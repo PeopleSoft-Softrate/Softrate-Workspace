@@ -11,7 +11,7 @@ const User = require("../models/User");
 
 const profilePhotoUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 }
 }).single("profilePhoto");
 
 const handleProfilePhotoUpload = (req, res, next) => {
@@ -20,7 +20,7 @@ const handleProfilePhotoUpload = (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: err.code === "LIMIT_FILE_SIZE"
-          ? "Profile photo must be 2 MB or smaller"
+          ? "Profile photo must be 5 MB or smaller"
           : "Unable to upload profile photo"
       });
     }

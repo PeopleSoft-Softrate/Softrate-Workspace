@@ -30,6 +30,69 @@ function profilePhotoToDataUrl(profilePhoto) {
   return `data:${contentType};base64,${buffer.toString("base64")}`;
 }
 
+function detectImageContentType(file) {
+  if (file.mimetype?.startsWith("image/")) return file.mimetype;
+
+  const buffer = file.buffer;
+  if (!buffer || buffer.length < 12) return null;
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg";
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return "image/png";
+  }
+  if (buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP") {
+    return "image/webp";
+  }
+  return null;
+}
+
+function tenantIdOf(user) {
+  return user?.companyId?._id || user?.companyId;
+}
+
+function profilePhotoPayload(file, contentType) {
+  return {
+    data: file.buffer,
+    contentType,
+    size: file.size,
+    updatedAt: new Date()
+  };
+}
+
+async function syncProfilePhotoByEmail(currentUser, CurrentModel, profilePhoto, companyId) {
+  const email = currentUser?.email;
+  if (!email) return;
+
+  const models = [User, Employee, Intern].filter((Model) => Model !== CurrentModel);
+  await Promise.all(
+    models.map((Model) =>
+      Model.updateMany(
+        { email, companyId },
+        { $set: { profilePhoto } }
+      )
+    )
+  );
+}
+
+async function removeProfilePhotoByEmail(currentUser, CurrentModel, companyId) {
+  const email = currentUser?.email;
+  if (!email) return;
+
+  const models = [User, Employee, Intern].filter((Model) => Model !== CurrentModel);
+  await Promise.all(
+    models.map((Model) =>
+      Model.updateMany(
+        { email, companyId },
+        { $unset: { profilePhoto: "" } }
+      )
+    )
+  );
+}
+
 function serializeUser(userDoc) {
   const user = userDoc?.toObject ? userDoc.toObject() : userDoc;
   if (!user) return user;
@@ -272,7 +335,8 @@ exports.updateProfilePhoto = async (req, res) => {
       return res.status(400).json({ success: false, message: "Profile photo is required" });
     }
 
-    if (!file.mimetype?.startsWith("image/")) {
+    const contentType = detectImageContentType(file);
+    if (!contentType) {
       return res.status(400).json({ success: false, message: "Only image files are allowed" });
     }
 
@@ -281,16 +345,16 @@ exports.updateProfilePhoto = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const updatedUser = await Model.findOneAndUpdate(
-      { _id: user._id, companyId: req.tenant.companyId },
+    if (String(tenantIdOf(user)) !== String(req.tenant.companyId)) {
+      return res.status(403).json({ success: false, message: "Tenant mismatch" });
+    }
+
+    const profilePhoto = profilePhotoPayload(file, contentType);
+    const updatedUser = await Model.findByIdAndUpdate(
+      user._id,
       {
         $set: {
-          profilePhoto: {
-            data: file.buffer,
-            contentType: file.mimetype,
-            size: file.size,
-            updatedAt: new Date()
-          }
+          profilePhoto
         }
       },
       { new: true }
@@ -299,6 +363,8 @@ exports.updateProfilePhoto = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    await syncProfilePhotoByEmail(user, Model, profilePhoto, req.tenant.companyId);
 
     res.status(200).json({
       success: true,
@@ -319,8 +385,12 @@ exports.removeProfilePhoto = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const updatedUser = await Model.findOneAndUpdate(
-      { _id: user._id, companyId: req.tenant.companyId },
+    if (String(tenantIdOf(user)) !== String(req.tenant.companyId)) {
+      return res.status(403).json({ success: false, message: "Tenant mismatch" });
+    }
+
+    const updatedUser = await Model.findByIdAndUpdate(
+      user._id,
       { $unset: { profilePhoto: "" } },
       { new: true }
     ).select(PROFILE_PHOTO_SELECT);
@@ -328,6 +398,8 @@ exports.removeProfilePhoto = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    await removeProfilePhotoByEmail(user, Model, req.tenant.companyId);
 
     res.status(200).json({
       success: true,

@@ -281,7 +281,7 @@ export class App {
     input.click();
   }
 
-  onProfilePhotoSelected(event: Event) {
+  async onProfilePhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
@@ -301,22 +301,73 @@ export class App {
     }
 
     this.profilePhotoSaving.set(true);
-    this.apiService.updateProfilePhoto(file).subscribe({
-      next: (res: any) => {
-        if (res.user) this.setCurrentUser(res.user, true);
-        if (res.role) {
-          localStorage.setItem('user_role', res.role);
-          this.userRole.set(res.role);
+    try {
+      const croppedFile = await this.cropProfilePhotoToSquare(file);
+      this.apiService.updateProfilePhoto(croppedFile).subscribe({
+        next: (res: any) => {
+          if (res.user) this.setCurrentUser(res.user, true);
+          if (res.role) {
+            localStorage.setItem('user_role', res.role);
+            this.userRole.set(res.role);
+          }
+
+          this.profilePhotoSaving.set(false);
+          input.value = '';
+        },
+        error: (err) => {
+          this.profilePhotoSaving.set(false);
+          this.profilePhotoError.set(err.error?.message || 'Unable to update profile photo.');
+          input.value = '';
+        }
+      });
+    } catch (err) {
+      this.profilePhotoSaving.set(false);
+      this.profilePhotoError.set('Unable to crop profile photo.');
+      input.value = '';
+    }
+  }
+
+  private cropProfilePhotoToSquare(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      image.onload = () => {
+        const size = Math.min(image.naturalWidth, image.naturalHeight);
+        const sourceX = Math.floor((image.naturalWidth - size) / 2);
+        const sourceY = Math.floor((image.naturalHeight - size) / 2);
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+
+        const context = canvas.getContext('2d');
+        if (!context) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Canvas is not available'));
+          return;
         }
 
-        this.profilePhotoSaving.set(false);
-        input.value = '';
-      },
-      error: (err) => {
-        this.profilePhotoSaving.set(false);
-        this.profilePhotoError.set(err.error?.message || 'Unable to update profile photo.');
-        input.value = '';
-      }
+        context.drawImage(image, sourceX, sourceY, size, size, 0, 0, 512, 512);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob) {
+            reject(new Error('Unable to crop image'));
+            return;
+          }
+
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          }));
+        }, 'image/jpeg', 0.9);
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Unable to load image'));
+      };
+
+      image.src = objectUrl;
     });
   }
 

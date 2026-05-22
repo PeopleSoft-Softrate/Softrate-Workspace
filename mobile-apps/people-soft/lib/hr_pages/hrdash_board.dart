@@ -41,6 +41,7 @@ import 'package:hrmappfrontend/hr_pages/intern_management.dart';
 import 'package:hrmappfrontend/hr_pages/intern_resignation.dart';
 import 'package:hrmappfrontend/hr_pages/hr_payroll_management.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
+import 'package:hrmappfrontend/profile_photo_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
@@ -415,47 +416,67 @@ class _HrdashBoardState extends State<HrdashBoard>
 
   Future<void> _loadProfileImage() async {
     if (hrId == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _profileImagePath = prefs.getString('profile_pic_$hrId');
-      });
+    final cached = await ProfilePhotoService.cachedPhotoUrl();
+    if (mounted && _profileImagePath != cached) {
+      setState(() => _profileImagePath = cached);
+    }
+
+    try {
+      final synced = await ProfilePhotoService.refreshPhotoUrl();
+      if (mounted && _profileImagePath != synced) {
+        setState(() => _profileImagePath = synced);
+      }
+    } catch (e) {
+      debugPrint('Profile photo sync failed: $e');
     }
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
 
-    if (pickedFile != null) {
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: pickedFile.path,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Profile',
-            toolbarColor: const Color(0xFF00657F),
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-            cropStyle: CropStyle.circle,
-          ),
-          IOSUiSettings(
-            title: 'Crop Profile',
-            aspectRatioLockEnabled: true,
-            cropStyle: CropStyle.circle,
-          ),
-        ],
-      );
+      if (pickedFile != null) {
+        final croppedFile = await ImageCropper().cropImage(
+          sourcePath: pickedFile.path,
+          compressFormat: ImageCompressFormat.jpg,
+          compressQuality: 82,
+          maxWidth: 900,
+          maxHeight: 900,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Crop Profile',
+              toolbarColor: const Color(0xFF00657F),
+              toolbarWidgetColor: Colors.white,
+              initAspectRatio: CropAspectRatioPreset.square,
+              lockAspectRatio: true,
+              cropStyle: CropStyle.rectangle,
+            ),
+            IOSUiSettings(
+              title: 'Crop Profile',
+              aspectRatioLockEnabled: true,
+              resetAspectRatioEnabled: false,
+              cropStyle: CropStyle.rectangle,
+            ),
+          ],
+        );
 
-      if (croppedFile != null && hrId != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('profile_pic_$hrId', croppedFile.path);
-        if (mounted) {
-          setState(() {
-            _profileImagePath = croppedFile.path;
-          });
+        if (croppedFile != null && hrId != null) {
+          final uploadedUrl = await ProfilePhotoService.uploadProfilePhoto(
+            croppedFile.path,
+          );
+          if (mounted) setState(() => _profileImagePath = uploadedUrl);
         }
       }
+    } catch (e) {
+      debugPrint('Profile photo update failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to update photo: ${e.toString()}'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -1030,7 +1051,10 @@ class _HrdashBoardState extends State<HrdashBoard>
                   image:
                       (_profileImagePath != null)
                           ? DecorationImage(
-                            image: FileImage(File(_profileImagePath!)),
+                            image:
+                                ProfilePhotoService.imageProvider(
+                                  _profileImagePath,
+                                )!,
                             fit: BoxFit.cover,
                           )
                           : null,

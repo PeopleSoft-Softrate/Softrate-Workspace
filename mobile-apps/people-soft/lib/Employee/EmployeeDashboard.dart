@@ -1,6 +1,5 @@
 import 'dart:async' as java_timer;
 import 'dart:convert';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'dart:math';
@@ -19,6 +18,7 @@ import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
 import 'package:hrmappfrontend/intern/HolidayCalendar.dart';
 import 'package:hrmappfrontend/port.dart';
+import 'package:hrmappfrontend/profile_photo_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
@@ -163,11 +163,18 @@ class _EmployeedashboardState extends State<Employeedashboard>
 
   Future<void> _loadProfileImage() async {
     if (employeeId == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _profileImagePath = prefs.getString('profile_pic_$employeeId');
-      });
+    final cached = await ProfilePhotoService.cachedPhotoUrl();
+    if (mounted && _profileImagePath != cached) {
+      setState(() => _profileImagePath = cached);
+    }
+
+    try {
+      final synced = await ProfilePhotoService.refreshPhotoUrl();
+      if (mounted && _profileImagePath != synced) {
+        setState(() => _profileImagePath = synced);
+      }
+    } catch (e) {
+      debugPrint('Profile photo sync failed: $e');
     }
   }
 
@@ -957,7 +964,10 @@ class _EmployeedashboardState extends State<Employeedashboard>
                   image:
                       (!isTestAccount && _profileImagePath != null)
                           ? DecorationImage(
-                            image: FileImage(File(_profileImagePath!)),
+                            image:
+                                ProfilePhotoService.imageProvider(
+                                  _profileImagePath,
+                                )!,
                             fit: BoxFit.cover,
                           )
                           : null,

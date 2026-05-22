@@ -1,6 +1,5 @@
 import 'dart:async' as java_timer;
 import 'dart:convert';
-import 'dart:io';
 import 'dart:ui';
 import 'dart:math';
 
@@ -26,6 +25,7 @@ import 'package:hrmappfrontend/intern/ProjectViewPage.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
+import 'package:hrmappfrontend/profile_photo_service.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -262,11 +262,18 @@ class _AttendancePageState extends State<AttendancePage>
 
   Future<void> _loadProfileImage() async {
     if (internId == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _profileImagePath = prefs.getString('profile_pic_$internId');
-      });
+    final cached = await ProfilePhotoService.cachedPhotoUrl();
+    if (mounted && _profileImagePath != cached) {
+      setState(() => _profileImagePath = cached);
+    }
+
+    try {
+      final synced = await ProfilePhotoService.refreshPhotoUrl();
+      if (mounted && _profileImagePath != synced) {
+        setState(() => _profileImagePath = synced);
+      }
+    } catch (e) {
+      debugPrint('Profile photo sync failed: $e');
     }
   }
 
@@ -762,7 +769,10 @@ class _AttendancePageState extends State<AttendancePage>
                   image:
                       (_profileImagePath != null)
                           ? DecorationImage(
-                            image: FileImage(File(_profileImagePath!)),
+                            image:
+                                ProfilePhotoService.imageProvider(
+                                  _profileImagePath,
+                                )!,
                             fit: BoxFit.cover,
                           )
                           : null,

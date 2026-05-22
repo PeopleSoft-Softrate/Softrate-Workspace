@@ -2,15 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/intern/RESIGNATION.dart';
+import 'package:hrmappfrontend/profile_photo_service.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:path/path.dart' as p;
 
 class InternProfilepage extends StatefulWidget {
   final Map<String, dynamic>? internData;
@@ -32,80 +31,50 @@ class _InternProfilepageState extends State<InternProfilepage> {
   }
 
   Future<void> _loadProfileImage() async {
-    final String internId = widget.internData?['internid'] ?? 'unknown';
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _profileImagePath = prefs.getString('profile_pic_$internId');
       _isImageLoading = false;
     });
+
+    final cached = await ProfilePhotoService.cachedPhotoUrl();
+    if (mounted) setState(() => _profileImagePath = cached);
+
+    try {
+      final synced = await ProfilePhotoService.refreshPhotoUrl();
+      if (mounted) setState(() => _profileImagePath = synced);
+    } catch (e) {
+      debugPrint('Profile photo sync failed: $e');
+    }
   }
 
   Future<void> _removeProfilePicture() async {
-    final String internId = widget.internData?['internid'] ?? 'unknown';
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      await ProfilePhotoService.removeProfilePhoto();
+      setState(() => _profileImagePath = null);
 
-    // Optionally delete the file if it exists
-    if (_profileImagePath != null) {
-      final file = File(_profileImagePath!);
-      if (await file.exists()) {
-        try {
-          await file.delete();
-        } catch (e) {
-          debugPrint("Error deleting file: $e");
-        }
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture removed')),
+        );
       }
-    }
-
-    await prefs.remove('profile_pic_$internId');
-    setState(() {
-      _profileImagePath = null;
-    });
-
-    if (mounted) {
-      Navigator.pop(context); // Close the sheet
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile picture removed')),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
-  }
-
-  Future<void> _saveImagePermanently(String imagePath) async {
-    final String internId = widget.internData?['internid'] ?? 'unknown';
-    final directory = await getApplicationDocumentsDirectory();
-
-    // 1. Delete old profile images for this user to save space and avoid conflicts
-    if (_profileImagePath != null) {
-      final oldFile = File(_profileImagePath!);
-      if (await oldFile.exists()) {
-        try {
-          await oldFile.delete();
-        } catch (e) {
-          debugPrint("Error deleting old profile pic: $e");
-        }
-      }
-    }
-
-    // 2. Generate a unique filename using timestamp to bust the image cache
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = 'profile_${internId}_$timestamp${p.extension(imagePath)}';
-    final permanentPath = '${directory.path}/$fileName';
-
-    // 3. Copy the new image to the application directory
-    final File imageFile = File(imagePath);
-    await imageFile.copy(permanentPath);
-
-    // 4. Save the new path to SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_pic_$internId', permanentPath);
-
-    setState(() {
-      _profileImagePath = permanentPath;
-    });
   }
 
   Future<void> _cropImage(String path) async {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: path,
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 82,
+      maxWidth: 900,
+      maxHeight: 900,
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Align Profile Picture',
@@ -114,19 +83,22 @@ class _InternProfilepageState extends State<InternProfilepage> {
           activeControlsWidgetColor: const Color(0xFF0284C7),
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: true,
-          cropStyle: CropStyle.circle,
+          cropStyle: CropStyle.rectangle,
         ),
         IOSUiSettings(
           title: 'Align Profile Picture',
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
-          cropStyle: CropStyle.circle,
+          cropStyle: CropStyle.rectangle,
         ),
       ],
     );
 
     if (croppedFile != null) {
-      await _saveImagePermanently(croppedFile.path);
+      final uploadedUrl = await ProfilePhotoService.uploadProfilePhoto(
+        croppedFile.path,
+      );
+      if (mounted) setState(() => _profileImagePath = uploadedUrl);
     }
   }
 
@@ -156,7 +128,7 @@ class _InternProfilepageState extends State<InternProfilepage> {
               return;
             }
           }
-          // Note: Android 13+ handles photo picking via system picker, 
+          // Note: Android 13+ handles photo picking via system picker,
           // usually doesn't need manual Permission.photos.request() for image_picker.
         }
       }
@@ -180,7 +152,9 @@ class _InternProfilepageState extends State<InternProfilepage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error picking image: ${e.toString().split("\n").first}'),
+            content: Text(
+              'Error picking image: ${e.toString().split("\n").first}',
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -191,25 +165,26 @@ class _InternProfilepageState extends State<InternProfilepage> {
   void _showPermissionDialog(String type) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$type Permission'),
-        content: Text(
-          'Please allow $type access in settings to update your profile picture.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: Text('$type Permission'),
+            content: Text(
+              'Please allow $type access in settings to update your profile picture.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  openAppSettings();
+                  Navigator.pop(context);
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-              Navigator.pop(context);
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -467,7 +442,9 @@ class _InternProfilepageState extends State<InternProfilepage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  internName.isEmpty ? 'Unknown Name' : internName,
+                                  internName.isEmpty
+                                      ? 'Unknown Name'
+                                      : internName,
                                   style: const TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
@@ -509,35 +486,46 @@ class _InternProfilepageState extends State<InternProfilepage> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFF0EA5E9).withOpacity(0.2),
+                                    color: const Color(
+                                      0xFF0EA5E9,
+                                    ).withOpacity(0.2),
                                     width: 4,
                                   ),
                                 ),
-                                child: _isImageLoading
-                                    ? const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                                child:
+                                    _isImageLoading
+                                        ? const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                        : CircleAvatar(
+                                          radius: 46,
+                                          backgroundColor: const Color(
+                                            0xFF0EA5E9,
+                                          ),
+                                          backgroundImage:
+                                              _profileImagePath != null
+                                                  ? ProfilePhotoService.imageProvider(
+                                                    _profileImagePath,
+                                                  )
+                                                  : null,
+                                          child:
+                                              _profileImagePath == null
+                                                  ? Text(
+                                                    internName.isNotEmpty
+                                                        ? internName[0]
+                                                            .toUpperCase()
+                                                        : '?',
+                                                    style: const TextStyle(
+                                                      fontSize: 36,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white,
+                                                    ),
+                                                  )
+                                                  : null,
                                         ),
-                                      )
-                                    : CircleAvatar(
-                                        radius: 46,
-                                        backgroundColor: const Color(0xFF0EA5E9),
-                                        backgroundImage: _profileImagePath != null
-                                            ? FileImage(File(_profileImagePath!))
-                                            : null,
-                                        child: _profileImagePath == null
-                                            ? Text(
-                                                internName.isNotEmpty
-                                                    ? internName[0].toUpperCase()
-                                                    : '?',
-                                                style: const TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
                               ),
                               Positioned(
                                 bottom: 0,
@@ -687,34 +675,41 @@ class _InternProfilepageState extends State<InternProfilepage> {
                     height: 56,
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: status.toLowerCase() == 'ongoing'
-                            ? const LinearGradient(
-                                colors: [Color(0xFFD32F2F), Color(0xFFB00020)],
-                              )
-                            : null,
+                        gradient:
+                            status.toLowerCase() == 'ongoing'
+                                ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFFD32F2F),
+                                    Color(0xFFB00020),
+                                  ],
+                                )
+                                : null,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton.icon(
-                        onPressed: status.toLowerCase() == 'ongoing'
-                            ? () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TerminationForm(
-                                      internName: internName,
-                                      internId: internId,
-                                      department: department,
+                        onPressed:
+                            status.toLowerCase() == 'ongoing'
+                                ? () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => TerminationForm(
+                                            internName: internName,
+                                            internId: internId,
+                                            department: department,
+                                          ),
                                     ),
-                                  ),
-                                );
-                              }
-                            : null,
+                                  );
+                                }
+                                : null,
                         icon: Icon(
                           Icons.person_remove_rounded,
                           size: 22,
-                          color: status.toLowerCase() == 'ongoing'
-                              ? Colors.white
-                              : Colors.grey[500],
+                          color:
+                              status.toLowerCase() == 'ongoing'
+                                  ? Colors.white
+                                  : Colors.grey[500],
                         ),
                         label: Text(
                           "Request Offboarding",
@@ -722,9 +717,10 @@ class _InternProfilepageState extends State<InternProfilepage> {
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
-                            color: status.toLowerCase() == 'ongoing'
-                                ? Colors.white
-                                : Colors.grey[500],
+                            color:
+                                status.toLowerCase() == 'ongoing'
+                                    ? Colors.white
+                                    : Colors.grey[500],
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -924,9 +920,7 @@ class _SectionContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFF00657F).withOpacity(0.08),
-        ),
+        border: Border.all(color: const Color(0xFF00657F).withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -1028,12 +1022,12 @@ class _LinkedInRow extends StatelessWidget {
                           hasUrl ? 'View Profile' : 'Not provided',
                           style: TextStyle(
                             fontSize: 15,
-                            color: hasUrl
-                                ? const Color(0xFF00657F)
-                                : Colors.grey[400],
-                            fontWeight: hasUrl
-                                ? FontWeight.w700
-                                : FontWeight.w400,
+                            color:
+                                hasUrl
+                                    ? const Color(0xFF00657F)
+                                    : Colors.grey[400],
+                            fontWeight:
+                                hasUrl ? FontWeight.w700 : FontWeight.w400,
                           ),
                         ),
                       ),
@@ -1066,9 +1060,8 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = value.isEmpty
-        ? 'Not provided'
-        : value.toString().trim();
+    final displayValue =
+        value.isEmpty ? 'Not provided' : value.toString().trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Row(
@@ -1194,19 +1187,21 @@ class _ContactButton extends StatelessWidget {
           color: isEnabled ? Colors.white : Colors.grey[50],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isEnabled
-                ? const Color(0xFF00657F).withOpacity(0.12)
-                : Colors.grey[200]!,
+            color:
+                isEnabled
+                    ? const Color(0xFF00657F).withOpacity(0.12)
+                    : Colors.grey[200]!,
           ),
-          boxShadow: isEnabled
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF00657F).withOpacity(0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          boxShadow:
+              isEnabled
+                  ? [
+                    BoxShadow(
+                      color: const Color(0xFF00657F).withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1356,10 +1351,7 @@ class _ImageSourceOption extends StatelessWidget {
             decoration: BoxDecoration(
               color: themeColor.withOpacity(0.1),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: themeColor.withOpacity(0.2),
-                width: 1,
-              ),
+              border: Border.all(color: themeColor.withOpacity(0.2), width: 1),
             ),
             child: Icon(icon, color: themeColor, size: 28),
           ),

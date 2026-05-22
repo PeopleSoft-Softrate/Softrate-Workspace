@@ -9,6 +9,7 @@ import 'package:hrmappfrontend/manager/manager_auth_check.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/homeScreen.dart';
+import 'package:hrmappfrontend/profile_photo_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -59,7 +60,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       return;
     }
 
-    if (enteredId == 'testemployee@softrate.com' && enteredPass == 'Test@1234') {
+    if (enteredId == 'testemployee@softrate.com' &&
+        enteredPass == 'Test@1234') {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', 'mock_token_123');
       await prefs.setString('user_role', 'employee');
@@ -70,7 +72,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const Employeedashboard(employeeId: 'test_employee_id'),
+          builder:
+              (_) => const Employeedashboard(employeeId: 'test_employee_id'),
         ),
       );
       return;
@@ -78,8 +81,10 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
 
     try {
       final url = Uri.parse('$_baseUrl/api/auth/unified-login');
-      debugPrint("Attempting login to $url with identifier: ${_idCtrl.text.trim()}");
-      
+      debugPrint(
+        "Attempting login to $url with identifier: ${_idCtrl.text.trim()}",
+      );
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -113,6 +118,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
         await prefs.setString('auth_token', token);
       }
       await prefs.setString('user_role', role);
+      await ProfilePhotoService.cachePhotoFromUser(user);
 
       TextInput.finishAutofillContext();
       setState(() => _loading = false);
@@ -126,7 +132,10 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           // 'internid' is lowercase in the Intern model
           final internId = (user['internid'] ?? user['email'] ?? '').toString();
           await prefs.setString('internId', internId);
-          await prefs.setString('internMongoId', (user['_id'] ?? '').toString());
+          await prefs.setString(
+            'internMongoId',
+            (user['_id'] ?? '').toString(),
+          );
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const AttendancePage()),
@@ -175,11 +184,14 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
         case 'hr_admin':
         case 'admin':
           debugPrint("Login success: Identified as HR. User data: $user");
-          final empId = (user['employeeId'] ?? user['EmployeeId'] ?? user['_id'] ?? '').toString();
+          final empId =
+              (user['employeeId'] ?? user['EmployeeId'] ?? user['_id'] ?? '')
+                  .toString();
           final firstName = user['profile']?['firstName'] ?? '';
           final lastName = user['profile']?['lastName'] ?? '';
-          final fullName = user['fullName'] ?? 
-                         (firstName.isNotEmpty ? "$firstName $lastName" : "HR Manager");
+          final fullName =
+              user['fullName'] ??
+              (firstName.isNotEmpty ? "$firstName $lastName" : "HR Manager");
 
           debugPrint("HR Session: ID=$empId, Name=$fullName");
           await prefs.setBool('hr_logged_in', true);
@@ -187,7 +199,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           await prefs.setString('hr_name', fullName);
           await prefs.setString('auth_token', token);
           await prefs.setString('hr_auth_token', token);
-          
+
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
@@ -212,97 +224,105 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
     final emailCtrl = TextEditingController();
     await showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) {
-          bool sending = false;
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              'Reset Password',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF00657F),
-              ),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Enter your registered email address.',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
+      builder:
+          (ctx) => StatefulBuilder(
+            builder: (ctx, setS) {
+              bool sending = false;
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: _inputDecoration(
-                    hint: 'Email address',
-                    icon: HugeIcons.strokeRoundedMail01,
+                title: const Text(
+                  'Reset Password',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF00657F),
                   ),
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: Colors.grey),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Enter your registered email address.',
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: _inputDecoration(
+                        hint: 'Email address',
+                        icon: HugeIcons.strokeRoundedMail01,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00657F),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ),
-                ),
-                onPressed: sending
-                    ? null
-                    : () async {
-                        setS(() => sending = true);
-                        try {
-                          final r = await http.post(
-                            Uri.parse('$_baseUrl/api/auth/forgot-password'),
-                            headers: {'Content-Type': 'application/json'},
-                            body: jsonEncode({'email': emailCtrl.text.trim()}),
-                          );
-                          if (!mounted) return;
-                          Navigator.pop(ctx);
-                          final ok = r.statusCode == 200;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                ok
-                                    ? 'Reset link sent to your email.'
-                                    : 'Email not found.',
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00657F),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed:
+                        sending
+                            ? null
+                            : () async {
+                              setS(() => sending = true);
+                              try {
+                                final r = await http.post(
+                                  Uri.parse(
+                                    '$_baseUrl/api/auth/forgot-password',
+                                  ),
+                                  headers: {'Content-Type': 'application/json'},
+                                  body: jsonEncode({
+                                    'email': emailCtrl.text.trim(),
+                                  }),
+                                );
+                                if (!mounted) return;
+                                Navigator.pop(ctx);
+                                final ok = r.statusCode == 200;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      ok
+                                          ? 'Reset link sent to your email.'
+                                          : 'Email not found.',
+                                    ),
+                                    backgroundColor:
+                                        ok ? Colors.green : Colors.red,
+                                  ),
+                                );
+                              } catch (_) {
+                                Navigator.pop(ctx);
+                              }
+                            },
+                    child:
+                        sending
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
                               ),
-                              backgroundColor: ok ? Colors.green : Colors.red,
-                            ),
-                          );
-                        } catch (_) {
-                          Navigator.pop(ctx);
-                        }
-                      },
-                child: sending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Send Link'),
-              ),
-            ],
-          );
-        },
-      ),
+                            )
+                            : const Text('Send Link'),
+                  ),
+                ],
+              );
+            },
+          ),
     );
   }
 
@@ -455,9 +475,11 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                       hint: 'Enter your email address',
                                       icon: HugeIcons.strokeRoundedMail01,
                                     ),
-                                    validator: (v) => (v == null || v.isEmpty)
-                                        ? 'Please enter your email address'
-                                        : null,
+                                    validator:
+                                        (v) =>
+                                            (v == null || v.isEmpty)
+                                                ? 'Please enter your email address'
+                                                : null,
                                   ),
 
                                   const SizedBox(height: 18),
@@ -484,19 +506,22 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                         icon: _buildIcon(
                                           _obscure
                                               ? HugeIcons
-                                                    .strokeRoundedViewOffSlash
+                                                  .strokeRoundedViewOffSlash
                                               : HugeIcons.strokeRoundedView,
                                           color: Colors.grey,
                                           size: 20,
                                         ),
-                                        onPressed: () => setState(
-                                          () => _obscure = !_obscure,
-                                        ),
+                                        onPressed:
+                                            () => setState(
+                                              () => _obscure = !_obscure,
+                                            ),
                                       ),
                                     ),
-                                    validator: (v) => (v == null || v.isEmpty)
-                                        ? 'Please enter your password'
-                                        : null,
+                                    validator:
+                                        (v) =>
+                                            (v == null || v.isEmpty)
+                                                ? 'Please enter your password'
+                                                : null,
                                   ),
 
                                   const SizedBox(height: 12),
@@ -578,19 +603,20 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                         elevation: 0,
                                       ),
                                       onPressed: _loading ? null : _login,
-                                      child: _loading
-                                          ? const CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2.4,
-                                            )
-                                          : const Text(
-                                              'Sign In',
-                                              style: TextStyle(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.w700,
+                                      child:
+                                          _loading
+                                              ? const CircularProgressIndicator(
                                                 color: Colors.white,
+                                                strokeWidth: 2.4,
+                                              )
+                                              : const Text(
+                                                'Sign In',
+                                                style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
                                               ),
-                                            ),
                                     ),
                                   ),
                                   const SizedBox(height: 16),
@@ -631,12 +657,13 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: icon != null
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: _buildIcon(icon, color: const Color(0xFF00657F)),
-            )
-          : null,
+      prefixIcon:
+          icon != null
+              ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _buildIcon(icon, color: const Color(0xFF00657F)),
+              )
+              : null,
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

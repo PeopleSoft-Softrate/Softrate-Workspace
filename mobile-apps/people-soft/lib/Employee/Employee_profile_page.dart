@@ -3,14 +3,13 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:hrmappfrontend/Employee/EmployeeResignationPage.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
+import 'package:hrmappfrontend/profile_photo_service.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:path/path.dart' as p;
 
 class EmployeeProfilePage extends StatefulWidget {
   final Map<String, dynamic>? employeeData;
@@ -32,76 +31,50 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
   }
 
   Future<void> _loadProfileImage() async {
-    final String employeeId = widget.employeeData?['EmployeeId'] ?? 'unknown';
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _profileImagePath = prefs.getString('profile_pic_$employeeId');
       _isImageLoading = false;
     });
+
+    final cached = await ProfilePhotoService.cachedPhotoUrl();
+    if (mounted) setState(() => _profileImagePath = cached);
+
+    try {
+      final synced = await ProfilePhotoService.refreshPhotoUrl();
+      if (mounted) setState(() => _profileImagePath = synced);
+    } catch (e) {
+      debugPrint('Profile photo sync failed: $e');
+    }
   }
 
   Future<void> _removeProfilePicture() async {
-    final String employeeId = widget.employeeData?['EmployeeId'] ?? 'unknown';
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      await ProfilePhotoService.removeProfilePhoto();
+      setState(() => _profileImagePath = null);
 
-    if (_profileImagePath != null) {
-      final file = File(_profileImagePath!);
-      if (await file.exists()) {
-        try {
-          await file.delete();
-        } catch (e) {
-          debugPrint("Error deleting file: $e");
-        }
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture removed')),
+        );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
-
-    await prefs.remove('profile_pic_$employeeId');
-    setState(() {
-      _profileImagePath = null;
-    });
-
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile picture removed')));
-    }
-  }
-
-  Future<void> _saveImagePermanently(String imagePath) async {
-    final String employeeId = widget.employeeData?['EmployeeId'] ?? 'unknown';
-    final directory = await getApplicationDocumentsDirectory();
-
-    if (_profileImagePath != null) {
-      final oldFile = File(_profileImagePath!);
-      if (await oldFile.exists()) {
-        try {
-          await oldFile.delete();
-        } catch (e) {
-          debugPrint("Error deleting old profile pic: $e");
-        }
-      }
-    }
-
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName =
-        'profile_emp_${employeeId}_$timestamp${p.extension(imagePath)}';
-    final permanentPath = '${directory.path}/$fileName';
-
-    final File imageFile = File(imagePath);
-    await imageFile.copy(permanentPath);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_pic_$employeeId', permanentPath);
-
-    setState(() {
-      _profileImagePath = permanentPath;
-    });
   }
 
   Future<void> _cropImage(String path) async {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: path,
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 82,
+      maxWidth: 900,
+      maxHeight: 900,
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Align Profile Picture',
@@ -110,19 +83,22 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
           activeControlsWidgetColor: const Color(0xFF0284C7),
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: true,
-          cropStyle: CropStyle.circle,
+          cropStyle: CropStyle.rectangle,
         ),
         IOSUiSettings(
           title: 'Align Profile Picture',
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
-          cropStyle: CropStyle.circle,
+          cropStyle: CropStyle.rectangle,
         ),
       ],
     );
 
     if (croppedFile != null) {
-      await _saveImagePermanently(croppedFile.path);
+      final uploadedUrl = await ProfilePhotoService.uploadProfilePhoto(
+        croppedFile.path,
+      );
+      if (mounted) setState(() => _profileImagePath = uploadedUrl);
     }
   }
 
@@ -183,23 +159,24 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
   void _showPermissionDialog(String type) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$type Permission'),
-        content: Text('Please allow $type access in settings.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: Text('$type Permission'),
+            content: Text('Please allow $type access in settings.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  openAppSettings();
+                  Navigator.pop(context);
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-              Navigator.pop(context);
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -468,37 +445,40 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                                     width: 4,
                                   ),
                                 ),
-                                child: _isImageLoading
-                                    ? const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                                child:
+                                    _isImageLoading
+                                        ? const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                        : CircleAvatar(
+                                          radius: 46,
+                                          backgroundColor: const Color(
+                                            0xFF0EA5E9,
+                                          ),
+                                          backgroundImage:
+                                              _profileImagePath != null
+                                                  ? ProfilePhotoService.imageProvider(
+                                                    _profileImagePath,
+                                                  )
+                                                  : null,
+                                          child:
+                                              _profileImagePath == null
+                                                  ? Text(
+                                                    employeeName.isNotEmpty
+                                                        ? employeeName[0]
+                                                            .toUpperCase()
+                                                        : '?',
+                                                    style: const TextStyle(
+                                                      fontSize: 36,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white,
+                                                    ),
+                                                  )
+                                                  : null,
                                         ),
-                                      )
-                                    : CircleAvatar(
-                                        radius: 46,
-                                        backgroundColor: const Color(
-                                          0xFF0EA5E9,
-                                        ),
-                                        backgroundImage:
-                                            _profileImagePath != null
-                                            ? FileImage(
-                                                File(_profileImagePath!),
-                                              )
-                                            : null,
-                                        child: _profileImagePath == null
-                                            ? Text(
-                                                employeeName.isNotEmpty
-                                                    ? employeeName[0]
-                                                          .toUpperCase()
-                                                    : '?',
-                                                style: const TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
                               ),
                               Positioned(
                                 bottom: 0,
@@ -654,12 +634,13 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => EmployeeResignationPage(
-                                employeeId: employeeId,
-                                fullName: employeeName,
-                                department: role,
-                                designation: designation,
-                              ),
+                              builder:
+                                  (context) => EmployeeResignationPage(
+                                    employeeId: employeeId,
+                                    fullName: employeeName,
+                                    department: role,
+                                    designation: designation,
+                                  ),
                             ),
                           );
                         },
@@ -866,9 +847,10 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = (value == null || value.isEmpty || value == "null")
-        ? 'Not provided'
-        : value.toString().trim();
+    final displayValue =
+        (value == null || value.isEmpty || value == "null")
+            ? 'Not provided'
+            : value.toString().trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -963,9 +945,10 @@ class _LinkedInRow extends StatelessWidget {
                     hasUrl ? 'View LinkedIn Profile' : 'Not provided',
                     style: TextStyle(
                       fontSize: 15,
-                      color: hasUrl
-                          ? const Color(0xFF0077B5)
-                          : const Color(0xFF1E293B),
+                      color:
+                          hasUrl
+                              ? const Color(0xFF0077B5)
+                              : const Color(0xFF1E293B),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1000,15 +983,16 @@ class _ContactButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isEnabled ? const Color(0xFF0F172A) : Colors.grey[100],
           borderRadius: BorderRadius.circular(16),
-          boxShadow: isEnabled
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          boxShadow:
+              isEnabled
+                  ? [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : null,
         ),
         child: Column(
           children: [

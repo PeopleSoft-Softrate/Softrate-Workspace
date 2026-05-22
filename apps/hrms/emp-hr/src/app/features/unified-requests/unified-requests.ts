@@ -17,7 +17,8 @@ import {
   BorderFullIcon,
   Logout01Icon,
   Login01Icon,
-  FingerAccessIcon
+  FingerAccessIcon,
+  WalletDone02Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -42,6 +43,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   readonly Logout01Icon = Logout01Icon;
   readonly Login01Icon = Login01Icon;
   readonly FingerAccessIcon = FingerAccessIcon;
+  readonly WalletDone02Icon = WalletDone02Icon;
 
   // Role and Profile Info
   userRole = signal<string | null>(null);
@@ -119,7 +121,8 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         resignations: this.apiService.getHRPendingResignations(),
         interns: this.apiService.getPendingInterns(),
         employees: this.apiService.getPendingEmployees(),
-        corrections: this.apiService.getHrPendingAttendanceRequests()
+        corrections: this.apiService.getHrPendingAttendanceRequests(),
+        funds: this.apiService.getHrAllFundRequests()
       }).pipe(
         finalize(() => this.loading.set(false))
       ).subscribe({
@@ -130,8 +133,9 @@ export class UnifiedRequests implements OnInit, OnDestroy {
           console.log('Interns:', res.interns);
           console.log('Employees:', res.employees);
           console.log('Corrections:', res.corrections);
+          console.log('Fund Requests:', res.funds);
           console.groupEnd();
-          this.consolidateHRData(res.leaves, res.resignations, res.interns, res.employees, res.corrections || []);
+          this.consolidateHRData(res.leaves, res.resignations, res.interns, res.employees, res.corrections || [], res.funds || []);
           console.group('🔍 [UnifiedRequests] After Consolidation');
           console.log('Total requestsList:', this.requestsList().length);
           console.log('All items managerStatus:', this.requestsList().map(r => ({ name: r.requesterName, type: r.type, status: r.status, managerStatus: r.managerStatus })));
@@ -149,12 +153,13 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         resignations: this.apiService.getAllResignations(), // Manager resignations filtered by team
         interns: this.apiService.getAssignedInterns(managerId),
         employees: this.apiService.getAssignedEmployees(managerId),
-        corrections: this.apiService.getManagerPendingAttendanceRequests(managerId)
+        corrections: this.apiService.getManagerPendingAttendanceRequests(managerId),
+        funds: this.apiService.getManagerAllFundRequests(managerId)
       }).pipe(
         finalize(() => this.loading.set(false))
       ).subscribe({
         next: (res) => {
-          this.consolidateManagerData(managerId, res.leaves, res.resignations.data || res.resignations || [], res.interns, res.employees, res.corrections || []);
+          this.consolidateManagerData(managerId, res.leaves, res.resignations.data || res.resignations || [], res.interns, res.employees, res.corrections || [], res.funds || []);
         },
         error: (err) => {
           console.error('Failed to fetch Manager approvals data:', err);
@@ -166,7 +171,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     }
   }
 
-  consolidateHRData(leaves: any[], resignationsRes: any, interns: any[], employees: any[], corrections: any[]) {
+  consolidateHRData(leaves: any[], resignationsRes: any, interns: any[], employees: any[], corrections: any[], funds: any[]) {
     const list: any[] = [];
     const resignations = resignationsRes?.data || resignationsRes || [];
 
@@ -274,12 +279,33 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       });
     });
 
+    // 6. Company Expense / Fund Requests
+    funds.forEach(f => {
+      list.push({
+        _id: f._id,
+        requesterName: f.requesterName,
+        requesterId: f.requesterId,
+        type: 'fund',
+        subType: f.category || 'Fund Request',
+        dateText: f.expenseDate ? new Date(f.expenseDate).toLocaleDateString('en-IN') : 'Not Set',
+        days: null,
+        amount: f.amount,
+        reason: f.description,
+        status: f.hrStatus || 'pending',
+        managerStatus: f.managerStatus || 'pending',
+        hrStatus: f.hrStatus || 'pending',
+        rejectionReason: f.hrRemarks || f.managerRemarks || '',
+        createdAt: f.createdAt,
+        raw: f
+      });
+    });
+
     // Sort by most recent
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     this.requestsList.set(list);
   }
 
-  consolidateManagerData(managerId: string, leaves: any[], resignations: any[], interns: any[], employees: any[], corrections: any[]) {
+  consolidateManagerData(managerId: string, leaves: any[], resignations: any[], interns: any[], employees: any[], corrections: any[], funds: any[]) {
     const list: any[] = [];
 
     // 1. Leave Requests for manager's team
@@ -384,6 +410,27 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       });
     });
 
+    // 6. Company Expense / Fund Requests
+    funds.forEach(f => {
+      list.push({
+        _id: f._id,
+        requesterName: f.requesterName,
+        requesterId: f.requesterId,
+        type: 'fund',
+        subType: f.category || 'Fund Request',
+        dateText: f.expenseDate ? new Date(f.expenseDate).toLocaleDateString('en-IN') : 'Not Set',
+        days: null,
+        amount: f.amount,
+        reason: f.description,
+        status: f.managerStatus || 'pending',
+        managerStatus: f.managerStatus || 'pending',
+        hrStatus: f.hrStatus || 'pending',
+        rejectionReason: f.managerRemarks || '',
+        createdAt: f.createdAt,
+        raw: f
+      });
+    });
+
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     this.requestsList.set(list);
   }
@@ -475,7 +522,29 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       this.handleOnboardingReview(request, action, remarks);
     } else if (request.type === 'correction') {
       this.handleCorrectionReview(request, action, remarks);
+    } else if (request.type === 'fund') {
+      this.handleFundReview(request, action, remarks);
     }
+  }
+
+  handleFundReview(request: any, action: 'approve' | 'reject', remarks: string) {
+    const status = action === 'approve' ? 'accepted' : 'rejected';
+    const actionObservable = this.isHr()
+      ? this.apiService.hrReviewFundRequest(request._id, status, remarks)
+      : this.apiService.managerReviewFundRequest(request._id, status, remarks);
+
+    actionObservable.subscribe({
+      next: () => {
+        this.fetchRequests();
+        this.closeModal();
+        alert(`Fund request ${action}d successfully`);
+      },
+      error: (err) => {
+        console.error(err);
+        this.loading.set(false);
+        alert('Action failed. Error: ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   handleCorrectionReview(request: any, action: 'approve' | 'reject', remarks: string) {
@@ -679,6 +748,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   pendingOffboardingsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'offboarding').length);
   pendingOnboardingsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'onboarding').length);
   pendingCorrectionsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'correction').length);
+  pendingFundsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'fund').length);
 
   formatTime(iso: string): string {
     if (!iso) return '--:--';

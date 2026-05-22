@@ -131,6 +131,7 @@
 .stat-item.leave .stat-icon-wrapper { background: rgba(37, 99, 235, 0.08); color: #2563eb; }
 .stat-item.offboarding .stat-icon-wrapper { background: rgba(245, 158, 11, 0.08); color: #d97706; }
 .stat-item.onboarding .stat-icon-wrapper { background: rgba(13, 148, 136, 0.08); color: #0d9488; }
+.stat-item.fund .stat-icon-wrapper { background: rgba(124, 58, 237, 0.08); color: #7c3aed; }
 
 .stat-info {
   display: flex;
@@ -365,6 +366,7 @@
 .badge.leave { background-color: rgba(37, 99, 235, 0.08); color: #2563eb; }
 .badge.offboarding { background-color: rgba(245, 158, 11, 0.08); color: #d97706; }
 .badge.onboarding { background-color: rgba(13, 148, 136, 0.08); color: #0d9488; }
+.badge.fund { background-color: rgba(124, 58, 237, 0.08); color: #7c3aed; }
 
 /* CARD BODY */
 .card-body {

@@ -192,7 +192,7 @@ class _FundRequestPageState extends State<FundRequestPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -311,7 +311,7 @@ class _FundRequestPageState extends State<FundRequestPage> {
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<String>(
-                  value: _category,
+                  initialValue: _category,
                   items:
                       _categories
                           .map(
@@ -329,9 +329,18 @@ class _FundRequestPageState extends State<FundRequestPage> {
                     decimal: true,
                   ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d*\.?\d{0,2}'),
-                    ),
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      final text = newValue.text;
+                      if (text.isEmpty) return newValue;
+                      final decimalIndex = text.indexOf('.');
+                      if (decimalIndex != -1 &&
+                          text.length - decimalIndex - 1 > 2) {
+                        return oldValue;
+                      }
+                      return double.tryParse(text) == null
+                          ? oldValue
+                          : newValue;
+                    }),
                   ],
                   decoration: _inputDecoration(
                     'Amount',

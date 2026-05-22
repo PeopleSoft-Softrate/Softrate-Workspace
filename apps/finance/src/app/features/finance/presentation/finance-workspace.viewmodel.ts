@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { finalize } from 'rxjs';
 import { FinanceApiService } from '../data/finance-api.service';
-import { amcDetailRows, invoiceDetailRows, moneyOrCount, paymentStatus, titleize } from '../domain/finance-formatters';
+import { amcDetailRows, employeeClaimDetailRows, invoiceDetailRows, moneyOrCount, paymentStatus, titleize } from '../domain/finance-formatters';
 import { FINANCE_NAV_GROUPS, FinanceGroupId, FinanceNavGroup, isIntegratedFinanceView } from '../domain/finance-navigation.model';
 import { FinanceAnalyticsItem, FinanceDetailItem, FinanceListResponse, FinanceRecord } from '../domain/finance-record.model';
 
@@ -26,9 +26,10 @@ export class FinanceWorkspaceViewModel {
   payload?: FinanceListResponse;
   selectedRecord?: FinanceRecord;
   showDetailDialog = false;
+  approvingClaimId = '';
 
   readonly navGroups = FINANCE_NAV_GROUPS;
-  readonly statusOptions = ['All Status', 'Paid', 'Unpaid', 'Overdue', 'Pending', 'Partially Paid'];
+  readonly statusOptions = ['All Status', 'Paid', 'Unpaid', 'Overdue', 'Pending', 'Partially Paid', 'Pending Finance Approval', 'Finance Verified', 'Submitted'];
 
   constructor(private readonly api: FinanceApiService) {}
 
@@ -136,16 +137,39 @@ export class FinanceWorkspaceViewModel {
     localStorage.setItem('financeCompanyCode', this.companyCode.trim());
 
     this.loading = true;
-    this.api.receivables(this.activeView, {
-      companyCode: this.companyCode.trim(),
-      from: this.dateFrom,
-      to: this.dateTo,
-    })
+    const query = this.activeQuery();
+    const request = this.activeGroup === 'expenses'
+      ? this.api.expenses(this.activeView, query)
+      : this.api.receivables(this.activeView, query);
+
+    request
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: (response) => this.payload = response,
         error: (err) => this.error = err?.error?.message || 'Finance records could not be loaded.',
       });
+  }
+
+  approveEmployeeClaim(record: FinanceRecord): void {
+    const claimId = String(record.id || record['_id'] || record['sourceId'] || '').trim();
+    if (!claimId || this.approvingClaimId) return;
+
+    this.error = '';
+    this.approvingClaimId = claimId;
+    this.api.approveEmployeeClaim(claimId, this.companyCode.trim())
+      .pipe(finalize(() => this.approvingClaimId = ''))
+      .subscribe({
+        next: () => this.loadActive(),
+        error: (err) => this.error = err?.error?.message || 'Employee claim could not be approved.',
+      });
+  }
+
+  private activeQuery(): { companyCode: string; from: string; to: string } {
+    return {
+      companyCode: this.companyCode.trim(),
+      from: this.dateFrom,
+      to: this.dateTo,
+    };
   }
 
   rows(): FinanceRecord[] {
@@ -177,8 +201,8 @@ export class FinanceWorkspaceViewModel {
   }
 
   detailRows(): FinanceDetailItem[] {
-    return this.activeView === 'amc-renewals'
-      ? amcDetailRows(this.selectedRecord)
-      : invoiceDetailRows(this.selectedRecord);
+    if (this.activeView === 'amc-renewals') return amcDetailRows(this.selectedRecord);
+    if (this.activeView === 'employee-claims') return employeeClaimDetailRows(this.selectedRecord);
+    return invoiceDetailRows(this.selectedRecord);
   }
 }

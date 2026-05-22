@@ -19,11 +19,16 @@ const financeExpenseSchema = new mongoose.Schema(
       default: 'Submitted',
     },
     receiptUrl: { type: String, trim: true, default: '' },
+    source: { type: String, trim: true, default: '' },
+    sourceId: { type: String, trim: true, default: '' },
+    financeApprovedBy: { type: String, trim: true, default: '' },
+    financeApprovedAt: { type: Date },
   },
   { timestamps: true }
 );
 
 financeExpenseSchema.index({ companyCode: 1, type: 1, status: 1 });
 financeExpenseSchema.index({ companyCode: 1, expenseDate: -1 });
+financeExpenseSchema.index({ companyCode: 1, source: 1, sourceId: 1 }, { sparse: true });
 
 module.exports = mongoose.models.FinanceExpense || mongoose.model('FinanceExpense', financeExpenseSchema);

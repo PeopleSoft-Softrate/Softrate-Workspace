@@ -22,6 +22,7 @@ const {
   resolveCompanyCode,
   toNumber,
 } = require('../services/finance.service');
+const { approveEmployeeClaim } = require('../services/hrmsClaims.service');
 
 const router = express.Router();
 
@@ -328,6 +329,17 @@ router.post('/expenses', requireCompanyCode, async (req, res) => {
     return res.status(201).json({ success: true, expense });
   } catch (err) {
     return sendError(res, err, 'Failed to save expense.');
+  }
+});
+
+router.patch('/employee-claims/:id/finance-approval', requireCompanyCode, async (req, res) => {
+  try {
+    const result = await approveEmployeeClaim(companyCode(req), req.params.id, {
+      approvedBy: normalize(req.body.approvedBy) || 'Finance Manager',
+    });
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return sendError(res, err, 'Failed to approve employee claim.');
   }
 });
 

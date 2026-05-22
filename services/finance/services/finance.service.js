@@ -8,6 +8,7 @@ const FinanceTaxRecord = require('../models/FinanceTaxRecord');
 const FinanceBankEntry = require('../models/FinanceBankEntry');
 const FinanceSettings = require('../models/FinanceSettings');
 const { lifecycleStatusFor } = require('../../crm/services/amcService');
+const { listEmployeeClaims } = require('./hrmsClaims.service');
 
 const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';
 
@@ -634,9 +635,18 @@ async function getPayables(companyCode, view = 'vendor-bills') {
 }
 
 async function getExpenses(companyCode, view = 'company-expenses') {
+  if (view === 'employee-claims') {
+    const claims = await listEmployeeClaims(companyCode);
+    return {
+      success: true,
+      view,
+      items: claims.items,
+      analytics: claims.analytics,
+    };
+  }
+
   const data = await getFinanceCollections(companyCode);
   const typeMap = {
-    'employee-claims': 'Employee Claim',
     'company-expenses': 'Company Expense',
     reimbursements: 'Reimbursement',
   };

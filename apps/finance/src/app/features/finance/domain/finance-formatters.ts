@@ -27,7 +27,7 @@ export function titleize(value: string): string {
 }
 
 export function moneyOrCount(value: number, key: string): string {
-  return /count|due|overdue|runs|submitted|verified|paid$/i.test(key) && Math.abs(value) < 1000
+  return /claims?$/i.test(key) || (/count|due|overdue|runs|submitted|verified|paid$/i.test(key) && Math.abs(value) < 1000)
     ? String(value)
     : formatMoney(value);
 }
@@ -71,5 +71,21 @@ export function amcDetailRows(record: FinanceRecord | undefined): FinanceDetailI
     { label: 'Paid Amount', value: formatMoney(record.paidAmount || 0) },
     { label: 'Outstanding', value: formatMoney(record.balanceAmount || record.outstandingAmount || 0) },
     { label: 'Source', value: record.stream || record.source || '-' },
+  ];
+}
+
+export function employeeClaimDetailRows(record: FinanceRecord | undefined): FinanceDetailItem[] {
+  if (!record) return [];
+  return [
+    { label: 'Claim No', value: record.claimNumber || record.id || '-' },
+    { label: 'Employee', value: record.employeeName || '-' },
+    { label: 'Employee ID', value: record.requesterId || '-' },
+    { label: 'Department', value: record.department || '-' },
+    { label: 'Category', value: record.category || '-' },
+    { label: 'Expense Date', value: formatDate(record.expenseDate) },
+    { label: 'Claim Amount', value: formatMoney(record.amount || record.totalAmount || 0) },
+    { label: 'Finance Status', value: paymentStatus(record) },
+    { label: 'Approved By', value: record.financeApprovedBy || '-' },
+    { label: 'Approved At', value: formatDate(record.financeApprovedAt) },
   ];
 }

@@ -104,5 +104,6 @@ export const FINANCE_NAV_GROUPS: FinanceNavGroup[] = [
 ];
 
 export function isIntegratedFinanceView(groupId: FinanceGroupId, viewId: string): boolean {
-  return groupId === 'receivables' && ['invoices', 'amc-renewals'].includes(viewId);
+  return (groupId === 'receivables' && ['invoices', 'amc-renewals'].includes(viewId))
+    || (groupId === 'expenses' && viewId === 'employee-claims');
 }

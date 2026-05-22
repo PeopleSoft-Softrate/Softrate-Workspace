@@ -1,0 +1,67 @@
+<app-finance-integration-placeholder *ngIf="!integrated" [title]="title"></app-finance-integration-placeholder>
+
+<ng-container *ngIf="integrated">
+  <div class="metrics-strip finance-metrics-strip" *ngIf="analytics.length">
+    <div class="metric-cell" *ngFor="let item of analytics">
+      <div class="metric-label">{{ item.label }}</div>
+      <div class="metric-value">{{ item.value }}</div>
+    </div>
+  </div>
+
+  <div class="table-scroll finance-table-scroll" *ngIf="rows.length; else emptyClaims">
+    <table class="data-table compact-table finance-data-table employee-claims-table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Claim No</th>
+          <th>Category</th>
+          <th>Expense Date</th>
+          <th>Amount</th>
+          <th>HR Status</th>
+          <th>Finance Status</th>
+          <th class="action-col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows; trackBy: trackById" (click)="openRecord.emit(row)">
+          <td>
+            <div class="claim-person">
+              <strong>{{ employeeName(row) }}</strong>
+              <span>{{ requesterMeta(row) }}</span>
+            </div>
+          </td>
+          <td>{{ row.claimNumber || row.id || '-' }}</td>
+          <td>{{ row.category || '-' }}</td>
+          <td>{{ formatDate(row.expenseDate) }}</td>
+          <td class="amount-cell">{{ claimAmount(row) }}</td>
+          <td><span class="status-pill stage-pill">{{ hrStatus(row) }}</span></td>
+          <td>
+            <span class="status-pill finance-claim-pill" [class.pending]="!isApproved(row)" [class.approved]="isApproved(row)">
+              {{ financeStatus(row) }}
+            </span>
+          </td>
+          <td class="action-cell">
+            <button
+              type="button"
+              class="claim-approve-button"
+              [class.approved]="isApproved(row)"
+              [disabled]="isApproved(row) || isApproving(row)"
+              [title]="isApproved(row) ? 'Approved' : 'Approve claim'"
+              [attr.aria-label]="isApproved(row) ? 'Claim approved' : 'Approve claim'"
+              (click)="approve($event, row)"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              <span>{{ isApproved(row) ? 'Approved' : (isApproving(row) ? 'Approving' : 'Approve') }}</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #emptyClaims>
+    <dv-empty-state message="No employee claims found."></dv-empty-state>
+  </ng-template>
+</ng-container>

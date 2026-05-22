@@ -187,6 +187,16 @@
           [analytics]="vm.analytics()"
           (openRecord)="vm.openDetail($event)"
         ></app-finance-amc-renewals-view>
+
+        <app-finance-expenses-view
+          *ngIf="vm.activeView === 'employee-claims'"
+          [integrated]="true"
+          [rows]="vm.rows()"
+          [analytics]="vm.analytics()"
+          [approvingClaimId]="vm.approvingClaimId"
+          (openRecord)="vm.openDetail($event)"
+          (approveClaim)="vm.approveEmployeeClaim($event)"
+        ></app-finance-expenses-view>
       </section>
 
       <ng-template #integratedLater>
@@ -236,7 +246,7 @@
     <header>
       <div>
         <p class="eyebrow">{{ vm.activeLabel }}</p>
-        <h2>{{ vm.selectedRecord?.clientName || vm.selectedRecord?.clientCompanyName || 'Finance record' }}</h2>
+        <h2>{{ vm.selectedRecord?.employeeName || vm.selectedRecord?.clientName || vm.selectedRecord?.clientCompanyName || 'Finance record' }}</h2>
       </div>
       <button type="button" class="icon-button" title="Close" (click)="vm.closeDetail()">x</button>
     </header>

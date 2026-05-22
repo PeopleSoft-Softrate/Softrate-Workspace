@@ -16,6 +16,19 @@ export class FinanceApiService {
     });
   }
 
+  expenses<T extends FinanceRecord = FinanceRecord>(view: string, query: FinanceQuery): Observable<FinanceListResponse<T>> {
+    return this.http.get<FinanceListResponse<T>>(`${this.baseUrl}/expenses/${view}`, {
+      params: this.params(query),
+    });
+  }
+
+  approveEmployeeClaim(claimId: string, companyCode: string): Observable<{ success: boolean; claim: FinanceRecord; expense: FinanceRecord }> {
+    return this.http.patch<{ success: boolean; claim: FinanceRecord; expense: FinanceRecord }>(
+      `${this.baseUrl}/employee-claims/${claimId}/finance-approval`,
+      { companyCode, approvedBy: 'Finance Manager' }
+    );
+  }
+
   private params(values: FinanceQuery): HttpParams {
     return Object.entries(values || {}).reduce((params, [key, value]) => {
       return value ? params.set(key, String(value)) : params;

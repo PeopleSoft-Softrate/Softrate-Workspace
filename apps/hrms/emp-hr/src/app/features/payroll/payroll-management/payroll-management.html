@@ -1,0 +1,364 @@
+<div class="main-content-layout">
+  <!-- Toast Alert -->
+  <div class="toast-notification" [class.show]="showToast()" [class.error]="toastType() === 'error'">
+    <span class="toast-message">{{ toastMessage() }}</span>
+  </div>
+
+  <div class="data-section">
+    <!-- Header Block -->
+    <div class="page-header-embedded">
+      <div class="header-back-btn" (click)="navigateToDashboard()">
+        <hugeicons-icon [icon]="ArrowLeft01Icon" size="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+        <span>Back to Dashboard</span>
+      </div>
+      <div class="header-title-row">
+        <div class="header-content">
+          <h1>Payroll Management</h1>
+          <p>Monitor, audit, and structure the compensation for all approved staff.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat Dashboard Cards -->
+    <div class="stats-grid">
+      <!-- Card 1: Total Outflow -->
+      <div class="stat-card gradient-purple">
+        <div class="stat-icon-wrapper">
+          <hugeicons-icon [icon]="Invoice01Icon" size="24" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Total Monthly Payroll</span>
+          <h2 class="stat-val">₹{{ totalPayrollExpense() | number:'1.0-0' }}</h2>
+          <span class="stat-sub">Aggregated employee &amp; intern salaries</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Active Staff count -->
+      <div class="stat-card gradient-blue">
+        <div class="stat-icon-wrapper">
+          <hugeicons-icon [icon]="UserCircleIcon" size="24" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Active Payroll Roster</span>
+          <h2 class="stat-val">{{ totalStaffCount() }} Staff</h2>
+          <span class="stat-sub">{{ allEmployees().length }} Employees &nbsp;·&nbsp; {{ allInterns().length }} Interns</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Avg Net Salary -->
+      <div class="stat-card gradient-teal">
+        <div class="stat-icon-wrapper">
+          <hugeicons-icon [icon]="Invoice01Icon" size="24" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-label">Average Net Salary</span>
+          <h2 class="stat-val">₹{{ averageNetSalary() | number:'1.0-0' }}</h2>
+          <span class="stat-sub">Per active staff member monthly</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- List Filter Tools -->
+    <div class="toolbar-section">
+      <div class="tab-filters">
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'employees'"
+          (click)="switchTab('employees')">
+          Employees
+          <span class="badge">{{ allEmployees().length }}</span>
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'interns'"
+          (click)="switchTab('interns')">
+          Interns
+          <span class="badge">{{ allInterns().length }}</span>
+        </button>
+      </div>
+
+      <div class="search-wrapper">
+        <hugeicons-icon [icon]="Search01Icon" size="18" [strokeWidth]="1.5" color="#94a3b8" class="search-icon"></hugeicons-icon>
+        <input
+          type="text"
+          placeholder="Search by name, ID, or department..."
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+          class="search-input"
+        >
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="data-container" [class.loading]="isLoading()">
+
+      <!-- Employees Tab View -->
+      <ng-container *ngIf="activeTab() === 'employees'">
+        <div class="table-responsive" *ngIf="!isLoading() && filteredEmployees().length > 0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Designation</th>
+                <th>Status</th>
+                <th class="text-right">Basic</th>
+                <th class="text-right">HRA</th>
+                <th class="text-right">Allowances</th>
+                <th class="text-right">Deductions</th>
+                <th class="text-center">LOP Days</th>
+                <th class="text-right highlight-head">Net Salary</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let emp of filteredEmployees()">
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-initial">{{ emp.fullName[0] }}</div>
+                    <div class="user-info-cell">
+                      <span class="user-name">{{ emp.fullName }}</span>
+                      <span class="user-sub">{{ emp.role || 'Employee' }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="dept-cell">{{ emp.role || '—' }}</td>
+                <td>
+                  <span class="payroll-badge" [class.configured]="emp.payroll.basicSalary > 0" [class.default-pay]="emp.payroll.basicSalary === 0">
+                    {{ emp.payroll.basicSalary > 0 ? 'Configured' : 'Default' }}
+                  </span>
+                </td>
+                <td class="text-right amount-cell">₹{{ emp.payroll.basicSalary | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ emp.payroll.hra | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ emp.payroll.allowances | number:'1.0-0' }}</td>
+                <td class="text-right text-deductions">₹{{ emp.payroll.deductions | number:'1.0-0' }}</td>
+                <td class="text-center">
+                  <span class="lop-days-badge" [class.has-lop]="emp.lopDays > 0">
+                    {{ emp.lopDays || 0 }}d
+                  </span>
+                </td>
+                <td class="text-right font-semibold text-net">₹{{ emp.netSalary | number:'1.0-0' }}</td>
+                <td class="text-center">
+                  <button class="action-edit-btn" (click)="openEditModal(emp)" title="Edit Payroll Structure">
+                    <hugeicons-icon [icon]="NoteEditIcon" size="16" [strokeWidth]="1.8" color="currentColor"></hugeicons-icon>
+                    <span>Edit</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoading() && filteredEmployees().length === 0">
+          <hugeicons-icon [icon]="UserCircleIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+          <h3>No employees found</h3>
+          <p>We couldn't find any employees matching your filter or search query.</p>
+        </div>
+      </ng-container>
+
+      <!-- Interns Tab View -->
+      <ng-container *ngIf="activeTab() === 'interns'">
+        <div class="table-responsive" *ngIf="!isLoading() && filteredInterns().length > 0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Intern</th>
+                <th>ID</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th class="text-right">Basic Stipend</th>
+                <th class="text-right">HRA</th>
+                <th class="text-right">Allowances</th>
+                <th class="text-right">Deductions</th>
+                <th class="text-center">LOP Days</th>
+                <th class="text-right highlight-head">Net Stipend</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let intern of filteredInterns()">
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar-initial color-intern">{{ intern.fullName[0] }}</div>
+                    <div class="user-info-cell">
+                      <span class="user-name">{{ intern.fullName }}</span>
+                      <span class="user-sub">Intern</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="id-cell">{{ intern.internid || intern.internId || intern._id.substring(0, 8) }}</td>
+                <td class="dept-cell">{{ intern.department || '—' }}</td>
+                <td>
+                  <span class="payroll-badge" [class.configured]="intern.payroll.basicSalary > 0" [class.default-pay]="intern.payroll.basicSalary === 0">
+                    {{ intern.payroll.basicSalary > 0 ? 'Configured' : 'Default' }}
+                  </span>
+                </td>
+                <td class="text-right amount-cell">₹{{ intern.payroll.basicSalary | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ intern.payroll.hra | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ intern.payroll.allowances | number:'1.0-0' }}</td>
+                <td class="text-right text-deductions">₹{{ intern.payroll.deductions | number:'1.0-0' }}</td>
+                <td class="text-center">
+                  <span class="lop-days-badge" [class.has-lop]="intern.lopDays > 0">
+                    {{ intern.lopDays || 0 }}d
+                  </span>
+                </td>
+                <td class="text-right font-semibold text-net">₹{{ intern.netSalary | number:'1.0-0' }}</td>
+                <td class="text-center">
+                  <button class="action-edit-btn" (click)="openEditModal(intern)" title="Edit Stipend Structure">
+                    <hugeicons-icon [icon]="NoteEditIcon" size="16" [strokeWidth]="1.8" color="currentColor"></hugeicons-icon>
+                    <span>Edit</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoading() && filteredInterns().length === 0">
+          <hugeicons-icon [icon]="UserCircleIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+          <h3>No interns found</h3>
+          <p>We couldn't find any interns matching your filter or search query.</p>
+        </div>
+      </ng-container>
+
+      <!-- Loading Spinner overlay -->
+      <div class="loading-overlay" *ngIf="isLoading()">
+        <div class="spinner"></div>
+        <p>Loading active staff roster...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Salary Structure Modal Overlay -->
+<div class="modal-backdrop" *ngIf="showEditModal()" (click)="closeEditModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-header-desc">
+        <h3>Edit Payroll Structure</h3>
+        <p>{{ selectedPerson()?.fullName }} &nbsp;·&nbsp; {{ selectedPerson()?.payrollType | titlecase }}</p>
+      </div>
+      <button class="modal-close" (click)="closeEditModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Real-time Net Calculation Banner -->
+      <div class="net-calculation-banner">
+        <span class="banner-lbl">Calculated Net Payout</span>
+        <h1 class="banner-val">₹{{ modalNetSalary() | number:'1.0-0' }}</h1>
+
+        <div class="breakdown-section">
+          <div class="breakdown-row">
+            <span class="breakdown-label">Gross (Basic + HRA + Allowances − Deductions)</span>
+            <span class="breakdown-amount">₹{{ modalGross() | number:'1.0-0' }}</span>
+          </div>
+          <div class="breakdown-row" *ngIf="modalPF() > 0">
+            <span class="breakdown-label">PF Deduction ({{ pfPercentage() }}% of Basic)</span>
+            <span class="breakdown-amount negative">− ₹{{ modalPF() | number:'1.0-0' }}</span>
+          </div>
+          <div class="breakdown-row" *ngIf="modalTax() > 0">
+            <span class="breakdown-label">Income Tax ({{ taxPercentage() }}% since taxable > ₹{{ taxLimitThreshold() | number:'1.0-0' }})</span>
+            <span class="breakdown-amount negative">− ₹{{ modalTax() | number:'1.0-0' }}</span>
+          </div>
+          <div class="breakdown-row" *ngIf="modalLOP() > 0">
+            <span class="breakdown-label">
+              LOP — {{ modalLopDays() }} unauthorized day{{ modalLopDays() === 1 ? '' : 's' }}
+              <span class="breakdown-label-note">(holidays excluded)</span>
+            </span>
+            <span class="breakdown-amount lop-deduct">− ₹{{ modalLOP() | number:'1.0-0' }}</span>
+          </div>
+          <div class="breakdown-row total-row">
+            <span class="breakdown-label">Net Payout</span>
+            <span class="breakdown-amount net-positive">₹{{ modalNetSalary() | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Form Fields -->
+      <div class="payroll-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="basicSalary">Basic Salary / Stipend (₹)</label>
+            <input
+              type="number"
+              id="basicSalary"
+              [(ngModel)]="basicSalary"
+              placeholder="e.g. 35000"
+              min="0"
+              class="form-control"
+            >
+          </div>
+          <div class="form-group" *ngIf="selectedPerson()?.payrollType === 'employee'">
+            <label for="hra">HRA Allowance (₹)</label>
+            <input
+              type="number"
+              id="hra"
+              [(ngModel)]="hra"
+              placeholder="e.g. 12000"
+              min="0"
+              class="form-control"
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="allowances">Other Allowances (₹)</label>
+            <input
+              type="number"
+              id="allowances"
+              [(ngModel)]="allowances"
+              placeholder="e.g. 5000"
+              min="0"
+              class="form-control"
+            >
+          </div>
+          <div class="form-group">
+            <label for="deductions">Deductions (PF, Tax, etc.) (₹)</label>
+            <input
+              type="number"
+              id="deductions"
+              [(ngModel)]="deductions"
+              placeholder="e.g. 2000"
+              min="0"
+              class="form-control"
+            >
+          </div>
+        </div>
+
+        <!-- LOP Days input — only shown when LOP is enabled for this person's type -->
+        <div class="form-row lop-days-row"
+             *ngIf="(selectedPerson()?.payrollType === 'employee' && enableLopEmployee()) || (selectedPerson()?.payrollType === 'intern' && enableLopIntern())">
+          <div class="form-group lop-days-group">
+            <label for="lopDays" class="lop-days-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.88 9.878a3 3 0 1 0 4.242 4.243m.58 -3.425a3.012 3.012 0 0 0 -1.412 -1.405" />
+                <path d="M10 6h9a2 2 0 0 1 2 2v8c0 .294 -.064 .574 -.178 .825m-2.822 1.175h-13a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2h1" />
+                <path d="M18 12l.01 0" />
+                <path d="M6 12l.01 0" />
+                <path d="M3 3l18 18" />
+              </svg>
+              Unauthorized Leave Days (LOP)
+            </label>
+            <div class="lop-days-input-wrapper">
+              <input
+                type="number"
+                id="lopDays"
+                [(ngModel)]="modalLopDays"
+                placeholder="0"
+                min="0"
+                class="form-control"
+              >
+              <span class="lop-days-hint">Enter the count of pending / unapproved leave days this month (excluding company holidays &amp; weekly offs)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeEditModal()">Cancel</button>
+      <button class="btn-save" (click)="savePayrollStructure()">Save Structure</button>
+    </div>
+  </div>
+</div>

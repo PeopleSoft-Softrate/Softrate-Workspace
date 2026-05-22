@@ -1,0 +1,134 @@
+<section class="lead-detail-workspace">
+  <aside class="lead-detail-sidebar">
+    <button class="lead-detail-back" type="button" (click)="back.emit()">
+      <span class="back-action-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="m15 18-6-6 6-6" />
+          <path d="M21 12H9" />
+        </svg>
+      </span>
+      <span>Back</span>
+    </button>
+    <div class="lead-detail-nav">
+      <button class="toolbar-button" type="button" [class.active]="drawerSection==='details'" (click)="detailsOpen.emit()">Details</button>
+      <button class="toolbar-button" type="button" [class.active]="drawerSection==='history'" (click)="historyOpen.emit()">History</button>
+      <button class="toolbar-button" type="button" (click)="invoiceOpen.emit()">Invoice</button>
+    </div>
+  </aside>
+
+  <div class="lead-detail-main">
+    <div class="lead-detail-header">
+      <div class="lead-detail-title-row">
+        <h3>{{ lead.leadCompanyName }}</h3>
+        <button
+          class="lead-favourite-toggle"
+          type="button"
+          [class.active]="lead.isFavourite"
+          [attr.aria-label]="lead.isFavourite ? 'Remove from Favourite' : 'Add to Favourite'"
+          (click)="favouriteToggle.emit()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
+          </svg>
+        </button>
+      </div>
+      <div class="lead-detail-subline">
+        <span>{{ lead.contactName || 'Primary Contact' }}</span>
+        <span>{{ lead.contactNumber }}</span>
+      </div>
+    </div>
+
+    <div class="lead-detail-panel" *ngIf="drawerSection==='details'">
+      <div class="lead-detail-summary">
+        <div class="lead-detail-column">
+          <div class="lead-detail-field">
+            <span>Contact</span>
+            <strong>{{ lead.contactName || 'Primary Contact' }}</strong>
+          </div>
+          <div class="lead-detail-field">
+            <span>Email</span>
+            <strong [title]="lead.directorEmailAddress || ''">{{ lead.directorEmailAddress || '-' }}</strong>
+          </div>
+          <div class="lead-detail-section" *ngIf="lead.mainDivisionDescription || lead.companyDescription">
+            <div class="lead-detail-section-title">Company Context</div>
+            <div class="lead-context-lines">
+              <div *ngIf="lead.mainDivisionDescription">{{ lead.mainDivisionDescription }}</div>
+              <div *ngIf="lead.companyDescription">{{ lead.companyDescription }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lead-detail-column lead-detail-column-side">
+          <div class="lead-detail-field">
+            <span>Phone</span>
+            <strong class="nowrap-value">{{ lead.contactNumber || '-' }}</strong>
+          </div>
+          <label class="lead-detail-field">
+            <span>Status</span>
+            <select
+              class="field-select lead-status-select-inline"
+              [ngModel]="lead.status"
+              (ngModelChange)="statusChange.emit($event)"
+              [style.color]="statusColor(lead.status)"
+            >
+              <option *ngFor="let st of statuses" [value]="st" [style.color]="statusColor(st)">{{ st }}</option>
+            </select>
+          </label>
+          <div class="lead-detail-meta-grid">
+            <div class="lead-detail-field">
+              <span>Updated</span>
+              <strong class="nowrap-value">{{ formatDate(lead.updatedAt || lead.createdAt) }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lead-detail-section lead-remarks-section">
+        <div class="lead-detail-section-title">Remarks</div>
+        <div class="lead-remarks-list">
+          <div class="lead-remarks-row" *ngFor="let remark of lead.remarks; let i = index">
+            <span>{{ remark }}</span>
+            <button class="text-action" type="button" (click)="remarkDelete.emit(i)" [disabled]="remarkDeletingIds.has(lead._id + '-' + i)">
+              {{ remarkDeletingIds.has(lead._id + '-' + i) ? 'Deleting' : 'Delete' }}
+            </button>
+          </div>
+          <div *ngIf="!lead.remarks || lead.remarks.length===0" class="empty-state-inline empty-state-inline-minimal">No remarks.</div>
+        </div>
+
+        <div class="remark-composer lead-remark-composer">
+          <input
+            class="field-input"
+            type="text"
+            [ngModel]="remarkValue"
+            (ngModelChange)="remarkValueChange.emit($event)"
+            list="remarkSuggestions"
+            placeholder="Add remark"
+            (keyup.enter)="remarkAdd.emit()"
+          />
+          <button class="primary-action" type="button" (click)="remarkAdd.emit()" [disabled]="remarkPosting">
+            <span *ngIf="!remarkPosting">Add</span>
+            <span *ngIf="remarkPosting" class="button-spinner"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lead-detail-panel lead-history-panel" *ngIf="drawerSection==='history'">
+      <div class="lead-history-list" *ngIf="!historyLoading && historyLogs.length > 0">
+        <div class="lead-history-item" *ngFor="let log of historyLogs">
+          <div class="lead-history-head">
+            <strong>{{ log.action }}</strong>
+            <span>{{ (log.createdAt || log.timestamp) | date:'MMM d, h:mm a' }}</span>
+          </div>
+          <div class="lead-history-body" *ngIf="log.oldValue || log.newValue">
+            <span class="nowrap-value">{{ log.oldValue || '-' }}</span>
+            <span class="nowrap-value">{{ log.newValue || '-' }}</span>
+          </div>
+          <div class="lead-history-note" *ngIf="log.details || log.metadata?.remark">{{ log.details || log.metadata?.remark }}</div>
+        </div>
+      </div>
+      <div *ngIf="historyLoading" class="empty-state-inline empty-state-inline-minimal">Loading.</div>
+      <div *ngIf="!historyLoading && historyLogs.length===0" class="empty-state-inline empty-state-inline-minimal">No history.</div>
+    </div>
+  </div>
+</section>

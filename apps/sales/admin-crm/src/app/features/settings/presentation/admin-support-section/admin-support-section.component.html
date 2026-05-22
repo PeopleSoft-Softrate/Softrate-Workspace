@@ -1,0 +1,157 @@
+      <div *ngIf="dashTab==='support'">
+        <div class="dash-header-row"
+          style="margin-bottom: 2.5rem; justify-content: space-between; border-bottom: none; align-items: baseline;">
+          <h2 class="dash-title" style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em;">Help & Support
+          </h2>
+          <!-- <p style="color: var(--text-3); font-size: 0.95rem; margin-top: 0.5rem; white-space: nowrap;">Everything you need to manage your connection and get expert assistance.</p> -->
+        </div>
+
+        <div class="support-grid" style="max-width: 1100px; gap: 2.5rem;">
+
+          <!-- LEFT COLUMN: Simplified Assistance -->
+          <div class="support-col-left" style="gap: 2rem;">
+
+            <!-- Minimal Connect Code Card -->
+            <div class="company-card"
+              style="padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); background: var(--bg-card); box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <div
+                  style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--purple);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                  </svg>
+                </div>
+                <div style="flex: 1;">
+                  <span
+                    style="font-size: 0.7rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em;">Device
+                    Connect Code</span>
+                  <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;">
+                    <h3
+                      style="font-size: 1.5rem; font-weight: 700; color: var(--text-1); margin: 0; letter-spacing: -0.01em; font-family: var(--font-mono);">
+                      {{ companyProfile?.companyCode }}</h3>
+                  </div>
+                </div>
+              </div>
+              <button class="cta-secondary"
+                style="width: 100%; border-radius: 10px; font-weight: 600; padding: 0.7rem; font-size: 0.85rem;"
+                (click)="openShareModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  style="margin-right: 6px;">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                Share
+              </button>
+            </div>
+
+            <!-- Minimal RM Card -->
+            <div class="company-card"
+              style="padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); background: var(--bg-card); box-shadow: 0 4px 15px rgba(0,0,0,0.02);"
+              *ngIf="companyProfile?.relationshipManager?.name; else requestRmTemplate">
+              <!-- RM Content same as before but slightly more compact padding -->
+              <h4
+                style="font-size: 0.7rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Personal Assistance
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="font-weight: 700; color: var(--text-1); font-size: 1.1rem; margin-bottom: 0.5rem;">{{
+                  companyProfile.relationshipManager.name }}</div>
+                <div
+                  style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                  <div>
+                    <div style="font-size: 0.65rem; color: var(--text-3); font-weight: 600; text-transform: uppercase;">
+                      Availability</div>
+                    <div style="font-size: 0.8rem; color: var(--text-2); margin-top: 2px;">{{
+                      companyProfile.relationshipManager.workingDays }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.65rem; color: var(--text-3); font-weight: 600; text-transform: uppercase;">
+                      Hours</div>
+                    <div style="font-size: 0.8rem; color: var(--text-2); margin-top: 2px;">{{
+                      companyProfile.relationshipManager.workingHours }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.65rem; color: var(--text-3); font-weight: 600; text-transform: uppercase;">
+                      Phone Number</div>
+                    <div style="font-size: 0.8rem; color: var(--text-2); margin-top: 2px;">{{
+                      companyProfile.relationshipManager.phone }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.65rem; color: var(--text-3); font-weight: 600; text-transform: uppercase;">
+                      Email Address</div>
+                    <div style="font-size: 0.8rem; color: var(--text-2); margin-top: 2px;">{{
+                      companyProfile.relationshipManager.email }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #requestRmTemplate>
+              <div class="company-card"
+                style="padding: 1.5rem; border-radius: 16px; border: 1px dashed var(--border); text-align: center; background: rgba(99, 102, 241, 0.02);">
+                <p style="color: var(--text-2); font-size: 0.85rem; font-weight: 500; margin-bottom: 1.25rem;">Need a
+                  dedicated manager for your account?</p>
+                <button class="cta-secondary"
+                  style="width: 100%; border-radius: 10px; font-weight: 600; padding: 0.7rem; font-size: 0.85rem;"
+                  (click)="requestRm()" [disabled]="!canRequestRm || rmRequestLoading">
+                  {{ rmRequestLoading ? 'Processing...' : 'Request Relationship Manager' }}
+                </button>
+                <div *ngIf="!canRequestRm" style="margin-top: 1rem;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)"
+                      stroke-width="2.5">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p style="font-size: 0.75rem; color: var(--orange); font-weight: 600;">Request pending. Recheck
+                      after few minutes.</p>
+                  </div>
+                  <div *ngIf="rmCountdown"
+                    style="font-size: 0.7rem; color: var(--text-3); margin-top: 4px; font-weight: 500;">
+                    Next request available in: <span style="color: var(--purple); font-weight: 700;">{{ rmCountdown
+                      }}</span>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+
+          </div>
+
+          <!-- RIGHT COLUMN: Clean Content -->
+          <div class="support-col-right" style="gap: 2rem;">
+            <div style="padding: 0 0.5rem;">
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-1); margin-bottom: 1.25rem;">Activation
+                Guide</h4>
+              <div
+                style="position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #f1f5f9; padding-bottom: 56.25%; border: 1px solid var(--border);">
+                <iframe style="position: absolute; top:0; left: 0; width: 100%; height: 100%; border: none;"
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen></iframe>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-3); margin-top: 1rem; line-height: 1.5;">Watch this
+                2-minute video to complete your setup. For faster deployment, you can share the link below with your
+                operators.</p>
+
+              <div
+                style="margin-top: 0.75rem; background: var(--bg-main); padding: 1rem; border-radius: 14px; border: 1px solid var(--border); display: flex; align-items: center; gap: 1rem;">
+                <input type="text" readonly value="https://help.callyzer.co/article/how-to-register-your-emp/"
+                  style="flex: 1; border: none; background: transparent; color: var(--text-2); font-size: 0.8rem; font-family: var(--font-mono); outline: none;">
+                <button (click)="copyConnectCodeLink()"
+                  style="background: var(--text-1); color: #fff; border: none; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">Copy</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>

@@ -1,0 +1,210 @@
+<div class="main-content-layout" [class.self-portal]="isSelfPortal()">
+<div class="data-section">
+
+  <!-- ================= EMPLOYEE SELF-PORTAL VIEW ================= -->
+  <ng-container *ngIf="isSelfPortal()">
+    
+    <!-- GALLERY MODE (No policy active) -->
+    <div *ngIf="!selectedPolicyUrl()">
+      <div class="page-header">
+        <div class="header-content">
+          <div class="breadcrumb">
+            <a routerLink="/employee/dashboard" class="back-link">
+              <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
+          <h1>HR Policies & Guidelines</h1>
+          <p>Browse and review published company guides, codes of conduct, and resources.</p>
+        </div>
+      </div>
+
+      <div class="data-container">
+        <!-- Search and Filter Bar -->
+        <div class="search-filter-wrapper">
+          <div class="search-input-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" [(ngModel)]="searchQuery" placeholder="Search policies by name (e.g. Leave Policy)...">
+          </div>
+          <div class="search-status-text" *ngIf="searchQuery()">
+            Found {{ filteredPolicies.length }} matching policies
+          </div>
+        </div>
+
+        <!-- Policy Cards Grid -->
+        <div class="policies-gallery-grid" *ngIf="filteredPolicies.length > 0">
+          <div class="policy-gallery-card" *ngFor="let policy of filteredPolicies">
+            <div class="policy-card-header">
+              <div class="policy-icon-title-group">
+                <div class="policy-visual-icon">
+                  <hugeicons-icon [icon]="PolicyIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+                </div>
+                <h3 class="policy-title-text" [title]="policy.policy_name">{{ policy.policy_name }}</h3>
+              </div>
+              <span class="policy-format-tag">PDF</span>
+            </div>
+
+            <div class="policy-card-actions">
+              <button class="btn-read-doc" (click)="selectPolicy(policy)">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Read Document</span>
+              </button>
+              <button class="btn-open-tab" (click)="openPdf(policy.policy_url)" title="Open in New Tab">
+                <i class="fa-solid fa-up-right-from-square"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State (No policies matching search or none published) -->
+        <div class="empty-state" *ngIf="filteredPolicies.length === 0">
+          <div class="empty-content">
+            <hugeicons-icon [icon]="PolicyIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+            <h3>No Policies Found</h3>
+            <p>{{ searchQuery() ? 'Try adjusting your search terms or keywords.' : 'Your HR department has not published any policies yet. Please check back later!' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FULL SCREEN READER MODE (Selected policy active) -->
+    <div *ngIf="selectedPolicyUrl()">
+      <div class="page-header reader-header">
+        <div class="reader-header-left">
+          <button class="btn-back-gallery" (click)="closeReader()">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>All Policies</span>
+          </button>
+          <div class="reader-title-container">
+            <h1 class="reader-doc-title">{{ selectedPolicyName() }}</h1>
+            <span class="reader-status-pill">Active View</span>
+          </div>
+        </div>
+        <div class="reader-header-right">
+          <button class="btn-action-primary" (click)="openPdf(selectedPolicyUrl())">
+            <i class="fa-solid fa-up-right-from-square"></i>
+            <span>Open in New Tab</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="data-container reader-container">
+        <div class="iframe-card">
+          <iframe [src]="getSafeUrl(selectedPolicyUrl())" class="policy-iframe" frameborder="0"></iframe>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+
+  <!-- ================= ADMIN/HR MANAGER VIEW ================= -->
+  <div class="policies-grid" *ngIf="!isSelfPortal()">
+    <!-- Add Policy Form -->
+    <div class="card">
+      <div class="card-header-minimal">
+        <h3>
+          <hugeicons-icon [icon]="AddInvoiceIcon" size="20" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          Add New Policy
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Policy Name</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-file-pen"></i>
+            <input type="text" [(ngModel)]="newPolicy.policy_name" placeholder="e.g. Leave Policy 2024">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Document Public URL (PDF)</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-link"></i>
+            <input type="text" [(ngModel)]="newPolicy.policy_url" placeholder="https://drive.google.com/file/d/...">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Visibility</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" [checked]="isRoleSelected('employee')" (change)="toggleVisibility('employee')">
+              <span>Employee</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" [checked]="isRoleSelected('intern')" (change)="toggleVisibility('intern')">
+              <span>Intern</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn-save-all" (click)="addPolicy()" [disabled]="isSaving()">
+          <hugeicons-icon [icon]="CheckmarkCircle01Icon" size="20" [strokeWidth]="2" color="currentColor" *ngIf="!isSaving()"></hugeicons-icon>
+          <div class="btn-spinner" *ngIf="isSaving()"></div>
+          <span>{{ isSaving() ? 'Saving...' : 'Publish Policy' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Policies List -->
+    <div class="card">
+      <div class="card-header-minimal">
+        <h3>
+          <hugeicons-icon [icon]="PolicyIcon" size="20" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          Active Policies
+        </h3>
+        <span class="count-badge">{{ policies().length }} Policies</span>
+      </div>
+
+      <div class="card-body">
+        @if (isLoading()) {
+          <div class="skeleton-list">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+        } @else if (policies().length > 0) {
+          <div class="policies-list">
+            <div class="policy-item" *ngFor="let policy of policies()">
+              <div class="policy-info">
+                <div class="icon-box">
+                  <hugeicons-icon [icon]="PolicyIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+                </div>
+                <div>
+                  <span>{{ policy.policy_name }}</span>
+                  <div class="badges">
+                    <span class="badge" *ngFor="let role of policy.policy_view_by">{{ role }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="icon-btn" (click)="openPdf(policy.policy_url)" title="View Policy">
+                  <hugeicons-icon [icon]="ViewIcon" size="16" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+                </button>
+                <button class="icon-btn delete" (click)="deletePolicy(policy._id)" title="Delete Policy">
+                  <hugeicons-icon [icon]="Delete02Icon" size="16" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon-box">
+              <hugeicons-icon [icon]="PolicyIcon" size="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <h3>No Policies Published</h3>
+            <p>Start by adding your first company policy using the form on the left.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading policies...</p>
+  </div>
+
+</div>
+</div>

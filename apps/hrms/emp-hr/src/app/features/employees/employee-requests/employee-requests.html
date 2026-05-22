@@ -1,0 +1,138 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/employees" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Employees
+      </a>
+    </div>
+    <h1>Pending Employee Requests</h1>
+    <p>Review and onboard new employee applications.</p>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  <div class="request-grid" *ngIf="!isLoading() && requests().length > 0">
+    <div class="request-card" *ngFor="let req of requests()">
+      <div class="card-header">
+        <div class="user-info">
+          <div class="avatar">{{ req.fullName ? req.fullName[0] : '?' }}</div>
+          <div>
+            <h3>{{ req.fullName }}</h3>
+            <p class="role-badge">{{ req.role || 'New Hire' }}</p>
+          </div>
+        </div>
+        <div class="time-stamp">
+          <i class="fa-solid fa-clock"></i>
+          {{ (req.submittedAt || req.createdAt) | date:'shortDate' }}
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Core Info -->
+        <div class="info-row">
+          <div class="info-item">
+            <label>Role & Dept</label>
+            <p>{{ req.designation || req.role || 'N/A' }} ({{ req.department || 'N/A' }})</p>
+          </div>
+          <div class="info-item">
+            <label>Contact</label>
+            <p>{{ req.phone }}</p>
+          </div>
+        </div>
+
+        <div class="info-divider"></div>
+
+        <!-- Education Section -->
+        <div class="details-section">
+          <h4 class="section-title"><i class="fa-solid fa-graduation-cap"></i> Education</h4>
+          <div class="info-row">
+            <div class="info-item">
+              <label>Qualification</label>
+              <p>{{ req.qualification }} - {{ req.specialization }}</p>
+            </div>
+            <div class="info-item">
+              <label>College & Year</label>
+              <p>{{ req.college }} ({{ req.passingYear }})</p>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-item">
+              <label>UG CGPA</label>
+              <p>{{ req.ugCgpa || 'N/A' }}</p>
+            </div>
+            <div class="info-item">
+              <label>PG CGPA</label>
+              <p>{{ req.pgCgpa || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-divider"></div>
+
+        <!-- Experience Section -->
+        <div class="details-section">
+          <h4 class="section-title"><i class="fa-solid fa-briefcase"></i> Experience</h4>
+          <div class="info-row" *ngIf="req.isExperienced">
+            <div class="info-item">
+              <label>Previous Org</label>
+              <p>{{ req.previousOrg }}</p>
+            </div>
+            <div class="info-item">
+              <label>Years</label>
+              <p>{{ req.experienceYears }} Years</p>
+            </div>
+          </div>
+          <p class="no-data" *ngIf="!req.isExperienced">Fresher / No previous experience</p>
+        </div>
+
+        <div class="info-divider"></div>
+
+        <!-- Personal Section -->
+        <div class="details-section">
+          <h4 class="section-title"><i class="fa-solid fa-user-tag"></i> Personal</h4>
+          <div class="info-row">
+            <div class="info-item">
+              <label>DOB & Gender</label>
+              <p>{{ req.dob | date:'mediumDate' }} ({{ req.gender }})</p>
+            </div>
+            <div class="info-item">
+              <label>Nationality</label>
+              <p>{{ req.nationality }}</p>
+            </div>
+          </div>
+          <div class="info-item full-width">
+            <label>Address</label>
+            <p>{{ req.address }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn-reject" (click)="rejectRequest(req._id)">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>
+        <button class="btn-approve" (click)="navigateTo(['/employees/approve', req._id])">
+          <i class="fa-solid fa-user-plus"></i> Review & Accept
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading() && requests().length === 0">
+    <div class="empty-content">
+      <hugeicons-icon [icon]="UserCircleIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+      <h3>No pending employees</h3>
+      <p>All clear! No new employee submissions found.</p>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Fetching requests...</p>
+  </div>
+</div>
+</div>
+<app-employee-sidebar></app-employee-sidebar>
+</div>

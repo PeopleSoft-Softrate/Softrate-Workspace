@@ -1,0 +1,120 @@
+<ng-container *ngIf="vm.dashTab==='crm_clients'">
+  <div class="workspace-header workspace-header-filters-only crm-filter-bar crm-client-toolbar">
+    <div class="workspace-controls crm-filter-controls crm-client-controls">
+      <label class="topbar-search crm-filter-search" for="crmClientSearch">
+        <span class="topbar-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        </span>
+        <input class="topbar-input" id="crmClientSearch" type="search" [(ngModel)]="vm.crmClientSearch" placeholder="Search converted clients">
+      </label>
+      <button class="toolbar-button crm-icon-refresh" type="button" (click)="vm.fetchCrmClients()" [disabled]="vm.crmClientsLoading" aria-label="Refresh CRM clients" title="Refresh">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="metrics-strip crm-metrics-strip crm-amc-metrics-strip crm-client-metrics-strip">
+    <div class="metric-cell">
+      <div class="metric-label">Clients</div>
+      <div class="metric-value">{{ vm.crmClients.length }}</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">SLA</div>
+      <div class="metric-value">{{ vm.crmContractsByType('SLA').length }}</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">NDA</div>
+      <div class="metric-value">{{ vm.crmContractsByType('NDA').length }}</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">AMC</div>
+      <div class="metric-value">{{ vm.crmAmcRows.length }}</div>
+    </div>
+  </div>
+
+  <div class="record-frame lead-record-frame admin-leads-record-frame crm-client-frame">
+    <aside class="company-rail lead-company-rail admin-leads-company-rail">
+      <div class="rail-header admin-leads-rail-header">
+        <div class="rail-heading">Clients</div>
+        <div class="rail-total">{{ vm.filteredCrmClients.length }} listed</div>
+      </div>
+      <div class="rail-list admin-leads-rail-list">
+        <button
+          type="button"
+          class="rail-item admin-leads-rail-item"
+          *ngFor="let client of vm.filteredCrmClients"
+          [class.active]="vm.selectedCrmClientCompany === client.companyName"
+          (click)="vm.selectCrmClient(client.companyName)"
+        >
+          <span class="rail-item-copy">
+            <span class="rail-item-name">{{ client.companyName || 'Unnamed Client' }}</span>
+            <span class="rail-item-meta">{{ client.contactCount }} contacts · {{ client.amcStatus }}</span>
+          </span>
+        </button>
+        <div *ngIf="vm.crmClientsLoading" class="scroll-page-state">Loading clients...</div>
+        <div *ngIf="!vm.crmClientsLoading && vm.filteredCrmClients.length === 0" class="empty-state-inline empty-state-inline-minimal">No converted clients found.</div>
+      </div>
+    </aside>
+
+    <section class="record-table-pane lead-table-pane lead-table-pane-full lead-company-pane admin-leads-company-pane">
+      <ng-container *ngIf="vm.selectedCrmClient as client; else emptyCrmClient">
+        <div class="table-pane-header lead-company-pane-header admin-leads-company-header">
+          <div>
+            <h3>{{ client.companyName }}</h3>
+            <div class="lead-company-pane-subtitle">{{ client.description || 'Converted client account' }}</div>
+          </div>
+          <div class="admin-leads-pane-actions">
+            <button class="ai-summary-button ai-summary-anchor admin-ai-summary-button" type="button" (click)="vm.openCrmClientAiSummary(client, $event)">
+              <span aria-hidden="true">✦</span>
+              <span>AI Summary</span>
+            </button>
+            <button class="toolbar-button invoice-date-filter-button" type="button" (click)="vm.openCrmClientFullView(client, $event)">Full View</button>
+          </div>
+        </div>
+
+        <div class="lead-company-pane-scroll admin-leads-card-scroll">
+          <div class="lead-card-grid admin-leads-card-grid admin-employee-style-grid">
+            <article class="lead-record-card admin-lead-record-card admin-employee-style-card" *ngFor="let contact of client.contacts">
+              <div class="lead-record-card-head admin-lead-card-head">
+                <div class="lead-record-title-row">
+                  <h4>{{ contact.contactName || 'Primary Contact' }}</h4>
+                  <span class="crm-status-pill">{{ contact.status || 'Converted' }}</span>
+                </div>
+              </div>
+              <div class="lead-record-line">
+                <span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg></span>
+                <span>{{ contact.contactNumber || '-' }}</span>
+              </div>
+              <div class="lead-record-line lead-record-email" [title]="contact.directorEmailAddress || ''">
+                <span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg></span>
+                <span>{{ contact.directorEmailAddress || '-' }}</span>
+              </div>
+              <div class="lead-record-line">
+                <span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg></span>
+                <span>{{ contact.assignedEmployeePhone || '-' }}</span>
+              </div>
+              <div class="lead-card-remarks">
+                <div class="lead-card-remarks-title">Latest Notes</div>
+                <div class="lead-card-remark-list" *ngIf="contact.remarks?.length; else emptyCrmNotes">
+                  <div class="lead-card-remark-item" *ngFor="let remark of contact.remarks.slice(-3).reverse()">{{ remark }}</div>
+                </div>
+                <ng-template #emptyCrmNotes><div class="lead-card-empty">No notes recorded.</div></ng-template>
+              </div>
+              <div class="lead-card-actions">
+                <button class="secondary-action company-remarks-button" type="button" (click)="vm.openCompanyRemarkHistory(contact)">History</button>
+                <button class="secondary-action company-remarks-button" type="button" (click)="vm.openQuotationModal(contact)">Quote</button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #emptyCrmClient>
+        <div class="empty-state-inline empty-state-inline-pane">Select a converted client from the list.</div>
+      </ng-template>
+    </section>
+  </div>
+</ng-container>

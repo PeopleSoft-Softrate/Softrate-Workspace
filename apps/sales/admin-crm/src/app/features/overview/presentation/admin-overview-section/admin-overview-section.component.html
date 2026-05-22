@@ -1,0 +1,684 @@
+      <section class="workspace overview-workspace admin-overview-workspace" *ngIf="false && dashTab==='overview'">
+        <div class="workspace-header workspace-header-filters-only">
+          <div class="workspace-controls workspace-controls-stack">
+            <label class="mini-field">
+              <span>Period</span>
+              <select class="field-select filter-select-field" [(ngModel)]="selectedPeriod" (change)="onPeriodChange(selectedPeriod)" aria-label="Overview period">
+                <option *ngFor="let p of periods" [value]="p.key">{{ p.label }}</option>
+              </select>
+            </label>
+
+            <ng-container *ngIf="selectedPeriod==='custom'">
+              <label class="mini-field admin-overview-date-field">
+                <span>From</span>
+                <input class="field-input" type="date" [(ngModel)]="customFrom" [max]="todayIso" aria-label="Custom period from date">
+              </label>
+              <label class="mini-field admin-overview-date-field">
+                <span>To</span>
+                <input class="field-input" type="date" [(ngModel)]="customTo" [min]="customFrom" [max]="todayIso" aria-label="Custom period to date">
+              </label>
+              <button class="primary-action" type="button" (click)="applyCustomRange()" [disabled]="!customFrom">Apply</button>
+            </ng-container>
+          </div>
+        </div>
+
+        <div *ngIf="summaryLoading" class="dash-loading admin-overview-loading">
+          <div class="skeleton-grid">
+            <div class="skeleton-card skeleton" *ngFor="let i of [1,2,3,4,5]"></div>
+          </div>
+        </div>
+
+        <div *ngIf="!summaryLoading && !summaryStats" class="empty-state-inline empty-state-inline-pane">
+          No call data synced yet for this period. Open the mobile app to sync.
+        </div>
+
+        <ng-container *ngIf="!summaryLoading && summaryStats">
+          <div class="metrics-strip">
+            <div class="metric-cell">
+              <div class="metric-label">Total Calls</div>
+              <div class="metric-value">{{ summaryStats.total || 0 }}</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-label">Connected</div>
+              <div class="metric-value">{{ summaryStats.connected || 0 }}</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-label">Talk Time</div>
+              <div class="metric-value">{{ fmtDur(summaryStats.totalDuration || 0) }}</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-label">Total Leads</div>
+              <div class="metric-value">{{ adminTotalLeadsCount }}</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-label">Follow-ups</div>
+              <div class="metric-value">{{ allBookmarks.length }}</div>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <section class="workspace-section">
+              <div class="section-header">
+                <div>
+                  <div class="section-kicker">Performance</div>
+                  <h3>Call trend</h3>
+                </div>
+                <div class="section-actions">
+                  <label class="mini-field">
+                    <span>View</span>
+                    <select class="field-select filter-select-field" [(ngModel)]="chartType" (change)="setChartType(chartType)" aria-label="Chart view">
+                      <option value="line">Timeline</option>
+                      <option value="bar">Breakdown</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="chart-frame">
+                <canvas id="timelineChart"></canvas>
+              </div>
+            </section>
+
+            <section class="workspace-section">
+              <div class="section-header">
+                <div>
+                  <div class="section-kicker">Distribution</div>
+                  <h3>Statistics</h3>
+                </div>
+              </div>
+              <div class="overview-side">
+                <div class="donut-frame">
+                  <canvas id="donutChart"></canvas>
+                </div>
+                <div class="summary-list call-mix-legend">
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-incoming"></span>Incoming</span>
+                    <strong>{{ summaryStats.incoming || 0 }}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-outgoing"></span>Outgoing</span>
+                    <strong>{{ summaryStats.outgoing || 0 }}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-missed"></span>Missed</span>
+                    <strong>{{ summaryStats.missed || 0 }}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-rejected"></span>Rejected</span>
+                    <strong>{{ summaryStats.rejected || 0 }}</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="workspace-section overview-activity-section">
+              <div class="section-header">
+                <div>
+                  <div class="section-kicker">Recent Records</div>
+                  <h3>Latest lead activity</h3>
+                </div>
+              </div>
+              <div class="table-scroll overview-table-scroll">
+                <table class="data-table compact-table overview-activity-table">
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th>Contact</th>
+                      <th>Status</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let lead of adminOverviewRecentLeads" (click)="openOverviewLead(lead)">
+                      <td>{{ lead.leadCompanyName }}</td>
+                      <td>{{ lead.contactName || 'Primary Contact' }}</td>
+                      <td>{{ lead.status || 'New' }}</td>
+                      <td>{{ fmtDate(lead.updatedAt || lead.createdAt) }}</td>
+                    </tr>
+                    <tr *ngIf="adminOverviewRecentLeads.length === 0">
+                      <td colspan="4" class="empty-cell">No recent lead activity yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="workspace-section overview-activity-section">
+              <div class="section-header">
+                <div>
+                  <div class="section-kicker">Next Actions</div>
+                  <h3>Upcoming follow-ups</h3>
+                </div>
+              </div>
+              <div class="table-scroll overview-table-scroll">
+                <div class="overview-followup-list" *ngIf="adminOverviewUpcomingFollowups.length > 0; else emptyAdminUpcomingFollowups">
+                  <div class="overview-followup-list-head">
+                    <span>Company</span>
+                    <span>Contact</span>
+                    <span>Reminder</span>
+                  </div>
+
+                  <button
+                    class="overview-followup-row"
+                    type="button"
+                    *ngFor="let bookmark of adminOverviewUpcomingFollowups"
+                    (click)="openOverviewFollowup(bookmark)"
+                  >
+                    <span class="overview-followup-company">{{ bookmark.companyName }}</span>
+                    <span class="overview-followup-contact">{{ bookmark.contactName }}</span>
+                    <span class="overview-followup-reminder">
+                      <span class="overview-followup-date-main">{{ bookmark.reminderDate | date:'dd MMM yyyy' }}</span>
+                    </span>
+                  </button>
+                </div>
+
+                <ng-template #emptyAdminUpcomingFollowups>
+                  <div class="empty-cell overview-empty-cell">No follow-ups scheduled.</div>
+                </ng-template>
+              </div>
+            </section>
+          </div>
+        </ng-container>
+      </section>
+
+      <div *ngIf="dashTab==='overview'" class="admin-overview-view">
+        <div class="dash-header-row admin-overview-filter-header">
+          <div class="period-tabs">
+            <button *ngFor="let p of periods" [class.active]="selectedPeriod===p.key" (click)="onPeriodChange(p.key)">{{
+              p.label }}</button>
+          </div>
+        </div>
+
+        <!-- Custom date range -->
+        <div class="custom-range-row" *ngIf="selectedPeriod==='custom'">
+          <div class="cr-field">
+            <label>From</label>
+            <input type="date" [(ngModel)]="customFrom" [max]="todayIso">
+          </div>
+          <div class="cr-field">
+            <label>To <span style="font-size:.7rem;opacity:.6;">(optional)</span></label>
+            <input type="date" [(ngModel)]="customTo" [min]="customFrom" [max]="todayIso">
+          </div>
+          <button class="cta-primary" style="padding:.42rem 1.1rem;font-size:.82rem;align-self:flex-end;"
+            (click)="applyCustomRange()" [disabled]="!customFrom">Apply</button>
+        </div>
+
+        <!-- SKELETON LOADING STATE -->
+        <div *ngIf="summaryLoading" class="dash-loading">
+          <div class="skeleton-grid">
+            <div class="skeleton-card skeleton" *ngFor="let i of [1,2,3,4]"></div>
+          </div>
+          <div class="charts-row">
+            <div class="chart-card flex-1 skeleton" style="height: 350px;"></div>
+            <div class="chart-card flex-1 skeleton" style="height: 350px;"></div>
+          </div>
+        </div>
+        <div *ngIf="!summaryLoading && !summaryStats" class="dash-empty">No call data synced yet for this period. Open
+          the mobile app to sync.</div>
+
+        <div class="dash-grid-layout" *ngIf="!summaryLoading && summaryStats">
+
+          <!-- ── TOP KPI CARDS ── -->
+          <div class="top-stats-row">
+
+            <!-- Card 1: Connected Calls -->
+            <div class="kpi-card animate-fade-in-up stagger-1">
+              <div class="kpi-info">
+                <span class="kpi-val">{{ summaryStats.connected }}</span>
+                <span class="kpi-label">Connected Calls</span>
+              </div>
+              <div class="kpi-progress">
+                <svg class="progress-ring" width="48" height="48">
+                  <circle class="progress-ring__circle bg" stroke="var(--border)" stroke-width="4" fill="transparent"
+                    r="20" cx="24" cy="24" />
+                  <circle class="progress-ring__circle val" stroke="var(--green)" stroke-width="4" fill="transparent"
+                    r="20" cx="24" cy="24" [style.stroke-dasharray]="125.6"
+                    [style.stroke-dashoffset]="125.6 - (125.6 * kpiMetrics.connectRate)" />
+                </svg>
+                <span class="kpi-semantic-icon success" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.89.33 1.76.63 2.59a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.49-1.2a2 2 0 0 1 2.02-.34c.83.3 1.7.51 2.59.63A2 2 0 0 1 22 16.92z"></path>
+                    <path d="m15 9 2 2 4-4"></path>
+                  </svg>
+                </span>
+                <div class="kpi-progress-text"
+                  [style.color]="kpiMetrics.trends.connected >= 0 ? 'var(--green)' : 'var(--red)'">
+                  ↑ {{ kpiMetrics.connectRate * 100 | number:'1.0-0' }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Duration -->
+            <div class="kpi-card animate-fade-in-up stagger-2">
+              <div class="kpi-info">
+                <span class="kpi-val">{{ summaryStats.totalDuration ? (summaryStats.totalDuration / 60 | number:'1.0-0')
+                  : '0' }}m</span>
+                <span class="kpi-label">Duration</span>
+              </div>
+              <div class="kpi-progress">
+                <svg class="progress-ring" width="48" height="48">
+                  <circle class="progress-ring__circle bg" stroke="var(--border)" stroke-width="4" fill="transparent"
+                    r="20" cx="24" cy="24" />
+                  <circle class="progress-ring__circle val" stroke="var(--pink)" stroke-width="4" fill="transparent"
+                    r="20" cx="24" cy="24" [style.stroke-dasharray]="125.6"
+                    [style.stroke-dashoffset]="125.6 - (125.6 * kpiMetrics.durationProgress)" />
+                </svg>
+                <span class="kpi-semantic-icon neutral" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 7v5l3 2"></path>
+                  </svg>
+                </span>
+                <div class="kpi-progress-text"
+                  [style.color]="kpiMetrics.trends.duration >= 0 ? 'var(--green)' : 'var(--red)'">
+                  {{ kpiMetrics.trends.duration >= 0 ? '↑ +' : '↓ ' }}{{ kpiMetrics.trends.duration }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Total Calls -->
+            <div class="kpi-card animate-fade-in-up stagger-3">
+              <div class="kpi-info">
+                <span class="kpi-val">{{ summaryStats.total }}</span>
+                <span class="kpi-label">Total Calls</span>
+              </div>
+              <div class="kpi-progress">
+                <svg class="progress-ring" width="48" height="48">
+                  <circle class="progress-ring__circle bg" stroke="var(--border)" stroke-width="4" fill="transparent"
+                    r="20" cx="24" cy="24" />
+                  <circle class="progress-ring__circle val" stroke="#84cc16" stroke-width="4" fill="transparent" r="20"
+                    cx="24" cy="24" [style.stroke-dasharray]="125.6"
+                    [style.stroke-dashoffset]="125.6 - (125.6 * kpiMetrics.totalCallsProgress)" />
+                </svg>
+                <span class="kpi-semantic-icon neutral" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"></path>
+                    <path d="m19 9-5 5-4-4-4 4"></path>
+                  </svg>
+                </span>
+                <div class="kpi-progress-text" [style.color]="kpiMetrics.trends.total >= 0 ? '#84cc16' : '#ef4444'">
+                  {{ kpiMetrics.trends.total >= 0 ? '↑ +' : '↓ ' }}{{ kpiMetrics.trends.total }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4: Missed -->
+            <div class="kpi-card animate-fade-in-up stagger-4">
+              <div class="kpi-info">
+                <span class="kpi-val">{{ summaryStats.missed }}</span>
+                <span class="kpi-label">Missed</span>
+              </div>
+              <div class="kpi-progress">
+                <svg class="progress-ring" width="48" height="48">
+                  <circle class="progress-ring__circle bg" stroke="var(--border)" stroke-width="4" fill="transparent"
+                    r="20" cx="24" cy="24" />
+                  <circle class="progress-ring__circle val" stroke="#f87171" stroke-width="4" fill="transparent" r="20"
+                    cx="24" cy="24" [style.stroke-dasharray]="125.6"
+                    [style.stroke-dashoffset]="125.6 - (125.6 * kpiMetrics.missedRate)" />
+                </svg>
+                <span class="kpi-semantic-icon warning" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.59.63a2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.4 19.4 0 0 1-3.33-2.67"></path>
+                    <path d="m2 2 20 20"></path>
+                  </svg>
+                </span>
+                <div class="kpi-progress-text"
+                  [style.color]="kpiMetrics.trends.missed <= 0 ? 'var(--green)' : 'var(--red)'">
+                  {{ kpiMetrics.trends.missed <= 0 ? '↓ ' : '↑ +' }}{{ kpiMetrics.trends.missed }}%
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /top-stats-row -->
+
+          <!-- ── CHARTS ROW ── -->
+          <div class="charts-row">
+
+            <!-- Statistics card: Line chart LEFT + Donut RIGHT -->
+            <div class="chart-card dark flex-1 animate-fade-in-up stagger-5 admin-statistics-card">
+
+              <!-- Card header -->
+              <div class="admin-statistics-header">
+                <div class="admin-statistics-kpis">
+                  <h3>Statistics</h3>
+                  <div class="admin-statistics-metrics">
+                    <div>
+                      <div class="admin-statistics-value">{{ summaryStats.total }}</div>
+                      <div class="admin-statistics-label">Total Calls</div>
+                    </div>
+                    <div>
+                      <div class="admin-statistics-value">{{ fmtAvgDur(summaryStats.totalDuration, summaryStats.connected) }}</div>
+                      <div class="admin-statistics-label">Avg Duration</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="admin-stat-toolbar" role="tablist" aria-label="Statistics views">
+                  <button type="button" class="admin-stat-icon-btn"
+                    [class.active]="adminStatsView === 'overview'"
+                    (click)="setAdminStatsView('overview')" title="Overview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 12a9 9 0 1 1-9-9"></path>
+                      <path d="M12 3v9h9"></path>
+                    </svg>
+                  </button>
+                  <button type="button" class="admin-stat-icon-btn"
+                    [class.active]="adminStatsView === 'bars'"
+                    (click)="setAdminStatsView('bars')" title="Distribution">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 20V4"></path>
+                      <path d="M8 20v-6"></path>
+                      <path d="M12 20v-10"></path>
+                      <path d="M16 20V8"></path>
+                      <path d="M20 20v-3"></path>
+                    </svg>
+                  </button>
+                  <button type="button" class="admin-stat-icon-btn"
+                    [class.active]="adminStatsView === 'grid'"
+                    (click)="setAdminStatsView('grid')" title="Summary grid">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 6h16"></path>
+                      <path d="M4 12h16"></path>
+                      <path d="M4 18h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="admin-stat-insights">
+                <div class="admin-insight-cell">
+                  <span>Connect Rate</span>
+                  <strong>{{ adminConnectRate }}%</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Missed Rate</span>
+                  <strong>{{ adminMissedRate }}%</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Outbound Share</span>
+                  <strong>{{ adminOutboundShare }}%</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Peak Window</span>
+                  <strong>{{ adminPeakActivity.label }} · {{ adminPeakActivity.count }}</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Active Reps</span>
+                  <strong>{{ adminActiveEmployeeCount }}</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Top Performer</span>
+                  <strong>{{ adminTopPerformerName }}</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Avg / Active Rep</span>
+                  <strong>{{ adminAvgCallsPerActiveEmployee }} calls</strong>
+                </div>
+              </div>
+
+              <!-- Chart body: centered donut + legend grid -->
+              <div class="stats-chart-body" *ngIf="adminStatsView === 'overview'">
+                <div class="donut-chart-wrap">
+                  <div class="admin-css-donut" [style.background]="adminDonutGradient"></div>
+                  <div class="donut-center-label">
+                    <div class="donut-center-val">{{ summaryStats.total }}</div>
+                    <div class="donut-center-sub">Total</div>
+                  </div>
+                </div>
+                <div class="donut-legend-grid">
+                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.incoming"></span><span
+                      class="lg-label">In</span><span class="lg-val">{{ summaryStats.incoming }}</span></div>
+                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.outgoing"></span><span
+                      class="lg-label">Out</span><span class="lg-val">{{ summaryStats.outgoing }}</span></div>
+                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.missed"></span><span
+                      class="lg-label">Missed</span><span class="lg-val">{{ summaryStats.missed }}</span></div>
+                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.rejected"></span><span
+                      class="lg-label">Rej</span><span class="lg-val">{{ summaryStats.rejected }}</span></div>
+                </div>
+              </div>
+
+              <div class="admin-stats-bars" *ngIf="adminStatsView === 'bars'">
+                <div class="admin-stats-bars-row">
+                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.incoming"></span>Incoming</div>
+                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.incoming" [style.width.%]="adminIncomingShare"></i></div>
+                  <div class="admin-stats-bars-value">{{ summaryStats.incoming }}</div>
+                </div>
+                <div class="admin-stats-bars-row">
+                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.outgoing"></span>Outgoing</div>
+                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.outgoing" [style.width.%]="adminOutboundShare"></i></div>
+                  <div class="admin-stats-bars-value">{{ summaryStats.outgoing }}</div>
+                </div>
+                <div class="admin-stats-bars-row">
+                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.missed"></span>Missed</div>
+                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.missed" [style.width.%]="adminMissedRate"></i></div>
+                  <div class="admin-stats-bars-value">{{ summaryStats.missed }}</div>
+                </div>
+                <div class="admin-stats-bars-row">
+                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.rejected"></span>Rejected</div>
+                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.rejected" [style.width.%]="adminRejectedRate"></i></div>
+                  <div class="admin-stats-bars-value">{{ summaryStats.rejected }}</div>
+                </div>
+              </div>
+
+              <div class="admin-stats-grid-view" *ngIf="adminStatsView === 'grid'">
+                <div class="admin-stat-grid-card">
+                  <span>Connect Rate</span>
+                  <strong>{{ adminConnectRate }}%</strong>
+                </div>
+                <div class="admin-stat-grid-card">
+                  <span>Outbound Share</span>
+                  <strong>{{ adminOutboundShare }}%</strong>
+                </div>
+                <div class="admin-stat-grid-card">
+                  <span>Peak Window</span>
+                  <strong>{{ adminPeakActivity.label }}</strong>
+                  <small>{{ adminPeakActivity.count }} calls</small>
+                </div>
+                <div class="admin-stat-grid-card">
+                  <span>Active Reps</span>
+                  <strong>{{ adminActiveEmployeeCount }}</strong>
+                  <small>{{ adminAvgCallsPerActiveEmployee }} calls / rep</small>
+                </div>
+                <div class="admin-stat-grid-card">
+                  <span>Top Performer</span>
+                  <strong>{{ adminTopPerformerName }}</strong>
+                </div>
+                <div class="admin-stat-grid-card">
+                  <span>Exceptions</span>
+                  <strong>{{ (summaryStats.missed || 0) + (summaryStats.rejected || 0) }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Employees card -->
+            <div class="chart-card flex-1 admin-employees-card">
+              <div class="top-employee-board-header">
+                <div>
+                  <h3>Top Employees</h3>
+                  <p>Ranked by calls handled, with live productivity context</p>
+                </div>
+                <button class="pill-btn dark" (click)="dashTab='employees'">See All
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </button>
+              </div>
+              <div class="top-employee-board" *ngIf="employeeCallRows && employeeCallRows.length; else noEmployeeBoard">
+                <div class="top-employee-ranklist">
+                  <button *ngFor="let row of (employeeCallRows | slice:0:5); let i = index" type="button"
+                    class="top-employee-row" (click)="selectEmployee(row.emp)">
+                    <div class="top-employee-rank">
+                      <div class="top-employee-rank-num">{{ i + 1 }}</div>
+                      <div class="emp-avatar">{{ row.emp.name.charAt(0).toUpperCase() }}</div>
+                    </div>
+                    <div class="top-employee-copy">
+                      <div class="top-employee-name">{{ row.emp.name || row.emp.mobile }}</div>
+                      <div class="top-employee-sub">{{ row.emp.mobile }}</div>
+                      <div class="top-employee-inline-stats">
+                        <span>{{ row.stats?.total || 0 }} calls</span>
+                        <span>{{ row.stats?.totalDuration ? fmtDur(row.stats.totalDuration) : '0s' }}</span>
+                      </div>
+                      <div class="top-employee-meter">
+                        <i [style.width.%]="(row.stats?.total || 0) / adminTopEmployeeMaxCalls * 100"></i>
+                      </div>
+                    </div>
+                    <div class="top-employee-metrics">
+                      <div>
+                        <span>Calls</span>
+                        <strong>{{ row.stats?.total || 0 }}</strong>
+                      </div>
+                      <div>
+                        <span>Duration</span>
+                        <strong>{{ row.stats?.totalDuration ? fmtDur(row.stats.totalDuration) : '0s' }}</strong>
+                      </div>
+                    </div>
+                    <div class="top-employee-chevron">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6"></path>
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+
+                <aside class="top-employee-side">
+                  <div class="top-employee-side-card">
+                    <span>Team Volume</span>
+                    <strong>{{ summaryStats.total }}</strong>
+                    <p>Calls handled across the selected period</p>
+                  </div>
+                  <div class="top-employee-side-card">
+                    <span>Active Reps</span>
+                    <strong>{{ adminActiveEmployeeCount }}</strong>
+                    <p>{{ adminAvgCallsPerActiveEmployee }} calls per active rep</p>
+                  </div>
+                  <div class="top-employee-side-card">
+                    <span>Top Performer</span>
+                    <strong>{{ adminTopPerformerName }}</strong>
+                    <p>{{ employeeCallRows.length ? (employeeCallRows[0].stats?.total || 0) : 0 }} calls by the current leader</p>
+                  </div>
+                  <div class="top-employee-side-chart">
+                    <div class="top-employee-side-chart-head">
+                      <span>Signal Mix</span>
+                      <strong>{{ adminConnectRate }}%</strong>
+                    </div>
+                    <div class="top-employee-side-bar">
+                      <i class="signal-in" [style.width.%]="adminIncomingShare"></i>
+                      <i class="signal-out" [style.width.%]="adminOutboundShare"></i>
+                      <i class="signal-missed" [style.width.%]="adminMissedRate"></i>
+                    </div>
+                    <div class="top-employee-side-legend">
+                      <span><i class="signal-dot in"></i>Incoming</span>
+                      <span><i class="signal-dot out"></i>Outgoing</span>
+                      <span><i class="signal-dot miss"></i>Missed</span>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+
+              <ng-template #noEmployeeBoard>
+                <div class="top-employee-empty">
+                  No employee data available for this period.
+                </div>
+              </ng-template>
+
+            </div>
+
+          </div><!-- /charts-row -->
+
+          <!-- ── BOTTOM STATS ROW ── -->
+          <div class="bottom-stats-grid call-analytics-panel">
+            <div class="call-analytics-header">
+              <h3>Call analytics</h3>
+              <span>{{ adminSelectedPeriodLabel }}</span>
+            </div>
+
+            <section class="call-analytics-widget">
+              <div class="analytics-widget-head">
+                <span>Call Volume</span>
+                <strong>{{ summaryStats.total }}</strong>
+              </div>
+              <div class="analytics-row">
+                <span>Total calls</span>
+                <b>{{ summaryStats.total }}</b>
+              </div>
+              <div class="analytics-row">
+                <span>Connected</span>
+                <b>{{ summaryStats.connected }}</b>
+              </div>
+              <div class="analytics-meter">
+                <i [style.width.%]="adminConnectRate"></i>
+              </div>
+              <p>{{ adminConnectRate }}% connect rate</p>
+            </section>
+
+            <section class="call-analytics-widget">
+              <div class="analytics-widget-head">
+                <span>Traffic Mix</span>
+                <strong>{{ adminOutboundShare }}%</strong>
+              </div>
+              <div class="traffic-split">
+                <i class="traffic-in" [style.width.%]="adminIncomingShare"></i>
+                <i class="traffic-out" [style.width.%]="adminOutboundShare"></i>
+              </div>
+              <div class="analytics-row">
+                <span>Incoming</span>
+                <b>{{ summaryStats.incoming }}</b>
+              </div>
+              <div class="analytics-row">
+                <span>Outgoing</span>
+                <b>{{ summaryStats.outgoing }}</b>
+              </div>
+              <p>{{ adminOutboundShare }}% outbound motion</p>
+            </section>
+
+            <section class="call-analytics-widget">
+              <div class="analytics-widget-head">
+                <span>Talk Time</span>
+                <strong>{{ shortDur(summaryStats.totalDuration) }}</strong>
+              </div>
+              <div class="analytics-row">
+                <span>Avg duration</span>
+                <b>{{ fmtAvgDur(summaryStats.totalDuration, summaryStats.connected) }}</b>
+              </div>
+              <div class="analytics-row">
+                <span>Inbound talk</span>
+                <b>{{ shortDur(summaryStats.incomingDuration) }}</b>
+              </div>
+              <div class="analytics-row">
+                <span>Outbound talk</span>
+                <b>{{ shortDur(summaryStats.outgoingDuration) }}</b>
+              </div>
+            </section>
+
+            <section class="call-analytics-widget">
+              <div class="analytics-widget-head">
+                <span>Exceptions</span>
+                <strong>{{ (summaryStats.missed || 0) + (summaryStats.rejected || 0) }}</strong>
+              </div>
+              <div class="analytics-row is-negative">
+                <span>Missed</span>
+                <b>{{ summaryStats.missed }}</b>
+              </div>
+              <div class="analytics-row is-warning">
+                <span>Rejected</span>
+                <b>{{ summaryStats.rejected }}</b>
+              </div>
+              <div class="analytics-meter is-risk">
+                <i [style.width.%]="adminMissedRate + adminRejectedRate"></i>
+              </div>
+              <p>{{ adminMissedRate }}% missed · {{ adminRejectedRate }}% rejected</p>
+            </section>
+          </div><!-- /bottom-stats-grid -->
+
+        </div><!-- /dash-grid-layout -->
+      </div><!-- /overview tab -->
+
+      <!-- ══ EMPLOYEE DASHBOARD (DETAILED VIEW) ══ -->

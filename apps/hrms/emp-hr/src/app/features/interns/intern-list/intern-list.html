@@ -1,0 +1,134 @@
+<div class="main-content-layout">
+  <!-- LEFT: DYNAMIC CONTENT SECTION -->
+  <div class="data-section">
+    <!-- VIEW 1: INTERN LIST -->
+    <ng-container *ngIf="currentTab() === 'list'">
+      <div class="page-header-embedded">
+        <div class="header-content">
+          <h1>Manage Interns</h1>
+          <p>View and manage all interns across different stages.</p>
+        </div>
+        <div class="header-tools">
+          <div class="header-filters">
+            <div class="range-filters">
+              <button 
+                class="filter-chip" 
+                [class.active]="rangeFilter() === 'thisMonth'"
+                (click)="setFilter('thisMonth')">
+                This month
+              </button>
+              <button 
+                class="filter-chip" 
+                [class.active]="rangeFilter() === 'sixMonths'"
+                (click)="setFilter('sixMonths')">
+                Last 6 months
+              </button>
+              <button 
+                class="filter-chip" 
+                [class.active]="rangeFilter() === 'all'"
+                (click)="setFilter('all')">
+                All time
+              </button>
+            </div>
+            
+            <div class="status-filter">
+              <select [value]="statusFilter()" (change)="setStatus($any($event.target).value)">
+                <option value="all">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="remote">Remote</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input 
+              type="text" 
+              placeholder="Search by name, ID or email..." 
+              (input)="onSearch($event)"
+              [value]="searchQuery()"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="data-container" [class.loading]="isLoading()">
+        <div class="table-responsive" *ngIf="!isLoading() && interns().length > 0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Intern Name</th>
+                <th>ID</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let intern of interns()">
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar">{{ intern.fullName[0] }}</div>
+                    <span>{{ intern.fullName }}</span>
+                  </div>
+                </td>
+                <td>{{ intern.internid || intern.internId || 'N/A' }}</td>
+                <td>{{ intern.department || 'N/A' }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusColor(intern.status)">
+                    {{ intern.status }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-group">
+                    <button class="icon-btn-sm teal" title="Attendance" (click)="navigateTo(['/interns', intern.internid || intern.internId, 'attendance'])">
+                      <hugeicons-icon [icon]="FingerAccessIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+                    </button>
+                    <button class="icon-btn-sm orange" title="Leaves" (click)="navigateTo(['/interns', intern.internid || intern.internId, 'leaves'])">
+                      <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+                    </button>
+                    <button class="icon-btn-sm blue" title="Review" (click)="navigateTo(['/interns', intern.internid || intern.internId, 'review'])">
+                      <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+                    </button>
+                    <button class="icon-btn-sm purple" title="Profile" (click)="navigateTo(['/interns', intern.internid || intern.internId])">
+                      <hugeicons-icon [icon]="UserCircleIcon" size="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="!isLoading() && interns().length === 0">
+          <hugeicons-icon [icon]="Home01Icon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+          <h3>No interns found</h3>
+          <p>Try adjusting your filters or add a new intern.</p>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" *ngIf="isLoading()">
+          <div class="spinner"></div>
+          <p>Loading interns...</p>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- VIEW 2: APPROVE LEAVE -->
+    <app-leave-management *ngIf="currentTab() === 'leaves'"></app-leave-management>
+
+    <!-- VIEW 3: PENDING REQUESTS -->
+    <app-intern-requests *ngIf="currentTab() === 'requests'"></app-intern-requests>
+
+    <!-- VIEW 4: ATTENDANCE CORRECTIONS -->
+    <app-attendance-corrections *ngIf="currentTab() === 'corrections'"></app-attendance-corrections>
+
+    <!-- VIEW 5: OFFBOARDING -->
+    <app-offboarding-requests *ngIf="currentTab() === 'offboarding'"></app-offboarding-requests>
+  </div>
+
+  <!-- RIGHT: VERTICAL ACTION SIDEBAR -->
+  <app-intern-sidebar [activeTab]="currentTab()"></app-intern-sidebar>
+</div>

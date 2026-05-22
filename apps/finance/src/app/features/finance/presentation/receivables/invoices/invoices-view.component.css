@@ -1,0 +1,7 @@
+:host {
+  display: contents;
+}
+
+.invoice-data-table {
+  min-width: 980px;
+}

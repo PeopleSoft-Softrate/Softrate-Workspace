@@ -1,0 +1,183 @@
+      <div *ngIf="dashTab==='reports'" class="admin-reports-view">
+        <div class="dash-header-row admin-actions-only-header" style="margin-bottom: 1rem;">
+          <div class="admin-header-actions">
+          <button class="cta-primary" (click)="exportToExcel()"
+            style="padding: 0.6rem 1.25rem; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            EXPORT AS EXCEL
+          </button>
+          </div>
+        </div>
+
+        <!-- Advanced Filter Bar -->
+        <div class="reports-filter-card">
+          <div class="reports-filter-grid">
+            <div class="filter-field">
+              <label>From Date</label>
+              <input type="date" [(ngModel)]="customFrom" (ngModelChange)="applyCustomRange()">
+            </div>
+            <div class="filter-field">
+              <label>To Date</label>
+              <input type="date" [(ngModel)]="customTo" (ngModelChange)="applyCustomRange()">
+            </div>
+            <div class="filter-field">
+              <label>Select Employee Tags</label>
+              <select [(ngModel)]="filterTags" (ngModelChange)="applyCustomRange()">
+                <option value="">Select</option>
+                <option *ngFor="let t of tagOptions" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Select Employees</label>
+              <select [(ngModel)]="filterEmployees" (ngModelChange)="applyCustomRange()">
+                <option value="">Select</option>
+                <option *ngFor="let row of employeeCallRows" [value]="row.emp.mobile">{{ row.emp.name }}</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Select Call Type</label>
+              <select [(ngModel)]="filterCallType" (ngModelChange)="applyCustomRange()">
+                <option value="">Select</option>
+                <option *ngFor="let ct of callTypeOptions" [value]="ct">{{ ct }}</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Select Duration</label>
+              <select [(ngModel)]="filterDuration" (ngModelChange)="applyCustomRange()">
+                <option value="">Select</option>
+                <option *ngFor="let d of durationOptions" [value]="d">{{ d }}</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Select Call Time</label>
+              <select [(ngModel)]="filterCallTime" (ngModelChange)="applyCustomRange()">
+                <option value="">Select</option>
+                <option *ngFor="let t of timeOptions" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button class="btn-apply" (click)="applyCustomRange()">Apply</button>
+              <button class="btn-reset" (click)="resetFilters()">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="margin-bottom: 1.5rem; font-weight: 500; font-size: 0.9rem; color: var(--text-2); display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" style="color: var(--orange);">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <ng-container *ngIf="customFrom && customTo && customFrom !== customTo; else singleDate">
+            {{ customFrom | date:'dd MMM yyyy' }} &nbsp;→&nbsp; {{ customTo | date:'dd MMM yyyy' }}
+          </ng-container>
+          <ng-template #singleDate>
+            {{ (customFrom ? (customFrom | date:'dd MMM yyyy') : (todayIso | date:'dd MMM yyyy')) }}
+          </ng-template>
+        </div>
+
+        <div *ngIf="empCallLoading" class="dash-loading">Loading report data&hellip;</div>
+
+        <div class="report-table-wrap" *ngIf="!empCallLoading">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th rowspan="2" class="sticky-col">Sr. No.</th>
+                <th rowspan="2" class="sticky-col">Employee</th>
+                <th rowspan="2">Total Calls</th>
+                <th rowspan="2">Total Duration</th>
+                <th rowspan="2">Connected Calls</th>
+                <th rowspan="2">Conn. Calls Duration</th>
+                <th rowspan="2">Conn. Call Avg. Duration</th>
+                <th rowspan="2">Working Hours</th>
+                <th rowspan="2">Unique Clients</th>
+                <th rowspan="2">Unique Conn. Calls</th>
+                <th colspan="3" class="group-in" *ngIf="!filterCallType || filterCallType === 'Incoming'">Incoming</th>
+                <th colspan="3" class="group-out" *ngIf="!filterCallType || filterCallType === 'Outgoing'">Outgoing</th>
+                <th colspan="1" class="group-miss" *ngIf="!filterCallType || filterCallType === 'Missed'">Missed</th>
+                <th colspan="1" class="group-rej" *ngIf="!filterCallType || filterCallType === 'Rejected'">Rejected</th>
+                <th rowspan="2">Never Attended</th>
+                <th rowspan="2">Not Pickup by Client</th>
+                <th rowspan="2">Last Sync Time</th>
+              </tr>
+              <tr>
+                <ng-container *ngIf="!filterCallType || filterCallType === 'Incoming'">
+                  <th class="group-in">Total Call</th>
+                  <th class="group-in">Total Duration</th>
+                  <th class="group-in">Connected Calls</th>
+                </ng-container>
+                <ng-container *ngIf="!filterCallType || filterCallType === 'Outgoing'">
+                  <th class="group-out">Total Call</th>
+                  <th class="group-out">Total Duration</th>
+                  <th class="group-out">Connected Calls</th>
+                </ng-container>
+                <th class="group-miss" *ngIf="!filterCallType || filterCallType === 'Missed'">Total Call</th>
+                <th class="group-rej" *ngIf="!filterCallType || filterCallType === 'Rejected'">Total Call</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of filteredEmployeeCallRows; let i = index">
+                <td class="sticky-col">{{ i + 1 }}</td>
+                <td class="sticky-col">
+                  <div style="font-weight:600;color:var(--text-1)">{{ row.emp.name || 'Unknown' }}</div>
+                  <div style="font-size:0.75rem;color:var(--text-3)">{{ row.emp.mobile }}</div>
+                </td>
+
+                <td>{{ row.stats?.total || 0 }}</td>
+                <td>{{ fmtDur(row.stats?.totalDuration || 0) }}</td>
+
+                <!-- Connected equals Incoming + Outgoing -->
+                <td>{{ row.stats?.connected || 0 }}</td>
+                <td>{{ fmtDur((row.stats?.incomingDuration || 0) + (row.stats?.outgoingDuration || 0)) }}</td>
+                <td>{{ fmtAvgDur((row.stats?.incomingDuration || 0) + (row.stats?.outgoingDuration || 0),
+                  row.stats?.connected || 0) }}</td>
+
+                <!-- Working Hours (mirrors total duration) -->
+                <td>{{ fmtDur(row.stats?.totalDuration || 0) }}</td>
+
+                <td>0</td> <!-- Unique clients unavailable backend -->
+                <td>0</td> <!-- Unique conn unavailable backend -->
+
+                <!-- INCOMING -->
+                <ng-container *ngIf="!filterCallType || filterCallType === 'Incoming'">
+                  <td>{{ row.stats?.incoming || 0 }}</td>
+                  <td>{{ fmtDur(row.stats?.incomingDuration || 0) }}</td>
+                  <td>{{ row.stats?.incomingConnected || 0 }}</td>
+                </ng-container>
+
+                <!-- OUTGOING -->
+                <ng-container *ngIf="!filterCallType || filterCallType === 'Outgoing'">
+                  <td>{{ row.stats?.outgoing || 0 }}</td>
+                  <td>{{ fmtDur(row.stats?.outgoingDuration || 0) }}</td>
+                  <td>{{ row.stats?.outgoingConnected || 0 }}</td>
+                </ng-container>
+
+                <!-- MISSED / REJECTED -->
+                <td *ngIf="!filterCallType || filterCallType === 'Missed'">{{ row.stats?.missed || 0 }}</td>
+                <td *ngIf="!filterCallType || filterCallType === 'Rejected'">{{ row.stats?.rejected || 0 }}</td>
+
+                <!-- OTHER -->
+                <td>0</td> <!-- Never attended -->
+                <td>{{ ((row.stats?.outgoing || 0) - (row.stats?.outgoingConnected || 0)) > 0 ? ((row.stats?.outgoing ||
+                  0) -
+                  (row.stats?.outgoingConnected || 0)) : 0 }}</td> <!-- Not pickup -->
+                <td style="white-space:nowrap;font-size:0.8rem;color:var(--text-2);">{{ row.emp.lastSyncTime ?
+                  (row.emp.lastSyncTime | date:'dd MMM yyyy, hh:mm a') : 'Never' }}</td>
+              </tr>
+              <tr *ngIf="!employeeCallRows.length">
+                <td colspan="100%" style="text-align:center;padding:3rem;color:var(--text-3);">No call report data
+                  available for this period.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+

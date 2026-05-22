@@ -1,0 +1,221 @@
+/* Global styles for TraceCall */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+:root {
+  --bg:          #f4f7fb;
+  --bg-card:     #ffffff;
+  --bg-card-2:   #f7f9fc;
+  --bg-card-3:   #eef3f9;
+  --bg-hover:    #f2f6fb;
+  --border:      #dbe4ef;
+  --border-strong:#c6d4e4;
+  --border-glow: rgba(43, 92, 230, 0.18);
+  --accent:      #2459d3;
+  --accent-2:    #1d4ed8;
+  --accent-dark: #0f172a;
+  --accent-soft: #edf4ff;
+  --blue:        #2459d3;
+  --green:       #059669;
+  --orange:      #d97706;
+  --pink:        #dc2626;
+  --red:         #dc2626;
+  --purple:      #4f46e5;
+  --text-1:      #0f172a;
+  --text-2:      #475569;
+  --text-3:      #64748b;
+  --text-heading:#0b1220;
+  --shadow-sm:   0 10px 25px rgba(15, 23, 42, 0.05);
+  --shadow-md:   0 18px 44px rgba(15, 23, 42, 0.08);
+  --shadow-lg:   0 28px 64px rgba(15, 23, 42, 0.12);
+  --radius:      22px;
+  --radius-md:   16px;
+  --radius-sm:   12px;
+  --font-head:   Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-body:   Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-main:   Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono:   Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(36, 89, 211, 0.07), transparent 26%),
+    radial-gradient(circle at top right, rgba(5, 150, 105, 0.05), transparent 22%),
+    linear-gradient(180deg, #f8fbff 0%, #f4f7fb 100%);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-feature-settings: "cv02", "cv05", "cv11";
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(36, 89, 211, 0.28);
+  outline-offset: 2px;
+}
+
+/* ── Modern UI Utilities ── */
+.premium-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.glass-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #edf2f7;
+  background: rgba(248, 250, 252, 0.8);
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.glass-input:focus {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+}
+
+.input-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-section-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #334155;
+  letter-spacing: -0.01em;
+}
+
+/* ── Soft Accents ── */
+.soft-indigo { background: rgba(99, 102, 241, 0.08); color: #6366f1; }
+.soft-amber  { background: rgba(245, 158, 11, 0.08);  color: #f59e0b; }
+.soft-emerald { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+.soft-rose    { background: rgba(244, 63, 94, 0.08);  color: #f43f5e; }
+
+/* ── Skeleton Loading ── */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text { height: 12px; margin-bottom: 8px; width: 100%; }
+.skeleton-title { height: 24px; margin-bottom: 12px; width: 40%; }
+.skeleton-card { background: white; border-radius: 20px; border: 1px solid #edf2f7; padding: 1.5rem; }
+.skeleton-circle { width: 40px; height: 40px; border-radius: 50%; }
+
+/* Modern Search and Date Picker UI */
+.date-input-wrap, .search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+
+.date-input-wrap:focus-within, .search-wrap:focus-within {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.date-input-wrap svg, .search-wrap svg.search-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.date-picker-input, .search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 10px 8px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  outline: none;
+}
+
+.date-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: 0.2s;
+}
+
+.date-picker-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.btn-edit-followup {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-edit-followup:hover {
+  color: #6366f1;
+  background: #f1f5f9;
+}

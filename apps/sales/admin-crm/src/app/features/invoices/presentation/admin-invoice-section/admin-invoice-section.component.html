@@ -1,0 +1,308 @@
+      <!-- ══ INVOICE TAB ══ -->
+      <div
+        *ngIf="dashTab==='invoice' || dashTab==='invoice_settings'"
+        class="workspace invoice-workspace admin-invoice-settings-view"
+        [class.admin-invoice-history-mode]="dashTab==='invoice'"
+        [class.admin-invoice-settings-mode]="dashTab==='invoice_settings'"
+        style="animation: fadeIn 0.4s ease-out; min-height: calc(100vh - 64px);"
+      >
+        <div class="workspace-header invoice-feature-header">
+          <div class="workspace-controls invoice-feature-controls">
+            <label class="topbar-search invoice-feature-search" for="adminInvoiceSearch">
+              <span class="topbar-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+              </span>
+              <input id="adminInvoiceSearch" class="topbar-input" type="text" placeholder="Search converted leads..." [(ngModel)]="invoiceSearch">
+            </label>
+          </div>
+        </div>
+
+        <div class="invoice-feature-grid">
+          <section class="invoice-feature-pane invoice-converted-pane">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+              <div>
+                <h3 class="settings-section-title">Converted Leads</h3>
+                <p style="margin-top:6px; color:#64748b;">{{ adminConvertedInvoiceLeads.length }} eligible leads</p>
+              </div>
+            </div>
+            <div style="max-height: 340px; overflow:auto; border:1px solid #e5e7eb;">
+              <table style="width:100%; border-collapse:collapse;">
+                <thead style="position:sticky; top:0; background:#fff; z-index:1;">
+                  <tr>
+                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Company</th>
+                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Contact</th>
+                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Status</th>
+                    <th style="padding:12px; text-align:right; color:#6b7280; font-weight:600;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let lead of adminConvertedInvoiceLeads" style="border-top:1px solid #e5e7eb;">
+                    <td style="padding:12px; color:#111827;">{{ lead.leadCompanyName }}</td>
+                    <td style="padding:12px; color:#4b5563;">{{ lead.contactName || lead.contactNumber }}</td>
+                    <td style="padding:12px; color:#4b5563;">{{ lead.status }}</td>
+                    <td style="padding:12px; text-align:right;">
+                      <button class="cta-primary" style="padding:.5rem .8rem; border-radius:8px;" (click)="openAdminInvoiceModal(lead)">
+                        Generate
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="adminConvertedInvoiceLeads.length===0">
+                    <td colspan="4" style="padding:32px; text-align:center; color:#94a3b8;">No converted leads found.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="invoice-feature-pane invoice-history-pane">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+              <div>
+                <h3 class="settings-section-title">Invoice History</h3>
+                <p style="margin-top:6px; color:#64748b;">{{ filteredInvoiceRecords.length }} saved invoices</p>
+              </div>
+              <div class="invoice-history-tools">
+                <label class="topbar-search invoice-history-search" for="adminInvoiceHistorySearch">
+                  <span class="topbar-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+                  </span>
+                  <input id="adminInvoiceHistorySearch" class="topbar-input" type="text" placeholder="Search invoices..." [(ngModel)]="invoiceHistorySearch">
+                </label>
+                <button class="toolbar-button invoice-date-filter-button" type="button" (click)="invoiceDateFilterOpen=!invoiceDateFilterOpen">Date Filter</button>
+              </div>
+            </div>
+            <div class="invoice-date-filter-row" *ngIf="invoiceDateFilterOpen">
+              <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="invoiceDateFrom"></label>
+              <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="invoiceDateTo"></label>
+              <button class="toolbar-button invoice-date-clear" type="button" (click)="invoiceDateFrom=''; invoiceDateTo=''">Clear</button>
+            </div>
+            <div style="max-height: 340px; overflow:auto; border:1px solid #e5e7eb;">
+              <table style="width:100%; border-collapse:collapse;">
+                <thead style="position:sticky; top:0; background:#fff; z-index:1;">
+                  <tr>
+                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Invoice</th>
+                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Company</th>
+                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Employee</th>
+                    <th style="padding:12px; text-align:right; color:#6b7280; font-weight:600;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let invoice of filteredInvoiceRecords" style="border-top:1px solid #e5e7eb; cursor:pointer;" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
+                    <td style="padding:12px; color:#111827;">{{ invoice.invoiceNumber }}</td>
+                    <td style="padding:12px; color:#4b5563;">{{ invoice.leadCompanyName }}</td>
+                    <td style="padding:12px; color:#4b5563;">{{ invoice.employeeName || invoice.employeePhone || '—' }}</td>
+                    <td style="padding:12px; color:#111827; text-align:right;">{{ formatInvoiceMoney(invoice.total) }}</td>
+                  </tr>
+                  <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
+                    <td colspan="4" style="padding:32px; text-align:center; color:#94a3b8;">No invoices saved yet.</td>
+                  </tr>
+                  <tr *ngIf="invoiceRecordsLoading">
+                    <td colspan="4" style="padding:32px; text-align:center; color:#94a3b8;">Loading invoices...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div class="dash-header-row admin-actions-only-header admin-invoice-settings-actions" style="margin-bottom: 1rem;">
+          <div class="admin-header-actions">
+            <button class="btn-login admin-save-settings-button" (click)="saveSettings()" [disabled]="settingsLoading"
+              style="padding: 0.75rem 1.35rem; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+              <svg *ngIf="!settingsLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span *ngIf="settingsLoading" class="btn-spinner"></span>
+              {{ settingsLoading ? 'Saving...' : 'Save All Changes' }}
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+          <!-- Branding & Identity Card -->
+          <div class="premium-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem;">
+              <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;" class="soft-indigo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              </div>
+              <h3 class="settings-section-title">Branding & Identity</h3>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div>
+                <label class="input-label">Company Logo</label>
+                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                  <div *ngIf="settingsInvoiceLogo" style="width: 100px; height: 100px; border-radius: 12px; background: #f8fafc; border: 2px dashed #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px;">
+                    <img [src]="settingsInvoiceLogo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                  </div>
+                  <div style="flex: 1;">
+                    <p style="font-size: 0.75rem; color: var(--text-3); margin-bottom: 10px;">Upload a high-resolution logo (PNG/JPG, max 3MB). This will appear at the top-left of every invoice.</p>
+                    <label style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: white; border: 1.5px solid var(--purple); color: var(--purple); border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      {{ settingsInvoiceLogo ? 'Change Logo' : 'Upload Logo' }}
+                      <input type="file" (change)="onLogoUpload($event)" accept="image/*" style="display: none;">
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label class="input-label" style="margin-bottom: 0;">Company Name</label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-1); cursor: pointer; font-weight: 600; background: #f1f5f9; padding: 4px 10px; border-radius: 6px;">
+                    <input type="checkbox" [(ngModel)]="settingsShowCompanyNameOnInvoice" style="width: 15px; height: 15px; accent-color: var(--purple);">
+                    Show on Invoice
+                  </label>
+                </div>
+                <input type="text" [(ngModel)]="settingsCompanyName" readonly class="glass-input" style="opacity: 0.7; background: #f1f5f9; cursor: not-allowed;">
+                <p style="font-size: 0.7rem; color: var(--text-3); margin-top: 6px;">Contact support to change your registered company name.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tax & Legal Card -->
+          <div class="premium-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem;">
+              <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;" class="soft-amber">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  <path d="M9 14h6"></path>
+                  <path d="M9 18h6"></path>
+                  <path d="M9 10h6"></path>
+                </svg>
+              </div>
+              <h3 class="settings-section-title">Tax & Legal Details</h3>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                <div>
+                  <label class="input-label">GST Number (GSTIN)</label>
+                  <input type="text" [(ngModel)]="settingsGstNumber" class="glass-input" placeholder="e.g. 29AAAAA0000A1Z5">
+                </div>
+                <div>
+                  <label class="input-label">GST Rate (%)</label>
+                  <input type="number" [(ngModel)]="settingsGstPercentage" class="glass-input" placeholder="18">
+                </div>
+              </div>
+
+              <div>
+                <label class="input-label">Invoice Contact Details</label>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <textarea [(ngModel)]="settingsInvoiceRegisteredAddress" class="glass-input" rows="3" style="resize: vertical; min-height: 82px;" placeholder="Registered invoice address"></textarea>
+                  <div style="position: relative;">
+                    <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <input type="text" [(ngModel)]="settingsContactDetails.website" class="glass-input" style="padding-left: 35px;" placeholder="www.yourcompany.com">
+                  </div>
+                  <div style="position: relative;">
+                    <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.19-1.33a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <input type="text" [(ngModel)]="settingsContactDetails.phone" class="glass-input" style="padding-left: 35px;" placeholder="+91 80000 00000">
+                  </div>
+                  <div style="position: relative;">
+                    <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <input type="text" [(ngModel)]="settingsContactDetails.email" class="glass-input" style="padding-left: 35px;" placeholder="billing@yourcompany.com">
+                  </div>
+                  <textarea [(ngModel)]="settingsInvoiceFooter" class="glass-input" rows="3" style="resize: vertical; min-height: 82px;" placeholder="Invoice footer note"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+          <!-- Product Configuration Card -->
+          <div class="premium-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem;">
+              <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;" class="soft-indigo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              </div>
+              <h3 class="settings-section-title">Services & Pricing</h3>
+            </div>
+
+            <div style="background: #f8fafc; padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem;">
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: flex-end;">
+                <div>
+                  <label class="input-label">Service Name</label>
+                  <input type="text" [(ngModel)]="newProductInput.name" class="glass-input" placeholder="e.g. Lead Generation">
+                </div>
+                <div>
+                  <label class="input-label">Min Price (₹)</label>
+                  <input type="number" [(ngModel)]="newProductInput.minPrice" class="glass-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="input-label">Max Price (₹)</label>
+                  <input type="number" [(ngModel)]="newProductInput.maxPrice" class="glass-input" placeholder="0">
+                </div>
+                <button class="cta-primary" (click)="addProduct()" style="height: 42px; width: 42px; border-radius: 10px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-container" style="max-height: 400px; overflow-y: auto; border: 1.5px solid #f1f5f9; border-radius: 12px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 1;">
+                  <tr>
+                    <th style="padding: 12px 16px; color: var(--text-2); text-align: left; font-weight: 700;">Service Description</th>
+                    <th style="padding: 12px 16px; color: var(--text-2); text-align: center; font-weight: 700;">Min Price</th>
+                    <th style="padding: 12px 16px; color: var(--text-2); text-align: center; font-weight: 700;">Max Price</th>
+                    <th style="padding: 12px 16px; color: var(--text-2); text-align: center; font-weight: 700;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of settingsProducts; let i = index" style="border-top: 1px solid #f1f5f9;">
+                    <td style="padding: 12px 16px; font-weight: 600; color: #1e293b;">{{ p.name }}</td>
+                    <td style="padding: 12px 16px; text-align: center; color: #475569; font-weight: 500;">₹{{ p.minPrice.toLocaleString() }}</td>
+                    <td style="padding: 12px 16px; text-align: center; color: #475569; font-weight: 500;">₹{{ p.maxPrice.toLocaleString() }}</td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <button (click)="removeProduct(i)" style="background: #fee2e2; border: none; color: #ef4444; cursor: pointer; padding: 6px; border-radius: 8px; transition: all 0.2s;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1-0.1-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="settingsProducts.length === 0">
+                    <td colspan="4" style="padding: 40px; text-align: center; color: #94a3b8; font-style: italic;">No services configured yet. Add your first service above.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Banking Details Card -->
+          <div class="premium-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem;">
+              <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;" class="soft-emerald">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+              </div>
+              <h3 class="settings-section-title">Banking Details</h3>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div>
+                <label class="input-label">Bank Name</label>
+                <input type="text" [(ngModel)]="settingsBankDetails.bankName" class="glass-input" placeholder="e.g. HDFC Bank">
+              </div>
+              <div>
+                <label class="input-label">Account Number</label>
+                <input type="text" [(ngModel)]="settingsBankDetails.accountNumber" class="glass-input" placeholder="e.g. 50100XXXXXXXX">
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label class="input-label">IFSC Code</label>
+                  <input type="text" [(ngModel)]="settingsBankDetails.ifscCode" class="glass-input" placeholder="e.g. HDFC0001234">
+                </div>
+                <div>
+                  <label class="input-label">Branch Name</label>
+                  <input type="text" [(ngModel)]="settingsBankDetails.branchName" class="glass-input" placeholder="e.g. Koramangala, Bangalore">
+                </div>
+              </div>
+              <div style="padding: 1rem; background: #fffbeb; border-radius: 12px; border: 1px solid #fde68a;">
+                <p style="font-size: 0.75rem; color: #92400e; line-height: 1.4;">
+                  <strong>Note:</strong> These banking details will be printed at the bottom of the invoice for customer payments. Please double-check for accuracy.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="settingsSaveError" class="form-error" style="margin-top: 1rem; padding: 1rem; border-radius: 10px;">{{ settingsSaveError }}</div>
+        <div *ngIf="settingsSaveSuccess" style="margin-top: 1rem; padding: 1rem; background: #ecfdf5; color: #059669; border-radius: 10px; font-weight: 700; text-align: center; border: 1px solid #10b981;">✓ {{ settingsSaveSuccess }}</div>
+      </div>
+

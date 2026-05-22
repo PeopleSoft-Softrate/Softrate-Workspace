@@ -1,0 +1,158 @@
+<ng-container *ngIf="vm.dashTab==='crm_tickets'">
+  <section class="crm-amc-board crm-ticket-board">
+    <div class="workspace-header workspace-header-filters-only crm-filter-bar crm-amc-toolbar crm-ticket-toolbar">
+      <div class="workspace-controls crm-filter-controls crm-amc-controls crm-ticket-controls">
+        <div class="crm-filter-left">
+          <label class="topbar-search crm-filter-search crm-ticket-search" for="crmTicketSearch">
+            <span class="topbar-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            </span>
+            <input class="topbar-input" id="crmTicketSearch" type="search" [ngModel]="vm.crmTicketSearch" (ngModelChange)="vm.setCrmTicketSearch($event)" placeholder="Search tickets">
+          </label>
+          <label class="mini-field">
+            <span>Client</span>
+            <select class="field-select filter-select-field" [(ngModel)]="vm.selectedCrmClientCompany" (ngModelChange)="vm.fetchCrmTickets()">
+              <option value="">All Clients</option>
+              <option *ngFor="let client of vm.crmClients" [value]="client.companyName">{{ client.companyName }}</option>
+            </select>
+          </label>
+          <label class="mini-field">
+            <span>Status</span>
+            <select class="field-select filter-select-field" [ngModel]="vm.crmTicketStatusFilter" (ngModelChange)="vm.setCrmTicketStatusFilter($event)">
+              <option value="all">All Status</option>
+              <option>Open</option>
+              <option>In Progress</option>
+              <option>Waiting on Client</option>
+              <option>Resolved</option>
+              <option>Closed</option>
+            </select>
+          </label>
+          <label class="mini-field">
+            <span>Priority</span>
+            <select class="field-select filter-select-field" [ngModel]="vm.crmTicketPriorityFilter" (ngModelChange)="vm.setCrmTicketPriorityFilter($event)">
+              <option value="all">All Priority</option>
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+              <option>Critical</option>
+            </select>
+          </label>
+          <button class="toolbar-button crm-icon-refresh" type="button" (click)="vm.fetchCrmTickets()" [disabled]="vm.crmTicketsLoading" aria-label="Refresh tickets" title="Refresh">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics-strip crm-metrics-strip crm-amc-metrics-strip crm-ticket-metrics-strip">
+      <div class="metric-cell">
+        <div class="metric-label">Open</div>
+        <div class="metric-value">{{ vm.crmTicketAnalytics.open }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">In Progress</div>
+        <div class="metric-value">{{ vm.crmTicketAnalytics.inProgress }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Waiting</div>
+        <div class="metric-value">{{ vm.crmTicketAnalytics.waiting }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Resolved</div>
+        <div class="metric-value">{{ vm.crmTicketAnalytics.resolved }}</div>
+      </div>
+    </div>
+
+    <div class="crm-ticket-layout">
+      <div class="table-scroll crm-amc-table-scroll crm-ticket-table-scroll">
+        <table class="data-table compact-table crm-amc-table crm-ticket-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Subject</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ticket of vm.crmTicketRows" [class.active-row]="ticket.id === vm.selectedCrmTicket?.id" (click)="vm.selectCrmTicket(ticket)">
+              <td>{{ ticket.clientCompanyName }}</td>
+              <td><strong>{{ ticket.subject }}</strong></td>
+              <td>{{ ticket.category || '-' }}</td>
+              <td>{{ ticket.priority || '-' }}</td>
+              <td><span class="crm-status-pill" [ngClass]="vm.crmTicketStatusClass(ticket.status)">{{ ticket.status }}</span></td>
+              <td>{{ vm.fmtDate(ticket.updatedAt || ticket.createdAt) }}</td>
+            </tr>
+            <tr *ngIf="!vm.crmTicketsLoading && vm.crmTicketRows.length===0"><td colspan="6" class="empty-cell">No tickets raised yet.</td></tr>
+            <tr *ngIf="vm.crmTicketsLoading"><td colspan="6" class="empty-cell">Loading tickets...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <aside class="crm-ticket-detail" *ngIf="vm.selectedCrmTicket as ticket; else emptyTicketDetail">
+        <div class="crm-ticket-detail-head">
+          <div>
+            <span class="section-kicker">{{ ticket.category }}</span>
+            <h3>{{ ticket.subject }}</h3>
+          </div>
+          <span class="crm-status-pill" [ngClass]="vm.crmTicketStatusClass(ticket.status)">{{ ticket.status }}</span>
+        </div>
+        <div class="crm-ticket-meta">
+          <span>Client <strong>{{ ticket.clientCompanyName }}</strong></span>
+          <span>Email <strong>{{ ticket.clientEmail || '-' }}</strong></span>
+          <span>Priority <strong>{{ ticket.priority }}</strong></span>
+          <span>Service <strong>{{ ticket.relatedProjectService || '-' }}</strong></span>
+        </div>
+        <label class="mini-field crm-ticket-status-field">
+          <span>Status</span>
+          <select class="field-select crm-inline-select" [ngModel]="ticket.status" (ngModelChange)="vm.setCrmTicketStatus(ticket, $event)" [disabled]="vm.crmTicketsLoading">
+            <option>Open</option>
+            <option>In Progress</option>
+            <option>Waiting on Client</option>
+            <option>Resolved</option>
+            <option>Closed</option>
+          </select>
+        </label>
+        <section class="crm-ticket-section">
+          <h4>Description</h4>
+          <p>{{ ticket.description || '-' }}</p>
+        </section>
+        <section class="crm-ticket-section" *ngIf="ticket.attachments?.length">
+          <h4>Attachments</h4>
+          <div class="crm-ticket-attachments">
+            <button class="crm-ticket-chip" type="button" *ngFor="let attachment of ticket.attachments" (click)="vm.downloadCrmTicketAttachment(ticket, attachment)">
+              {{ attachment.originalName }}
+            </button>
+          </div>
+        </section>
+        <section class="crm-ticket-section crm-ticket-remarks">
+          <h4>Remarks</h4>
+          <div class="crm-ticket-remark-list" *ngIf="ticket.remarks?.length; else noTicketRemarks">
+            <article class="crm-ticket-remark" *ngFor="let remark of ticket.remarks">
+              <div>
+                <strong>{{ remark.authorName || remark.authorRole }}</strong>
+                <span>{{ vm.fmtDate(remark.createdAt) }}</span>
+              </div>
+              <p>{{ remark.message }}</p>
+            </article>
+          </div>
+          <ng-template #noTicketRemarks><div class="empty-state-inline">No remarks yet.</div></ng-template>
+          <div class="crm-ticket-reply">
+            <textarea class="field-input" rows="3" [(ngModel)]="vm.crmTicketRemarkDraft" placeholder="Add CRM response"></textarea>
+            <button class="primary-action" type="button" (click)="vm.addCrmTicketRemark(ticket)" [disabled]="vm.crmTicketsLoading || !vm.crmTicketRemarkDraft.trim()">Add Remark</button>
+          </div>
+        </section>
+      </aside>
+      <ng-template #emptyTicketDetail>
+        <aside class="crm-ticket-detail">
+          <div class="empty-state-inline">Select a ticket to review details.</div>
+        </aside>
+      </ng-template>
+    </div>
+  </section>
+</ng-container>

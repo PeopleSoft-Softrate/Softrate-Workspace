@@ -1,0 +1,1157 @@
+<div class="landing-wrapper" *ngIf="!vm.loggedIn" [class.ready]="!vm.showSplash">
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar" [class.navbar-scrolled]="vm.isNavbarScrolled">
+    <div class="nav-container">
+      <div class="nav-brand" (click)="vm.goHome()" style="cursor:pointer;">
+        <div class="brand-icon">
+          <img src="assets/icon/logo.png" alt="DealVoice Logo">
+        </div>
+      </div>
+      <div class="nav-links">
+        <a (click)="vm.setPage('home')" class="nav-link" [class.active]="vm.currentPage === 'home'"
+          style="cursor:pointer;">Home</a>
+        <a (click)="vm.scrollToSection('features', vm.currentPage)" class="nav-link" style="cursor:pointer;">Features</a>
+        <a (click)="vm.scrollToSection('security', vm.currentPage)" class="nav-link" style="cursor:pointer;">Security</a>
+        <a (click)="vm.setPage('pricing')" class="nav-link" [class.active]="vm.currentPage === 'pricing'"
+          style="cursor:pointer;">Pricing</a>
+        <a (click)="vm.scrollToSection('about', vm.currentPage)" class="nav-link" style="cursor:pointer;">About</a>
+      </div>
+      <div class="nav-auth">
+        <button class="btn-login" (click)="vm.openLogin()">Log In</button>
+        <button class="btn-signup" (click)="vm.isTrialRequest=false; vm.openSignup()">Sign Up</button>
+        <button class="cta-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;" (click)="vm.openTrialSignup()">Get
+          Free Trial</button>
+      </div>
+      <button class="hamburger" aria-label="Open menu" (click)="vm.toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" [class.open]="vm.isMobileMenuOpen">
+      <a (click)="vm.setPage('home')" class="nav-link">Home</a>
+      <a (click)="vm.scrollToSection('features', vm.currentPage)" class="nav-link">Features</a>
+      <a (click)="vm.scrollToSection('security', vm.currentPage)" class="nav-link">Security</a>
+      <a (click)="vm.setPage('pricing')" class="nav-link">Pricing</a>
+      <a (click)="vm.scrollToSection('about', vm.currentPage)" class="nav-link">About</a>
+      <div class="mobile-auth">
+        <button class="btn-login" (click)="vm.openLogin(); vm.toggleMobileMenu()">Log In</button>
+        <button class="btn-signup" (click)="vm.isTrialRequest=false; vm.openSignup(); vm.toggleMobileMenu()">Sign Up
+          Free</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========== HOME SECTIONS ========== -->
+  <ng-container *ngIf="vm.currentPage === 'home'">
+    <!-- ========== HERO ========== -->
+    <section class="hero">
+      <div class="hero-container">
+        <h1 class="hero-title"><span style="color: #8d8d8d !important;">The Intelligent CRM for</span><br><span
+            class="gradient-text">sales deal closing.</span></h1>
+
+        <div class="hero-action-row">
+          <div class="hero-cta">
+            <button class="cta-primary" (click)="vm.openTrialSignup()">
+              Book a demo
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M13 6L19 12L13 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+          <p class="hero-subtitle">DealVoice automates the heavy lifting of sales pipeline management. Live in hours.
+            Learning from every deal.</p>
+        </div>
+      </div>
+      <div class="hero-image-wrapper" (mousemove)="vm.onHeroMouseMove($event)" (mouseenter)="vm.isDashHovered = true"
+        (mouseleave)="vm.isDashHovered = false">
+        <img src="assets/images/hero page.png" alt="DealVoice Dashboard Preview"
+          class="dashboard-preview-image grayscale">
+        <div class="color-reveal" [style.--mouse-x]="vm.dashMouseX + '%'" [style.--mouse-y]="vm.dashMouseY + '%'"
+          [class.active]="vm.isDashHovered">
+          <img src="assets/images/hero page.png" alt="" class="dashboard-preview-image">
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== TRUSTED BY ========== -->
+    <section class="trusted-by">
+      <div class="trusted-container">
+        <h2 class="trusted-header">Trusted by <span class="dark-text">high-performing sales teams</span></h2>
+        <div class="logo-grid four-logos">
+          <div class="logo-card">
+            <img src="assets/images/trust/Wealth Empires.webp" alt="Wealth Empires" class="trust-img">
+          </div>
+          <div class="logo-card">
+            <img src="assets/images/trust/ramco-logo.png.webp" alt="Ramco" class="trust-img">
+          </div>
+          <div class="logo-card">
+            <img src="assets/images/trust/logo-footer-2.webp" alt="Trust Logo" class="trust-img">
+          </div>
+          <div class="logo-card">
+            <img src="assets/images/trust/pdf_logo.webp" alt="PDF Logo" class="trust-img">
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- ========== BENEFITS (SHARED) ========== -->
+  <section class="benefits" id="features" [class.pricing-page-benefits]="vm.currentPage === 'pricing'">
+    <div class="benefits-container">
+      <div class="benefits-badge">
+        <span class="badge-dot"></span>
+        Benefits
+      </div>
+      <h2 class="benefits-title">
+        Smart Sales Automation: <span class="dark-text">Efficiency at scale with intelligent workflows</span>
+      </h2>
+
+      <div class="benefits-grid">
+        <!-- Manual Work Card -->
+        <div class="benefit-card warning">
+          <div class="benefit-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h3 class="benefit-card-title">Your sales reps are buried in manual work</h3>
+          <p class="benefit-card-desc">
+            Sales reps in growing teams spend 30–50% of their time on repetitive tasks logging calls, updating
+            pipelines, chasing follow-ups. The cost: slower deal cycles, growing backlogs, and burned-out reps.
+          </p>
+        </div>
+
+        <!-- AI Agent Card -->
+        <div class="benefit-card success">
+          <div class="benefit-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="black" stroke-width="2.5">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div class="benefit-content-wrap">
+            <div class="benefit-text">
+              <h3 class="benefit-card-title">An intelligent CRM built for modern sales execution</h3>
+              <p class="benefit-card-desc">
+                DealVoice handles the heavy lifting of your sales process from automated follow-ups and conversation
+                tracking to lead organization and performance insights. The result: faster deal closures, better
+                engagement, and sales teams focused on selling, not admin work.
+              </p>
+            </div>
+            <div class="tag-cloud-visual">
+              <div class="tag-row">
+                <span class="tag-pill">Lead Management</span>
+                <span class="tag-pill">Live Calls Tracking</span>
+              </div>
+              <div class="tag-row offset">
+                <span class="tag-pill">Follow-up Bookmarking</span>
+                <span class="tag-pill">Performance Monitoring</span>
+              </div>
+              <div class="tag-row">
+                <span class="tag-pill">Sales Analytics</span>
+                <span class="tag-pill">Team Monitoring</span>
+              </div>
+              <!-- Connector line visual -->
+              <svg class="connector-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="area-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" style="stop-color:#00f0aa;stop-opacity:0" />
+                    <stop offset="100%" style="stop-color:#00f0aa;stop-opacity:0.15" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,100 L40,85 L70,95 L100,50 V100 H0 Z" fill="url(#area-grad)" />
+                <path d="M0,100 L40,85 L70,95 L100,50" stroke="#00f0aa" fill="none" stroke-width="2"
+                  stroke-linejoin="round" style="opacity: 0.6;" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">> 95 <span class="unit">%</span></div>
+          <div class="stat-label">follow-up accuracy rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">80 <span class="unit">%</span></div>
+          <div class="stat-label">faster deal closing</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">
+            < 1 <span class="unit">min</span>
+          </div>
+          <div class="stat-label">per lead update</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOME ONLY SECTIONS (MIDDLE) ========== -->
+  <ng-container *ngIf="vm.currentPage === 'home'">
+    <!-- ========== CUSTOM CTA / CUSTOMIZATION ========== -->
+    <section class="custom-cta">
+      <div class="cta-container">
+        <h2 class="cta-title">
+          Need a smart CRM tailored for your<br>
+          <span class="highlight">specific sales workflows?</span>
+        </h2>
+        <p class="cta-subtitle">
+          We’ll customize it to match your process, faster and better than anyone else.
+        </p>
+
+        <div class="cta-details">
+          <p>
+            We analyze your sales flow, identify high-impact touchpoints, and configure DealVoice to fit your team —
+            live in days, not months. From there, DealVoice learns from every deal and gets smarter continuously.
+          </p>
+        </div>
+
+        <button class="cta-action-btn" (click)="vm.openTrialSignup()">
+          Let’s build your sales system
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========== TESTIMONIALS ========== -->
+    <section class="vm.testimonials">
+      <div class="testimonial-container">
+        <div class="testimonial-header-row">
+          <div class="header-left">
+            <div class="benefits-badge">
+              <span class="badge-dot"></span>
+              Customer reviews
+            </div>
+            <h2 class="benefits-title">
+              How DealVoice automates deal closing, <span class="dark-text">in our customers’ words</span>
+            </h2>
+          </div>
+          <div class="slider-nav">
+            <button class="nav-btn prev" (click)="vm.prevTestimonial()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button class="nav-btn next" (click)="vm.nextTestimonial()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div> <!-- End header-row -->
+
+        <div class="testimonial-slider-viewport" (touchstart)="vm.onTouchStart($event)" (touchend)="vm.onTouchEnd($event)">
+          <div class="testimonial-slider-track"
+            [style.transform]="'translateX(-' + (vm.currentTestimonialIndex * 100) + '%)'">
+            <div class="testimonial-card" *ngFor="let testimonial of vm.testimonials">
+              <div class="card-left">
+                <img [src]="testimonial.image" alt="Customer Profile" class="portrait">
+              </div>
+              <div class="card-middle">
+                <p class="quote">“{{ testimonial.quote }}”</p>
+                <div class="card-footer">
+                  <div class="reviewer-info">
+                    <h4 class="name">{{ testimonial.author }}</h4>
+                    <p class="role">{{ testimonial.title }}</p>
+                  </div>
+
+                </div>
+              </div>
+              <div class="card-right">
+                <div class="impact-stats-stack">
+                  <div class="impact-stat" *ngFor="let stat of testimonial.stats">
+                    <div class="stat-main">
+                      <span class="value">{{ stat.value }}</span>
+                      <div class="stat-icon-wrapper">
+                        <svg viewBox="0 0 24 24" width="12" height="12" class="stat-arrow-diag">
+                          <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2.5" fill="none" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="label">{{ stat.label }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== TRANSFORM BANNER ========== -->
+    <section class="transform-banner">
+      <div class="banner-gradient-mesh">
+        <div class="mesh-orb orb-1"></div>
+        <div class="mesh-orb orb-2"></div>
+        <div class="mesh-orb orb-3"></div>
+      </div>
+      <div class="banner-container">
+        <h2 class="banner-title">
+          Transform your <span class="highlight">sales team performance</span>
+        </h2>
+        <button class="banner-btn" (click)="vm.openTrialSignup()">
+          Talk to Sales
+        </button>
+      </div>
+    </section>
+
+    <!-- ========== HOW IT WORKS ========== -->
+    <section class="how-it-works">
+      <div class="how-container">
+        <div class="benefits-badge">
+          <span class="badge-dot"></span>
+          HOW IT WORKS
+        </div>
+        <h2 class="benefits-title">
+          How it <span class="dark-text">works</span>
+        </h2>
+        <p class="section-subtitle">
+          Sales teams working with DealVoice get more done — faster, better, every deal
+        </p>
+
+        <div class="step-grid">
+          <!-- Step 1 -->
+          <div class="step-card">
+            <div class="step-header">
+              <span class="step-number">1. </span>
+              <h3 class="step-title">Install DealVoice</h3>
+            </div>
+            <p class="step-desc">Download and set up DealVoice from the Play Store in minutes.</p>
+            <p class="ps-intro-text">Perfect for teams on the move. Access your leads, track calls, and close deals from
+              anywhere with our native Android experience.</p>
+            <div class="ps-divider"></div>
+            <span class="ps-platform-label">AVAILABLE ON ANDROID</span>
+            <div class="step-app-preview">
+              <!-- <div class="app-icon-small">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,11.5L10,17H12.5L11,21L15,14H12.5L14,9H12.5L12,11.5Z"/></svg>
+            </div> -->
+              <div class="app-meta-mini">
+                <span class="app-rating">★★★★★ 4.9/5</span>
+                <div class="app-trust-wrapper">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="#10b981">
+                    <path
+                      d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                  </svg>
+                  <span class="app-trust-tag">Highly Rated on Play Store</span>
+                </div>
+              </div>
+            </div>
+            <div class="play-store-badge-container">
+              <a href="https://play.google.com/store/apps/details?id=com.dealvoice.app" target="_blank"
+                class="play-store-link">
+                <img src="assets/images/trust/google-play-store-badge-en.jpg" alt="Get it on Google Play"
+                  class="play-store-badge-img">
+              </a>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card">
+            <div class="step-header">
+              <span class="step-number">2. </span>
+              <h3 class="step-title">Connect your team</h3>
+            </div>
+            <p class="step-desc">Enter your organization key to securely connect your team and workflows.</p>
+            <div class="step-ui-visual">
+              <img src="/assets/images/how-to/step-2.webp" alt="Instructional Visual 2">
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-card">
+            <div class="step-header">
+              <span class="step-number">3. </span>
+              <h3 class="step-title">Start tracking & selling</h3>
+            </div>
+            <p class="step-desc">Begin managing conversations, tracking leads, and monitoring performance — all in one
+              place.</p>
+            <div class="step-ui-visual">
+              <img src="/assets/images/how-to/step-3.webp" alt="Instructional Visual 3">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+
+  <!-- ========== SHARED SECTION: SECURITY ========== -->
+  <section class="security-section" id="security">
+    <div class="security-container">
+      <div class="benefits-badge">
+        <span class="badge-dot"></span>
+        SECURITY
+      </div>
+
+      <div class="security-header-content">
+        <h2 class="benefits-title">
+          Built to meet the <span class="dark-text">security and reliability</span> needs of modern sales teams
+        </h2>
+
+        <div class="security-features-bar">
+          <div class="s-feature">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Enterprise-grade security</span>
+          </div>
+          <div class="s-feature">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Data privacy & protection</span>
+          </div>
+          <div class="s-feature">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span>Access control & audit logs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="trust-cards-grid">
+        <div class="trust-card wide">
+          <div class="trust-icon-label">
+            <div class="trust-icon-sm">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4l3 3" />
+              </svg>
+            </div>
+            <div class="trust-label-lg">GDPR</div>
+          </div>
+        </div>
+        <div class="trust-card wide">
+          <div class="trust-icon-label">
+            <div class="trust-icon-sm">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <div class="trust-label-lg">Secure cloud hosting</div>
+          </div>
+        </div>
+        <div class="trust-card wide">
+          <div class="trust-icon-label">
+            <div class="trust-icon-sm">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div class="trust-label-lg">ISO-27001:2022</div>
+          </div>
+        </div>
+        <div class="trust-card wide">
+          <div class="trust-icon-label">
+            <div class="trust-icon-sm">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <div class="trust-label-lg">SOC 2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOME ONLY SECTION: GET STARTED ========== -->
+  <section class="get-started-cta" *ngIf="vm.currentPage === 'home'">
+    <div class="cta-banner">
+      <div class="banner-gradient-mesh green-mesh">
+        <div class="mesh-orb g-orb-1"></div>
+        <div class="mesh-orb g-orb-2"></div>
+      </div>
+      <div class="cta-banner-content">
+
+        <h2 class="cta-banner-title">
+          Get started <span class="light-text">with a Smart CRM built for <br> high-performing sales teams</span>
+        </h2>
+        <button class="cta-white-btn" (click)="vm.openTrialSignup()">
+          Book a demo <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+            stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="cta-values-grid">
+      <div class="value-card">
+        <h3 class="value-title">Ready to go live in days</h3>
+        <p class="value-desc">Understands your sales flow, communication patterns, and workflows from day one</p>
+      </div>
+      <div class="value-card">
+        <h3 class="value-title">No complex setup required</h3>
+        <p class="value-desc">Get started instantly with a simple onboarding process</p>
+      </div>
+      <div class="value-card full-width">
+        <div class="value-card-row">
+          <h3 class="value-title">No training needed</h3>
+          <p class="value-desc">Built for every sales professional — simple, intuitive, and easy to use</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ========== PRICING (PRICING PAGE ONLY) ========== -->
+  <section class="pricing" id="pricing" *ngIf="vm.currentPage === 'pricing'">
+    <div class="header-decoration-wrap">
+      <div class="pricing-orb-1"></div>
+      <div class="pricing-orb-2"></div>
+    </div>
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-tag">FLEXIBLE PRICING</span>
+        <h2 class="section-title">Scale with Confidence</h2>
+        <p class="section-subtitle">From solo entrepreneurs to large enterprises, we have a plan that fits your
+          ambition.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Basic -->
+        <div class="pricing-card">
+          <div class="plan-name">Basic</div>
+          <div class="plan-price">
+            <span class="price-currency">₹</span>
+            <span class="price-amount">90</span>
+            <span class="price-period">Per User/Month</span>
+          </div>
+          <button class="plan-cta" (click)="vm.openSignup()">Sign Up Now</button>
+
+          <ul class="plan-features">
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              1 Free Phone Number
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Free WhatsApp Business API
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Voicemail
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Click to Dial
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              SMS (Text messages) & MMS
+            </li>
+          </ul>
+        </div>
+
+        <!-- Starter -->
+        <div class="pricing-card">
+          <div class="plan-name">Starter</div>
+          <div class="plan-price">
+            <span class="price-currency">₹</span>
+            <span class="price-amount">1,659</span>
+            <span class="price-period">Per User/Month</span>
+          </div>
+          <button class="plan-cta primary" (click)="vm.openTrialSignup()">10-Day Free Trial</button>
+
+          <div class="plan-subtitle">Everything in Basic + Telephony</div>
+          <ul class="plan-features">
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Unlimited Minutes (In/Out)
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Free WhatsApp Business API
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              100 SMS Monthly
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Basic Report Analytics
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Free Omnichannel Inbox
+            </li>
+          </ul>
+          <div class="view-all-features">View all Features</div>
+        </div>
+
+        <!-- Professional -->
+        <div class="pricing-card popular">
+          <div class="popular-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            Most Popular
+          </div>
+          <div class="plan-name">Professional</div>
+          <div class="plan-price">
+            <span class="price-currency">₹</span>
+            <span class="price-amount">2,759</span>
+            <span class="price-period">Per User/Month</span>
+          </div>
+          <button class="plan-cta primary" (click)="vm.openTrialSignup()">10-Day Free Trial</button>
+
+          <div class="plan-subtitle">Everything in Starter +</div>
+          <ul class="plan-features">
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Unlimited Minutes (In/Out)
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Free WhatsApp Business API
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              500 SMS Monthly
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Advanced Call Recordings
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Deeper Reports / Analytics
+            </li>
+          </ul>
+          <div class="view-all-features">View all Features</div>
+        </div>
+
+        <!-- Ultimate -->
+        <div class="pricing-card">
+          <div class="plan-name">Ultimate</div>
+          <div class="plan-price">
+            <span class="price-currency">₹</span>
+            <span class="price-amount">3,865</span>
+            <span class="price-period">Per User/Month</span>
+          </div>
+          <button class="plan-cta primary" (click)="vm.openTrialSignup()">10-Day Free Trial</button>
+
+          <div class="plan-subtitle">Everything in Professional +</div>
+          <ul class="plan-features">
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Unlimited Minutes (In/Out)
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              1000 SMS Monthly
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Dedicated Account Manager
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Custom API Integrations
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Single Sign-On (SSO) Support
+            </li>
+            <li class="plan-feature">
+              <svg class="feature-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Premium CRM-Based Routing
+            </li>
+          </ul>
+          <div class="view-all-features">View all Features</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+  <!-- ========== MOBILE APP SHOWCASE ========== -->
+  <section class="mobile-showcase">
+    <div class="showcase-container">
+      <div class="showcase-content">
+        <h2 class="showcase-title">Sales tracking that works <br> as fast as your team does.</h2>
+        <p class="showcase-desc">
+          The DealVoice mobile app makes deal management effortless. Sales reps log calls from anywhere.
+          Managers track live performance from any device. No paper, no spreadsheets, no delay.
+        </p>
+        <ul class="showcase-features">
+          <li>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Sales reps log live calls and updates on the go
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Instant visibility into team performance
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Real-time sync between web and mobile
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Reduces administrative overhead for everyone
+          </li>
+        </ul>
+
+        <div class="store-buttons">
+          <a href="https://play.google.com/store/apps/details?id=com.dealvoice.app" target="_blank" class="store-btn">
+            <img src="assets/images/trust/google-play-store-badge-en.jpg" alt="Google Play Store" class="play-badge">
+          </a>
+          <button class="store-btn-apple">
+            <svg viewBox="0 0 384 512" width="20" height="20" fill="white">
+              <path
+                d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 21.8-88.5 21.8-11.4 0-51.1-20.8-83.6-20.8-44.3 0-85.3 24.8-108.2 64.1-46.3 78.8-11.8 196.1 32.7 261.2 21.8 31.9 47.9 67.8 82.3 66.6 30.6-1.1 43.1-19.4 80.6-19.4 37.3 0 49.1 19.4 80.6 18.7 35.1-.6 57.3-32.3 78.8-63.5 24.3-35.4 34-69.5 34.2-71.2-.8-.3-65.7-25.2-65.9-100.2zM273.8 89.1c15.6-18.9 26.1-45.1 23.3-71.1-22.3.9-49.2 14.8-65.2 33.5-14.4 16.5-27.1 43.3-24.3 68.6 24.8 2 49-11.8 66.2-31z" />
+            </svg>
+            <div class="btn-text">
+              <span class="small">Download on the</span>
+              <span class="large">App Store</span>
+            </div>
+          </button>
+        </div>
+      </div>
+      <div class="showcase-visual">
+        <img src="assets/images/banner/2.png" alt="DealVoice Mobile App" class="showcase-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer" id="about">
+    <div class="footer-container">
+      <div class="footer-main-grid">
+        <!-- Logo & Contact -->
+        <div class="footer-col brand-col">
+          <div class="footer-logo">
+            <img src="assets/icon/logo.png" alt="DealVoice" class="site-logo-img">
+          </div>
+          <p class="footer-addr">
+            Softrate Tech Park,<br>
+            Chennai 600122
+          </p>
+          <a href="mailto:support@dealvoice.com" class="footer-email">support&#64;dealvoice.com</a>
+        </div>
+
+        <!-- How It Works & Links -->
+        <div class="footer-col">
+          <h4 class="footer-heading">How it works</h4>
+          <ul class="footer-links">
+            <li><a href="#">Download DealVoice</a></li>
+            <li><a href="#">Download EasyCalls</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+          </ul>
+        </div>
+
+        <!-- Features -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Features</h4>
+          <ul class="footer-links">
+            <li><a href="#">Live Call Tracking</a></li>
+            <li><a href="#">Smart Analytics</a></li>
+            <li><a href="#">Easy communications</a></li>
+            <li><a href="#">Call monitoring</a></li>
+            <li><a href="#">Performance tracking</a></li>
+          </ul>
+        </div>
+
+        <!-- CTA & Simple Form -->
+        <div class="footer-col cta-col">
+          <h4 class="footer-heading">Schedule a Demo</h4>
+          <div class="footer-demo-form">
+            <input type="text" placeholder="Full Name" class="footer-input">
+            <div class="input-row">
+              <input type="email" placeholder="Mail ID" class="footer-input">
+              <input type="tel" placeholder="Phone" class="footer-input">
+            </div>
+            <button class="footer-submit-btn">Schedule Demo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-copyright">
+          © 2026 Softrate Technologies Private Limited · All rights reserved
+        </div>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <span class="sep">|</span>
+          <a href="#">Terms of service</a>
+          <span class="sep">|</span>
+          <a href="#">Refund policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ========== LOGIN MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isLoginOpen" (click)="vm.closeModals()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeModals()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">Welcome back</h2>
+    <p class="modal-subtitle">Sign in to your account</p>
+    <div class="form-error" *ngIf="vm.loginError">{{ vm.loginError }}</div>
+    <form class="modal-form" (submit)="vm.onLoginSubmit($event)">
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="you&#64;company.com" autocomplete="email"
+          [(ngModel)]="vm.loginForm.email" name="loginEmail" required>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+          [(ngModel)]="vm.loginForm.password" name="loginPassword" required>
+      </div>
+      <a href="#" class="forgot-link" (click)="vm.openForgotPwd(); $event.preventDefault()">Forgot password?</a>
+      <button type="submit" class="btn-signup modal-submit" [disabled]="vm.loginLoading">{{ vm.loginLoading ? 'Signing in…' :
+        'Log In' }}</button>
+    </form>
+    <p class="modal-switch">Don't have an account? <a href="#"
+        (click)="vm.isTrialRequest=false; vm.openSignup(); $event.preventDefault()">Sign Up</a></p>
+  </div>
+</div>
+
+<!-- ========== FORGOT PASSWORD MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isForgotPwdOpen" (click)="vm.closeModals()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeModals()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">Reset password</h2>
+    <p class="modal-subtitle">Enter your email and we'll send you a link to reset your password.</p>
+
+    <div class="form-error" *ngIf="vm.forgotError">{{ vm.forgotError }}</div>
+
+    <div class="signup-success" *ngIf="vm.forgotSuccess">
+      <div class="success-icon">✓</div>
+      <h3>Email Sent!</h3>
+      <p>{{ vm.forgotSuccess }}</p>
+      <button type="button" class="btn-signup modal-submit" (click)="vm.closeModals()">Got it</button>
+    </div>
+
+    <form class="modal-form" (submit)="vm.onForgotPwdSubmit($event)" *ngIf="!vm.forgotSuccess">
+      <div class="form-group">
+        <label for="forgot-email">Email Address</label>
+        <input type="email" id="forgot-email" placeholder="you&#64;company.com" [(ngModel)]="vm.forgotEmail"
+          name="vm.forgotEmail" required>
+      </div>
+      <button type="submit" class="btn-signup modal-submit" [disabled]="vm.forgotLoading">
+        {{ vm.forgotLoading ? 'Sending link…' : 'Send reset link' }}
+      </button>
+    </form>
+
+    <p class="modal-switch" *ngIf="!vm.forgotSuccess">Remember your password? <a href="#"
+        (click)="vm.openLogin(); $event.preventDefault()">Log In</a></p>
+  </div>
+</div>
+
+<!-- ========== RESET PASSWORD MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isResetPwdOpen" (click)="vm.closeModals()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeModals()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">New password</h2>
+    <p class="modal-subtitle">Set a secure password for your account.</p>
+
+    <div class="form-error" *ngIf="vm.resetError">{{ vm.resetError }}</div>
+
+    <div class="signup-success" *ngIf="vm.resetSuccess">
+      <div class="success-icon">✓</div>
+      <h3>Password Reset!</h3>
+      <p>{{ vm.resetSuccess }}</p>
+      <button type="button" class="btn-signup modal-submit" (click)="vm.openLogin()">Log In</button>
+    </div>
+
+    <form class="modal-form" (submit)="vm.onResetPwdSubmit($event)" *ngIf="!vm.resetSuccess">
+      <div class="form-group">
+        <label for="reset-password">New Password</label>
+        <input type="password" id="reset-password" placeholder="Min. 8 chars + A + 1 + !" [value]="vm.resetNewPassword"
+          (input)="vm.onResetPasswordInput($any($event.target).value)" required>
+        <div class="pwd-checks">
+          <span [class.check-ok]="vm.resetPwdChecks.length">{{ vm.resetPwdChecks.length ? '✓' : '○' }} 8+ characters</span>
+          <span [class.check-ok]="vm.resetPwdChecks.upper">{{ vm.resetPwdChecks.upper ? '✓' : '○' }} Uppercase letter</span>
+          <span [class.check-ok]="vm.resetPwdChecks.number">{{ vm.resetPwdChecks.number ? '✓' : '○' }} Number</span>
+          <span [class.check-ok]="vm.resetPwdChecks.symbol">{{ vm.resetPwdChecks.symbol ? '✓' : '○' }} Symbol
+            (!&#64;#…)</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="reset-confirm">Confirm Password</label>
+        <input type="password" id="reset-confirm" placeholder="••••••••" [(ngModel)]="vm.resetConfirmPassword"
+          name="resetConfirm" required>
+      </div>
+      <button type="submit" class="btn-signup modal-submit" [disabled]="vm.resetLoading || !vm.isResetPasswordStrong">
+        {{ vm.resetLoading ? 'Updating password…' : 'Update password' }}
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ========== SIGNUP MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isSignupOpen" (click)="vm.closeModals()">
+  <div class="modal modal-wide" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeModals()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">{{ vm.isTrialRequest ? 'Request Free Demo' : 'Create your account' }}</h2>
+    <p class="modal-subtitle">{{ vm.isTrialRequest ? 'Get 7 days of full access to DealVoice features' : 'Start tracking
+      calls for free — no credit card required' }}</p>
+    <div class="signup-success" *ngIf="vm.signupSuccess">
+      <div class="success-icon">✓</div>
+      <h3>{{ vm.isTrialRequest ? 'Request Sent!' : 'Account Created!' }}</h3>
+      <p>{{ vm.isTrialRequest ? 'Your trial request has been sent to the main admin for approval. You will receive an email
+        once approved.' : 'Welcome to DealVoice. You can now log in with your credentials.' }}</p>
+      <button type="button" class="btn-signup modal-submit" (click)="vm.goToLoginFromSuccess()">{{ vm.isTrialRequest ? 'Got
+        it' : 'Go to Log In' }}</button>
+    </div>
+    <ng-container *ngIf="!vm.signupSuccess">
+      <div class="form-error" *ngIf="vm.signupError">{{ vm.signupError }}</div>
+      <form class="modal-form" (submit)="vm.onSignupSubmit($event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="su-company">Company Name <span class="req">*</span></label>
+            <input type="text" id="su-company" placeholder="Softrate Global" [(ngModel)]="vm.signupForm.companyName"
+              name="suCompany" required>
+          </div>
+          <div class="form-group">
+            <label for="su-name">Your Name <span class="req">*</span></label>
+            <input type="text" id="su-name" placeholder="John Doe" [(ngModel)]="vm.signupForm.name" name="suName" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="su-address">Company Address <span class="req">*</span></label>
+          <input type="text" id="su-address" placeholder="123 Industry Park, Tech City"
+            [(ngModel)]="vm.signupForm.companyAddress" name="suAddress" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="su-email">Work Email <span class="req">*</span></label>
+            <input type="email" id="su-email" placeholder="you&#64;company.com" autocomplete="email"
+              [(ngModel)]="vm.signupForm.email" name="suEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="su-mobile">Mobile Number <span class="req">*</span></label>
+            <div class="mobile-input-wrap">
+              <div class="mobile-prefix-wrap">
+                <select class="mobile-prefix-select" [(ngModel)]="vm.signupForm.countryCode" name="suCountryCode" required>
+                  <option value="+91">🇮🇳 +91</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+971">🇦🇪 +971</option>
+                </select>
+              </div>
+              <input type="tel" id="su-mobile" placeholder="9876543210" maxlength="15" [(ngModel)]="vm.signupForm.mobile"
+                name="suMobile" required>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="su-team">Team Capacity Limit <span class="req">*</span></label>
+            <input type="number" id="su-team" [(ngModel)]="vm.signupForm.teamSize" name="suTeam" placeholder="e.g. 5"
+              min="1" (input)="vm.onToDateChange()" required>
+            <small class="form-hint"
+              style="display: block; margin-top: 4px; color: #64748b; font-size: 0.75rem; line-height: 1.4;">
+              <b>Note:</b> Your employee creation limit is determined by this count. You can modify this capacity later
+              as your team grows.
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="su-industry">Industry <span class="req">*</span></label>
+            <select id="su-industry" [(ngModel)]="vm.signupForm.industry" name="suIndustry" required>
+              <option value="" disabled>Select Industry</option>
+              <option *ngFor="let i of vm.INDUSTRIES" [value]="i">{{ i }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="su-password">Password <span class="req">*</span></label>
+          <input type="password" id="su-password" placeholder="Min. 8 chars + A + 1 + !" autocomplete="new-password"
+            [value]="vm.signupForm.password" (input)="vm.onPasswordInput($any($event.target).value)" required>
+          <div class="pwd-checks">
+            <span [class.check-ok]="vm.pwdChecks.length">{{ vm.pwdChecks.length ? '✓' : '○' }} 8+ characters</span>
+            <span [class.check-ok]="vm.pwdChecks.upper">{{ vm.pwdChecks.upper ? '✓' : '○' }} Uppercase letter</span>
+            <span [class.check-ok]="vm.pwdChecks.number">{{ vm.pwdChecks.number ? '✓' : '○' }} Number</span>
+            <span [class.check-ok]="vm.pwdChecks.symbol">{{ vm.pwdChecks.symbol ? '✓' : '○' }} Symbol (!&#64;#…)</span>
+          </div>
+        </div>
+        <!-- Subscription end date (Paid accounts only) -->
+        <div class="form-group" *ngIf="!vm.isTrialRequest">
+          <label for="su-todate">Subscription End Date <span class="req">*</span></label>
+          <input type="date" id="su-todate" [(ngModel)]="vm.paymentToDate" name="suToDate" [min]="vm.minToDate"
+            (change)="vm.onToDateChange()" required>
+          <!-- Live cost preview -->
+          <div *ngIf="vm.paymentCostPreview" class="payment-preview-box"
+            style="margin-top:0.75rem;padding:0.85rem 1rem;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <div style="font-size:0.8rem;color:var(--text-3);margin-bottom:0.25rem;">Total (Incl. 18% GST)</div>
+            <div style="display:flex;gap:1.5rem;align-items:baseline;flex-wrap:wrap;">
+              <div><span style="font-size:1.6rem;font-weight:700;color:#6366f1;">₹{{ vm.paymentCostPreview.amountRupees |
+                  number }}</span></div>
+              <div style="font-size:0.8rem;color:var(--text-3);line-height:1.5;">
+                {{ vm.paymentCostPreview.teamSizeMax }} people × ₹10/day × {{ vm.paymentCostPreview.days }} days
+              </div>
+            </div>
+          </div>
+          <small style="display:block;margin-top:6px;color:#8d8d8d;font-size:0.75rem;">Your plan is active from today to
+            the date you pick. Payment is processed securely via Razorpay.</small>
+        </div>
+        <button type="submit" class="btn-signup modal-submit"
+          [disabled]="vm.signupLoading || !vm.passwordStrong || vm.paymentStep==='paying'">
+          {{ vm.signupLoading ? 'Creating account…' : vm.paymentStep==='paying' ? 'Opening payment…' : vm.isTrialRequest ?
+          'Request Trial →' : 'Create & Pay →' }}
+        </button>
+      </form>
+    </ng-container>
+    <p class="modal-switch" *ngIf="!vm.signupSuccess">Already have an account? <a href="#"
+        (click)="vm.openLogin(); $event.preventDefault()">Log In</a></p>
+  </div>
+</div>
+
+<!-- Signup Modal Placeholder -->
+
+<!-- ========== RESET PASSWORD MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isResetPwdOpen" (click)="vm.closeModals()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeModals()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">New password</h2>
+    <p class="modal-subtitle">Set a secure password for your account.</p>
+
+    <div class="form-error" *ngIf="vm.resetError">{{ vm.resetError }}</div>
+
+    <div class="signup-success" *ngIf="vm.resetSuccess">
+      <div class="success-icon">✓</div>
+      <h3>Password Reset!</h3>
+      <p>{{ vm.resetSuccess }}</p>
+      <button type="button" class="btn-signup modal-submit" (click)="vm.openLogin()">Log In</button>
+    </div>
+
+    <form class="modal-form" (submit)="vm.onResetPwdSubmit($event)" *ngIf="!vm.resetSuccess">
+      <div class="form-group">
+        <label for="reset-password">New Password</label>
+        <input type="password" id="reset-password" placeholder="Min. 8 chars + A + 1 + !" [value]="vm.resetNewPassword"
+          (input)="vm.onResetPasswordInput($any($event.target).value)" required>
+        <div class="pwd-checks">
+          <span [class.check-ok]="vm.resetPwdChecks.length">{{ vm.resetPwdChecks.length ? '✓' : '○' }} 8+ characters</span>
+          <span [class.check-ok]="vm.resetPwdChecks.upper">{{ vm.resetPwdChecks.upper ? '✓' : '○' }} Uppercase letter</span>
+          <span [class.check-ok]="vm.resetPwdChecks.number">{{ vm.resetPwdChecks.number ? '✓' : '○' }} Number</span>
+          <span [class.check-ok]="vm.resetPwdChecks.symbol">{{ vm.resetPwdChecks.symbol ? '✓' : '○' }} Symbol
+            (!&#64;#…)</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="reset-confirm">Confirm Password</label>
+        <input type="password" id="reset-confirm" placeholder="••••••••" [(ngModel)]="vm.resetConfirmPassword"
+          name="resetConfirm" required>
+      </div>
+      <button type="submit" class="btn-signup modal-submit" [disabled]="vm.resetLoading || !vm.isResetPasswordStrong">
+        {{ vm.resetLoading ? 'Updating password…' : 'Update password' }}
+      </button>
+    </form>
+  </div>
+</div>

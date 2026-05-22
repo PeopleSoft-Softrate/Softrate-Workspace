@@ -1,0 +1,2593 @@
+<div class="splash-screen" *ngIf="showSplash">
+  <div class="splash-content">
+    <div class="splash-logo">
+      <img src="assets/icon/logo.png" alt="DealVoice Logo">
+    </div>
+    <div class="splash-loader">
+      <div class="loader-bar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="auth-shell" *ngIf="!loggedIn">
+  <section class="auth-brand">
+    <img src="assets/icon/logo.png" alt="DealVoice Logo" class="auth-logo">
+    <div class="auth-kicker">Employee CRM</div>
+    <h1 class="auth-title">Sharp operational workspace for daily lead execution.</h1>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-panel-header">
+      <div class="auth-panel-kicker">Sign in</div>
+      <h2>Employee Access</h2>
+    </div>
+
+    <div class="form-stack">
+      <label class="field">
+        <span class="field-label">Company Code</span>
+        <input
+          id="companyCode"
+          class="field-input"
+          type="text"
+          placeholder="e.g. STP-1603-2026"
+          [(ngModel)]="loginForm.companyCode"
+          (keyup.enter)="login()"
+        />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Mobile Number</span>
+        <div class="phone-input">
+          <select class="field-select country-code" [(ngModel)]="loginForm.countryCode">
+            <option value="+91">+91</option>
+            <option value="+1">+1</option>
+            <option value="+44">+44</option>
+            <option value="+971">+971</option>
+            <option value="+61">+61</option>
+          </select>
+          <input
+            id="mobileNumber"
+            class="field-input"
+            type="tel"
+            placeholder="Enter mobile number"
+            [(ngModel)]="loginForm.mobile"
+            (keyup.enter)="login()"
+          />
+        </div>
+      </label>
+
+      <div class="form-error" *ngIf="loginError">{{ loginError }}</div>
+
+      <button id="loginBtn" class="primary-action" (click)="login()" [disabled]="loginLoading">
+        <span *ngIf="!loginLoading">Sign In</span>
+        <span *ngIf="loginLoading" class="button-spinner"></span>
+      </button>
+    </div>
+  </section>
+</div>
+
+<div class="crm-shell" *ngIf="loggedIn" [class.sidebar-minimized]="sidebarMinimized">
+  <div class="crm-sidebar-overlay" [class.active]="sidebarOpen" (click)="sidebarOpen = false"></div>
+
+  <aside class="crm-sidebar" [class.open]="sidebarOpen" [class.minimized]="sidebarMinimized">
+    <div class="sidebar-brand">
+      <img [src]="sidebarMinimized ? 'assets/icon/logo 2.png' : 'assets/icon/logo.png'" alt="DealVoice Logo" class="sidebar-logo">
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="sidebar-link sidebar-link-overview" [class.active]="dashTab==='overview'" (click)="switchTab('overview')" [title]="sidebarMinimized ? 'Overview' : ''">
+        <span class="sidebar-icon sidebar-icon-overview" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect width="7" height="7" x="3" y="3" rx="1" />
+            <rect width="7" height="7" x="14" y="3" rx="1" />
+            <rect width="7" height="7" x="14" y="14" rx="1" />
+            <rect width="7" height="7" x="3" y="14" rx="1" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Overview</span>
+      </button>
+
+      <label class="sidebar-search" for="sidebarFeatureSearch">
+        <span class="sidebar-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="m20 20-4.35-4.35"></path>
+          </svg>
+        </span>
+        <input
+          id="sidebarFeatureSearch"
+          type="text"
+          placeholder="Search features"
+          autocomplete="off"
+          [(ngModel)]="sidebarFeatureSearch"
+        />
+      </label>
+
+      <div class="sidebar-group-label" *ngIf="sidebarSectionHas(['Invoice', 'Quotation'])">Quick Access</div>
+      <button class="sidebar-link sidebar-link-invoice" [class.active]="dashTab==='invoices'" (click)="switchTab('invoices')" *ngIf="sidebarFeatureMatches('Invoice')" [title]="sidebarMinimized ? 'Invoice' : ''">
+        <span class="sidebar-icon sidebar-icon-invoice" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Invoice</span>
+      </button>
+      <button class="sidebar-link sidebar-link-quotation" [class.active]="dashTab==='quotations'" (click)="switchTab('quotations')" *ngIf="sidebarFeatureMatches('Quotation')" [title]="sidebarMinimized ? 'Quotation' : ''">
+        <span class="sidebar-icon sidebar-icon-quotation" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 4h16v16H4z" />
+            <path d="M8 9h8" />
+            <path d="M8 13h8" />
+            <path d="M8 17h5" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Quotation</span>
+      </button>
+
+      <div class="sidebar-group-label" *ngIf="sidebarSectionHas(['My Leads', 'Interested', 'Not Connected', 'Converted', 'Favorites'])">Lead Views</div>
+      <button class="sidebar-link sidebar-link-leads" [class.active]="dashTab==='leads'" (click)="switchTab('leads')" *ngIf="sidebarFeatureMatches('My Leads')" [title]="sidebarMinimized ? 'My Leads' : ''">
+        <span class="sidebar-icon sidebar-icon-leads" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <line x1="10" y1="9" x2="8" y2="9" />
+          </svg>
+        </span>
+        <span class="sidebar-label">My Leads</span>
+      </button>
+      <button class="sidebar-link sidebar-link-interested" [class.active]="dashTab==='interested'" (click)="switchTab('interested')" *ngIf="sidebarFeatureMatches('Interested')" [title]="sidebarMinimized ? 'Interested' : ''">
+        <span class="sidebar-icon sidebar-icon-interested" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Interested</span>
+      </button>
+      <button class="sidebar-link sidebar-link-dnp" [class.active]="dashTab==='dnp'" (click)="switchTab('dnp')" *ngIf="sidebarFeatureMatches('Not Connected')" [title]="sidebarMinimized ? 'Not Connected' : ''">
+        <span class="sidebar-icon sidebar-icon-dnp" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <line x1="23" y1="1" x2="17" y2="7" />
+            <line x1="17" y1="1" x2="23" y2="7" />
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Not Connected</span>
+      </button>
+      <button class="sidebar-link sidebar-link-converted" [class.active]="dashTab==='converted'" (click)="switchTab('converted')" *ngIf="sidebarFeatureMatches('Converted')" [title]="sidebarMinimized ? 'Converted' : ''">
+        <span class="sidebar-icon sidebar-icon-converted" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Converted</span>
+      </button>
+      <button class="sidebar-link sidebar-link-favourite" [class.active]="dashTab==='favourite'" (click)="switchTab('favourite')" *ngIf="sidebarFeatureMatches('Favorites')" [title]="sidebarMinimized ? 'Favorites' : ''">
+        <span class="sidebar-icon sidebar-icon-favourite" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Favorites</span>
+      </button>
+
+      <div class="sidebar-group-label" *ngIf="sidebarSectionHas(['Follow-ups', 'Today History'])">Execution</div>
+      <button class="sidebar-link sidebar-link-followups" [class.active]="dashTab==='followups'" (click)="switchTab('followups')" *ngIf="sidebarFeatureMatches('Follow-ups')" [title]="sidebarMinimized ? 'Follow-ups' : ''">
+        <span class="sidebar-icon sidebar-icon-followups" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Follow-ups</span>
+      </button>
+      <button class="sidebar-link sidebar-link-history" [class.active]="dashTab==='today-calls'" (click)="switchTab('today-calls')" *ngIf="sidebarFeatureMatches('Today History')" [title]="sidebarMinimized ? 'Today History' : ''">
+        <span class="sidebar-icon sidebar-icon-history" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M12 7v5l4 2" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Today History</span>
+      </button>
+    </nav>
+
+    <button
+      class="edge-sidebar-toggle"
+      type="button"
+      (click)="toggleSidebarMinimized()"
+      [class.minimized]="sidebarMinimized"
+      [title]="sidebarMinimized ? 'Expand Sidebar' : 'Collapse Sidebar'"
+      [attr.aria-label]="sidebarMinimized ? 'Expand sidebar' : 'Collapse sidebar'"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+  </aside>
+
+  <section class="crm-stage">
+    <header class="crm-topbar">
+      <button class="topbar-sidebar-toggle" type="button" (click)="toggleSidebar()" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <div class="topbar-page-title">{{ topbarTitle }}</div>
+
+      <label
+        class="topbar-search"
+        for="globalSearch"
+        [class.search-loading]="globalSearchLoading"
+        [attr.aria-busy]="globalSearchLoading"
+      >
+        <span class="topbar-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="m20 20-4.35-4.35"></path>
+          </svg>
+        </span>
+        <input
+          id="globalSearch"
+          class="topbar-input"
+          type="text"
+          placeholder="Search leads, phone, or company..."
+          autocomplete="off"
+          aria-label="Search leads, companies, or phone numbers"
+          [(ngModel)]="leadSearch"
+        />
+        <span *ngIf="globalSearchLoading" class="topbar-search-spinner" aria-hidden="true"></span>
+      </label>
+
+      <div class="topbar-actions">
+        <button class="topbar-metric topbar-metric-followups" type="button" (click)="switchTab('followups'); followupFilter='today'">
+          <span class="topbar-metric-icon topbar-metric-icon-followups" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 3v4" />
+              <path d="M17 3v4" />
+              <path d="M4 9h16" />
+              <path d="M5 6h14v13H5z" />
+              <path d="m9 14 2 2 4-5" />
+            </svg>
+          </span>
+          <span class="topbar-metric-copy">
+            <span class="utility-label">Today Follow-ups</span>
+            <span class="utility-value">{{ todayFollowupsCount }}</span>
+          </span>
+        </button>
+
+        <button
+          id="breakBtn"
+          class="topbar-metric topbar-metric-break"
+          type="button"
+          [class.topbar-metric-active]="breakActive"
+          (click)="markBreak()"
+          [disabled]="breakPosting"
+        >
+          <span class="topbar-metric-icon topbar-metric-icon-break" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M8 4h8" />
+              <path d="M9 2h6" />
+              <path d="M12 9v4l2 2" />
+              <path d="M7.5 5.5a7 7 0 1 0 9 0" />
+            </svg>
+          </span>
+          <span class="topbar-metric-copy">
+            <span class="utility-label">{{ breakActive ? 'Break Running' : 'Break' }}</span>
+            <span class="utility-value">{{ breakActive ? breakTimerDisplay : fmtSecs(breakTotalSecondsToday) }}</span>
+          </span>
+        </button>
+
+        <div class="profile-dropdown" [class.open]="profileMenuOpen">
+          <input #profilePhotoInput type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="profile-file-input" (change)="onProfilePhotoSelected($event)" />
+          <button
+            class="profile-trigger"
+            type="button"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="profileMenuOpen"
+            (click)="toggleProfileMenu($event)"
+          >
+            <div class="topbar-user">
+              <div class="user-avatar-shell">
+                <div class="user-avatar" aria-hidden="true" [class.user-avatar-has-photo]="hasProfilePhoto">
+                  <img *ngIf="hasProfilePhoto" [src]="employee?.profilePhoto" [alt]="employee?.name || 'Employee profile photo'" class="user-avatar-image" />
+                  <span *ngIf="!hasProfilePhoto">{{ employeeInitials }}</span>
+                </div>
+                <span class="user-status-dot" [class.user-status-break]="breakActive" aria-hidden="true"></span>
+              </div>
+              <div class="user-copy">
+                <div class="user-name">{{ employee?.name }}</div>
+                <div class="user-meta">{{ employee?.mobile }}</div>
+              </div>
+              <span class="profile-chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+            </div>
+          </button>
+
+          <div class="profile-menu" *ngIf="profileMenuOpen" role="menu">
+            <div class="profile-menu-header">
+              <button
+                class="profile-menu-avatar-button"
+                type="button"
+                (click)="openProfilePhotoPicker(profilePhotoInput)"
+                [attr.aria-label]="hasProfilePhoto ? 'Change profile photo' : 'Add profile photo'"
+              >
+                <div class="profile-menu-avatar" [class.profile-menu-avatar-has-photo]="hasProfilePhoto">
+                  <img *ngIf="hasProfilePhoto" [src]="employee?.profilePhoto" [alt]="employee?.name || 'Employee profile photo'" class="profile-menu-avatar-image" />
+                  <span *ngIf="!hasProfilePhoto">{{ employeeInitials }}</span>
+                </div>
+              </button>
+              <div class="profile-menu-copy">
+                <div class="profile-menu-name">{{ employee?.name }}</div>
+                <div class="profile-menu-meta">{{ employee?.mobile }}</div>
+                <div class="profile-menu-code" *ngIf="employee?.companyCode">{{ employee?.companyCode }}</div>
+                <div class="profile-menu-status" [class.profile-menu-status-break]="breakActive">{{ breakActive ? 'On break' : 'Active now' }}</div>
+              </div>
+            </div>
+
+            <div class="profile-menu-section" *ngIf="hasProfilePhoto || profilePhotoError || profilePhotoSuccess">
+              <button
+                class="profile-menu-item"
+                *ngIf="hasProfilePhoto"
+                type="button"
+                role="menuitem"
+                (click)="removeProfilePhoto()"
+              >
+                <span class="profile-menu-item-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                  </svg>
+                </span>
+                <span>Remove photo</span>
+              </button>
+              <div class="profile-menu-feedback profile-menu-feedback-error" *ngIf="profilePhotoError">{{ profilePhotoError }}</div>
+              <div class="profile-menu-feedback profile-menu-feedback-success" *ngIf="profilePhotoSuccess">{{ profilePhotoSuccess }}</div>
+            </div>
+
+            <div class="profile-menu-divider"></div>
+
+            <button class="profile-menu-item profile-menu-item-danger" type="button" role="menuitem" (click)="logout()">
+              <span class="profile-menu-item-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <path d="m16 17 5-5-5-5" />
+                  <path d="M21 12H9" />
+                </svg>
+              </span>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="profile-editor-backdrop" *ngIf="profileEditorOpen" (click)="closeProfileEditor()">
+      <div class="profile-editor-modal" (click)="$event.stopPropagation()">
+        <div class="profile-editor-header">
+          <div>
+            <div class="profile-editor-title">Profile photo</div>
+            <div class="profile-editor-subtitle">Drag the image to place it inside the circle.</div>
+          </div>
+          <button class="profile-editor-close" type="button" (click)="closeProfileEditor()" aria-label="Close profile photo editor">
+            <svg viewBox="0 0 24 24">
+              <path d="M6 6l12 12" />
+              <path d="M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="profile-editor-stage" (mousedown)="startProfileEditorDrag($event)">
+          <img
+            class="profile-editor-image"
+            [src]="profileEditorImageSrc"
+            alt="Selected profile"
+            (load)="onProfileEditorImageLoad($event)"
+            [style.transform]="'translate(' + profileEditorOffsetX + 'px, ' + profileEditorOffsetY + 'px) scale(' + profileEditorScale + ')'"
+          />
+          <div class="profile-editor-mask" aria-hidden="true"></div>
+        </div>
+
+        <div class="profile-editor-controls">
+          <label class="profile-editor-slider-wrap">
+            <span>Zoom</span>
+            <input
+              type="range"
+              [min]="profileEditorMinScale"
+              [max]="profileEditorMaxScale"
+              [step]="0.01"
+              [ngModel]="profileEditorScale"
+              (ngModelChange)="onProfileEditorScaleChange($event)"
+            />
+          </label>
+        </div>
+
+        <div class="profile-editor-actions">
+          <button class="profile-editor-button profile-editor-button-secondary" type="button" (click)="closeProfileEditor()">Cancel</button>
+          <button class="profile-editor-button profile-editor-button-primary" type="button" (click)="saveProfilePhoto()" [disabled]="profilePhotoSaving">
+            {{ profilePhotoSaving ? 'Saving...' : 'Save photo' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <main class="crm-main">
+      <div class="overview-greeting-wrap" *ngIf="dashTab==='overview'">
+        <section class="overview-greeting-card" aria-label="Employee greeting">
+          <div class="overview-greeting-copy">
+            <h2 class="overview-greeting-title">
+              <span class="overview-greeting-line">{{ overviewGreeting }},</span>
+              <span class="overview-greeting-name">{{ employeeFirstName }}</span>
+            </h2>
+            <p>Track calls, follow-ups, and lead activity for {{ companyName || 'your workspace' }} from one place.</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="workspace overview-workspace" *ngIf="dashTab==='overview'">
+        <div class="workspace-header workspace-header-filters-only">
+          <div class="workspace-controls">
+            <label class="mini-field">
+              <span>Period</span>
+              <select class="field-select filter-select-field" [(ngModel)]="selectedPeriod" (change)="onPeriodChange(selectedPeriod)" aria-label="Overview period">
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="lastweek">Last 7 Days</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="metrics-strip">
+          <div class="metric-cell">
+            <div class="metric-label">Total Calls</div>
+            <div class="metric-value">{{ callStats?.total || 0 }}</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Connected</div>
+            <div class="metric-value">{{ callStats?.connected || 0 }}</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Talk Time</div>
+            <div class="metric-value">{{ fmtDur(callStats?.totalDuration || 0) }}</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Total Leads</div>
+            <div class="metric-value">{{ totalLeadsCount }}</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label">Follow-ups</div>
+            <div class="metric-value">{{ filteredFollowups.length }}</div>
+          </div>
+        </div>
+
+        <div class="overview-grid">
+          <section class="workspace-section">
+            <div class="section-header">
+              <div>
+                <div class="section-kicker">Performance</div>
+                <h3>Call trend</h3>
+              </div>
+              <div class="section-actions">
+                <label class="overview-view-control">
+                  <span>View:</span>
+                  <select class="field-select filter-select-field" [(ngModel)]="chartType" (change)="setChartType(chartType)" aria-label="Chart view">
+                    <option value="line">Timeline</option>
+                    <option value="bar">Breakdown</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <ng-container *ngIf="hasOverviewActivity; else overviewNoActivityState">
+              <div class="chart-frame">
+                <canvas id="timelineChart"></canvas>
+              </div>
+            </ng-container>
+          </section>
+
+          <section class="workspace-section">
+            <div class="section-header">
+              <div>
+                <div class="section-kicker">Distribution</div>
+                <h3>Call mix</h3>
+              </div>
+            </div>
+            <ng-container *ngIf="hasOverviewActivity; else overviewNoActivityState">
+              <div class="overview-side">
+                <div class="donut-frame">
+                  <canvas id="empDonutChart"></canvas>
+                </div>
+                <div class="summary-list call-mix-legend">
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-incoming"></span>Incoming</span>
+                    <strong>{{ callStats?.incoming || 0 }}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-outgoing"></span>Outgoing</span>
+                    <strong>{{ callStats?.outgoing || 0 }}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-missed"></span>Missed</span>
+                    <strong>{{ callStats?.missed || 0 }}</strong>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label"><span class="summary-dot summary-dot-rejected"></span>Rejected</span>
+                    <strong>{{ callStats?.rejected || 0 }}</strong>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </section>
+
+          <section class="workspace-section overview-activity-section">
+            <div class="section-header">
+              <div>
+                <div class="section-kicker">Recent Records</div>
+                <h3>Latest lead activity</h3>
+              </div>
+            </div>
+            <div class="table-scroll overview-table-scroll">
+              <table class="data-table compact-table overview-activity-table overview-resizable-table">
+                <colgroup>
+                  <col [style.width.%]="overviewActivityColumnWidths[0]" />
+                  <col [style.width.%]="overviewActivityColumnWidths[1]" />
+                  <col [style.width.%]="overviewActivityColumnWidths[2]" />
+                  <col [style.width.%]="overviewActivityColumnWidths[3]" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="overview-header-cell">
+                        <span>Company</span>
+                      </div>
+                      <button class="table-column-resizer" type="button" aria-label="Resize company column" (mousedown)="startOverviewColumnResize('activity', 0, $event)"></button>
+                    </th>
+                    <th>
+                      <div class="overview-header-cell">
+                        <span>Contact</span>
+                      </div>
+                      <button class="table-column-resizer" type="button" aria-label="Resize contact column" (mousedown)="startOverviewColumnResize('activity', 1, $event)"></button>
+                    </th>
+                    <th>
+                      <div class="overview-header-cell">
+                        <span>Status</span>
+                      </div>
+                      <button class="table-column-resizer" type="button" aria-label="Resize status column" (mousedown)="startOverviewColumnResize('activity', 2, $event)"></button>
+                    </th>
+                    <th><div class="overview-header-cell"><span>Updated</span></div></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="let lead of overviewRecentLeads"
+                    class="history-click-row"
+                    tabindex="0"
+                    role="button"
+                    (click)="openRecentLeadFullView(lead)"
+                    (keydown.enter)="openRecentLeadFullView(lead)"
+                    (keydown.space)="$event.preventDefault(); openRecentLeadFullView(lead)"
+                  >
+                    <td>{{ lead.leadCompanyName }}</td>
+                    <td>{{ lead.contactName || 'Primary Contact' }}</td>
+                    <td><span [style.color]="leadStatusColor(lead.status || 'New')">{{ lead.status || 'New' }}</span></td>
+                    <td>{{ fmtDate(lead.updatedAt || lead.createdAt) }}</td>
+                  </tr>
+                  <tr *ngIf="overviewRecentLeads.length === 0">
+                    <td colspan="4" class="empty-cell">No recent lead activity yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="workspace-section overview-activity-section">
+            <div class="section-header">
+              <div>
+                <div class="section-kicker">Next Actions</div>
+                <h3>Upcoming follow-ups</h3>
+              </div>
+            </div>
+            <div class="table-scroll overview-table-scroll">
+              <table class="data-table compact-table overview-upcoming-table overview-resizable-table">
+                <colgroup>
+                  <col [style.width.%]="overviewUpcomingColumnWidths[0]" />
+                  <col [style.width.%]="overviewUpcomingColumnWidths[1]" />
+                  <col [style.width.%]="overviewUpcomingColumnWidths[2]" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="overview-header-cell">
+                        <span>Company</span>
+                      </div>
+                      <button class="table-column-resizer" type="button" aria-label="Resize company column" (mousedown)="startOverviewColumnResize('upcoming', 0, $event)"></button>
+                    </th>
+                    <th>
+                      <div class="overview-header-cell">
+                        <span>Contact</span>
+                      </div>
+                      <button class="table-column-resizer" type="button" aria-label="Resize contact column" (mousedown)="startOverviewColumnResize('upcoming', 1, $event)"></button>
+                    </th>
+                    <th><div class="overview-header-cell"><span>Reminder</span></div></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="let bookmark of overviewUpcomingFollowups"
+                    (click)="openFollowupInWorkspace(bookmark)"
+                  >
+                    <td>{{ bookmark.companyName }}</td>
+                    <td>{{ bookmark.contactName || 'Primary Contact' }}</td>
+                    <td>{{ bookmark.reminderDate | date:'dd MMM yyyy' }}</td>
+                  </tr>
+                  <tr *ngIf="overviewUpcomingFollowups.length === 0">
+                    <td colspan="3" class="empty-cell overview-empty-cell">No follow-ups scheduled.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="workspace invoice-workspace" *ngIf="dashTab==='invoices'">
+        <div class="workspace-header invoice-feature-header">
+          <div class="workspace-controls invoice-feature-controls">
+            <label class="topbar-search invoice-feature-search" for="invoiceSearch">
+              <span class="topbar-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="6"></circle>
+                  <path d="m20 20-4.35-4.35"></path>
+                </svg>
+              </span>
+              <input
+                id="invoiceSearch"
+                class="topbar-input"
+                type="text"
+                placeholder="Search converted leads..."
+                [(ngModel)]="invoiceSearch"
+                (ngModelChange)="onInvoiceSearchChange()"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="invoice-feature-grid">
+          <section class="invoice-feature-pane invoice-converted-pane">
+            <div class="invoice-pane-header">
+              <div>
+                <h2>Converted Leads</h2>
+                <p>{{ invoiceEligibleLeadsLoading ? 'Loading companies' : (invoiceLeadCompanyTotal + ' listed') }}</p>
+              </div>
+            </div>
+            <div class="invoice-lead-list" (scroll)="onInvoiceLeadListScroll($event)">
+              <article class="invoice-lead-row" *ngFor="let company of invoiceLeadCompanies" (click)="openInvoiceModalForCompany(company.name)" tabindex="0" role="button">
+                <div class="invoice-lead-main">
+                  <span class="invoice-lead-company">{{ company.name }}</span>
+                </div>
+              </article>
+              <div *ngIf="invoiceEligibleLeadsLoading" class="empty-state-inline">Loading converted leads...</div>
+              <div *ngIf="invoiceLeadCompaniesLoadingMore" class="empty-state-inline">Loading more converted leads...</div>
+              <div *ngIf="!invoiceEligibleLeadsLoading && !invoiceLeadCompaniesLoadingMore && invoiceLeadCompanies.length===0" class="empty-state-inline">No converted leads match the current search.</div>
+            </div>
+          </section>
+
+          <section class="invoice-feature-pane invoice-history-pane">
+            <div class="invoice-pane-header invoice-pane-header-stacked">
+              <div>
+                <h2>Invoice History</h2>
+                <p>{{ filteredInvoiceRecords.length }} saved invoices</p>
+              </div>
+              <div class="invoice-history-tools">
+                <label class="topbar-search invoice-history-search" for="invoiceHistorySearch">
+                  <span class="topbar-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="6"></circle>
+                      <path d="m20 20-4.35-4.35"></path>
+                    </svg>
+                  </span>
+                  <input
+                    id="invoiceHistorySearch"
+                    class="topbar-input"
+                    type="text"
+                    placeholder="Search invoices..."
+                    [(ngModel)]="invoiceHistorySearch"
+                    (ngModelChange)="onInvoiceHistoryQueryChange()"
+                  />
+                </label>
+                <button class="toolbar-button invoice-date-filter-button" type="button" (click)="invoiceDateFilterOpen=!invoiceDateFilterOpen">
+                  Date Filter
+                </button>
+              </div>
+            </div>
+            <div class="invoice-date-filter-row" *ngIf="invoiceDateFilterOpen">
+              <label class="mini-field">
+                <span>From</span>
+                <input class="field-input" type="date" [(ngModel)]="invoiceDateFrom" (change)="onInvoiceHistoryQueryChange()" />
+              </label>
+              <label class="mini-field">
+                <span>To</span>
+                <input class="field-input" type="date" [(ngModel)]="invoiceDateTo" [max]="todayInputDate" (change)="onInvoiceHistoryQueryChange()" />
+              </label>
+              <button class="toolbar-button invoice-date-clear" type="button" (click)="invoiceDateFrom=''; invoiceDateTo=''; onInvoiceHistoryQueryChange()">Clear</button>
+            </div>
+            <div class="table-scroll invoice-history-table" (scroll)="onInvoiceHistoryScroll($event)">
+              <table class="data-table compact-table">
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let invoice of filteredInvoiceRecords" class="history-click-row" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
+                    <td>{{ invoice.invoiceNumber }}</td>
+                    <td>{{ invoice.leadCompanyName }}</td>
+                    <td>{{ invoice.contactName || invoice.contactNumber }}</td>
+                    <td><span class="invoice-status-chip" [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
+                    <td>{{ formatInvoiceMoney(invoice.total) }}</td>
+                    <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
+                  </tr>
+                  <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
+                    <td colspan="6" class="empty-cell">No invoices saved yet.</td>
+                  </tr>
+                  <tr *ngIf="invoiceRecordsLoading">
+                    <td colspan="6" class="empty-cell">Loading invoices...</td>
+                  </tr>
+                  <tr *ngIf="invoiceRecordsLoadingMore">
+                    <td colspan="6" class="empty-cell">Loading more invoices...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="workspace invoice-workspace quotation-workspace" *ngIf="dashTab==='quotations'">
+        <div class="workspace-header invoice-feature-header">
+          <div class="workspace-controls invoice-feature-controls">
+            <label class="topbar-search invoice-feature-search" for="quotationSearch">
+              <span class="topbar-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+              </span>
+              <input id="quotationSearch" class="topbar-input" type="text" placeholder="Search leads..." [(ngModel)]="quotationSearch" (ngModelChange)="onQuotationSearchChange()" />
+            </label>
+          </div>
+        </div>
+
+        <div class="invoice-feature-grid">
+          <section class="invoice-feature-pane invoice-converted-pane">
+            <div class="invoice-pane-header">
+              <div>
+                <h2>All Leads</h2>
+                <p>{{ quotationLeadsLoading ? 'Loading companies' : (quotationLeadCompanyTotal + ' listed') }}</p>
+              </div>
+            </div>
+            <div class="invoice-lead-list" (scroll)="onQuotationLeadListScroll($event)">
+              <article class="invoice-lead-row" *ngFor="let company of quotationLeadCompanies" (click)="openQuotationModalForCompany(company.name)" tabindex="0" role="button">
+                <div class="invoice-lead-main">
+                  <span class="invoice-lead-company">{{ company.name }}</span>
+                </div>
+              </article>
+              <div *ngIf="quotationLeadsLoading" class="empty-state-inline">Loading leads...</div>
+              <div *ngIf="quotationLeadCompaniesLoadingMore" class="empty-state-inline">Loading more leads...</div>
+              <div *ngIf="!quotationLeadsLoading && !quotationLeadCompaniesLoadingMore && quotationLeadCompanies.length===0" class="empty-state-inline">No leads match the current search.</div>
+            </div>
+          </section>
+
+          <section class="invoice-feature-pane invoice-history-pane">
+            <div class="invoice-pane-header invoice-pane-header-stacked">
+              <div>
+                <h2>Quotation History</h2>
+                <p>{{ filteredQuotationRecords.length }} saved quotations</p>
+              </div>
+              <div class="invoice-history-tools">
+                <label class="topbar-search invoice-history-search" for="quotationHistorySearch">
+                  <span class="topbar-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+                  </span>
+                  <input id="quotationHistorySearch" class="topbar-input" type="text" placeholder="Search quotations..." [(ngModel)]="quotationHistorySearch" (ngModelChange)="onQuotationHistoryQueryChange()" />
+                </label>
+                <button class="toolbar-button invoice-date-filter-button" type="button" (click)="quotationDateFilterOpen=!quotationDateFilterOpen">Date Filter</button>
+              </div>
+            </div>
+            <div class="invoice-date-filter-row" *ngIf="quotationDateFilterOpen">
+              <label class="mini-field">
+                <span>From</span>
+                <input class="field-input" type="date" [(ngModel)]="quotationDateFrom" (change)="onQuotationHistoryQueryChange()" />
+              </label>
+              <label class="mini-field">
+                <span>To</span>
+                <input class="field-input" type="date" [(ngModel)]="quotationDateTo" [max]="todayInputDate" (change)="onQuotationHistoryQueryChange()" />
+              </label>
+              <button class="toolbar-button invoice-date-clear" type="button" (click)="quotationDateFrom=''; quotationDateTo=''; onQuotationHistoryQueryChange()">Clear</button>
+            </div>
+            <div class="table-scroll invoice-history-table" (scroll)="onQuotationHistoryScroll($event)">
+              <table class="data-table compact-table">
+                <thead>
+                  <tr>
+                    <th>Quotation</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let quote of filteredQuotationRecords" class="history-click-row" (click)="openSavedQuotation(quote)" tabindex="0" role="button">
+                    <td>{{ quote.quotationNumber }}</td>
+                    <td>{{ quote.leadCompanyName }}</td>
+                    <td>{{ quote.contactName || quote.contactNumber }}</td>
+                    <td>{{ formatInvoiceMoney(quote.total) }}</td>
+                    <td>{{ quote.quotationDate | date:'dd MMM yyyy' }}</td>
+                  </tr>
+                  <tr *ngIf="!quotationRecordsLoading && filteredQuotationRecords.length===0">
+                    <td colspan="5" class="empty-cell">No quotations saved yet.</td>
+                  </tr>
+                  <tr *ngIf="quotationRecordsLoading">
+                    <td colspan="5" class="empty-cell">Loading quotations...</td>
+                  </tr>
+                  <tr *ngIf="quotationRecordsLoadingMore">
+                    <td colspan="5" class="empty-cell">Loading more quotations...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="workspace record-workspace lead-workspace" *ngIf="dashTab==='leads' || dashTab==='interested' || dashTab==='dnp' || dashTab==='converted' || dashTab==='favourite' || dashTab==='today-calls'">
+        <div class="workspace-header lead-workspace-header workspace-header-filters-only">
+          <div class="workspace-controls workspace-controls-stack">
+            <label class="mini-field">
+              <span>Lead Filter</span>
+              <select class="field-select filter-select-field" [(ngModel)]="selectedLeadSet" (ngModelChange)="onLeadFilterChange()" aria-label="Lead filter">
+                <option value="">All Leads</option>
+                <option *ngFor="let set of availableLeadSets" [value]="set">{{ set }}</option>
+              </select>
+            </label>
+
+            <label class="mini-field lead-division-filter" *ngIf="isLeadSegregationFilterTab()">
+              <span>Lead Segregation</span>
+              <select class="field-select filter-select-field division-filter-field" [(ngModel)]="selectedLeadDivision" (ngModelChange)="onLeadFilterChange()" aria-label="Lead segregation filter">
+                <option value="">All Segments</option>
+                <option *ngFor="let division of availableLeadDivisions" [value]="division">{{ division }}</option>
+              </select>
+            </label>
+
+            <ng-container *ngIf="dashTab==='leads'">
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="leadStatusFilter" (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
+                  <option value="">All Status</option>
+                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+            </ng-container>
+
+            <ng-container *ngIf="dashTab==='interested'">
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="selectedInterestedStatus" (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
+                  <option value="All">All Statuses</option>
+                  <option *ngFor="let st of INTERESTED_PAGE_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+            </ng-container>
+
+            <ng-container *ngIf="dashTab==='dnp'">
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="selectedDnpStatus" (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
+                  <option value="All">All Statuses</option>
+                  <option *ngFor="let st of DNP_PAGE_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+            </ng-container>
+
+            <ng-container *ngIf="dashTab==='converted'">
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="selectedConvertedStatus" (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
+                  <option value="All">All Statuses</option>
+                  <option *ngFor="let st of CONVERTED_PAGE_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+            </ng-container>
+
+            <ng-container *ngIf="dashTab==='favourite'">
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="selectedFavouriteStatus" (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
+                  <option value="All">All Statuses</option>
+                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+            </ng-container>
+
+            <ng-container *ngIf="dashTab==='today-calls'">
+              <label class="mini-field">
+                <span>Date</span>
+                <input
+                  class="field-input filter-date-field"
+                  type="date"
+                  [(ngModel)]="historyFilterDate"
+                  [max]="todayInputDate"
+                  (change)="onHistoryDateChange()"
+                  aria-label="History date"
+                />
+              </label>
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="todayFilterStatus" (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
+                  <option value="All">All Statuses</option>
+                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+            </ng-container>
+          </div>
+        </div>
+
+        <section class="history-summary-panel" *ngIf="dashTab==='today-calls'">
+          <div class="history-summary-card history-summary-card-call">
+            <span class="history-summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+            </span>
+            <span class="history-summary-copy">
+              <span>Total Calls</span>
+              <strong>{{ todayCallSummary.total }}</strong>
+            </span>
+          </div>
+
+          <div class="history-summary-card history-summary-card-connected">
+            <span class="history-summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <path d="m22 4-10 10.01-3-3" />
+              </svg>
+            </span>
+            <span class="history-summary-copy">
+              <span>Connected</span>
+              <strong>{{ todayCallSummary.connected }}</strong>
+            </span>
+          </div>
+
+          <div class="history-status-cluster" *ngIf="todayStatusSummaryItems.length > 0">
+            <button
+              class="history-status-chip"
+              type="button"
+              *ngFor="let item of todayStatusSummaryItems; trackBy: trackStatusSummary"
+              [class.active]="todayFilterStatus===item.status"
+              (click)="setTodayFilterStatus(item.status)"
+            >
+              <span>{{ item.status }}</span>
+              <strong>{{ item.count }}</strong>
+            </button>
+          </div>
+        </section>
+
+        <div class="record-frame lead-record-frame" [class.lead-record-frame-detail]="showLeadRecordView" [class.lead-record-frame-history]="dashTab==='today-calls'">
+          <aside class="company-rail lead-company-rail">
+            <div class="rail-header">
+              <div class="rail-heading">Companies</div>
+              <div class="rail-total">{{ employeeLeadCompanyTotal || activeLeadViewCompanies.length }} listed</div>
+            </div>
+            <div class="rail-list" (scroll)="onEmployeeLeadCompanyScroll($event)">
+              <button
+                class="rail-item"
+                *ngFor="let company of activeLeadViewCompanies; trackBy: trackCompanyName"
+                [class.active]="activeSelectedCompany===company"
+                (click)="selectLeadCompany(company)"
+              >
+                <span class="rail-item-copy">
+                  <span class="rail-item-name">{{ company }}</span>
+                  <span class="rail-item-meta">{{ activeCompanyLeadCount(company) }} contacts</span>
+                </span>
+              </button>
+              <div *ngIf="activeLeadViewCompanies.length===0" class="empty-state-inline empty-state-inline-minimal">No records.</div>
+              <div *ngIf="employeeLeadCompaniesLoading" class="scroll-page-state">Loading companies...</div>
+              <div *ngIf="!employeeLeadCompaniesLoading && activeLeadViewCompanies.length > 0 && !employeeLeadCompanyHasMore" class="scroll-page-state">End of companies</div>
+            </div>
+          </aside>
+
+          <ng-container *ngIf="showLeadRecordView && currentSelectedLead as lead; else leadListMode">
+            <app-employee-lead-detail
+              [lead]="lead"
+              [drawerSection]="drawerSection"
+              [statuses]="LEAD_STATUSES"
+              [historyLogs]="historyLogs"
+              [historyLoading]="historyLoading"
+              [remarkValue]="leadRemarksInputs[lead._id] || ''"
+              (remarkValueChange)="leadRemarksInputs[lead._id] = $event"
+              [remarkPosting]="remarkPostingIds.has(lead._id)"
+              [remarkDeletingIds]="remarkDeletingIds"
+              [statusColor]="leadStatusColorFn"
+              [formatDate]="fmtDateFn"
+              (back)="closeLeadRecordView()"
+              (detailsOpen)="selectLeadRecord(lead, 'details'); showHistoryModal=false"
+              (historyOpen)="openHistory(lead)"
+              (invoiceOpen)="openInvoiceModal(lead)"
+              (favouriteToggle)="toggleFavourite(lead)"
+              (statusChange)="updateLeadStatus(lead, $event)"
+              (remarkAdd)="addLeadRemark(lead)"
+              (remarkDelete)="deleteLeadRemark(lead, $event)"
+            ></app-employee-lead-detail>
+          </ng-container>
+
+          <ng-template #leadListMode>
+            <section class="record-table-pane lead-table-pane lead-table-pane-full lead-company-pane">
+              <div class="table-pane-header lead-company-pane-header">
+                <div>
+                  <h3>{{ activeSelectedCompany || activeWorkspaceTitle }}</h3>
+                  <div class="lead-company-pane-subtitle" *ngIf="activeSelectedCompany && activeCompanyPreviewLine(activeSelectedCompany)">
+                    {{ activeCompanyPreviewLine(activeSelectedCompany) }}
+                  </div>
+                </div>
+                <div class="lead-pane-actions" *ngIf="dashTab==='leads' && activeLeadBannerLead()">
+                  <button
+                    class="ai-summary-button ai-summary-anchor"
+                    type="button"
+                    (click)="openAiBriefForCurrentCompany($event)"
+                  >
+                    <span aria-hidden="true">✦</span>
+                    <span>AI Summary</span>
+                  </button>
+                  <button class="toolbar-button invoice-date-filter-button" type="button" (click)="openCompanyFullView($event)">
+                    Full View
+                  </button>
+                </div>
+              </div>
+
+              <ng-container *ngIf="isAiBriefPopupOpen(currentAiSummaryTargetKey()); else leadCardsContent">
+                <section class="ai-summary-tab-panel ai-summary-anchor" (click)="$event.stopPropagation()">
+                  <div class="ai-summary-tab-head">
+                    <div>
+                      <div class="ai-summary-tab-kicker">AI Summary</div>
+                      <h4>{{ aiBriefCompany || activeSelectedCompany || activeWorkspaceTitle }}</h4>
+                    </div>
+                    <button class="secondary-action back-action-inline" type="button" (click)="closeAiBriefPopup()">
+                      <span class="back-action-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                          <path d="m15 18-6-6 6-6" />
+                          <path d="M21 12H9" />
+                        </svg>
+                      </span>
+                      <span>Back to Leads</span>
+                    </button>
+                  </div>
+
+                  <div class="empty-state-inline empty-state-inline-minimal" *ngIf="aiBriefLoading">Loading summary.</div>
+                  <div class="ai-summary-empty-panel" *ngIf="!aiBriefLoading && aiBriefError">
+                    <h4>Summary unavailable</h4>
+                    <p>{{ aiBriefError }}</p>
+                  </div>
+
+                  <div class="ai-summary-tab-body" *ngIf="!aiBriefLoading && aiBrief">
+                    <ng-template [ngTemplateOutlet]="aiSummaryFullTemplate"></ng-template>
+                  </div>
+                </section>
+              </ng-container>
+
+              <ng-template #leadCardsContent>
+              <div class="lead-company-pane-scroll" (scroll)="onEmployeeLeadContactScroll($event)">
+                <div class="lead-card-grid" *ngIf="activeLeadRows.length > 0; else emptyLeadCompanyState">
+                  <app-employee-lead-card
+                    *ngFor="let lead of activeLeadRows; trackBy: trackLeadId"
+                    [lead]="lead"
+                    [statuses]="LEAD_STATUSES"
+                    [productRemarks]="productRemarks"
+                    [remarkValue]="leadRemarksInputs[lead._id] || ''"
+                    (remarkValueChange)="leadRemarksInputs[lead._id] = $event"
+                    [remarkPosting]="remarkPostingIds.has(lead._id)"
+                    [statusUpdating]="updatingLeadId===lead._id"
+                    [showQuotationAction]="dashTab==='leads' || dashTab==='interested' || dashTab==='dnp' || dashTab==='favourite'"
+                    [statusColor]="leadStatusColorFn"
+                    (starToggle)="toggleStar(lead)"
+                    (quotationOpen)="openQuotationModal(lead)"
+                    (invoiceOpen)="openInvoiceModal(lead)"
+                    (remarkAdd)="addLeadRemark(lead)"
+                    (statusChange)="updateLeadStatus(lead, $event)"
+                    (followupOpen)="openFollowupModal(lead)"
+                    (favouriteToggle)="toggleFavourite(lead)"
+                    (remarkHistoryOpen)="openCompanyRemarkHistory(lead)"
+                  ></app-employee-lead-card>
+                </div>
+
+                <ng-template #emptyLeadCompanyState>
+                  <div *ngIf="leadsLoading || employeeLeadContactsLoadingMore; else noLeadContactsState" class="empty-state-inline empty-state-inline-pane">Loading contacts...</div>
+                  <ng-template #noLeadContactsState>
+                    <div class="empty-state-inline empty-state-inline-pane">No contacts match the current filters.</div>
+                  </ng-template>
+                </ng-template>
+                <div *ngIf="employeeLeadContactsLoadingMore && activeLeadRows.length > 0" class="scroll-page-state">Loading contacts...</div>
+                <div *ngIf="!employeeLeadContactsLoadingMore && activeLeadRows.length > 0 && !employeeLeadContactsHasMore" class="scroll-page-state">End of contacts</div>
+              </div>
+              </ng-template>
+
+            </section>
+          </ng-template>
+        </div>
+      </section>
+
+      <section class="workspace record-workspace" *ngIf="dashTab==='followups'">
+        <div class="workspace-header lead-workspace-header workspace-header-filters-only">
+          <div class="workspace-controls workspace-controls-stack">
+            <label class="mini-field">
+              <span>Filter</span>
+              <select class="field-select filter-select-field" [(ngModel)]="followupFilter" (ngModelChange)="onFollowupQueryChange()">
+                <option value="all">All Follow-ups</option>
+                <option value="today">Today</option>
+                <option value="custom">Custom Date</option>
+              </select>
+            </label>
+            <label class="mini-field">
+              <span>Date</span>
+              <input class="field-input" type="date" [(ngModel)]="selectedFollowupDate" [max]="todayInputDate" (change)="followupFilter='custom'; onFollowupQueryChange()" />
+            </label>
+          </div>
+        </div>
+
+        <div class="record-frame lead-record-frame followup-record-frame">
+          <aside class="company-rail lead-company-rail followup-company-rail">
+            <div class="rail-header">
+              <div class="rail-heading">Companies</div>
+              <div class="rail-total">{{ uniqueFollowupCompanies.length }} listed</div>
+            </div>
+            <div class="rail-list">
+              <button
+                class="rail-item"
+                *ngFor="let company of uniqueFollowupCompanies"
+                [class.active]="activeFollowupCompany===company"
+                (click)="selectLeadCompany(company)"
+              >
+                <span class="rail-item-copy">
+                  <span class="rail-item-name">{{ company }}</span>
+                  <span class="rail-item-meta">{{ followupsInCompanyCount(company) }} follow-ups</span>
+                </span>
+              </button>
+              <div *ngIf="uniqueFollowupCompanies.length===0" class="empty-state-inline empty-state-inline-minimal">No records.</div>
+            </div>
+          </aside>
+
+          <ng-container *ngIf="showFollowupRecordView; else followupListMode">
+            <ng-template [ngTemplateOutlet]="followupDrawerTemplate"></ng-template>
+          </ng-container>
+
+          <ng-template #followupListMode>
+            <section class="record-table-pane lead-table-pane lead-table-pane-full lead-company-pane">
+              <div class="table-pane-header lead-company-pane-header">
+                <div>
+                  <h3>{{ activeFollowupCompany || 'Follow-up queue' }}</h3>
+                  <div class="lead-company-pane-subtitle" *ngIf="activeFollowupCompany && followupCompanyPreviewLine(activeFollowupCompany)">
+                    {{ followupCompanyPreviewLine(activeFollowupCompany) }}
+                  </div>
+                </div>
+                <div class="lead-pane-actions">
+                  <div class="table-pane-meta">{{ followupsInActiveCompany.length }} follow-ups</div>
+                  <button
+                    class="ai-summary-button ai-summary-anchor"
+                    type="button"
+                    *ngIf="activeFollowupHeroLead()"
+                    (click)="openAiBriefForCurrentCompany($event)"
+                  >
+                    <span aria-hidden="true">✦</span>
+                    <span>AI Summary</span>
+                  </button>
+                  <button
+                    class="toolbar-button invoice-date-filter-button"
+                    type="button"
+                    *ngIf="activeFollowupHeroLead()"
+                    (click)="openAiBriefFullView($event)"
+                  >
+                    Full View
+                  </button>
+                </div>
+              </div>
+
+              <ng-container *ngIf="isAiBriefPopupOpen(currentAiSummaryTargetKey()); else followupCardsContent">
+                <section class="ai-summary-tab-panel ai-summary-anchor" (click)="$event.stopPropagation()">
+                  <div class="ai-summary-tab-head">
+                    <div>
+                      <div class="ai-summary-tab-kicker">AI Summary</div>
+                      <h4>{{ aiBriefCompany || activeFollowupCompany || 'Follow-up queue' }}</h4>
+                    </div>
+                    <button class="secondary-action back-action-inline" type="button" (click)="closeAiBriefPopup()">
+                      <span class="back-action-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                          <path d="m15 18-6-6 6-6" />
+                          <path d="M21 12H9" />
+                        </svg>
+                      </span>
+                      <span>Back to Follow-ups</span>
+                    </button>
+                  </div>
+
+                  <div class="empty-state-inline empty-state-inline-minimal" *ngIf="aiBriefLoading">Loading summary.</div>
+                  <div class="ai-summary-empty-panel" *ngIf="!aiBriefLoading && aiBriefError">
+                    <h4>Summary unavailable</h4>
+                    <p>{{ aiBriefError }}</p>
+                  </div>
+
+                  <div class="ai-summary-tab-body" *ngIf="!aiBriefLoading && aiBrief">
+                    <ng-template [ngTemplateOutlet]="aiSummaryFullTemplate"></ng-template>
+                  </div>
+                </section>
+              </ng-container>
+
+              <ng-template #followupCardsContent>
+              <div class="lead-company-pane-scroll" (scroll)="onFollowupScroll($event)">
+                <div
+                  class="lead-card-grid lead-card-grid-followups"
+                  [class.lead-card-grid-single]="followupsInActiveCompany.length===1"
+                  *ngIf="followupsInActiveCompany.length > 0; else emptyFollowupCompanyState"
+                >
+                  <ng-container *ngFor="let bookmark of followupsInActiveCompany">
+                    <ng-container *ngIf="{ matchedLead: getMatchedLeadForBookmark(bookmark) } as ctx">
+                      <article
+                        class="lead-record-card followup-record-card"
+                        role="button"
+                        tabindex="0"
+                        [attr.title]="'Open full details for ' + (bookmark.contactName || 'follow-up contact')"
+                        (click)="openLeadFromFollowup(bookmark)"
+                        (keydown.enter)="openLeadFromFollowup(bookmark)"
+                      >
+                        <div class="lead-record-card-head">
+                          <div class="lead-record-title-row">
+                            <h4 [title]="bookmark.contactName || 'Follow-up Contact'">{{ bookmark.contactName || 'Follow-up Contact' }}</h4>
+                            <button
+                              class="lead-card-star"
+                              type="button"
+                              [class.active]="ctx.matchedLead?.isStarred"
+                              [disabled]="!ctx.matchedLead"
+                              [attr.aria-label]="ctx.matchedLead ? (ctx.matchedLead.isStarred ? 'Unstar lead' : 'Star lead') : 'Star unavailable'"
+                              [attr.title]="ctx.matchedLead ? (ctx.matchedLead.isStarred ? 'Unstar lead' : 'Star lead') : 'Star unavailable'"
+                              (click)="$event.stopPropagation(); ctx.matchedLead && toggleStar(ctx.matchedLead)"
+                            >
+                              <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="lead-record-line" [title]="bookmark.contactNumber || '-'">
+                          <span class="lead-record-line-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                          </span>
+                          <span class="lead-record-line-value">{{ bookmark.contactNumber || '-' }}</span>
+                        </div>
+
+                        <button
+                          class="lead-card-invoice-action"
+                          type="button"
+                          *ngIf="ctx.matchedLead; else followupOpenDetailsAction"
+                          title="Generate invoice"
+                          (click)="$event.stopPropagation(); openInvoiceModal(ctx.matchedLead)"
+                        >
+                          <span aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
+                          </span>
+                          <span>Generate Invoice</span>
+                        </button>
+                        <ng-template #followupOpenDetailsAction>
+                          <button
+                            class="lead-card-invoice-action"
+                            type="button"
+                            title="Open full details"
+                            (click)="$event.stopPropagation(); openLeadFromFollowup(bookmark)"
+                          >
+                            <span aria-hidden="true">
+                              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /><path d="M5 12h10" /></svg>
+                            </span>
+                            <span>Open Full Details</span>
+                          </button>
+                        </ng-template>
+
+                        <div class="lead-record-line" [title]="followupReminderLabel(bookmark)">
+                          <span class="lead-record-line-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M8 2v4" /><path d="M16 2v4" /><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M3 10h18" /></svg>
+                          </span>
+                          <span class="lead-record-line-value">{{ followupReminderLabel(bookmark) }}</span>
+                        </div>
+
+                        <div class="lead-record-line lead-record-email" [title]="ctx.matchedLead?.directorEmailAddress || 'No email available'">
+                          <span class="lead-record-line-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
+                          </span>
+                          <span class="lead-record-line-value">{{ ctx.matchedLead?.directorEmailAddress || 'No email available' }}</span>
+                        </div>
+
+                        <div class="lead-card-remarks">
+                          <div class="lead-card-remarks-title">
+                            <span class="lead-record-line-icon" aria-hidden="true">
+                              <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></svg>
+                            </span>
+                            <span>Remarks</span>
+                            <button
+                              class="text-action"
+                              type="button"
+                              title="View remark history"
+                              (click)="$event.stopPropagation(); openFollowupHistory(bookmark)"
+                            >
+                              History
+                            </button>
+                          </div>
+                          <div class="lead-card-remark-list" *ngIf="followupCardNotePreviewList(bookmark).length; else emptyFollowupCardRemarks">
+                            <div class="lead-card-remark-item" *ngFor="let remark of followupCardNotePreviewList(bookmark)" [title]="remark">{{ remark }}</div>
+                          </div>
+                          <ng-template #emptyFollowupCardRemarks>
+                            <div class="lead-card-empty">No remarks added.</div>
+                          </ng-template>
+                          <div class="lead-card-remark-entry">
+                            <div class="lead-card-remark-combobox" (click)="$event.stopPropagation()">
+                              <input
+                                class="field-input lead-card-remark-input"
+                                type="text"
+                                [ngModel]="followupRemarkInputs[bookmark._id] || ''"
+                                (ngModelChange)="handleFollowupRemarkInput(bookmark, $event)"
+                                (click)="$event.stopPropagation()"
+                                (focus)="openFollowupRemarkMenu(bookmark._id)"
+                                (blur)="queueCloseFollowupRemarkMenu(bookmark._id)"
+                                (keyup.enter)="$event.stopPropagation(); addFollowupRemark(bookmark)"
+                                autocomplete="off"
+                                autocapitalize="off"
+                                autocorrect="off"
+                                spellcheck="false"
+                                placeholder="Type remark..."
+                                [title]="followupRemarkInputs[bookmark._id] || 'Type remark'"
+                              />
+                              <button
+                                class="lead-card-remark-toggle"
+                                type="button"
+                                title="Show admin remark options"
+                                aria-label="Show admin remark options"
+                                (mousedown)="$event.preventDefault()"
+                                (click)="toggleFollowupRemarkMenu(bookmark._id)"
+                              >
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                              </button>
+                              <div class="lead-card-remark-options" *ngIf="isFollowupRemarkMenuOpen(bookmark._id) && filteredFollowupAdminRemarkOptions(bookmark).length > 0">
+                                <button
+                                  class="lead-card-remark-option"
+                                  type="button"
+                                  *ngFor="let remark of filteredFollowupAdminRemarkOptions(bookmark)"
+                                  [title]="remark"
+                                  (mousedown)="$event.preventDefault()"
+                                  (click)="selectFollowupAdminRemark(bookmark, remark)"
+                                >
+                                  {{ remark }}
+                                </button>
+                              </div>
+                            </div>
+                            <button
+                              class="lead-card-add-remark"
+                              type="button"
+                              title="Add remark"
+                              aria-label="Add remark"
+                              (click)="$event.stopPropagation(); addFollowupRemark(bookmark)"
+                              [disabled]="!canAddFollowupRemark(bookmark)"
+                            >
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="lead-card-actions">
+                          <ng-container *ngIf="ctx.matchedLead; else followupUnavailableStatus">
+                            <select
+                              class="field-select lead-card-status-select"
+                              [ngModel]="ctx.matchedLead.status"
+                              (click)="$event.stopPropagation()"
+                              (ngModelChange)="updateLeadStatus(ctx.matchedLead, $event)"
+                              [style.color]="leadStatusColor(ctx.matchedLead.status)"
+                              [disabled]="updatingLeadId===ctx.matchedLead._id"
+                              [title]="ctx.matchedLead.status || 'Lead status'"
+                              aria-label="Lead status"
+                            >
+                              <option *ngFor="let st of LEAD_STATUSES" [value]="st" [style.color]="leadStatusColor(st)">{{ st }}</option>
+                            </select>
+                          </ng-container>
+                          <ng-template #followupUnavailableStatus>
+                            <select
+                              class="field-select lead-card-status-select"
+                              [ngModel]="'Follow-up'"
+                              disabled
+                              title="Lead status unavailable"
+                              aria-label="Lead status unavailable"
+                            >
+                              <option value="Follow-up">Follow-up</option>
+                            </select>
+                          </ng-template>
+
+                          <button
+                            class="lead-card-icon-action lead-card-followup-action"
+                            type="button"
+                            title="Edit follow-up"
+                            aria-label="Edit follow-up"
+                            (click)="$event.stopPropagation(); openEditFollowupModal(bookmark)"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                          </button>
+
+                          <button
+                            class="lead-card-icon-action lead-card-favourite-action"
+                            type="button"
+                            [class.active]="ctx.matchedLead?.isFavourite"
+                            [disabled]="!ctx.matchedLead"
+                            [attr.aria-label]="ctx.matchedLead ? (ctx.matchedLead.isFavourite ? 'Remove from Favorites' : 'Add to Favorites') : 'Favorites unavailable'"
+                            [attr.title]="ctx.matchedLead ? (ctx.matchedLead.isFavourite ? 'Remove from Favorites' : 'Add to Favorites') : 'Favorites unavailable'"
+                            (click)="$event.stopPropagation(); ctx.matchedLead && toggleFavourite(ctx.matchedLead)"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                          </button>
+                        </div>
+                      </article>
+                    </ng-container>
+                  </ng-container>
+                </div>
+
+                <ng-template #emptyFollowupCompanyState>
+                  <div class="empty-state-inline empty-state-inline-pane">No follow-ups available in this queue.</div>
+                </ng-template>
+              </div>
+              </ng-template>
+            </section>
+          </ng-template>
+        </div>
+      </section>
+    </main>
+  </section>
+</div>
+
+<ng-template #overviewNoActivityState>
+  <div class="overview-empty-stage">
+    <div class="overview-empty-panel">No activity</div>
+  </div>
+</ng-template>
+
+<ng-template #aiSummaryFullTemplate>
+  <div class="lead-ai-grid ai-summary-popover-full">
+    <div class="lead-ai-detail-meta">
+      <span class="lead-ai-chip" *ngIf="aiBrief?.industry">{{ aiBrief?.industry }}</span>
+      <a *ngIf="aiBrief?.officialWebsite as officialWebsite" class="lead-ai-chip lead-ai-chip-link" [href]="officialWebsite" target="_blank" rel="noopener noreferrer">
+        {{ hostnameFromUrl(officialWebsite) }}
+      </a>
+      <span class="lead-ai-chip" *ngIf="aiBrief?.sources?.length">{{ aiBrief?.sources?.length }} sources</span>
+      <span class="lead-ai-chip" *ngIf="aiBrief?.topRecommendations?.length">{{ aiBrief?.topRecommendations?.length }} recommendations</span>
+    </div>
+
+    <div class="lead-ai-detail-panels">
+      <div class="lead-ai-detail-panel-card">
+        <div class="lead-ai-section-label">Business Summary</div>
+        <p class="drawer-copy">{{ aiBrief?.businessSummary }}</p>
+      </div>
+      <div class="lead-ai-detail-panel-card" *ngIf="aiBrief?.primaryPitch">
+        <div class="lead-ai-section-label">Pitch Line</div>
+        <p class="drawer-copy">{{ aiBrief?.primaryPitch }}</p>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="aiBrief?.topRecommendations?.length">
+      <div class="lead-ai-section-label">What Softrate Can Offer</div>
+      <div class="lead-ai-recommendations">
+        <article class="lead-ai-recommendation" *ngFor="let recommendation of aiBrief?.topRecommendations">
+          <div class="lead-ai-recommendation-top">
+            <span class="lead-ai-rank">#{{ recommendation.rank }}</span>
+            <span class="lead-ai-tier">{{ recommendation.tier }}</span>
+          </div>
+          <h5>{{ recommendation.serviceName }}</h5>
+          <p class="drawer-copy"><strong>Fit:</strong> {{ recommendation.fitReason }}</p>
+          <p class="drawer-copy"><strong>Pain point:</strong> {{ recommendation.painPointMatch }}</p>
+          <p class="drawer-copy"><strong>Pitch:</strong> {{ recommendation.pitchAngle }}</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="aiBrief?.discoveryQuestions?.length">
+      <div class="lead-ai-section-label">Discovery Questions</div>
+      <div class="lead-ai-list">
+        <div class="lead-ai-list-item" *ngFor="let question of aiBrief?.discoveryQuestions">{{ question }}</div>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="aiBrief?.servicesOrPlatforms?.length">
+      <div class="lead-ai-section-label">Company Services / Platforms</div>
+      <div class="lead-ai-chip-row">
+        <span class="lead-ai-chip lead-ai-chip-soft" *ngFor="let item of aiBrief?.servicesOrPlatforms">{{ item }}</span>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="aiBrief?.sourceFindings?.length">
+      <div class="lead-ai-section-label">Research Signals</div>
+      <div class="lead-ai-list">
+        <div class="lead-ai-list-item" *ngFor="let finding of aiBrief?.sourceFindings">
+          <strong>{{ finding.title }}</strong>
+          <span>{{ finding.finding }}</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="aiBriefOfficialSources() as officialSources">
+      <div class="lead-detail-section" *ngIf="officialSources.length">
+        <div class="lead-ai-section-label">Official Company Sources</div>
+        <div class="lead-ai-source-list">
+          <a class="lead-ai-source" *ngFor="let source of officialSources" [href]="source.url" target="_blank" rel="noopener noreferrer">
+            <span class="lead-ai-source-title">{{ source.title }}</span>
+            <span class="lead-ai-source-meta">{{ aiBriefSourceMetaLabel(source, 'official') }}</span>
+          </a>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="aiBriefResearchSources() as researchSources">
+      <div class="lead-detail-section" *ngIf="researchSources.length">
+        <div class="lead-ai-section-label">Research Sources</div>
+        <div class="lead-ai-source-list">
+          <a class="lead-ai-source" *ngFor="let source of researchSources" [href]="source.url" target="_blank" rel="noopener noreferrer">
+            <span class="lead-ai-source-title">{{ source.title }}</span>
+            <span class="lead-ai-source-meta">{{ aiBriefSourceMetaLabel(source, 'research') }}</span>
+          </a>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</ng-template>
+
+<ng-template #followupDrawerTemplate>
+  <section class="lead-detail-workspace followup-detail-workspace" *ngIf="currentSelectedFollowup as bookmark">
+    <aside class="lead-detail-sidebar">
+      <button class="lead-detail-back" type="button" (click)="closeFollowupRecordView()">
+        <span class="back-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m15 18-6-6 6-6" />
+            <path d="M21 12H9" />
+          </svg>
+        </span>
+        <span>Back</span>
+      </button>
+      <div class="lead-detail-nav">
+        <button class="toolbar-button" [class.active]="drawerSection==='details'" (click)="scrollFollowupSection('details')">Information</button>
+        <button class="toolbar-button" [class.active]="drawerSection==='followup'" (click)="openEditFollowupModal(bookmark)">Edit Follow-up</button>
+        <button class="toolbar-button" [class.active]="drawerSection==='history'" type="button" (click)="openFollowupHistory(bookmark)">History</button>
+      </div>
+    </aside>
+
+    <div class="lead-detail-main">
+      <div class="lead-detail-header">
+        <div class="lead-detail-title-row">
+          <h3>{{ bookmark.companyName }}</h3>
+        </div>
+        <div class="lead-detail-subline">
+          <span>{{ bookmark.contactName }}</span>
+          <span>{{ bookmark.contactNumber }}</span>
+        </div>
+      </div>
+
+      <div class="lead-detail-panel followup-detail-panel" #followupDetailPanel (scroll)="onFollowupDetailScroll()">
+        <section class="followup-detail-block" #followupDetailsSection>
+          <div class="lead-detail-section-title">Information</div>
+          <div class="lead-detail-summary followup-detail-summary">
+            <div class="lead-detail-column">
+              <div class="lead-detail-field">
+                <span>Contact</span>
+                <strong>{{ bookmark.contactName }}</strong>
+              </div>
+
+              <div class="lead-detail-field" *ngIf="currentDrawerLead">
+                <span>Email</span>
+                <strong [title]="currentDrawerLead.directorEmailAddress || ''">{{ currentDrawerLead.directorEmailAddress || '—' }}</strong>
+              </div>
+
+              <div class="lead-detail-section">
+                <div class="lead-detail-section-title">Description</div>
+                <p class="drawer-copy">{{ bookmark.description || 'No description recorded.' }}</p>
+              </div>
+
+              <div class="lead-detail-section">
+                <div class="lead-detail-section-title">Historical Remarks</div>
+                <div class="line-list">
+                  <div class="line-list-item" *ngFor="let remark of bookmark.remarks">{{ remark }}</div>
+                  <div *ngIf="!bookmark.remarks.length" class="empty-state-inline empty-state-inline-minimal">No historical remarks recorded.</div>
+                </div>
+              </div>
+
+              <div class="lead-detail-section" *ngIf="currentDrawerLead && (currentDrawerLead.mainDivisionDescription || currentDrawerLead.companyDescription)">
+                <div class="lead-detail-section-title">Company Context</div>
+                <div class="lead-context-lines">
+                  <div *ngIf="currentDrawerLead.mainDivisionDescription">{{ currentDrawerLead.mainDivisionDescription }}</div>
+                  <div *ngIf="currentDrawerLead.companyDescription">{{ currentDrawerLead.companyDescription }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lead-detail-column lead-detail-column-side">
+              <div class="lead-detail-field">
+                <span>Phone</span>
+                <strong class="nowrap-value">{{ bookmark.contactNumber }}</strong>
+              </div>
+
+              <div class="lead-detail-field">
+                <span>Reminder</span>
+                <strong class="nowrap-value">{{ fmtDate(bookmark.reminderDate) }}</strong>
+              </div>
+
+              <div class="lead-detail-grid followup-flag-grid">
+                <div class="lead-detail-field">
+                  <span>Remarks</span>
+                  <strong>{{ bookmark.remarks.length || 0 }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Brochure Sent</span>
+                  <strong>{{ bookmark.brochuresSent ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Quotation Sent</span>
+                  <strong>{{ bookmark.quotationSent ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Proposal Sent</span>
+                  <strong>{{ bookmark.proposalSent ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Tech Meet</span>
+                  <strong>{{ bookmark.techMeet ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Whatsapp Group</span>
+                  <strong>{{ bookmark.whatsappGrp ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Meeting Remarks</span>
+                  <strong>{{ bookmark.meetingRemarks ? 'Yes' : 'No' }}</strong>
+                </div>
+              </div>
+
+              <div class="lead-detail-section" *ngIf="currentDrawerLead">
+                <div class="lead-detail-section-title">Matched Lead</div>
+                <div class="lead-detail-grid followup-matched-grid">
+                  <div class="lead-detail-field">
+                    <span>Status</span>
+                    <strong [style.color]="leadStatusColor(currentDrawerLead.status)">{{ currentDrawerLead.status }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Company Code</span>
+                    <strong class="nowrap-value">{{ currentDrawerLead.companyCode || '—' }}</strong>
+                  </div>
+                  <div class="lead-detail-field lead-detail-field-wide">
+                    <span>Email</span>
+                    <strong [title]="currentDrawerLead.directorEmailAddress || ''">{{ currentDrawerLead.directorEmailAddress || '—' }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="followup-detail-divider" aria-hidden="true"></div>
+
+        <section class="followup-detail-block" #followupEditSection>
+          <div class="lead-detail-section-title">{{ editingBookmarkId ? 'Edit Follow-up' : 'Schedule Follow-up' }}</div>
+
+          <div class="lead-detail-section">
+            <div class="checkbox-grid">
+              <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.brochuresSent" /> <span>Brochure Sent</span></label>
+              <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.techMeet" /> <span>Tech Meet</span></label>
+              <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
+              <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.quotationSent" /> <span>Quotation Sent</span></label>
+              <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.proposalSent" /> <span>Proposal Sent</span></label>
+              <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
+            </div>
+          </div>
+
+          <div class="lead-detail-section">
+            <div class="lead-detail-section-title">Description</div>
+            <textarea class="field-textarea" rows="4" [(ngModel)]="followupForm.description" placeholder="Describe the current follow-up context"></textarea>
+          </div>
+
+          <div class="lead-detail-section">
+            <div class="lead-detail-section-title">Historical Remarks</div>
+            <div class="remark-list">
+              <div class="remark-item" *ngFor="let remark of followupForm.remarks; let i = index; trackBy: trackByFn">
+                <input class="field-input" type="text" [(ngModel)]="followupForm.remarks[i]" />
+                <button class="text-action" (click)="removeRemark(i)">Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="lead-detail-grid followup-edit-grid">
+            <label class="lead-detail-field">
+              <span>New Remark</span>
+              <input class="field-input" type="text" [(ngModel)]="followupForm.newRemark" placeholder="Add a new remark to history" />
+            </label>
+            <label class="lead-detail-field">
+              <span>Reminder Date</span>
+              <input class="field-input" type="date" [(ngModel)]="followupForm.reminderDate" />
+            </label>
+          </div>
+
+          <div class="action-row followup-drawer-actions">
+            <button class="secondary-action" type="button" (click)="cancelFollowupEdit()">Cancel</button>
+            <button class="primary-action" type="button" (click)="saveFollowup()" [disabled]="followupSaving">
+              <span *ngIf="!followupSaving">{{ editingBookmarkId ? 'Update Follow-up' : 'Save Follow-up' }}</span>
+              <span *ngIf="followupSaving" class="button-spinner"></span>
+            </button>
+          </div>
+
+          <div class="lead-detail-section" *ngIf="modalAiSuggestion || modalAiSuggestionLoading || modalAiSuggestionError">
+            <div class="lead-detail-section-title">AI follow-up guidance</div>
+            <div *ngIf="modalAiSuggestionLoading" class="empty-state-inline">Generating guidance…</div>
+            <div *ngIf="!modalAiSuggestionLoading && modalAiSuggestionError" class="empty-state-inline">{{ modalAiSuggestionError }}</div>
+            <div *ngIf="!modalAiSuggestionLoading && modalAiSuggestion">
+              <p class="drawer-copy">{{ formatAiText(modalAiSuggestion.recommendedApproach) }}</p>
+              <p class="drawer-copy">{{ formatAiText(modalAiSuggestion.nextStep) }}</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="followup-detail-divider" aria-hidden="true"></div>
+
+        <section class="followup-detail-block" #followupHistorySection>
+          <div class="lead-detail-section-title">History</div>
+          <div class="followup-history-scroll">
+            <div class="lead-history-list" *ngIf="!historyLoading && historyLogs.length > 0">
+              <div class="lead-history-item" *ngFor="let log of historyLogs">
+                <div class="lead-history-head">
+                  <strong>{{ log.action }}</strong>
+                  <span>{{ (log.createdAt || log.timestamp) | date:'MMM d, h:mm a' }}</span>
+                </div>
+                <div class="lead-history-body" *ngIf="log.oldValue || log.newValue">
+                  <span class="nowrap-value">{{ log.oldValue || '—' }}</span>
+                  <span class="nowrap-value">{{ log.newValue || '—' }}</span>
+                </div>
+                <div class="lead-history-note" *ngIf="log.details || log.metadata?.remark">{{ log.details || log.metadata?.remark }}</div>
+              </div>
+            </div>
+            <div *ngIf="historyLoading" class="empty-state-inline empty-state-inline-minimal">Loading.</div>
+            <div *ngIf="!historyLoading && historyLogs.length===0" class="empty-state-inline empty-state-inline-minimal">No history.</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</ng-template>
+
+<div class="invoice-overlay" *ngIf="companyFullViewOpen" (click)="closeCompanyFullView()">
+  <div class="invoice-modal company-full-modal" (click)="$event.stopPropagation()">
+    <section class="company-full-shell lead-detail-workspace">
+      <aside class="lead-detail-sidebar company-full-sidebar">
+        <button class="lead-detail-back" type="button" (click)="closeCompanyFullView()">
+          <span class="back-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="m15 18-6-6 6-6" />
+              <path d="M21 12H9" />
+            </svg>
+          </span>
+          <span>Close</span>
+        </button>
+
+        <div class="lead-detail-nav company-full-nav">
+          <button
+            class="toolbar-button"
+            type="button"
+            *ngFor="let section of companyFullSections"
+            [class.active]="companyFullActiveSection===section.id"
+            (click)="scrollCompanyFullSection(section.id)"
+          >
+            {{ section.label }}
+          </button>
+        </div>
+      </aside>
+
+      <div class="lead-detail-main company-full-main" id="company-full-scroll-root">
+        <div class="lead-detail-header company-full-header">
+          <div class="lead-detail-title-row">
+            <h3>{{ companyFullCompanyName() }}</h3>
+          </div>
+        </div>
+
+        <div class="lead-detail-panel company-full-content" #companyFullScrollContent (scroll)="onCompanyFullContentScroll($event)">
+          <section class="company-full-card" [id]="companyFullSectionId('overview')">
+            <div class="company-full-card-head">
+              <h4>Overview</h4>
+              <span class="company-full-card-meta" *ngIf="companyFullLoading">Loading company details...</span>
+            </div>
+
+            <div class="lead-detail-summary company-full-overview-grid" *ngIf="companyFullViewLead() as companyLead; else emptyCompanyFullOverview">
+              <div class="lead-detail-column">
+                <div class="lead-detail-field">
+                  <span>Primary Contact</span>
+                  <strong>{{ companyFullPrimaryContact() }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Email</span>
+                  <strong [title]="companyFullPrimaryEmail()">{{ companyFullPrimaryEmail() }}</strong>
+                </div>
+                <div class="lead-detail-section">
+                  <div class="lead-detail-section-title">Company Context</div>
+                  <div class="company-full-context-copy">
+                    {{ companyFullViewContext() || 'No company context recorded.' }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="lead-detail-column lead-detail-column-side">
+                <div class="lead-detail-grid company-full-meta-grid">
+                  <div class="lead-detail-field">
+                    <span>Phone</span>
+                    <strong class="nowrap-value" [title]="companyFullPrimaryPhone()">{{ companyFullPrimaryPhone() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Latest Update</span>
+                    <strong class="nowrap-value">{{ companyFullLatestUpdate() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Contacts</span>
+                    <strong>{{ companyFullViewRows().length }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Set</span>
+                    <strong>{{ companyFullSetSummary() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Primary Status</span>
+                    <strong [style.color]="leadStatusColor(companyFullPrimaryStatus())">{{ companyFullPrimaryStatus() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Company Code</span>
+                    <strong class="nowrap-value">{{ companyFullCompanyCode() }}</strong>
+                  </div>
+                  <div class="lead-detail-field lead-detail-field-wide">
+                    <span>Alternate Phone</span>
+                    <strong class="nowrap-value">{{ companyFullAlternatePhoneValue() }}</strong>
+                  </div>
+                  <div class="lead-detail-field lead-detail-field-wide">
+                    <span>Alternate Email</span>
+                    <strong [title]="companyFullAlternateEmailValue()">{{ companyFullAlternateEmailValue() }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lead-detail-section">
+              <div class="lead-detail-section-title">Directors / Contacts</div>
+              <div class="company-full-scroll-card company-full-contact-list" *ngIf="companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
+                <article class="company-full-contact-row" *ngFor="let lead of companyFullOverviewContacts()">
+                  <div class="company-full-contact-main">
+                    <strong>{{ lead.contactName || 'Primary Contact' }}</strong>
+                    <span [title]="companyFullContactEmail(lead)">{{ companyFullContactEmail(lead) }}</span>
+                  </div>
+                  <div class="company-full-contact-field">
+                    <span>Phone</span>
+                    <strong class="nowrap-value" [title]="companyFullContactPhone(lead)">{{ companyFullContactPhone(lead) }}</strong>
+                  </div>
+                  <div class="company-full-contact-field">
+                    <span>Status</span>
+                    <strong [style.color]="leadStatusColor(lead.status)">{{ lead.status || 'New' }}</strong>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('followups')" *ngIf="companyFullHasFollowupSection()">
+            <div class="company-full-card-head">
+              <h4>Followups</h4>
+              <span class="company-full-card-meta" *ngIf="companyFullFollowupLead() as followupLead">
+                {{ followupLead.contactName || 'Primary Contact' }}
+              </span>
+            </div>
+
+            <div *ngIf="companyFullFollowupError" class="form-error company-full-inline-error">{{ companyFullFollowupError }}</div>
+
+            <div class="lead-detail-section">
+              <div class="lead-detail-section-title">Current Overview</div>
+              <div class="lead-detail-grid followup-flag-grid company-full-followup-overview">
+                <div class="lead-detail-field">
+                  <span>Remarks</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.remarks?.length || 0 }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Brochure Sent</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.brochuresSent ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Quotation Sent</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.quotationSent ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Proposal Sent</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.proposalSent ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Tech Meet</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.techMeet ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Whatsapp Group</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.whatsappGrp ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Meeting Remarks</span>
+                  <strong>{{ companyFullPrimaryFollowup()?.meetingRemarks ? 'Yes' : 'No' }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="company-full-section-divider" aria-hidden="true"></div>
+
+            <div class="lead-detail-section">
+              <div class="lead-detail-section-title">Edit Follow-up</div>
+              <div class="checkbox-grid">
+                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.brochuresSent" /> <span>Brochure Sent</span></label>
+                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.techMeet" /> <span>Tech Meet</span></label>
+                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
+                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.quotationSent" /> <span>Quotation Sent</span></label>
+                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.proposalSent" /> <span>Proposal Sent</span></label>
+                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
+              </div>
+            </div>
+
+            <div class="lead-detail-section">
+              <div class="lead-detail-grid company-full-followup-edit-grid">
+                <label class="lead-detail-field lead-detail-field-wide company-full-followup-description">
+                  <span>Description</span>
+                  <textarea
+                    class="field-textarea"
+                    rows="4"
+                    [(ngModel)]="companyFullFollowupForm.description"
+                    placeholder="Describe the current follow-up context"
+                  ></textarea>
+                </label>
+                <label class="lead-detail-field">
+                  <span>New Remark</span>
+                  <input class="field-input" type="text" [(ngModel)]="companyFullFollowupForm.newRemark" placeholder="Add a new remark to history" />
+                </label>
+                <label class="lead-detail-field">
+                  <span>Reminder Date</span>
+                  <input class="field-input" type="date" [(ngModel)]="companyFullFollowupForm.reminderDate" />
+                </label>
+              </div>
+              <div class="company-full-followup-meta-row">
+                <div class="lead-detail-field">
+                  <span>Saved Description</span>
+                  <strong [title]="companyFullFollowupDescription()">{{ companyFullFollowupDescription() }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Reminder</span>
+                  <strong class="nowrap-value">{{ companyFullFollowupReminderLabel() }}</strong>
+                </div>
+              </div>
+              <div class="company-full-action-row">
+                <button class="primary-action" type="button" (click)="saveCompanyFullFollowup()" [disabled]="companyFullFollowupSaving || companyFullFollowupLoading">
+                  <span *ngIf="!companyFullFollowupSaving">{{ companyFullPrimaryFollowup()?._id ? 'Update Follow-up' : 'Save Follow-up' }}</span>
+                  <span *ngIf="companyFullFollowupSaving" class="button-spinner"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="company-full-section-divider" aria-hidden="true"></div>
+
+            <div class="lead-detail-section">
+              <div class="lead-detail-section-title">Follow-up History</div>
+              <div class="company-full-scroll-card company-full-followup-history">
+                <div *ngIf="companyFullFollowupLoading || companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading follow-up history.</div>
+                <ng-container *ngIf="!companyFullFollowupLoading && !companyFullHistoryLoading && companyFullFollowupHistoryEntries().length > 0; else fallbackCompanyFullFollowupHistory">
+                  <article class="company-full-history-row" *ngFor="let log of companyFullFollowupHistoryEntries()">
+                    <div class="company-full-history-head">
+                      <strong>{{ log.action }}</strong>
+                      <span>{{ fmtDateTime(log.createdAt || log.timestamp) }}</span>
+                    </div>
+                    <div class="company-full-history-copy">{{ companyFullFollowupHistoryText(log) }}</div>
+                    <div class="company-full-history-meta" *ngIf="log.changedBy">By {{ log.changedBy }}</div>
+                  </article>
+                </ng-container>
+                <ng-template #fallbackCompanyFullFollowupHistory>
+                  <ng-container *ngIf="!companyFullFollowupLoading && !companyFullHistoryLoading && companyFullFollowupFallbackRemarks().length > 0; else emptyCompanyFullFollowupHistory">
+                    <article class="company-full-history-row" *ngFor="let remark of companyFullFollowupFallbackRemarks()">
+                      <div class="company-full-history-head">
+                        <strong>Follow-up Remark</strong>
+                      </div>
+                      <div class="company-full-history-copy">{{ remark }}</div>
+                    </article>
+                  </ng-container>
+                </ng-template>
+                <ng-template #emptyCompanyFullFollowupHistory>
+                  <div class="empty-state-inline empty-state-inline-minimal">No follow-up history recorded for this company.</div>
+                </ng-template>
+              </div>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('remarks')">
+            <div class="company-full-card-head">
+              <h4>Remarks History</h4>
+            </div>
+            <div class="company-full-remark-entry">
+              <div class="lead-card-remark-combobox company-full-remark-combobox" (click)="$event.stopPropagation()">
+                <input
+                  class="field-input lead-card-remark-input company-full-remark-input"
+                  type="text"
+                  [ngModel]="companyFullRemarkDraft"
+                  (ngModelChange)="handleCompanyFullRemarkInput($event)"
+                  (click)="$event.stopPropagation()"
+                  (focus)="openCompanyFullRemarkMenu()"
+                  (blur)="queueCloseCompanyFullRemarkMenu()"
+                  (keyup.enter)="$event.stopPropagation(); addCompanyFullRemark()"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                  placeholder="Type remark..."
+                  [title]="companyFullRemarkDraft || 'Type remark'"
+                />
+                <button
+                  class="lead-card-remark-toggle"
+                  type="button"
+                  title="Show admin remark options"
+                  aria-label="Show admin remark options"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="toggleCompanyFullRemarkMenu()"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                </button>
+                <div class="lead-card-remark-options" *ngIf="companyFullRemarkMenuOpen && filteredCompanyFullAdminRemarkOptions().length > 0">
+                  <button
+                    class="lead-card-remark-option"
+                    type="button"
+                    *ngFor="let remark of filteredCompanyFullAdminRemarkOptions()"
+                    [title]="remark"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="selectCompanyFullAdminRemark(remark)"
+                  >
+                    {{ remark }}
+                  </button>
+                </div>
+              </div>
+              <button class="primary-action company-full-remark-add" type="button" (click)="addCompanyFullRemark()" [disabled]="companyFullRemarkSaving || !companyFullRemarkDraft.trim()">
+                <span *ngIf="!companyFullRemarkSaving">Add Remark</span>
+                <span *ngIf="companyFullRemarkSaving" class="button-spinner"></span>
+              </button>
+            </div>
+            <div *ngIf="companyFullRemarkError" class="form-error company-full-inline-error">{{ companyFullRemarkError }}</div>
+            <div class="company-full-scroll-card">
+              <div *ngIf="companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading remark history.</div>
+              <div *ngIf="!companyFullHistoryLoading && companyFullHistoryError" class="empty-state-inline empty-state-inline-minimal">{{ companyFullHistoryError }}</div>
+              <ng-container *ngIf="!companyFullHistoryLoading && !companyFullHistoryError && companyFullRemarkEntries().length > 0; else emptyCompanyFullRemarks">
+                <article class="company-full-history-row" *ngFor="let log of companyFullRemarkEntries()">
+                  <div class="company-full-history-head">
+                    <strong>{{ log.action }}</strong>
+                    <span>{{ fmtDateTime(log.createdAt || log.timestamp) }}</span>
+                  </div>
+                  <div class="company-full-history-copy">{{ companyFullRemarkText(log) || 'Remark updated.' }}</div>
+                  <div class="company-full-history-meta" *ngIf="log.changedBy">By {{ log.changedBy }}</div>
+                </article>
+              </ng-container>
+              <ng-template #emptyCompanyFullRemarks>
+                <div *ngIf="!companyFullHistoryLoading && !companyFullHistoryError" class="empty-state-inline empty-state-inline-minimal">No remark history recorded for this company.</div>
+              </ng-template>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('invoices')">
+            <div class="company-full-card-head">
+              <h4>Invoice History</h4>
+              <span class="company-full-card-meta">{{ companyFullInvoiceItems.length }} record{{ companyFullInvoiceItems.length === 1 ? '' : 's' }}</span>
+            </div>
+            <div class="company-full-scroll-card">
+              <div *ngIf="companyFullInvoiceLoading" class="empty-state-inline empty-state-inline-minimal">Loading invoice history.</div>
+              <div *ngIf="!companyFullInvoiceLoading && companyFullInvoiceError" class="empty-state-inline empty-state-inline-minimal">{{ companyFullInvoiceError }}</div>
+              <ng-container *ngIf="!companyFullInvoiceLoading && !companyFullInvoiceError && companyFullInvoiceItems.length > 0; else emptyCompanyFullInvoices">
+                <article class="company-full-record-row company-full-record-action" *ngFor="let invoice of companyFullInvoiceItems" tabindex="0" role="button" (click)="openSavedInvoice(invoice)" (keydown.enter)="openSavedInvoice(invoice)" (keydown.space)="$event.preventDefault(); openSavedInvoice(invoice)">
+                  <div class="company-full-record-main">
+                    <strong>{{ invoice.invoiceNumber || 'Invoice' }}</strong>
+                    <span>{{ invoice.contactName || companyFullCompanyName() }}</span>
+                  </div>
+                  <div class="company-full-record-meta">
+                    <span>{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span>
+                    <span>{{ fmtDate(invoice.invoiceDate || invoice.createdAt) }}</span>
+                    <strong>Rs {{ invoice.total | number:'1.0-2' }}</strong>
+                  </div>
+                </article>
+              </ng-container>
+              <ng-template #emptyCompanyFullInvoices>
+                <div *ngIf="!companyFullInvoiceLoading && !companyFullInvoiceError" class="empty-state-inline empty-state-inline-minimal">No invoices recorded for this company.</div>
+              </ng-template>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('quotations')">
+            <div class="company-full-card-head">
+              <h4>Quotation History</h4>
+              <span class="company-full-card-meta">{{ companyFullQuotationItems.length }} record{{ companyFullQuotationItems.length === 1 ? '' : 's' }}</span>
+            </div>
+            <div class="company-full-scroll-card">
+              <div *ngIf="companyFullQuotationLoading" class="empty-state-inline empty-state-inline-minimal">Loading quotation history.</div>
+              <div *ngIf="!companyFullQuotationLoading && companyFullQuotationError" class="empty-state-inline empty-state-inline-minimal">{{ companyFullQuotationError }}</div>
+              <ng-container *ngIf="!companyFullQuotationLoading && !companyFullQuotationError && companyFullQuotationItems.length > 0; else emptyCompanyFullQuotations">
+                <article class="company-full-record-row company-full-record-action" *ngFor="let quotation of companyFullQuotationItems" tabindex="0" role="button" (click)="openSavedQuotation(quotation)" (keydown.enter)="openSavedQuotation(quotation)" (keydown.space)="$event.preventDefault(); openSavedQuotation(quotation)">
+                  <div class="company-full-record-main">
+                    <strong>{{ quotation.quotationNumber || 'Quotation' }}</strong>
+                    <span>{{ quotation.contactName || companyFullCompanyName() }}</span>
+                  </div>
+                  <div class="company-full-record-meta">
+                    <span>{{ fmtDate(quotation.quotationDate || quotation.createdAt) }}</span>
+                    <strong>Rs {{ quotation.total | number:'1.0-2' }}</strong>
+                  </div>
+                </article>
+              </ng-container>
+              <ng-template #emptyCompanyFullQuotations>
+                <div *ngIf="!companyFullQuotationLoading && !companyFullQuotationError" class="empty-state-inline empty-state-inline-minimal">No quotations recorded for this company.</div>
+              </ng-template>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('alternate')">
+            <div class="company-full-card-head">
+              <h4>Alternate Info</h4>
+            </div>
+            <div class="lead-detail-grid company-full-form-grid">
+              <label class="lead-detail-field">
+                <span>Alternate Phone</span>
+                <input class="field-input" type="text" [(ngModel)]="companyFullAlternatePhone" placeholder="Add alternate phone number" />
+              </label>
+              <label class="lead-detail-field">
+                <span>Alternate Email</span>
+                <input class="field-input" type="email" [(ngModel)]="companyFullAlternateEmail" placeholder="Add alternate email" />
+              </label>
+            </div>
+            <div *ngIf="companyFullProfileError" class="form-error company-full-inline-error">{{ companyFullProfileError }}</div>
+            <div class="company-full-action-row">
+              <button class="primary-action" type="button" (click)="saveCompanyFullAlternateInfo()" [disabled]="companyFullSavingAlternateInfo">
+                <span *ngIf="!companyFullSavingAlternateInfo">Save Alternate Info</span>
+                <span *ngIf="companyFullSavingAlternateInfo" class="button-spinner"></span>
+              </button>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('notes')">
+            <div class="company-full-card-head">
+              <h4>Notes</h4>
+            </div>
+            <div class="company-full-note-composer">
+              <textarea
+                class="field-textarea company-full-note-input"
+                rows="3"
+                [(ngModel)]="companyFullNoteDraft"
+                placeholder="Add a dated note for this company"
+              ></textarea>
+              <button class="primary-action company-full-note-button" type="button" (click)="addCompanyFullNote()" [disabled]="companyFullNoteSaving || !companyFullNoteDraft.trim()">
+                <span *ngIf="!companyFullNoteSaving">Add Note</span>
+                <span *ngIf="companyFullNoteSaving" class="button-spinner"></span>
+              </button>
+            </div>
+            <div class="company-full-scroll-card company-full-note-list">
+              <div *ngIf="companyFullProfileLoading" class="empty-state-inline empty-state-inline-minimal">Loading notes.</div>
+              <ng-container *ngIf="!companyFullProfileLoading && companyFullProfile.notes.length > 0; else emptyCompanyFullNotes">
+                <article class="company-full-note-row" *ngFor="let note of companyFullProfile.notes">
+                  <div class="company-full-note-date">{{ fmtDateTime(note.createdAt) }}</div>
+                  <div class="company-full-note-copy">{{ note.text }}</div>
+                </article>
+              </ng-container>
+              <ng-template #emptyCompanyFullNotes>
+                <div *ngIf="!companyFullProfileLoading" class="empty-state-inline empty-state-inline-minimal">No notes recorded for this company.</div>
+              </ng-template>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<ng-template #emptyCompanyFullOverview>
+  <div class="empty-state-inline empty-state-inline-minimal">No company details loaded for this record.</div>
+</ng-template>
+
+<ng-template #emptyCompanyFullView>
+  <div class="empty-state-inline empty-state-inline-minimal">No contact data loaded for this company.</div>
+</ng-template>
+
+<div class="invoice-overlay company-remarks-overlay" *ngIf="companyRemarkLead" (click)="closeCompanyRemarkHistory()">
+  <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">Remark History</div>
+        <h3>{{ companyRemarkLead.contactName || 'Primary Contact' }}</h3>
+        <p>{{ companyRemarkLead.leadCompanyName }}</p>
+      </div>
+      <button class="secondary-action" type="button" (click)="closeCompanyRemarkHistory()">Close</button>
+    </div>
+    <div class="company-remarks-list" *ngIf="companyRemarkHistory(companyRemarkLead).length; else emptyCompanyRemarks">
+      <div class="company-remark-row" *ngFor="let remark of companyRemarkHistory(companyRemarkLead)">
+        {{ remark }}
+      </div>
+    </div>
+    <ng-template #emptyCompanyRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">No remarks recorded for this contact.</div>
+    </ng-template>
+  </div>
+</div>
+
+<div class="invoice-overlay" *ngIf="aiBriefFullViewOpen" (click)="closeAiBriefFullView()">
+  <div class="invoice-modal followup-modal ai-summary-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">AI Summary</div>
+        <h3>{{ aiBriefCompany || activeSelectedCompany || activeFollowupCompany || 'Company summary' }}</h3>
+      </div>
+      <button class="secondary-action" type="button" (click)="closeAiBriefFullView()">Close</button>
+    </div>
+
+    <div class="ai-summary-modal-body">
+      <div class="empty-state-inline empty-state-inline-minimal" *ngIf="aiBriefLoading">Loading summary.</div>
+      <div class="ai-summary-empty-panel" *ngIf="!aiBriefLoading && aiBriefError">
+        <h4>Summary unavailable</h4>
+        <p>{{ aiBriefError }}</p>
+      </div>
+      <ng-container *ngIf="!aiBriefLoading && aiBrief">
+        <ng-template [ngTemplateOutlet]="aiSummaryFullTemplate"></ng-template>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<div class="invoice-overlay" *ngIf="showFollowupModal && dashTab !== 'followups'" (click)="closeFollowupModal()">
+  <div class="invoice-modal followup-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">Follow-up</div>
+        <h3>{{ editingBookmarkId ? 'Update Follow-up' : 'Schedule Follow-up' }}</h3>
+        <p *ngIf="followupLead">{{ followupLead.contactName || 'Primary Contact' }} · {{ followupLead.contactNumber }}</p>
+      </div>
+      <button class="secondary-action" type="button" (click)="closeFollowupModal()">Close</button>
+    </div>
+
+    <div class="followup-modal-body">
+      <section class="followup-modal-panel">
+        <div class="followup-modal-label">Progress flags</div>
+        <div class="followup-flag-grid">
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.brochuresSent" /> <span>Brochure Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.techMeet" /> <span>Tech Meet</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.quotationSent" /> <span>Quotation Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.proposalSent" /> <span>Proposal Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="followupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
+        </div>
+      </section>
+
+      <section class="followup-modal-panel">
+        <div class="followup-modal-label">Context</div>
+        <label class="field">
+          <span class="field-label">Description</span>
+          <textarea class="field-textarea" rows="4" [(ngModel)]="followupForm.description" placeholder="Describe the current follow-up context"></textarea>
+        </label>
+
+        <div class="followup-modal-grid">
+          <label class="field">
+            <span class="field-label">New Remark</span>
+            <input class="field-input" type="text" [(ngModel)]="followupForm.newRemark" placeholder="Add a new remark" />
+          </label>
+          <label class="field">
+            <span class="field-label">Reminder Date</span>
+            <input class="field-input" type="date" [(ngModel)]="followupForm.reminderDate" />
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="action-row followup-modal-actions">
+      <button class="secondary-action" type="button" (click)="closeFollowupModal()">Cancel</button>
+      <button class="primary-action" type="button" (click)="saveFollowup()" [disabled]="followupSaving">
+        <span *ngIf="!followupSaving">{{ editingBookmarkId ? 'Update Follow-up' : 'Save Follow-up' }}</span>
+        <span *ngIf="followupSaving" class="button-spinner"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="invoice-overlay" *ngIf="showInvoiceModal" (click)="closeInvoiceModal()">
+  <div class="invoice-modal invoice-modal-billing" (click)="$event.stopPropagation()">
+    <div class="invoice-builder" [class.invoice-builder-readonly]="viewingSavedDocument">
+      <div class="section-header invoice-builder-header">
+        <div>
+          <div class="section-kicker">{{ viewingSavedDocument ? (quoteMode ? 'Saved Quotation' : 'Saved Invoice') : (quoteMode ? 'Quotation Builder' : 'Invoice Builder') }}</div>
+          <h3>{{ quoteMode ? 'Quote' : 'Invoice' }} {{ invoiceNumber() }}</h3>
+        </div>
+        <button class="secondary-action" (click)="closeInvoiceModal()">Close</button>
+      </div>
+
+      <div class="invoice-form-grid invoice-control-card" [class.invoice-form-grid-quotation]="quoteMode" *ngIf="!viewingSavedDocument">
+        <label class="mini-field">
+          <span>Product</span>
+          <select class="field-select" [(ngModel)]="selectedInvoiceProduct" (change)="onProductSelect()">
+            <option [ngValue]="null">Select product</option>
+            <option *ngFor="let product of products" [ngValue]="product">{{ product.name }}</option>
+          </select>
+        </label>
+        <label class="mini-field">
+          <span>Price</span>
+          <input class="field-input" type="number" [(ngModel)]="invoicePrice" />
+        </label>
+        <label class="mini-field">
+          <span>Quantity</span>
+          <input class="field-input" type="number" [(ngModel)]="invoiceQuantity" />
+        </label>
+        <label class="mini-field" *ngIf="!quoteMode">
+          <span>Status</span>
+          <select class="field-select" [(ngModel)]="invoicePaymentStatus">
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+          </select>
+        </label>
+        <button class="primary-action" (click)="addInvoiceItem()" [disabled]="!selectedInvoiceProduct">Add Item</button>
+        <div class="invoice-builder-transfer" *ngIf="!quoteMode">
+          <button class="secondary-action" type="button" (click)="transferLatestQuotationToInvoice()" [disabled]="quotationTransferLoading">
+            {{ quotationTransferLoading ? 'Loading latest quotation...' : (invoiceTransferredFromQuotation ? 'Refresh from Latest Quotation' : 'Transfer Latest Quotation') }}
+          </button>
+          <p class="invoice-transfer-note" *ngIf="transferredQuotationRecord">
+            Loaded {{ transferredQuotationRecord.quotationNumber }}. Imported item prices can be edited below before saving the invoice.
+          </p>
+        </div>
+      </div>
+
+      <div class="table-scroll invoice-items-card" *ngIf="!viewingSavedDocument">
+        <table class="data-table compact-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Sum</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of invoiceItems; let i = index">
+              <td>{{ item.name }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>
+                <ng-container *ngIf="invoiceTransferredFromQuotation && !quoteMode; else invoiceItemStaticPrice">
+                  <input
+                    class="field-input invoice-inline-price-input"
+                    type="number"
+                    [ngModel]="item.price"
+                    (ngModelChange)="updateTransferredInvoiceItemPrice(i, $event)"
+                    min="0"
+                  />
+                </ng-container>
+                <ng-template #invoiceItemStaticPrice>{{ formatInvoiceMoney(item.price) }}</ng-template>
+              </td>
+              <td>{{ formatInvoiceMoney(item.price * item.quantity) }}</td>
+              <td><button class="text-action" (click)="removeInvoiceItem(i)">Remove</button></td>
+            </tr>
+            <tr *ngIf="invoiceItems.length===0">
+              <td colspan="5" class="empty-cell">No {{ quoteMode ? 'quotation' : 'invoice' }} items added yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <label class="quotation-note-editor invoice-control-card" *ngIf="quoteMode && !viewingSavedDocument">
+        <span>Kind Note</span>
+        <textarea
+          class="field-textarea"
+          rows="3"
+          [(ngModel)]="quotationKindNoteDraft"
+          placeholder="Add the kind note for this quotation"
+        ></textarea>
+      </label>
+
+      <div id="invoice-preview" class="invoice-preview" [class.quotation-preview]="quoteMode">
+        <ng-container *ngIf="quoteMode; else invoicePreviewDocument">
+          <section class="quotation-page quotation-main-page">
+            <header class="quotation-hero">
+              <div class="quotation-hero-logo">
+                <img *ngIf="quotationCompanyLogo(); else quotationTextLogo" [src]="quotationCompanyLogo()" alt="Quotation logo" class="quotation-logo">
+                <ng-template #quotationTextLogo>
+                  <div class="invoice-text-logo">{{ invoiceCompanyDisplayName() }}</div>
+                </ng-template>
+              </div>
+              <div class="quotation-hero-title">
+                <h2>Quotation</h2>
+                <span>Quote Number</span>
+                <strong>{{ invoiceNumber() }}</strong>
+                <span>Date of issue</span>
+                <strong>{{ invoiceIssuedAt | date:'dd/MM/yyyy' }}</strong>
+              </div>
+            </header>
+
+            <ng-container [ngTemplateOutlet]="quotationPrintBody"></ng-container>
+          </section>
+
+          <section class="quotation-page quotation-sample-page">
+            <img src="/assets/quotation/softrate-sample-quotation-page-2.png" alt="Softrate quotation terms page">
+          </section>
+        </ng-container>
+
+        <ng-template #invoicePreviewDocument>
+          <header class="invoice-print-header">
+            <div class="invoice-print-logo-block">
+              <img *ngIf="invoiceCompanyLogo(); else invoiceTextLogo" [src]="invoiceCompanyLogo()" alt="Invoice logo" class="invoice-logo">
+              <ng-template #invoiceTextLogo>
+                <div class="invoice-text-logo">{{ invoiceCompanyDisplayName() }}</div>
+              </ng-template>
+            </div>
+
+            <div class="invoice-print-company">
+              <h2>{{ invoiceCompanyDisplayName() }}</h2>
+              <div class="invoice-print-subtitle">Invoice</div>
+              <p *ngIf="invoiceCompanyAddress()"><strong>Address:</strong> {{ invoiceCompanyAddress() }}</p>
+              <p *ngIf="invoiceCompanyPhone()"><strong>Ph No:</strong> {{ invoiceCompanyPhone() }}</p>
+              <p *ngIf="invoiceCompanyEmail()"><strong>Mail:</strong> {{ invoiceCompanyEmail() }}</p>
+              <p *ngIf="invoiceCompanyWebsite()"><strong>Website:</strong> {{ invoiceCompanyWebsite() }}</p>
+              <p *ngIf="invoiceCompanyGstNumber()"><strong>GSTIN:</strong> {{ invoiceCompanyGstNumber() }}</p>
+            </div>
+
+            <div class="invoice-qr-block">
+              <div class="invoice-qr-code" aria-label="E invoice QR placeholder"></div>
+              <div>Scan to See E-Invoice</div>
+            </div>
+          </header>
+
+          <section class="invoice-print-section invoice-summary-section">
+            <div class="invoice-summary-column">
+              <div class="invoice-section-heading">Invoice Details</div>
+              <div class="invoice-detail-lines">
+                <div class="invoice-detail-line"><strong>Invoice No:</strong> {{ invoiceNumber() }}</div>
+                <div class="invoice-detail-line"><strong>Date:</strong> {{ invoiceIssuedAt | date:'dd MMM yyyy, hh:mm a' }}</div>
+                <div class="invoice-detail-line"><strong>Billed by:</strong> {{ invoicePreparedByName() }}</div>
+                <div class="invoice-detail-line"><strong>Status:</strong> {{ formatInvoicePaymentStatus(invoicePaymentStatus) }}</div>
+              </div>
+            </div>
+            <div class="invoice-summary-column">
+              <div class="invoice-section-heading">Bill To</div>
+              <div class="invoice-detail-lines">
+                <div class="invoice-detail-line invoice-company-name">{{ invoiceClientCompanyName() }}</div>
+                <div class="invoice-detail-line" *ngIf="invoiceClientContactName()"><strong>Contact:</strong> {{ invoiceClientContactName() }}</div>
+                <div class="invoice-detail-line" *ngIf="invoiceClientPhone()"><strong>Ph No:</strong> {{ invoiceClientPhone() }}</div>
+                <div class="invoice-detail-line" *ngIf="invoiceClientEmail()"><strong>Mail:</strong> {{ invoiceClientEmail() }}</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="invoice-service-section">
+            <h3>Service / Product Intended</h3>
+            <table class="invoice-print-table">
+              <thead>
+                <tr>
+                  <th>S.No.</th>
+                  <th>Service / Product</th>
+                  <th>SAC/HSN</th>
+                  <th>Units</th>
+                  <th>Rate</th>
+                  <th>Taxable</th>
+                  <th>CGST ({{ invoicePreviewGstPercentage() / 2 }}%)</th>
+                  <th>SGST ({{ invoicePreviewGstPercentage() / 2 }}%)</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of invoiceItems; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.product?.sacHsn || item.product?.hsn || '—' }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ formatInvoiceMoney(item.price) }}</td>
+                  <td>{{ formatInvoiceMoney(invoiceItemTaxable(item)) }}</td>
+                  <td>{{ formatInvoiceMoney(invoiceItemGst(item) / 2) }}</td>
+                  <td>{{ formatInvoiceMoney(invoiceItemGst(item) / 2) }}</td>
+                  <td><strong>{{ formatInvoiceMoney(invoiceItemTotal(item)) }}</strong></td>
+                </tr>
+                <tr class="invoice-table-total-row">
+                  <td colspan="3">Total</td>
+                  <td>{{ invoiceTotalUnits }}</td>
+                  <td>—</td>
+                  <td>{{ formatInvoiceMoney(invoiceSubtotal) }}</td>
+                  <td>{{ formatInvoiceMoney(invoiceCgstAmount) }}</td>
+                  <td>{{ formatInvoiceMoney(invoiceSgstAmount) }}</td>
+                  <td><strong>{{ formatInvoiceMoney(invoiceTotal) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="invoice-print-section invoice-payment-section">
+            <div class="invoice-section-heading">Payment Receipt</div>
+            <div class="invoice-payment-grid">
+              <span>Taxable amount</span>
+              <strong>{{ formatInvoiceMoney(invoiceSubtotal) }}</strong>
+              <span>CGST</span>
+              <strong>{{ formatInvoiceMoney(invoiceCgstAmount) }}</strong>
+              <span>SGST / UTGST</span>
+              <strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong>
+              <span>Amount received</span>
+              <strong>{{ formatInvoiceMoney(invoiceAmountReceived) }}</strong>
+              <span>Balance due</span>
+              <strong>{{ formatInvoiceMoney(invoiceBalanceDue) }}</strong>
+              <span class="invoice-net-total-label">Net total</span>
+              <strong class="invoice-net-total">{{ formatInvoiceMoney(invoiceTotal) }}</strong>
+            </div>
+          </section>
+
+          <footer class="invoice-print-footer">
+            <div class="invoice-section-heading">Company Details</div>
+            <p *ngIf="invoiceCompanyAddress()"><strong>Address:</strong> {{ invoiceCompanyAddress() }}</p>
+            <p *ngIf="invoiceCompanyPhone()"><strong>Ph No:</strong> {{ invoiceCompanyPhone() }}</p>
+            <p *ngIf="invoiceCompanyGstNumber()"><strong>GSTIN:</strong> {{ invoiceCompanyGstNumber() }}</p>
+            <p *ngIf="invoiceCompanyEmail()"><strong>Mail:</strong> {{ invoiceCompanyEmail() }}</p>
+            <p *ngIf="invoiceCompanyWebsite()"><strong>Website:</strong> {{ invoiceCompanyWebsite() }}</p>
+            <p class="invoice-footer-note">{{ invoiceFooterText() }}</p>
+          </footer>
+        </ng-template>
+
+        <ng-template #quotationPrintBody>
+          <section class="quotation-letter">
+            <h3>Dear {{ invoiceLead?.contactName || 'Client' }},</h3>
+            <strong>{{ invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
+            <p>It was a pleasure speaking with you.</p>
+            <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide you with the cost details of our services.</p>
+          </section>
+
+          <section class="quotation-service-card">
+            <div class="quotation-service-header">
+              <span>Item Description</span>
+              <span>Qty</span>
+              <span>Price</span>
+              <span>Amount</span>
+            </div>
+            <div class="quotation-service-body">
+              <div class="quotation-service-row" *ngFor="let item of invoiceItems">
+                <span>{{ item.name }}</span>
+                <span>{{ item.quantity }}</span>
+                <span>{{ item.price | number:'1.0-0' }}</span>
+                <span>{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
+              </div>
+              <div class="quotation-total-panel">
+                <div><span>Sub Total</span><strong>{{ invoiceSubtotal | number:'1.0-0' }}</strong></div>
+                <div><span>GST ({{ invoicePreviewGstPercentage() }}%)</span><strong>{{ invoiceGstAmount | number:'1.0-0' }}</strong></div>
+                <div><span>Grand Total</span><strong>{{ invoiceTotal | number:'1.0-0' }}</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="quotation-kind-note">
+            <strong>Kind Note:</strong>
+            <span>{{ quotationKindNoteText() }}</span>
+          </section>
+        </ng-template>
+      </div>
+
+      <div class="action-row">
+        <button class="secondary-action" (click)="closeInvoiceModal()">Cancel</button>
+        <button class="primary-action" (click)="printInvoice()" [disabled]="invoiceItems.length===0 || invoiceSaving || quotationSaving">
+          {{ viewingSavedDocument ? 'Print' : ((invoiceSaving || quotationSaving) ? 'Saving...' : (quoteMode ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<datalist id="remarkSuggestions">
+  <option *ngFor="let remark of productRemarks" [value]="remark"></option>
+</datalist>

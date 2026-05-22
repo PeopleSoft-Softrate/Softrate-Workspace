@@ -1,0 +1,218 @@
+<section class="ticket-screen" *ngIf="vm.view$ | async as view">
+  <div class="ticket-notice error" *ngIf="view.error">{{ view.error }}</div>
+
+  <div class="ticket-command-bar">
+    <div class="ticket-command-copy">
+      <div class="section-kicker">Request queue</div>
+      <h1>{{ statusLabel(view.status) }}</h1>
+    </div>
+    <div class="ticket-command-actions">
+      <select class="field-select queue-filter" [ngModel]="view.status" (ngModelChange)="vm.setStatus($event)">
+        <option *ngFor="let status of statusOptions" [value]="status">{{ statusLabel(status) }}</option>
+      </select>
+      <button class="secondary-action icon-action" type="button" (click)="vm.reload()" [disabled]="view.loading" aria-label="Refresh tickets" title="Refresh tickets">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      </button>
+      <button class="primary-action" type="button" (click)="vm.openCreate()">Raise Ticket</button>
+    </div>
+  </div>
+
+  <div class="metrics-strip">
+    <article class="metric-cell" *ngFor="let metric of metricCards(view)">
+      <span>{{ metric.label }}</span>
+      <strong>{{ metric.value }}</strong>
+    </article>
+  </div>
+
+  <div class="ticket-workspace-grid">
+    <aside class="queue-panel">
+      <div class="queue-panel-head">
+        <div>
+          <span class="section-kicker">Tickets</span>
+          <strong>{{ view.tickets.length }} listed</strong>
+        </div>
+        <span class="queue-live-dot" aria-hidden="true"></span>
+      </div>
+
+      <div class="queue-list">
+        <button
+          class="queue-item"
+          type="button"
+          *ngFor="let ticket of view.tickets; trackBy: trackByTicketId"
+          [class.active]="ticket.id === view.selectedTicketId"
+          (click)="vm.selectTicket(ticket.id)"
+        >
+          <span class="queue-item-topline">
+            <span class="ticket-key">{{ ticketKey(ticket) }}</span>
+            <span class="status-chip" [ngClass]="statusClass(ticket.status)">{{ ticket.status }}</span>
+          </span>
+          <strong>{{ ticket.subject }}</strong>
+          <span class="queue-item-preview">{{ lastMessage(ticket) }}</span>
+          <span class="queue-item-meta">
+            <span>{{ ticket.category }}</span>
+            <span class="priority-dot" [ngClass]="priorityClass(ticket.priority)"></span>
+            <span>{{ ticket.priority }}</span>
+            <span>{{ lastActivity(ticket) | date:'dd MMM, h:mm a' }}</span>
+          </span>
+        </button>
+
+        <dv-empty-state *ngIf="!view.loading && view.tickets.length === 0" message="No tickets found for this queue."></dv-empty-state>
+        <div class="empty-state-inline" *ngIf="view.loading">Loading tickets...</div>
+      </div>
+    </aside>
+
+    <ng-container *ngIf="view.selectedTicket as ticket; else emptyConversation">
+      <section class="conversation-panel">
+        <div class="conversation-head">
+          <div class="conversation-title">
+            <span class="ticket-key">{{ ticketKey(ticket) }}</span>
+            <h2>{{ ticket.subject }}</h2>
+          </div>
+          <span class="status-chip" [ngClass]="statusClass(ticket.status)">{{ ticket.status }}</span>
+        </div>
+
+        <div class="conversation-meta">
+          <span>{{ ticket.category }}</span>
+          <span>{{ ticket.relatedProjectService || 'General Support' }}</span>
+          <span>Updated {{ ticket.updatedAt | date:'dd MMM yyyy, h:mm a' }}</span>
+        </div>
+
+        <div class="conversation-scroll">
+          <article class="message-card client-message">
+            <div class="message-avatar">{{ ticket.clientCompanyName.charAt(0) || 'C' }}</div>
+            <div class="message-body">
+              <div class="message-head">
+                <strong>{{ ticket.clientCompanyName }}</strong>
+                <span>{{ ticket.createdAt | date:'dd MMM yyyy, h:mm a' }}</span>
+              </div>
+              <p>{{ ticket.description }}</p>
+            </div>
+          </article>
+
+          <article class="message-card" *ngFor="let remark of ticket.remarks" [class.client-message]="remark.authorRole === 'client'">
+            <div class="message-avatar">{{ authorLabel(ticket, remark.authorRole).charAt(0) }}</div>
+            <div class="message-body">
+              <div class="message-head">
+                <strong>{{ remark.authorName || authorLabel(ticket, remark.authorRole) }}</strong>
+                <span>{{ remark.createdAt | date:'dd MMM yyyy, h:mm a' }}</span>
+              </div>
+              <p>{{ remark.message }}</p>
+            </div>
+          </article>
+
+          <div class="empty-thread-note" *ngIf="ticket.remarks.length === 0">No support responses yet.</div>
+        </div>
+
+        <div class="reply-composer">
+          <textarea class="field-input" rows="3" [ngModel]="view.remarkDraft" (ngModelChange)="vm.setRemarkDraft($event)" placeholder="Write a reply to the support team"></textarea>
+          <div class="reply-actions">
+            <span>{{ attachmentLabel(ticket) }}</span>
+            <button class="primary-action" type="button" (click)="vm.addRemark(ticket)" [disabled]="view.saving">
+              {{ view.saving ? 'Sending...' : 'Send Reply' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="context-panel">
+        <section class="context-section">
+          <span class="section-kicker">Requester</span>
+          <strong>{{ ticket.clientCompanyName }}</strong>
+          <p>{{ ticket.clientContactName || ticket.clientEmail }}</p>
+          <p>{{ ticket.clientPhone || '-' }}</p>
+        </section>
+
+        <section class="context-section">
+          <span class="section-kicker">Details</span>
+          <dl class="detail-list">
+            <div>
+              <dt>Priority</dt>
+              <dd><span class="priority-dot" [ngClass]="priorityClass(ticket.priority)"></span>{{ ticket.priority }}</dd>
+            </div>
+            <div>
+              <dt>Category</dt>
+              <dd>{{ ticket.category }}</dd>
+            </div>
+            <div>
+              <dt>Service</dt>
+              <dd>{{ ticket.relatedProjectService || '-' }}</dd>
+            </div>
+            <div>
+              <dt>Created</dt>
+              <dd>{{ ticket.createdAt | date:'dd MMM yyyy' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="context-section">
+          <span class="section-kicker">Attachments</span>
+          <div class="attachment-list" *ngIf="ticket.attachments.length; else noAttachments">
+            <span class="attachment-chip" *ngFor="let attachment of ticket.attachments">{{ attachment.originalName }}</span>
+          </div>
+          <ng-template #noAttachments><p>No files attached.</p></ng-template>
+        </section>
+      </aside>
+    </ng-container>
+
+    <ng-template #emptyConversation>
+      <section class="conversation-panel empty-panel">
+        <dv-empty-state message="Select a ticket or raise a new one."></dv-empty-state>
+      </section>
+    </ng-template>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="view.createOpen" (click)="vm.closeCreate()">
+    <section class="ticket-modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <span class="section-kicker">New request</span>
+          <h2>Raise Ticket</h2>
+        </div>
+        <button class="secondary-action icon-action" type="button" (click)="vm.closeCreate()" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <label class="field-block field-wide">
+          <span>Subject</span>
+          <input class="field-input" type="text" [ngModel]="view.draft.subject" (ngModelChange)="updateDraft('subject', $event)" placeholder="Briefly describe the issue">
+        </label>
+        <label class="field-block">
+          <span>Category</span>
+          <select class="field-select" [ngModel]="view.draft.category" (ngModelChange)="updateDraft('category', $event)">
+            <option *ngFor="let category of categoryOptions" [value]="category">{{ category }}</option>
+          </select>
+        </label>
+        <label class="field-block">
+          <span>Priority</span>
+          <select class="field-select" [ngModel]="view.draft.priority" (ngModelChange)="updateDraft('priority', $event)">
+            <option *ngFor="let priority of priorityOptions" [value]="priority">{{ priority }}</option>
+          </select>
+        </label>
+        <label class="field-block field-wide">
+          <span>Related Project / Service</span>
+          <input class="field-input" type="text" [ngModel]="view.draft.relatedProjectService" (ngModelChange)="updateDraft('relatedProjectService', $event)" placeholder="Website, CRM, hosting, billing, or other service">
+        </label>
+        <label class="field-block field-wide">
+          <span>Description</span>
+          <textarea class="field-input" rows="6" [ngModel]="view.draft.description" (ngModelChange)="updateDraft('description', $event)" placeholder="Add steps, expected result, screenshots, or any detail that helps the team respond faster"></textarea>
+        </label>
+        <label class="field-block field-wide">
+          <span>Attachment</span>
+          <input class="field-input file-input" type="file" (change)="vm.setAttachment(fileList($event))">
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="secondary-action" type="button" (click)="vm.closeCreate()">Cancel</button>
+        <button class="primary-action" type="button" (click)="vm.createTicket()" [disabled]="view.saving">
+          {{ view.saving ? 'Saving...' : 'Create Ticket' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</section>

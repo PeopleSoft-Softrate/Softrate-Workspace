@@ -1,0 +1,110 @@
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/employees/requests" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Requests
+      </a>
+    </div>
+    <h1>
+      {{ isEditMode() ? 'Edit Employee Profile' : (isApprovalMode() ? 'Review & Onboard' : 'Add New Employee') }}
+    </h1>
+    <p>
+      {{ isEditMode() ? 'Update information for ' + employee.fullName : (isApprovalMode() ? 'Finalize details to onboard ' + employee.fullName : 'Register a new employee into the system') }}
+    </p>
+  </div>
+</div>
+
+<div class="data-container">
+  <div class="card form-card">
+    <form (ngSubmit)="saveEmployee()" #empForm="ngForm">
+      <div class="form-grid">
+        <!-- Personal Details -->
+        <div class="form-section">
+          <h3>Personal Details</h3>
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" [(ngModel)]="employee.fullName" name="fullName" required placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" [(ngModel)]="employee.email" name="email" required placeholder="john@example.com">
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="text" [(ngModel)]="employee.phone" name="phone" required placeholder="+91 ...">
+          </div>
+          <div class="form-group">
+            <label>Current Address</label>
+            <textarea [(ngModel)]="employee.address" name="address" placeholder="Address..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Gender</label>
+              <input type="text" [(ngModel)]="employee.gender" name="gender">
+            </div>
+            <div class="form-group">
+              <label>Nationality</label>
+              <input type="text" [(ngModel)]="employee.nationality" name="nationality">
+            </div>
+          </div>
+        </div>
+
+        <!-- Education Details -->
+        <div class="form-section">
+          <h3>Education</h3>
+          <div class="form-group">
+            <label>Qualification & Specialization</label>
+            <div class="input-group">
+              <input type="text" [(ngModel)]="employee.qualification" name="qualification" placeholder="Degree">
+              <input type="text" [(ngModel)]="employee.specialization" name="specialization" placeholder="Major">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>College / University</label>
+            <input type="text" [(ngModel)]="employee.college" name="college">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Passing Year</label>
+              <input type="text" [(ngModel)]="employee.passingYear" name="passingYear">
+            </div>
+            <div class="form-group">
+              <label>UG CGPA</label>
+              <input type="text" [(ngModel)]="employee.ugCgpa" name="ugCgpa">
+            </div>
+          </div>
+        </div>
+
+        <!-- Work Details -->
+        <div class="form-section">
+          <h3>Official Details</h3>
+          <div class="form-group">
+            <label>Department</label>
+            <input type="text" [(ngModel)]="employee.department" name="department" placeholder="Sales, HR, IT...">
+          </div>
+          <div class="form-group">
+            <label>Designation</label>
+            <select [(ngModel)]="employee.designation" name="designation" *ngIf="employeeRoles().length > 0" class="form-select">
+              <option value="">Select Designation</option>
+              <option *ngFor="let role of employeeRoles()" [value]="role">{{role}}</option>
+            </select>
+            <input type="text" [(ngModel)]="employee.designation" name="designation" placeholder="Manager, Senior, etc." *ngIf="employeeRoles().length === 0">
+          </div>
+          <div class="form-group">
+            <label>Onboarding Date *</label>
+            <input type="date" [(ngModel)]="employee.onboardingDate" name="onboardingDate" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" routerLink="/employees/requests">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving() || !empForm.valid">
+          <i class="fa-solid fa-user-check" *ngIf="!isSaving()"></i>
+          <span *ngIf="!isSaving()">{{ isEditMode() ? 'Save Changes' : (isApprovalMode() ? 'Approve & Onboard' : 'Register Employee') }}</span>
+          <span *ngIf="isSaving()">{{ isEditMode() ? 'Updating...' : 'Saving...' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

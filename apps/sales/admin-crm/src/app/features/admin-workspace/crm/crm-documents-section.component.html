@@ -1,0 +1,73 @@
+<ng-container *ngIf="vm.dashTab==='crm_sla' || vm.dashTab==='crm_nda'">
+  <div class="workspace-header workspace-header-filters-only crm-filter-bar">
+    <div class="workspace-controls crm-filter-controls">
+      <label class="topbar-search crm-filter-search" for="crmDocumentSearch">
+        <span class="topbar-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        </span>
+        <input class="topbar-input" id="crmDocumentSearch" type="search" [(ngModel)]="vm.crmClientSearch" placeholder="Search client or document">
+      </label>
+      <button class="toolbar-button invoice-date-filter-button" type="button" (click)="vm.fetchCrmContracts(vm.dashTab==='crm_sla' ? 'SLA' : 'NDA')" [disabled]="vm.crmContractsLoading">Refresh</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="vm.dashTab==='crm_sla'; else ndaDocMode">
+    <ng-template [ngTemplateOutlet]="contractPanel" [ngTemplateOutletContext]="{ type: 'SLA', title: 'SLA' }"></ng-template>
+  </ng-container>
+  <ng-template #ndaDocMode>
+    <ng-template [ngTemplateOutlet]="contractPanel" [ngTemplateOutletContext]="{ type: 'NDA', title: 'NDA' }"></ng-template>
+  </ng-template>
+</ng-container>
+
+<ng-template #contractPanel let-type="type" let-title="title">
+  <div class="crm-document-layout">
+    <section class="premium-card crm-document-generate">
+      <div class="settings-section-title">{{ title }} Generation</div>
+      <div class="crm-client-picker">
+        <button class="rail-item admin-leads-rail-item" type="button" *ngFor="let client of vm.filteredCrmClients" [class.active]="vm.selectedCrmClientCompany===client.companyName" (click)="vm.selectCrmClient(client.companyName)">
+          <span class="rail-item-copy">
+            <span class="rail-item-name">{{ client.companyName }}</span>
+            <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }}</span>
+          </span>
+        </button>
+      </div>
+      <div class="crm-selected-client-card" *ngIf="vm.selectedCrmClient as client">
+        <h3>{{ client.companyName }}</h3>
+        <p>{{ client.primaryContact }} · {{ client.primaryEmail || client.primaryPhone || '-' }}</p>
+        <button class="primary-action" type="button" (click)="vm.generateCrmContract(type, client)" [disabled]="vm.crmContractsLoading">
+          {{ vm.crmContractsLoading ? 'Generating...' : 'Generate ' + title }}
+        </button>
+      </div>
+    </section>
+
+    <section class="premium-card crm-document-history">
+      <div class="crm-panel-head">
+        <div>
+          <div class="settings-section-title">{{ title }} History</div>
+          <p>{{ vm.crmContractsByType(type).length }} records</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table compact-table">
+          <thead>
+            <tr><th>Document</th><th>Client</th><th>Status</th><th>Generated</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let contract of vm.crmContractsByType(type)">
+              <td>{{ contract.documentNumber }}</td>
+              <td>{{ contract.clientCompanyName }}</td>
+              <td><span class="crm-status-pill">{{ contract.status }}</span></td>
+              <td>{{ vm.fmtDate(contract.createdAt) }}</td>
+            </tr>
+            <tr *ngIf="!vm.crmContractsLoading && vm.crmContractsByType(type).length===0">
+              <td colspan="4" class="empty-cell">No {{ title }} history yet.</td>
+            </tr>
+            <tr *ngIf="vm.crmContractsLoading">
+              <td colspan="4" class="empty-cell">Loading {{ title }} records...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</ng-template>

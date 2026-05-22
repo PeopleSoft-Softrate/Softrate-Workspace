@@ -1,0 +1,72 @@
+<div class="login-container">
+  <div class="login-brand">
+    <div class="logo-box">
+      <i class="fa-solid fa-users-gear"></i>
+    </div>
+    <h1>Softrate HRM</h1>
+    <p>Empowering your workforce</p>
+  </div>
+
+  <div class="login-card">
+    <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+      <div class="form-header">
+        <h2>Register Company</h2>
+        <p>Create your new tenant account</p>
+      </div>
+
+      <div class="error-banner" *ngIf="errorMessage()">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ errorMessage() }}
+      </div>
+
+      <div class="form-group">
+        <label>Company Name</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-business-time"></i>
+          <input type="text" [(ngModel)]="formData.companyName" name="companyName" required placeholder="Acme Corp">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Company Code</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-tag"></i>
+          <input type="text" [(ngModel)]="formData.companyCode" name="companyCode" required placeholder="e.g. ACME123">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Admin Full Name</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" [(ngModel)]="formData.hrName" name="hrName" required placeholder="Praveen">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Admin Email</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-envelope"></i>
+          <input type="email" [(ngModel)]="formData.hrEmail" name="hrEmail" required placeholder="admin@company.com">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" [(ngModel)]="formData.hrPassword" name="hrPassword" required placeholder="••••••••">
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="isLoading() || !registerForm.form.valid">
+        <span *ngIf="!isLoading()">Register Account</span>
+        <div class="spinner" *ngIf="isLoading()"></div>
+      </button>
+
+      <div class="form-footer">
+        <a routerLink="/login">Already have an account? Sign in</a>
+      </div>
+    </form>
+  </div>
+</div>

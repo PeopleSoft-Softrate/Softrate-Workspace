@@ -1,0 +1,306 @@
+<div class="dashboard-wrapper">
+  
+  <div class="dashboard-main">
+
+    <!-- Premium Greeting Header -->
+    <div class="overview-greeting-wrap">
+      <section class="overview-greeting-card" aria-label="Employee greeting">
+        <div class="overview-greeting-content">
+          <div class="overview-greeting-copy">
+            <h2 class="overview-greeting-title">
+              <span class="overview-greeting-line">{{ greeting }},</span>
+              <span class="overview-greeting-name">{{ employeeData()?.fullName?.split(' ')[0] }}</span>
+            </h2>
+            <p class="overview-greeting-desc">Track your attendance, manage leaves, and stay updated on active tasks from one place.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  <!-- Statistics Grid -->
+  <div class="stats-grid">
+    <!-- Monthly Attendance -->
+    <div class="stat-card green" routerLink="/employee/attendance" style="cursor: pointer;">
+      <div class="stat-top">
+        <div class="stat-value-group">
+          <h3 class="stat-value">{{ monthlyAttendance() }}</h3>
+          <span class="stat-label">Monthly Attendance</span>
+        </div>
+        <div class="stat-icon-container">
+          <hugeicons-icon [icon]="FingerAccessIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        </div>
+      </div>
+      <div class="stat-bottom">
+        <span class="trend-badge positive">
+          <hugeicons-icon [icon]="Clock01Icon" size="12" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          On Track
+        </span>
+        <span class="trend-text">{{ attendanceSubtitle() }}</span>
+      </div>
+    </div>
+
+    <!-- Leaves Available -->
+    <div class="stat-card orange" routerLink="/employee/leaves" style="cursor: pointer;">
+      <div class="stat-top">
+        <div class="stat-value-group">
+          <h3 class="stat-value">{{ leavesAvailable() }}</h3>
+          <span class="stat-label">Leaves Available</span>
+        </div>
+        <div class="stat-icon-container">
+          <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        </div>
+      </div>
+      <div class="stat-bottom">
+        <span class="trend-badge positive" style="background: #ffedd5; color: #9a3412;">
+          <hugeicons-icon [icon]="Calendar01Icon" size="12" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          Available
+        </span>
+        <span class="trend-text">{{ leavesSubtitle() }}</span>
+      </div>
+    </div>
+
+    <!-- Active Tasks -->
+    <div class="stat-card blue" routerLink="/employee/dashboard" style="cursor: pointer;">
+      <div class="stat-top">
+        <div class="stat-value-group">
+          <h3 class="stat-value">{{ activeTasksCount() }}</h3>
+          <span class="stat-label">Active Tasks</span>
+        </div>
+        <div class="stat-icon-container">
+          <hugeicons-icon [icon]="AssignmentsIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        </div>
+      </div>
+      <div class="stat-bottom">
+        <span class="trend-badge positive" style="background: #dbeafe; color: #1e40af;">
+          <hugeicons-icon [icon]="AssignmentsIcon" size="12" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          Assigned
+        </span>
+        <span class="trend-text">{{ tasksSubtitle() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manager Assignment Section -->
+  <section class="actions-section" *ngIf="isManager() && pendingTeamRequests().length > 0">
+    <h3 class="section-title" style="display: flex; justify-content: space-between;">
+      <span>
+        <hugeicons-icon [icon]="UserCircleIcon" size="20" [strokeWidth]="2" color="var(--accent-primary)"></hugeicons-icon>
+        Pending Team Requests
+      </span>
+      <span class="count" style="background: #fef3c7; color: #d97706; padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: 800;">{{ pendingTeamRequests().length }} NEW</span>
+    </h3>
+    
+    <div class="requests-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+      <div class="team-request-card" *ngFor="let req of pendingTeamRequests()" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: white; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
+        <div class="req-main" style="display: flex; align-items: center; gap: 1.25rem; flex: 1;">
+          <div class="avatar-small" style="width: 44px; height: 44px; background: #e2e8f0; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+            {{ req.fullName[0] }}
+          </div>
+          <div class="req-details">
+            <h4 style="font-weight: 700; color: var(--text-primary); margin: 0 0 0.25rem 0;">{{ req.fullName }}</h4>
+            <p style="font-size: 0.8125rem; color: var(--text-muted); margin: 0;">{{ req.role }}</p>
+          </div>
+        </div>
+        <div class="req-info" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
+          <p class="college" style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0; display: flex; align-items: center; gap: 0.5rem;"><hugeicons-icon [icon]="Home01Icon" size="14"></hugeicons-icon> {{ req.college }}</p>
+          <p class="time" style="font-size: 0.8125rem; color: var(--text-muted); margin: 0; display: flex; align-items: center; gap: 0.5rem;"><hugeicons-icon [icon]="Clock01Icon" size="14"></hugeicons-icon> Applied on {{ req.createdAt | date:'shortDate' }}</p>
+        </div>
+        <div class="req-actions" style="display: flex; gap: 0.75rem;">
+          <button class="btn-reject-sm" (click)="reviewRequest(req._id, 'rejected')" style="padding: 0.5rem 1rem; border: none; border-radius: 10px; font-size: 0.8125rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; background: #fee2e2; color: #dc2626;">
+            Reject
+          </button>
+          <button class="btn-approve-sm" (click)="reviewRequest(req._id, 'approved')" style="padding: 0.5rem 1rem; border: none; border-radius: 10px; font-size: 0.8125rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; background: #d1fae5; color: #059669;">
+            Approve
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Actions Section -->
+  <section class="actions-section">
+    <h3 class="section-title">
+      <hugeicons-icon [icon]="PlusSignIcon" size="20" [strokeWidth]="2" color="var(--accent-primary)"></hugeicons-icon>
+      Quick Actions
+    </h3>
+    <div class="actions-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+      <!-- My Attendance -->
+      <div class="action-card green" routerLink="/employee/attendance">
+        <div class="action-icon-box">
+          <hugeicons-icon [icon]="CalendarCheckIn01Icon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="action-details">
+          <h4>My Attendance</h4>
+          <p>Track your daily logs</p>
+        </div>
+      </div>
+
+      <!-- Leave Applications -->
+      <div class="action-card orange" routerLink="/employee/leaves">
+        <div class="action-icon-box">
+          <hugeicons-icon [icon]="SentIcon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="action-details">
+          <h4>Leave Applications</h4>
+          <p>Request and track leaves</p>
+        </div>
+      </div>
+
+      <!-- My Payslips -->
+      <div class="action-card purple" routerLink="/employee/payroll">
+        <div class="action-icon-box">
+          <hugeicons-icon [icon]="Invoice01Icon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="action-details">
+          <h4>My Payslips</h4>
+          <p>View and download payslips</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content Grid -->
+  <div class="dashboard-content-layout">
+    
+    <!-- Active Task Panel -->
+    <div class="activity-card task-card" style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);">
+      <div class="card-header" style="margin: 0; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(43, 43, 43, 0.05); display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+          <hugeicons-icon [icon]="AssignmentsIcon" size="18" [strokeWidth]="2" color="#C85C78"></hugeicons-icon>
+          Active Task
+        </h3>
+        <span class="status-badge" style="background: #e0f2fe; color: #0369a1; padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">In Progress</span>
+      </div>
+      
+      <div class="task-body" *ngIf="urgentProject(); else noTaskTemplate" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="task-main-details">
+          <h4 style="font-size: 1.25rem; font-weight: 800; color: #2B2B2B; margin: 0 0 0.35rem 0; letter-spacing: -0.01em;">{{ urgentProject()?.title }}</h4>
+          <div class="client-info" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 0.8125rem; color: #8C8C8C;">
+            <span>{{ urgentProject()?.client || 'Internal Project' }}</span>
+            <div style="display: flex; align-items: center; gap: 0.35rem; color: #C85C78; font-weight: 600;">
+              <hugeicons-icon [icon]="Calendar01Icon" size="14" [strokeWidth]="2"></hugeicons-icon>
+              <span>Due {{ getProjectDeadline(urgentProject()) | date:'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="task-description" style="font-size: 0.875rem; color: #555555; line-height: 1.5; margin: 0; background: #FAFAFA; border-left: 3px solid #C85C78; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; font-style: italic;">
+          "{{ urgentProject()?.description || 'No description provided' }}"
+        </p>
+      </div>
+
+      <ng-template #noTaskTemplate>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 1.5rem; text-align: center; gap: 0.75rem; min-height: 160px; background: #FAFAFA; border-radius: 8px;">
+          <div style="width: 48px; height: 48px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #16a34a;">
+            <hugeicons-icon [icon]="AssignmentsIcon" size="24" [strokeWidth]="2"></hugeicons-icon>
+          </div>
+          <div>
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: #2B2B2B; margin: 0 0 0.25rem 0;">All Caught Up!</h4>
+            <p style="font-size: 0.8rem; color: #8C8C8C; margin: 0; max-width: 200px; line-height: 1.4;">No active projects with deadlines pending.</p>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+    
+    <!-- Premium Profile Card Wrapper -->
+    <div class="profile-premium-card" style="margin-top: 0;">
+      <!-- Right Panel: White background rounded card with detailed employee data -->
+      <div class="profile-premium-right">
+        <!-- Left Panel: Wavy Crimson Card (Absolutely positioned to overlap white card) -->
+        <div class="profile-premium-left">
+          <!-- Main Front Gradient Layer with Wavy SVG Path -->
+          <svg class="profile-front-gradient" viewBox="0 0 140 280" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="grad-crimson" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#C85C78" />
+                <stop offset="100%" stop-color="#9A3F63" />
+              </linearGradient>
+            </defs>
+            <path d="M 0,32 A 17.5,32 0 0 1 17.5,0 L 105,0 C 95,40 92,80 102,120 C 112,150 112,180 102,210 C 92,240 90,260 98,280 L 17.5,280 A 17.5,32 0 0 1 0,248 Z" fill="url(#grad-crimson)" />
+          </svg>
+
+          <!-- Overlapping Avatar positioned centered inside the wavy left block -->
+          <div class="profile-premium-avatar-wrapper">
+            <div class="profile-premium-avatar">
+              <span>{{ employeeData()?.fullName?.charAt(0) || 'E' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stacked Organic Wavy SVG Depth Layers (Lavender, Orange, Peach) -->
+        <svg class="profile-depth-layer lavender" viewBox="0 0 140 280" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad-lavender" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#9D83C5" />
+              <stop offset="100%" stop-color="#8B6FB3" />
+            </linearGradient>
+          </defs>
+          <path d="M 0,32 A 32,32 0 0 1 32,0 L 105,0 C 95,40 92,80 102,120 C 112,150 112,180 102,210 C 92,240 90,260 98,280 L 32,280 A 32,32 0 0 1 0,248 Z" fill="url(#grad-lavender)" />
+        </svg>
+
+        <svg class="profile-depth-layer orange" viewBox="0 0 140 280" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F7C393" />
+              <stop offset="100%" stop-color="#F2B37B" />
+            </linearGradient>
+          </defs>
+          <path d="M 0,32 A 32,32 0 0 1 32,0 L 105,0 C 95,40 92,80 102,120 C 112,150 112,180 102,210 C 92,240 90,260 98,280 L 32,280 A 32,32 0 0 1 0,248 Z" fill="url(#grad-orange)" />
+        </svg>
+
+        <svg class="profile-depth-layer peach" viewBox="0 0 140 280" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad-peach" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FADCB9" />
+              <stop offset="100%" stop-color="#F7C99A" />
+            </linearGradient>
+          </defs>
+          <path d="M 0,32 A 32,32 0 0 1 32,0 L 105,0 C 95,40 92,80 102,120 C 112,150 112,180 102,210 C 92,240 90,260 98,280 L 32,280 A 32,32 0 0 1 0,248 Z" fill="url(#grad-peach)" />
+        </svg>
+
+        <div class="profile-premium-info">
+          <h2 class="profile-premium-name">{{ employeeData()?.fullName }}</h2>
+          <div class="profile-premium-meta" *ngIf="employeeData()?.role">
+            <span class="profile-premium-badge designation">
+              {{ employeeData()?.role }}
+            </span>
+          </div>
+
+          <div class="profile-premium-details">
+            <div class="detail-item" *ngIf="employeeData()?.EmployeeId">
+              <hugeicons-icon [icon]="FingerAccessIcon" size="14" [strokeWidth]="2"></hugeicons-icon>
+              <span>ID: {{ employeeData()?.EmployeeId }}</span>
+            </div>
+            <div class="detail-item" *ngIf="employeeData()?.email">
+              <hugeicons-icon [icon]="Mail01Icon" size="14" [strokeWidth]="2"></hugeicons-icon>
+              <span>{{ employeeData()?.email }}</span>
+            </div>
+            <div class="detail-item" *ngIf="employeeData()?.phone">
+              <hugeicons-icon [icon]="CallIcon" size="14" [strokeWidth]="2"></hugeicons-icon>
+              <span>{{ employeeData()?.phone }}</span>
+            </div>
+            <div class="detail-item" *ngIf="employeeData()?.gender">
+              <hugeicons-icon [icon]="UserCircleIcon" size="14" [strokeWidth]="2"></hugeicons-icon>
+              <span>Gender: {{ employeeData()?.gender }}</span>
+            </div>
+            <div class="detail-item" *ngIf="employeeData()?.college">
+              <hugeicons-icon [icon]="StudentsIcon" size="14" [strokeWidth]="2"></hugeicons-icon>
+              <span>College: {{ employeeData()?.college }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Actions: LinkedIn and Mail -->
+        <div class="profile-premium-social">
+          <a [href]="employeeData()?.linkedin || 'https://linkedin.com'" target="_blank" class="social-link linkedin" title="Connect on LinkedIn">
+            <hugeicons-icon [icon]="Linkedin01Icon" size="20" [strokeWidth]="2"></hugeicons-icon>
+          </a>
+          <a [href]="'mailto:' + employeeData()?.email" class="social-link mail" title="Send Email">
+            <hugeicons-icon [icon]="Mail01Icon" size="20" [strokeWidth]="2"></hugeicons-icon>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

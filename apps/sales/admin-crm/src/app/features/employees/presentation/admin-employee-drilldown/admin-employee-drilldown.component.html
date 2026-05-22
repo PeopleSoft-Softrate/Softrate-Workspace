@@ -1,0 +1,353 @@
+  <!-- Employee drilldown panel (Legacy - disabled when using new emp_dashboard) -->
+  <div class="drilldown-overlay" [class.open]="!!selectedEmployee && dashTab !== 'emp_dashboard'"
+    (click)="closeEmployee()">
+    <div class="drilldown-panel" (click)="$event.stopPropagation()"
+      *ngIf="selectedEmployee && dashTab !== 'emp_dashboard'">
+      <button class="drilldown-close" (click)="closeEmployee()">&#x2715;</button>
+      <div class="drilldown-header">
+        <div class="emp-avatar big">{{ selectedEmployee.name.charAt(0).toUpperCase() }}</div>
+        <div style="flex:1">
+          <div class="drilldown-name">{{ selectedEmployee.name }}</div>
+          <div class="drilldown-phone">{{ selectedEmployee.mobile }} &middot; #{{ selectedEmployee.employeeCode }}</div>
+          <div style="font-size:.78rem;color:var(--text-3);margin-top:3px">{{ selectedEmployee.deviceModel || 'Device
+            unknown' }} &bull; v{{ selectedEmployee.appVersion || '?' }}</div>
+        </div>
+        <button class="btn-login" style="padding:.35rem .8rem;font-size:.8rem;display:flex;align-items:center;gap:5px;"
+          (click)="syncEmployee()" [disabled]="syncEmpLoading">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+            [style.animation]="syncEmpLoading?'spin 0.8s linear infinite':''" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {{ syncEmpLoading ? 'Syncing…' : 'Sync' }}
+        </button>
+      </div>
+      <div class="period-tabs" style="margin:1.1rem 0 0.5rem;">
+        <button *ngFor="let p of periods" [class.active]="selectedPeriod===p.key" (click)="onPeriodChange(p.key)">{{
+          p.label }}</button>
+      </div>
+      <div class="custom-range-row" *ngIf="selectedPeriod==='custom'"
+        style="margin:0.75rem 0 1rem;padding:.75rem 1rem;">
+        <div class="cr-field">
+          <label>From</label>
+          <input type="date" [(ngModel)]="customFrom" [max]="todayIso">
+        </div>
+        <div class="cr-field">
+          <label>To <span style="font-size:.7rem;opacity:.6;">(optional)</span></label>
+          <input type="date" [(ngModel)]="customTo" [min]="customFrom" [max]="todayIso">
+        </div>
+        <button class="cta-primary" style="padding:.38rem .9rem;font-size:.8rem;align-self:flex-end;"
+          (click)="applyCustomRange()" [disabled]="!customFrom">Apply</button>
+      </div>
+      <div class="drilldown-tabs">
+        <button [class.active]="drilldownTab==='stats'" (click)="switchDrilldownTab('stats')">Summary</button>
+        <button [class.active]="drilldownTab==='calls'" (click)="switchDrilldownTab('calls')">Call History <span
+            class="badge-count" *ngIf="selectedEmpCalls.length">{{ selectedEmpCalls.length }}</span></button>
+        <button [class.active]="drilldownTab==='leads'" (click)="switchDrilldownTab('leads')">Leads <span
+            class="badge-count" *ngIf="empLeads.length">{{ empLeads.length }}</span></button>
+        <button [class.active]="drilldownTab==='followups'" (click)="switchDrilldownTab('followups')">Follow-ups <span
+            class="badge-count" *ngIf="selectedEmpBookmarks.length">{{ selectedEmpBookmarks.length }}</span></button>
+      </div>
+      <div *ngIf="drilldownTab==='stats'">
+        <div *ngIf="selectedEmpLoading" class="dash-loading">Loading&hellip;</div>
+        <div *ngIf="!selectedEmpLoading && !selectedEmpStats" class="dash-empty" style="padding:1.5rem;">No data for
+          this period.</div>
+        <div class="drilldown-stats" *ngIf="!selectedEmpLoading && selectedEmpStats">
+          <div class="ds-row"><span class="ds-label">Total Calls</span><span class="ds-val">{{ selectedEmpStats.total
+              }}</span></div>
+          <div class="ds-row"><span class="ds-label">Call Duration</span><span class="ds-val">{{
+              fmtDur(selectedEmpStats.totalDuration) }}</span></div>
+          <div class="ds-row in-row"><span class="ds-label">Incoming</span><span class="ds-val">{{
+              selectedEmpStats.incoming }}</span></div>
+          <div class="ds-row in-row"><span class="ds-label">Incoming Duration</span><span class="ds-val">{{
+              fmtDur(selectedEmpStats.incomingDuration) }}</span></div>
+          <div class="ds-row out-row"><span class="ds-label">Outgoing</span><span class="ds-val">{{
+              selectedEmpStats.outgoing }}</span></div>
+          <div class="ds-row out-row"><span class="ds-label">Outgoing Duration</span><span class="ds-val">{{
+              fmtDur(selectedEmpStats.outgoingDuration) }}</span></div>
+          <div class="ds-row miss-row"><span class="ds-label">Missed</span><span class="ds-val">{{
+              selectedEmpStats.missed }}</span></div>
+          <div class="ds-row rej-row"><span class="ds-label">Rejected</span><span class="ds-val">{{
+              selectedEmpStats.rejected }}</span></div>
+          <div class="ds-row conn-row"><span class="ds-label">Connected</span><span class="ds-val">{{
+              selectedEmpStats.connected }}</span></div>
+        </div>
+        <div class="drilldown-meta" *ngIf="selectedEmployee">
+          <div class="dm-row"><span>Registered</span><span>{{ fmtDate(selectedEmployee.createdAt) }}</span></div>
+          <div class="dm-row"><span>Last Call</span><span>{{ fmtDate(selectedEmployee.lastCallTime) }}</span></div>
+          <div class="dm-row"><span>Last Sync</span><span style="color:var(--green)">{{
+              fmtDate(selectedEmployee.lastSyncTime) }}</span></div>
+        </div>
+      </div>
+      <div *ngIf="drilldownTab==='calls'">
+        <div *ngIf="selectedEmpCallsLoading" class="dash-loading">Loading calls&hellip;</div>
+        <div *ngIf="!selectedEmpCallsLoading && selectedEmpCalls.length===0" class="dash-empty" style="padding:1.5rem;">
+          No individual call data.</div>
+        <div class="call-history-list" *ngIf="!selectedEmpCallsLoading && selectedEmpCalls.length>0">
+          <div class="ch-item" *ngFor="let c of selectedEmpCalls | slice:0:4" style="padding: 0.85rem 0.5rem;">
+            <div class="log-avatar" style="width: 28px; height: 28px; font-size: 0.75rem;">{{ (c.name ||
+              '?').charAt(0).toUpperCase() }}</div>
+            <div class="ch-info" style="margin-left: 4px;">
+              <div class="ch-number" style="font-size: 0.82rem; font-weight: 700;">{{ c.name || c.number }}</div>
+              <div class="ch-sub" style="font-size: 0.7rem; opacity: 0.7;">{{ c.timestamp | date:'hh:mm a' }} &bull; {{
+                c.callType }}</div>
+            </div>
+            <div class="ch-right">
+              <div class="ch-dur" style="font-size: 0.78rem; font-weight: 800; color: var(--accent);">{{ c.duration > 0
+                ? fmtDur(c.duration) : '—' }}</div>
+            </div>
+          </div>
+          <button *ngIf="selectedEmpCalls.length > 5" class="cta-secondary"
+            style="width: 100%; margin-top: 1rem; padding: 0.6rem; border-radius: 8px; font-size: 0.85rem;"
+            (click)="openAllCallsModal()">View All {{ selectedEmpCalls.length }} Calls</button>
+        </div>
+      </div>
+
+      <!-- LEAD MANAGEMENT TAB -->
+      <div *ngIf="drilldownTab==='leads'" class="leads-tab-content" style="padding: 1.25rem 0;">
+
+        <!-- Tab Header with Actions -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h4 style="margin:0; font-size: 1rem; font-weight: 700;">Assigned Leads</h4>
+          <div style="display: flex; gap: 8px;">
+            <!-- Manual Add Toggle/Section could go here, but we'll show both -->
+            <label class="cta-secondary"
+              style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Upload Excel
+              <input type="file" (change)="onLeadExcelUpload($event)" accept=".xlsx, .xls" style="display:none;">
+            </label>
+          </div>
+        </div>
+
+        <!-- Feedback Messages -->
+        <div *ngIf="addLeadError" class="form-error" style="margin-bottom: 1rem;">{{ addLeadError }}</div>
+        <div *ngIf="addLeadSuccess"
+          style="color:var(--green); font-weight: 600; margin-bottom: 1rem; font-size: 0.85rem;">✓ {{ addLeadSuccess }}
+        </div>
+
+        <!-- EXCEL MAPPING UI -->
+        <div *ngIf="leadUploadStep === 'mapping' || leadUploadStep === 'uploading'" class="mapping-box"
+          style="background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+          <h5 style="margin-top:0; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 700; color: var(--accent);">Map
+            Excel Columns</h5>
+          <p style="font-size: 0.8rem; color: var(--text-3); margin-bottom: 1.25rem;">We found <strong>{{
+              parsedExcelData.length }}</strong> rows. Please match the attributes below:</p>
+
+          <!-- Set Label Input -->
+          <div
+            style="margin-bottom: 1rem; padding: 0.85rem; background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px;">
+            <label
+              style="font-size: 0.75rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              🏷 Set / Batch Label <span style="color: red;">*</span>
+            </label>
+            <input type="text" [(ngModel)]="newLeadSetLabel" placeholder='e.g. "Jan 2026" or "1/1/2026-10/1/2026"'
+              style="width: 100%; padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.82rem; box-sizing: border-box;">
+            <div style="font-size: 0.72rem; color: var(--text-3); margin-top: 5px;">This label groups all imported leads
+              so you can filter and access them easily later.</div>
+          </div>
+
+          <div style="display: grid; gap: 12px;">
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Name Column <span style="color:red">*</span></label>
+              <select [(ngModel)]="leadColumnMapping.leadCompanyName"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Contact Number Column <span style="color:red">*</span></label>
+              <select [(ngModel)]="leadColumnMapping.contactNumber"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">First Name Column <span style="color:red">*</span></label>
+              <select [(ngModel)]="leadColumnMapping.firstName"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Main Division Column</label>
+              <select [(ngModel)]="leadColumnMapping.mainDivisionDescription"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Director Email Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorEmailAddress"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Remarks Column</label>
+              <select [(ngModel)]="leadColumnMapping.remarks"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem; color: #4f46e5; font-weight: 700;">Batch Lead Status *</label>
+              <select [(ngModel)]="batchDefaultStatus"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #4f46e5; background: #fef2f2;">
+                <option *ngFor="let s of settingsLeadStatuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Description Column</label>
+              <select [(ngModel)]="leadColumnMapping.companyDescription"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+            <button class="cta-primary" (click)="confirmLeadMapping()"
+              [disabled]="addLeadLoading || !newLeadSetLabel.trim()"
+              style="flex:1; padding: 0.6rem; border-radius: 8px; font-size: 0.85rem;">
+              {{ addLeadLoading ? 'Importing...' : 'Start Import' }}
+            </button>
+            <button class="btn-login" (click)="cancelLeadMapping()"
+              style="flex:1; padding: 0.6rem; border-radius: 8px; font-size: 0.85rem;">Cancel</button>
+          </div>
+          <div *ngIf="!newLeadSetLabel.trim()"
+            style="text-align:center; margin-top: 8px; font-size: 0.75rem; color: #f59e0b; font-weight: 600;">⚠ Please
+            enter a Set Label before importing</div>
+        </div>
+
+        <!-- MANUAL ADD UI -->
+        <div *ngIf="leadUploadStep === 'idle'" class="manual-add-box"
+          style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+          <h5 style="margin-top:0; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 700;">Add Single Lead</h5>
+          <input type="text" [(ngModel)]="newLeadSetLabel"
+            placeholder='Set Label (e.g. "Jan 2026" or "1/1/2026-10/1/2026")'
+            style="width:100%; margin-bottom:10px; padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); font-size: 0.82rem; background: rgba(99,102,241,0.03); box-sizing: border-box;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" [(ngModel)]="newSingleLead.leadCompanyName" placeholder="Company Name *"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+            <input type="tel" [(ngModel)]="newSingleLead.contactNumber" placeholder="Contact Number *"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <input type="text" [(ngModel)]="newSingleLead.firstName" placeholder="First Name *"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+            <input type="text" [(ngModel)]="newSingleLead.lastName" placeholder="Last Name (Optional)"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <input type="text" [(ngModel)]="newSingleLead.mainDivisionDescription" placeholder="Main Division (Optional)"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+            <input type="email" [(ngModel)]="newSingleLead.directorEmailAddress" placeholder="Director Email (Optional)"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <input type="text" [(ngModel)]="newSingleLead.remarks" placeholder="Remarks (Optional)" list="remarkSuggestions"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+            <select [(ngModel)]="newSingleLead.status"
+              style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem; background: #fff;">
+              <option *ngFor="let s of settingsLeadStatuses" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+          <div style="margin-top: 10px;">
+            <textarea [(ngModel)]="newSingleLead.companyDescription" placeholder="Company Description (Optional)"
+              style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem; min-height: 60px; font-family: inherit; box-sizing: border-box;"></textarea>
+          </div>
+          <button class="cta-primary" (click)="addManualLead()" [disabled]="addLeadLoading"
+            style="width:100%; margin-top: 15px; padding: 0.6rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">
+            {{ addLeadLoading ? 'Adding...' : 'Add Lead' }}
+          </button>
+        </div>
+
+        <!-- SET FILTER PILLS -->
+        <div *ngIf="leadSets.length > 0" style="margin-bottom: 1.25rem;">
+          <div
+            style="font-size: 0.7rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+            Filter by Set / Batch</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <button (click)="selectLeadSet('')"
+              [style.background]="selectedLeadSet === '' ? 'var(--accent)' : '#f1f5f9'"
+              [style.color]="selectedLeadSet === '' ? '#fff' : 'var(--text-2)'"
+              style="border: none; padding: 5px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+              All
+            </button>
+            <div *ngFor="let set of leadSets" style="display: flex; align-items: center;">
+              <button (click)="selectLeadSet(set)"
+                [style.background]="selectedLeadSet === set ? 'var(--accent)' : '#f1f5f9'"
+                [style.color]="selectedLeadSet === set ? '#fff' : 'var(--text-2)'"
+                style="border: none; padding: 5px 14px; border-radius: 20px 0 0 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                🏷 {{ set }}
+              </button>
+              <button (click)="deleteLeadSet(set)" [disabled]="deleteSetLoading" title="Delete all leads in this set"
+                [style.background]="selectedLeadSet === set ? '#c7d2fe' : '#e2e8f0'"
+                style="border: none; padding: 5px 8px; border-radius: 0 20px 20px 0; font-size: 0.7rem; color: #ef4444; cursor: pointer; transition: all 0.2s; border-left: 1px solid rgba(0,0,0,0.06);">
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEADS LIST -->
+        <div *ngIf="empLeadsLoading" class="dash-loading">Fetching leads...</div>
+        <div *ngIf="!empLeadsLoading && empLeads.length === 0 && leadUploadStep === 'idle'" class="dash-empty"
+          style="padding: 2rem;">
+          {{ selectedLeadSet ? 'No leads in this set.' : 'No leads assigned yet. Use the form above to add leads.' }}
+        </div>
+
+        <div class="leads-scroll-list" *ngIf="!empLeadsLoading && empLeads.length > 0"
+          style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
+          <div *ngFor="let lead of empLeads" class="lead-item"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="flex:1">
+              <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-1);">{{ lead.leadCompanyName }}</div>
+              <div style="font-size: 0.78rem; color: var(--text-2); margin-top: 2px;">{{ lead.contactName || 'No Name'
+                }} &middot; <strong>{{ lead.contactNumber }}</strong></div>
+              <div *ngIf="lead.setLabel" style="margin-top: 4px;">
+                <span
+                  style="font-size: 0.62rem; font-weight: 700; background: rgba(99,102,241,0.1); color: var(--accent); padding: 2px 7px; border-radius: 10px; letter-spacing: 0.02em;">🏷
+                  {{ lead.setLabel }}</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span
+                style="font-size: 0.65rem; font-weight: 800; background: #f1f5f9; color: var(--text-3); padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">{{
+                lead.status }}</span>
+              <button (click)="deleteLead(lead._id)"
+                style="background: none; border: none; color: #ef4444; padding: 4px; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                  </path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="drilldown-analytics" *ngIf="selectedEmployee && selectedEmpCalls.length > 0">
+        <div class="da-header">
+          <h3>Analytics</h3>
+          <div class="period-tabs">
+            <button [class.active]="chartType==='line'" (click)="setChartType('line')">Line</button>
+            <button [class.active]="chartType==='pie'" (click)="setChartType('pie')">Pie</button>
+            <button [class.active]="chartType==='bar'" (click)="setChartType('bar')">Bar</button>
+          </div>
+        </div>
+        <div class="chart-container"><canvas id="empChart"></canvas></div>
+      </div>
+    </div>
+  </div>

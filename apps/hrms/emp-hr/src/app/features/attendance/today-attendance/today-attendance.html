@@ -1,0 +1,101 @@
+<div class="attendance-wrapper">
+  <header class="page-header">
+    <div class="header-main">
+      <div class="header-title">
+        <h1>Today's Attendance</h1>
+        <p class="subtitle">Live tracking of team presence for {{ (attendance().length > 0 ? (attendance()[0].date |
+          date:'MMMM d, y') : 'Today') }}</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="search-bar">
+        <hugeicons-icon [icon]="Search01Icon" size="18" [strokeWidth]="1.5"></hugeicons-icon>
+        <input type="text" placeholder="Search by name, ID or dept..." (input)="onSearch($event)">
+      </div>
+      <div class="presence-stats" *ngIf="!isLoading()">
+        <div class="stat-badge present">
+          <span class="label">Present</span>
+          <span class="value">{{ presentCount() }}</span>
+        </div>
+        <div class="stat-badge absent">
+          <span class="label">Absent</span>
+          <span class="value">{{ absentCount() }}</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="data-container" [class.loading]="isLoading()">
+    <!-- Loading Skeleton -->
+    <div class="skeleton-grid" *ngIf="isLoading()">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="table-card" *ngIf="!isLoading() && filteredAttendance().length > 0">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Member Details</th>
+            <th>Type</th>
+            <th>Punch In</th>
+            <th>Punch Out</th>
+            <th>Duration</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of filteredAttendance()">
+            <td class="user-cell">
+              <div class="avatar">{{ record.name.charAt(0) }}</div>
+              <div class="info">
+                <span class="name">{{ record.name }}</span>
+                <span class="id">{{ record.id }} • {{ record.department }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="type-badge" [ngClass]="record.type.toLowerCase()">{{ record.type }}</span>
+            </td>
+            <td>
+              <div class="time-cell">
+                <hugeicons-icon *ngIf="record.punchInTime" [icon]="Location01Icon" size="16" [strokeWidth]="2" color="#6366f1"
+                  style="cursor: pointer;"
+                  [title]="record.punchInLocation || 'No location data'"
+                  (click)="openMap(record.punchInLocation)"></hugeicons-icon>
+                {{ record.punchInTime ? (record.punchInTime | date:'hh:mm a') : '--:--' }}
+              </div>
+            </td>
+            <td>
+              <div class="time-cell">
+                <hugeicons-icon *ngIf="record.punchOutTime" [icon]="Location01Icon" size="16" [strokeWidth]="2" color="#6366f1"
+                  style="cursor: pointer;"
+                  [title]="record.punchOutLocation || 'No location data'"
+                  (click)="openMap(record.punchOutLocation)"></hugeicons-icon>
+                {{ record.punchOutTime ? (record.punchOutTime | date:'hh:mm a') : '--:--' }}
+              </div>
+            </td>
+            <td>
+              <span class="duration">{{ record.duration }}</span>
+            </td>
+            <td>
+              <span class="status-pill" [ngClass]="record.status.toLowerCase()">
+                <span class="dot"></span>
+                {{ record.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading() && filteredAttendance().length === 0">
+      <div class="empty-icon-box">
+        <hugeicons-icon [icon]="FingerAccessIcon" size="48" [strokeWidth]="1"></hugeicons-icon>
+      </div>
+      <h3>No attendance records found</h3>
+      <p>Try adjusting your search or check back later as members punch in.</p>
+    </div>
+  </div>
+</div>

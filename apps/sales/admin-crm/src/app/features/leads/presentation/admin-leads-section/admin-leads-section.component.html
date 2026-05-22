@@ -1,0 +1,222 @@
+      <div *ngIf="dashTab==='leads'" class="animate-fade-in admin-leads-view">
+
+        <section class="workspace record-workspace lead-workspace admin-leads-frame">
+          <div class="workspace-header lead-workspace-header workspace-header-filters-only admin-leads-filter-strip">
+            <div class="workspace-controls workspace-controls-stack">
+              <label class="mini-field">
+                <span>Lead Filter</span>
+                <select class="field-select filter-select-field" [(ngModel)]="selectedAdminLeadSet" (change)="fetchAdminLeads()" aria-label="Lead set filter">
+                  <option value="">All Leads</option>
+                  <option *ngFor="let set of adminLeadSets" [value]="set">{{ set }}</option>
+                </select>
+              </label>
+
+              <label class="mini-field">
+                <span>Status</span>
+                <select class="field-select filter-select-field" [(ngModel)]="adminLeadStatusFilter" (change)="fetchAdminLeads()" aria-label="Status filter">
+                  <option value="">All Status</option>
+                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                </select>
+              </label>
+
+              <label class="mini-field">
+                <span>Employee</span>
+                <select class="field-select filter-select-field" [(ngModel)]="leadEmployeeFilter" (change)="closeAdminLeadPanels()" aria-label="Employee filter">
+                  <option value="">All Employees</option>
+                  <option *ngFor="let emp of employees" [value]="emp.mobile">{{ emp.name || emp.mobile }}</option>
+                </select>
+              </label>
+
+              <button class="toolbar-button admin-leads-refresh" type="button" (click)="fetchAdminLeads(true)" aria-label="Refresh leads" title="Refresh">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
+              </button>
+              <button *ngIf="selectedAdminLeadSet" class="toolbar-button admin-leads-delete-set" type="button" (click)="deleteGlobalLeadSet()" aria-label="Delete selected lead set">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="record-frame lead-record-frame admin-leads-record-frame">
+            <aside class="company-rail lead-company-rail admin-leads-company-rail">
+              <div class="rail-header admin-leads-rail-header">
+                <div class="rail-heading">Companies</div>
+                <div class="rail-total">{{ adminLeadCompanyTotal || displayedLeadCompanies.length }} listed</div>
+              </div>
+              <div class="rail-list admin-leads-rail-list" (scroll)="onSidebarScroll($event)">
+                <button
+                  type="button"
+                  class="rail-item admin-leads-rail-item"
+                  *ngFor="let company of displayedLeadCompanies"
+                  [class.active]="selectedLeadCompany === company"
+                  (click)="selectLeadCompany(company)"
+                >
+                  <span class="rail-item-copy">
+                    <span class="rail-item-name">{{ company || 'Unnamed Company' }}</span>
+                    <span class="rail-item-meta">{{ getAdminLeadCompanyCount(company) }} contacts</span>
+                  </span>
+                </button>
+                <div *ngIf="adminLeadCompanyHasMore && !adminLeadCompaniesLoading" class="scroll-page-state">Scroll to load more companies</div>
+                <div *ngIf="allLeadsLoading || adminLeadCompaniesLoading" class="scroll-page-state">Loading companies...</div>
+                <div *ngIf="displayedLeadCompanies.length === 0 && !allLeadsLoading" class="empty-state-inline empty-state-inline-minimal">No companies found.</div>
+              </div>
+            </aside>
+
+            <section class="record-table-pane lead-table-pane lead-table-pane-full lead-company-pane admin-leads-company-pane">
+              <ng-container *ngIf="selectedLeadCompany; else adminLeadsEmptyState">
+                <div class="table-pane-header lead-company-pane-header admin-leads-company-header">
+                  <div>
+                    <h3>{{ selectedLeadCompany }}</h3>
+                    <div class="lead-company-pane-subtitle" *ngIf="adminLeadCompanyPreviewLine(selectedLeadCompany)">{{ adminLeadCompanyPreviewLine(selectedLeadCompany) }}</div>
+                  </div>
+                  <div class="admin-leads-pane-actions">
+                    <button class="ai-summary-button ai-summary-anchor admin-ai-summary-button" type="button" *ngIf="leadsInSelectedCompany.length" (click)="openAdminAiSummary($event)">
+                      <span aria-hidden="true">✦</span>
+                      <span>AI Summary</span>
+                    </button>
+                    <button class="toolbar-button invoice-date-filter-button" type="button" *ngIf="leadsInSelectedCompany.length" (click)="openCompanyFullView($event)">
+                      Full View
+                    </button>
+                  </div>
+                </div>
+
+                <ng-template [ngTemplateOutlet]="adminLeadCardsContent"></ng-template>
+
+                <ng-template #adminLeadCardsContent>
+              <div class="lead-company-pane-scroll admin-leads-card-scroll" (scroll)="onAdminLeadContactsScroll($event)">
+              <div class="lead-card-grid admin-leads-card-grid admin-employee-style-grid" *ngIf="leadsInSelectedCompany.length > 0; else noAdminLeadContacts">
+                <article *ngFor="let lead of leadsInSelectedCompany" class="lead-record-card admin-lead-record-card admin-employee-style-card">
+
+                  <div class="admin-lead-call-count" *ngIf="getLeadInteractionCount(lead.contactNumber) > 0">
+                    {{ getLeadInteractionCount(lead.contactNumber) }} calls
+                  </div>
+                  <div class="lead-record-card-head admin-lead-card-head">
+                    <div class="lead-record-title-row">
+                      <h4>{{ lead.contactName || 'Primary Contact' }}</h4>
+                      <button
+                        class="lead-card-star"
+                        type="button"
+                        [class.active]="lead.isStarred"
+                        [attr.aria-label]="lead.isStarred ? 'Unstar lead' : 'Star lead'"
+                        (click)="toggleStar(lead)"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                    <div class="lead-record-line">
+                      <span class="lead-record-line-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                      </span>
+                      <span>{{ lead.contactNumber || '-' }}</span>
+                    </div>
+
+                    <button class="lead-card-invoice-action" type="button" (click)="openQuotationModal(lead)">
+                      <span aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
+                      </span>
+                      <span>Generate Quote</span>
+                    </button>
+
+                    <div class="lead-record-line">
+                      <span class="lead-record-line-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg>
+                      </span>
+                      <span>{{ lead.setLabel || 'Old Leads' }}</span>
+                    </div>
+
+                    <div class="lead-record-line lead-record-email" [title]="lead.directorEmailAddress || ''">
+                      <span class="lead-record-line-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
+                      </span>
+                      <span>{{ lead.directorEmailAddress || '-' }}</span>
+                    </div>
+
+                    <div class="lead-card-remarks">
+                      <div class="lead-card-remarks-title">
+                        <span class="lead-record-line-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></svg>
+                        </span>
+                        <span>Remarks</span>
+                        <button class="text-action" type="button" (click)="openCompanyRemarkHistory(lead)">History</button>
+                      </div>
+                      <div class="lead-card-remark-list" *ngIf="lead.remarks?.length; else emptyAdminLeadRemarks">
+                        <div class="lead-card-remark-item" *ngFor="let remark of adminLeadRemarkPreviewList(lead)">{{ remark }}</div>
+                      </div>
+                      <ng-template #emptyAdminLeadRemarks>
+                        <div class="lead-card-empty">No remarks added.</div>
+                      </ng-template>
+                      <div class="lead-card-remark-entry">
+                        <div class="lead-card-remark-combobox">
+                          <input
+                            class="field-input lead-remark-input lead-card-remark-input"
+                            type="text"
+                            [(ngModel)]="leadRemarksInputs[lead._id]"
+                            (focus)="openAdminRemarkMenu(lead._id || '')"
+                            (blur)="queueCloseAdminRemarkMenu(lead._id || '')"
+                            autocomplete="off"
+                            placeholder="Type remark..."
+                            (keyup.enter)="addLeadRemark(lead)"
+                          />
+                          <button
+                            class="lead-card-remark-toggle"
+                            type="button"
+                            aria-label="Show remark options"
+                            (mousedown)="$event.preventDefault()"
+                            (click)="toggleAdminRemarkMenu(lead._id || '')"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                          </button>
+                          <div class="lead-card-remark-options" *ngIf="isAdminRemarkMenuOpen(lead._id || '') && filteredAdminRemarkOptions(leadRemarksInputs[lead._id]).length > 0">
+                            <button
+                              class="lead-card-remark-option"
+                              type="button"
+                              *ngFor="let remark of filteredAdminRemarkOptions(leadRemarksInputs[lead._id])"
+                              (mousedown)="$event.preventDefault()"
+                              (click)="selectAdminRemark(lead._id || '', remark)"
+                            >
+                              {{ remark }}
+                            </button>
+                          </div>
+                        </div>
+                        <button class="lead-card-add-remark" type="button" (click)="addLeadRemark(lead)" [disabled]="remarkPostingIds.has(lead._id || '')" aria-label="Add remark">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="lead-card-actions">
+                      <select class="field-select lead-card-status-select" [ngModel]="normalizedLeadStatus(lead.status)" (ngModelChange)="updateLeadStatus(lead, $event)" [style.color]="leadStatusColor(normalizedLeadStatus(lead.status))" [disabled]="updatingLeadId===lead._id" aria-label="Lead status">
+                        <option *ngFor="let st of LEAD_STATUSES" [value]="st" [style.color]="leadStatusColor(st)">{{ st }}</option>
+                      </select>
+                      <button class="lead-card-icon-action" type="button" (click)="openHistory(lead)" aria-label="Open history">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 3v6h6" /><path d="M12 7v5l3 2" /></svg>
+                      </button>
+                      <button class="lead-card-icon-action lead-card-favourite-action" type="button" [class.active]="lead.isFavourite" (click)="toggleFavourite(lead)" aria-label="Favourite lead">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                      </button>
+                    </div>
+                  </article>
+                </div>
+
+                <ng-template #noAdminLeadContacts>
+                  <div class="empty-state-inline empty-state-inline-pane">No contacts match the current filters.</div>
+                </ng-template>
+
+                <div class="scroll-page-state" *ngIf="adminLeadContactsLoadingMore">Loading contacts...</div>
+                <div class="scroll-page-state" *ngIf="!adminLeadContactsLoadingMore && leadsInSelectedCompany.length > 0 && !adminLeadContactsHasMore">End of contacts</div>
+              </div>
+                </ng-template>
+              </ng-container>
+
+              <ng-template #adminLeadsEmptyState>
+                <div class="empty-state-inline empty-state-inline-pane">Select a company from the list to view lead details.</div>
+              </ng-template>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <!-- ══ REMARKS FILTER TAB ══ -->

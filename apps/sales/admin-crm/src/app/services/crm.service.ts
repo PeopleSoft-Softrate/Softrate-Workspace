@@ -147,9 +147,42 @@ export class CrmService {
     clientCompanyName: string;
     contactName?: string;
     contactEmail?: string;
+    clientAddress?: string;
+    effectiveFrom?: string;
+    effectiveTo?: string;
+    projectName?: string;
+    projectDescription?: string;
+    jurisdiction?: string;
+    solicitationPeriod?: string;
+    validityPeriod?: string;
+    terminationNoticeDays?: string;
+    noticeReceiptDays?: string;
+    signatoryName?: string;
+    signatoryTitle?: string;
+    clientSignatoryTitle?: string;
+    ndaTemplate?: any;
   }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/api/crm/contracts/generate`, payload, {
       headers: this.headers(),
+    });
+  }
+
+  getNdaTemplate(params: { companyCode?: string } = {}): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/crm/nda-template${this.query(params)}`, {
+      headers: this.headers(),
+    });
+  }
+
+  updateNdaTemplate(payload: { companyCode?: string; ndaTemplate: any }): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/api/crm/nda-template`, payload, {
+      headers: this.headers(),
+    });
+  }
+
+  getContractPdf(contractId: string, params: { companyCode?: string } = {}): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/crm/contracts/${encodeURIComponent(contractId)}/pdf${this.query(params)}`, {
+      headers: this.headers(),
+      responseType: 'blob',
     });
   }
 

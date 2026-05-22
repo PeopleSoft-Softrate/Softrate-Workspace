@@ -14,6 +14,9 @@ const crmContractSchema = new mongoose.Schema(
     effectiveTo: { type: Date },
     generatedBy: { type: String, trim: true, default: 'CRM Admin' },
     content: { type: String, trim: true, default: '' },
+    pdfFileName: { type: String, trim: true, default: '' },
+    pdfBase64: { type: String, select: false, default: '' },
+    templateSnapshot: { type: mongoose.Schema.Types.Mixed, select: false, default: undefined },
   },
   { timestamps: true }
 );

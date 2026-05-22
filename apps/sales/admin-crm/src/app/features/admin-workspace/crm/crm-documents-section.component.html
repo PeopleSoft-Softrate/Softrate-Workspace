@@ -15,9 +15,365 @@
     <ng-template [ngTemplateOutlet]="contractPanel" [ngTemplateOutletContext]="{ type: 'SLA', title: 'SLA' }"></ng-template>
   </ng-container>
   <ng-template #ndaDocMode>
-    <ng-template [ngTemplateOutlet]="contractPanel" [ngTemplateOutletContext]="{ type: 'NDA', title: 'NDA' }"></ng-template>
+    <ng-template [ngTemplateOutlet]="ndaPanel"></ng-template>
   </ng-template>
 </ng-container>
+
+<ng-template #ndaPanel>
+  <div class="crm-nda-shell">
+    <div class="crm-nda-modebar">
+      <div class="crm-nda-mode-buttons">
+        <button class="toolbar-button" type="button" [class.active]="vm.ndaTemplateMode==='generate'" (click)="vm.ndaTemplateMode='generate'">Generate</button>
+        <button class="toolbar-button" type="button" [class.active]="vm.ndaTemplateMode==='builder'" (click)="vm.ndaTemplateMode='builder'">Template Builder</button>
+      </div>
+      <div class="crm-nda-status" *ngIf="vm.crmActionMessage">{{ vm.crmActionMessage }}</div>
+    </div>
+
+    <ng-container *ngIf="vm.ndaTemplateMode==='generate'; else ndaBuilderMode">
+      <div class="crm-document-layout crm-nda-generate-layout">
+        <section class="premium-card crm-document-generate">
+          <div class="settings-section-title">NDA Generation</div>
+          <div class="crm-client-picker">
+            <button class="rail-item admin-leads-rail-item" type="button" *ngFor="let client of vm.filteredCrmClients" [class.active]="vm.selectedCrmClientCompany===client.companyName" (click)="vm.selectCrmClient(client.companyName)">
+              <span class="rail-item-copy">
+                <span class="rail-item-name">{{ client.companyName }}</span>
+                <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }}</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="crm-selected-client-card" *ngIf="vm.selectedCrmClient as client">
+            <h3>{{ client.companyName }}</h3>
+            <p>{{ client.primaryContact }} · {{ client.primaryEmail || client.primaryPhone || '-' }}</p>
+
+            <div class="crm-nda-form-grid">
+              <label>
+                <span>Client Address</span>
+                <textarea class="glass-input" rows="2" [(ngModel)]="vm.ndaGenerationDraft.clientAddress" placeholder="Client registered address"></textarea>
+              </label>
+              <label>
+                <span>Project Name</span>
+                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.projectName" placeholder="Project Name / Service Name">
+              </label>
+              <label>
+                <span>Service Description</span>
+                <textarea class="glass-input" rows="2" [(ngModel)]="vm.ndaGenerationDraft.projectDescription" placeholder="Service Description"></textarea>
+              </label>
+              <label>
+                <span>Jurisdiction</span>
+                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.jurisdiction">
+              </label>
+              <label>
+                <span>Effective Date</span>
+                <input class="glass-input" type="date" [(ngModel)]="vm.ndaGenerationDraft.effectiveFrom">
+              </label>
+              <label>
+                <span>Expiry Date</span>
+                <input class="glass-input" type="date" [(ngModel)]="vm.ndaGenerationDraft.effectiveTo">
+              </label>
+              <label>
+                <span>Solicitation Period</span>
+                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.solicitationPeriod">
+              </label>
+              <label>
+                <span>Validity</span>
+                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.validityPeriod">
+              </label>
+              <label>
+                <span>Company Signatory</span>
+                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.signatoryName" placeholder="Authorized signatory">
+              </label>
+              <label>
+                <span>Signatory Title</span>
+                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.signatoryTitle">
+              </label>
+            </div>
+
+            <button class="primary-action" type="button" (click)="vm.generateCrmContract('NDA', client)" [disabled]="vm.crmContractsLoading">
+              {{ vm.crmContractsLoading ? 'Generating...' : 'Generate NDA PDF' }}
+            </button>
+          </div>
+        </section>
+
+        <section class="premium-card crm-document-history">
+          <div class="crm-panel-head">
+            <div>
+              <div class="settings-section-title">NDA History</div>
+              <p>{{ vm.crmContractsByType('NDA').length }} records</p>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table compact-table">
+              <thead>
+                <tr><th>Document</th><th>Client</th><th>Status</th><th>Generated</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let contract of vm.crmContractsByType('NDA')">
+                  <td>{{ contract.documentNumber }}</td>
+                  <td>{{ contract.clientCompanyName }}</td>
+                  <td><span class="crm-status-pill">{{ contract.status }}</span></td>
+                  <td>{{ vm.fmtDate(contract.createdAt) }}</td>
+                  <td>
+                    <button class="secondary-action" type="button" *ngIf="contract.downloadUrl || contract.pdfFileName" (click)="vm.downloadCrmContractPdf(contract)">Open PDF</button>
+                  </td>
+                </tr>
+                <tr *ngIf="!vm.crmContractsLoading && vm.crmContractsByType('NDA').length===0">
+                  <td colspan="5" class="empty-cell">No NDA history yet.</td>
+                </tr>
+                <tr *ngIf="vm.crmContractsLoading">
+                  <td colspan="5" class="empty-cell">Loading NDA records...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+
+    <ng-template #ndaBuilderMode>
+      <section class="premium-card crm-nda-builder">
+        <div class="crm-nda-builder-head">
+          <div>
+            <div class="settings-section-title">NDA Template Builder</div>
+            <p>{{ vm.currentNdaTemplate.name }} · {{ vm.currentNdaTemplate.sourceDocument || 'Default clauses' }} · {{ vm.currentNdaTemplate.pages.length }} pages</p>
+          </div>
+          <div class="crm-panel-actions">
+            <button class="toolbar-button" type="button" (click)="vm.fetchNdaTemplate()" [disabled]="vm.ndaTemplateLoading">Reload</button>
+            <button class="primary-action" type="button" (click)="vm.saveNdaTemplate()" [disabled]="vm.ndaTemplateSaving">
+              {{ vm.ndaTemplateSaving ? 'Saving...' : 'Save Template' }}
+            </button>
+          </div>
+        </div>
+
+        <input type="file" #ndaBackgroundInput (change)="vm.onNdaBackgroundSelected($event)" accept="image/*" hidden>
+
+        <div class="crm-nda-pagebar">
+          <div class="crm-nda-page-tabs">
+            <button class="toolbar-button" type="button" *ngFor="let page of vm.currentNdaTemplate.pages; let i = index" [class.active]="vm.ndaSelectedPageIndex===i" (click)="vm.ndaSelectedPageIndex=i">
+              Page {{ i + 1 }}
+              <span class="crm-nda-tab-remove" *ngIf="vm.currentNdaTemplate.pages.length > 1" (click)="$event.stopPropagation(); vm.removeNdaPage(i)">x</span>
+            </button>
+          </div>
+          <button class="toolbar-button" type="button" (click)="vm.addNdaPage()">Add Page</button>
+        </div>
+
+        <div class="crm-nda-builder-grid">
+          <div class="crm-nda-controls">
+            <div class="crm-nda-control-panel crm-nda-clauses-panel">
+              <div class="crm-nda-panel-title">
+                <span>Default Clauses</span>
+                <button class="toolbar-button" type="button" (click)="vm.addNdaClause()">Add Clause</button>
+              </div>
+              <div class="crm-nda-clause-list">
+                <div class="crm-nda-clause-card" *ngFor="let clause of vm.currentNdaTemplate.clauses; let i = index">
+                  <div class="crm-nda-clause-top">
+                    <label class="crm-nda-check">
+                      <input type="checkbox" [(ngModel)]="clause.enabled">
+                      <span>Include</span>
+                    </label>
+                    <span class="crm-nda-clause-count">Clause {{ i + 1 }}</span>
+                    <button class="secondary-action" type="button" (click)="vm.removeNdaClause(i)">Remove</button>
+                  </div>
+                  <div class="crm-nda-clause-grid">
+                    <label>
+                      <span>Heading</span>
+                      <input class="glass-input" type="text" [(ngModel)]="clause.heading" placeholder="Clause heading">
+                    </label>
+                    <label>
+                      <span>Sub Heading</span>
+                      <input class="glass-input" type="text" [(ngModel)]="clause.subheading" placeholder="Optional sub heading">
+                    </label>
+                  </div>
+                  <div class="crm-nda-toolbar">
+                    <select class="glass-input" (change)="vm.onNdaInsertClausePlaceholder(i, $event)">
+                      <option value="">Insert Placeholder</option>
+                      <option *ngFor="let key of vm.ndaAvailablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
+                    </select>
+                  </div>
+                  <textarea class="glass-input crm-nda-textarea crm-nda-clause-textarea" [id]="'nda-clause-ta-' + i" [(ngModel)]="clause.content" [attr.placeholder]="vm.ndaParaPlaceholderHint"></textarea>
+                </div>
+              </div>
+              <div class="crm-nda-empty" *ngIf="!vm.currentNdaTemplate.clauses || vm.currentNdaTemplate.clauses.length===0">No clauses configured.</div>
+            </div>
+
+            <div class="crm-nda-control-panel">
+              <div class="crm-nda-panel-title">Document Setup</div>
+              <label class="crm-nda-check">
+                <input type="checkbox" [(ngModel)]="vm.currentNdaTemplate.header.enabled">
+                <span>Show Softrate header</span>
+              </label>
+              <div class="crm-nda-two-col">
+                <label>
+                  <span>Orientation</span>
+                  <select class="glass-input" [(ngModel)]="vm.currentNdaTemplate.orientation">
+                    <option value="portrait">Portrait</option>
+                    <option value="landscape">Landscape</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Background</span>
+                  <button class="toolbar-button crm-nda-full-button" type="button" (click)="ndaBackgroundInput.click()">
+                    {{ vm.currentNdaPage.backgroundUrl ? 'Change' : 'Upload' }}
+                  </button>
+                </label>
+              </div>
+            </div>
+
+            <div class="crm-nda-control-panel">
+              <div class="crm-nda-panel-title">
+                <span>Placeholder Chips</span>
+                <button class="toolbar-button" type="button" (click)="vm.addNdaPlaceholder()">Add</button>
+              </div>
+              <div class="crm-nda-row crm-nda-row-head"><span>Field</span><span>X</span><span>Y</span><span>Font</span><span></span></div>
+              <div class="crm-nda-row" *ngFor="let p of vm.currentNdaPage.placeholders; let i = index">
+                <select class="glass-input" [(ngModel)]="p.key">
+                  <option *ngFor="let key of vm.ndaAvailablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
+                </select>
+                <input class="glass-input" type="number" [(ngModel)]="p.x">
+                <input class="glass-input" type="number" [(ngModel)]="p.y">
+                <input class="glass-input" type="number" [(ngModel)]="p.fontSize">
+                <button class="secondary-action" type="button" (click)="vm.removeNdaPlaceholder(i)">Remove</button>
+              </div>
+              <div class="crm-nda-empty" *ngIf="vm.currentNdaPage.placeholders.length===0">No chips on this page.</div>
+            </div>
+
+            <div class="crm-nda-control-panel">
+              <div class="crm-nda-panel-title">
+                <span>Highlighted Placeholder Areas</span>
+                <button class="toolbar-button" type="button" (click)="vm.addNdaHighlightArea()">Add</button>
+              </div>
+              <div class="crm-nda-highlight-row" *ngFor="let h of vm.currentNdaPage.highlightedAreas; let i = index">
+                <select class="glass-input" [(ngModel)]="h.key">
+                  <option *ngFor="let key of vm.ndaAvailablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
+                </select>
+                <input class="glass-input" type="number" [(ngModel)]="h.x" placeholder="X">
+                <input class="glass-input" type="number" [(ngModel)]="h.y" placeholder="Y">
+                <input class="glass-input" type="number" [(ngModel)]="h.width" placeholder="W">
+                <input class="glass-input" type="number" [(ngModel)]="h.height" placeholder="H">
+                <input class="crm-nda-color" type="color" [(ngModel)]="h.backgroundColor">
+                <button class="secondary-action" type="button" (click)="vm.removeNdaHighlightArea(i)">Remove</button>
+              </div>
+              <div class="crm-nda-empty" *ngIf="vm.currentNdaPage.highlightedAreas.length===0">No highlighted areas on this page.</div>
+            </div>
+
+            <div class="crm-nda-control-panel">
+              <div class="crm-nda-panel-title">
+                <span>Paragraph Blocks</span>
+                <button class="toolbar-button" type="button" (click)="vm.addNdaParagraph()">Add</button>
+              </div>
+              <div class="crm-nda-para-editor" *ngFor="let para of vm.currentNdaPage.paragraphs; let i = index">
+                <div class="crm-nda-para-head" (click)="para.isCollapsed=!para.isCollapsed">
+                  <strong>Paragraph {{ i + 1 }}</strong>
+                  <span>{{ para.x }}, {{ para.y }}</span>
+                  <button class="secondary-action" type="button" (click)="$event.stopPropagation(); vm.removeNdaParagraph(i)">Remove</button>
+                </div>
+                <div class="crm-nda-para-body" *ngIf="!para.isCollapsed">
+                  <div class="crm-nda-toolbar">
+                    <button class="toolbar-button" type="button" (click)="vm.adjustNdaFontSize(para, -1)">-</button>
+                    <input class="glass-input" type="number" [(ngModel)]="para.fontSize" min="6" max="120">
+                    <button class="toolbar-button" type="button" (click)="vm.adjustNdaFontSize(para, 1)">+</button>
+                    <select class="glass-input" [(ngModel)]="para.alignment">
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                      <option value="justify">Justify</option>
+                    </select>
+                    <label class="crm-nda-check"><input type="checkbox" [(ngModel)]="para.isBold"><span>Bold</span></label>
+                    <label class="crm-nda-check"><input type="checkbox" [(ngModel)]="para.isItalic"><span>Italic</span></label>
+                  </div>
+                  <div class="crm-nda-toolbar">
+                    <select class="glass-input" [(ngModel)]="para.fontFamily">
+                      <option *ngFor="let font of vm.ndaAvailableFonts" [value]="font.value">{{ font.name }}</option>
+                    </select>
+                    <input class="glass-input" type="number" [(ngModel)]="para.width" min="80" max="820" placeholder="Width">
+                    <input class="crm-nda-color" type="color" [(ngModel)]="para.color">
+                    <label class="crm-nda-check"><input type="checkbox" [(ngModel)]="para.highlightPlaceholders"><span>Highlight placeholders</span></label>
+                    <input class="crm-nda-color" type="color" [(ngModel)]="para.placeholderHighlightColor">
+                  </div>
+                  <div class="crm-nda-toolbar">
+                    <select class="glass-input" (change)="vm.onNdaInsertPlaceholder(i, $event)">
+                      <option value="">Insert Placeholder</option>
+                      <option *ngFor="let key of vm.ndaAvailablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
+                    </select>
+                  </div>
+                  <textarea class="glass-input crm-nda-textarea" [id]="'nda-para-ta-' + i" [(ngModel)]="para.text" [attr.placeholder]="vm.ndaParaPlaceholderHint"></textarea>
+                </div>
+              </div>
+              <div class="crm-nda-empty" *ngIf="vm.currentNdaPage.paragraphs.length===0">No paragraph blocks on this page.</div>
+            </div>
+          </div>
+
+          <div class="crm-nda-preview-panel">
+            <div class="crm-nda-canvas-wrap">
+              <div class="crm-nda-canvas"
+                (mousemove)="vm.onNdaCanvasMouseMove($event)"
+                (mouseup)="vm.onNdaCanvasMouseUp()"
+                (mouseleave)="vm.onNdaCanvasMouseUp()"
+                [style.width.px]="vm.ndaCanvasWidth"
+                [style.height.px]="vm.ndaCanvasHeight"
+                [style.backgroundImage]="vm.currentNdaPage.backgroundUrl ? 'url(' + vm.currentNdaPage.backgroundUrl + ')' : 'none'">
+
+                <div class="crm-nda-canvas-header" *ngIf="vm.currentNdaTemplate.header.enabled">
+                  <div class="crm-nda-canvas-logo"></div>
+                  <div class="crm-nda-canvas-heading">
+                    <strong>{{ vm.currentNdaTemplate.header.companyTitle }}</strong>
+                    <span>{{ vm.currentNdaTemplate.header.addressLine }}</span>
+                    <span>{{ vm.currentNdaTemplate.header.contactLine }}</span>
+                  </div>
+                </div>
+
+                <div class="crm-nda-highlight-box"
+                  *ngFor="let h of vm.currentNdaPage.highlightedAreas; let i = index"
+                  (mousedown)="vm.onNdaCanvasMouseDown($event, 'highlight', i)"
+                  [class.dragging]="vm.ndaDraggingType==='highlight' && vm.ndaDraggingIndex===i"
+                  [style.left.px]="h.x"
+                  [style.top.px]="h.y"
+                  [style.width.px]="h.width"
+                  [style.height.px]="h.height"
+                  [style.fontSize.px]="h.fontSize"
+                  [style.color]="h.color || '#111111'"
+                  [style.background]="h.backgroundColor || '#fff3a3'"
+                  [style.borderColor]="h.borderColor || '#f0c94a'">
+                  {{ '{' + '{' + h.key + '}' + '}' }}
+                </div>
+
+                <div class="crm-nda-chip"
+                  *ngFor="let p of vm.currentNdaPage.placeholders; let i = index"
+                  (mousedown)="vm.onNdaCanvasMouseDown($event, 'placeholder', i)"
+                  [class.dragging]="vm.ndaDraggingType==='placeholder' && vm.ndaDraggingIndex===i"
+                  [style.left.px]="p.x"
+                  [style.top.px]="p.y"
+                  [style.fontSize.px]="p.fontSize"
+                  [style.color]="p.color || '#111111'"
+                  [style.fontWeight]="p.isBold ? '700' : '400'">
+                  {{ '{' + '{' + p.key + '}' + '}' }}
+                </div>
+
+                <div class="crm-nda-para-block"
+                  *ngFor="let para of vm.currentNdaPage.paragraphs; let i = index"
+                  (mousedown)="vm.onNdaCanvasMouseDown($event, 'paragraph', i)"
+                  [class.dragging]="vm.ndaDraggingType==='paragraph' && vm.ndaDraggingIndex===i"
+                  [style.left.px]="para.x"
+                  [style.top.px]="para.y"
+                  [style.width.px]="para.width"
+                  [style.fontSize.px]="para.fontSize"
+                  [style.fontFamily]="para.fontFamily"
+                  [style.fontWeight]="para.isBold ? '700' : '400'"
+                  [style.fontStyle]="para.isItalic ? 'italic' : 'normal'"
+                  [style.textAlign]="para.alignment"
+                  [style.color]="para.color || '#111111'"
+                  [style.lineHeight]="para.lineHeight">
+                  <span class="crm-nda-para-handle">P{{ i + 1 }}</span>
+                  {{ vm.previewNdaText(para.text) || '(empty paragraph)' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </ng-template>
+  </div>
+</ng-template>
 
 <ng-template #contractPanel let-type="type" let-title="title">
   <div class="crm-document-layout">

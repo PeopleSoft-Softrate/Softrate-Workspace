@@ -680,9 +680,10 @@ export class AdminAuthPaymentWorkflow {
         vm.loginLoading = false;
         if (res.success && res.user && res.token) {
           const crmCompanyName = String(res.user.companyName || '').trim().toLowerCase();
-          const salesCompanyCode = crmCompanyName.includes('softrate tech park')
+          const configuredCompanyCode = res.user.salesCompanyCode || res.user.adminCompanyCode || res.user.companyCode || '';
+          const salesCompanyCode = crmCompanyName.includes('softrate tech park') || !configuredCompanyCode
             ? 'STP-1603-2026'
-            : (res.user.salesCompanyCode || res.user.adminCompanyCode || res.user.companyCode || '');
+            : configuredCompanyCode;
           const crmUser = {
             ...res.user,
             role: 'crm_admin',

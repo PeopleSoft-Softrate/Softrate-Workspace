@@ -5,9 +5,11 @@ import { amcDetailRows, invoiceDetailRows, moneyOrCount, paymentStatus, titleize
 import { FINANCE_NAV_GROUPS, FinanceGroupId, FinanceNavGroup, isIntegratedFinanceView } from '../domain/finance-navigation.model';
 import { FinanceAnalyticsItem, FinanceDetailItem, FinanceListResponse, FinanceRecord } from '../domain/finance-record.model';
 
+const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';
+
 @Injectable()
 export class FinanceWorkspaceViewModel {
-  companyCode = localStorage.getItem('financeCompanyCode') || localStorage.getItem('companyCode') || '';
+  companyCode = this.storedFinanceCompanyCode();
   dateFrom = '';
   dateTo = '';
   search = '';
@@ -17,8 +19,8 @@ export class FinanceWorkspaceViewModel {
   sidebarMinimized = false;
   financeFeatureOpen = true;
   profileMenuOpen = false;
-  activeGroup: FinanceGroupId = 'dashboard';
-  activeView = 'dashboard';
+  activeGroup: FinanceGroupId = 'receivables';
+  activeView = 'invoices';
   loading = false;
   error = '';
   payload?: FinanceListResponse;
@@ -29,6 +31,30 @@ export class FinanceWorkspaceViewModel {
   readonly statusOptions = ['All Status', 'Paid', 'Unpaid', 'Overdue', 'Pending', 'Partially Paid'];
 
   constructor(private readonly api: FinanceApiService) {}
+
+  private storedFinanceCompanyCode(): string {
+    const financeCompanyCode = localStorage.getItem('financeCompanyCode')?.trim();
+    if (financeCompanyCode) return financeCompanyCode;
+
+    const crmUserCode = this.crmUserCompanyCode();
+    if (crmUserCode) return crmUserCode;
+
+    return localStorage.getItem('companyCode')?.trim() || DEFAULT_FINANCE_COMPANY_CODE;
+  }
+
+  private crmUserCompanyCode(): string {
+    const rawUser = localStorage.getItem('tracecall_user');
+    if (!rawUser) return '';
+
+    try {
+      const user = JSON.parse(rawUser);
+      const companyName = String(user?.companyName || '').trim().toLowerCase();
+      if (companyName.includes('softrate tech park')) return DEFAULT_FINANCE_COMPANY_CODE;
+      return String(user?.salesCompanyCode || user?.adminCompanyCode || user?.companyCode || '').trim();
+    } catch {
+      return '';
+    }
+  }
 
   get activeNav(): FinanceNavGroup {
     return this.navGroups.find((item) => item.id === this.activeGroup) || this.navGroups[0];
@@ -100,7 +126,9 @@ export class FinanceWorkspaceViewModel {
       return;
     }
 
-    if (!this.companyCode.trim()) {
+    this.companyCode = this.companyCode.trim() || DEFAULT_FINANCE_COMPANY_CODE;
+
+    if (!this.companyCode) {
       this.error = 'Enter a company code to sync finance data.';
       return;
     }

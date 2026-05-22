@@ -147,7 +147,6 @@
 
     <main class="dash-main" [class.expanded]="vm.sidebarMinimized">
       <div class="notice error" *ngIf="vm.error">{{ vm.error }}</div>
-      <div class="notice loading" *ngIf="vm.loading">Loading finance records...</div>
 
       <section class="finance-content" *ngIf="vm.isIntegratedView; else integratedLater">
         <div class="record-toolbar admin-followups-toolbar">

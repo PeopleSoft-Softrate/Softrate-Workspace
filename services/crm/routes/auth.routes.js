@@ -7,8 +7,8 @@ function crmCredentialConfig() {
   return {
     email: (process.env.CRM_ADMIN_EMAIL || 'crm.admin@softrate.local').toLowerCase(),
     password: process.env.CRM_ADMIN_PASSWORD || 'CrmAdmin@123',
-    companyCode: process.env.CRM_DEFAULT_COMPANY_CODE || '',
-    companyName: process.env.CRM_DEFAULT_COMPANY_NAME || 'Softrate CRM',
+    companyCode: process.env.CRM_DEFAULT_COMPANY_CODE || 'STP-1603-2026',
+    companyName: process.env.CRM_DEFAULT_COMPANY_NAME || 'Softrate Tech Park',
   };
 }
 

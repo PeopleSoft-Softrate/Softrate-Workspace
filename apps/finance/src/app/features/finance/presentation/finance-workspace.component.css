@@ -509,12 +509,6 @@
   color: #dc2626;
 }
 
-.notice.loading {
-  border-color: rgba(36, 89, 211, 0.24);
-  background: rgba(36, 89, 211, 0.08);
-  color: #2459d3;
-}
-
 .profile-dropdown {
   position: relative;
 }

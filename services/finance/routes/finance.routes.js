@@ -19,13 +19,14 @@ const {
   getReports,
   getTax,
   normalize,
+  resolveCompanyCode,
   toNumber,
 } = require('../services/finance.service');
 
 const router = express.Router();
 
 function companyCode(req) {
-  return normalize(req.query.companyCode || req.body?.companyCode);
+  return resolveCompanyCode(req.query.companyCode || req.body?.companyCode);
 }
 
 function requireCompanyCode(req, res, next) {
@@ -60,6 +61,12 @@ function normalizeItems(items = []) {
       };
     })
     .filter((item) => item.name && item.total >= 0);
+}
+
+function updatePayload(body = {}) {
+  const payload = { ...(body || {}) };
+  delete payload.companyCode;
+  return payload;
 }
 
 function sendError(res, err, fallback) {
@@ -182,7 +189,7 @@ router.patch('/settings', requireCompanyCode, async (req, res) => {
   try {
     const settings = await FinanceSettings.findOneAndUpdate(
       { companyCode: companyCode(req) },
-      { $set: req.body, $setOnInsert: { companyCode: companyCode(req) } },
+      { $set: updatePayload(req.body), $setOnInsert: { companyCode: companyCode(req) } },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
     ).lean();
     return res.json({ success: true, settings });
@@ -251,7 +258,7 @@ router.patch('/payables/vendor-bills/:id', requireCompanyCode, async (req, res) 
   try {
     const bill = await FinanceVendorBill.findOneAndUpdate(
       { _id: req.params.id, companyCode: companyCode(req) },
-      { $set: req.body },
+      { $set: updatePayload(req.body) },
       { new: true, runValidators: true }
     ).lean();
     if (!bill) return res.status(404).json({ success: false, message: 'Vendor bill not found.' });
@@ -291,7 +298,7 @@ router.patch('/payables/purchase-orders/:id', requireCompanyCode, async (req, re
   try {
     const purchaseOrder = await FinancePurchaseOrder.findOneAndUpdate(
       { _id: req.params.id, companyCode: companyCode(req) },
-      { $set: req.body },
+      { $set: updatePayload(req.body) },
       { new: true, runValidators: true }
     ).lean();
     if (!purchaseOrder) return res.status(404).json({ success: false, message: 'Purchase order not found.' });
@@ -328,7 +335,7 @@ router.patch('/expenses/:id', requireCompanyCode, async (req, res) => {
   try {
     const expense = await FinanceExpense.findOneAndUpdate(
       { _id: req.params.id, companyCode: companyCode(req) },
-      { $set: req.body },
+      { $set: updatePayload(req.body) },
       { new: true, runValidators: true }
     ).lean();
     if (!expense) return res.status(404).json({ success: false, message: 'Expense not found.' });
@@ -378,7 +385,7 @@ router.patch('/payroll/runs/:id', requireCompanyCode, async (req, res) => {
   try {
     const payrollRun = await FinancePayrollRun.findOneAndUpdate(
       { _id: req.params.id, companyCode: companyCode(req) },
-      { $set: req.body },
+      { $set: updatePayload(req.body) },
       { new: true, runValidators: true }
     ).lean();
     if (!payrollRun) return res.status(404).json({ success: false, message: 'Payroll run not found.' });
@@ -431,7 +438,7 @@ router.patch('/banking/entries/:id', requireCompanyCode, async (req, res) => {
   try {
     const bankEntry = await FinanceBankEntry.findOneAndUpdate(
       { _id: req.params.id, companyCode: companyCode(req) },
-      { $set: req.body },
+      { $set: updatePayload(req.body) },
       { new: true, runValidators: true }
     ).lean();
     if (!bankEntry) return res.status(404).json({ success: false, message: 'Bank entry not found.' });

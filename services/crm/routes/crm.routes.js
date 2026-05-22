@@ -2,10 +2,14 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { getConvertedClients } = require('../services/clientService');
 const CrmContract = require('../models/CrmContract');
+const CrmDocumentTemplate = require('../models/CrmDocumentTemplate');
 const CrmAmc = require('../models/CrmAmc');
 const CrmPayment = require('../models/CrmPayment');
 const CrmProject = require('../models/CrmProject');
 const CrmTicket = require('../models/CrmTicket');
+const User = require('../models/User');
+const { NDA_PLACEHOLDERS, createDefaultNdaTemplate, normalizeTemplate } = require('../utilities/ndaTemplate');
+const { generateDynamicNdaPDF } = require('../utilities/ndaPdfGenerator');
 const { fetchHostingerDomains } = require('../services/hostingerService');
 const {
   addYears,
@@ -58,6 +62,66 @@ function numberValue(value, fallback = 0) {
 
 function stringValue(value) {
   return String(value || '').trim();
+}
+
+function addCalendarYears(date, amount) {
+  const next = new Date(date);
+  next.setFullYear(next.getFullYear() + amount);
+  return next;
+}
+
+function contractResponse(contract) {
+  const object = typeof contract.toObject === 'function' ? contract.toObject() : { ...contract };
+  delete object.pdfBase64;
+  delete object.templateSnapshot;
+  if (object._id && object.pdfFileName) {
+    object.downloadUrl = `/api/crm/contracts/${object._id}/pdf`;
+  }
+  return object;
+}
+
+async function loadNdaTemplate(companyCode) {
+  const saved = await CrmDocumentTemplate.findOne({ companyCode, type: 'NDA' }).lean();
+  return saved?.template ? normalizeTemplate(saved.template) : createDefaultNdaTemplate();
+}
+
+async function buildNdaDocData(req, clientCompanyName) {
+  const companyCode = scopedCompany(req);
+  const [company, project] = await Promise.all([
+    companyCode ? User.findOne({ companyCode }).lean() : null,
+    companyCode && clientCompanyName
+      ? CrmProject.findOne({ companyCode, clientCompanyName }).sort({ updatedAt: -1 }).lean()
+      : null,
+  ]);
+
+  const effectiveDate = parseDate(req.body.effectiveFrom || req.body.effectiveDate) || new Date();
+  const expiryDate = parseDate(req.body.effectiveTo || req.body.expiryDate) || addCalendarYears(effectiveDate, 3);
+
+  return {
+    companyName: stringValue(req.body.companyName) || company?.companyName || 'Softrate Technologies Private Limited',
+    companyAddress: stringValue(req.body.companyAddress) || company?.companyAddress || '60A, Velleeswaran Street, Mangadu, Chennai, Tamil Nadu, 600122, India',
+    companyEmail: stringValue(req.body.companyEmail) || company?.email || 'helpdesk@softrateglobal.com',
+    companyPhone: stringValue(req.body.companyPhone) || company?.mobile || '+91 8148633580',
+    clientName: stringValue(req.body.contactName || req.body.clientName) || 'Client Representative',
+    clientCompanyName,
+    clientAddress: stringValue(req.body.clientAddress) || '#, Street Name, Area Name, City, State, 600001, India',
+    clientEmail: stringValue(req.body.contactEmail || req.body.clientEmail),
+    effectiveDate,
+    expiryDate,
+    projectName: stringValue(req.body.projectName) || project?.clientCompanyName || 'Project Name / Service Name',
+    projectDescription: stringValue(req.body.projectDescription) || project?.notes || 'Service Description',
+    jurisdiction: stringValue(req.body.jurisdiction) || 'India',
+    solicitationPeriod: stringValue(req.body.solicitationPeriod) || 'one (1) year',
+    validityPeriod: stringValue(req.body.validityPeriod) || 'three (3) years',
+    terminationNoticeDays: stringValue(req.body.terminationNoticeDays) || '30',
+    noticeReceiptDays: stringValue(req.body.noticeReceiptDays) || 'five (5)',
+    signatoryName: stringValue(req.body.signatoryName) || company?.name || 'Authorized Signatory',
+    signatoryTitle: stringValue(req.body.signatoryTitle) || 'Authorized Signatory',
+    clientSignatoryTitle: stringValue(req.body.clientSignatoryTitle) || 'Authorized Signatory',
+    companySignature: stringValue(req.body.companySignature),
+    clientSignature: stringValue(req.body.clientSignature),
+    todayDate: new Date(),
+  };
 }
 
 function amcViewFilter(row, view) {
@@ -187,6 +251,65 @@ router.get('/clients', async (req, res) => {
   }
 });
 
+router.get('/nda-template', async (req, res) => {
+  try {
+    const companyCode = scopedCompany(req);
+    const saved = await CrmDocumentTemplate.findOne({ companyCode, type: 'NDA' }).lean();
+    return res.json({
+      success: true,
+      ndaTemplate: saved?.template ? normalizeTemplate(saved.template) : createDefaultNdaTemplate(),
+      placeholders: NDA_PLACEHOLDERS,
+      updatedAt: saved?.updatedAt || null,
+    });
+  } catch (err) {
+    console.error('[crm nda template]', err);
+    return res.status(500).json({ success: false, message: 'Failed to load NDA template.' });
+  }
+});
+
+router.put('/nda-template', async (req, res) => {
+  try {
+    const companyCode = scopedCompany(req);
+    const ndaTemplate = normalizeTemplate(req.body?.ndaTemplate || req.body?.template || {});
+    const saved = await CrmDocumentTemplate.findOneAndUpdate(
+      { companyCode, type: 'NDA' },
+      {
+        $set: {
+          companyCode,
+          type: 'NDA',
+          name: ndaTemplate.name || 'NDA Format Sample',
+          template: ndaTemplate,
+          updatedBy: req.crmUser?.email || '',
+        },
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    ).lean();
+    return res.json({
+      success: true,
+      message: 'NDA template saved successfully.',
+      ndaTemplate: normalizeTemplate(saved.template),
+    });
+  } catch (err) {
+    console.error('[crm nda template save]', err);
+    return res.status(500).json({ success: false, message: 'Failed to save NDA template.' });
+  }
+});
+
+router.post('/nda/preview', async (req, res) => {
+  try {
+    const clientCompanyName = stringValue(req.body.clientCompanyName) || 'Client Company Name';
+    const template = normalizeTemplate(req.body?.ndaTemplate || await loadNdaTemplate(scopedCompany(req)));
+    const data = await buildNdaDocData(req, clientCompanyName);
+    const buffer = await generateDynamicNdaPDF(data, template);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="NDA-Preview.pdf"');
+    return res.send(buffer);
+  } catch (err) {
+    console.error('[crm nda preview]', err);
+    return res.status(500).json({ success: false, message: 'Failed to preview NDA.' });
+  }
+});
+
 router.get('/contracts', async (req, res) => {
   try {
     const companyCode = scopedCompany(req);
@@ -195,11 +318,30 @@ router.get('/contracts', async (req, res) => {
     if (req.query.type) query.type = String(req.query.type).toUpperCase();
     if (req.query.clientCompanyName) query.clientCompanyName = req.query.clientCompanyName;
 
-    const contracts = await CrmContract.find(query).sort({ createdAt: -1 }).lean();
-    return res.json({ success: true, contracts });
+    const contracts = await CrmContract.find(query).select('-pdfBase64 -templateSnapshot').sort({ createdAt: -1 }).lean();
+    return res.json({ success: true, contracts: contracts.map(contractResponse) });
   } catch (err) {
     console.error('[crm contracts]', err);
     return res.status(500).json({ success: false, message: 'Failed to load contract history.' });
+  }
+});
+
+router.get('/contracts/:id/pdf', async (req, res) => {
+  try {
+    const companyCode = scopedCompany(req);
+    const query = { _id: req.params.id };
+    if (companyCode) query.companyCode = companyCode;
+    const contract = await CrmContract.findOne(query).select('+pdfBase64').lean();
+    if (!contract || !contract.pdfBase64) {
+      return res.status(404).json({ success: false, message: 'PDF not found for this contract.' });
+    }
+    const buffer = Buffer.from(contract.pdfBase64, 'base64');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${contract.pdfFileName || `${contract.documentNumber}.pdf`}"`);
+    return res.send(buffer);
+  } catch (err) {
+    console.error('[crm contract pdf]', err);
+    return res.status(500).json({ success: false, message: 'Failed to load contract PDF.' });
   }
 });
 
@@ -215,6 +357,21 @@ router.post('/contracts/generate', async (req, res) => {
 
     const clientCompanyName = String(req.body.clientCompanyName).trim();
     const documentNumber = makeDocumentNumber(type);
+    let pdfBuffer = null;
+    let pdfFileName = '';
+    let templateSnapshot;
+    let content = req.body.content || `${type} generated for ${clientCompanyName}.`;
+
+    if (type === 'NDA') {
+      templateSnapshot = req.body?.ndaTemplate
+        ? normalizeTemplate(req.body.ndaTemplate)
+        : await loadNdaTemplate(scopedCompany(req));
+      const docData = await buildNdaDocData(req, clientCompanyName);
+      pdfBuffer = await generateDynamicNdaPDF(docData, templateSnapshot);
+      pdfFileName = `${documentNumber}-${clientCompanyName.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      content = `NDA generated for ${clientCompanyName} using ${templateSnapshot.name || 'NDA Format Sample'}.`;
+    }
+
     const contract = await CrmContract.create({
       companyCode: scopedCompany(req),
       clientCompanyName,
@@ -227,10 +384,13 @@ router.post('/contracts/generate', async (req, res) => {
       effectiveFrom: req.body.effectiveFrom || new Date(),
       effectiveTo: req.body.effectiveTo || null,
       generatedBy: req.crmUser?.email || 'CRM Admin',
-      content: req.body.content || `${type} generated for ${clientCompanyName}.`,
+      content,
+      pdfFileName,
+      pdfBase64: pdfBuffer ? pdfBuffer.toString('base64') : '',
+      templateSnapshot,
     });
 
-    return res.status(201).json({ success: true, contract });
+    return res.status(201).json({ success: true, contract: contractResponse(contract) });
   } catch (err) {
     console.error('[crm contract generate]', err);
     return res.status(500).json({ success: false, message: 'Failed to generate contract.' });

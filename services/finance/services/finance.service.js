@@ -1,8 +1,4 @@
-const Invoice = require('../../sales/models/Invoice');
-const Payment = require('../../sales/models/Payment');
-const CrmPayment = require('../../crm/models/CrmPayment');
-const CrmAmc = require('../../crm/models/CrmAmc');
-const CrmProject = require('../../crm/models/CrmProject');
+const mongoose = require('mongoose');
 const FinanceVendor = require('../models/FinanceVendor');
 const FinanceVendorBill = require('../models/FinanceVendorBill');
 const FinancePurchaseOrder = require('../models/FinancePurchaseOrder');
@@ -11,9 +7,34 @@ const FinancePayrollRun = require('../models/FinancePayrollRun');
 const FinanceTaxRecord = require('../models/FinanceTaxRecord');
 const FinanceBankEntry = require('../models/FinanceBankEntry');
 const FinanceSettings = require('../models/FinanceSettings');
+const { lifecycleStatusFor } = require('../../crm/services/amcService');
+
+const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';
+
+function sourceModel(name, collection) {
+  return mongoose.models[name] || mongoose.model(
+    name,
+    new mongoose.Schema({}, { strict: false, collection }),
+    collection
+  );
+}
+
+const Invoice = sourceModel('FinanceSourceSalesInvoice', 'invoices');
+const Payment = sourceModel('FinanceSourceSalesPayment', 'payments');
+const CrmPayment = sourceModel('FinanceSourceCrmPayment', 'crmpayments');
+const CrmAmc = sourceModel('FinanceSourceCrmAmc', 'crmamcs');
+const CrmProject = sourceModel('FinanceSourceCrmProject', 'crmprojects');
 
 function normalize(value) {
   return String(value || '').trim();
+}
+
+function defaultFinanceCompanyCode() {
+  return normalize(process.env.DEFAULT_FINANCE_COMPANY_CODE) || DEFAULT_FINANCE_COMPANY_CODE;
+}
+
+function resolveCompanyCode(companyCode) {
+  return normalize(companyCode) || defaultFinanceCompanyCode();
 }
 
 function toNumber(value, fallback = 0) {
@@ -57,15 +78,6 @@ function dateRangeFromQuery(query = {}) {
   };
 }
 
-function currentFinancialYearRange(now = new Date()) {
-  const date = parseDate(now) || new Date();
-  const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
-  return {
-    from: new Date(startYear, 3, 1, 0, 0, 0, 0),
-    to: new Date(startYear + 1, 2, 31, 23, 59, 59, 999),
-  };
-}
-
 function withinRange(value, range = {}) {
   const date = parseDate(value);
   if (!date) return false;
@@ -75,8 +87,7 @@ function withinRange(value, range = {}) {
 }
 
 function companyQuery(companyCode) {
-  const code = normalize(companyCode);
-  return code ? { companyCode: code } : {};
+  return { companyCode: resolveCompanyCode(companyCode) };
 }
 
 function daysBetween(from, to = new Date()) {
@@ -169,7 +180,8 @@ function serializeCrmPayment(payment) {
 }
 
 function serializeAmc(amc) {
-  const paid = String(amc.paymentStatus || '').toLowerCase() === 'paid';
+  const status = lifecycleStatusFor(amc);
+  const paid = status === 'Paid';
   const amount = toNumber(amc.annualFee || amc.outstandingAmount);
   const outstanding = paid ? 0 : toNumber(amc.outstandingAmount, amount);
   const renewalDate = parseDate(amc.renewalDate);
@@ -189,7 +201,7 @@ function serializeAmc(amc) {
     paidAmount: paid ? amount : 0,
     balanceAmount: outstanding,
     paymentStatus: paid ? 'Paid' : 'Unpaid',
-    status: amc.status || (paid ? 'Paid' : 'Unpaid'),
+    status,
     owner: amc.owner || '',
     daysUntilRenewal,
     outstandingAmount: outstanding,
@@ -528,10 +540,11 @@ function buildDashboard(data, range = {}) {
 }
 
 async function getDashboard(companyCode, query = {}) {
+  const code = resolveCompanyCode(companyCode);
   const data = await getFinanceCollections(companyCode);
   return {
     success: true,
-    companyCode: normalize(companyCode),
+    companyCode: code,
     range: dateRangeFromQuery(query),
     ...buildDashboard(data, dateRangeFromQuery(query)),
   };
@@ -557,17 +570,14 @@ async function getReceivables(companyCode, view = 'invoices', query = {}) {
   const data = await getFinanceCollections(companyCode);
   const range = dateRangeFromQuery(query);
   const hasRequestedRange = !!(range.from || range.to);
-  const amcRange = hasRequestedRange ? range : currentFinancialYearRange();
   const invoices = data.invoices
-    .filter((item) => item.paymentStatus === 'Paid')
     .filter((item) => !hasRequestedRange || withinRange(item.invoiceDate || item.paidAt, range))
     .sort((a, b) => new Date(b.invoiceDate || b.paidAt || 0) - new Date(a.invoiceDate || a.paidAt || 0));
   const payments = data.invoices.filter((item) => item.paidAmount > 0)
     .filter((item) => withinRange(item.paidAt || item.invoiceDate, range));
   const outstanding = buildOutstanding(data);
   const amcRenewals = data.amcRecords
-    .filter((item) => item.paymentStatus === 'Paid')
-    .filter((item) => withinRange(item.paidAt || item.lastPaidRenewalDate || item.renewalDate, amcRange))
+    .filter((item) => !hasRequestedRange || withinRange(item.paidAt || item.lastPaidRenewalDate || item.renewalDate, range))
     .sort((a, b) => new Date(b.paidAt || b.renewalDate || 0) - new Date(a.paidAt || a.renewalDate || 0));
   const clientBalance = buildClientBalances(data);
   const views = {
@@ -584,15 +594,17 @@ async function getReceivables(companyCode, view = 'invoices', query = {}) {
     items: views[view] || invoices,
     analytics: view === 'amc-renewals'
       ? {
-          paidAmcCharges: sum(amcRenewals, (item) => item.paidAmount || item.totalAmount),
+          paidAmcCharges: sum(amcRenewals.filter((item) => item.paymentStatus === 'Paid'), (item) => item.paidAmount || item.totalAmount),
           annualFeeValue: sum(amcRenewals, (item) => item.totalAmount || item.annualFee),
-          paidAmcCount: amcRenewals.length,
+          paidAmcCount: amcRenewals.filter((item) => item.paymentStatus === 'Paid').length,
+          totalAmcCount: amcRenewals.length,
           outstandingAmount: sum(amcRenewals, (item) => item.balanceAmount || item.outstandingAmount),
         }
       : {
           totalInvoiced: sum(invoices, (item) => item.totalAmount),
           totalPaid: sum(invoices, (item) => item.paidAmount),
-          paidInvoiceCount: invoices.length,
+          invoiceCount: invoices.length,
+          paidInvoiceCount: invoices.filter((item) => item.paymentStatus === 'Paid').length,
           outstandingAmount: sum(invoices, (item) => item.balanceAmount || item.outstandingAmount),
         },
   };
@@ -782,9 +794,7 @@ function financeNavigation() {
     { id: 'receivables', label: 'Receivables', children: [
       { id: 'invoices', label: 'Invoices' },
       { id: 'payments-received', label: 'Payments Received' },
-      { id: 'outstanding', label: 'Outstanding' },
       { id: 'amc-renewals', label: 'AMC Renewals' },
-      { id: 'client-balance', label: 'Client Balance' },
     ] },
     { id: 'payables', label: 'Payables', children: [
       { id: 'vendor-bills', label: 'Vendor Bills' },
@@ -844,6 +854,7 @@ module.exports = {
   buildIncomeStreams,
   buildOutstanding,
   dateRangeFromQuery,
+  defaultFinanceCompanyCode,
   financeNavigation,
   getBanking,
   getDashboard,
@@ -856,6 +867,7 @@ module.exports = {
   getReports,
   getTax,
   normalize,
+  resolveCompanyCode,
   sum,
   toNumber,
 };

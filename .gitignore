@@ -53,3 +53,4 @@ out-tsc/
 # Kotlin and Gradle daemon logs/caches
 **/.kotlin/
 **/.gradle/
+**/.playwright-mcp

@@ -29,9 +29,7 @@ export const FINANCE_NAV_GROUPS: FinanceNavGroup[] = [
     children: [
       { id: 'invoices', label: 'Invoices', icon: 'M6 3h8l4 4v14H6z M14 3v5h5 M8 12h8 M8 16h6' },
       { id: 'payments-received', label: 'Payments Received', icon: 'M3 7h18v11H3z M3 10h18 M7 15h4' },
-      { id: 'outstanding', label: 'Outstanding', icon: 'M12 8v5l3 2 M21 12a9 9 0 1 1-9-9' },
       { id: 'amc-renewals', label: 'AMC Renewals', icon: 'M4 19V5 M4 19h16 M7 15l4-4 3 3 5-6' },
-      { id: 'client-balance', label: 'Client Balance', icon: 'M4 5h16v14H4z M8 9h8 M8 13h8 M8 17h5' },
     ],
   },
   {

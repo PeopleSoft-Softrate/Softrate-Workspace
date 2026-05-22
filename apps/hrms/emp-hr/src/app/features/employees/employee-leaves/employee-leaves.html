@@ -1,0 +1,140 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/employee/dashboard" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+    <h1>Leave Applications</h1>
+    <p>Track your leave balance, request time off, and monitor manager/HR approvals</p>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  
+  <!-- Balances row -->
+  <div class="balances-row" *ngIf="!isLoading()">
+    <div class="balance-card" *ngFor="let bal of balances()">
+      <div class="balance-icon">
+        <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="20" [strokeWidth]="1.5" color="#00657f"></hugeicons-icon>
+      </div>
+      <div class="balance-info">
+        <span class="label">{{ bal.leaveType }}</span>
+        <h3 class="value">{{ bal.balance }} <span class="total">/ {{ bal.totalAllowed }} Days Left</span></h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="leaves-content-grid" *ngIf="!isLoading()">
+    <!-- Apply for Leave Form -->
+    <div class="card form-card">
+      <div class="card-header">
+        <h3>Request Time Off</h3>
+      </div>
+      <form (submit)="onSubmitLeave()" class="leave-form-element">
+        <div class="form-group">
+          <label for="leaveType">Leave Type <span class="required">*</span></label>
+          <select id="leaveType" [(ngModel)]="leaveForm.leaveType" name="leaveType" required class="form-input">
+            <option value="" disabled selected>Select Leave Type</option>
+            <option *ngIf="isIntern()" value="Casual Leave">Casual Leave</option>
+            <option *ngIf="isIntern()" value="Sick Leave">Sick Leave</option>
+            <option *ngIf="!isIntern()" value="Casual Leave">Casual Leave</option>
+            <option *ngIf="!isIntern()" value="Sick Leave">Sick Leave</option>
+            <option *ngIf="!isIntern()" value="Maternity Leave">Maternity Leave</option>
+            <option *ngIf="!isIntern()" value="Paternity Leave">Paternity Leave</option>
+            <option *ngIf="!isIntern()" value="Loss of Pay">Loss of Pay</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fromDate">Start Date <span class="required">*</span></label>
+            <input type="date" id="fromDate" [(ngModel)]="leaveForm.fromDate" name="fromDate" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="toDate">End Date <span class="required">*</span></label>
+            <input type="date" id="toDate" [(ngModel)]="leaveForm.toDate" name="toDate" required class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reason">Reason <span class="required">*</span></label>
+          <textarea id="reason" [(ngModel)]="leaveForm.reason" name="reason" rows="3" required placeholder="Explain your reason..." class="form-input textarea"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Supporting Document (Optional)</label>
+          <div class="upload-btn-wrapper">
+            <button class="btn-upload" type="button">
+              <hugeicons-icon [icon]="Upload02Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+              <span>{{ selectedFile ? selectedFile.name : 'Choose File' }}</span>
+            </button>
+            <input type="file" id="document-upload" (change)="onFileSelected($event)" name="document" accept=".pdf,.png,.jpg,.jpeg" />
+          </div>
+          <span class="file-hint">Accepted formats: PDF, PNG, JPG (Max 5MB)</span>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="submitLoading()">
+          <span *ngIf="submitLoading()">Submitting...</span>
+          <span *ngIf="!submitLoading()">Submit Request</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- History Logs -->
+    <div class="card logs-card">
+      <div class="card-header">
+        <h3>Time Off History</h3>
+      </div>
+      <div class="table-responsive" *ngIf="leaves().length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Period</th>
+              <th>Days</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of leaves()">
+              <td>
+                <span class="leave-type-badge">{{ item.leaveType }}</span>
+              </td>
+              <td>
+                <span class="date-range">{{ item.fromDate | date:'dd MMM' }} - {{ item.toDate | date:'dd MMM yyyy' }}</span>
+              </td>
+              <td style="font-weight: 700;">{{ item.numberOfDays }}</td>
+              <td class="reason-cell" [title]="item.reason">{{ item.reason }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusColor(item.hrStatus || item.status)">
+                  {{ item.hrStatus || item.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty state for history -->
+      <div class="empty-state" *ngIf="leaves().length === 0">
+        <div class="empty-content">
+          <hugeicons-icon [icon]="LicenseDraftIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+          <h3>No leaves requested</h3>
+          <p>Your history log is currently empty. Submit a request to see it here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Retrieving time off records...</p>
+  </div>
+</div>
+</div>
+</div>

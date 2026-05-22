@@ -1,0 +1,427 @@
+<div class="approvals-container">
+
+  <!-- PAGE HEADER (Full Width Strip) -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Approvals & Requests Hub</h1>
+      <p>Centralized real-time center to manage leaves, offboardings, and onboarding requests.</p>
+    </div>
+    <div class="role-badge" [ngClass]="isHr() ? 'role-hr' : 'role-manager'">
+      <div class="pulse-indicator"></div>
+      <hugeicons-icon [icon]="UserGroupIcon" size="14" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+      <span>{{ isHr() ? 'HR Administration' : 'Team Manager' }}</span>
+    </div>
+  </div>
+
+  <!-- SINGLE UNIFIED SECTION -->
+  <div class="unified-section">
+
+    <!-- STATS ROW -->
+    <div class="section-stats">
+      <div class="stats-row">
+        <div class="stat-item total">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="BorderFullIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingCount() }}</span>
+            <span class="stat-label">Total Pending</span>
+          </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item leave">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="Calendar01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingLeavesCount() }}</span>
+            <span class="stat-label">Pending Leaves</span>
+          </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item offboarding">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="Logout01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingOffboardingsCount() }}</span>
+            <span class="stat-label">Offboardings</span>
+          </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item onboarding">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="Login01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingOnboardingsCount() }}</span>
+            <span class="stat-label">Pending Onboarding</span>
+          </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item correction">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="FingerAccessIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingCorrectionsCount() }}</span>
+            <span class="stat-label">Pending Corrections</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="section-divider"></div>
+
+    <!-- FILTERS BAR -->
+    <div class="section-filters">
+      <div class="search-wrapper">
+        <hugeicons-icon [icon]="Search01Icon" size="16" [strokeWidth]="1.5" color="#94A3B8" class="search-icon"></hugeicons-icon>
+        <input 
+          type="text" 
+          placeholder="Search by name, ID, department..." 
+          [(ngModel)]="searchQuery" 
+          class="search-input"
+        />
+      </div>
+
+      <div class="filter-controls">
+        <div class="category-tabs">
+          <button 
+            (click)="activeCategory.set('all')" 
+            [class.active]="activeCategory() === 'all'"
+            class="tab-btn"
+          >All Requests</button>
+          <button 
+            (click)="activeCategory.set('leave')" 
+            [class.active]="activeCategory() === 'leave'"
+            class="tab-btn"
+          >Leaves</button>
+          <button 
+            (click)="activeCategory.set('offboarding')" 
+            [class.active]="activeCategory() === 'offboarding'"
+            class="tab-btn"
+          >Offboardings</button>
+          <button 
+            (click)="activeCategory.set('onboarding')" 
+            [class.active]="activeCategory() === 'onboarding'"
+            class="tab-btn"
+          >Onboarding</button>
+          <button 
+            (click)="activeCategory.set('correction')" 
+            [class.active]="activeCategory() === 'correction'"
+            class="tab-btn"
+          >Attendance Corrections</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="section-divider"></div>
+
+    <!-- MAIN LOADING SPINNER -->
+    <div *ngIf="loading()" class="loader-container">
+      <div class="spinner"></div>
+      <p>Synchronizing request feed...</p>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div *ngIf="!loading() && filteredRequests().length === 0" class="empty-state">
+      <hugeicons-icon [icon]="WorkflowSquare03Icon" size="48" [strokeWidth]="1.5" color="#94A3B8" class="empty-icon"></hugeicons-icon>
+      <h3>All Clear!</h3>
+      <p>No pending or filtered approvals match your selection.</p>
+    </div>
+
+    <!-- REQUESTS FEED / GRID -->
+    <div *ngIf="!loading() && filteredRequests().length > 0" class="requests-grid">
+    <div *ngFor="let req of filteredRequests()" class="request-item card" [ngClass]="[req.type, req.type === 'onboarding' ? 'padding-remove' : '']">
+
+    <!-- ============================================================ -->
+    <!-- ONBOARDING CARD — styled like intern-requests                -->
+    <!-- ============================================================ -->
+
+    <ng-container *ngIf="req.type === 'onboarding'; else genericCard">
+
+      <!-- ONBOARDING CARD HEADER -->
+      <div class="ob-card-header">
+        <div class="user-info">
+          <div class="ob-avatar">{{ req.requesterName.substring(0, 2).toUpperCase() }}</div>
+          <div>
+            <h3>{{ req.requesterName }}</h3>
+            <p class="role-badge">{{ req.raw?.role || req.subType || 'Applicant' }}</p>
+          </div>
+        </div>
+        <div class="ob-timestamp">
+          <hugeicons-icon [icon]="Clock01Icon" size="12" [strokeWidth]="1.5" color="#94A3B8"></hugeicons-icon>
+          {{ req.createdAt | date:'mediumDate' }}
+        </div>
+      </div>
+
+      <!-- ONBOARDING CARD BODY -->
+      <div class="ob-card-body">
+        <div class="ob-details-grid">
+          <div class="ob-detail-item">
+            <label>College</label>
+            <p>{{ req.raw?.college || 'N/A' }}</p>
+          </div>
+          <div class="ob-detail-item">
+            <label>Department</label>
+            <p>{{ req.raw?.department || 'N/A' }}</p>
+          </div>
+          <div class="ob-detail-item">
+            <label>Year</label>
+            <p>{{ req.raw?.year || 'N/A' }}</p>
+          </div>
+          <div class="ob-detail-item">
+            <label>Contact</label>
+            <p>{{ req.raw?.contact || req.raw?.phone || 'N/A' }}</p>
+          </div>
+          <div class="ob-detail-item" *ngIf="req.raw?.linkedin">
+            <label>Profile</label>
+            <a [href]="req.raw.linkedin" target="_blank" class="ob-social-link">
+              LinkedIn <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- ASSIGNMENT STATUS ROW -->
+        <div class="ob-status-info">
+          <div class="ob-info-item">
+            <label>Assignment Status</label>
+            <p [class.ob-assigned]="req.raw?.assignedManager" [class.ob-unassigned]="!req.raw?.assignedManager">
+              {{ req.raw?.assignedManager ? 'Assigned to ' + (req.raw.assignedManager?.fullName || 'Manager') : 'No Manager Assigned' }}
+              <span *ngIf="req.raw?.managerApprovalStatus" class="ob-approval-badge"
+                [class.ob-badge-approved]="req.raw.managerApprovalStatus === 'approved'"
+                [class.ob-badge-pending]="req.raw.managerApprovalStatus === 'pending'"
+                [class.ob-badge-rejected]="req.raw.managerApprovalStatus === 'rejected'">
+                {{ req.raw.managerApprovalStatus }}
+              </span>
+            </p>
+          </div>
+          <div class="ob-info-item" *ngIf="req.raw?.assignedManager">
+            <label>Manager Dept</label>
+            <p class="ob-dept-badge">{{ req.raw.assignedManager?.department || 'N/A' }}</p>
+          </div>
+        </div>
+
+        <!-- MANAGER REMARKS -->
+        <div class="ob-manager-remarks" *ngIf="req.raw?.managerRemarks">
+          <label>Manager Remarks</label>
+          <div class="ob-remarks-bubble">
+            <p>{{ req.raw.managerRemarks }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONBOARDING CARD ACTIONS -->
+      <div class="ob-card-actions">
+        <button class="ob-action-btn ob-reject" (click)="openReview(req, 'reject')">
+          <i class="fa-solid fa-trash-can"></i> Reject
+        </button>
+        <!-- For HR: Redirect to Review & Onboard form -->
+        <a *ngIf="isHr() && req.subType === 'Intern'" class="ob-action-btn ob-approve" [routerLink]="['/interns/approve', req._id]" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-sizing: border-box;">
+          <i class="fa-solid fa-user-plus"></i> Onboard
+        </a>
+        <a *ngIf="isHr() && req.subType !== 'Intern'" class="ob-action-btn ob-approve" [routerLink]="['/employees/approve', req._id]" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-sizing: border-box;">
+          <i class="fa-solid fa-user-plus"></i> Onboard
+        </a>
+        <!-- For Managers: Open Approval/Recommendation Modal -->
+        <button *ngIf="!isHr()" class="ob-action-btn ob-approve" (click)="openReview(req, 'approve')">
+          <i class="fa-solid fa-user-plus"></i> Approve
+        </button>
+      </div>
+
+    </ng-container>
+    <!-- ============================================================ -->
+    <!-- END ONBOARDING CARD                                          -->
+    <!-- ============================================================ -->
+
+    <!-- GENERIC CARD (Leave / Offboarding) -->
+    <ng-template #genericCard>
+
+      <!-- CARD HEADER -->
+      <div class="card-header">
+        <div class="user-meta">
+          <div class="avatar-placeholder">
+            {{ req.requesterName.substring(0, 2).toUpperCase() }}
+          </div>
+          <div>
+            <h4 class="user-name">{{ req.requesterName }}</h4>
+            <span class="user-id">ID: {{ req.requesterId }}</span>
+          </div>
+        </div>
+        <span class="badge" [ngClass]="req.type">
+          {{ req.type === 'leave' ? 'Leave' : (req.type === 'offboarding' ? 'Offboarding' : 'Correction') }}
+        </span>
+      </div>
+
+      <!-- CARD DETAILS BODY -->
+      <div class="card-body">
+        <div class="detail-row">
+          <span class="detail-label">Type / Reason:</span>
+          <span class="detail-value highlight">{{ req.subType }}</span>
+        </div>
+        <div class="detail-row" *ngIf="req.days">
+          <span class="detail-label">Duration:</span>
+          <span class="detail-value">{{ req.days }} Days</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Timeline:</span>
+          <span class="detail-value timeline-value">{{ req.dateText }}</span>
+        </div>
+        
+        <div class="reason-box" *ngIf="req.reason">
+          <p class="reason-title">Details / Motivation:</p>
+          <p class="reason-content">"{{ req.reason }}"</p>
+        </div>
+
+        <!-- Approval progress checklist -->
+        <div class="approval-progress">
+          <p class="progress-title">Approval Progress:</p>
+          <div class="checks-row">
+            <div class="check-item" [ngClass]="req.managerStatus">
+              <div class="dot"></div>
+              <span>Manager: <b>{{ req.managerStatus || 'pending' }}</b></span>
+            </div>
+            <div class="check-item" [ngClass]="req.hrStatus">
+              <div class="dot"></div>
+              <span>HR Action: <b>{{ req.hrStatus || 'pending' }}</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD FOOTER / ACTIONS -->
+      <div class="card-footer">
+        <div class="time-stamp">
+          <hugeicons-icon [icon]="Clock01Icon" size="12" [strokeWidth]="1.5" color="#94A3B8"></hugeicons-icon>
+          <span>Applied: {{ req.createdAt | date:'mediumDate' }}</span>
+        </div>
+
+        <div class="action-buttons" *ngIf="req.status === 'pending'">
+          <button (click)="openReview(req, 'reject')" class="action-btn btn-reject">Reject</button>
+          <button (click)="openReview(req, 'approve')" class="action-btn btn-approve">Accept</button>
+        </div>
+
+        <div class="status-stamp" *ngIf="req.status !== 'pending'" [ngClass]="req.status">
+          <span>{{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Decision: Approved' : 'Decision: Rejected' }}</span>
+          <p class="rejection-hint" *ngIf="req.rejectionReason">"{{ req.rejectionReason }}"</p>
+        </div>
+      </div>
+
+    </ng-template>
+
+  </div>
+
+
+  <!-- ACTION REVIEW MODAL OVERLAY -->
+  <div class="modal-backdrop" *ngIf="showReviewModal()">
+    <div class="modal-container card slide-in">
+      <div class="modal-header">
+        <h3>
+          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Attendance Correction' : 'Onboarding')) }} Decision
+        </h3>
+        <button (click)="closeModal()" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="selected-meta card">
+          <p><strong>Applicant:</strong> {{ selectedRequest()?.requesterName }}</p>
+          <p><strong>Request Category:</strong> {{ selectedRequest()?.subType }}</p>
+          <p><strong>Timeline:</strong> {{ selectedRequest()?.dateText }}</p>
+        </div>
+
+        <div class="decision-alert" [ngClass]="reviewAction()">
+          <p>
+            You are about to <strong>{{ reviewAction() === 'approve' ? 'APPROVE & LEGITIMIZE' : 'REJECT & DENY' }}</strong> this request.
+          </p>
+        </div>
+
+        <!-- ONBOARDING FORM FIELD INPUTS (HR APPROVAL SPECIFIC) -->
+        <div class="form-container" *ngIf="selectedRequest()?.type === 'onboarding' && reviewAction() === 'approve' && isHr()">
+          <p class="form-section-title">Configure Onboarding Parameters:</p>
+          
+          <div class="form-group">
+            <label>Onboarding Date:</label>
+            <input type="date" [(ngModel)]="onboardingDate" class="form-control" />
+          </div>
+
+          <!-- Intern specific fields -->
+          <div *ngIf="selectedRequest()?.subType === 'Intern'">
+            <div class="form-group">
+              <label>Expected Internship End Date:</label>
+              <input type="date" [(ngModel)]="endDate" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label>Internship Compensation Scheme:</label>
+              <select [(ngModel)]="internshipType" class="form-control">
+                <option value="Stipend">Stipend-based Internship</option>
+                <option value="Paid">Paid Internship</option>
+                <option value="Free">Unpaid/Free Internship</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Assigned Designation/Role:</label>
+            <input type="text" [(ngModel)]="assignedRole" class="form-control" placeholder="E.g., Software Intern" />
+          </div>
+        </div>
+
+        <!-- OFFBOARDING DOCUMENTS GENERATION (HR APPROVAL SPECIFIC) -->
+        <div class="form-container flags-box" *ngIf="selectedRequest()?.type === 'offboarding' && reviewAction() === 'approve' && isHr()">
+          <p class="form-section-title">Select Documents to Generate automatically (PDF):</p>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="certInternship" />
+            <span>Generate Internship Completion Certificate</span>
+          </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="certProject" />
+            <span>Generate Project Completion Certificate</span>
+          </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="certLor" />
+            <span>Generate Letter of Recommendation (LOR)</span>
+          </label>
+        </div>
+
+        <!-- REMARKS FIELD -->
+        <div class="form-group remarks-group">
+          <label>{{ reviewAction() === 'approve' ? 'Action Remarks / Notes:' : 'Reason for Rejection (Required):' }}</label>
+          <textarea 
+            [(ngModel)]="reviewRemarks" 
+            placeholder="Add notes explaining your action or detailing feedback..." 
+            class="form-control text-area"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeModal()" class="btn-secondary">Cancel</button>
+        <button 
+          (click)="submitReview()" 
+          [disabled]="reviewAction() === 'reject' && !reviewRemarks().trim()"
+          class="btn-primary" 
+          [ngClass]="reviewAction() === 'approve' ? 'approve' : 'reject'"
+        >
+          Confirm Decision
+        </button>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /unified-section -->
+</div>

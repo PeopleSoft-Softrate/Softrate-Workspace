@@ -1,0 +1,203 @@
+<div class="hc-root">
+  <!-- Page Header -->
+  <div class="hc-header">
+    <div class="hc-header-left">
+      <div class="hc-header-eyebrow">
+        <span>HR &amp; Attendance</span>
+      </div>
+      <h1 class="hc-title">Holiday Calendar</h1>
+      <p class="hc-subtitle">Configure company-wide holidays and weekly off-days</p>
+    </div>
+
+  </div>
+
+  <div class="hc-layout">
+
+    <!-- ── SIDEBAR ─────────────────────────────── -->
+    <aside class="hc-sidebar">
+
+      <!-- Bulk Upload Card -->
+      <div class="hc-card">
+        <div class="hc-card-label">
+          Bulk Action
+          <div class="hc-info-tip">
+            <hugeicons-icon [icon]="FileQuestionMarkIcon" size="18" [strokeWidth]="1.5" color="#00657F"></hugeicons-icon>
+            <div class="hc-info-popup">
+              <img src="images/holiday/how to upload.webp" alt="Bulk Upload Guide">
+              <p>Excel should contain "Date" and "Reason" columns.</p>
+            </div>
+          </div>
+        </div>
+        <h2 class="hc-card-title">Import Holidays</h2>
+        <p class="hc-card-desc">Upload an Excel file with "Date" and "Reason" columns.</p>
+        
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx, .xls, .csv" style="display: none">
+        <button class="hc-btn-primary" (click)="fileInput.click()" [disabled]="isSaving()">
+          <hugeicons-icon [icon]="UploadIcon" size="18" [strokeWidth]="1.5" *ngIf="!isSaving()"></hugeicons-icon>
+          <span class="hc-spinner" *ngIf="isSaving()"></span>
+          {{ isSaving() ? 'Importing…' : 'Import Excel' }}
+        </button>
+      </div>
+
+      <div class="hc-card">
+        <div class="hc-card-label">Special Holiday</div>
+        <h2 class="hc-card-title">Add Holiday</h2>
+
+        <div class="hc-field">
+          <label class="hc-label">Holiday Name / Reason</label>
+          <input class="hc-input" type="text" [(ngModel)]="newHoliday.reason" placeholder="e.g. Diwali, Christmas">
+        </div>
+
+        <div class="hc-field-row">
+          <div class="hc-field">
+            <label class="hc-label">From</label>
+            <input class="hc-input" type="date" [(ngModel)]="newHoliday.fromDate">
+          </div>
+          <div class="hc-field">
+            <label class="hc-label">To</label>
+            <input class="hc-input" type="date" [(ngModel)]="newHoliday.toDate">
+          </div>
+        </div>
+
+        <button class="hc-btn-primary" (click)="addHoliday()" [disabled]="isSaving()">
+          <hugeicons-icon [icon]="PlusIcon" size="18" [strokeWidth]="2" *ngIf="!isSaving()"></hugeicons-icon>
+          <span class="hc-spinner" *ngIf="isSaving()"></span>
+          {{ isSaving() ? 'Saving…' : 'Add Holiday' }}
+        </button>
+      </div>
+
+      <!-- Weekly Off Section -->
+      <div class="hc-card">
+        <div class="hc-card-label">Weekly Off</div>
+        <h2 class="hc-card-title">Recurring Days</h2>
+        <p class="hc-card-desc">Select days that repeat as off every week</p>
+
+        <div class="hc-day-grid">
+          <button
+            *ngFor="let day of days"
+            class="hc-day-btn"
+            [class.active]="selectedDay() === day"
+            [class.configured]="(weeklyHolidaysMap()[day]?.length || 0) > 0"
+            (click)="selectDay(day)">
+            <span class="hc-day-abbr">{{ day }}</span>
+            <span class="hc-day-dot" *ngIf="(weeklyHolidaysMap()[day]?.length || 0) > 0"></span>
+          </button>
+        </div>
+
+        <div class="hc-week-panel" *ngIf="selectedDay()">
+          <div class="hc-week-panel-head">
+            <span class="hc-week-label">{{ selectedDay() }} — Occurrence</span>
+            <span class="hc-badge" *ngIf="selectedWeeks().length > 0">{{ selectedWeeks().length }} selected</span>
+          </div>
+          <div class="hc-week-list">
+            <label class="hc-week-row" *ngFor="let week of weeks">
+              <input
+                type="checkbox"
+                class="hc-checkbox"
+                [checked]="selectedWeeks().includes(week.id)"
+                (change)="toggleWeek(week.id)">
+              <span class="hc-week-name">{{ week.label }}</span>
+            </label>
+          </div>
+          <button class="hc-btn-primary" (click)="saveWeeklyHoliday()" [disabled]="isSaving()">
+            <hugeicons-icon [icon]="SaveIcon" size="16" *ngIf="!isSaving()"></hugeicons-icon>
+            <span class="hc-spinner" *ngIf="isSaving()"></span>
+            {{ isSaving() ? 'Updating…' : 'Update ' + selectedDay() }}
+          </button>
+        </div>
+
+        <div class="hc-empty-hint" *ngIf="!selectedDay()">
+          <hugeicons-icon [icon]="ClockIcon" size="28" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          <p>Select a day to configure</p>
+        </div>
+      </div>
+
+      <!-- Special Holiday Form -->
+      
+
+    </aside>
+
+    <!-- ── MAIN ────────────────────────────────── -->
+    <main class="hc-main">
+
+      <!-- Filters -->
+      <div class="hc-filters">
+        <div class="hc-filter-tabs">
+          <button class="hc-tab" [class.active]="filterMode() === 'all'" (click)="filterMode.set('all')">All</button>
+          <button class="hc-tab" [class.active]="filterMode() === 'today'" (click)="filterMode.set('today')">Today</button>
+          <button class="hc-tab" [class.active]="filterMode() === 'upcoming'" (click)="filterMode.set('upcoming')">Upcoming</button>
+          <button class="hc-tab" [class.active]="filterMode() === 'past'" (click)="filterMode.set('past')">Past</button>
+        </div>
+
+        <div class="hc-filter-selects">
+          <div class="hc-select-wrap">
+            <hugeicons-icon [icon]="CalendarIcon" size="16" [strokeWidth]="1.5" color="currentColor" class="hc-select-icon"></hugeicons-icon>
+            <select class="hc-select" [ngModel]="selectedMonth()" (ngModelChange)="selectedMonth.set(+$event)">
+              <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="hc-select-wrap">
+            <select class="hc-select" [ngModel]="selectedYear()" (ngModelChange)="selectedYear.set(+$event)">
+              <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- List Header -->
+      <div class="hc-list-header">
+        <div class="hc-list-title-row">
+          <h3 class="hc-list-title">Special Holidays</h3>
+          <span class="hc-count-pill">{{ filteredSpecialHolidays().length }}</span>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="hc-skeletons" *ngIf="isLoading()">
+        <div class="hc-skeleton-row" *ngFor="let i of [1,2,3]">
+          <div class="hc-sk hc-sk-date"></div>
+          <div class="hc-sk-info">
+            <div class="hc-sk hc-sk-title"></div>
+            <div class="hc-sk hc-sk-sub"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holiday List -->
+      <div class="hc-list" *ngIf="!isLoading()">
+        <div class="hc-holiday-row" *ngFor="let holiday of filteredSpecialHolidays()">
+          <div class="hc-date-block">
+            <span class="hc-date-day">{{ holiday.fromDate | date:'dd' }}</span>
+            <span class="hc-date-mon">{{ holiday.fromDate | date:'MMM' }}</span>
+          </div>
+          <div class="hc-info">
+            <span class="hc-reason">{{ holiday.reason }}</span>
+            <span class="hc-range">
+              <hugeicons-icon [icon]="CalendarIcon" size="14" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+              {{ holiday.fromDate | date:'dd MMM yyyy' }} — {{ holiday.toDate | date:'dd MMM yyyy' }}
+            </span>
+          </div>
+          <button class="hc-del-btn" (click)="deleteHoliday(holiday._id)" title="Delete">
+            <hugeicons-icon [icon]="DeleteIcon" size="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="hc-empty" *ngIf="filteredSpecialHolidays().length === 0">
+          <div class="hc-empty-icon">
+            <hugeicons-icon [icon]="CalendarIcon" size="36" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <p class="hc-empty-text">No holidays match the selected filters</p>
+        </div>
+      </div>
+
+      <!-- Global Overlay (Now scoped to main list) -->
+      <div class="hc-overlay" *ngIf="isLoading() || isSaving()">
+        <div class="hc-overlay-inner">
+          <div class="hc-loader"></div>
+          <span>{{ isSaving() ? 'Saving…' : 'Loading…' }}</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

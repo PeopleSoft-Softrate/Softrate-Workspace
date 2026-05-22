@@ -1,0 +1,252 @@
+<div class="dashboard-wrapper finance-dashboard-wrapper ready" [class.sidebar-minimized]="vm.sidebarMinimized">
+  <nav class="navbar dashboard-nav crm-topbar">
+    <div class="nav-container">
+      <button class="topbar-sidebar-toggle" type="button" (click)="vm.toggleSidebar()" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <div class="topbar-page-title admin-topbar-page-title">{{ vm.activeLabel }}</div>
+
+      <label class="topbar-search admin-global-search" for="financeGlobalSearch">
+        <span class="topbar-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="m20 20-4.35-4.35"></path>
+          </svg>
+        </span>
+        <input
+          id="financeGlobalSearch"
+          class="topbar-input"
+          type="text"
+          placeholder="Search finance records"
+          autocomplete="off"
+          [(ngModel)]="vm.search"
+        />
+      </label>
+
+      <div class="nav-auth topbar-actions">
+        <div class="profile-dropdown" [class.open]="vm.profileMenuOpen">
+          <button
+            class="profile-trigger"
+            type="button"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="vm.profileMenuOpen"
+            (click)="vm.toggleProfileMenu($event)"
+          >
+            <div class="topbar-user">
+              <div class="user-avatar-shell">
+                <div class="user-avatar" aria-hidden="true">{{ vm.companyInitials }}</div>
+                <span class="user-status-dot" aria-hidden="true"></span>
+              </div>
+              <div class="user-copy">
+                <div class="user-name">{{ vm.companyCode || 'Finance' }}</div>
+                <div class="user-meta">Finance</div>
+              </div>
+              <span class="profile-chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+            </div>
+          </button>
+
+          <div class="profile-menu" *ngIf="vm.profileMenuOpen" role="menu">
+            <div class="profile-menu-header">
+              <div class="profile-menu-avatar">{{ vm.companyInitials }}</div>
+              <div class="profile-menu-copy">
+                <div class="profile-menu-name">{{ vm.companyCode || 'Finance' }}</div>
+                <div class="profile-menu-meta">Softrate Finance</div>
+                <div class="profile-menu-status">Active now</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dash-body">
+    <div class="crm-sidebar-overlay dash-sidebar-overlay" [class.active]="vm.sidebarOpen" (click)="vm.sidebarOpen = false"></div>
+
+    <aside class="crm-sidebar dash-sidebar" [class.open]="vm.sidebarOpen" [class.minimized]="vm.sidebarMinimized">
+      <div class="sidebar-brand">
+        <img [src]="vm.sidebarMinimized ? 'assets/icon/logo 2.png' : 'assets/icon/logo.png'" alt="DealVoice Logo" class="sidebar-logo">
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Finance navigation">
+        <label class="sidebar-search" for="financeSidebarFeatureSearch">
+          <span class="sidebar-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m20 20-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="financeSidebarFeatureSearch"
+            type="text"
+            placeholder="Search features"
+            autocomplete="off"
+            [(ngModel)]="vm.sidebarFeatureSearch"
+          />
+        </label>
+
+        <div class="sidebar-folder">
+          <button
+            class="sidebar-folder-toggle"
+            type="button"
+            (click)="vm.financeFeatureOpen = !vm.financeFeatureOpen"
+            [attr.aria-expanded]="vm.financeFeatureOpen"
+          >
+            <span class="sidebar-folder-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+            </span>
+            <span class="sidebar-label">Finance</span>
+            <span class="sidebar-folder-caret" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+            </span>
+          </button>
+
+          <div class="sidebar-folder-children" *ngIf="vm.financeFeatureOpen">
+            <ng-container *ngFor="let group of vm.filteredNavGroups">
+              <div class="sidebar-group-label">{{ group.label }}</div>
+              <button
+                *ngFor="let child of group.children"
+                type="button"
+                class="sidebar-link sidebar-tree-link"
+                [class.active]="vm.activeGroup === group.id && vm.activeView === child.id"
+                (click)="vm.selectNav(group, child.id)"
+                [title]="vm.sidebarMinimized ? child.label : ''"
+              >
+                <span class="sidebar-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path [attr.d]="child.icon" />
+                  </svg>
+                </span>
+                <span class="sidebar-label">{{ child.label }}</span>
+              </button>
+            </ng-container>
+          </div>
+        </div>
+      </nav>
+
+      <button
+        class="edge-sidebar-toggle"
+        type="button"
+        (click)="vm.toggleSidebarMinimized()"
+        [class.minimized]="vm.sidebarMinimized"
+        [title]="vm.sidebarMinimized ? 'Expand Sidebar' : 'Collapse Sidebar'"
+        [attr.aria-label]="vm.sidebarMinimized ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+    </aside>
+
+    <main class="dash-main" [class.expanded]="vm.sidebarMinimized">
+      <div class="notice error" *ngIf="vm.error">{{ vm.error }}</div>
+      <div class="notice loading" *ngIf="vm.loading">Loading finance records...</div>
+
+      <section class="finance-content" *ngIf="vm.isIntegratedView; else integratedLater">
+        <div class="record-toolbar admin-followups-toolbar">
+          <div class="workspace-controls">
+            <label class="mini-field admin-followups-date-control">
+              <span>From</span>
+              <input class="field-input filter-date-field admin-followups-date-input" type="date" [(ngModel)]="vm.dateFrom" (change)="vm.loadActive()" />
+            </label>
+            <label class="mini-field admin-followups-date-control">
+              <span>To</span>
+              <input class="field-input filter-date-field admin-followups-date-input" type="date" [(ngModel)]="vm.dateTo" (change)="vm.loadActive()" />
+            </label>
+            <app-status-select
+              [value]="vm.statusFilter"
+              [options]="vm.statusOptions"
+              label="Status filter"
+              (valueChange)="vm.statusFilter = $event"
+            ></app-status-select>
+            <button class="toolbar-button crm-icon-refresh finance-refresh-button" type="button" title="Sync finance data" aria-label="Sync finance data" (click)="vm.loadActive()">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                <path d="M21 3v6h-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <app-finance-invoices-view
+          *ngIf="vm.activeView === 'invoices'"
+          [rows]="vm.rows()"
+          [analytics]="vm.analytics()"
+          (openRecord)="vm.openDetail($event)"
+        ></app-finance-invoices-view>
+
+        <app-finance-amc-renewals-view
+          *ngIf="vm.activeView === 'amc-renewals'"
+          [rows]="vm.rows()"
+          [analytics]="vm.analytics()"
+          (openRecord)="vm.openDetail($event)"
+        ></app-finance-amc-renewals-view>
+      </section>
+
+      <ng-template #integratedLater>
+        <app-finance-dashboard-view
+          *ngIf="vm.activeGroup === 'dashboard'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-dashboard-view>
+        <app-finance-receivables-placeholder-view
+          *ngIf="vm.activeGroup === 'receivables'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-receivables-placeholder-view>
+        <app-finance-payables-view
+          *ngIf="vm.activeGroup === 'payables'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-payables-view>
+        <app-finance-expenses-view
+          *ngIf="vm.activeGroup === 'expenses'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-expenses-view>
+        <app-finance-payroll-view
+          *ngIf="vm.activeGroup === 'payroll'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-payroll-view>
+        <app-finance-tax-view
+          *ngIf="vm.activeGroup === 'tax'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-tax-view>
+        <app-finance-banking-view
+          *ngIf="vm.activeGroup === 'banking'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-banking-view>
+        <app-finance-reports-view
+          *ngIf="vm.activeGroup === 'reports'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-reports-view>
+        <app-finance-settings-view
+          *ngIf="vm.activeGroup === 'settings'"
+          [title]="vm.placeholderMessage"
+        ></app-finance-settings-view>
+      </ng-template>
+    </main>
+  </div>
+</div>
+
+<section class="modal-backdrop invoice-overlay" *ngIf="vm.showDetailDialog" (click)="vm.closeDetail()">
+  <article class="detail-modal invoice-modal" (click)="$event.stopPropagation()">
+    <header>
+      <div>
+        <p class="eyebrow">{{ vm.activeLabel }}</p>
+        <h2>{{ vm.selectedRecord?.clientName || vm.selectedRecord?.clientCompanyName || 'Finance record' }}</h2>
+      </div>
+      <button type="button" class="icon-button" title="Close" (click)="vm.closeDetail()">x</button>
+    </header>
+
+    <div class="detail-grid">
+      <div class="detail-item" *ngFor="let item of vm.detailRows()">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+      </div>
+    </div>
+  </article>
+</section>

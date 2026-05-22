@@ -1,0 +1,43 @@
+@import './app/shared/ui/dealvoice-ui.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--surface-canvas);
+  color-scheme: light;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--surface-canvas);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-feature-settings: "cv02", "cv05", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(61, 125, 254, 0.34);
+  outline-offset: 2px;
+}

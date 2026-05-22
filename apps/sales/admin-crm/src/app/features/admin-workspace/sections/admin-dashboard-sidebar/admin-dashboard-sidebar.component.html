@@ -1,0 +1,407 @@
+<div class="crm-sidebar-overlay dash-sidebar-overlay" [class.active]="vm.sidebarOpen" (click)="vm.sidebarOpen = false"></div>
+
+<aside class="crm-sidebar dash-sidebar" [class.open]="vm.sidebarOpen" [class.minimized]="vm.sidebarMinimized">
+  <div class="sidebar-brand">
+    <img [src]="vm.sidebarMinimized ? 'assets/icon/logo 2.png' : 'assets/icon/logo.png'" alt="DealVoice Logo" class="sidebar-logo">
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Admin workspace navigation">
+    <button
+      class="sidebar-link sidebar-link-overview"
+      type="button"
+      [class.active]="vm.dashTab==='overview'"
+      (click)="vm.switchTab('overview')"
+      [title]="vm.sidebarMinimized ? 'Dashboard' : ''"
+    >
+      <span class="sidebar-icon sidebar-icon-overview" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <rect width="7" height="7" x="3" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="14" rx="1" />
+          <rect width="7" height="7" x="3" y="14" rx="1" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Dashboard</span>
+    </button>
+
+    <label class="sidebar-search" for="adminSidebarFeatureSearch">
+      <span class="sidebar-search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6"></circle>
+          <path d="m20 20-4.35-4.35"></path>
+        </svg>
+      </span>
+      <input
+        id="adminSidebarFeatureSearch"
+        type="text"
+        placeholder="Search features"
+        autocomplete="off"
+        [(ngModel)]="vm.sidebarFeatureSearch"
+      />
+    </label>
+
+    <ng-container *ngIf="vm.isCrmAdmin">
+      <div class="sidebar-folder">
+        <button
+          class="sidebar-folder-toggle"
+          type="button"
+          (click)="vm.crmFeatureOpen=!vm.crmFeatureOpen"
+          [attr.aria-expanded]="vm.crmFeatureOpen"
+        >
+          <span class="sidebar-folder-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+          </span>
+          <span class="sidebar-label">CRM</span>
+          <span class="sidebar-folder-caret" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+          </span>
+        </button>
+
+        <div class="sidebar-folder-children" *ngIf="vm.crmFeatureOpen">
+          <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Clients'])">Client Views</div>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_clients'" (click)="vm.switchTab('crm_clients')" *ngIf="vm.sidebarFeatureMatches('Clients')" [title]="vm.sidebarMinimized ? 'Clients' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h9l5 5v13" /><path d="M14 3v6h6" /><path d="M8 13h8" /><path d="M8 17h6" /></svg></span>
+            <span class="sidebar-label">Clients</span>
+          </button>
+
+          <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['SLA', 'NDA'])">Documents</div>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_sla'" (click)="vm.switchTab('crm_sla')" *ngIf="vm.sidebarFeatureMatches('SLA')" [title]="vm.sidebarMinimized ? 'SLA' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
+            <span class="sidebar-label">SLA</span>
+          </button>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_nda'" (click)="vm.switchTab('crm_nda')" *ngIf="vm.sidebarFeatureMatches('NDA')" [title]="vm.sidebarMinimized ? 'NDA' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5z" /><path d="M9 12l2 2 4-4" /></svg></span>
+            <span class="sidebar-label">NDA</span>
+          </button>
+
+          <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['AMC Tracking', 'Payments', 'Tickets'])">Operations</div>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_amc'" (click)="vm.switchTab('crm_amc')" *ngIf="vm.sidebarFeatureMatches('AMC Tracking')" [title]="vm.sidebarMinimized ? 'AMC Tracking' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4v16h16" /><path d="m7 15 4-4 3 3 5-6" /></svg></span>
+            <span class="sidebar-label">AMC Tracking</span>
+          </button>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_payments'" (click)="vm.switchTab('crm_payments')" *ngIf="vm.sidebarFeatureMatches('Payments')" [title]="vm.sidebarMinimized ? 'Payments' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18" /><path d="M7 15h3" /></svg></span>
+            <span class="sidebar-label">Payments</span>
+          </button>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_tickets'" (click)="vm.switchTab('crm_tickets')" *ngIf="vm.sidebarFeatureMatches('Tickets')" [title]="vm.sidebarMinimized ? 'Tickets' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 1 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 1 0 0-4z" /></svg></span>
+            <span class="sidebar-label">Tickets</span>
+          </button>
+
+          <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Project Management'])">Delivery</div>
+
+          <button class="sidebar-link sidebar-tree-link" type="button" [class.active]="vm.dashTab==='crm_projects'" (click)="vm.switchTab('crm_projects')" *ngIf="vm.sidebarFeatureMatches('Project Management')" [title]="vm.sidebarMinimized ? 'Project Management' : ''">
+            <span class="sidebar-tree-branch" aria-hidden="true"></span>
+            <span class="sidebar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h18" /><path d="M3 12h18" /><path d="M3 17h18" /><path d="M7 4v16" /></svg></span>
+            <span class="sidebar-label">Project Management</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-folder">
+        <button
+          class="sidebar-folder-toggle"
+          type="button"
+          (click)="vm.adminFeatureOpen=!vm.adminFeatureOpen"
+          [attr.aria-expanded]="vm.adminFeatureOpen"
+        >
+          <span class="sidebar-folder-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+          </span>
+          <span class="sidebar-label">Sales</span>
+          <span class="sidebar-folder-caret" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+          </span>
+        </button>
+
+        <div class="sidebar-folder-children" *ngIf="vm.adminFeatureOpen">
+          <ng-container *ngTemplateOutlet="adminNavigation"></ng-container>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!vm.isCrmAdmin">
+      <ng-container *ngTemplateOutlet="adminNavigation"></ng-container>
+    </ng-container>
+
+    <ng-template #adminNavigation>
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Import Leads', 'Add Employee', 'Invoice', 'Quotation'])">Quick Access</div>
+
+    <button
+      class="sidebar-link sidebar-link-import"
+      type="button"
+      (click)="vm.switchTab('employees')"
+      *ngIf="vm.sidebarFeatureMatches('Import Leads')"
+      [title]="vm.sidebarMinimized ? 'Import Leads' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Import Leads</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-add-employee"
+      type="button"
+      (click)="vm.switchTab('employees'); vm.openAddEmployee()"
+      *ngIf="vm.sidebarFeatureMatches('Add Employee')"
+      [title]="vm.sidebarMinimized ? 'Add Employee' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <line x1="19" y1="8" x2="19" y2="14" />
+          <line x1="22" y1="11" x2="16" y2="11" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Add Employee</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-invoice"
+      type="button"
+      [class.active]="vm.dashTab==='invoice'"
+      (click)="vm.switchTab('invoice')"
+      *ngIf="vm.sidebarFeatureMatches('Invoice')"
+      [title]="vm.sidebarMinimized ? 'Invoice' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Invoice</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-quotation"
+      type="button"
+      [class.active]="vm.dashTab==='quotation'"
+      (click)="vm.switchTab('quotation')"
+      *ngIf="vm.sidebarFeatureMatches('Quotation')"
+      [title]="vm.sidebarMinimized ? 'Quotation' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 4h16v16H4z" />
+          <path d="M8 9h8" />
+          <path d="M8 13h8" />
+          <path d="M8 17h5" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Quotation</span>
+    </button>
+
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Remarks Filter', 'Follow-ups', 'Employees', 'Periodic Reports'])">Admin Views</div>
+
+    <button
+      class="sidebar-link sidebar-link-leads"
+      type="button"
+      [class.active]="vm.dashTab==='leads'"
+      (click)="vm.switchTab('leads')"
+      *ngIf="vm.sidebarFeatureMatches('Leads')"
+      [title]="vm.sidebarMinimized ? 'Leads' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <line x1="10" y1="9" x2="8" y2="9" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Leads</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-remarks"
+      type="button"
+      [class.active]="vm.dashTab==='remarks_filter'"
+      (click)="vm.switchTab('remarks_filter')"
+      *ngIf="vm.sidebarFeatureMatches('Remarks Filter')"
+      [title]="vm.sidebarMinimized ? 'Remarks Filter' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z" />
+          <path d="M7 7h.01" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Remarks Filter</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-followups"
+      type="button"
+      [class.active]="vm.dashTab==='followups'"
+      (click)="vm.switchTab('followups')"
+      *ngIf="vm.sidebarFeatureMatches('Follow-ups')"
+      [title]="vm.sidebarMinimized ? 'Follow-ups' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Follow-ups</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-employees"
+      type="button"
+      [class.active]="vm.dashTab==='employees'"
+      (click)="vm.switchTab('employees')"
+      *ngIf="vm.sidebarFeatureMatches('Employees')"
+      [title]="vm.sidebarMinimized ? 'Employees' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 19a6 6 0 0 0-12 0" />
+          <circle cx="8" cy="9" r="4" />
+          <path d="M22 19a6 6 0 0 0-6-6 4 4 0 1 0 0-8" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Employees</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-reports"
+      type="button"
+      [class.active]="vm.dashTab==='reports'"
+      (click)="vm.dashTab='reports'; vm.selectedPeriod='custom'; vm.sidebarOpen=false"
+      *ngIf="vm.sidebarFeatureMatches('Periodic Reports')"
+      [title]="vm.sidebarMinimized ? 'Periodic Reports' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z" />
+          <path d="M12 11h4" />
+          <path d="M12 16h4" />
+          <path d="M8 11h.01" />
+          <path d="M8 16h.01" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Periodic Reports</span>
+    </button>
+
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Company Settings', 'Invoice Settings', 'App Settings', 'Help & Support'])">Organization</div>
+
+    <button
+      class="sidebar-link sidebar-link-company"
+      type="button"
+      [class.active]="vm.dashTab==='company'"
+      (click)="vm.switchTab('company')"
+      *ngIf="vm.sidebarFeatureMatches('Company Settings')"
+      [title]="vm.sidebarMinimized ? 'Company Settings' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <rect width="16" height="20" x="4" y="2" rx="2" />
+          <path d="M9 22v-4h6v4" />
+          <path d="M8 6h.01" />
+          <path d="M16 6h.01" />
+          <path d="M8 10h.01" />
+          <path d="M16 10h.01" />
+          <path d="M8 14h.01" />
+          <path d="M16 14h.01" />
+          <path d="M8 18h.01" />
+          <path d="M16 18h.01" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Company Settings</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-invoice-settings"
+      type="button"
+      [class.active]="vm.dashTab==='invoice_settings'"
+      (click)="vm.switchTab('invoice_settings')"
+      *ngIf="vm.sidebarFeatureMatches('Invoice Settings')"
+      [title]="vm.sidebarMinimized ? 'Invoice Settings' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Invoice Settings</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-settings"
+      type="button"
+      [class.active]="vm.dashTab==='settings'"
+      (click)="vm.switchTab('settings')"
+      *ngIf="vm.sidebarFeatureMatches('App Settings')"
+      [title]="vm.sidebarMinimized ? 'App Settings' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.05V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.05-.33H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6A1.65 1.65 0 0 0 10.33 3V3a2 2 0 1 1 4 0v.09c0 .4.15.78.42 1.07.3.3.68.44 1.08.44.4 0 .78-.15 1.07-.44l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c0 .4.15.78.42 1.07.3.3.68.44 1.08.44H21a2 2 0 1 1 0 4h-.09c-.4 0-.78.15-1.07.42-.3.3-.44.68-.44 1.08Z" />
+        </svg>
+      </span>
+      <span class="sidebar-label">App Settings</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-support"
+      type="button"
+      [class.active]="vm.dashTab==='support'"
+      (click)="vm.switchTab('support')"
+      *ngIf="vm.sidebarFeatureMatches('Help & Support')"
+      [title]="vm.sidebarMinimized ? 'Help & Support' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Help & Support</span>
+    </button>
+    </ng-template>
+  </nav>
+
+  <button
+    class="edge-sidebar-toggle"
+    type="button"
+    (click)="vm.toggleSidebarMinimized()"
+    [class.minimized]="vm.sidebarMinimized"
+    [title]="vm.sidebarMinimized ? 'Expand Sidebar' : 'Collapse Sidebar'"
+    [attr.aria-label]="vm.sidebarMinimized ? 'Expand sidebar' : 'Collapse sidebar'"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  </button>
+</aside>

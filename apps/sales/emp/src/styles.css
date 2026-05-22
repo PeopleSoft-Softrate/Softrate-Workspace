@@ -1,0 +1,391 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+:root {
+  --surface-canvas: #f5f6f8;
+  --surface-primary: #ffffff;
+  --surface-selected: #f3f7ff;
+  --border: #e5e7eb;
+  --border-strong: #e5e7eb;
+  --accent: #3d7dfe;
+  --accent-strong: #245fe0;
+  --nav-surface: #17153f;
+  --nav-surface-strong: #131136;
+  --nav-text: #f3f6fb;
+  --nav-muted: rgba(243, 246, 251, 0.7);
+  --nav-subtle: rgba(243, 246, 251, 0.42);
+  --nav-divider: rgba(243, 246, 251, 0.12);
+  --text-strong: #111827;
+  --text-muted: #6b7280;
+  --text-subtle: #9ca3af;
+  --status-positive: #2c6e49;
+  --status-warning: #8a641a;
+  --status-negative: #b34a3a;
+  --status-info: #2b5f9e;
+  --font-ui: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-heading: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-canvas);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-feature-settings: "cv02", "cv05", "cv11";
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  border-radius: 0;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c4cad6 #f4f5f7;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f5f7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cfd5df 0%, #bcc5d1 100%);
+  border: 3px solid #f4f5f7;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #bcc5d1 0%, #aeb8c6 100%);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+
+  html,
+  body {
+    width: 194mm;
+    min-height: 281mm;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .crm-shell {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .crm-shell > :not(.invoice-overlay),
+  .invoice-overlay:not(:has(#invoice-preview)) {
+    display: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-preview,
+  #invoice-preview * {
+    visibility: visible;
+  }
+
+  .invoice-overlay,
+  .invoice-modal,
+  .invoice-modal-billing,
+  .invoice-builder {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .invoice-builder > :not(#invoice-preview) {
+    display: none !important;
+  }
+
+  #invoice-preview {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    margin: 0 !important;
+    width: 194mm !important;
+    height: 281mm !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0;
+    border: 1.5px solid #8fa1bb !important;
+    background: #ffffff;
+    box-sizing: border-box;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  #invoice-preview.quotation-preview {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    width: 194mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    page-break-after: auto;
+    page-break-inside: auto;
+  }
+
+  #invoice-preview.quotation-preview .quotation-page {
+    position: relative !important;
+    width: 194mm !important;
+    height: 281mm !important;
+    min-height: 281mm !important;
+    margin: 0 !important;
+    border: 1.5px solid #8fa1bb !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    break-after: page;
+    page-break-after: always;
+    overflow: hidden !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-main-page {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-sample-page {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  #invoice-preview.quotation-preview .quotation-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .invoice-print-header {
+    min-height: 30mm !important;
+    padding: 4mm 5mm !important;
+  }
+
+  .invoice-print-section {
+    padding: 3.5mm 5mm !important;
+  }
+
+  #invoice-preview .invoice-summary-section {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    margin: 4mm 5mm !important;
+    padding: 0 !important;
+    border: 1px solid #b8c6d8 !important;
+  }
+
+  #invoice-preview .invoice-summary-column {
+    align-content: start !important;
+    padding: 4mm 5mm !important;
+  }
+
+  #invoice-preview .invoice-summary-column + .invoice-summary-column {
+    border-left: 1px solid #b8c6d8 !important;
+  }
+
+  #invoice-preview .quotation-hero {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    min-height: 64mm !important;
+    padding: 8mm 12mm !important;
+    grid-template-columns: minmax(72mm, 1fr) 56mm !important;
+    background:
+      linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
+      url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-hero-logo {
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-logo {
+    width: 52mm !important;
+    max-height: 18mm !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-hero-title {
+    align-self: end !important;
+    width: 52mm !important;
+    margin-bottom: 2mm !important;
+    gap: 0 !important;
+    justify-items: end !important;
+    text-align: right !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-hero-title h2 {
+    margin: 0 !important;
+    font-size: 12mm !important;
+    line-height: 1 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-hero-title span,
+  #invoice-preview.quotation-preview .quotation-hero-title strong {
+    line-height: 1.06 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-hero-title span:not(:first-of-type) {
+    margin-top: 0 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-service-header,
+  #invoice-preview.quotation-preview .quotation-service-body,
+  #invoice-preview.quotation-preview .quotation-kind-note,
+  #invoice-preview.quotation-preview .quotation-sample-page,
+  #invoice-preview.quotation-preview .quotation-sample-page img {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-letter {
+    padding: 7mm 12mm 4mm !important;
+    gap: 3.5mm !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-letter h3,
+  #invoice-preview.quotation-preview .quotation-letter strong {
+    font-size: 12pt !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-letter p {
+    font-size: 10pt !important;
+    line-height: 1.34 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-service-card {
+    --quotation-table-columns: minmax(0, 1fr) 22mm 25mm 27mm !important;
+    width: calc(100% - 24mm) !important;
+    max-width: calc(100% - 24mm) !important;
+    margin: 0 auto !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-service-header {
+    grid-template-columns: var(--quotation-table-columns) !important;
+    padding: 5mm 8mm !important;
+    gap: 3mm !important;
+    border-radius: 7mm !important;
+    background-color: #5f9b76 !important;
+    color: #ffffff !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-service-body {
+    display: grid !important;
+    gap: 3mm !important;
+    margin-top: 5mm !important;
+    padding: 8mm 8mm 6mm !important;
+    border-radius: 6mm !important;
+    background-color: #eefaf1 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-service-row {
+    grid-template-columns: var(--quotation-table-columns) !important;
+    gap: 3mm !important;
+    font-size: 9.5pt !important;
+    line-height: 1.22 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-kind-note {
+    margin: auto 12mm 7mm !important;
+    padding: 5mm 8mm !important;
+    border-radius: 5mm !important;
+    background-color: #eefaf1 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-sample-page img {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    object-fit: fill !important;
+  }
+
+  .invoice-service-section {
+    padding-bottom: 3mm !important;
+  }
+
+  .invoice-payment-section {
+    min-height: 48mm !important;
+  }
+
+  .invoice-print-footer {
+    min-height: 30mm !important;
+    padding: 4mm 5mm !important;
+  }
+
+  .invoice-print-table th,
+  .invoice-print-table td {
+    padding: 1.5mm 1.7mm !important;
+    font-size: 8.5px !important;
+  }
+
+  .invoice-overlay,
+  .invoice-modal,
+  .invoice-builder {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+}

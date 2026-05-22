@@ -1,0 +1,8 @@
+<section *ngIf="vm.isCrmAdmin && vm.isCrmPage(vm.dashTab)" class="workspace record-workspace crm-admin-view">
+  <app-crm-clients-section [vm]="vm"></app-crm-clients-section>
+  <app-crm-documents-section [vm]="vm"></app-crm-documents-section>
+  <app-crm-amc-section [vm]="vm"></app-crm-amc-section>
+  <app-crm-payments-section [vm]="vm"></app-crm-payments-section>
+  <app-crm-tickets-section [vm]="vm"></app-crm-tickets-section>
+  <app-crm-projects-section [vm]="vm"></app-crm-projects-section>
+</section>

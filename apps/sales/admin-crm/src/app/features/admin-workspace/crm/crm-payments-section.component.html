@@ -1,0 +1,68 @@
+<ng-container *ngIf="vm.dashTab==='crm_payments'">
+  <div class="workspace-header workspace-header-filters-only crm-filter-bar">
+    <div class="workspace-controls crm-filter-controls">
+      <label class="mini-field">
+        <span>Client</span>
+        <select class="field-select filter-select-field" [(ngModel)]="vm.selectedCrmClientCompany">
+          <option value="">All Clients</option>
+          <option *ngFor="let client of vm.crmClients" [value]="client.companyName">{{ client.companyName }}</option>
+        </select>
+      </label>
+      <button class="toolbar-button invoice-date-filter-button" type="button" (click)="vm.fetchCrmPayments()" [disabled]="vm.crmPaymentsLoading">Refresh</button>
+    </div>
+  </div>
+
+  <div class="metrics-strip crm-metrics-strip crm-payments-metrics-strip">
+    <div class="metric-cell">
+      <div class="metric-label">Invoice Amount</div>
+      <div class="metric-value">{{ vm.formatInvoiceMoney(vm.crmPaymentAnalytics?.totalInvoiceAmount || 0) }}</div>
+      <div class="crm-metric-note">Total raised</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">Paid</div>
+      <div class="metric-value">{{ vm.formatInvoiceMoney(vm.crmPaymentAnalytics?.paidAmount || 0) }}</div>
+      <div class="crm-metric-note">Collected</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label">Outstanding</div>
+      <div class="metric-value">{{ vm.formatInvoiceMoney(vm.crmPaymentAnalytics?.outstandingAmount || 0) }}</div>
+      <div class="crm-metric-note">Pending</div>
+    </div>
+  </div>
+
+  <div class="crm-document-layout">
+    <section class="premium-card crm-document-generate">
+      <div class="settings-section-title">Paid Invoice</div>
+      <label class="mini-field">
+        <span>Client</span>
+        <select class="field-select" [(ngModel)]="vm.selectedCrmClientCompany">
+          <option value="">Select client</option>
+          <option *ngFor="let client of vm.crmClients" [value]="client.companyName">{{ client.companyName }}</option>
+        </select>
+      </label>
+      <label class="mini-field">
+        <span>Paid Amount</span>
+        <input class="field-input" type="number" [(ngModel)]="vm.crmPaidInvoiceAmount" placeholder="0">
+      </label>
+      <button class="primary-action" type="button" (click)="vm.generateCrmPaidInvoice()" [disabled]="vm.crmPaymentsLoading">Generate Paid Invoice</button>
+    </section>
+    <section class="premium-card crm-document-history">
+      <div class="settings-section-title">Payment History</div>
+      <div class="table-scroll">
+        <table class="data-table compact-table">
+          <thead><tr><th>Invoice</th><th>Client</th><th>Status</th><th>Paid</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let payment of vm.crmPaymentRows">
+              <td>{{ payment.invoiceNumber }}</td>
+              <td>{{ payment.clientCompanyName }}</td>
+              <td><span class="crm-status-pill">{{ payment.status }}</span></td>
+              <td>{{ vm.formatInvoiceMoney(payment.paidAmount || 0) }}</td>
+            </tr>
+            <tr *ngIf="!vm.crmPaymentsLoading && vm.crmPaymentRows.length===0"><td colspan="4" class="empty-cell">No payments recorded yet.</td></tr>
+            <tr *ngIf="vm.crmPaymentsLoading"><td colspan="4" class="empty-cell">Loading payments...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</ng-container>

@@ -1,0 +1,30 @@
+{
+  "name": "client-ticket-portal",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "NG_CLI_ANALYTICS=false ng serve --port 4203",
+    "build": "NG_CLI_ANALYTICS=false ng build",
+    "watch": "NG_CLI_ANALYTICS=false ng build --watch --configuration development",
+    "test": "NG_CLI_ANALYTICS=false ng test"
+  },
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "dependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "@angular/router": "^21.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "^0.16.1"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.7",
+    "@angular/cli": "^21.2.7",
+    "@angular/compiler-cli": "^21.2.0",
+    "typescript": "~5.9.2"
+  }
+}

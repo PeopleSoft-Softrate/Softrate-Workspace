@@ -1,0 +1,183 @@
+<ng-container *ngIf="vm.dashTab==='crm_amc'">
+  <section class="crm-amc-board">
+    <div class="workspace-header workspace-header-filters-only crm-filter-bar crm-amc-toolbar">
+      <div class="workspace-controls crm-filter-controls crm-amc-controls">
+        <div class="crm-filter-left">
+          <label class="mini-field">
+            <span>AMC View</span>
+            <select class="field-select filter-select-field" [(ngModel)]="vm.crmAmcView" (ngModelChange)="vm.setCrmAmcView($event)">
+              <option value="all">All AMC</option>
+              <option value="paid">Paid</option>
+              <option value="upcoming">Upcoming Renewals</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="blocked">Blocked Domain</option>
+            </select>
+          </label>
+          <button class="toolbar-button crm-icon-refresh" type="button" (click)="vm.fetchCrmAmc()" aria-label="Refresh AMC tracking" title="Refresh">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+          </button>
+        </div>
+        <div class="crm-filter-actions">
+          <button class="toolbar-button invoice-date-filter-button crm-map-client-button" type="button" (click)="vm.openCrmHostingerMappingModal()" [disabled]="vm.crmHostingerDomainsLoading">
+            Map Client
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="metrics-strip crm-metrics-strip crm-amc-metrics-strip">
+      <div class="metric-cell">
+        <div class="metric-label">Paid</div>
+        <div class="metric-value">{{ vm.crmAmcAnalytics?.paid || 0 }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Upcoming</div>
+        <div class="metric-value">{{ vm.crmAmcAnalytics?.upcoming || 0 }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Unpaid</div>
+        <div class="metric-value">{{ vm.crmAmcAnalytics?.unpaid || 0 }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Blocked</div>
+        <div class="metric-value">{{ vm.crmAmcAnalytics?.blocked || 0 }}</div>
+      </div>
+    </div>
+    <div class="table-scroll crm-amc-table-scroll">
+      <table class="data-table compact-table crm-amc-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Domain</th>
+            <th>Purchase Date</th>
+            <th>Annual Renewal</th>
+            <th>Annual Fee</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Manage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of vm.crmAmcRows">
+            <td>{{ row.clientCompanyName }}</td>
+            <td><strong>{{ row.domainName || '-' }}</strong></td>
+            <td>{{ row.domainPurchaseDate ? vm.fmtDate(row.domainPurchaseDate) : '-' }}</td>
+            <td>
+              {{ row.renewalDate ? vm.fmtDate(row.renewalDate) : '-' }}
+              <span class="lead-company-pane-subtitle crm-renewal-inline" *ngIf="row.daysUntilRenewal !== null && row.daysUntilRenewal !== undefined">
+                {{ row.daysUntilRenewal >= 0 ? row.daysUntilRenewal + ' days left' : (-row.daysUntilRenewal) + ' days overdue' }}
+              </span>
+            </td>
+            <td>{{ vm.formatInvoiceMoney(row.annualFee || 0) }}</td>
+            <td><span class="crm-status-pill" [ngClass]="vm.crmAmcStatusClass(row)">{{ row.status || '-' }}</span></td>
+            <td>
+              <select class="field-select crm-inline-select" [(ngModel)]="row.paymentStatus" (ngModelChange)="vm.setCrmAmcPaymentStatus(row, $event)" [disabled]="vm.crmAmcLoading || !row.domainPurchaseDate">
+                <option value="Unpaid">Unpaid</option>
+                <option value="Paid">Paid</option>
+              </select>
+            </td>
+            <td class="crm-manage-cell">
+              <button class="crm-kebab-button" type="button" (click)="vm.toggleCrmAmcRowMenu(row, $event)" aria-label="Manage AMC record">⋮</button>
+              <div class="profile-menu crm-row-menu" *ngIf="vm.isCrmAmcRowMenuOpen(row)" role="menu" (click)="$event.stopPropagation()">
+                <button class="profile-menu-item profile-menu-item-danger" type="button" role="menuitem" (click)="vm.blockCrmAmcClient(row)" [disabled]="vm.crmAmcLoading || !(row.id || row._id)">
+                  Block Domain
+                </button>
+                <button class="profile-menu-item profile-menu-item-danger" type="button" role="menuitem" (click)="vm.removeCrmAmcMapping(row)" [disabled]="vm.crmAmcLoading || !(row.id || row._id)">
+                  Remove Mapping
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!vm.crmAmcLoading && vm.crmAmcRows.length===0"><td colspan="8" class="empty-cell">No mapped AMC domains found.</td></tr>
+          <tr *ngIf="vm.crmAmcLoading"><td colspan="8" class="empty-cell">Loading AMC tracking...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="crm-modal-backdrop" *ngIf="vm.crmHostingerMappingOpen" (click)="vm.closeCrmHostingerMappingModal()">
+    <div class="invoice-modal followup-modal crm-map-modal" (click)="$event.stopPropagation()">
+      <div class="followup-modal-head">
+        <div class="followup-modal-title">
+          <h3>Map Domain</h3>
+        </div>
+        <button class="secondary-action" type="button" (click)="vm.closeCrmHostingerMappingModal()">Close</button>
+      </div>
+      <div class="crm-map-modal-toolbar">
+        <button class="toolbar-button invoice-date-filter-button" type="button" (click)="vm.fetchCrmHostingerDomains()" [disabled]="vm.crmHostingerDomainsLoading">
+          {{ vm.crmHostingerDomainsLoading ? 'Fetching...' : 'Fetch Domains' }}
+        </button>
+        <button class="primary-action crm-map-import-button" type="button" (click)="vm.saveCrmHostingerModalMapping()" [disabled]="vm.crmHostingerImportLoading || !vm.selectedCrmHostingerDomain || !vm.selectedCrmMappingClient">
+          {{ vm.crmHostingerImportLoading ? 'Saving...' : 'Save Mapping' }}
+        </button>
+      </div>
+      <div class="crm-map-modal-body">
+        <section class="followup-modal-panel crm-map-list-panel">
+          <label class="topbar-search crm-map-search" for="crmDomainMapSearch">
+            <span class="topbar-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            </span>
+            <input class="topbar-input" id="crmDomainMapSearch" type="search" [(ngModel)]="vm.crmMappingDomainSearch" placeholder="Search Hostinger domains">
+          </label>
+          <div class="crm-map-list">
+            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let domain of vm.filteredCrmHostingerDomainsForMapping" [class.active]="vm.selectedCrmHostingerDomainName===domain.domainName" (click)="vm.selectCrmHostingerDomainForMapping(domain)">
+              <span class="rail-item-copy">
+                <span class="rail-item-name">{{ domain.domainName }}</span>
+                <span class="rail-item-meta">{{ domain.domainPurchaseDate ? (domain.domainPurchaseDate | date:'dd MMM yyyy') : 'No purchase date' }} · {{ domain.existingMapping ? 'Mapped' : 'Not mapped' }}</span>
+              </span>
+            </button>
+            <div class="empty-state-inline" *ngIf="!vm.crmHostingerDomainsLoading && vm.filteredCrmHostingerDomainsForMapping.length===0">No Hostinger domains match.</div>
+          </div>
+        </section>
+        <section class="followup-modal-panel crm-map-list-panel">
+          <label class="topbar-search crm-map-search" for="crmClientMapSearch">
+            <span class="topbar-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            </span>
+            <input class="topbar-input" id="crmClientMapSearch" type="search" [(ngModel)]="vm.crmMappingClientSearch" placeholder="Search converted clients">
+          </label>
+          <div class="crm-map-list">
+            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let client of vm.filteredCrmMappingClients" [class.active]="vm.selectedCrmMappingClientCompany===client.companyName" (click)="vm.selectCrmClientForHostingerMapping(client)">
+              <span class="rail-item-copy">
+                <span class="rail-item-name">{{ client.companyName }}</span>
+                <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }} · {{ client.contactCount }} contacts</span>
+              </span>
+            </button>
+            <div class="empty-state-inline" *ngIf="vm.filteredCrmMappingClients.length===0">No converted clients match.</div>
+          </div>
+        </section>
+        <section class="followup-modal-panel crm-map-detail-panel">
+          <div class="crm-map-detail-title">
+            <span class="crm-map-detail-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93" />
+                <path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07" />
+              </svg>
+            </span>
+            <span>Mapping</span>
+          </div>
+          <div class="crm-map-field-grid">
+            <div class="crm-map-static-field">
+              <span>Domain</span>
+              <strong>{{ vm.selectedCrmHostingerDomain?.domainName || '-' }}</strong>
+            </div>
+            <div class="crm-map-static-field">
+              <span>Client</span>
+              <strong>{{ vm.selectedCrmMappingClient?.companyName || '-' }}</strong>
+            </div>
+            <label class="mini-field crm-map-input-field">
+              <span>Annual Fee</span>
+              <input class="field-input" type="number" min="0" [(ngModel)]="vm.crmMappingAnnualFee" placeholder="0">
+            </label>
+            <label class="mini-field crm-map-input-field">
+              <span>Owner</span>
+              <input class="field-input" type="text" [(ngModel)]="vm.crmMappingOwner" placeholder="Manager">
+            </label>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,84 @@
+      <!-- ══ QUOTATION TAB ══ -->
+      <div *ngIf="dashTab==='quotation'" class="workspace invoice-workspace quotation-workspace admin-quotation-view" style="animation: fadeIn 0.4s ease-out; min-height: calc(100vh - 64px);">
+        <div class="workspace-header invoice-feature-header">
+          <div class="workspace-controls invoice-feature-controls">
+            <label class="topbar-search invoice-feature-search" for="adminQuotationSearch">
+              <span class="topbar-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+              </span>
+              <input id="adminQuotationSearch" class="topbar-input" type="text" placeholder="Search leads..." [(ngModel)]="quotationSearch">
+            </label>
+          </div>
+        </div>
+
+        <div class="invoice-feature-grid">
+          <section class="invoice-feature-pane invoice-converted-pane">
+            <div class="invoice-pane-header">
+              <div>
+                <h2>All Leads</h2>
+                <p>{{ adminQuotationLeads.length }} available leads</p>
+              </div>
+            </div>
+            <div class="invoice-lead-list">
+              <article class="invoice-lead-row" *ngFor="let lead of adminQuotationLeads" (click)="openQuotationModal(lead)" tabindex="0" role="button">
+                <div class="invoice-lead-main">
+                  <strong>{{ lead.leadCompanyName }}</strong>
+                  <span>{{ lead.contactName || 'Primary Contact' }} · {{ lead.contactNumber }}</span>
+                </div>
+              </article>
+              <div *ngIf="adminQuotationLeads.length===0" class="empty-state-inline">No leads match the current search.</div>
+            </div>
+          </section>
+
+          <section class="invoice-feature-pane invoice-history-pane">
+            <div class="invoice-pane-header invoice-pane-header-stacked">
+              <div>
+                <h2>Quotation History</h2>
+                <p>{{ filteredQuotationRecords.length }} saved quotations</p>
+              </div>
+              <div class="invoice-history-tools">
+                <label class="topbar-search invoice-history-search" for="adminQuotationHistorySearch">
+                  <span class="topbar-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+                  </span>
+                  <input id="adminQuotationHistorySearch" class="topbar-input" type="text" placeholder="Search quotations..." [(ngModel)]="quotationHistorySearch">
+                </label>
+                <button class="toolbar-button invoice-date-filter-button" type="button" (click)="quotationDateFilterOpen=!quotationDateFilterOpen">Date Filter</button>
+              </div>
+            </div>
+            <div class="invoice-date-filter-row" *ngIf="quotationDateFilterOpen">
+              <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="quotationDateFrom"></label>
+              <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="quotationDateTo"></label>
+              <button class="toolbar-button invoice-date-clear" type="button" (click)="quotationDateFrom=''; quotationDateTo=''">Clear</button>
+            </div>
+            <div class="table-scroll invoice-history-table">
+              <table class="data-table compact-table">
+                <thead>
+                  <tr>
+                    <th>Quotation</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let quote of filteredQuotationRecords" class="history-click-row" (click)="openSavedQuotation(quote)" tabindex="0" role="button">
+                    <td>{{ quote.quotationNumber }}</td>
+                    <td>{{ quote.leadCompanyName }}</td>
+                    <td>{{ quote.contactName || quote.contactNumber }}</td>
+                    <td>{{ formatInvoiceMoney(quote.total) }}</td>
+                    <td>{{ quote.quotationDate | date:'dd MMM yyyy' }}</td>
+                  </tr>
+                  <tr *ngIf="!quotationRecordsLoading && filteredQuotationRecords.length===0">
+                    <td colspan="5" class="empty-cell">No quotations saved yet.</td>
+                  </tr>
+                  <tr *ngIf="quotationRecordsLoading">
+                    <td colspan="5" class="empty-cell">Loading quotations...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>

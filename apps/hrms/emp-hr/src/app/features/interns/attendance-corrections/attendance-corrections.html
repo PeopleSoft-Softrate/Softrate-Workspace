@@ -1,0 +1,97 @@
+<div class="corrections-container">
+  <div class="header-section">
+    <div class="title-group">
+      <h1>Attendance Corrections</h1>
+      <p>Final HR Review for Intern Attendance Adjustments</p>
+    </div>
+    <div class="stats-badge">
+      <span class="count">{{ requests().length }}</span>
+      <span class="label">Pending Review</span>
+    </div>
+  </div>
+
+  <div class="content-section">
+    @if (isLoading()) {
+      <div class="loader-container">
+        <div class="spinner"></div>
+        <p>Loading requests...</p>
+      </div>
+    } @else if (requests().length === 0) {
+      <div class="empty-state">
+        <i class="fa-solid fa-clipboard-check"></i>
+        <h3>No Pending Corrections</h3>
+        <p>All attendance correction requests have been processed.</p>
+      </div>
+    } @else {
+      <div class="requests-grid">
+        @for (req of requests(); track req._id) {
+          <div class="request-card">
+            <div class="card-header">
+              <div class="intern-info">
+                <div class="avatar">{{ req.internName[0] }}</div>
+                <div>
+                  <h3>{{ req.internName }}</h3>
+                  <span class="intern-id">ID: {{ req.internId }}</span>
+                </div>
+              </div>
+              <div class="date-badge">
+                <i class="fa-regular fa-calendar"></i>
+                {{ formatDate(req.date) }}
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="times-comparison">
+                <div class="time-box requested">
+                  <span class="label">Requested Correction</span>
+                  <div class="times">
+                    <div class="time">
+                      <i class="fa-solid fa-right-to-bracket"></i>
+                      {{ formatTime(req.requestedPunchIn) }}
+                    </div>
+                    <div class="time">
+                      <i class="fa-solid fa-right-from-bracket"></i>
+                      {{ formatTime(req.requestedPunchOut) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="reason-section">
+                <span class="section-label">Reason for Correction</span>
+                <p class="reason-text">{{ req.reason }}</p>
+              </div>
+
+              <div class="manager-notes">
+                <span class="section-label">Manager Remarks</span>
+                <p class="remarks-text">{{ req.managerRemarks || 'No remarks provided' }}</p>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              @if (reviewingId() === req._id) {
+                <div class="review-form">
+                  <textarea 
+                    [(ngModel)]="remarks" 
+                    placeholder="Enter HR remarks..."
+                    class="remarks-input"
+                  ></textarea>
+                  <div class="action-buttons">
+                    <button class="btn-cancel" (click)="reviewingId.set(null)">Cancel</button>
+                    <button class="btn-reject" (click)="rejectRequest(req._id)">Reject</button>
+                    <button class="btn-approve" (click)="approveRequest(req._id)">Approve & Update</button>
+                  </div>
+                </div>
+              } @else {
+                <button class="btn-review" (click)="reviewingId.set(req._id)">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  Review Request
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,179 @@
+<ng-container *ngIf="vm.dashTab==='crm_projects'">
+  <section class="crm-amc-board crm-project-board">
+    <div class="workspace-header workspace-header-filters-only crm-filter-bar crm-amc-toolbar crm-project-toolbar">
+      <div class="workspace-controls crm-filter-controls crm-amc-controls">
+        <div class="crm-filter-left">
+          <label class="mini-field">
+            <span>Status</span>
+            <select class="field-select filter-select-field" [(ngModel)]="vm.crmProjectStatusFilter" (ngModelChange)="vm.setCrmProjectStatusFilter($event)">
+              <option value="all">All Status</option>
+              <option value="Assigned">Assigned</option>
+              <option value="In Progress">In Progress</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </label>
+          <button class="toolbar-button crm-icon-refresh" type="button" (click)="vm.fetchCrmProjects()" [disabled]="vm.crmProjectsLoading" aria-label="Refresh project mappings" title="Refresh">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+          </button>
+        </div>
+        <div class="crm-filter-actions">
+          <button class="toolbar-button invoice-date-filter-button crm-map-client-button" type="button" (click)="vm.openCrmProjectMappingModal()">
+            Map PM
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics-strip crm-metrics-strip crm-amc-metrics-strip crm-project-metrics-strip">
+      <div class="metric-cell">
+        <div class="metric-label">Assigned</div>
+        <div class="metric-value">{{ vm.crmProjectAnalytics.assigned }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">In Progress</div>
+        <div class="metric-value">{{ vm.crmProjectAnalytics.inProgress }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">On Hold</div>
+        <div class="metric-value">{{ vm.crmProjectAnalytics.onHold }}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Completed</div>
+        <div class="metric-value">{{ vm.crmProjectAnalytics.completed }}</div>
+      </div>
+    </div>
+
+    <div class="table-scroll crm-amc-table-scroll crm-project-table-scroll">
+      <table class="data-table compact-table crm-amc-table crm-project-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Lead Status</th>
+            <th>Project Manager</th>
+            <th>Contact</th>
+            <th>Project Status</th>
+            <th>Updated</th>
+            <th>Manage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let project of vm.filteredCrmProjectRows">
+            <td>{{ project.clientCompanyName }}</td>
+            <td><span class="crm-status-pill">{{ project.clientStatus || vm.crmProjectClientStatus(project.clientCompanyName) }}</span></td>
+            <td><strong>{{ project.projectManagerName || '-' }}</strong></td>
+            <td>{{ project.projectManagerPhone || project.projectManagerEmail || '-' }}</td>
+            <td>
+              <select class="field-select crm-inline-select" [(ngModel)]="project.status" (ngModelChange)="vm.setCrmProjectStatus(project, $event)" [disabled]="vm.crmProjectsLoading">
+                <option>Assigned</option>
+                <option>In Progress</option>
+                <option>On Hold</option>
+                <option>Completed</option>
+              </select>
+            </td>
+            <td>{{ vm.fmtDate(project.updatedAt || project.createdAt) }}</td>
+            <td class="crm-manage-cell">
+              <button class="crm-kebab-button" type="button" (click)="vm.toggleCrmProjectRowMenu(project, $event)" aria-label="Manage project mapping">⋮</button>
+              <div class="profile-menu crm-row-menu" *ngIf="vm.isCrmProjectRowMenuOpen(project)" role="menu" (click)="$event.stopPropagation()">
+                <button class="profile-menu-item profile-menu-item-danger" type="button" role="menuitem" (click)="vm.removeCrmProjectMapping(project)" [disabled]="vm.crmProjectsLoading || !(project.id || project._id)">
+                  Remove Assignment
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!vm.crmProjectsLoading && vm.filteredCrmProjectRows.length===0"><td colspan="7" class="empty-cell">No project manager mappings found.</td></tr>
+          <tr *ngIf="vm.crmProjectsLoading"><td colspan="7" class="empty-cell">Loading project mappings...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="crm-modal-backdrop" *ngIf="vm.crmProjectMappingOpen" (click)="vm.closeCrmProjectMappingModal()">
+    <div class="invoice-modal followup-modal crm-map-modal crm-project-map-modal" (click)="$event.stopPropagation()">
+      <div class="followup-modal-head">
+        <div class="followup-modal-title">
+          <h3>Map Project Manager</h3>
+        </div>
+        <button class="secondary-action" type="button" (click)="vm.closeCrmProjectMappingModal()">Close</button>
+      </div>
+      <div class="crm-map-modal-toolbar">
+        <button class="primary-action crm-map-import-button" type="button" (click)="vm.saveCrmProjectMapping()" [disabled]="vm.crmProjectsLoading || !vm.selectedCrmProjectClient || !vm.selectedCrmProjectManager">
+          {{ vm.crmProjectsLoading ? 'Saving...' : 'Save Mapping' }}
+        </button>
+      </div>
+      <div class="crm-map-modal-body crm-project-map-modal-body">
+        <section class="followup-modal-panel crm-map-list-panel">
+          <label class="topbar-search crm-map-search" for="crmProjectClientSearch">
+            <span class="topbar-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            </span>
+            <input class="topbar-input" id="crmProjectClientSearch" type="search" [(ngModel)]="vm.crmProjectClientSearch" placeholder="Search converted clients">
+          </label>
+          <div class="crm-map-list">
+            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let client of vm.filteredCrmProjectMappingClients" [class.active]="vm.selectedCrmProjectClientCompany===client.companyName" (click)="vm.selectCrmProjectClientForMapping(client)">
+              <span class="rail-item-copy">
+                <span class="rail-item-name">{{ client.companyName }}</span>
+                <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }} · {{ client.contactCount }} contacts</span>
+              </span>
+            </button>
+            <div class="empty-state-inline" *ngIf="vm.filteredCrmProjectMappingClients.length===0">No converted clients match.</div>
+          </div>
+        </section>
+        <section class="followup-modal-panel crm-map-list-panel">
+          <label class="topbar-search crm-map-search" for="crmProjectManagerSearch">
+            <span class="topbar-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            </span>
+            <input class="topbar-input" id="crmProjectManagerSearch" type="search" [(ngModel)]="vm.crmProjectManagerSearch" placeholder="Search project managers">
+          </label>
+          <div class="crm-map-list">
+            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let manager of vm.filteredCrmProjectManagers" [class.active]="vm.selectedCrmProjectManagerKey===vm.crmProjectManagerKey(manager)" (click)="vm.selectCrmProjectManagerForMapping(manager)">
+              <span class="rail-item-copy">
+                <span class="rail-item-name">{{ manager.name || vm.crmManagerName(manager.mobile) }}</span>
+                <span class="rail-item-meta">{{ manager.mobile || 'No phone' }}<ng-container *ngIf="manager.email"> · {{ manager.email }}</ng-container></span>
+              </span>
+            </button>
+            <div class="empty-state-inline" *ngIf="vm.filteredCrmProjectManagers.length===0">No project managers match.</div>
+          </div>
+        </section>
+        <section class="followup-modal-panel crm-map-detail-panel">
+          <div class="crm-map-detail-title">
+            <span class="crm-map-detail-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93" />
+                <path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07" />
+              </svg>
+            </span>
+            <span>Mapping</span>
+          </div>
+          <div class="crm-map-field-grid">
+            <div class="crm-map-static-field">
+              <span>Client</span>
+              <strong>{{ vm.selectedCrmProjectClient?.companyName || '-' }}</strong>
+            </div>
+            <div class="crm-map-static-field">
+              <span>Project Manager</span>
+              <strong>{{ vm.selectedCrmProjectManager?.name || '-' }}</strong>
+            </div>
+            <label class="mini-field crm-map-input-field">
+              <span>Status</span>
+              <select class="field-select" [(ngModel)]="vm.crmProjectDraft.status">
+                <option>Assigned</option>
+                <option>In Progress</option>
+                <option>On Hold</option>
+                <option>Completed</option>
+              </select>
+            </label>
+            <label class="mini-field crm-map-input-field">
+              <span>Notes</span>
+              <textarea class="field-input crm-project-notes-input" rows="3" [(ngModel)]="vm.crmProjectDraft.notes" placeholder="Add notes"></textarea>
+            </label>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</ng-container>

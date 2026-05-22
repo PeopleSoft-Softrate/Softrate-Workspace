@@ -1,0 +1,346 @@
+      <div *ngIf="dashTab==='company'" class="admin-organization-view">
+        <div *ngIf="companyProfileLoading" class="dash-loading">Loading company info&hellip;</div>
+        <div class="company-tab-container" *ngIf="!companyProfileLoading && companyProfile">
+          <div class="company-tab-grid">
+
+            <!-- LEFT COLUMN: Profile & Change Password -->
+            <div class="company-col">
+              <div class="company-card dark">
+                <div class="company-card-header">
+                  <div class="cc-avatar">{{ companyProfile?.companyName?.charAt(0)?.toUpperCase() }}</div>
+                  <div>
+                    <h3 class="cc-title">{{ companyProfile?.companyName }}</h3>
+                    <span class="cc-badge">#{{ companyProfile?.companyCode }}</span>
+                  </div>
+                </div>
+                <div class="cc-details-grid">
+                  <div class="cc-detail"><label>ADMIN NAME</label>
+                    <div>{{ companyProfile.name }}</div>
+                  </div>
+                  <div class="cc-detail"><label>EMAIL ADDRESS</label>
+                    <div>{{ companyProfile.email }}</div>
+                  </div>
+                  <div class="cc-detail"><label>PHONE NUMBER</label>
+                    <div style="font-family: var(--font-mono);">{{ companyProfile.countryCode }} {{
+                      companyProfile.mobile }}</div>
+                  </div>
+                  <div class="cc-detail"><label>INDUSTRY</label>
+                    <div>{{ companyProfile.industry }}</div>
+                  </div>
+                  <div class="cc-detail">
+                    <label>
+                      TEAM SIZE
+                      <button class="cc-edit-btn" (click)='startEditTeamSize()' *ngIf='!editingTeamSize'
+                        title='Edit team size'>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                          <path
+                            d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Edit
+                      </button>
+                    </label>
+                    <div *ngIf='!editingTeamSize'>
+                      {{ companyProfile.teamSize }}
+                      <span *ngIf="saveTeamSizeSuccess" class="addr-success"
+                        style="color: var(--green); margin-left: 8px;">✓ {{ saveTeamSizeSuccess }}</span>
+                    </div>
+                    <div *ngIf='editingTeamSize' class="cc-address-edit">
+                      <input type="number" [(ngModel)]="editTeamSizeValue" name="editTeam"
+                        placeholder="Enter team size…" class="cc-address-input" min="1">
+                      <div class="cc-addr-error" *ngIf="saveTeamSizeError"
+                        style="color: var(--orange); font-size: 0.75rem; margin-top: 4px;">{{ saveTeamSizeError }}</div>
+                      <div class="cc-addr-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                        <button class="cta-primary" style="padding:.38rem .9rem;font-size:.8rem;"
+                          (click)="saveTeamSize()" [disabled]="saveTeamSizeLoading">{{ saveTeamSizeLoading ? 'Saving…' :
+                          'Save' }}</button>
+                        <button class="btn-login" style="padding:.38rem .9rem;font-size:.8rem;"
+                          (click)="cancelEditTeamSize()">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="cc-detail"><label>MEMBER SINCE</label>
+                    <div style="font-family: inherit;">{{ companyProfile.createdAt | date:'dd MMM yyyy' }} at {{
+                      companyProfile.createdAt | date:'hh:mm a' }}</div>
+                  </div>
+                  <div class="cc-detail full-width">
+                    <label>
+                      ADDRESS
+                      <button class="cc-edit-btn" (click)="startEditAddress()" *ngIf="!editingAddress"
+                        title="Edit address">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                          <path
+                            d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Edit
+                      </button>
+                    </label>
+                    <div *ngIf="!editingAddress" class="cc-address-value">
+                      {{ companyProfile.companyAddress || 'No address provided.' }}
+                      <span *ngIf="saveAddressSuccess" class="addr-success">✓ {{ saveAddressSuccess }}</span>
+                    </div>
+                    <div *ngIf="editingAddress" class="cc-address-edit">
+                      <input type="text" [(ngModel)]="editAddressValue" name="editAddr"
+                        placeholder="Enter company address…" class="cc-address-input">
+                      <div class="cc-addr-error" *ngIf="saveAddressError">{{ saveAddressError }}</div>
+                      <div class="cc-addr-actions">
+                        <button class="cta-primary" style="padding:.38rem .9rem;font-size:.8rem;"
+                          (click)="saveAddress()" [disabled]="saveAddressLoading">{{ saveAddressLoading ? 'Saving…' :
+                          'Save' }}</button>
+                        <button class="btn-login" style="padding:.38rem .9rem;font-size:.8rem;"
+                          (click)="cancelEditAddress()">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="company-card">
+                <h3 class="cc-title" style="margin-bottom:1.5rem;">Change Password</h3>
+                <div class="form-error" *ngIf="changePwdError">{{ changePwdError }}</div>
+                <div *ngIf="changePwdSuccess"
+                  style="color:var(--green);font-weight:600;margin-bottom:1rem;font-size:0.85rem;">✓ {{
+                  changePwdSuccess }}</div>
+                <form class="modal-form" (submit)="onChangePasswordSubmit($event)">
+                  <div class="form-group">
+                    <label for="old-pwd">Current Password</label>
+                    <input type="password" id="old-pwd" [(ngModel)]="changePwdForm.oldPassword" name="oldPwd" required
+                      placeholder="Enter current password...">
+                  </div>
+                  <div class="form-group">
+                    <label for="new-pwd">New Password</label>
+                    <input type="password" id="new-pwd" [value]="changePwdForm.newPassword"
+                      (input)="onChangePwdInput($any($event.target).value)" name="newPwd" required
+                      placeholder="Enter new password...">
+                    <div class="pwd-checks-grid">
+                      <span class="pwd-check-item" [class.check-ok]="changePwdChecks.length">
+                        <span class="check-dot"></span> 8+ characters
+                      </span>
+                      <span class="pwd-check-item" [class.check-ok]="changePwdChecks.upper">
+                        <span class="check-dot"></span> Uppercase letter
+                      </span>
+                      <span class="pwd-check-item" [class.check-ok]="changePwdChecks.number">
+                        <span class="check-dot"></span> Number
+                      </span>
+                      <span class="pwd-check-item" [class.check-ok]="changePwdChecks.symbol">
+                        <span class="check-dot"></span> Symbol
+                      </span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm-pwd">Confirm New Password</label>
+                    <input type="password" id="confirm-pwd" [(ngModel)]="changePwdForm.confirmPassword" name="confPwd"
+                      required placeholder="Confirm new password...">
+                  </div>
+                  <button type="submit" class="cta-primary" [disabled]="changePwdLoading || !changePwdStrong"
+                    style="margin-top:1rem; width:100%; border-radius: 8px;">
+                    {{ changePwdLoading ? 'Updating...' : 'Update Password' }}
+                  </button>
+                  <div style="text-align: center; margin-top: 1rem;">
+                    <button type="button" (click)="openForgotFromSettings()" class="forgot-link"
+                      style="background:none; border:none; padding: 0; font-size: 0.85rem;">
+                      Forgot password? Reset via email
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Tag Management & Subscription -->
+            <div class="company-col">
+              <!-- Tag Management Card is now in App Settings tab -->
+
+              <!-- ── SUBSCRIPTION & PAYMENT CARD ── -->
+              <div class="company-card dark">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                  <h3 class="cc-title" style="margin:0;">Subscription &amp; Payments</h3>
+                  <span [ngClass]="{
+                    'badge-paid': companyProfile?.status === 'Paid',
+                    'badge-trial': companyProfile?.status === 'Free-Trial',
+                    'badge-due': companyProfile?.status === 'On due' || subscriptionExpired,
+                    'badge-pending': companyProfile?.status === 'Free-Trial-Request'
+                  }"
+                    style="padding:0.35rem 0.85rem;border-radius:20px;font-size:0.75rem;font-weight:700;text-transform:uppercase;">
+                    {{ companyProfile?.status }}
+                  </span>
+                </div>
+
+                <!-- Subscription dates -->
+                <div class="cc-details-grid" style="margin-bottom:0.75rem;">
+                  <div class="cc-detail">
+                    <label>PLAN START</label>
+                    <div style="font-weight: 600;">{{ companyProfile?.subscriptionFrom ?
+                      (companyProfile.subscriptionFrom | date:'dd MMM yyyy') : '—' }}</div>
+                  </div>
+                  <div class="cc-detail">
+                    <label>PLAN EXPIRES</label>
+                    <div [style.color]="subscriptionExpired ? '#dc2626' : '#10b981'" style="font-weight: 600;">
+                      {{ companyProfile?.subscriptionTo ? (companyProfile.subscriptionTo | date:'dd MMM yyyy') : '—' }}
+                      <span *ngIf="subscriptionExpired" style="margin-left:6px;font-size:1rem;">(Expired)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Renew section -->
+                <div
+                  style="padding:1.5rem;background:var(--bg-card-2);border-radius:12px;border:1px solid var(--border);margin-bottom:1rem;">
+                  <div style="font-weight:700;color:var(--text-1);margin-bottom:1rem;font-size:0.95rem;">Renew / Extend
+                    Subscription</div>
+                  <div style="display:flex;gap:1.5rem;align-items:flex-end;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                      <label
+                        style="font-size:0.75rem;color:var(--text-2);display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">New
+                        End Date</label>
+                      <input type="date" [(ngModel)]="renewToDate" name="renewToDate" [min]="minToDate"
+                        (change)="onRenewToDateChange()"
+                        style="width:100%;padding:0.65rem 1rem;border:1px solid var(--border);border-radius:10px;background:#ffffff;color:var(--text-1);font-size:0.9rem;outline:none;color-scheme:light;">
+                    </div>
+                    <button class="cta-primary"
+                      style="padding:0.65rem 1.5rem;font-size:0.85rem;white-space:nowrap;border-radius:10px;display:inline-flex;align-items:center;height:42px;"
+                      (click)="renewSubscription()" [disabled]="!renewToDate || renewLoading">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="margin-right:6px;" [class.spin-anim]="renewLoading">
+                        <circle *ngIf="renewLoading" cx="12" cy="12" r="10" stroke-opacity="0.2"></circle>
+                        <path *ngIf="renewLoading" d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+                        <ng-container *ngIf="!renewLoading">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                          <line x1="1" y1="10" x2="23" y2="10"></line>
+                        </ng-container>
+                      </svg>
+                      {{ renewLoading ? 'Processing...' : 'Renew Now' }}
+                    </button>
+                  </div>
+                  <div *ngIf="renewCostPreview"
+                    style="margin-top:1rem;font-size:0.85rem;color:var(--text-2);padding:0.75rem 1rem;background:rgba(16, 185, 129, 0.05);border-radius:8px;border:1px solid rgba(16, 185, 129, 0.1);">
+                    Total (Incl. 18% GST): <strong style="color:var(--green);font-size:1.1rem;margin-left:4px;">₹{{
+                      renewCostPreview.amountRupees | number:'1.2-2' }}</strong>
+                    <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">
+                      ({{ renewCostPreview.teamSizeMax }} users × ₹10 × {{ renewCostPreview.days }} days + 18% GST)
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Payment History -->
+                <div style="margin-top: 1.5rem;">
+                  <div
+                    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+                    <div style="font-weight:700;color:var(--text-1);font-size:0.95rem;">Payment History</div>
+                    <button class="btn-login"
+                      style="display:flex;align-items:center;gap:6px;padding:.4rem 1rem;font-size:.8rem;border-radius:8px;"
+                      (click)="fetchPaymentHistory()" [disabled]="paymentHistoryLoading">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" [class.spin-anim]="paymentHistoryLoading">
+                        <path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      {{ paymentHistoryLoading ? '' : 'Refresh' }}
+                    </button>
+                  </div>
+                  <div *ngIf="!paymentHistory.length && !paymentHistoryLoading"
+                    style="color:var(--text-3);font-size:0.85rem;font-style:italic;padding:2rem;text-align:center;background:var(--bg-card-2);border-radius:12px;border:1px dashed var(--border);">
+                    No payment records yet.</div>
+                  <div class="top-list-table-container" *ngIf="paymentHistory.length"
+                    style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:transparent;">
+                    <table class="emp-table payment-history-table" style="background:transparent;">
+                      <thead>
+                        <tr
+                          style="background:var(--bg-card-2) !important;border-bottom:1px solid var(--border) !important;">
+                          <th
+                            style="color:var(--text-2) !important;font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:1rem 0.75rem;">
+                            DATE</th>
+                          <th
+                            style="color:var(--text-2) !important;font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:1rem 0.75rem;">
+                            PERIOD</th>
+                          <th
+                            style="color:var(--text-2) !important;font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:1rem 0.75rem;">
+                            EMP</th>
+                          <th
+                            style="color:var(--text-2) !important;font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:1rem 0.75rem;text-align:right">
+                            AMOUNT</th>
+                          <th
+                            style="color:var(--text-2) !important;font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:1rem 0.75rem;">
+                            STATUS</th>
+                          <th
+                            style="color:var(--text-2);font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:1rem 0.75rem;text-align:right">
+                            ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let p of paymentHistory" style="border-bottom: 1px solid var(--border) !important;">
+                          <td style="color:var(--text-1);padding:1.1rem 0.75rem;font-size:0.85rem;">{{ p.createdAt |
+                            date:'dd MMM yyyy' }}</td>
+                          <td style="color:var(--text-2);font-size:0.8rem;padding:1.1rem 0.75rem;">{{ p.fromDate |
+                            date:'dd MMM' }} → {{ p.toDate | date:'dd MMM yyyy' }} ({{ p.days }}d)</td>
+                          <td style="color:var(--text-1);padding:1.1rem 0.75rem;font-size:0.85rem;">{{ p.teamSizeMax }}
+                          </td>
+                          <td
+                            style="text-align:right;font-weight:700;color:var(--text-1);padding:1.1rem 0.75rem;font-size:0.85rem;">
+                            ₹{{ (p.amount / 100) | number:'1.2-2' }}</td>
+                          <td style="padding:1.1rem 0.75rem;">
+                            <span
+                              [style.color]="p.status === 'paid' ? '#10b981' : p.status === 'failed' ? '#ef4444' : '#f59e0b'"
+                              style="font-weight:600;font-size:0.8rem;">
+                              {{ p.status | titlecase }}
+                            </span>
+                          </td>
+                          <td style="text-align:right">
+                            <div style="display:flex;justify-content:flex-end;gap:12px;">
+                              <!-- Download Invoice for PAID -->
+                              <button *ngIf="p.status === 'paid'" (click)="downloadInvoice(p)" title="Download Invoice"
+                                style="border:none;background:transparent;color:#64748b;cursor:pointer;padding:2px;display:flex;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                  <polyline points="7 10 12 15 17 10"></polyline>
+                                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                              </button>
+
+                              <!-- Pay/Retry for CREATED -->
+                              <button *ngIf="p.status === 'created' || p.status === 'failed'" (click)="retryPayment(p)"
+                                title="Pay Now"
+                                style="border:none;background:transparent;color:#f59e0b;cursor:pointer;padding:2px;display:flex;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                  <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                              </button>
+
+                              <!-- Delete Order for CREATED/FAILED -->
+                              <button *ngIf="p.status === 'created' || p.status === 'failed'"
+                                (click)="deleteOrder(p._id)" title="Delete Order"
+                                style="border:none;background:transparent;color:#ef4444;cursor:pointer;padding:2px;display:flex;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                  </path>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="companyProfileLoading" style="text-align: center; padding: 4rem 0; color: var(--text-3);">
+        Loading company profile...
+      </div>
+
+      <!-- ══ SETTINGS TAB ══ -->

@@ -1,0 +1,35 @@
+<div class="metrics-strip finance-metrics-strip" *ngIf="analytics.length">
+  <div class="metric-cell" *ngFor="let item of analytics">
+    <div class="metric-label">{{ item.label }}</div>
+    <div class="metric-value">{{ item.value }}</div>
+  </div>
+</div>
+
+<div class="table-scroll finance-table-scroll" *ngIf="rows.length; else emptyList">
+  <table class="data-table compact-table finance-data-table invoice-data-table">
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Invoice No</th>
+        <th>Invoice Date</th>
+        <th>Payment Status</th>
+        <th>Paid Amount</th>
+        <th>Invoice Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of rows" (click)="openRecord.emit(row)">
+        <td>{{ clientName(row) }}</td>
+        <td>{{ row.invoiceNumber || '-' }}</td>
+        <td>{{ formatDate(row.invoiceDate) }}</td>
+        <td><span class="status-pill">{{ paymentStatus(row) }}</span></td>
+        <td class="amount-cell">{{ formatMoney(row.paidAmount || 0) }}</td>
+        <td class="amount-cell">{{ formatMoney(row.totalAmount || 0) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #emptyList>
+  <dv-empty-state message="No finance records found."></dv-empty-state>
+</ng-template>

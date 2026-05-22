@@ -1,0 +1,163 @@
+      <!-- ══ EMPLOYEES TAB ══ -->
+      <div *ngIf="dashTab==='employees'" class="admin-employees-view">
+        <div class="dash-header-row admin-actions-only-header">
+          <div class="admin-header-actions">
+            <button class="btn-login"
+              style="padding:.45rem 1rem;font-size:.85rem;display:flex;align-items:center;gap:6px;" (click)="syncAll()"
+              [disabled]="syncAllLoading">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                [style.animation]="syncAllLoading?'spin 0.8s linear infinite':''" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {{ syncAllLoading ? 'Syncing…' : 'Sync All' }}
+            </button>
+            <button class="cta-primary" style="padding:.45rem 1rem;font-size:.85rem;" (click)="openAddEmployee()">+
+              Add</button>
+          </div>
+        </div>
+        <div *ngIf="employeesLoading" class="dash-loading">Loading&hellip;</div>
+
+        <!-- Server error banner for employee list -->
+        <div *ngIf="!employeesLoading && employeesError" class="dash-error-banner">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <span>{{ employeesError }}</span>
+          <button class="btn-retry" (click)="fetchEmployees()">Retry</button>
+        </div>
+
+        <!-- Call stats error banner -->
+        <div *ngIf="!empCallLoading && empCallError && employees.length > 0" class="dash-error-banner dash-error-soft">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ empCallError }}</span>
+          <button class="btn-retry" (click)="fetchEmployeeCallRows()">Retry</button>
+        </div>
+
+        <div *ngIf="!employeesLoading && !employeesError && employees.length===0" class="dash-empty">No employees yet.
+          Click "Add" to get started.</div>
+        <div class="emp-table-wrap" *ngIf="!employeesLoading && employees.length>0">
+          <table class="emp-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Tag</th>
+                <th>App Ver.</th>
+                <th>Last Call</th>
+                <th>Last Sync</th>
+                <th style="text-align: center;">Interactions</th>
+                <th style="min-width: 140px; text-align: center;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let emp of filteredEmployeesForTable" class="emp-row">
+                <td (click)="openEmployee(emp)">
+                  <div class="emp-cell">
+                    <div class="emp-avatar">{{ emp.name.charAt(0).toUpperCase() }}</div>
+                    <div>
+                      <div class="emp-name">{{ emp.name }}</div>
+                      <div class="emp-phone">{{ emp.mobile }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td (click)="$event.stopPropagation()">
+                  <ng-container *ngIf="editTagEmpId !== emp._id">
+                    <span *ngIf="emp.tags && emp.tags.length > 0" class="tag-badge">{{ emp.tags[0] }}</span>
+                    <button *ngIf="!emp.tags || emp.tags.length === 0" class="btn-add-tag"
+                      (click)="enableTagEdit(emp)">+ Add Tag</button>
+                    <button *ngIf="emp.tags && emp.tags.length > 0" class="btn-edit-tag" (click)="enableTagEdit(emp)">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    </button>
+                  </ng-container>
+                  <ng-container *ngIf="editTagEmpId === emp._id">
+                    <div style="display:flex; align-items:center; gap:4px; position:relative;"
+                      (click)="$event.stopPropagation()">
+                      <div style="position:relative;">
+                        <input type="text" [(ngModel)]="inlineTagValue" (focus)="focusTagInput(emp)"
+                          (blur)="blurTagInput()" (keydown.enter)="saveInlineTag(emp, $event)"
+                          placeholder="Type For Custom"
+                          style="padding: 0.25rem 0.5rem; font-size: 0.8rem; border: 1px solid var(--border); border-radius: 4px; width: 100px; background: var(--bg); color: var(--text-1); outline: none;" />
+
+                        <!-- Custom Dropdown -->
+                        <div *ngIf="showInlineDropdown === emp._id"
+                          style="position:absolute; top: 100%; left: 0; margin-top: 2px; width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; max-height: 120px; overflow-y: auto;">
+                          <div *ngFor="let opt of getFilteredTagOptions()"
+                            (mousedown)="$event.preventDefault(); inlineTagValue = opt; saveInlineTag(emp, $event)"
+                            class="custom-dropdown-opt">
+                            {{ opt }}
+                          </div>
+                          <div *ngIf="getFilteredTagOptions().length === 0"
+                            style="padding: 0.35rem 0.5rem; font-size: 0.75rem; color: var(--text-3); text-align: center; font-style: italic;">
+                            + New tag
+                          </div>
+                        </div>
+                      </div>
+
+                      <button (click)="saveInlineTag(emp, $event)" [disabled]="savingTag" title="Save"
+                        style="background:transparent; border:none; cursor:pointer; color:var(--green); padding:2px; display:inline-flex; align-items:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                      <button (click)="cancelTagEdit($event)" title="Cancel"
+                        style="background:transparent; border:none; cursor:pointer; color:var(--text-3); padding:2px; display:inline-flex; align-items:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </ng-container>
+                </td>
+                <td style="font-size:.78rem;color:var(--text-3);">{{ emp.appVersion || '—' }}</td>
+                <td style="font-size:.78rem;white-space:nowrap;"
+                  [style.color]="emp.lastCallTime ? 'var(--text-1)' : 'var(--text-3)'">{{ fmtDate(emp.lastCallTime) }}
+                </td>
+                <td style="font-size:.78rem;white-space:nowrap;"
+                  [style.color]="emp.lastSyncTime ? 'var(--green)' : 'var(--text-3)'">{{ fmtDate(emp.lastSyncTime) }}
+                </td>
+                <td style="text-align: center;">
+                  <span
+                    style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
+                    {{ getEmployeeInteractionCount(emp.mobile) }}
+                  </span>
+                </td>
+                <td style="text-align: center;">
+                  <button class="action-btn" (click)="$event.stopPropagation(); openEditEmployee(emp)"
+                    title="Edit employee" style="margin-right: 4px; color: var(--purple);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path
+                        d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13">
+                      </path>
+                      <path
+                        d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z">
+                      </path>
+                    </svg>
+                  </button>
+                  <button class="action-btn" (click)="openEmployee(emp)" title="View details">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+                      <path d="M2 12C2 12 5.818 5 12 5s10 7 10 7-3.818 7-10 7S2 12 2 12z" stroke="currentColor"
+                        stroke-width="2" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+
+      <!-- ══ LEADS MANAGEMENT TAB ══ -->

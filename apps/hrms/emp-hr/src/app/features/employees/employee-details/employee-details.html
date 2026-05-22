@@ -1,0 +1,248 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/employees" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Employees
+      </a>
+    </div>
+    <h1>Employee Profile</h1>
+    <p>Detailed overview and management for {{ employee()?.fullName || 'Employee' }}</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-secondary" (click)="editProfile()">
+      <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+    </button>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  <div class="profile-layout" *ngIf="!isLoading() && employee()">
+    <!-- Profile Sidebar -->
+    <div class="profile-sidebar">
+      <div class="card profile-card">
+        <div class="profile-image">
+          <div class="avatar-placeholder">{{ employee().fullName?.charAt(0) }}</div>
+          <div class="status-dot" [class.active]="employee().status === 'approved'"></div>
+        </div>
+        <h3>
+          {{ employee().fullName }}
+          <i *ngIf="employee().isManager" class="fa-solid fa-crown" style="color: #f59e0b; font-size: 1rem; margin-left: 8px;" title="Manager"></i>
+          <i *ngIf="employee().isHr" class="fa-solid fa-shield-halved" style="color: #0ea5e9; font-size: 1rem; margin-left: 8px;" title="HR Admin"></i>
+        </h3>
+        <p class="employee-id-label">Employee ID: {{ employee().EmployeeId || 'N/A' }}</p>
+        <div class="status-pill" [ngClass]="getStatusColor(employee().status)">
+          {{ employee().status }}
+        </div>
+        
+        <div class="quick-stats">
+          <div class="q-stat">
+            <span class="q-label">Role</span>
+            <span class="q-value">{{ employee().role || 'Staff' }}</span>
+          </div>
+          <div class="q-stat">
+            <span class="q-label">Department</span>
+            <span class="q-value">{{ employee().department || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card nav-card">
+        <h4>Navigation</h4>
+        <div class="nav-links">
+          <button (click)="navigateTo(['/employees', employeeId()])" class="nav-item">
+            <hugeicons-icon [icon]="UserCircleIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Profile
+          </button>
+          <button (click)="navigateTo(['/employees', employeeId(), 'attendance'])" class="nav-item">
+            <hugeicons-icon [icon]="FingerAccessIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Attendance
+          </button>
+          <button (click)="navigateTo(['/employees', employeeId(), 'payroll'])" class="nav-item">
+            <hugeicons-icon [icon]="Money03Icon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Payroll
+          </button>
+          <button (click)="navigateTo(['/employees', employeeId(), 'review'])" class="nav-item">
+            <hugeicons-icon [icon]="LicenseDraftIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Performance
+          </button>
+        </div>
+      </div>
+
+      <div class="card promotion-card" *ngIf="canPromoteToManager() || canConvertToHr() || canDemoteToManager() || canDemoteToEmployee()">
+        <h4>Role & Promotion</h4>
+        <p class="stat-desc">Update this staff member's administrative or management status.</p>
+        
+        <button class="btn-primary-outline w-100 mt-2 mb-2" *ngIf="canPromoteToManager()" (click)="promoteToManager()" [disabled]="isPromoting()">
+          <i class="fa-solid fa-arrow-up-right-dots" *ngIf="!isPromoting()"></i>
+          <span *ngIf="!isPromoting()">Promote to Manager</span>
+          <span *ngIf="isPromoting()">Updating...</span>
+        </button>
+
+        <button class="btn-secondary-outline w-100" *ngIf="canConvertToHr()" (click)="convertToHr()" [disabled]="isPromoting()">
+          <i class="fa-solid fa-user-gear" *ngIf="!isPromoting()"></i>
+          <span *ngIf="!isPromoting()">Convert to HR Staff</span>
+          <span *ngIf="isPromoting()">Updating...</span>
+        </button>
+
+        <button class="btn-danger-outline w-100 mt-2" *ngIf="canDemoteToManager()" (click)="demoteToManager()" [disabled]="isPromoting()">
+          <i class="fa-solid fa-user-minus" *ngIf="!isPromoting()"></i>
+          <span *ngIf="!isPromoting()">Demote to Manager</span>
+          <span *ngIf="isPromoting()">Updating...</span>
+        </button>
+
+        <button class="btn-danger-outline w-100 mt-2" *ngIf="canDemoteToEmployee()" (click)="demoteToEmployee()" [disabled]="isPromoting()">
+          <i class="fa-solid fa-user-slash" *ngIf="!isPromoting()"></i>
+          <span *ngIf="!isPromoting()">Demote to Employee</span>
+          <span *ngIf="isPromoting()">Updating...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="profile-main">
+      <!-- Section 1: Personal Details -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fa-solid fa-user"></i>
+          <h3>Personal & Contact Details</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Full Name</label>
+            <p>{{ employee().fullName }}</p>
+          </div>
+          <div class="info-item">
+            <label>Work Email</label>
+            <p>{{ employee().email }}</p>
+          </div>
+          <div class="info-item">
+            <label>Phone Number</label>
+            <p>{{ employee().phone || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Date of Birth</label>
+            <p>{{ (employee().dob | date:'longDate') || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Gender</label>
+            <p>{{ employee().gender || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Marital Status</label>
+            <p>{{ employee().maritalStatus || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Employment Details -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fa-solid fa-briefcase"></i>
+          <h3>Work Information</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Designation</label>
+            <p>{{ employee().designation || employee().role || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Department</label>
+            <p>{{ employee().department || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Onboarding Date</label>
+            <p>{{ (employee().onboardingDate | date:'longDate') || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>LinkedIn Profile</label>
+            <p>
+              <a *ngIf="employee().linkedin" [href]="employee().linkedin" target="_blank" class="linkedin-link" title="View LinkedIn Profile">
+                <hugeicons-icon [icon]="Share05Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+              </a>
+              <span *ngIf="!employee().linkedin">N/A</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Education -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <h3>Education & Qualification</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Qualification</label>
+            <p>{{ employee().qualification || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Specialization</label>
+            <p>{{ employee().specialization || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>College/University</label>
+            <p>{{ employee().college || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Passing Year</label>
+            <p>{{ employee().passingYear || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>UG/PG CGPA</label>
+            <p>{{ employee().ugCgpa || 'N/A' }} / {{ employee().pgCgpa || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Emergency Contacts -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fa-solid fa-hospital-user"></i>
+          <h3>Emergency Contact</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Contact Person</label>
+            <p>{{ employee().emergencyName || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Contact Phone</label>
+            <p>{{ employee().emergencyPhone || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="card" *ngIf="employee().address">
+        <div class="card-header">
+          <i class="fa-solid fa-location-dot"></i>
+          <h3>Address Information</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item full-width">
+            <label>Permanent / Current Address</label>
+            <p>{{ employee().address }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading profile...</p>
+  </div>
+  
+  <div class="empty-state" *ngIf="!isLoading() && !employee()">
+    <i class="fa-solid fa-user-xmark empty-icon"></i>
+    <h3>Employee not found</h3>
+    <p>The employee details could not be retrieved. Please check the ID.</p>
+  </div>
+</div>
+</div>
+<app-employee-sidebar></app-employee-sidebar>
+</div>

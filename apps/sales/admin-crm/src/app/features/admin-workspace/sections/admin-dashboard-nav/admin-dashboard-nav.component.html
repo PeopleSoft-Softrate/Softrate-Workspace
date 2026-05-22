@@ -1,0 +1,170 @@
+<nav class="navbar dashboard-nav crm-topbar" [class.navbar-scrolled]="vm.isNavbarScrolled">
+  <div class="nav-container">
+    <button class="topbar-sidebar-toggle" type="button" (click)="vm.toggleSidebar()" aria-label="Open navigation">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
+    <div class="topbar-page-title admin-topbar-page-title">{{ vm.adminTopbarTitle }}</div>
+
+    <label class="topbar-search admin-global-search" for="adminGlobalSearch">
+      <span class="topbar-search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6"></circle>
+          <path d="m20 20-4.35-4.35"></path>
+        </svg>
+      </span>
+      <input
+        id="adminGlobalSearch"
+        class="topbar-input"
+        type="text"
+        [placeholder]="vm.adminSearchPlaceholder"
+        autocomplete="off"
+        [(ngModel)]="vm.adminGlobalSearch"
+        (keyup.enter)="vm.onAdminGlobalSearchEnter()"
+      />
+    </label>
+
+    <div class="nav-auth topbar-actions">
+      <div class="admin-break-alert" *ngIf="vm.breakNotifCount > 0">
+        <button
+          id="breakNotifBtn"
+          class="topbar-icon-button"
+          type="button"
+          (click)="vm.toggleBreakNotifPanel()"
+          title="Break Alerts"
+          aria-label="Break alerts"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span class="topbar-alert-count">{{ vm.breakNotifCount }}</span>
+        </button>
+
+        <div class="break-notification-panel" *ngIf="vm.showBreakNotifPanel">
+          <div class="break-notification-title">Break Limit Exceeded</div>
+          <div class="break-notification-row" *ngFor="let emp of vm.breakOverLimitEmps">
+            <div>
+              <div class="break-notification-name">{{ emp.employeeName }}</div>
+              <div class="break-notification-phone">{{ emp.employeePhone }}</div>
+            </div>
+            <div class="break-notification-time">
+              <div>{{ vm.fmtSecs(emp.totalSeconds) }}</div>
+              <span>Limit: {{ vm.fmtSecs(emp.limitSeconds) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="vm.showDueAlert">
+        <button
+          class="topbar-due-alert"
+          type="button"
+          (click)="vm.switchTab('company')"
+          [class.expired]="vm.subscriptionDaysLeft! <= 0"
+        >
+          <span *ngIf="vm.subscriptionDaysLeft! <= 0">Subscription Expired</span>
+          <span *ngIf="vm.subscriptionDaysLeft! === 1">Expires Tomorrow</span>
+          <span *ngIf="vm.subscriptionDaysLeft! > 1 && vm.subscriptionDaysLeft! <= 7">
+            {{ vm.subscriptionDaysLeft }} days left
+          </span>
+        </button>
+      </ng-container>
+
+      <div class="profile-dropdown" [class.open]="vm.profileMenuOpen">
+        <input
+          #adminProfilePhotoInput
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp"
+          class="profile-file-input"
+          (change)="vm.onProfilePhotoSelected($event)"
+        />
+        <button
+          class="profile-trigger"
+          type="button"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="vm.profileMenuOpen"
+          (click)="vm.toggleProfileMenu($event)"
+        >
+          <div class="topbar-user">
+            <div class="user-avatar-shell">
+              <div class="user-avatar" aria-hidden="true" [class.user-avatar-has-photo]="vm.hasAdminProfilePhoto">
+                <img *ngIf="vm.hasAdminProfilePhoto" [src]="vm.adminProfilePhoto" [alt]="vm.dashboardCompany || 'Admin profile photo'" class="user-avatar-image" />
+                <span *ngIf="!vm.hasAdminProfilePhoto">{{ vm.adminInitials }}</span>
+              </div>
+              <span class="user-status-dot" aria-hidden="true"></span>
+            </div>
+            <div class="user-copy">
+              <div class="user-name">{{ vm.dashboardCompany }}</div>
+              <div class="user-meta">{{ vm.dashboardCode }}</div>
+            </div>
+            <span class="profile-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
+          </div>
+        </button>
+
+        <div class="profile-menu" *ngIf="vm.profileMenuOpen" role="menu">
+          <div class="profile-menu-header">
+            <button
+              class="profile-menu-avatar-button"
+              type="button"
+              (click)="vm.openProfilePhotoPicker(adminProfilePhotoInput)"
+              [attr.aria-label]="vm.hasAdminProfilePhoto ? 'Change profile photo' : 'Add profile photo'"
+            >
+              <div class="profile-menu-avatar" [class.profile-menu-avatar-has-photo]="vm.hasAdminProfilePhoto">
+                <img *ngIf="vm.hasAdminProfilePhoto" [src]="vm.adminProfilePhoto" [alt]="vm.dashboardCompany || 'Admin profile photo'" class="profile-menu-avatar-image" />
+                <span *ngIf="!vm.hasAdminProfilePhoto">{{ vm.adminInitials }}</span>
+              </div>
+            </button>
+            <div class="profile-menu-copy">
+              <div class="profile-menu-name">{{ vm.dashboardCompany }}</div>
+              <div class="profile-menu-meta">{{ vm.dashboardCode }}</div>
+              <div class="profile-menu-status">Active now</div>
+            </div>
+          </div>
+
+          <div class="profile-menu-section" *ngIf="vm.hasAdminProfilePhoto || vm.profilePhotoError || vm.profilePhotoSuccess">
+            <button
+              class="profile-menu-item"
+              *ngIf="vm.hasAdminProfilePhoto"
+              type="button"
+              role="menuitem"
+              (click)="vm.removeProfilePhoto()"
+            >
+              <span class="profile-menu-item-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+              </span>
+              <span>Remove photo</span>
+            </button>
+            <div class="profile-menu-feedback profile-menu-feedback-error" *ngIf="vm.profilePhotoError">{{ vm.profilePhotoError }}</div>
+            <div class="profile-menu-feedback profile-menu-feedback-success" *ngIf="vm.profilePhotoSuccess">{{ vm.profilePhotoSuccess }}</div>
+          </div>
+
+          <div class="profile-menu-divider"></div>
+
+          <button class="profile-menu-item profile-menu-item-danger" type="button" role="menuitem" (click)="vm.openLogoutConfirm()">
+            <span class="profile-menu-item-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="m16 17 5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+            </span>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

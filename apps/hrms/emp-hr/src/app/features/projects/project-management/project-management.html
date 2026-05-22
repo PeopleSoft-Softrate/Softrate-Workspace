@@ -1,0 +1,193 @@
+<div class="projects-container" [class.self-portal]="isSelfPortal()">
+  <div class="page-header">
+    <div class="header-left">
+      <div class="breadcrumb" *ngIf="isSelfPortal()">
+        <a routerLink="/employee/dashboard" class="back-link">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+      <h1>{{ isSelfPortal() ? 'My Projects' : 'Project Management' }}</h1>
+      <p>{{ isSelfPortal() ? 'View and track your assigned projects and checklist items.' : 'Track team progress, manage tasks, and collaborate on projects.' }}</p>
+    </div>
+    <button class="btn-primary" (click)="openModal()" *ngIf="!isSelfPortal()">
+      <hugeicons-icon [icon]="PlusSignIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+      <span>New Project</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading() && projects().length === 0" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading projects...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading() && projects().length === 0" class="empty-state">
+    <div class="empty-icon-box">
+      <hugeicons-icon [icon]="DashboardSquare02Icon" size="48" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+    </div>
+    <h3>No Projects Found</h3>
+    <p>{{ isSelfPortal() ? 'You have not been assigned to any projects yet.' : 'You haven\'t created any projects yet. Start by creating a new one!' }}</p>
+    <button class="btn-secondary" (click)="openModal()" *ngIf="!isSelfPortal()">Create First Project</button>
+  </div>
+
+  <!-- Project Grid -->
+  <div class="projects-grid" *ngIf="projects().length > 0">
+    <div class="project-card" *ngFor="let project of projects()">
+      <div class="project-header">
+        <div class="status-badge" [class.completed]="project.status === 'Completed'">
+          {{ project.status }}
+        </div>
+        <div class="header-actions" *ngIf="!isSelfPortal()">
+          <button class="btn-icon more-btn" (click)="toggleMenu($event, project._id)">
+            <hugeicons-icon [icon]="MoreVerticalIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </button>
+          
+          <div class="action-dropdown" *ngIf="activeMenuId() === project._id">
+            <button class="dropdown-item" (click)="editProject(project)">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Edit Project</span>
+            </button>
+            <button class="dropdown-item delete" (click)="deleteProject(project._id); activeMenuId.set(null)">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>Delete Project</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="project-title">{{ project.title }}</h3>
+      <p class="project-client" *ngIf="project.client">
+        <i class="fa-solid fa-briefcase"></i> {{ project.client }}
+      </p>
+      
+      <div class="progress-section">
+        <div class="progress-meta">
+          <span>Progress</span>
+          <span class="progress-value">{{ project.progress }}%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="project.progress" [style.background-color]="getProgressColor(project.progress)"></div>
+        </div>
+      </div>
+
+      <div class="project-info">
+        <div class="info-item members-trigger">
+          <hugeicons-icon [icon]="UserGroupIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          <span>{{ project.teamMembers.length }} Members</span>
+          
+          <!-- Members Hover Tooltip -->
+          <div class="members-tooltip" *ngIf="project.teamMembers.length > 0">
+            <div class="tooltip-header">Team Members</div>
+            <div class="tooltip-list">
+              <div class="tooltip-member" *ngFor="let member of project.teamMembers">
+                <span class="type-dot" [class.intern]="member.memberType === 'intern'"></span>
+                {{ member.fullName }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-item">
+          <hugeicons-icon [icon]="Calendar03Icon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          <span>{{ project.deadline | date:'mediumDate' }}</span>
+        </div>
+      </div>
+
+      <div class="checklist-preview">
+        <h4>Tasks ({{ project.checklist.length }})</h4>
+        <div class="task-mini-list">
+          <div class="task-mini-item" *ngFor="let task of project.checklist | slice:0:3">
+            <input type="checkbox" [checked]="task.isCompleted" (change)="toggleTask(project, task)">
+            <span [class.done]="task.isCompleted">{{ task.task }}</span>
+          </div>
+          <p class="more-tasks" *ngIf="project.checklist.length > 3">
+            + {{ project.checklist.length - 3 }} more tasks
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal-overlay" *ngIf="showAddModal()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="header-icon">
+        <hugeicons-icon [icon]="isEditMode() ? Task01Icon : PlusSignIcon" size="24" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+      </div>
+      <div class="header-text">
+        <h2>{{ isEditMode() ? 'Edit Project' : 'Create New Project' }}</h2>
+        <p>{{ isEditMode() ? 'Update project details and team assignments.' : 'Define project scope, team, and initial tasks.' }}</p>
+      </div>
+      <button class="btn-close" (click)="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-section">
+        <label>Project Title</label>
+        <input type="text" [(ngModel)]="newProject().title" placeholder="e.g. Employee Portal Redesign">
+      </div>
+
+      <div class="form-row">
+        <div class="form-section">
+          <label>Client / Department</label>
+          <input type="text" [(ngModel)]="newProject().client" placeholder="e.g. Internal HR">
+        </div>
+        <div class="form-section">
+          <label>Deadline</label>
+          <input type="date" [(ngModel)]="newProject().deadline">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label>Description</label>
+        <textarea [(ngModel)]="newProject().description" placeholder="Short summary of the project goals..."></textarea>
+      </div>
+
+      <div class="form-section">
+        <label>Team Members</label>
+        <div class="member-selector">
+          <select #memberSelect (change)="addMember(teamMembers()[memberSelect.selectedIndex - 1]); memberSelect.selectedIndex = 0">
+            <option value="">Select member to add...</option>
+            <option *ngFor="let m of teamMembers()" [value]="m._id">
+              {{ m.fullName }} ({{ m.memberType }})
+            </option>
+          </select>
+        </div>
+        <div class="selected-members">
+          <div class="member-tag" *ngFor="let m of newProject().teamMembers; let i = index">
+            <span class="type-indicator" [class.intern]="m.memberType === 'intern'">{{ m.memberType[0] }}</span>
+            <span>{{ m.fullName }}</span>
+            <button (click)="removeMember(i)"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label>Checklist Tasks</label>
+        <div class="task-input-row">
+          <input type="text" [(ngModel)]="tempTask" (keyup.enter)="addTask()" placeholder="Add a task and press enter...">
+          <button (click)="addTask()"><hugeicons-icon [icon]="PlusSignIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon></button>
+        </div>
+        <div class="tasks-list">
+          <div class="task-item" *ngFor="let t of newProject().checklist; let i = index">
+            <hugeicons-icon [icon]="Task01Icon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            <span>{{ t.task }}</span>
+            <button (click)="removeTask(i)"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" (click)="saveProject()">
+        <hugeicons-icon [icon]="CheckmarkCircle01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        <span>{{ isEditMode() ? 'Update Project' : 'Create Project' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

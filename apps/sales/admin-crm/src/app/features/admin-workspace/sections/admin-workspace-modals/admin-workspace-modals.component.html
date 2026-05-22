@@ -1,0 +1,1088 @@
+<!-- ========== ADD EMPLOYEE MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isAddEmployeeOpen" (click)="vm.closeAddEmployee()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeAddEmployee()">&#x2715;</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">Add Agent</h2>
+    <p class="modal-subtitle">Add a new employee to your trace logging system.</p>
+    <div class="form-error" *ngIf="vm.addEmployeeError">{{ vm.addEmployeeError }}</div>
+    <form class="modal-form" (submit)="vm.onAddEmployeeSubmit($event)">
+      <div class="form-group">
+        <label for="emp-name">Full Name <span class="req">*</span></label>
+        <input type="text" id="emp-name" placeholder="Agent Name" [(ngModel)]="vm.newEmployee.name" name="empName"
+          required>
+      </div>
+      <div class="form-group">
+        <label for="emp-mobile">Phone Number <span class="req">*</span></label>
+        <div class="mobile-input-wrap">
+          <div class="mobile-prefix-wrap">
+            <select class="mobile-prefix-select" [(ngModel)]="vm.newEmployee.countryCode" name="empCC" required>
+              <option *ngFor="let c of vm.countryCodes" [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+            </select>
+          </div>
+          <input type="tel" id="emp-mobile" placeholder="9876543210" maxlength="15" [(ngModel)]="vm.newEmployee.mobile"
+            name="empMobile" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-signup modal-submit" [disabled]="vm.addEmployeeLoading" style="width:100%;">
+        {{ vm.addEmployeeLoading ? 'Adding...' : 'Add Employee' }}
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ========== VIEW ALL CALLS MODAL (Detailed & Professional) ========== -->
+<div class="modal-overlay" [class.open]="vm.showAllCallsModal" (click)="vm.closeAllCallsModal()">
+  <div class="modal history-modal-wide" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.closeAllCallsModal()">&#x2715;</button>
+
+    <div class="detailed-history-header">
+      <div class="header-left">
+        <h2 class="modal-title"><span style="color: var(--accent); font-size: 1.05rem; letter-spacing: 1px;">Detailed
+            Call </span><br>History</h2>
+        <p class="modal-subtitle">For <strong>{{ vm.selectedEmployee?.name }}</strong></p>
+      </div>
+
+      <!-- Quick Stats Header in Modal -->
+      <div class="log-header-stats animate-fade-in-up stagger-1">
+        <div class="log-stat-item">
+          <span class="log-stat-val total">{{ vm.selectedEmpStats?.total || 0 }}</span>
+          <span class="log-stat-label">Total Logs</span>
+        </div>
+        <div class="log-stat-item">
+          <span class="log-stat-val connected">{{ vm.selectedEmpStats?.connected || 0 }}</span>
+          <span class="log-stat-label">Connected</span>
+        </div>
+        <div class="log-stat-item">
+          <span class="log-stat-val time">{{ vm.fmtDur(vm.selectedEmpStats?.totalDuration || 0) }}</span>
+          <span class="log-stat-label">Total Time</span>
+        </div>
+        <div class="log-stat-item">
+          <span class="log-stat-val missed">{{ vm.selectedEmpStats?.missed || 0 }}</span>
+          <span class="log-stat-label">Missed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-grid-container">
+      <div class="premium-log-table-wrap">
+        <table class="premium-log-table">
+          <thead>
+            <tr>
+              <th>Contact Details</th>
+              <th>Type</th>
+              <th>Timestamp</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="log-row" *ngFor="let c of vm.selectedEmpCalls">
+              <td class="log-cell">
+                <div class="contact-cell">
+                  <div class="log-avatar">{{ (c.name || '?').charAt(0).toUpperCase() }}</div>
+                  <div>
+                    <div class="log-name">{{ c.name || 'Unknown Contact' }}</div>
+                    <div class="log-phone">{{ c.number }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="log-cell">
+                <span class="ch-type-badge" [class]="c.callType">{{ c.callType }}</span>
+              </td>
+              <td class="log-cell">
+                <div style="font-size: 0.85rem; font-weight: 500;">{{ c.timestamp | date:'dd MMM, hh:mm a' }}</div>
+              </td>
+              <td class="log-cell">
+                <div class="dur-pill" *ngIf="c.duration > 0">{{ vm.fmtDur(c.duration) }}</div>
+                <span *ngIf="c.duration <= 0" style="color: var(--text-3); font-size: 0.8rem;">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem; text-align: right;">
+      <button class="btn-login" (click)="vm.closeAllCallsModal()" style="padding: 0.75rem 2rem;">Close Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SHARE MESSAGE MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.showShareModal" (click)="vm.showShareModal = false">
+  <div class="modal" style="max-width: 500px; width: 90%;" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="vm.showShareModal = false">&#x2715;</button>
+    <div class="modal-brand" style="justify-content:flex-start;margin-bottom:1rem;">
+      <h2 class="modal-title" style="margin:0;">Share Registration Link</h2>
+    </div>
+    <p class="modal-subtitle" style="text-align:left;margin-bottom:1.5rem;">Copy this message to share with your
+      employees.</p>
+
+    <div style="margin-bottom: 1.5rem;">
+      <textarea readonly
+        style="width: 100%; height: 280px; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-1); font-size: 0.85rem; line-height: 1.5; resize: none; font-family: inherit; outline: none;"
+        [(ngModel)]="vm.shareMessage"></textarea>
+    </div>
+
+    <button (click)="vm.copyShareMessage()" class="btn-signup"
+      style="width: 100%; border-radius: 12px; padding: 0.8rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      Copy Message
+    </button>
+  </div>
+</div>
+
+<!-- ========== EDIT EMPLOYEE MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isEditEmployeeOpen" (click)="vm.closeEditEmployee()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">
+    <button class="modal-close" (click)="vm.closeEditEmployee()">&#x2715;</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">Edit Employee</h2>
+    <p class="modal-subtitle">Update employee name, phone, and tags.</p>
+
+    <form class="modal-form" (submit)="vm.onEditEmployeeSubmit($event)">
+      <div class="form-error" *ngIf="vm.editEmployeeError">{{ vm.editEmployeeError }}</div>
+
+      <div class="form-group">
+        <label for="edit-emp-name">Full Name</label>
+        <div class="input-with-icon">
+          <input type="text" id="edit-emp-name" [(ngModel)]="vm.editingEmployee.name" name="name" placeholder="Enter name"
+            required />
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="edit-emp-mobile">Phone Number</label>
+        <div class="mobile-input-wrap">
+          <div class="mobile-prefix-wrap">
+            <select class="mobile-prefix-select" [(ngModel)]="vm.editingEmployee.countryCode" name="editCC" required>
+              <option *ngFor="let c of vm.countryCodes" [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+            </select>
+          </div>
+          <input type="text" id="edit-emp-mobile" [(ngModel)]="vm.editingEmployee.mobile" name="mobile"
+            placeholder="Enter phone number" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Selected Tags</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+          <div *ngFor="let t of vm.tagOptions" (click)="vm.toggleEditTag(t)"
+            [style.background]="vm.editingEmployee.tags.includes(t) ? 'rgba(99, 102, 241, 0.15)' : 'transparent'"
+            [style.color]="vm.editingEmployee.tags.includes(t) ? 'var(--purple)' : 'var(--text-3)'"
+            [style.border-color]="vm.editingEmployee.tags.includes(t) ? 'var(--purple)' : 'var(--border)'"
+            style="padding: 4px 10px; border: 1px solid; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: 600;">
+            {{ t }}
+          </div>
+          <div *ngIf="vm.tagOptions.length === 0" style="font-size: 0.75rem; color: var(--text-3); font-style: italic;">No
+            tags available. Manage tags in Company Profile.</div>
+        </div>
+      </div>
+
+      <button type="submit" class="cta-primary" [disabled]="vm.editEmployeeLoading" style="margin-top: 1rem; width: 100%;">
+        {{ vm.editEmployeeLoading ? 'Updating...' : 'Save Changes' }}
+      </button>
+    </form>
+  </div>
+</div>
+<!-- ========== LOGOUT CONFIRMATION MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isLogoutConfirmOpen" (click)="vm.closeLogoutConfirm()">
+  <div class="modal vm.logout-confirm-modal" (click)="$event.stopPropagation()" style="max-width: 400px;">
+    <button class="modal-close" (click)="vm.closeLogoutConfirm()">✕</button>
+    <div class="modal-brand" style="margin-bottom: 1.5rem;">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title" style="margin: 0 0 0.5rem 0; text-align: center; width: 100%;">Log Out</h2>
+    <p class="modal-subtitle" style="text-align: center; width: 100%;">Are you sure you want to log out of your account?
+    </p>
+    <div class="modal-actions" style="display: flex; gap: 1rem; margin-top: 2rem; width: 100%;">
+      <button type="button" class="cta-secondary"
+        style="flex: 1; padding: 0.75rem; border-radius: 10px; justify-content: center;"
+        (click)="vm.closeLogoutConfirm()">Cancel</button>
+      <button type="button" class="btn-login"
+        style="flex: 1; padding: 0.75rem; background: #ef4444; border-color: #ef4444; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center;"
+        (click)="vm.logout()">Log Out</button>
+    </div>
+  </div>
+</div>
+<!-- ========== ALL REMARKS MODAL ========== -->
+<div class="invoice-overlay company-remarks-overlay" *ngIf="vm.showAllRemarksModal && vm.selectedBookmarkForRemarks"
+  (click)="vm.closeAllRemarksModal()">
+  <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">Remark History</div>
+        <h3>{{ vm.selectedBookmarkForRemarks?.contactName || 'Primary Contact' }}</h3>
+        <p>{{ vm.selectedBookmarkForRemarks?.companyName || vm.selectedBookmarkForRemarks?.leadCompanyName || 'Unnamed Company' }}</p>
+      </div>
+      <button class="secondary-action" type="button" (click)="vm.closeAllRemarksModal()">Close</button>
+    </div>
+    <div class="company-remarks-list" *ngIf="vm.companyRemarkHistory(vm.selectedBookmarkForRemarks).length; else emptyBookmarkRemarks">
+      <div class="company-remark-row" *ngFor="let remark of vm.companyRemarkHistory(vm.selectedBookmarkForRemarks)">
+        {{ remark }}
+      </div>
+    </div>
+    <ng-template #emptyBookmarkRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">No remarks recorded for this contact.</div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- ========== SAVE FOLLOW-UP MODAL (Employee UI parity) ========== -->
+<div class="modal-overlay admin-followup-overlay" *ngIf="vm.showFollowupModal" (click)="vm.closeFollowupModal()">
+  <div class="invoice-modal followup-modal admin-followup-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">Follow-up</div>
+        <h3>{{ vm.editingBookmarkId ? 'Update Follow-up' : 'Schedule Follow-up' }}</h3>
+        <p *ngIf="vm.followupLead">{{ vm.followupLead.contactName || 'Primary Contact' }} · {{ vm.followupLead.contactNumber }}</p>
+      </div>
+      <button class="secondary-action" type="button" (click)="vm.closeFollowupModal()">Close</button>
+    </div>
+
+    <div class="followup-modal-body">
+      <section class="followup-modal-panel">
+        <div class="followup-modal-label">Progress flags</div>
+        <div class="followup-flag-grid">
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.brochuresSent" /> <span>Brochure Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.techMeet" /> <span>Tech Meet</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.quotationSent" /> <span>Quotation Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.proposalSent" /> <span>Proposal Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
+        </div>
+      </section>
+
+      <section class="followup-modal-panel">
+        <div class="followup-modal-label">Context</div>
+        <label class="field">
+          <span class="field-label">Description</span>
+          <textarea class="field-textarea" rows="4" [(ngModel)]="vm.followupForm.description" placeholder="Describe the current follow-up context"></textarea>
+        </label>
+
+        <label class="field" *ngIf="vm.followupForm.remarks.length > 0">
+          <span class="field-label">Historical Remarks</span>
+          <div class="admin-followup-remark-list">
+            <div class="remark-item" *ngFor="let r of vm.followupForm.remarks; let i = index; trackBy: vm.trackByFn">
+              <input class="field-input" type="text" [(ngModel)]="vm.followupForm.remarks[i]" />
+              <button class="icon-button" type="button" (click)="vm.removeRemark(i)" aria-label="Remove remark">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </div>
+        </label>
+
+        <div class="followup-modal-grid">
+          <label class="field">
+            <span class="field-label">New Remark</span>
+            <input class="field-input" type="text" [(ngModel)]="vm.followupForm.newRemark" placeholder="Add a new remark" />
+          </label>
+          <label class="field">
+            <span class="field-label">Reminder Date</span>
+            <input class="field-input" type="date" [(ngModel)]="vm.followupForm.reminderDate" />
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="action-row followup-modal-actions">
+      <button class="secondary-action" type="button" (click)="vm.closeFollowupModal()">Cancel</button>
+      <button class="primary-action" type="button" (click)="vm.saveFollowup()" [disabled]="vm.followupSaving">
+        <span *ngIf="!vm.followupSaving">{{ vm.editingBookmarkId ? 'Update Follow-up' : 'Save Follow-up' }}</span>
+        <span *ngIf="vm.followupSaving" class="button-spinner"></span>
+      </button>
+    </div>
+  </div>
+</div>
+<ng-template #aiSummaryFullTemplate>
+  <div class="lead-ai-grid ai-summary-popover-full">
+    <div class="lead-ai-detail-meta">
+      <span class="lead-ai-chip" *ngIf="vm.aiBrief?.industry">{{ vm.aiBrief?.industry }}</span>
+      <a *ngIf="vm.aiBrief?.officialWebsite as officialWebsite" class="lead-ai-chip lead-ai-chip-link" [href]="officialWebsite" target="_blank" rel="noopener noreferrer">
+        {{ vm.hostnameFromUrl(officialWebsite) }}
+      </a>
+      <span class="lead-ai-chip" *ngIf="vm.aiBrief?.sources?.length">{{ vm.aiBrief?.sources?.length }} sources</span>
+      <span class="lead-ai-chip" *ngIf="vm.aiBrief?.topRecommendations?.length">{{ vm.aiBrief?.topRecommendations?.length }} recommendations</span>
+    </div>
+
+    <div class="lead-ai-detail-panels">
+      <div class="lead-ai-detail-panel-card">
+        <div class="lead-ai-section-label">Business Summary</div>
+        <p class="drawer-copy">{{ vm.aiBrief?.businessSummary }}</p>
+      </div>
+      <div class="lead-ai-detail-panel-card" *ngIf="vm.aiBrief?.primaryPitch">
+        <div class="lead-ai-section-label">Pitch Line</div>
+        <p class="drawer-copy">{{ vm.aiBrief?.primaryPitch }}</p>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="vm.aiBrief?.topRecommendations?.length">
+      <div class="lead-ai-section-label">What Softrate Can Offer</div>
+      <div class="lead-ai-recommendations">
+        <article class="lead-ai-recommendation" *ngFor="let recommendation of vm.aiBrief?.topRecommendations">
+          <div class="lead-ai-recommendation-top">
+            <span class="lead-ai-rank">#{{ recommendation.rank }}</span>
+            <span class="lead-ai-tier">{{ recommendation.tier }}</span>
+          </div>
+          <h5>{{ recommendation.serviceName }}</h5>
+          <p class="drawer-copy"><strong>Fit:</strong> {{ recommendation.fitReason }}</p>
+          <p class="drawer-copy"><strong>Pain point:</strong> {{ recommendation.painPointMatch }}</p>
+          <p class="drawer-copy"><strong>Pitch:</strong> {{ recommendation.pitchAngle }}</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="vm.aiBrief?.discoveryQuestions?.length">
+      <div class="lead-ai-section-label">Discovery Questions</div>
+      <div class="lead-ai-list">
+        <div class="lead-ai-list-item" *ngFor="let question of vm.aiBrief?.discoveryQuestions">{{ question }}</div>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="vm.aiBrief?.servicesOrPlatforms?.length">
+      <div class="lead-ai-section-label">Company Services / Platforms</div>
+      <div class="lead-ai-chip-row">
+        <span class="lead-ai-chip lead-ai-chip-soft" *ngFor="let item of vm.aiBrief?.servicesOrPlatforms">{{ item }}</span>
+      </div>
+    </div>
+
+    <div class="lead-detail-section" *ngIf="vm.aiBrief?.sourceFindings?.length">
+      <div class="lead-ai-section-label">Research Signals</div>
+      <div class="lead-ai-list">
+        <div class="lead-ai-list-item" *ngFor="let finding of vm.aiBrief?.sourceFindings">
+          <strong>{{ finding.title }}</strong>
+          <span>{{ finding.finding }}</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="vm.aiBriefOfficialSources() as officialSources">
+      <div class="lead-detail-section" *ngIf="officialSources.length">
+        <div class="lead-ai-section-label">Official Company Sources</div>
+        <div class="lead-ai-source-list">
+          <a class="lead-ai-source" *ngFor="let source of officialSources" [href]="source.url" target="_blank" rel="noopener noreferrer">
+            <span class="lead-ai-source-title">{{ source.title }}</span>
+            <span class="lead-ai-source-meta">{{ vm.aiBriefSourceMetaLabel(source, 'official') }}</span>
+          </a>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="vm.aiBriefResearchSources() as researchSources">
+      <div class="lead-detail-section" *ngIf="researchSources.length">
+        <div class="lead-ai-section-label">Research Sources</div>
+        <div class="lead-ai-source-list">
+          <a class="lead-ai-source" *ngFor="let source of researchSources" [href]="source.url" target="_blank" rel="noopener noreferrer">
+            <span class="lead-ai-source-title">{{ source.title }}</span>
+            <span class="lead-ai-source-meta">{{ vm.aiBriefSourceMetaLabel(source, 'research') }}</span>
+          </a>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</ng-template>
+
+<!-- ══ ADMIN COMPANY FULL VIEW ══ -->
+<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.companyFullViewOpen" (click)="vm.closeCompanyFullView()">
+  <div class="invoice-modal company-full-modal admin-company-full-modal" (click)="$event.stopPropagation()">
+    <section class="company-full-shell lead-detail-workspace admin-company-full-detail">
+      <aside class="lead-detail-sidebar company-full-sidebar">
+        <button class="lead-detail-back" type="button" (click)="vm.closeCompanyFullView()">
+          <span class="back-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="m15 18-6-6 6-6" />
+              <path d="M21 12H9" />
+            </svg>
+          </span>
+          <span>Close</span>
+        </button>
+
+        <div class="lead-detail-nav company-full-nav">
+          <button
+            class="toolbar-button"
+            type="button"
+            *ngFor="let section of vm.adminCompanyFullSections"
+            [class.active]="vm.adminCompanyFullSection===section.id"
+            (click)="vm.scrollAdminCompanyFullSection(section.id)"
+          >
+            {{ section.label }}
+          </button>
+        </div>
+      </aside>
+
+      <div class="lead-detail-main company-full-main" (scroll)="vm.onAdminCompanyFullScroll($event)">
+        <div class="lead-detail-header company-full-header">
+          <div class="lead-detail-title-row">
+            <h3>{{ vm.companyFullCompanyName() }}</h3>
+          </div>
+        </div>
+
+        <div class="lead-detail-panel company-full-content">
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('overview')">
+            <div class="company-full-card-head">
+              <h4>Overview</h4>
+            </div>
+
+            <div class="lead-detail-summary company-full-overview-grid" *ngIf="vm.companyFullViewLead(); else emptyAdminCompanyFullOverview">
+              <div class="lead-detail-column">
+                <div class="lead-detail-field">
+                  <span>Primary Contact</span>
+                  <strong>{{ vm.companyFullPrimaryContact() }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Email</span>
+                  <strong [title]="vm.companyFullPrimaryEmail()">{{ vm.companyFullPrimaryEmail() }}</strong>
+                </div>
+                <div class="lead-detail-section">
+                  <div class="lead-detail-section-title">Company Context</div>
+                  <div class="company-full-context-copy">
+                    {{ vm.companyFullViewContext() || 'No company context recorded.' }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="lead-detail-column lead-detail-column-side">
+                <div class="lead-detail-grid company-full-meta-grid">
+                  <div class="lead-detail-field">
+                    <span>Phone</span>
+                    <strong class="nowrap-value" [title]="vm.companyFullPrimaryPhone()">{{ vm.companyFullPrimaryPhone() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Latest Update</span>
+                    <strong class="nowrap-value">{{ vm.companyFullLatestUpdate() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Contacts</span>
+                    <strong>{{ vm.companyFullViewRows().length }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Set</span>
+                    <strong>{{ vm.companyFullSetSummary() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Primary Status</span>
+                    <strong [style.color]="vm.leadStatusColor(vm.companyFullPrimaryStatus())">{{ vm.companyFullPrimaryStatus() }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Company Code</span>
+                    <strong class="nowrap-value">{{ vm.companyFullCompanyCode() }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('contacts')">
+            <div class="company-full-card-head">
+              <h4>Directors / Contacts</h4>
+              <span class="company-full-card-meta">{{ vm.companyFullOverviewContacts().length }} contact{{ vm.companyFullOverviewContacts().length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="company-full-scroll-card company-full-contact-list" *ngIf="vm.companyFullOverviewContacts().length > 0; else emptyAdminCompanyFullView">
+              <article class="company-full-contact-row" *ngFor="let lead of vm.companyFullOverviewContacts()">
+                <div class="company-full-contact-main">
+                  <strong>{{ lead.contactName || 'Primary Contact' }}</strong>
+                  <span [title]="vm.companyFullContactEmail(lead)">{{ vm.companyFullContactEmail(lead) }}</span>
+                </div>
+                <div class="company-full-contact-field">
+                  <span>Phone</span>
+                  <strong class="nowrap-value" [title]="vm.companyFullContactPhone(lead)">{{ vm.companyFullContactPhone(lead) }}</strong>
+                </div>
+                <div class="company-full-contact-field">
+                  <span>Status</span>
+                  <strong [style.color]="vm.leadStatusColor(vm.normalizedLeadStatus(lead.status))">{{ vm.normalizedLeadStatus(lead.status) }}</strong>
+                </div>
+                <div class="company-full-contact-actions">
+                  <button class="secondary-action company-remarks-button" type="button" (click)="vm.openCompanyRemarkHistory(lead)">
+                    Remarks {{ vm.companyRemarkCount(lead) }}
+                  </button>
+                  <button class="secondary-action company-remarks-button" type="button" (click)="vm.openQuotationModal(lead)">
+                    Quote
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('followups')">
+            <div class="company-full-card-head">
+              <h4>Followups</h4>
+              <span class="company-full-card-meta">{{ vm.adminCompanyFullFollowups().length }} record{{ vm.adminCompanyFullFollowups().length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="lead-detail-section company-full-followup-overview-section">
+              <div class="lead-detail-section-title">Current Overview</div>
+              <div class="lead-detail-grid company-full-followup-overview">
+                <div class="lead-detail-field">
+                  <span>Followups</span>
+                  <strong>{{ vm.adminCompanyFullFollowups().length }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Remarks</span>
+                  <strong>{{ vm.adminCompanyFullFollowupRemarkCount() }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Reminders</span>
+                  <strong>{{ vm.adminCompanyFullFollowupReminderCount() }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Brochure Sent</span>
+                  <strong>{{ vm.adminCompanyFullFollowupFlagCount('brochuresSent') }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Quotation Sent</span>
+                  <strong>{{ vm.adminCompanyFullFollowupFlagCount('quotationSent') }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Proposal Sent</span>
+                  <strong>{{ vm.adminCompanyFullFollowupFlagCount('proposalSent') }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Tech Meet</span>
+                  <strong>{{ vm.adminCompanyFullFollowupFlagCount('techMeet') }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Whatsapp Group</span>
+                  <strong>{{ vm.adminCompanyFullFollowupFlagCount('whatsappGrp') }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="lead-detail-section company-full-followup-history-section">
+              <div class="lead-detail-section-title">History</div>
+              <div class="company-full-scroll-card company-full-followup-history" *ngIf="vm.adminCompanyFullFollowupEntries().length > 0; else emptyAdminCompanyFullFollowups">
+                <article class="company-full-history-row" *ngFor="let entry of vm.adminCompanyFullFollowupEntries()">
+                  <div class="company-full-history-head">
+                    <strong>{{ entry.title }}</strong>
+                    <span>{{ entry.date }}</span>
+                  </div>
+                  <div class="company-full-history-copy">{{ entry.body }}</div>
+                  <div class="company-full-history-meta">By {{ entry.employeeName || entry.bookmark.employeePhone || 'Employee' }}</div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('remarks')">
+            <div class="company-full-card-head">
+              <h4>Remarks History</h4>
+              <span class="company-full-card-meta">{{ vm.adminCompanyFullRemarkEntries().length }} remark{{ vm.adminCompanyFullRemarkEntries().length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="company-full-remark-entry" *ngIf="vm.companyFullViewLead() as companyLead">
+              <div class="lead-card-remark-combobox company-full-remark-combobox">
+                <input
+                  class="field-input lead-card-remark-input company-full-remark-input"
+                  type="text"
+                  [(ngModel)]="vm.leadRemarksInputs[companyLead._id || '']"
+                  (focus)="vm.openAdminRemarkMenu(companyLead._id || '')"
+                  (blur)="vm.queueCloseAdminRemarkMenu(companyLead._id || '')"
+                  placeholder="Type remark..."
+                  (keyup.enter)="vm.addLeadRemark(companyLead)"
+                />
+                <button
+                  class="lead-card-remark-toggle"
+                  type="button"
+                  aria-label="Show remark options"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="vm.toggleAdminRemarkMenu(companyLead._id || '')"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                </button>
+                <div class="lead-card-remark-options" *ngIf="vm.isAdminRemarkMenuOpen(companyLead._id || '') && vm.filteredAdminRemarkOptions(vm.leadRemarksInputs[companyLead._id || '']).length > 0">
+                  <button
+                    class="lead-card-remark-option"
+                    type="button"
+                    *ngFor="let remark of vm.filteredAdminRemarkOptions(vm.leadRemarksInputs[companyLead._id || ''])"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="vm.selectAdminRemark(companyLead._id || '', remark)"
+                  >
+                    {{ remark }}
+                  </button>
+                </div>
+              </div>
+              <button class="primary-action company-full-remark-add" type="button" (click)="vm.addLeadRemark(companyLead)" [disabled]="!companyLead._id || vm.remarkPostingIds.has(companyLead._id)">
+                <span *ngIf="!companyLead._id || !vm.remarkPostingIds.has(companyLead._id)">Add Remark</span>
+                <span *ngIf="companyLead._id && vm.remarkPostingIds.has(companyLead._id)" class="button-spinner"></span>
+              </button>
+            </div>
+
+            <div class="company-full-scroll-card company-full-remarks-history">
+              <ng-container *ngIf="vm.adminCompanyFullRemarkEntries().length > 0; else emptyAdminCompanyFullRemarks">
+                <article class="company-full-history-row" *ngFor="let entry of vm.adminCompanyFullRemarkEntries()">
+                  <div class="company-full-history-head">
+                    <strong>{{ entry.lead.contactName || 'Primary Contact' }}</strong>
+                    <span>{{ vm.fmtDate(entry.lead.updatedAt || entry.lead.createdAt) }}</span>
+                  </div>
+                  <div class="company-full-history-copy">{{ entry.remark }}</div>
+                </article>
+              </ng-container>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('invoices')">
+            <div class="company-full-card-head">
+              <h4>Invoice History</h4>
+              <span class="company-full-card-meta">{{ vm.adminCompanyFullInvoiceItems().length }} record{{ vm.adminCompanyFullInvoiceItems().length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="company-full-scroll-card company-full-invoice-history">
+              <div *ngIf="vm.invoiceRecordsLoading" class="empty-state-inline empty-state-inline-minimal">Loading invoice history.</div>
+              <ng-container *ngIf="!vm.invoiceRecordsLoading && vm.adminCompanyFullInvoiceItems().length > 0; else emptyAdminCompanyFullInvoices">
+                <article
+                  class="company-full-record-row company-full-record-action"
+                  *ngFor="let invoice of vm.adminCompanyFullInvoiceItems()"
+                  tabindex="0"
+                  role="button"
+                  (click)="vm.openSavedInvoice(invoice)"
+                  (keydown.enter)="vm.openSavedInvoice(invoice)"
+                  (keydown.space)="$event.preventDefault(); vm.openSavedInvoice(invoice)"
+                >
+                  <div class="company-full-record-main">
+                    <strong>{{ invoice.invoiceNumber || 'Invoice' }}</strong>
+                    <span>{{ invoice.contactName || vm.companyFullCompanyName() }}</span>
+                  </div>
+                  <div class="company-full-record-meta">
+                    <span>{{ invoice.paymentStatus || 'Invoice' }}</span>
+                    <span>{{ vm.fmtDate(invoice.invoiceDate || invoice.createdAt) }}</span>
+                    <strong>{{ vm.formatInvoiceMoney(invoice.total || 0) }}</strong>
+                  </div>
+                </article>
+              </ng-container>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('quotations')">
+            <div class="company-full-card-head">
+              <h4>Quotation History</h4>
+              <span class="company-full-card-meta">{{ vm.adminCompanyFullQuotationItems().length }} record{{ vm.adminCompanyFullQuotationItems().length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="company-full-scroll-card company-full-quotation-history">
+              <div *ngIf="vm.quotationRecordsLoading" class="empty-state-inline empty-state-inline-minimal">Loading quotation history.</div>
+              <ng-container *ngIf="!vm.quotationRecordsLoading && vm.adminCompanyFullQuotationItems().length > 0; else emptyAdminCompanyFullQuotations">
+                <article
+                  class="company-full-record-row company-full-record-action"
+                  *ngFor="let quotation of vm.adminCompanyFullQuotationItems()"
+                  tabindex="0"
+                  role="button"
+                  (click)="vm.openSavedQuotation(quotation)"
+                  (keydown.enter)="vm.openSavedQuotation(quotation)"
+                  (keydown.space)="$event.preventDefault(); vm.openSavedQuotation(quotation)"
+                >
+                  <div class="company-full-record-main">
+                    <strong>{{ quotation.quotationNumber || 'Quotation' }}</strong>
+                    <span>{{ quotation.contactName || vm.companyFullCompanyName() }}</span>
+                  </div>
+                  <div class="company-full-record-meta">
+                    <span>{{ vm.fmtDate(quotation.quotationDate || quotation.createdAt) }}</span>
+                    <strong>{{ vm.formatInvoiceMoney(quotation.total || 0) }}</strong>
+                  </div>
+                </article>
+              </ng-container>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.adminCompanyFullSectionId('notes')">
+            <div class="company-full-card-head">
+              <h4>Notes</h4>
+              <span class="company-full-card-meta">{{ vm.adminCompanyFullNoteEntries().length }} note{{ vm.adminCompanyFullNoteEntries().length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="company-full-scroll-card company-full-note-list" *ngIf="vm.adminCompanyFullNoteEntries().length > 0; else emptyAdminCompanyFullNotes">
+              <article class="company-full-note-row" *ngFor="let note of vm.adminCompanyFullNoteEntries()">
+                <div class="company-full-history-head">
+                  <strong>{{ note.title }}</strong>
+                  <span>{{ note.date }}</span>
+                </div>
+                <div class="company-full-note-copy">{{ note.body }}</div>
+                <div class="company-full-history-meta">By {{ note.employeeName || 'Employee' }}</div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <ng-template #emptyAdminCompanyFullOverview>
+      <div class="empty-state-inline empty-state-inline-minimal">No company overview loaded.</div>
+    </ng-template>
+    <ng-template #emptyAdminCompanyFullView>
+      <div class="empty-state-inline empty-state-inline-minimal">No contact data loaded for this company.</div>
+    </ng-template>
+    <ng-template #emptyAdminCompanyFullRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">No remark history recorded for this company.</div>
+    </ng-template>
+    <ng-template #emptyAdminCompanyFullFollowups>
+      <div class="empty-state-inline empty-state-inline-minimal">No follow-up history recorded for this company.</div>
+    </ng-template>
+    <ng-template #emptyAdminCompanyFullNotes>
+      <div class="empty-state-inline empty-state-inline-minimal">No notes recorded for this company.</div>
+    </ng-template>
+    <ng-template #emptyAdminCompanyFullInvoices>
+      <div *ngIf="!vm.invoiceRecordsLoading" class="empty-state-inline empty-state-inline-minimal">No invoices recorded for this company.</div>
+    </ng-template>
+    <ng-template #emptyAdminCompanyFullQuotations>
+      <div *ngIf="!vm.quotationRecordsLoading" class="empty-state-inline empty-state-inline-minimal">No quotations recorded for this company.</div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- ══ ADMIN REMARK HISTORY ══ -->
+<div class="invoice-overlay company-remarks-overlay" *ngIf="vm.companyRemarkLead" (click)="vm.closeCompanyRemarkHistory()">
+  <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">Remark History</div>
+        <h3>{{ vm.companyRemarkLead.contactName || 'Primary Contact' }}</h3>
+        <p>{{ vm.companyRemarkLead.leadCompanyName }}</p>
+      </div>
+      <button class="secondary-action" type="button" (click)="vm.closeCompanyRemarkHistory()">Close</button>
+    </div>
+    <div class="company-remarks-list" *ngIf="vm.companyRemarkHistory(vm.companyRemarkLead).length; else emptyCompanyLeadRemarks">
+      <div class="company-remark-row" *ngFor="let remark of vm.companyRemarkHistory(vm.companyRemarkLead)">
+        {{ remark }}
+      </div>
+    </div>
+    <ng-template #emptyCompanyLeadRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">No remarks recorded for this contact.</div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- ══ ADMIN AI SUMMARY ══ -->
+<div class="invoice-overlay company-remarks-overlay admin-ai-overlay" *ngIf="vm.adminAiSummaryOpen" (click)="vm.closeAdminAiSummary()">
+  <div class="invoice-modal followup-modal ai-summary-modal admin-ai-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">AI Summary</div>
+        <h3>{{ vm.aiBriefCompany || vm.selectedLeadCompany || vm.selectedRemarksFilterCompany || 'Company summary' }}</h3>
+        <p *ngIf="vm.companyFullViewContext()">{{ vm.companyFullViewContext() }}</p>
+      </div>
+      <button class="secondary-action" type="button" (click)="vm.closeAdminAiSummary()">Close</button>
+    </div>
+    <div class="ai-summary-modal-body">
+      <div class="empty-state-inline empty-state-inline-minimal" *ngIf="vm.aiBriefLoading">Loading summary.</div>
+      <div class="ai-summary-empty-panel" *ngIf="!vm.aiBriefLoading && vm.aiBriefError">
+        <h4>Summary unavailable</h4>
+        <p>{{ vm.aiBriefError }}</p>
+        <button class="secondary-action" type="button" (click)="vm.retryAiBrief()">Retry</button>
+      </div>
+      <ng-container *ngIf="!vm.aiBriefLoading && vm.aiBrief">
+        <ng-template [ngTemplateOutlet]="aiSummaryFullTemplate"></ng-template>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN QUOTATION BUILDER ══ -->
+<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.showInvoiceModal" (click)="vm.closeInvoiceModal()">
+  <div class="invoice-modal invoice-modal-billing admin-quote-modal" (click)="$event.stopPropagation()">
+    <div class="invoice-builder" [class.invoice-builder-readonly]="vm.viewingSavedDocument">
+      <div class="section-header invoice-builder-header">
+        <div>
+          <div class="section-kicker">{{ vm.viewingSavedDocument ? (vm.quoteMode ? 'Saved Quotation' : 'Saved Invoice') : (vm.quoteMode ? 'Quotation Builder' : 'Invoice Builder') }}</div>
+          <h3>{{ vm.quoteMode ? 'Quote' : 'Invoice' }} {{ vm.invoiceNumber() }}</h3>
+        </div>
+        <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Close</button>
+      </div>
+
+      <div class="invoice-form-grid invoice-control-card" *ngIf="!vm.viewingSavedDocument">
+        <label class="mini-field">
+          <span>Product</span>
+          <select class="field-select" [(ngModel)]="vm.selectedInvoiceProduct" (change)="vm.onProductSelect()">
+            <option [ngValue]="null">Select product</option>
+            <option *ngFor="let product of vm.settingsProducts" [ngValue]="product">{{ product.name }}</option>
+          </select>
+        </label>
+        <label class="mini-field">
+          <span>Price</span>
+          <input class="field-input" type="number" [(ngModel)]="vm.invoicePrice" />
+        </label>
+        <label class="mini-field">
+          <span>Quantity</span>
+          <input class="field-input" type="number" [(ngModel)]="vm.invoiceQuantity" />
+        </label>
+        <button class="primary-action" type="button" (click)="vm.addInvoiceItem()" [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
+      </div>
+
+      <div class="table-scroll invoice-items-card" *ngIf="!vm.viewingSavedDocument">
+        <table class="data-table compact-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Sum</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of vm.invoiceItems; let i = index">
+              <td>{{ item.name }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ vm.formatInvoiceMoney(item.price) }}</td>
+              <td>{{ vm.formatInvoiceMoney(item.price * item.quantity) }}</td>
+              <td><button class="text-action" type="button" (click)="vm.removeInvoiceItem(i)">Remove</button></td>
+            </tr>
+            <tr *ngIf="vm.invoiceItems.length===0">
+              <td colspan="5" class="empty-cell">No {{ vm.quoteMode ? 'quotation' : 'invoice' }} items added yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="invoice-preview" class="invoice-preview" [class.quotation-preview]="vm.quoteMode">
+        <header class="quotation-hero" *ngIf="vm.quoteMode; else adminInvoicePrintHeader">
+          <div class="quotation-hero-logo">
+            <img *ngIf="vm.settingsInvoiceLogo; else quotationTextLogo" [src]="vm.settingsInvoiceLogo" alt="Quotation logo" class="quotation-logo">
+            <ng-template #quotationTextLogo>
+              <div class="invoice-text-logo">{{ vm.invoiceCompanyDisplayName() }}</div>
+            </ng-template>
+          </div>
+          <div class="quotation-hero-title">
+            <h2>Quotation</h2>
+            <span>Quote Number</span>
+            <strong>{{ vm.invoiceNumber() }}</strong>
+          </div>
+        </header>
+
+        <ng-template #adminInvoicePrintHeader>
+          <header class="invoice-print-header">
+            <div class="invoice-print-logo-block">
+              <img *ngIf="vm.settingsInvoiceLogo; else invoiceTextLogo" [src]="vm.settingsInvoiceLogo" alt="Invoice logo" class="invoice-logo">
+              <ng-template #invoiceTextLogo>
+                <div class="invoice-text-logo">{{ vm.invoiceCompanyDisplayName() }}</div>
+              </ng-template>
+            </div>
+
+            <div class="invoice-print-company">
+              <h2>{{ vm.invoiceCompanyDisplayName() }}</h2>
+              <div class="invoice-print-subtitle">Invoice</div>
+              <p *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</p>
+              <p *ngIf="vm.settingsContactDetails.phone">{{ vm.settingsContactDetails.phone }}</p>
+              <p *ngIf="vm.settingsContactDetails.email">{{ vm.settingsContactDetails.email }}</p>
+              <p *ngIf="vm.settingsContactDetails.website">{{ vm.settingsContactDetails.website }}</p>
+              <p *ngIf="vm.settingsGstNumber">GSTIN: {{ vm.settingsGstNumber }}</p>
+            </div>
+
+            <div class="invoice-qr-block">
+              <div class="invoice-qr-code" aria-label="E invoice QR placeholder"></div>
+              <div>Scan to See E-Invoice</div>
+            </div>
+          </header>
+        </ng-template>
+
+        <ng-container *ngIf="!vm.quoteMode; else adminQuotationPrintBody">
+          <section class="invoice-print-section invoice-details-section">
+            <div class="invoice-print-kicker">Invoice Details</div>
+            <div class="invoice-detail-grid">
+              <span>Invoice No</span>
+              <strong>{{ vm.invoiceNumber() }}</strong>
+              <span>Date</span>
+              <strong>{{ vm.invoiceIssuedAt | date:'dd MMM yyyy, hh:mm a' }}</strong>
+              <span>Billed by</span>
+              <strong>Admin</strong>
+            </div>
+          </section>
+
+          <section class="invoice-print-section invoice-bill-section">
+            <div class="invoice-print-kicker">Bill To</div>
+            <strong>{{ vm.invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
+            <div>{{ vm.invoiceLead?.contactName || 'Primary Contact' }}</div>
+            <div *ngIf="vm.invoiceLead?.contactNumber">Mobile: {{ vm.invoiceLead?.contactNumber }}</div>
+            <div *ngIf="vm.invoiceLead?.directorEmailAddress">Email: {{ vm.invoiceLead?.directorEmailAddress }}</div>
+          </section>
+
+          <section class="invoice-service-section">
+            <h3>Service / Product Intended</h3>
+            <table class="invoice-print-table">
+              <thead>
+                <tr>
+                  <th>S.No.</th>
+                  <th>Service / Product</th>
+                  <th>SAC/HSN</th>
+                  <th>Units</th>
+                  <th>Rate</th>
+                  <th>Taxable</th>
+                  <th>CGST ({{ vm.settingsGstPercentage / 2 }}%)</th>
+                  <th>SGST ({{ vm.settingsGstPercentage / 2 }}%)</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of vm.invoiceItems; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.product?.sacHsn || item.product?.hsn || '—' }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ vm.formatInvoiceMoney(item.price) }}</td>
+                  <td>{{ vm.formatInvoiceMoney(vm.invoiceItemTaxable(item)) }}</td>
+                  <td>{{ vm.formatInvoiceMoney(vm.invoiceItemGst(item) / 2) }}</td>
+                  <td>{{ vm.formatInvoiceMoney(vm.invoiceItemGst(item) / 2) }}</td>
+                  <td><strong>{{ vm.formatInvoiceMoney(vm.invoiceItemTotal(item)) }}</strong></td>
+                </tr>
+                <tr class="invoice-table-total-row">
+                  <td colspan="3">Total</td>
+                  <td>{{ vm.invoiceItems.length ? vm.invoiceItems.length : 0 }}</td>
+                  <td>—</td>
+                  <td>{{ vm.formatInvoiceMoney(vm.invoiceSubtotal) }}</td>
+                  <td>{{ vm.formatInvoiceMoney(vm.invoiceCgstAmount) }}</td>
+                  <td>{{ vm.formatInvoiceMoney(vm.invoiceSgstAmount) }}</td>
+                  <td><strong>{{ vm.formatInvoiceMoney(vm.invoiceTotal) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="invoice-print-section invoice-payment-section">
+            <div class="invoice-print-kicker">Payment Receipt</div>
+            <div class="invoice-payment-grid">
+              <span>Taxable amount</span>
+              <strong>{{ vm.formatInvoiceMoney(vm.invoiceSubtotal) }}</strong>
+              <span>CGST</span>
+              <strong>{{ vm.formatInvoiceMoney(vm.invoiceCgstAmount) }}</strong>
+              <span>SGST / UTGST</span>
+              <strong>{{ vm.formatInvoiceMoney(vm.invoiceSgstAmount) }}</strong>
+              <span>Amount received</span>
+              <strong>{{ vm.formatInvoiceMoney(vm.invoiceTotal) }}</strong>
+              <span class="invoice-net-total-label">Net total</span>
+              <strong class="invoice-net-total">{{ vm.formatInvoiceMoney(vm.invoiceTotal) }}</strong>
+            </div>
+          </section>
+
+          <footer class="invoice-print-footer">
+            <div class="invoice-print-kicker">Company Details</div>
+            <p *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</p>
+            <p *ngIf="vm.settingsContactDetails.phone">{{ vm.settingsContactDetails.phone }}</p>
+            <p *ngIf="vm.settingsGstNumber">GSTIN: {{ vm.settingsGstNumber }}</p>
+            <p *ngIf="vm.settingsContactDetails.email">{{ vm.settingsContactDetails.email }}</p>
+            <p *ngIf="vm.settingsContactDetails.website">{{ vm.settingsContactDetails.website }}</p>
+            <p class="invoice-footer-note">{{ vm.settingsInvoiceFooter || 'This is a system-generated invoice. Please verify service details before processing payment.' }}</p>
+          </footer>
+        </ng-container>
+
+        <ng-template #adminQuotationPrintBody>
+          <section class="quotation-letter">
+            <h3>Dear {{ vm.invoiceLead?.contactName || 'Client' }},</h3>
+            <strong>{{ vm.invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
+            <p>It was a pleasure speaking with you.</p>
+            <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide you with the cost details of our services.</p>
+          </section>
+
+          <section class="quotation-service-card">
+            <div class="quotation-service-header">
+              <span>Service Description</span>
+              <span>Qty</span>
+              <span>Price</span>
+              <span>Amount</span>
+            </div>
+            <div class="quotation-service-body">
+              <div class="quotation-service-row" *ngFor="let item of vm.invoiceItems">
+                <span>{{ item.name }}</span>
+                <span>{{ item.quantity }}</span>
+                <span>{{ item.price | number:'1.0-0' }}</span>
+                <span>{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
+              </div>
+              <div class="quotation-total-panel">
+                <div><span>Sub Total</span><strong>{{ vm.invoiceSubtotal | number:'1.0-0' }}</strong></div>
+                <div><span>GST ({{ vm.settingsGstPercentage }}%)</span><strong>{{ vm.invoiceGstAmount | number:'1.0-0' }}</strong></div>
+                <div><span>Grand Total</span><strong>{{ vm.invoiceTotal | number:'1.0-0' }}</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="quotation-kind-note">
+            <strong>Kind Note:</strong>
+            <span>{{ vm.settingsInvoiceFooter || 'We aim to provide the best software to automate your business with high quality at affordable cost.' }}</span>
+          </section>
+        </ng-template>
+      </div>
+
+      <div class="action-row invoice-builder-actions">
+        <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Cancel</button>
+        <button class="primary-action" type="button" (click)="vm.printInvoice()" [disabled]="vm.invoiceItems.length===0 || vm.invoiceSaving || vm.quotationSaving">
+          {{ vm.viewingSavedDocument ? 'Print' : ((vm.invoiceSaving || vm.quotationSaving) ? 'Saving...' : (vm.quoteMode ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══ HISTORY MODAL ══ -->
+<div class="modal-overlay" [class.open]="vm.showHistoryModal" (click)="vm.closeHistoryModal()">
+  <div class="modal history-modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
+    <button class="modal-close" (click)="vm.closeHistoryModal()">×</button>
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #6366f1;">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Activity History
+      </h3>
+      <div *ngIf="vm.historyLead" style="margin-top: 4px; font-size: 0.85rem; color: #64748b; font-weight: 600;">
+        {{ vm.historyLead.contactName }} • {{ vm.historyLead.contactNumber }}
+      </div>
+    </div>
+
+    <div *ngIf="vm.historyLoading" style="padding: 3rem 0; text-align: center; color: #94a3b8;">
+      <div class="spinner-small" style="margin: 0 auto 12px; width: 24px; height: 24px; border-width: 3px;"></div>
+      <p style="font-size: 0.9rem; font-weight: 600;">Fetching logs...</p>
+    </div>
+
+    <div *ngIf="!vm.historyLoading && vm.historyLogs.length === 0" style="padding: 3rem 1rem; text-align: center; color: #94a3b8; background: #f8fafc; border-radius: 16px;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 1rem;">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <p style="font-size: 0.9rem; font-weight: 600;">No history logs found for this lead.</p>
+    </div>
+
+    <div class="history-timeline" *ngIf="!vm.historyLoading && vm.historyLogs.length > 0">
+      <div class="timeline-item" *ngFor="let log of vm.historyLogs">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <div style="display: flex; flex-direction: column;">
+              <span class="timeline-action">{{ log.action }}</span>
+              <span *ngIf="log.contactName" style="font-size: 0.75rem; color: #6366f1; font-weight: 700;">{{ log.contactName }}</span>
+            </div>
+            <span class="timeline-time">{{ (log.createdAt || log.timestamp) | date:'MMM d, h:mm a' }}</span>
+          </div>
+          <div class="timeline-details" *ngIf="log.oldValue || log.newValue">
+            <span class="old-val" *ngIf="log.oldValue">{{ log.oldValue }}</span>
+            <svg *ngIf="log.oldValue && log.newValue" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color: #94a3b8;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            <span class="new-val" *ngIf="log.newValue">{{ log.newValue }}</span>
+          </div>
+          <div class="timeline-extra" *ngIf="log.details || log.metadata?.remark">
+            {{ log.details || log.metadata?.remark }}
+          </div>
+          <div class="timeline-actor" *ngIf="log.changedBy">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {{ log.action === 'Lead Created' && log.changedBy === 'System (Legacy)' ? 'INITIAL DATA' : 'BY: ' + log.changedBy }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="cta-primary" (click)="vm.closeHistoryModal()" style="width: 100%; margin-top: 1.5rem; padding: 0.75rem; border-radius: 12px; justify-content: center;">
+      Close History
+    </button>
+  </div>
+</div>

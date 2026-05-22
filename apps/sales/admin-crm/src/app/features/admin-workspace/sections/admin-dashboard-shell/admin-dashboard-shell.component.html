@@ -1,0 +1,25 @@
+<div class="dashboard-wrapper" *ngIf="vm.loggedIn" [class.ready]="!vm.showSplash" [class.sidebar-minimized]="vm.sidebarMinimized">
+  <app-admin-dashboard-nav [vm]="vm"></app-admin-dashboard-nav>
+
+  <div class="dash-body">
+    <app-admin-dashboard-sidebar [vm]="vm"></app-admin-dashboard-sidebar>
+
+    <main class="dash-main" [class.expanded]="vm.sidebarMinimized">
+      <app-admin-overview-section [vm]="vm"></app-admin-overview-section>
+      <app-admin-employee-dashboard-section [vm]="vm"></app-admin-employee-dashboard-section>
+      <app-admin-employees-section [vm]="vm"></app-admin-employees-section>
+      <app-admin-leads-section [vm]="vm"></app-admin-leads-section>
+      <app-admin-remarks-section [vm]="vm"></app-admin-remarks-section>
+      <app-admin-followups-section [vm]="vm"></app-admin-followups-section>
+      <app-admin-reports-section [vm]="vm"></app-admin-reports-section>
+      <app-admin-organization-section [vm]="vm"></app-admin-organization-section>
+      <app-admin-settings-section [vm]="vm"></app-admin-settings-section>
+      <app-admin-support-section [vm]="vm"></app-admin-support-section>
+      <app-admin-invoice-section [vm]="vm"></app-admin-invoice-section>
+      <app-admin-quotation-section [vm]="vm"></app-admin-quotation-section>
+      <app-crm-admin-section [vm]="vm"></app-crm-admin-section>
+    </main>
+  </div>
+
+  <app-admin-employee-drilldown [vm]="vm"></app-admin-employee-drilldown>
+</div>

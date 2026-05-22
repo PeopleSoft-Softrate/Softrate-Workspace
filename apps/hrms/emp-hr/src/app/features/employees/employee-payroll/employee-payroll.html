@@ -1,0 +1,144 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/employee/dashboard" class="back-link" *ngIf="isSelfPortal()">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <a routerLink="/employees" class="back-link" *ngIf="!isSelfPortal()">
+        <i class="fa-solid fa-arrow-left"></i> Back to Employees
+      </a>
+    </div>
+    <h1>{{ isSelfPortal() ? 'My Payslips' : 'Payroll & Salary' }}</h1>
+    <p>{{ isSelfPortal() ? 'Track salary details, gross/net breakdown, and download monthly payslips' : 'Salary breakdown and payslip history for ' + (employee()?.fullName || 'Employee') }}</p>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  <div class="payroll-grid" *ngIf="!isLoading() && employee()">
+    <!-- Salary Summary Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <hugeicons-icon [icon]="Money03Icon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="stat-info">
+          <span class="label">Gross Salary</span>
+          <h3 class="value">{{ payrollStats.grossSalary }}</h3>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <hugeicons-icon [icon]="Money03Icon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="stat-info">
+          <span class="label">Net Payable</span>
+          <h3 class="value">{{ payrollStats.netSalary }}</h3>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <hugeicons-icon [icon]="LicenseDraftIcon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="stat-info">
+          <span class="label">Total Deductions</span>
+          <h3 class="value">{{ payrollStats.deductions }}</h3>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <hugeicons-icon [icon]="UserCircleIcon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="stat-info">
+          <span class="label">Professional Tax</span>
+          <h3 class="value">{{ payrollStats.tax }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="main-payroll-grid">
+      <!-- Earnings & Deductions Breakdown -->
+      <div class="card breakdown-card">
+        <div class="card-header">
+          <h3>Monthly Breakdown</h3>
+        </div>
+        <div class="breakdown-content">
+          <div class="breakdown-section">
+            <h4 class="section-title earnings">Earnings</h4>
+            <div class="breakdown-item">
+              <span>Basic Salary</span>
+              <span class="amount">₹ 25,000</span>
+            </div>
+            <div class="breakdown-item">
+              <span>HRA</span>
+              <span class="amount">₹ 10,000</span>
+            </div>
+            <div class="breakdown-item">
+              <span>Special Allowance</span>
+              <span class="amount">₹ 10,000</span>
+            </div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-total">
+              <span>Total Earnings</span>
+              <span class="amount">₹ 45,000</span>
+            </div>
+          </div>
+
+          <div class="breakdown-section">
+            <h4 class="section-title deductions">Deductions</h4>
+            <div class="breakdown-item">
+              <span>Provident Fund (PF)</span>
+              <span class="amount">- ₹ 1,800</span>
+            </div>
+            <div class="breakdown-item">
+              <span>Professional Tax</span>
+              <span class="amount">- ₹ 1,200</span>
+            </div>
+            <div class="breakdown-item">
+              <span>ESI</span>
+              <span class="amount">- ₹ 800</span>
+            </div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-total">
+              <span>Total Deductions</span>
+              <span class="amount">- ₹ 3,800</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payslip History -->
+      <div class="card history-card">
+        <div class="card-header">
+          <h3>Payslip History</h3>
+        </div>
+        <div class="history-list">
+          <div class="history-item" *ngFor="let item of salaryHistory">
+            <div class="item-info">
+              <span class="month">{{ item.month }}</span>
+              <span class="date">Paid on {{ item.date }}</span>
+            </div>
+            <div class="item-amount">
+              <span class="amount">{{ item.amount }}</span>
+              <span class="status-badge status-green">{{ item.status }}</span>
+            </div>
+            <button class="icon-btn" (click)="downloadPayslip(item.month)" title="Download Payslip">
+              <hugeicons-icon [icon]="Download02Icon" size="18" [strokeWidth]="1.5"></hugeicons-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Calculating payroll data...</p>
+  </div>
+</div>
+</div>
+<app-employee-sidebar *ngIf="!isSelfPortal()"></app-employee-sidebar>
+</div>

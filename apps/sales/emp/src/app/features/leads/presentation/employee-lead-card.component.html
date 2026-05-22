@@ -1,0 +1,153 @@
+<article class="lead-record-card">
+  <div class="lead-record-card-head">
+    <div class="lead-record-title-row">
+      <h4 [title]="lead.contactName || 'Primary Contact'">{{ lead.contactName || 'Primary Contact' }}</h4>
+      <button
+        class="lead-card-star"
+        type="button"
+        [class.active]="lead.isStarred"
+        [attr.aria-label]="lead.isStarred ? 'Unstar lead' : 'Star lead'"
+        [attr.title]="lead.isStarred ? 'Unstar lead' : 'Star lead'"
+        (click)="$event.stopPropagation(); starToggle.emit(lead)"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="lead-record-line" [title]="lead.contactNumber || '-'">
+    <span class="lead-record-line-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+    </span>
+    <span class="lead-record-line-value">{{ lead.contactNumber || '-' }}</span>
+  </div>
+
+  <button class="lead-card-invoice-action" type="button" title="Generate quote" (click)="$event.stopPropagation(); quotationOpen.emit(lead)" *ngIf="showQuotationAction; else invoiceLeadAction">
+    <span aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
+    </span>
+    <span>Generate Quote</span>
+  </button>
+  <ng-template #invoiceLeadAction>
+    <button class="lead-card-invoice-action" type="button" title="Generate invoice" (click)="$event.stopPropagation(); invoiceOpen.emit(lead)">
+      <span aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
+      </span>
+      <span>Generate Invoice</span>
+    </button>
+  </ng-template>
+
+  <div class="lead-record-line" [title]="lead.setLabel || '-'">
+    <span class="lead-record-line-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg>
+    </span>
+    <span class="lead-record-line-value" [title]="lead.setLabel || '-'">{{ lead.setLabel || '-' }}</span>
+  </div>
+
+  <div class="lead-record-line lead-record-email" [title]="lead.directorEmailAddress || '-'">
+    <span class="lead-record-line-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
+    </span>
+    <span class="lead-record-line-value" [title]="lead.directorEmailAddress || '-'">{{ lead.directorEmailAddress || '-' }}</span>
+  </div>
+
+  <div class="lead-card-remarks">
+    <div class="lead-card-remarks-title">
+      <span class="lead-record-line-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></svg>
+      </span>
+      <span>Remarks</span>
+      <button class="text-action" type="button" title="View remark history" (click)="$event.stopPropagation(); remarkHistoryOpen.emit(lead)">
+        History
+      </button>
+    </div>
+    <div class="lead-card-remark-list" *ngIf="lead.remarks?.length; else emptyLeadCardRemarks">
+      <div class="lead-card-remark-item" *ngFor="let remark of remarkPreviewList()" [title]="remark">{{ remark }}</div>
+    </div>
+    <ng-template #emptyLeadCardRemarks>
+      <div class="lead-card-empty">No remarks added.</div>
+    </ng-template>
+    <div class="lead-card-remark-entry">
+      <div class="lead-card-remark-combobox" (click)="$event.stopPropagation()">
+        <input
+          class="field-input lead-card-remark-input"
+          type="text"
+          [ngModel]="remarkValue"
+          (ngModelChange)="handleRemarkInput($event)"
+          (click)="$event.stopPropagation()"
+          (focus)="openRemarkMenu()"
+          (blur)="queueCloseRemarkMenu()"
+          (keyup.enter)="$event.stopPropagation(); addRemark()"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="Type remark..."
+          [title]="remarkValue || 'Type remark'"
+        />
+        <button
+          class="lead-card-remark-toggle"
+          type="button"
+          title="Show admin remark options"
+          aria-label="Show admin remark options"
+          (mousedown)="$event.preventDefault()"
+          (click)="toggleRemarkMenu()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        <div class="lead-card-remark-options" *ngIf="remarkMenuOpen && filteredAdminRemarkOptions().length > 0">
+          <button
+            class="lead-card-remark-option"
+            type="button"
+            *ngFor="let remark of filteredAdminRemarkOptions()"
+            [title]="remark"
+            (mousedown)="$event.preventDefault()"
+            (click)="selectAdminRemark(remark)"
+          >
+            {{ remark }}
+          </button>
+        </div>
+      </div>
+      <button
+        class="lead-card-add-remark"
+        type="button"
+        title="Add remark"
+        (click)="$event.stopPropagation(); addRemark()"
+        [disabled]="!canAddRemark()"
+        aria-label="Add remark"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="lead-card-actions">
+    <select
+      class="field-select lead-card-status-select"
+      [ngModel]="lead.status"
+      (ngModelChange)="statusChange.emit($event)"
+      (click)="$event.stopPropagation()"
+      [style.color]="statusColor(lead.status)"
+      [disabled]="statusUpdating"
+      [title]="lead.status || 'Lead status'"
+      aria-label="Lead status"
+    >
+      <option *ngFor="let st of statuses" [value]="st" [style.color]="statusColor(st)">{{ st }}</option>
+    </select>
+    <button class="lead-card-icon-action lead-card-followup-action" type="button" title="Schedule follow-up" (click)="$event.stopPropagation(); followupOpen.emit(lead)" aria-label="Schedule follow-up">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>
+    </button>
+    <button
+      class="lead-card-icon-action lead-card-favourite-action"
+      type="button"
+      [class.active]="lead.isFavourite"
+      [attr.aria-label]="lead.isFavourite ? 'Remove from Favorites' : 'Add to Favorites'"
+      [attr.title]="lead.isFavourite ? 'Remove from Favorites' : 'Add to Favorites'"
+      (click)="$event.stopPropagation(); favouriteToggle.emit(lead)"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+    </button>
+  </div>
+</article>

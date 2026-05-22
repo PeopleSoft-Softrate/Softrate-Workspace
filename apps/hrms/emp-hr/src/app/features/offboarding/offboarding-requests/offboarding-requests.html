@@ -1,0 +1,110 @@
+<div class="offboarding-container">
+  <div class="page-header">
+    <h1>Offboarding Workflow</h1>
+    <p>Manage employee resignations through a multi-stage approval process.</p>
+  </div>
+
+
+  <div class="requests-grid" *ngIf="!isLoading(); else loading">
+    <div class="request-card" *ngFor="let req of filteredRequests">
+      <div class="card-header">
+        <div class="avatar">{{ getInitials(req.fullName) }}</div>
+        <div class="intern-info">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3>{{ req.fullName }}</h3>
+            <span class="user-type-badge" [ngClass]="req.userType">{{ req.userType | titlecase }}</span>
+          </div>
+          <p>{{ req.userId }} • {{ req.department }}</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Exit Type</span>
+          <span class="value">{{ req.exitType }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Last Working Day</span>
+          <span class="value">{{ formatDate(req.lastWorkingDay) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Status</span>
+          <span class="status-badge" [ngClass]="req.status">{{ req.status.replace('_', ' ') | titlecase }}</span>
+        </div>
+        <div class="info-row" *ngIf="req.exitReason">
+          <span class="label">Reason</span>
+          <span class="value">{{ req.exitReason }}</span>
+        </div>
+      </div>
+      <div class="card-footer" *ngIf="req.status === 'pending_manager'">
+        <button class="btn btn-primary" (click)="openReview(req, 'approved')">
+          <i class="fa-solid fa-check"></i> Approve as Manager
+        </button>
+        <button class="btn btn-outline" (click)="openReview(req, 'rejected')">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>
+      </div>
+      <div class="card-footer" *ngIf="req.status === 'pending_hr'">
+        <button class="btn btn-primary" (click)="openReview(req, 'accept')">
+          <i class="fa-solid fa-file-signature"></i> Final HR Accept
+        </button>
+        <button class="btn btn-outline" (click)="openReview(req, 'reject')">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredRequests.length === 0">
+      <i class="fa-solid fa-clipboard-check"></i>
+      <h3>No requests found</h3>
+      <p>There are no offboarding requests in this category.</p>
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <div class="empty-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <h3>Loading requests...</h3>
+    </div>
+  </ng-template>
+
+  <!-- Review Modal -->
+  <div class="overlay" *ngIf="showReviewModal()" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ reviewAction() === 'approved' || reviewAction() === 'accept' ? 'Approve' : 'Reject' }} Offboarding</h2>
+        <p>Confirming offboarding for {{ selectedRequest()?.fullName }}</p>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Review Remarks</label>
+          <textarea [(ngModel)]="reviewRemarks" placeholder="Enter your comments here..." rows="4"></textarea>
+        </div>
+
+        <!-- HR Specific: Certificate Selection -->
+        <div class="form-group" *ngIf="isHrType(userRole()) && reviewAction() === 'accept'">
+          <label>Select Certificates to Generate & Send</label>
+          <div class="certificate-checkboxes" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+              <input type="checkbox" [checked]="certInternship()" (change)="certInternship.set(!certInternship())">
+              Internship Completion Certificate
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+              <input type="checkbox" [checked]="certProject()" (change)="certProject.set(!certProject())">
+              Project Completion Certificate
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;">
+              <input type="checkbox" [checked]="certLor()" (change)="certLor.set(!certLor())">
+              Letter of Recommendation (LOR)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary" [disabled]="isLoading()" (click)="submitReview()">
+          {{ isLoading() ? 'Processing...' : 'Confirm Action' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

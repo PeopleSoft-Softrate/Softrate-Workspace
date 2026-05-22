@@ -1,0 +1,3443 @@
+/* Employee detail refinements: fixed record panels, follow-up dropdown, centered modal controls. */
+.dashboard-wrapper .dash-main:has(.admin-employee-fullview) {
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-list-section {
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  min-height: 0 !important;
+  height: clamp(720px, calc(100vh - 140px), 900px) !important;
+}
+
+.dashboard-wrapper .admin-employee-fullview {
+  height: calc(100vh - 6.25rem) !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-section {
+  height: clamp(660px, calc(100vh - 180px), 840px) !important;
+  margin-bottom: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-fullview-scroll {
+  padding-bottom: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-record-frame {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+.dashboard-wrapper .admin-employee-record-frame > .company-rail {
+  position: sticky !important;
+  left: 0 !important;
+  height: 100% !important;
+}
+
+.dashboard-wrapper .admin-employee-company-pane {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+.dashboard-wrapper .admin-employee-card-grid {
+  align-content: start !important;
+  gap: 28px !important;
+  row-gap: 32px !important;
+  grid-auto-rows: auto !important;
+}
+
+.dashboard-wrapper .followup-only-card-actions {
+  grid-template-columns: 1fr !important;
+}
+
+.dashboard-wrapper .followup-card-details {
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-section {
+  height: auto !important;
+  min-height: clamp(660px, calc(100vh - 180px), 840px) !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-frame {
+  height: min(760px, calc(100vh - 180px)) !important;
+  min-height: 680px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-section .admin-employee-company-pane {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .employee-followup-card-grid {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  align-content: start !important;
+  gap: 28px !important;
+  row-gap: 32px !important;
+  grid-auto-rows: auto !important;
+  padding-bottom: 48px !important;
+}
+
+.dashboard-wrapper .employee-followup-record-card {
+  min-height: 516px !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame {
+  height: min(760px, calc(100vh - 180px)) !important;
+  min-height: 680px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-employee-company-pane {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  align-content: start !important;
+  gap: 28px !important;
+  row-gap: 32px !important;
+  grid-auto-rows: auto !important;
+  padding-bottom: 48px !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-employee-style-card {
+  min-height: 456px !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.dashboard-wrapper .employee-followup-record-card .followup-card-edit {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #f3b629 !important;
+}
+
+.dashboard-wrapper .employee-followup-record-card .followup-card-edit svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.dashboard-wrapper .employee-followup-record-card .lead-card-remarks {
+  min-height: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-followup-filter-field {
+  flex: 0 0 auto !important;
+}
+
+.dashboard-wrapper .admin-employee-followup-filter-select {
+  width: 180px !important;
+  min-width: 180px !important;
+  padding-right: 36px !important;
+  text-align: center !important;
+  text-align-last: center !important;
+  font-weight: 500 !important;
+}
+
+.dashboard-wrapper .admin-employee-add-modal {
+  width: min(1120px, calc(100vw - 64px)) !important;
+  max-height: calc(100vh - 56px) !important;
+  border-radius: 28px !important;
+}
+
+.dashboard-wrapper .admin-employee-add-modal-head {
+  align-items: flex-start !important;
+}
+
+.dashboard-wrapper .admin-employee-add-modal-head .secondary-action,
+.dashboard-wrapper .admin-employee-add-modal-toolbar .secondary-action,
+.dashboard-wrapper .admin-employee-modal-actions .secondary-action,
+.dashboard-wrapper .admin-employee-modal-actions .primary-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 0 18px !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-employee-add-modal-head .secondary-action {
+  min-width: 74px !important;
+}
+
+.dashboard-wrapper .admin-employee-upload-button {
+  min-width: 126px !important;
+  gap: 10px !important;
+}
+
+.dashboard-wrapper .admin-employee-add-modal-toolbar {
+  align-items: center !important;
+}
+
+.dashboard-wrapper .admin-employee-modal-grid .mini-field > span,
+.dashboard-wrapper .admin-employee-modal-wide-field > span {
+  display: block !important;
+  margin-bottom: 8px !important;
+  color: #667085 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .admin-employee-modal-grid .field-input,
+.dashboard-wrapper .admin-employee-modal-grid .field-select,
+.dashboard-wrapper .admin-employee-modal-wide-field .field-input {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  line-height: 48px !important;
+}
+
+.dashboard-wrapper .admin-employee-modal-grid .field-input::placeholder,
+.dashboard-wrapper .admin-employee-modal-wide-field .field-input::placeholder {
+  color: #667085 !important;
+  opacity: 0.85 !important;
+}
+
+.dashboard-wrapper .admin-employee-modal-textarea {
+  height: auto !important;
+  min-height: 64px !important;
+  padding-top: 14px !important;
+  line-height: 1.35 !important;
+}
+
+/* Match Remarks Filter and Follow-ups typography to the Leads page. */
+.dashboard-wrapper .admin-remarks-view .leads-container,
+.dashboard-wrapper .admin-followups-record-frame {
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr) !important;
+  border: 1px solid var(--crm-line) !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail,
+.dashboard-wrapper .admin-followups-record-frame > .company-rail {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  border: 0 !important;
+  border-right: 1px solid var(--crm-line) !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-rail-header,
+.dashboard-wrapper .admin-followups-record-frame .rail-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 70px !important;
+  padding: 24px 24px 20px !important;
+  border-bottom: 1px solid var(--crm-line) !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-remarks-rail-header > div:first-child,
+.dashboard-wrapper .admin-followups-record-frame .rail-heading {
+  color: var(--crm-ink) !important;
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .admin-remarks-rail-header > div:last-child,
+.dashboard-wrapper .admin-followups-record-frame .rail-total {
+  color: var(--crm-muted) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  text-align: right !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .leads-list,
+.dashboard-wrapper .admin-followups-record-frame .rail-list {
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item,
+.dashboard-wrapper .admin-followups-record-frame .rail-item {
+  position: relative !important;
+  display: grid !important;
+  gap: 8px !important;
+  min-height: 82px !important;
+  margin: 0 !important;
+  padding: 18px 24px 18px 28px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--crm-line-soft) !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item::before,
+.dashboard-wrapper .admin-followups-record-frame .rail-item::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 16px !important;
+  bottom: 16px !important;
+  width: 2px !important;
+  background: transparent !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item.active,
+.dashboard-wrapper .admin-followups-record-frame .rail-item.active {
+  background: #fbfdff !important;
+  border-color: var(--crm-line) !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item.active::before,
+.dashboard-wrapper .admin-followups-record-frame .rail-item.active::before {
+  background: var(--crm-blue) !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-name,
+.dashboard-wrapper .admin-followups-record-frame .rail-item-name {
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.32 !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .admin-remarks-view .lead-item-name,
+.dashboard-wrapper .admin-followups-record-frame .rail-item-name {
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta,
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta span,
+.dashboard-wrapper .admin-followups-record-frame .rail-item-meta {
+  color: var(--crm-muted) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-header,
+.dashboard-wrapper .admin-followups-company-header {
+  min-height: 110px !important;
+  padding: 28px 32px !important;
+  border-bottom: 1px solid var(--crm-line) !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-header h3,
+.dashboard-wrapper .admin-followups-company-header h3 {
+  max-width: 100% !important;
+  margin: 0 !important;
+  color: var(--crm-ink) !important;
+  font-size: clamp(22px, 1.6vw, 30px) !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.025em !important;
+  text-transform: none !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-header .lead-company-pane-subtitle,
+.dashboard-wrapper .admin-followups-company-header .lead-company-pane-subtitle {
+  margin-top: 8px !important;
+  color: #667085 !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+
+.dashboard-wrapper .admin-remarks-card-grid,
+.dashboard-wrapper .admin-followup-card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
+  gap: 18px !important;
+  padding: 26px 32px !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card,
+.dashboard-wrapper .admin-followup-contact-card {
+  padding: 22px !important;
+  border: 1px solid var(--crm-line) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-record-title-row h4,
+.dashboard-wrapper .admin-followup-contact-card .lead-record-title-row h4 {
+  color: var(--crm-ink) !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.25 !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-record-line,
+.dashboard-wrapper .admin-followup-contact-card .lead-record-line {
+  color: #667085 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* Admin follow-ups toolbar and rail alignment. */
+.dashboard-wrapper .admin-followups-mode-field {
+  flex: 0 0 220px !important;
+  margin: 0 !important;
+}
+
+.dashboard-wrapper .admin-followups-mode-field > span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+}
+
+.dashboard-wrapper .admin-followups-mode-select {
+  width: 220px !important;
+  min-width: 220px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame .rail-header {
+  min-height: 64px !important;
+  padding: 0 24px !important;
+  align-items: center !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame .rail-heading,
+.dashboard-wrapper .admin-followups-record-frame .rail-total {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 64px !important;
+  margin: 0 !important;
+}
+
+/* Scrollable remark histories for admin lead and follow-up cards. */
+.dashboard-wrapper .admin-lead-record-card .lead-card-remarks,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-remarks,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remarks {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  min-height: 178px !important;
+}
+
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remarks,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remarks {
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-height: 118px !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card .lead-card-remark-list,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-remark-list,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remark-list,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remark-list {
+  display: grid !important;
+  align-content: start !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  max-height: 78px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  padding-right: 6px !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+  scrollbar-gutter: stable !important;
+  scrollbar-width: thin !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card .lead-card-remark-list::-webkit-scrollbar,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-remark-list::-webkit-scrollbar,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remark-list::-webkit-scrollbar,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remark-list::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card .lead-card-remark-list::-webkit-scrollbar-track,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-remark-list::-webkit-scrollbar-track,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remark-list::-webkit-scrollbar-track,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remark-list::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card .lead-card-remark-list::-webkit-scrollbar-thumb,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-remark-list::-webkit-scrollbar-thumb,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remark-list::-webkit-scrollbar-thumb,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remark-list::-webkit-scrollbar-thumb {
+  border-radius: 999px !important;
+  background: #cbd5e1 !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card .lead-card-remark-item,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-remark-item,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remark-item,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remark-item {
+  overflow-wrap: anywhere !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card .lead-card-empty,
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-empty,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-empty,
+.dashboard-wrapper .employee-followup-record-card .lead-card-empty {
+  min-height: 78px !important;
+}
+
+/* Quote builder modal action alignment shared by Leads, Remarks, Follow-ups, and Employee detail entry points. */
+.admin-employee-modal-overlay .admin-quote-modal {
+  overflow: hidden !important;
+}
+
+.admin-quote-modal .invoice-builder {
+  max-height: calc(100vh - 48px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+  scrollbar-gutter: stable !important;
+  scrollbar-width: thin !important;
+}
+
+.admin-quote-modal .invoice-builder::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.admin-quote-modal .invoice-builder::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.admin-quote-modal .invoice-builder::-webkit-scrollbar-thumb {
+  border-radius: 999px !important;
+  background: #cbd5e1 !important;
+}
+
+.admin-quote-modal .invoice-builder-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+}
+
+.admin-quote-modal .invoice-builder-header .secondary-action,
+.admin-quote-modal .invoice-form-grid .primary-action,
+.admin-quote-modal .invoice-builder-actions .secondary-action,
+.admin-quote-modal .invoice-builder-actions .primary-action {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+
+.admin-quote-modal .invoice-form-grid .primary-action {
+  align-self: end !important;
+  min-width: 112px !important;
+  height: 48px !important;
+}
+
+.admin-quote-modal .invoice-builder-actions .primary-action {
+  min-width: 190px !important;
+}
+
+.admin-quote-modal .invoice-builder-actions {
+  position: sticky !important;
+  bottom: -24px !important;
+  z-index: 4 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin: 0 -24px -24px !important;
+  padding: 16px 24px !important;
+  border-top: 1px solid #e4e7ec !important;
+  background: #ffffff !important;
+}
+
+.admin-quote-modal .invoice-form-grid .primary-action:not(:disabled),
+.admin-quote-modal .invoice-builder-actions .primary-action:not(:disabled) {
+  border-color: #3157c8 !important;
+  background: #3157c8 !important;
+  color: #ffffff !important;
+}
+
+.admin-quote-modal .invoice-form-grid .primary-action:not(:disabled) {
+  min-width: 112px !important;
+}
+
+.admin-quote-modal .invoice-builder-header .secondary-action:hover:not(:disabled),
+.admin-quote-modal .invoice-builder-actions .secondary-action:hover:not(:disabled) {
+  border-color: #111827 !important;
+  background: #f8fafc !important;
+  color: #111827 !important;
+}
+
+.admin-quote-modal .invoice-form-grid .primary-action:hover:not(:disabled),
+.admin-quote-modal .invoice-builder-actions .primary-action:hover:not(:disabled) {
+  border-color: #2449ad !important;
+  background: #2449ad !important;
+  color: #ffffff !important;
+}
+
+.admin-quote-modal .invoice-form-grid .primary-action:disabled,
+.admin-quote-modal .invoice-builder-actions .primary-action:disabled,
+.admin-quote-modal .invoice-builder-actions .secondary-action:disabled {
+  border-color: #d8dee8 !important;
+  background: #f3f4f6 !important;
+  color: #98a2b3 !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 900px) {
+  .admin-quote-modal .invoice-builder {
+    max-height: calc(100vh - 32px) !important;
+    padding: 16px !important;
+  }
+
+  .admin-quote-modal .invoice-builder-header,
+  .admin-quote-modal .invoice-builder-actions {
+    align-items: stretch !important;
+  }
+
+  .admin-quote-modal .invoice-builder-actions {
+    bottom: -16px !important;
+    margin: 0 -16px -16px !important;
+    padding: 14px 16px !important;
+  }
+
+  .admin-quote-modal .invoice-builder-header .secondary-action,
+  .admin-quote-modal .invoice-form-grid .primary-action,
+  .admin-quote-modal .invoice-builder-actions .secondary-action,
+  .admin-quote-modal .invoice-builder-actions .primary-action {
+    width: 100% !important;
+  }
+}
+
+/* Center full-panel empty states so no-data views do not sit at the rail edge. */
+.dashboard-wrapper .rail-list > .empty-state-inline {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100% !important;
+  padding: 32px 24px !important;
+  color: #667085 !important;
+  text-align: center !important;
+  line-height: 1.45 !important;
+}
+
+.dashboard-wrapper .lead-company-pane > .empty-state-inline-pane,
+.dashboard-wrapper .lead-company-pane-scroll > .empty-state-inline-pane,
+.dashboard-wrapper .admin-employee-company-pane > .empty-state-inline-pane,
+.dashboard-wrapper .admin-followups-company-pane > .empty-state-inline-pane {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  min-height: 100% !important;
+  height: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 32px !important;
+  border: 0 !important;
+  background: #ffffff !important;
+  color: #667085 !important;
+  text-align: center !important;
+  line-height: 1.45 !important;
+}
+
+.dashboard-wrapper .lead-company-pane-scroll > .empty-state-inline-pane {
+  min-height: 100% !important;
+}
+
+.dashboard-wrapper .admin-remarks-view .lead-detail-view > .leads-empty-state {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  min-height: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 32px !important;
+  text-align: center !important;
+}
+
+.dashboard-wrapper .admin-followups-view {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  min-height: calc(100vh - 128px) !important;
+}
+
+.dashboard-wrapper .admin-followups-view .dash-header-row {
+  margin-bottom: 18px !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame {
+  height: calc(100vh - 300px) !important;
+  min-height: 520px !important;
+  max-height: calc(100vh - 300px) !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame > .company-rail,
+.dashboard-wrapper .admin-followups-record-frame > .record-table-pane {
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame .rail-list,
+.dashboard-wrapper .admin-followups-company-pane .admin-followup-card-grid {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+.dashboard-wrapper .admin-followups-company-pane {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+}
+
+/* Follow-up cards use the same anatomy as the standard lead cards. */
+.dashboard-wrapper .admin-followup-contact-card,
+.dashboard-wrapper .employee-followup-record-card {
+  grid-template-rows: auto auto auto auto auto minmax(178px, auto) auto !important;
+}
+
+.dashboard-wrapper .admin-followup-contact-card .lead-record-card-head,
+.dashboard-wrapper .employee-followup-record-card .lead-record-card-head {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+
+.dashboard-wrapper .admin-followup-contact-card .lead-card-remarks,
+.dashboard-wrapper .employee-followup-record-card .lead-card-remarks {
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  min-height: 178px !important;
+}
+
+.dashboard-wrapper .admin-followup-contact-card .lead-card-actions,
+.dashboard-wrapper .employee-followup-record-card .lead-card-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 44px 44px !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+/* Leads-page parity for admin company views: Leads, Remark Filter, Follow-ups. */
+.dashboard-wrapper .admin-remarks-view .leads-container,
+.dashboard-wrapper .admin-followups-record-frame {
+  grid-template-columns: minmax(280px, 336px) minmax(0, 1fr) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail,
+.dashboard-wrapper .admin-followups-record-frame > .company-rail {
+  background: #fbfbfc !important;
+  border-right: 1px solid var(--admin-line) !important;
+}
+
+.dashboard-wrapper .admin-remarks-rail-header,
+.dashboard-wrapper .admin-followups-record-frame .rail-header {
+  min-height: 72px !important;
+  padding: 18px 20px !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+}
+
+.dashboard-wrapper .admin-remarks-rail-header > div:first-child,
+.dashboard-wrapper .admin-followups-record-frame .rail-heading,
+.dashboard-wrapper .admin-remarks-rail-header > div:last-child,
+.dashboard-wrapper .admin-followups-record-frame .rail-total {
+  color: var(--admin-text) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 22.4px !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .leads-list,
+.dashboard-wrapper .admin-followups-record-frame .rail-list {
+  background: transparent !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item,
+.dashboard-wrapper .admin-followups-record-frame .rail-item {
+  min-height: 76px !important;
+  padding: 16px 20px !important;
+  border-left: 2px solid transparent !important;
+  border-bottom: 1px solid var(--admin-line-soft) !important;
+  background: transparent !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item::before,
+.dashboard-wrapper .admin-followups-record-frame .rail-item::before {
+  display: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item.active,
+.dashboard-wrapper .admin-followups-record-frame .rail-item.active {
+  border-left-color: var(--admin-ink) !important;
+  background: #f4f4f5 !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-name,
+.dashboard-wrapper .admin-followups-record-frame .rail-item-name {
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.32 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta,
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta span,
+.dashboard-wrapper .admin-followups-record-frame .rail-item-meta {
+  color: #667085 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-header,
+.dashboard-wrapper .admin-followups-company-header {
+  min-height: 92px !important;
+  padding: 20px 28px !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-header h3,
+.dashboard-wrapper .admin-followups-company-header h3 {
+  color: var(--admin-text) !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-header .lead-company-pane-subtitle,
+.dashboard-wrapper .admin-followups-company-header .lead-company-pane-subtitle {
+  margin-top: 8px !important;
+  color: #71717a !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 20.15px !important;
+}
+
+.dashboard-wrapper .admin-remarks-card-grid,
+.dashboard-wrapper .admin-followup-card-grid {
+  grid-template-columns: repeat(2, minmax(360px, 1fr)) !important;
+  gap: 18px !important;
+  padding: 26px 28px !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card,
+.dashboard-wrapper .admin-followup-contact-card {
+  padding: 20px !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-record-title-row h4,
+.dashboard-wrapper .admin-followup-contact-card .lead-record-title-row h4 {
+  color: var(--admin-text) !important;
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-record-line,
+.dashboard-wrapper .admin-followup-contact-card .lead-record-line {
+  color: #667085 !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  line-height: 22.4px !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-record-title-row,
+.dashboard-wrapper .admin-followup-contact-card .lead-record-title-row {
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-star,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-star {
+  align-self: center !important;
+  margin-left: 0 !important;
+}
+
+.dashboard-wrapper .admin-remarks-contact-card .lead-card-star svg,
+.dashboard-wrapper .admin-followup-contact-card .lead-card-star svg {
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.dashboard-wrapper .remarks-command-panel,
+.dashboard-wrapper .admin-followups-toolbar {
+  min-height: 65px !important;
+  padding: 12px 24px !important;
+  border: 1px solid var(--admin-line) !important;
+  border-bottom: 0 !important;
+}
+
+.dashboard-wrapper .remarks-command-row,
+.dashboard-wrapper .admin-followups-toolbar .workspace-controls {
+  min-height: 40px !important;
+  align-items: center !important;
+}
+
+.dashboard-wrapper .remarks-filter-select,
+.dashboard-wrapper .admin-followups-toolbar .filter-select-field,
+.dashboard-wrapper .admin-followups-toolbar .field-input {
+  width: 214px !important;
+  min-width: 214px !important;
+  max-width: 214px !important;
+  min-height: 46px !important;
+  height: 46px !important;
+  padding: 0 44px 0 16px !important;
+  border-radius: 14px !important;
+  font-size: 15px !important;
+}
+
+.dashboard-wrapper .remarks-panel-search,
+.dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search {
+  min-height: 46px !important;
+  height: 46px !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+}
+
+/* Final follow-up layout fix: use the same fixed frame as Leads and keep the filter row stable. */
+.dashboard-wrapper .admin-followups-view {
+  min-height: calc(100vh - 120px) !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-view .dash-header-row {
+  display: none !important;
+}
+
+.dashboard-wrapper .admin-followups-frame {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  height: calc(100vh - 136px) !important;
+  min-height: 520px !important;
+  border: 1px solid var(--admin-line) !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 76px !important;
+  margin: 0 !important;
+  padding: 16px 24px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-toolbar .workspace-controls {
+  display: grid !important;
+  grid-template-columns: 214px 214px minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 12px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+.dashboard-wrapper .admin-followups-mode-field,
+.dashboard-wrapper .admin-followups-date-control,
+.dashboard-wrapper .admin-followups-toolbar-search {
+  min-width: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.dashboard-wrapper .admin-followups-mode-field .filter-select-field,
+.dashboard-wrapper .admin-followups-date-control .admin-followups-date-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 44px 0 16px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard-wrapper .admin-followups-date-control .admin-followups-date-input {
+  padding: 0 16px !important;
+}
+
+.dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 18px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search .topbar-search-icon {
+  position: static !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search .topbar-input {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: #526176 !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame {
+  display: grid !important;
+  grid-template-columns: minmax(248px, 296px) minmax(0, 1fr) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame > .company-rail {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame > .record-table-pane,
+.dashboard-wrapper .admin-followups-company-pane {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-followups-record-frame .rail-list,
+.dashboard-wrapper .admin-followups-company-pane .admin-followup-card-grid {
+  min-height: 0 !important;
+  overflow: auto !important;
+}
+
+@media (max-width: 980px) {
+  .dashboard-wrapper .admin-followups-frame {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .dashboard-wrapper .admin-followups-toolbar .workspace-controls {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-wrapper .admin-followups-record-frame {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Employee detail owns its own scroll; prevent the document from scrolling into blank space. */
+html:has(.dashboard-wrapper .admin-employee-fullview),
+body:has(.dashboard-wrapper .admin-employee-fullview) {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .dash-main:has(.admin-employee-fullview) {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* Keep employee-detail follow-ups independent from the outer admin follow-ups rail sizing. */
+.dashboard-wrapper {
+  --dashboard-color-incoming: #4f8fe7;
+  --dashboard-color-outgoing: #f28c38;
+  --dashboard-color-missed: #f4c542;
+  --dashboard-color-rejected: #e46f61;
+}
+
+.dashboard-wrapper .admin-employee-followups-frame {
+  grid-template-columns: 336px minmax(0, 1fr) !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-frame > .company-rail {
+  width: 336px !important;
+  min-width: 336px !important;
+  max-width: 336px !important;
+}
+
+/* Dashboard palette sync: update colors only, keep the current graph layouts. */
+.dashboard-wrapper .summary-dot-incoming {
+  background: var(--dashboard-color-incoming) !important;
+}
+
+.dashboard-wrapper .summary-dot-outgoing {
+  background: var(--dashboard-color-outgoing) !important;
+}
+
+.dashboard-wrapper .summary-dot-missed {
+  background: var(--dashboard-color-missed) !important;
+}
+
+.dashboard-wrapper .summary-dot-rejected {
+  background: var(--dashboard-color-rejected) !important;
+}
+
+.dashboard-wrapper .top-employee-side-bar .signal-in,
+.dashboard-wrapper .signal-dot.in {
+  background: var(--dashboard-color-incoming) !important;
+}
+
+.dashboard-wrapper .top-employee-side-bar .signal-out,
+.dashboard-wrapper .signal-dot.out {
+  background: var(--dashboard-color-outgoing) !important;
+}
+
+.dashboard-wrapper .top-employee-side-bar .signal-missed,
+.dashboard-wrapper .signal-dot.miss {
+  background: var(--dashboard-color-missed) !important;
+}
+
+.dashboard-wrapper .admin-employee-fullview-scroll {
+  overscroll-behavior: contain !important;
+  scrollbar-gutter: stable !important;
+}
+
+/* Keep the overview desktop layout at normal browser zoom. */
+.dashboard-wrapper .admin-overview-view .dash-grid-layout {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+@media (min-width: 1181px) {
+  .dashboard-wrapper .admin-overview-view .charts-row {
+    grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.9fr) !important;
+  }
+
+  .dashboard-wrapper .admin-overview-view .admin-employees-card {
+    border-top: 0 !important;
+    border-left: 1px solid var(--crm-line, var(--admin-line)) !important;
+  }
+
+  .dashboard-wrapper .admin-overview-view .bottom-stats-grid.call-analytics-panel {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-wrapper .admin-overview-view .call-analytics-widget {
+    border-right: 1px solid var(--crm-line, var(--admin-line)) !important;
+    border-bottom: 0 !important;
+  }
+
+  .dashboard-wrapper .admin-overview-view .call-analytics-widget:last-child {
+    border-right: 0 !important;
+  }
+}
+
+/* Employee portal lead-card styling shared by admin right-pane card views. */
+.dashboard-wrapper .admin-employee-style-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  grid-auto-rows: max-content !important;
+  align-items: start !important;
+  align-content: start !important;
+  gap: 16px !important;
+  padding: 24px !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card {
+  position: relative !important;
+  align-self: start !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  padding: 18px 18px 14px !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: var(--text-1, #0f172a) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+  overflow: visible !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #d8dee8 !important;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1) !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .admin-lead-card-head,
+.dashboard-wrapper .admin-employee-style-card .lead-record-card-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-title-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-title-row h4 {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  color: var(--text-1, #0f172a) !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line,
+.dashboard-wrapper .admin-employee-style-card .lead-phone,
+.dashboard-wrapper .admin-employee-style-card .lead-meta {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  color: var(--text-2, #475569) !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-email,
+.dashboard-wrapper .admin-employee-style-card .lead-meta {
+  color: var(--text-3, #64748b) !important;
+  font-size: 0.78rem !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line > span:last-child,
+.dashboard-wrapper .admin-employee-style-card .lead-record-email > span:last-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line-icon {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  color: #64748b !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line-icon svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-star svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark svg,
+.dashboard-wrapper .admin-employee-style-card .followup-card-edit svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line-icon svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-star svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark svg,
+.dashboard-wrapper .admin-employee-style-card .followup-card-edit svg {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.4 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  min-height: 36px !important;
+  margin: 4px 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  cursor: pointer !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action:hover {
+  border-color: #cbd5e1 !important;
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action span:first-child {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  display: inline-flex !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .admin-lead-call-count {
+  position: static !important;
+  align-self: flex-start !important;
+  min-height: 22px !important;
+  margin: -2px 0 0 !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, auto) auto !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  margin-top: 4px !important;
+  padding: 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card.admin-followup-contact-card .lead-card-remarks,
+.dashboard-wrapper .admin-employee-style-card.employee-followup-record-card .lead-card-remarks {
+  grid-template-rows: 24px minmax(0, 1fr) 42px !important;
+  min-height: 168px !important;
+  max-height: 168px !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  color: #64748b !important;
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title .lead-record-line-icon {
+  width: 10px !important;
+  min-width: 10px !important;
+  height: 10px !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title .text-action {
+  margin-left: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #2563eb !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-list {
+  display: grid !important;
+  align-content: start !important;
+  gap: 5px !important;
+  min-height: 0 !important;
+  max-height: 84px !important;
+  padding-right: 4px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item,
+.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: var(--text-2, #475569) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item + .lead-card-remark-item {
+  padding-top: 5px !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-entry {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 34px !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-remark-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  line-height: 34px !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 9px !important;
+  border: 1px solid #c7d2fe !important;
+  border-radius: 9px !important;
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 4px !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-status-select {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 7px 10px !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  background: #f8fafc !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action,
+.dashboard-wrapper .admin-employee-style-card .followup-card-edit {
+  flex: 0 0 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 9px !important;
+  background: #ffffff !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action:hover,
+.dashboard-wrapper .admin-employee-style-card .followup-card-edit:hover {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star {
+  flex: 0 0 24px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: flex-start !important;
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  margin: -2px 0 0 !important;
+  padding: 4px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: #fbbf24 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star.active svg {
+  fill: #fbbf24 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-favourite-action {
+  color: #ef4444 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-favourite-action.active {
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-favourite-action.active svg {
+  fill: #ef4444 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-followup-action {
+  color: #2563eb !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .followup-only-card-actions {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .followup-only-card-actions .followup-card-details {
+  width: 100% !important;
+  min-height: 44px !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .fu-reminder,
+.dashboard-wrapper .admin-employee-style-card .admin-followup-reminder {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: var(--orange, #f97316) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .admin-followup-assigned {
+  margin: -2px 0 2px !important;
+  color: #64748b !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 720px) {
+  .dashboard-wrapper .admin-employee-style-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 16px !important;
+  }
+
+  .dashboard-wrapper .admin-employee-style-card {
+    padding: 16px !important;
+  }
+}
+
+/* Final admin overview and follow-up card alignment fixes. */
+.dashboard-wrapper .admin-overview-view .charts-row {
+  align-items: stretch !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-card,
+.dashboard-wrapper .admin-overview-view .admin-employees-card {
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 28px 30px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-card {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(240px, 1fr) !important;
+  row-gap: 22px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  gap: 16px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-kpis h3,
+.dashboard-wrapper .admin-overview-view .top-employee-board-header h3 {
+  margin: 0 !important;
+  font-size: 24px !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(2, max-content) !important;
+  align-items: end !important;
+  gap: 28px !important;
+  margin-top: 12px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-stat-insights {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  justify-self: stretch !important;
+  margin: 0 !important;
+  border: 1px solid var(--crm-line, var(--admin-line)) !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-insight-cell {
+  min-width: 0 !important;
+  min-height: 96px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 18px 20px 22px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-insight-cell strong {
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  font-size: clamp(16px, 1.1vw, 20px) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .stats-chart-body {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  grid-template-columns: minmax(160px, 0.82fr) minmax(0, 1fr) !important;
+  gap: 22px !important;
+  align-self: stretch !important;
+}
+
+.dashboard-wrapper .admin-overview-view .donut-chart-wrap {
+  width: min(220px, 100%) !important;
+  height: auto !important;
+  aspect-ratio: 1 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .donut-legend-grid {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-employees-card {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  row-gap: 16px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-board-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  margin: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-board-header p {
+  max-width: 32ch !important;
+  margin-top: 6px !important;
+  line-height: 1.35 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-board {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: start !important;
+  align-items: start !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-ranklist {
+  display: grid !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-row {
+  display: grid !important;
+  grid-template-columns: 46px minmax(0, 1fr) 18px !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-name,
+.dashboard-wrapper .admin-overview-view .top-employee-inline-stats {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-side {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-side-card,
+.dashboard-wrapper .admin-overview-view .top-employee-side-chart {
+  min-width: 0 !important;
+  min-height: 104px !important;
+  padding: 12px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-side-card strong,
+.dashboard-wrapper .admin-overview-view .top-employee-side-chart-head strong {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-overview-view .top-employee-side-card p,
+.dashboard-wrapper .admin-overview-view .top-employee-side-legend span {
+  overflow-wrap: anywhere !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star:disabled,
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action:disabled,
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action:disabled,
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title .text-action:disabled,
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark:disabled {
+  opacity: 0.58 !important;
+  cursor: not-allowed !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action:disabled:hover {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+  color: #475569 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-remark-input:disabled,
+.dashboard-wrapper .admin-employee-style-card .lead-card-status-select:disabled {
+  color: #94a3b8 !important;
+  background: #f8fafc !important;
+  cursor: not-allowed !important;
+}
+
+.dashboard-wrapper .admin-followups-company-pane .admin-employee-style-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.dashboard-wrapper .admin-followups-company-pane .admin-followup-contact-card.admin-employee-style-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 760px) {
+  .dashboard-wrapper .admin-overview-view .admin-statistics-header,
+  .dashboard-wrapper .admin-overview-view .admin-statistics-metrics,
+  .dashboard-wrapper .admin-overview-view .admin-stat-insights,
+  .dashboard-wrapper .admin-overview-view .top-employee-side {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Admin company panes should match the employee lead-card flow: one stacked card column. */
+.dashboard-wrapper .admin-leads-company-pane .admin-employee-style-grid,
+.dashboard-wrapper .admin-remarks-view .lead-detail-view .admin-employee-style-grid,
+.dashboard-wrapper .admin-followups-company-pane .admin-employee-style-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.dashboard-wrapper .admin-leads-company-pane .admin-employee-style-card,
+.dashboard-wrapper .admin-remarks-view .lead-detail-view .admin-employee-style-card,
+.dashboard-wrapper .admin-followups-company-pane .admin-employee-style-card {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+.dashboard-wrapper .admin-leads-company-header,
+.dashboard-wrapper .admin-remarks-company-header,
+.dashboard-wrapper .admin-followups-company-header {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-leads-company-header > div:first-child,
+.dashboard-wrapper .admin-remarks-company-header > div:first-child,
+.dashboard-wrapper .admin-followups-company-header > div:first-child {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.dashboard-wrapper .admin-leads-company-header h3,
+.dashboard-wrapper .admin-remarks-company-header h3,
+.dashboard-wrapper .admin-followups-company-header h3,
+.dashboard-wrapper .admin-leads-company-header .lead-company-pane-subtitle,
+.dashboard-wrapper .admin-remarks-company-header .lead-company-pane-subtitle,
+.dashboard-wrapper .admin-followups-company-header .lead-company-pane-subtitle {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-followups-company-header .admin-leads-pane-actions {
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  gap: 10px !important;
+}
+
+.dashboard-wrapper .admin-followups-company-header .admin-leads-pane-actions .admin-ai-summary-button {
+  min-width: 126px !important;
+  padding: 0 18px !important;
+}
+
+.dashboard-wrapper .admin-followups-company-header .admin-leads-pane-actions .invoice-date-filter-button {
+  min-width: 96px !important;
+  padding: 0 18px !important;
+}
+
+@media (max-width: 760px) {
+  .dashboard-wrapper .admin-leads-company-header,
+  .dashboard-wrapper .admin-remarks-company-header,
+  .dashboard-wrapper .admin-followups-company-header {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* CRM client detail pane: keep status metadata and contact cards compact. */
+.dashboard-wrapper .crm-client-frame .admin-leads-company-pane {
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+}
+
+.dashboard-wrapper .crm-client-frame .crm-status-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 14px 28px !important;
+  border-bottom: 1px solid #e7ebf1 !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-client-frame .crm-status-grid .lead-detail-field {
+  display: grid !important;
+  align-content: start !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid #e7ebf1 !important;
+  border-radius: 8px !important;
+  background: #f8fafc !important;
+}
+
+.dashboard-wrapper .crm-client-frame .crm-status-grid .lead-detail-field span {
+  display: block !important;
+  color: #667085 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.dashboard-wrapper .crm-client-frame .crm-status-grid .lead-detail-field strong {
+  display: block !important;
+  min-width: 0 !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.dashboard-wrapper .crm-client-frame .lead-company-pane-scroll {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .admin-employee-style-grid {
+  align-content: start !important;
+  grid-auto-rows: auto !important;
+  gap: 16px !important;
+  padding: 18px 28px 24px !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .admin-employee-style-card {
+  grid-template-rows: auto !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 18px !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .lead-card-remarks {
+  min-height: 0 !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .lead-card-actions {
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .lead-card-actions .company-remarks-button {
+  min-width: 74px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+}
+
+@media (max-width: 1120px) {
+  .dashboard-wrapper .crm-client-frame .crm-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-wrapper .crm-client-frame .crm-status-grid {
+    grid-template-columns: 1fr !important;
+    padding: 14px 18px !important;
+  }
+
+  .dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .admin-employee-style-grid {
+    padding: 16px 18px 22px !important;
+  }
+}
+
+/* CRM feature parity with deal-voice-employee controls. */
+.dashboard-wrapper .crm-admin-view,
+.dashboard-wrapper .crm-admin-view * {
+  font-family: var(--admin-ui-font) !important;
+  letter-spacing: 0 !important;
+}
+
+.dashboard-wrapper .crm-filter-bar.workspace-header-filters-only {
+  min-height: 56px !important;
+  height: auto !important;
+  padding: 12px 24px !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-filter-controls {
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.dashboard-wrapper .crm-filter-search.topbar-search,
+.dashboard-wrapper .crm-map-search.topbar-search {
+  width: min(100%, 520px) !important;
+  min-height: 40px !important;
+  padding: 0 10px 0 14px !important;
+  border: 1px solid #d6d9df !important;
+  border-radius: 8px !important;
+  background: #f3f4f6 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .crm-filter-search .topbar-input,
+.dashboard-wrapper .crm-map-search .topbar-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .crm-admin-view .filter-select-field {
+  min-height: 40px !important;
+  min-width: 172px !important;
+  padding-left: 16px !important;
+  padding-right: 40px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 14px !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard-wrapper .crm-admin-view .toolbar-button,
+.dashboard-wrapper .crm-admin-view .secondary-action,
+.dashboard-wrapper .crm-map-modal .toolbar-button,
+.dashboard-wrapper .crm-map-modal .secondary-action {
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .crm-admin-view .toolbar-button:hover:not(:disabled),
+.dashboard-wrapper .crm-admin-view .secondary-action:hover:not(:disabled),
+.dashboard-wrapper .crm-map-modal .toolbar-button:hover:not(:disabled),
+.dashboard-wrapper .crm-map-modal .secondary-action:hover:not(:disabled) {
+  border-color: #3157c8 !important;
+  background: #eef4ff !important;
+  color: #3157c8 !important;
+}
+
+.dashboard-wrapper .crm-admin-view .primary-action,
+.dashboard-wrapper .crm-map-modal .primary-action {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border: 1px solid #3157c8 !important;
+  border-radius: 8px !important;
+  background: #3157c8 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .crm-admin-view .primary-action:hover:not(:disabled),
+.dashboard-wrapper .crm-map-modal .primary-action:hover:not(:disabled) {
+  border-color: #2546a2 !important;
+  background: #2546a2 !important;
+  color: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-admin-view .primary-action:disabled,
+.dashboard-wrapper .crm-map-modal .primary-action:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.dashboard-wrapper .crm-admin-view .settings-section-title,
+.dashboard-wrapper .crm-map-modal .followup-modal-title h3,
+.dashboard-wrapper .crm-admin-view .table-pane-header h3 {
+  color: #111827 !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.dashboard-wrapper .crm-admin-view,
+.dashboard-wrapper .crm-admin-view p,
+.dashboard-wrapper .crm-admin-view td,
+.dashboard-wrapper .crm-admin-view .rail-item-name,
+.dashboard-wrapper .crm-admin-view .lead-record-line,
+.dashboard-wrapper .crm-map-modal {
+  color: #111827 !important;
+  font-size: 14px !important;
+}
+
+.dashboard-wrapper .crm-metrics-strip.metrics-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-payments-metrics-strip.metrics-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.dashboard-wrapper .crm-metrics-strip .metric-cell {
+  min-height: 150px !important;
+  padding: 24px 28px !important;
+  border-left: 1px solid var(--admin-line-soft) !important;
+}
+
+.dashboard-wrapper .crm-metrics-strip .metric-cell:first-child {
+  border-left: 0 !important;
+}
+
+.dashboard-wrapper .crm-metrics-strip .metric-label,
+.dashboard-wrapper .crm-metrics-strip .crm-metric-note {
+  color: #667085 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-wrapper .crm-metrics-strip .metric-value {
+  margin-top: 10px !important;
+  color: #111827 !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.dashboard-wrapper .crm-icon-refresh {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.dashboard-wrapper .crm-map-modal {
+  border-radius: 18px !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-head {
+  padding: 22px 26px !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-title h3 {
+  font-size: 24px !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-title p {
+  margin: 8px 0 0 !important;
+  color: #667085 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-wrapper .crm-map-modal .field-input,
+.dashboard-wrapper .crm-map-modal .field-select,
+.dashboard-wrapper .crm-admin-view .field-input,
+.dashboard-wrapper .crm-admin-view .field-select {
+  min-height: 40px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-label,
+.dashboard-wrapper .crm-admin-view .mini-field span {
+  color: #667085 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+}
+
+@media (max-width: 920px) {
+  .dashboard-wrapper .crm-metrics-strip.metrics-strip,
+  .dashboard-wrapper .crm-payments-metrics-strip.metrics-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-wrapper .crm-metrics-strip.metrics-strip,
+  .dashboard-wrapper .crm-payments-metrics-strip.metrics-strip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* AMC tracking final UI alignment. */
+.dashboard-wrapper .crm-amc-controls {
+  width: 100% !important;
+  justify-content: space-between !important;
+}
+
+.dashboard-wrapper .crm-filter-left,
+.dashboard-wrapper .crm-filter-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.dashboard-wrapper .crm-filter-actions {
+  margin-left: auto !important;
+}
+
+.dashboard-wrapper .crm-amc-board .crm-map-client-button {
+  min-width: 116px !important;
+  min-height: 42px !important;
+  padding: 0 20px !important;
+  border: 1px solid #111827 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-wrapper .crm-amc-board .crm-map-client-button:hover:not(:disabled) {
+  border-color: #111827 !important;
+  background: #f8fafc !important;
+  color: #111827 !important;
+}
+
+.dashboard-wrapper .crm-amc-metrics-strip.metrics-strip {
+  min-height: 112px !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+}
+
+.dashboard-wrapper .crm-amc-metrics-strip .metric-cell {
+  min-height: 112px !important;
+  padding: 18px 20px !important;
+  border-left: 1px solid var(--admin-line-soft) !important;
+}
+
+.dashboard-wrapper .crm-amc-metrics-strip .metric-label {
+  color: #667085 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .crm-amc-metrics-strip .metric-value {
+  margin-top: 8px !important;
+  color: #111827 !important;
+  font-size: 30px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.dashboard-wrapper .crm-amc-metrics-strip .crm-metric-note {
+  display: none !important;
+}
+
+.dashboard-wrapper .crm-amc-table-scroll {
+  width: 100% !important;
+  min-height: 520px !important;
+  overflow: auto !important;
+  border-top: 1px solid var(--admin-line) !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+  scrollbar-gutter: stable both-edges !important;
+  scrollbar-width: thin !important;
+}
+
+.dashboard-wrapper .crm-amc-table-scroll::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.dashboard-wrapper .crm-amc-table-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.dashboard-wrapper .crm-amc-table-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px !important;
+  background: #cbd5e1 !important;
+}
+
+.dashboard-wrapper .crm-amc-table {
+  min-width: 1320px !important;
+  table-layout: auto !important;
+}
+
+.dashboard-wrapper .crm-amc-table th,
+.dashboard-wrapper .crm-amc-table td {
+  height: 62px !important;
+  padding: 14px 18px !important;
+  border-bottom: 1px solid var(--admin-line-soft) !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+
+.dashboard-wrapper .crm-amc-table th {
+  color: #667085 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.dashboard-wrapper .crm-amc-table td {
+  font-weight: 400 !important;
+}
+
+.dashboard-wrapper .crm-amc-table td strong {
+  font-weight: 700 !important;
+}
+
+.dashboard-wrapper .crm-renewal-inline {
+  display: inline !important;
+  margin-left: 8px !important;
+  color: #667085 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard-wrapper .crm-manage-cell {
+  width: 56px !important;
+  min-width: 56px !important;
+  text-align: left !important;
+}
+
+.dashboard-wrapper .crm-kebab-button {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #111827 !important;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}
+
+.dashboard-wrapper .crm-kebab-button:hover {
+  background: transparent !important;
+  color: #3157c8 !important;
+}
+
+.dashboard-wrapper .crm-map-modal {
+  width: min(1720px, calc(100vw - 96px)) !important;
+  max-height: calc(100vh - 64px) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 22px 72px rgba(15, 23, 42, 0.28) !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-head {
+  align-items: flex-start !important;
+  padding: 32px 36px !important;
+  border-bottom: 1px solid #e4e7ec !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-title h3 {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 30px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-title p {
+  display: none !important;
+}
+
+.dashboard-wrapper .crm-map-modal .secondary-action,
+.dashboard-wrapper .crm-map-modal .toolbar-button,
+.dashboard-wrapper .crm-map-modal .primary-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+  padding: 0 18px !important;
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .crm-map-modal .secondary-action,
+.dashboard-wrapper .crm-map-modal .toolbar-button {
+  border: 1px solid #d8dee8 !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.dashboard-wrapper .crm-map-modal .primary-action {
+  min-width: 144px !important;
+  border: 1px solid #3157c8 !important;
+  background: #3157c8 !important;
+  color: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-map-modal-toolbar {
+  gap: 12px !important;
+  padding: 20px 36px !important;
+  border-bottom: 1px solid #e4e7ec !important;
+}
+
+.dashboard-wrapper .crm-map-modal-body {
+  grid-template-columns: minmax(300px, 0.95fr) minmax(360px, 1.15fr) minmax(360px, 0.95fr) !important;
+}
+
+.dashboard-wrapper .crm-map-modal .followup-modal-panel {
+  padding: 28px 36px !important;
+  border-right: 1px solid #e4e7ec !important;
+}
+
+.dashboard-wrapper .crm-map-search.topbar-search {
+  min-height: 48px !important;
+  padding: 0 16px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-map-search .topbar-input {
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard-wrapper .crm-map-list {
+  max-height: min(520px, calc(100vh - 380px)) !important;
+  gap: 0 !important;
+}
+
+.dashboard-wrapper .crm-map-option {
+  min-height: 72px !important;
+  padding: 14px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e4e7ec !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.dashboard-wrapper .crm-map-option.active,
+.dashboard-wrapper .crm-map-option:hover {
+  background: #f3f4f6 !important;
+}
+
+.dashboard-wrapper .crm-map-detail-panel {
+  gap: 20px !important;
+}
+
+.dashboard-wrapper .crm-map-detail-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  color: #667085 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-wrapper .crm-map-detail-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  color: #3157c8 !important;
+}
+
+.dashboard-wrapper .crm-map-detail-icon svg {
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Loaded-last parity pass: keep admin contact cards aligned with the employee portal card. */
+.dashboard-wrapper .admin-employee-style-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)) !important;
+  grid-auto-rows: 1fr !important;
+  align-items: stretch !important;
+  align-content: start !important;
+  gap: 18px !important;
+  min-width: 0 !important;
+  padding: 18px !important;
+  background: #ffffff !important;
+  overflow: visible !important;
+}
+
+.dashboard-wrapper .admin-leads-company-pane .admin-employee-style-grid,
+.dashboard-wrapper .admin-remarks-view .lead-detail-view .admin-employee-style-grid,
+.dashboard-wrapper .admin-followups-company-pane .admin-employee-style-grid,
+.dashboard-wrapper .employee-leads-pane .admin-employee-style-grid,
+.dashboard-wrapper .employee-followups-pane .admin-employee-style-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card.admin-employee-style-card,
+.dashboard-wrapper .admin-remarks-contact-card.admin-employee-style-card,
+.dashboard-wrapper .admin-followup-contact-card.admin-employee-style-card,
+.dashboard-wrapper .employee-followup-record-card.admin-employee-style-card {
+  position: relative !important;
+  display: grid !important;
+  grid-template-rows: 44px 28px 44px 28px 28px 168px 44px !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 456px !important;
+  height: 100% !important;
+  padding: 18px 20px !important;
+  border: 1px solid #dbe2ec !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  box-shadow: 0 10px 24px -28px rgba(15, 23, 42, 0.32) !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  transition: border-color 100ms ease, box-shadow 100ms ease, transform 100ms ease, background 100ms ease !important;
+}
+
+.dashboard-wrapper .admin-lead-record-card.admin-employee-style-card:hover,
+.dashboard-wrapper .admin-remarks-contact-card.admin-employee-style-card:hover,
+.dashboard-wrapper .admin-followup-contact-card.admin-employee-style-card:hover,
+.dashboard-wrapper .employee-followup-record-card.admin-employee-style-card:hover,
+.dashboard-wrapper .admin-lead-record-card.admin-employee-style-card:focus-within,
+.dashboard-wrapper .admin-remarks-contact-card.admin-employee-style-card:focus-within,
+.dashboard-wrapper .admin-followup-contact-card.admin-employee-style-card:focus-within,
+.dashboard-wrapper .employee-followup-record-card.admin-employee-style-card:focus-within {
+  border-color: #cbd5e1 !important;
+  background: #fcfdff !important;
+  box-shadow: 0 18px 30px -28px rgba(15, 23, 42, 0.42) !important;
+  transform: translateY(-1px) !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card,
+.dashboard-wrapper .admin-employee-style-card * {
+  box-sizing: border-box !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .admin-lead-call-count {
+  display: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .admin-lead-card-head,
+.dashboard-wrapper .admin-employee-style-card .lead-record-card-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-title-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  max-width: 100% !important;
+  flex-wrap: nowrap !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-title-row h4 {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  max-height: 42px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: #111827 !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  text-transform: none !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 32px !important;
+  align-self: flex-start !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #f3b629 !important;
+  transition: background 90ms ease, transform 90ms ease !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star:hover,
+.dashboard-wrapper .admin-employee-style-card .lead-card-star:focus-visible {
+  background: rgba(243, 182, 41, 0.12) !important;
+  outline: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star svg,
+.dashboard-wrapper .admin-employee-style-card .lead-record-line-icon svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark svg,
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.dashboard-wrapper .crm-map-field-grid {
+  display: grid !important;
+  gap: 18px !important;
+}
+
+.dashboard-wrapper .crm-map-static-field {
+  display: grid !important;
+  align-content: center !important;
+  min-height: 64px !important;
+  padding: 10px 18px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-map-static-field span,
+.dashboard-wrapper .crm-map-input-field span {
+  color: #667085 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .crm-map-static-field strong {
+  margin-top: 6px !important;
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .crm-map-input-field {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.dashboard-wrapper .crm-map-modal .crm-map-input-field .field-input {
+  min-height: 56px !important;
+  padding: 0 18px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard-wrapper .crm-project-map-modal .crm-map-modal-toolbar {
+  justify-content: flex-end !important;
+}
+
+.dashboard-wrapper .crm-project-map-modal .crm-project-notes-input {
+  min-height: 96px !important;
+  padding: 14px 18px !important;
+  line-height: 1.35 !important;
+  resize: vertical !important;
+}
+
+.dashboard-wrapper .crm-project-map-modal .crm-map-input-field .field-select {
+  min-height: 56px !important;
+  padding: 0 18px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 0 !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+.dashboard-wrapper .crm-ticket-controls .crm-filter-left {
+  width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+.dashboard-wrapper .crm-ticket-search.topbar-search {
+  width: min(100%, 360px) !important;
+  min-height: 44px !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-ticket-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.7fr) !important;
+  min-height: 520px !important;
+  height: calc(100vh - 356px) !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-ticket-table-scroll {
+  min-height: 0 !important;
+  height: 100% !important;
+  border-right: 1px solid var(--admin-line) !important;
+}
+
+.dashboard-wrapper .crm-ticket-table tbody tr {
+  cursor: pointer !important;
+}
+
+.dashboard-wrapper .crm-ticket-table tbody tr.active-row,
+.dashboard-wrapper .crm-ticket-table tbody tr:hover {
+  background: #f3f4f6 !important;
+}
+
+.dashboard-wrapper .crm-ticket-detail {
+  display: grid !important;
+  align-content: start !important;
+  gap: 18px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  padding: 24px !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-ticket-detail-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding-bottom: 18px !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+}
+
+.dashboard-wrapper .crm-ticket-detail-head h3 {
+  margin: 4px 0 0 !important;
+  color: #111827 !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+}
+
+.dashboard-wrapper .crm-ticket-meta {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.dashboard-wrapper .crm-ticket-meta span {
+  display: grid !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  padding: 12px !important;
+  border: 1px solid #e4e7ec !important;
+  color: #667085 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-wrapper .crm-ticket-meta strong {
+  color: #111827 !important;
+  font-size: 13px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .crm-ticket-status-field {
+  max-width: 260px !important;
+}
+
+.dashboard-wrapper .crm-ticket-section {
+  display: grid !important;
+  gap: 10px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid var(--admin-line-soft) !important;
+}
+
+.dashboard-wrapper .crm-ticket-section h4 {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+.dashboard-wrapper .crm-ticket-section p {
+  margin: 0 !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+.dashboard-wrapper .crm-ticket-attachments {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.dashboard-wrapper .crm-ticket-chip {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.dashboard-wrapper .crm-ticket-remark-list {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.dashboard-wrapper .crm-ticket-remark {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 12px !important;
+  border: 1px solid #e4e7ec !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-ticket-remark div {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  color: #667085 !important;
+  font-size: 12px !important;
+}
+
+.dashboard-wrapper .crm-ticket-reply {
+  display: grid !important;
+  gap: 10px !important;
+  margin-top: 8px !important;
+}
+
+.dashboard-wrapper .crm-ticket-reply .field-input {
+  min-height: 92px !important;
+  padding-top: 12px !important;
+}
+
+.dashboard-wrapper .crm-ticket-reply .primary-action {
+  justify-self: end !important;
+}
+
+.dashboard-wrapper .crm-client-toolbar .crm-client-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.dashboard-wrapper .crm-client-toolbar .crm-filter-search.topbar-search {
+  width: min(100%, 360px) !important;
+  min-height: 48px !important;
+  padding: 0 16px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .crm-client-toolbar .crm-filter-search .topbar-input {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+.dashboard-wrapper .crm-client-metrics-strip.metrics-strip {
+  min-height: 112px !important;
+}
+
+.dashboard-wrapper .crm-client-metrics-strip .crm-metric-note {
+  display: none !important;
+}
+
+.dashboard-wrapper .crm-client-frame {
+  height: calc(100vh - 356px) !important;
+  min-height: 520px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .crm-client-frame .company-rail {
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .crm-client-frame .rail-list {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-company-pane {
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .crm-client-frame .crm-status-grid {
+  display: none !important;
+}
+
+.dashboard-wrapper .crm-client-frame .lead-company-pane-scroll {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+@media (max-width: 1040px) {
+  .dashboard-wrapper .crm-map-modal {
+    width: calc(100vw - 32px) !important;
+  }
+
+  .dashboard-wrapper .crm-map-modal-body {
+    grid-template-columns: 1fr !important;
+    overflow: auto !important;
+  }
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star svg {
+  width: 22px !important;
+  height: 22px !important;
+  stroke-linejoin: round !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-star.active svg {
+  fill: currentColor !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line,
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  min-height: 28px !important;
+  color: #4b5563 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line > span:last-child,
+.dashboard-wrapper .admin-employee-style-card .lead-record-line-value {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-record-line-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  color: #526176 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  overflow: hidden !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #526176 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action:hover,
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action:focus-visible {
+  border-color: #b8c4d8 !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  outline: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-invoice-action span:last-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks {
+  display: grid !important;
+  grid-template-rows: 24px minmax(0, 1fr) 42px !important;
+  gap: 10px !important;
+  min-height: 168px !important;
+  max-height: 168px !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  overflow: hidden !important;
+  border: 1px solid #e6ebf2 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title {
+  min-height: 24px !important;
+  color: #667085 !important;
+  font-size: 13px !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title .text-action {
+  margin-left: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #315ce7 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-list {
+  display: grid !important;
+  align-content: start !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  max-height: 68px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+  scrollbar-width: thin !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item,
+.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
+  overflow: hidden !important;
+  color: #4b5563 !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
+  display: flex !important;
+  align-items: flex-start !important;
+  min-height: 68px !important;
+  color: #8a94a6 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-entry {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-combobox {
+  position: relative !important;
+  display: block !important;
+  min-width: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-input,
+.dashboard-wrapper .admin-employee-style-card .lead-remark-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 42px !important;
+  padding: 0 42px 0 14px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #c7d2fe !important;
+  border-radius: 10px !important;
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+  transition: transform 90ms ease, box-shadow 90ms ease, background 90ms ease !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark:hover:not(:disabled),
+.dashboard-wrapper .admin-employee-style-card .lead-card-add-remark:focus-visible {
+  background: #4338ca !important;
+  box-shadow: 0 8px 18px -14px rgba(79, 70, 229, 0.75) !important;
+  outline: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 44px 44px !important;
+  gap: 10px !important;
+  align-items: center !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-status-select {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  height: auto !important;
+  padding: 0 36px 0 14px !important;
+  border-radius: 10px !important;
+  background-color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #526176 !important;
+  transition: border-color 90ms ease, background 90ms ease, color 90ms ease !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action:hover,
+.dashboard-wrapper .admin-employee-style-card .lead-card-icon-action:focus-visible {
+  border-color: #b8c4d8 !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  outline: none !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-followup-action,
+.dashboard-wrapper .admin-employee-style-card .lead-card-favourite-action {
+  color: #526176 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-favourite-action.active {
+  border-color: #fecaca !important;
+  background: #ffffff !important;
+  color: #ef4444 !important;
+}
+
+.dashboard-wrapper .admin-employee-style-card .lead-card-favourite-action.active svg {
+  fill: none !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .admin-employee-style-grid {
+  grid-auto-rows: auto !important;
+  gap: 18px !important;
+  padding: 18px 28px 24px !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .admin-employee-style-card {
+  display: grid !important;
+  grid-template-rows: auto !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 18px 20px !important;
+  border: 1px solid #dbe2ec !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 24px -28px rgba(15, 23, 42, 0.32) !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .lead-card-remarks {
+  grid-template-rows: 24px minmax(0, 1fr) !important;
+  min-height: 128px !important;
+  max-height: none !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .lead-card-actions {
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  min-height: 42px !important;
+}
+
+.dashboard-wrapper .crm-client-frame .admin-leads-card-scroll .lead-card-actions .company-remarks-button {
+  min-width: 74px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-wrapper .admin-leads-company-pane .admin-employee-style-grid,
+  .dashboard-wrapper .admin-remarks-view .lead-detail-view .admin-employee-style-grid,
+  .dashboard-wrapper .admin-followups-company-pane .admin-employee-style-grid,
+  .dashboard-wrapper .employee-leads-pane .admin-employee-style-grid,
+  .dashboard-wrapper .employee-followups-pane .admin-employee-style-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Remarks Filter rail final alignment with the other admin company lists. */
+.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 72px !important;
+  padding: 18px 20px !important;
+  border-bottom: 1px solid var(--admin-line, #dfe5ef) !important;
+  background: #ffffff !important;
+  text-align: left !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header > div {
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--admin-text, #111827) !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 22.4px !important;
+  letter-spacing: 0 !important;
+  text-align: left !important;
+  text-transform: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header > div:last-child {
+  justify-self: end !important;
+  text-align: right !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: center !important;
+  align-items: center !important;
+  justify-items: start !important;
+  gap: 8px !important;
+  min-height: 76px !important;
+  padding: 16px 20px !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 1px solid var(--admin-line-soft, #eef2f7) !important;
+  border-left: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-align: left !important;
+  transform: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item:hover {
+  background: #f8fafc !important;
+  transform: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item.active {
+  border-left-color: var(--admin-ink, #111827) !important;
+  background: #f4f4f5 !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item::before {
+  display: none !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-name,
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta,
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta span {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-name {
+  color: #1f2937 !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta,
+.dashboard-wrapper .admin-remarks-company-rail .lead-item-meta span {
+  display: block !important;
+  margin-top: 6px !important;
+  color: #667085 !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}

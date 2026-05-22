@@ -1,5 +1,4 @@
 build/
-mobile-apps/
 node_modules/
 dist/
 .angular/
@@ -47,7 +46,6 @@ out-tsc/
 **/app.*.map.json
 
 # Android Studio will place build artifacts here
-**/android/app/
 **/android/app/debug
 **/android/app/profile
 **/android/app/release

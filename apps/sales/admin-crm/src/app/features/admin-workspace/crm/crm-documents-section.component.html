@@ -1,5 +1,5 @@
 <ng-container *ngIf="vm.dashTab==='crm_sla' || vm.dashTab==='crm_nda'">
-  <div class="workspace-header workspace-header-filters-only crm-filter-bar">
+  <div class="workspace-header workspace-header-filters-only crm-filter-bar" *ngIf="vm.dashTab==='crm_sla'">
     <div class="workspace-controls crm-filter-controls">
       <label class="topbar-search crm-filter-search" for="crmDocumentSearch">
         <span class="topbar-search-icon" aria-hidden="true">
@@ -20,130 +20,104 @@
 </ng-container>
 
 <ng-template #ndaPanel>
-  <div class="crm-nda-shell">
-    <div class="crm-nda-modebar">
-      <div class="crm-nda-mode-buttons">
-        <button class="toolbar-button" type="button" [class.active]="vm.ndaTemplateMode==='generate'" (click)="vm.ndaTemplateMode='generate'">Generate</button>
-        <button class="toolbar-button" type="button" [class.active]="vm.ndaTemplateMode==='builder'" (click)="vm.ndaTemplateMode='builder'">Template Builder</button>
+  <div class="crm-nda-shell crm-nda-quotation-shell">
+    <div class="workspace-header invoice-feature-header crm-nda-feature-header">
+      <div class="workspace-controls invoice-feature-controls">
+        <label class="topbar-search invoice-feature-search crm-nda-feature-search" for="crmNdaSearch">
+          <span class="topbar-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+          </span>
+          <input id="crmNdaSearch" class="topbar-input" type="text" placeholder="Search converted clients" [(ngModel)]="vm.crmClientSearch">
+        </label>
       </div>
-      <div class="crm-nda-status" *ngIf="vm.crmActionMessage">{{ vm.crmActionMessage }}</div>
     </div>
 
-    <ng-container *ngIf="vm.ndaTemplateMode==='generate'; else ndaBuilderMode">
-      <div class="crm-document-layout crm-nda-generate-layout">
-        <section class="premium-card crm-document-generate">
-          <div class="settings-section-title">NDA Generation</div>
-          <div class="crm-client-picker">
-            <button class="rail-item admin-leads-rail-item" type="button" *ngFor="let client of vm.filteredCrmClients" [class.active]="vm.selectedCrmClientCompany===client.companyName" (click)="vm.selectCrmClient(client.companyName)">
-              <span class="rail-item-copy">
-                <span class="rail-item-name">{{ client.companyName }}</span>
-                <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }}</span>
-              </span>
-            </button>
-          </div>
-
-          <div class="crm-selected-client-card" *ngIf="vm.selectedCrmClient as client">
-            <h3>{{ client.companyName }}</h3>
-            <p>{{ client.primaryContact }} · {{ client.primaryEmail || client.primaryPhone || '-' }}</p>
-
-            <div class="crm-nda-form-grid">
-              <label>
-                <span>Client Address</span>
-                <textarea class="glass-input" rows="2" [(ngModel)]="vm.ndaGenerationDraft.clientAddress" placeholder="Client registered address"></textarea>
-              </label>
-              <label>
-                <span>Project Name</span>
-                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.projectName" placeholder="Project Name / Service Name">
-              </label>
-              <label>
-                <span>Service Description</span>
-                <textarea class="glass-input" rows="2" [(ngModel)]="vm.ndaGenerationDraft.projectDescription" placeholder="Service Description"></textarea>
-              </label>
-              <label>
-                <span>Jurisdiction</span>
-                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.jurisdiction">
-              </label>
-              <label>
-                <span>Effective Date</span>
-                <input class="glass-input" type="date" [(ngModel)]="vm.ndaGenerationDraft.effectiveFrom">
-              </label>
-              <label>
-                <span>Expiry Date</span>
-                <input class="glass-input" type="date" [(ngModel)]="vm.ndaGenerationDraft.effectiveTo">
-              </label>
-              <label>
-                <span>Solicitation Period</span>
-                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.solicitationPeriod">
-              </label>
-              <label>
-                <span>Validity</span>
-                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.validityPeriod">
-              </label>
-              <label>
-                <span>Company Signatory</span>
-                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.signatoryName" placeholder="Authorized signatory">
-              </label>
-              <label>
-                <span>Signatory Title</span>
-                <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.signatoryTitle">
-              </label>
-            </div>
-
-            <button class="primary-action" type="button" (click)="vm.generateCrmContract('NDA', client)" [disabled]="vm.crmContractsLoading">
-              {{ vm.crmContractsLoading ? 'Generating...' : 'Generate NDA PDF' }}
-            </button>
-          </div>
-        </section>
-
-        <section class="premium-card crm-document-history">
-          <div class="crm-panel-head">
-            <div>
-              <div class="settings-section-title">NDA History</div>
-              <p>{{ vm.crmContractsByType('NDA').length }} records</p>
-            </div>
-          </div>
-          <div class="table-scroll">
-            <table class="data-table compact-table">
-              <thead>
-                <tr><th>Document</th><th>Client</th><th>Status</th><th>Generated</th><th></th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let contract of vm.crmContractsByType('NDA')">
-                  <td>{{ contract.documentNumber }}</td>
-                  <td>{{ contract.clientCompanyName }}</td>
-                  <td><span class="crm-status-pill">{{ contract.status }}</span></td>
-                  <td>{{ vm.fmtDate(contract.createdAt) }}</td>
-                  <td>
-                    <button class="secondary-action" type="button" *ngIf="contract.downloadUrl || contract.pdfFileName" (click)="vm.downloadCrmContractPdf(contract)">Open PDF</button>
-                  </td>
-                </tr>
-                <tr *ngIf="!vm.crmContractsLoading && vm.crmContractsByType('NDA').length===0">
-                  <td colspan="5" class="empty-cell">No NDA history yet.</td>
-                </tr>
-                <tr *ngIf="vm.crmContractsLoading">
-                  <td colspan="5" class="empty-cell">Loading NDA records...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-    </ng-container>
-
-    <ng-template #ndaBuilderMode>
-      <section class="premium-card crm-nda-builder">
-        <div class="crm-nda-builder-head">
+    <div class="invoice-feature-grid crm-nda-feature-grid">
+      <section class="invoice-feature-pane invoice-converted-pane">
+        <div class="invoice-pane-header">
           <div>
-            <div class="settings-section-title">NDA Template Builder</div>
-            <p>{{ vm.currentNdaTemplate.name }} · {{ vm.currentNdaTemplate.sourceDocument || 'Default clauses' }} · {{ vm.currentNdaTemplate.pages.length }} pages</p>
-          </div>
-          <div class="crm-panel-actions">
-            <button class="toolbar-button" type="button" (click)="vm.fetchNdaTemplate()" [disabled]="vm.ndaTemplateLoading">Reload</button>
-            <button class="primary-action" type="button" (click)="vm.saveNdaTemplate()" [disabled]="vm.ndaTemplateSaving">
-              {{ vm.ndaTemplateSaving ? 'Saving...' : 'Save Template' }}
-            </button>
+            <h2>All Companies</h2>
+            <p>{{ vm.filteredCrmClients.length }} listed</p>
           </div>
         </div>
+        <div class="invoice-lead-list">
+          <article class="invoice-lead-row" *ngFor="let client of vm.filteredCrmClients" [class.active]="vm.selectedCrmClientCompany===client.companyName" (click)="vm.openNdaWorkspace(client, $event)" tabindex="0" role="button" (keydown.enter)="vm.openNdaWorkspace(client, $event)" (keydown.space)="$event.preventDefault(); vm.openNdaWorkspace(client, $event)">
+            <div class="invoice-lead-main invoice-lead-main-company">
+              <strong>{{ client.companyName }}</strong>
+              <span>{{ client.contactCount || 0 }} contacts · {{ client.amcStatus || 'Not Configured' }}</span>
+            </div>
+          </article>
+          <div *ngIf="!vm.crmClientsLoading && vm.filteredCrmClients.length===0" class="empty-state-inline">No companies match the current search.</div>
+          <div *ngIf="vm.crmClientsLoading" class="empty-state-inline">Loading companies...</div>
+        </div>
+      </section>
+
+      <section class="invoice-feature-pane invoice-history-pane">
+        <div class="invoice-pane-header invoice-pane-header-stacked">
+          <div>
+            <h2>NDA History</h2>
+            <p>{{ vm.filteredNdaContracts.length }} records</p>
+          </div>
+          <div class="invoice-history-tools">
+            <label class="topbar-search invoice-history-search" for="crmNdaHistorySearch">
+              <span class="topbar-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+              </span>
+              <input id="crmNdaHistorySearch" class="topbar-input" type="text" placeholder="Search NDA history..." [(ngModel)]="vm.ndaHistorySearch">
+            </label>
+            <button class="toolbar-button invoice-date-filter-button" type="button" (click)="vm.ndaDateFilterOpen=!vm.ndaDateFilterOpen">Date Filter</button>
+          </div>
+        </div>
+        <div class="invoice-date-filter-row" *ngIf="vm.ndaDateFilterOpen">
+          <label class="mini-field">
+            <span>From</span>
+            <input class="field-input" type="date" [(ngModel)]="vm.ndaDateFrom">
+          </label>
+          <label class="mini-field">
+            <span>To</span>
+            <input class="field-input" type="date" [(ngModel)]="vm.ndaDateTo" [max]="vm.todayInputDate">
+          </label>
+          <button class="toolbar-button invoice-date-clear" type="button" (click)="vm.ndaDateFrom=''; vm.ndaDateTo=''">Clear</button>
+        </div>
+        <div class="table-scroll invoice-history-table">
+          <table class="data-table compact-table">
+            <thead>
+              <tr><th>Document</th><th>Client</th><th>Status</th><th>Generated</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let contract of vm.filteredNdaContracts" class="history-click-row" (click)="vm.openCrmContractPrintView(contract, $event)" tabindex="0" role="button" (keydown.enter)="vm.openCrmContractPrintView(contract, $event)" (keydown.space)="$event.preventDefault(); vm.openCrmContractPrintView(contract, $event)">
+                <td>{{ contract.documentNumber }}</td>
+                <td>{{ contract.clientCompanyName }}</td>
+                <td><span class="crm-status-pill">{{ contract.status }}</span></td>
+                <td>{{ vm.fmtDate(contract.createdAt) }}</td>
+              </tr>
+              <tr *ngIf="!vm.crmContractsLoading && vm.filteredNdaContracts.length===0">
+                <td colspan="4" class="empty-cell">No NDA history yet.</td>
+              </tr>
+              <tr *ngIf="vm.crmContractsLoading">
+                <td colspan="4" class="empty-cell">Loading NDA records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div class="invoice-overlay crm-nda-workspace-overlay" *ngIf="vm.ndaWorkspaceOpen" (click)="vm.closeNdaWorkspace()">
+      <div class="invoice-modal crm-nda-workspace-modal" (click)="$event.stopPropagation()">
+        <section class="crm-nda-builder crm-nda-modal-shell">
+          <div class="crm-nda-builder-head crm-nda-modal-head">
+            <div>
+              <div class="crm-nda-modal-title">NDA Workspace</div>
+              <p>{{ vm.ndaWorkspaceClient?.companyName || vm.selectedCrmClient?.companyName || 'Selected Company' }} · {{ vm.currentNdaTemplate.name }} · {{ vm.currentNdaTemplate.pages.length }} pages</p>
+            </div>
+            <div class="crm-panel-actions">
+              <button class="primary-action" type="button" (click)="vm.generateCrmContract('NDA', vm.ndaWorkspaceClient || vm.selectedCrmClient)" [disabled]="vm.crmContractsLoading">
+                {{ vm.crmContractsLoading ? 'Generating...' : 'Generate NDA PDF' }}
+              </button>
+              <button class="secondary-action" type="button" (click)="vm.closeNdaWorkspace()">Close</button>
+            </div>
+          </div>
 
         <input type="file" #ndaBackgroundInput (change)="vm.onNdaBackgroundSelected($event)" accept="image/*" hidden>
 
@@ -157,7 +131,7 @@
           <button class="toolbar-button" type="button" (click)="vm.addNdaPage()">Add Page</button>
         </div>
 
-        <div class="crm-nda-builder-grid">
+        <div class="crm-nda-builder-grid crm-nda-modal-body">
           <div class="crm-nda-controls">
             <div class="crm-nda-control-panel crm-nda-clauses-panel">
               <div class="crm-nda-panel-title">
@@ -165,35 +139,88 @@
                 <button class="toolbar-button" type="button" (click)="vm.addNdaClause()">Add Clause</button>
               </div>
               <div class="crm-nda-clause-list">
-                <div class="crm-nda-clause-card" *ngFor="let clause of vm.currentNdaTemplate.clauses; let i = index">
+                <div class="crm-nda-clause-card" *ngFor="let clause of vm.currentNdaTemplate.clauses; let i = index" [id]="'nda-clause-card-' + i" [class.active]="vm.activeNdaClauseIndex===i" (click)="vm.focusNdaClause(i, false)">
                   <div class="crm-nda-clause-top">
-                    <label class="crm-nda-check">
-                      <input type="checkbox" [(ngModel)]="clause.enabled">
+                    <label class="crm-nda-check" (click)="$event.stopPropagation()">
+                      <input type="checkbox" [(ngModel)]="clause.enabled" (ngModelChange)="vm.syncNdaPagesFromClauses()">
                       <span>Include</span>
                     </label>
-                    <span class="crm-nda-clause-count">Clause {{ i + 1 }}</span>
-                    <button class="secondary-action" type="button" (click)="vm.removeNdaClause(i)">Remove</button>
+                    <div class="crm-nda-clause-summary">
+                      <span class="crm-nda-clause-count">Clause {{ i + 1 }}</span>
+                      <strong>{{ clause.subheading || clause.heading || 'New Clause' }}</strong>
+                      <span>{{ clause.heading || 'No heading' }}</span>
+                    </div>
+                    <button class="secondary-action" type="button" (click)="$event.stopPropagation(); vm.removeNdaClause(i)">Remove</button>
                   </div>
-                  <div class="crm-nda-clause-grid">
-                    <label>
-                      <span>Heading</span>
-                      <input class="glass-input" type="text" [(ngModel)]="clause.heading" placeholder="Clause heading">
-                    </label>
-                    <label>
-                      <span>Sub Heading</span>
-                      <input class="glass-input" type="text" [(ngModel)]="clause.subheading" placeholder="Optional sub heading">
-                    </label>
+                  <div class="crm-nda-clause-body" *ngIf="vm.activeNdaClauseIndex===i">
+                    <div class="crm-nda-clause-grid">
+                      <label>
+                        <span>Heading</span>
+                        <input class="glass-input" type="text" [(ngModel)]="clause.heading" (ngModelChange)="vm.syncNdaPagesFromClauses()" placeholder="Clause heading">
+                      </label>
+                      <label>
+                        <span>Sub Heading</span>
+                        <input class="glass-input" type="text" [(ngModel)]="clause.subheading" (ngModelChange)="vm.syncNdaPagesFromClauses()" placeholder="Optional sub heading">
+                      </label>
+                    </div>
+                    <div class="crm-nda-toolbar">
+                      <select class="glass-input" (change)="vm.onNdaInsertClausePlaceholder(i, $event)">
+                        <option value="">Insert Placeholder</option>
+                        <option *ngFor="let key of vm.ndaAvailablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
+                      </select>
+                    </div>
+                    <textarea class="glass-input crm-nda-textarea crm-nda-clause-textarea" [id]="'nda-clause-ta-' + i" [(ngModel)]="clause.content" (ngModelChange)="vm.syncNdaPagesFromClauses()" [attr.placeholder]="vm.ndaParaPlaceholderHint"></textarea>
                   </div>
-                  <div class="crm-nda-toolbar">
-                    <select class="glass-input" (change)="vm.onNdaInsertClausePlaceholder(i, $event)">
-                      <option value="">Insert Placeholder</option>
-                      <option *ngFor="let key of vm.ndaAvailablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
-                    </select>
-                  </div>
-                  <textarea class="glass-input crm-nda-textarea crm-nda-clause-textarea" [id]="'nda-clause-ta-' + i" [(ngModel)]="clause.content" [attr.placeholder]="vm.ndaParaPlaceholderHint"></textarea>
                 </div>
               </div>
               <div class="crm-nda-empty" *ngIf="!vm.currentNdaTemplate.clauses || vm.currentNdaTemplate.clauses.length===0">No clauses configured.</div>
+            </div>
+
+            <div class="crm-nda-client-card" *ngIf="(vm.ndaWorkspaceClient || vm.selectedCrmClient) as client">
+              <h3>{{ client.companyName }}</h3>
+              <p>{{ client.primaryContact }} · {{ client.primaryEmail || client.primaryPhone || '-' }}</p>
+              <div class="crm-nda-form-grid">
+                <label>
+                  <span>Client Address</span>
+                  <textarea class="glass-input" rows="2" [(ngModel)]="vm.ndaGenerationDraft.clientAddress" placeholder="Client registered address"></textarea>
+                </label>
+                <label>
+                  <span>Project Name</span>
+                  <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.projectName" placeholder="Project Name / Service Name">
+                </label>
+                <label>
+                  <span>Service Description</span>
+                  <textarea class="glass-input" rows="2" [(ngModel)]="vm.ndaGenerationDraft.projectDescription" placeholder="Service Description"></textarea>
+                </label>
+                <label>
+                  <span>Jurisdiction</span>
+                  <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.jurisdiction">
+                </label>
+                <label>
+                  <span>Effective Date</span>
+                  <input class="glass-input" type="date" [(ngModel)]="vm.ndaGenerationDraft.effectiveFrom">
+                </label>
+                <label>
+                  <span>Expiry Date</span>
+                  <input class="glass-input" type="date" [(ngModel)]="vm.ndaGenerationDraft.effectiveTo">
+                </label>
+                <label>
+                  <span>Solicitation Period</span>
+                  <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.solicitationPeriod">
+                </label>
+                <label>
+                  <span>Validity</span>
+                  <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.validityPeriod">
+                </label>
+                <label>
+                  <span>Company Signatory</span>
+                  <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.signatoryName" placeholder="Authorized signatory">
+                </label>
+                <label>
+                  <span>Signatory Title</span>
+                  <input class="glass-input" type="text" [(ngModel)]="vm.ndaGenerationDraft.signatoryTitle">
+                </label>
+              </div>
             </div>
 
             <div class="crm-nda-control-panel">
@@ -205,7 +232,7 @@
               <div class="crm-nda-two-col">
                 <label>
                   <span>Orientation</span>
-                  <select class="glass-input" [(ngModel)]="vm.currentNdaTemplate.orientation">
+                  <select class="glass-input" [(ngModel)]="vm.currentNdaTemplate.orientation" (ngModelChange)="vm.syncNdaPagesFromClauses()">
                     <option value="portrait">Portrait</option>
                     <option value="landscape">Landscape</option>
                   </select>
@@ -256,13 +283,13 @@
               <div class="crm-nda-empty" *ngIf="vm.currentNdaPage.highlightedAreas.length===0">No highlighted areas on this page.</div>
             </div>
 
-            <div class="crm-nda-control-panel">
+            <div class="crm-nda-control-panel crm-nda-paragraph-panel" *ngIf="false">
               <div class="crm-nda-panel-title">
                 <span>Paragraph Blocks</span>
                 <button class="toolbar-button" type="button" (click)="vm.addNdaParagraph()">Add</button>
               </div>
-              <div class="crm-nda-para-editor" *ngFor="let para of vm.currentNdaPage.paragraphs; let i = index">
-                <div class="crm-nda-para-head" (click)="para.isCollapsed=!para.isCollapsed">
+              <div class="crm-nda-para-editor" *ngFor="let para of vm.currentNdaPage.paragraphs; let i = index" [id]="'nda-para-editor-' + i" [class.active]="vm.activeNdaParagraphIndex===i">
+                <div class="crm-nda-para-head" (click)="vm.focusNdaParagraph(i, false); para.isCollapsed=!para.isCollapsed">
                   <strong>Paragraph {{ i + 1 }}</strong>
                   <span>{{ para.x }}, {{ para.y }}</span>
                   <button class="secondary-action" type="button" (click)="$event.stopPropagation(); vm.removeNdaParagraph(i)">Remove</button>
@@ -313,7 +340,7 @@
                 [style.height.px]="vm.ndaCanvasHeight"
                 [style.backgroundImage]="vm.currentNdaPage.backgroundUrl ? 'url(' + vm.currentNdaPage.backgroundUrl + ')' : 'none'">
 
-                <div class="crm-nda-canvas-header" *ngIf="vm.currentNdaTemplate.header.enabled">
+                <div class="crm-nda-canvas-header" *ngIf="vm.currentNdaTemplate.header.enabled && vm.currentNdaPage.showHeader !== false">
                   <div class="crm-nda-canvas-logo"></div>
                   <div class="crm-nda-canvas-heading">
                     <strong>{{ vm.currentNdaTemplate.header.companyTitle }}</strong>
@@ -351,8 +378,8 @@
 
                 <div class="crm-nda-para-block"
                   *ngFor="let para of vm.currentNdaPage.paragraphs; let i = index"
-                  (mousedown)="vm.onNdaCanvasMouseDown($event, 'paragraph', i)"
-                  [class.dragging]="vm.ndaDraggingType==='paragraph' && vm.ndaDraggingIndex===i"
+                  (click)="vm.focusNdaParagraphFromCanvas(i, para, $event)"
+                  [class.active]="vm.activeNdaParagraphIndex===i || vm.activeNdaClauseIndex===para.sourceClauseIndex"
                   [style.left.px]="para.x"
                   [style.top.px]="para.y"
                   [style.width.px]="para.width"
@@ -371,7 +398,8 @@
           </div>
         </div>
       </section>
-    </ng-template>
+    </div>
+  </div>
   </div>
 </ng-template>
 

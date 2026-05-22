@@ -176,12 +176,6 @@ function drawHighlightedArea(doc, area, data) {
   const width = safeNumber(area.width, 140, 20, 820);
   const height = safeNumber(area.height, 20, 10, 200);
   const fontSize = safeNumber(area.fontSize, 11, 6, 80);
-  const backgroundColor = safeColor(area.backgroundColor, '#fff3a3');
-  const borderColor = safeColor(area.borderColor, '#f0c94a');
-
-  doc.save();
-  doc.roundedRect(x, y, width, height, 2).fillAndStroke(backgroundColor, borderColor);
-  doc.restore();
 
   setPdfFont(doc, area.fontFamily || 'Times-Roman', area.isBold, area.isItalic);
   doc
@@ -210,7 +204,6 @@ function drawInlineText(doc, paragraph, data) {
   const width = safeNumber(paragraph.width, 487, 20, 820);
   const fontSize = safeNumber(paragraph.fontSize, 10, 6, 120);
   const lineHeight = fontSize * safeNumber(paragraph.lineHeight, 1.3, 1, 3);
-  const highlightColor = safeColor(paragraph.placeholderHighlightColor, '#fff3a3');
   let cursorX = x;
   let cursorY = y;
 
@@ -229,12 +222,6 @@ function drawInlineText(doc, paragraph, data) {
       if (!/^\s+$/.test(piece) && cursorX > x && cursorX + measured > x + width) {
         cursorX = x;
         cursorY += lineHeight;
-      }
-
-      if (segment.highlight && piece.trim()) {
-        doc.save();
-        doc.roundedRect(cursorX - 1, cursorY - 1, measured + 2, fontSize + 4, 2).fill(highlightColor);
-        doc.restore();
       }
 
       doc.fillColor(safeColor(paragraph.color, '#111111')).text(piece, cursorX, cursorY, { lineBreak: false });
@@ -285,11 +272,11 @@ async function generateDynamicNdaPDF(data, rawTemplate = {}) {
       doc.on('data', buffers.push.bind(buffers));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-      for (const page of pages) {
+      for (const [index, page] of pages.entries()) {
         doc.addPage({ size: 'A4', layout: orientation, margin: 0 });
         doc.rect(0, 0, width, height).fill('#ffffff');
         await drawBackground(doc, page, width, height);
-        drawHeader(doc, template, width);
+        if (index === 0 && page.showHeader !== false) drawHeader(doc, template, width);
         (page.paragraphs || []).forEach((paragraph) => drawParagraph(doc, paragraph, data));
         (page.highlightedAreas || []).forEach((area) => drawHighlightedArea(doc, area, data));
         (page.placeholders || []).forEach((placeholder) => drawPlaceholder(doc, placeholder, data));

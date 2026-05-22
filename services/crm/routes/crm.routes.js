@@ -80,9 +80,20 @@ function contractResponse(contract) {
   return object;
 }
 
+function normalizeStoredNdaTemplate(template) {
+  const defaultTemplate = createDefaultNdaTemplate();
+  if (!template) return defaultTemplate;
+
+  const normalized = normalizeTemplate(template);
+  const defaultClauseCount = defaultTemplate.clauses.length;
+  const savedClauseCount = Array.isArray(normalized.clauses) ? normalized.clauses.length : 0;
+
+  return savedClauseCount < Math.floor(defaultClauseCount * 0.8) ? defaultTemplate : normalized;
+}
+
 async function loadNdaTemplate(companyCode) {
   const saved = await CrmDocumentTemplate.findOne({ companyCode, type: 'NDA' }).lean();
-  return saved?.template ? normalizeTemplate(saved.template) : createDefaultNdaTemplate();
+  return normalizeStoredNdaTemplate(saved?.template);
 }
 
 async function buildNdaDocData(req, clientCompanyName) {
@@ -257,7 +268,7 @@ router.get('/nda-template', async (req, res) => {
     const saved = await CrmDocumentTemplate.findOne({ companyCode, type: 'NDA' }).lean();
     return res.json({
       success: true,
-      ndaTemplate: saved?.template ? normalizeTemplate(saved.template) : createDefaultNdaTemplate(),
+      ndaTemplate: normalizeStoredNdaTemplate(saved?.template),
       placeholders: NDA_PLACEHOLDERS,
       updatedAt: saved?.updatedAt || null,
     });

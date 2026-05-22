@@ -261,8 +261,8 @@ function normalizeClause(clause = {}, index = 0) {
   };
 }
 
-function normalizeClauses(clauses = []) {
-  const source = Array.isArray(clauses) && clauses.length ? clauses : DEFAULT_NDA_CLAUSES;
+function normalizeClauses(clauses = DEFAULT_NDA_CLAUSES) {
+  const source = Array.isArray(clauses) ? clauses : DEFAULT_NDA_CLAUSES;
   return source.map(normalizeClause).filter((clause) => clause.heading || clause.content);
 }
 
@@ -282,30 +282,41 @@ function contentLinesToBlocks(content) {
 function blocksFromClauses(clauses = []) {
   const blocks = [];
   let lastHeading = '';
+  let sectionNumber = 0;
+  let subSectionNumber = 0;
 
   normalizeClauses(clauses)
-    .filter((clause) => clause.enabled !== false)
-    .forEach((clause) => {
+    .forEach((clause, index) => {
+      if (clause.enabled === false) return;
+
       const heading = normalizeText(clause.heading);
       const subheading = normalizeText(clause.subheading);
+      const source = {
+        sourceClauseId: clause.id,
+        sourceClauseIndex: index,
+      };
 
       if (clause.type === 'title') {
-        blocks.push({ type: 'title', text: heading || 'Non-Disclosure Agreement (NDA)' });
-        blocks.push(...contentLinesToBlocks(clause.content));
+        blocks.push({ type: 'title', text: heading || 'Non-Disclosure Agreement (NDA)', ...source });
+        blocks.push(...contentLinesToBlocks(clause.content).map((block) => ({ ...block, ...source })));
         lastHeading = '';
         return;
       }
 
       if (heading && heading !== lastHeading) {
-        blocks.push({ type: 'heading', text: heading });
+        sectionNumber += 1;
+        subSectionNumber = 0;
+        blocks.push({ type: 'heading', text: `${sectionNumber}. ${heading}`, rawText: heading, numberLabel: `${sectionNumber}`, ...source });
         lastHeading = heading;
       }
 
       if (subheading) {
-        blocks.push({ type: 'subheading', text: subheading });
+        subSectionNumber += 1;
+        const numberLabel = sectionNumber ? `${sectionNumber}.${subSectionNumber}` : `${subSectionNumber}`;
+        blocks.push({ type: 'subheading', text: `${numberLabel} ${subheading}`, rawText: subheading, numberLabel, ...source });
       }
 
-      blocks.push(...contentLinesToBlocks(clause.content));
+      blocks.push(...contentLinesToBlocks(clause.content).map((block) => ({ ...block, ...source })));
     });
 
   return blocks;
@@ -315,6 +326,8 @@ function styleForBlock(block) {
   const base = {
     id: `nda-${Math.random().toString(36).slice(2, 10)}`,
     text: block.text,
+    sourceClauseId: block.sourceClauseId || '',
+    sourceClauseIndex: Number.isInteger(block.sourceClauseIndex) ? block.sourceClauseIndex : null,
     x: 54,
     y: 140,
     width: 487,
@@ -355,8 +368,9 @@ function estimateHeight(paragraph) {
   return Math.ceil(lineCount * (paragraph.fontSize || 10) * (paragraph.lineHeight || 1.3)) + 7;
 }
 
-function newPage() {
+function newPage(index = 0) {
   return {
+    showHeader: index === 0,
     backgroundUrl: '',
     placeholders: [],
     highlightedAreas: [],
@@ -365,19 +379,24 @@ function newPage() {
 }
 
 function paginateBlocks(blocks) {
-  const pages = [newPage()];
+  const pages = [newPage(0)];
   const pageHeight = A4.portrait.height;
-  const top = 132;
-  const bottom = 58;
-  const gap = 4;
-  let y = top;
+  const firstPageTop = 132;
+  const continuationTop = 84;
+  const bottom = 64;
+  const gap = 5;
+  let y = firstPageTop;
+
+  const addPage = () => {
+    pages.push(newPage(pages.length));
+    y = pages[pages.length - 1].showHeader ? firstPageTop : continuationTop;
+  };
 
   blocks.forEach((block) => {
     const paragraph = styleForBlock(block);
     const height = estimateHeight(paragraph);
     if (y + height > pageHeight - bottom && pages[pages.length - 1].paragraphs.length > 0) {
-      pages.push(newPage());
-      y = top;
+      addPage();
     }
     paragraph.y = y;
     pages[pages.length - 1].paragraphs.push(paragraph);
@@ -386,8 +405,7 @@ function paginateBlocks(blocks) {
 
   const signatureIntroHeight = 32;
   if (y + 165 > pageHeight - bottom) {
-    pages.push(newPage());
-    y = top;
+    addPage();
   }
 
   const signaturePage = pages[pages.length - 1];
@@ -492,6 +510,7 @@ function mergePageShell(generatedPages, existingPages = []) {
     const existing = existingPages[index] || {};
     return {
       ...page,
+      showHeader: typeof existing.showHeader === 'boolean' ? existing.showHeader : page.showHeader,
       backgroundUrl: existing.backgroundUrl || page.backgroundUrl || '',
       placeholders: Array.isArray(existing.placeholders) ? existing.placeholders : page.placeholders,
       highlightedAreas: Array.isArray(existing.highlightedAreas) ? existing.highlightedAreas : page.highlightedAreas,

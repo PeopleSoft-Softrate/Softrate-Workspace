@@ -747,6 +747,14 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmContractsLoading = false;
   crmContracts: any[] = [];
   crmActionMessage = '';
+  ndaWorkspaceOpen = false;
+  ndaWorkspaceClient: CrmClient | null = null;
+  ndaHistorySearch = '';
+  ndaDateFilterOpen = false;
+  ndaDateFrom = '';
+  ndaDateTo = '';
+  activeNdaClauseIndex = -1;
+  activeNdaParagraphIndex = -1;
   ndaTemplateMode: 'generate' | 'builder' = 'generate';
   ndaTemplateLoading = false;
   ndaTemplateSaving = false;
@@ -1475,8 +1483,73 @@ export abstract class AdminWorkspaceController implements OnInit {
       .filter((item) => !query || String(item.clientCompanyName || '').toLowerCase().includes(query) || String(item.documentNumber || '').toLowerCase().includes(query));
   }
 
+  get filteredNdaContracts(): any[] {
+    const query = this.ndaHistorySearch.trim().toLowerCase();
+    return this.crmContracts
+      .filter((item) => item.type === 'NDA')
+      .filter((item) => this.matchesNdaDateFilter(item.createdAt || item.generatedAt || item.effectiveFrom))
+      .filter((item) => !query || [
+        item.documentNumber,
+        item.clientCompanyName,
+        item.contactName,
+        item.status,
+      ].some((value) => String(value || '').toLowerCase().includes(query)));
+  }
+
+  get todayInputDate(): string {
+    return this.inputDateValue(new Date().toISOString());
+  }
+
+  matchesNdaDateFilter(rawDate?: string): boolean {
+    if (!this.ndaDateFrom && !this.ndaDateTo) return true;
+    if (!rawDate) return false;
+    const date = new Date(rawDate);
+    if (Number.isNaN(date.getTime())) return false;
+    if (this.ndaDateFrom) {
+      const from = new Date(`${this.ndaDateFrom}T00:00:00`);
+      if (date < from) return false;
+    }
+    if (this.ndaDateTo) {
+      const to = new Date(`${this.ndaDateTo}T23:59:59`);
+      if (date > to) return false;
+    }
+    return true;
+  }
+
+  openNdaWorkspace(client: CrmClient, event?: Event): void {
+    event?.stopPropagation();
+    this.selectCrmClient(client.companyName);
+    this.ndaWorkspaceClient = client;
+    this.ndaWorkspaceOpen = true;
+    this.ndaTemplateMode = 'builder';
+    this.crmActionMessage = '';
+    this.prefillNdaDraftFromClient(client);
+    if (!Array.isArray(this.currentNdaTemplate.clauses) || this.currentNdaTemplate.clauses.length === 0) {
+      this.fetchNdaTemplate();
+    } else {
+      this.syncNdaPagesFromClauses();
+    }
+    setTimeout(() => this.focusNdaClause(0, false), 0);
+  }
+
+  closeNdaWorkspace(): void {
+    this.ndaWorkspaceOpen = false;
+    this.ndaWorkspaceClient = null;
+    this.activeNdaClauseIndex = -1;
+    this.activeNdaParagraphIndex = -1;
+    this.onNdaCanvasMouseUp();
+  }
+
+  prefillNdaDraftFromClient(client: CrmClient): void {
+    const contact = client.contacts?.[0] || {};
+    this.ndaGenerationDraft.clientAddress = this.ndaGenerationDraft.clientAddress || contact.address || contact.companyAddress || '';
+    this.ndaGenerationDraft.projectName = this.ndaGenerationDraft.projectName || client.companyName || '';
+    this.ndaGenerationDraft.projectDescription = this.ndaGenerationDraft.projectDescription || client.description || '';
+  }
+
   defaultNdaPage(): any {
     return {
+      showHeader: false,
       backgroundUrl: '',
       placeholders: [],
       highlightedAreas: [],
@@ -1508,7 +1581,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         contactLine: '(+91) 8148633580  |  helpdesk@softrateglobal.com',
       },
       clauses: [],
-      pages: [this.defaultNdaPage()],
+      pages: [{ ...this.defaultNdaPage(), showHeader: true }],
     };
   }
 
@@ -1590,6 +1663,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       : [];
     next.pages = Array.isArray(next.pages) && next.pages.length
       ? next.pages.map((page: any) => ({
+          showHeader: typeof page?.showHeader === 'boolean' ? page.showHeader : false,
           backgroundUrl: page?.backgroundUrl || '',
           placeholders: Array.isArray(page?.placeholders) ? page.placeholders : [],
           highlightedAreas: Array.isArray(page?.highlightedAreas) ? page.highlightedAreas : [],
@@ -1599,14 +1673,214 @@ export abstract class AdminWorkspaceController implements OnInit {
     return next;
   }
 
+  private ndaText(value: unknown): string {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  private ndaContentLinesToBlocks(content: string, source: any): any[] {
+    return String(content || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => /^[-•]\s+/.test(line)
+        ? { type: 'bullet', text: line.replace(/^[-•]\s+/, ''), ...source }
+        : { type: 'body', text: line, ...source });
+  }
+
+  private ndaBlocksFromCurrentClauses(): any[] {
+    const blocks: any[] = [];
+    let lastHeading = '';
+    let sectionNumber = 0;
+    let subSectionNumber = 0;
+    (this.currentNdaTemplate.clauses || [])
+      .forEach((clause: any, index: number) => {
+        if (clause?.enabled === false) return;
+
+        const heading = this.ndaText(clause.heading || clause.title || '');
+        const subheading = this.ndaText(clause.subheading || clause.subHeading || '');
+        const source = {
+          sourceClauseId: String(clause.id || ''),
+          sourceClauseIndex: index,
+        };
+
+        if (clause.type === 'title') {
+          blocks.push({ type: 'title', text: heading || 'Non-Disclosure Agreement (NDA)', ...source });
+          blocks.push(...this.ndaContentLinesToBlocks(clause.content || '', source));
+          lastHeading = '';
+          return;
+        }
+
+        if (heading && heading !== lastHeading) {
+          sectionNumber += 1;
+          subSectionNumber = 0;
+          blocks.push({ type: 'heading', text: `${sectionNumber}. ${heading}`, rawText: heading, numberLabel: `${sectionNumber}`, ...source });
+          lastHeading = heading;
+        }
+        if (subheading) {
+          subSectionNumber += 1;
+          const numberLabel = sectionNumber ? `${sectionNumber}.${subSectionNumber}` : `${subSectionNumber}`;
+          blocks.push({ type: 'subheading', text: `${numberLabel} ${subheading}`, rawText: subheading, numberLabel, ...source });
+        }
+        blocks.push(...this.ndaContentLinesToBlocks(clause.content || '', source));
+      });
+    return blocks;
+  }
+
+  private ndaParagraphForBlock(block: any): any {
+    const base = {
+      id: `nda-${Math.random().toString(36).slice(2, 10)}`,
+      text: block.text,
+      sourceClauseId: block.sourceClauseId || '',
+      sourceClauseIndex: Number.isInteger(block.sourceClauseIndex) ? block.sourceClauseIndex : null,
+      x: 54,
+      y: 140,
+      width: 487,
+      fontSize: 10,
+      fontFamily: 'Times-Roman',
+      alignment: block.type === 'body' || block.type === 'bullet' ? 'justify' : 'left',
+      letterSpacing: 0,
+      lineHeight: 1.3,
+      isBold: false,
+      isItalic: false,
+      color: '#111111',
+      isCollapsed: true,
+      highlightPlaceholders: /\{\{[^}]+\}\}/.test(String(block.text || '')),
+      placeholderHighlightColor: '#fff3a3',
+    };
+
+    if (block.type === 'title') return { ...base, fontSize: 18, alignment: 'center', isBold: true, lineHeight: 1.2 };
+    if (block.type === 'heading') return { ...base, fontSize: 11.5, isBold: true, lineHeight: 1.2 };
+    if (block.type === 'subheading') return { ...base, fontSize: 10.5, isBold: true, lineHeight: 1.2 };
+    if (block.type === 'bullet') return { ...base, x: 70, width: 471, text: `- ${block.text}` };
+    return base;
+  }
+
+  private ndaEstimateParagraphHeight(paragraph: any): number {
+    const fontSize = Number(paragraph.fontSize || 10);
+    const width = Number(paragraph.width || 487);
+    const charsPerLine = Math.max(30, Math.floor(width / (fontSize * 0.47)));
+    const lineCount = Math.max(1, Math.ceil(String(paragraph.text || '').length / charsPerLine));
+    return Math.ceil(lineCount * fontSize * Number(paragraph.lineHeight || 1.3)) + 7;
+  }
+
+  private ndaNewGeneratedPage(): any {
+    return {
+      showHeader: false,
+      backgroundUrl: '',
+      placeholders: [],
+      highlightedAreas: [],
+      paragraphs: [],
+    };
+  }
+
+  private ndaPaginateBlocks(blocks: any[]): any[] {
+    const firstPage = { ...this.ndaNewGeneratedPage(), showHeader: true };
+    const pages = [firstPage];
+    const firstPageTop = 132;
+    const continuationTop = 84;
+    const bottom = 64;
+    const gap = 5;
+    let y = firstPageTop;
+
+    const addPage = () => {
+      pages.push(this.ndaNewGeneratedPage());
+      y = pages[pages.length - 1].showHeader ? firstPageTop : continuationTop;
+    };
+
+    blocks.forEach((block) => {
+      const paragraph = this.ndaParagraphForBlock(block);
+      const height = this.ndaEstimateParagraphHeight(paragraph);
+      if (y + height > this.ndaCanvasHeight - bottom && pages[pages.length - 1].paragraphs.length > 0) {
+        addPage();
+      }
+      paragraph.y = y;
+      pages[pages.length - 1].paragraphs.push(paragraph);
+      y += height + gap;
+    });
+
+    if (y + 165 > this.ndaCanvasHeight - bottom) {
+      addPage();
+    }
+
+    const signaturePage = pages[pages.length - 1];
+    signaturePage.paragraphs.push({
+      ...this.ndaParagraphForBlock({ type: 'body', text: 'This agreement has been executed and signed by the parties.' }),
+      id: 'nda-signature-intro',
+      y,
+      isCollapsed: false,
+    });
+    y += 32;
+
+    signaturePage.paragraphs.push({
+      ...this.ndaParagraphForBlock({ type: 'body', text: '{{companyName}}' }),
+      id: 'nda-party-a-name',
+      x: 54,
+      y,
+      width: 220,
+      isBold: true,
+      alignment: 'left',
+      highlightPlaceholders: true,
+    });
+    signaturePage.paragraphs.push({
+      ...this.ndaParagraphForBlock({ type: 'body', text: '{{clientCompanyName}}' }),
+      id: 'nda-party-b-name',
+      x: 318,
+      y,
+      width: 220,
+      isBold: true,
+      alignment: 'left',
+      highlightPlaceholders: true,
+    });
+
+    [
+      ['signatoryName', 'clientName', 'Full Name:'],
+      ['signatoryTitle', 'clientSignatoryTitle', 'Title:'],
+      ['todayDate', 'todayDate', 'Date:'],
+      ['companySignature', 'clientSignature', 'Signature:'],
+    ].forEach(([leftKey, rightKey, label], index) => {
+      const rowY = y + 28 + (index * 26);
+      signaturePage.paragraphs.push({ ...this.ndaParagraphForBlock({ type: 'body', text: label }), id: `nda-signature-left-label-${index}`, x: 54, y: rowY, width: 70, alignment: 'left' });
+      signaturePage.paragraphs.push({ ...this.ndaParagraphForBlock({ type: 'body', text: label }), id: `nda-signature-right-label-${index}`, x: 318, y: rowY, width: 70, alignment: 'left' });
+      signaturePage.highlightedAreas.push({ key: leftKey, x: 126, y: rowY - 3, width: 145, height: 18, fontSize: 10, isBold: index === 0, color: '#111111', backgroundColor: '#fff3a3', borderColor: '#f0c94a' });
+      signaturePage.highlightedAreas.push({ key: rightKey, x: 390, y: rowY - 3, width: 145, height: 18, fontSize: 10, isBold: index === 0, color: '#111111', backgroundColor: '#fff3a3', borderColor: '#f0c94a' });
+    });
+
+    return pages;
+  }
+
+  syncNdaPagesFromClauses(): void {
+    const template = this.currentNdaTemplate;
+    const existingPages = Array.isArray(template.pages) ? template.pages : [];
+    const generated = this.ndaPaginateBlocks(this.ndaBlocksFromCurrentClauses());
+    template.pages = generated.map((page, index) => {
+      const existing = existingPages[index] || {};
+      return {
+        ...page,
+        showHeader: typeof existing.showHeader === 'boolean' ? existing.showHeader : page.showHeader,
+        backgroundUrl: existing.backgroundUrl || page.backgroundUrl || '',
+        placeholders: Array.isArray(existing.placeholders) ? existing.placeholders : page.placeholders,
+        highlightedAreas: Array.isArray(existing.highlightedAreas) && existing.highlightedAreas.length
+          ? existing.highlightedAreas
+          : page.highlightedAreas,
+      };
+    });
+    if (this.ndaSelectedPageIndex >= template.pages.length) {
+      this.ndaSelectedPageIndex = Math.max(0, template.pages.length - 1);
+    }
+  }
+
   addNdaClause(): void {
     if (!Array.isArray(this.currentNdaTemplate.clauses)) this.currentNdaTemplate.clauses = [];
     this.currentNdaTemplate.clauses.push(this.defaultNdaClause(this.currentNdaTemplate.clauses.length));
+    this.syncNdaPagesFromClauses();
+    setTimeout(() => this.focusNdaClause(this.currentNdaTemplate.clauses.length - 1), 0);
   }
 
   removeNdaClause(index: number): void {
     if (!Array.isArray(this.currentNdaTemplate.clauses)) return;
     this.currentNdaTemplate.clauses.splice(index, 1);
+    this.activeNdaClauseIndex = Math.min(index, this.currentNdaTemplate.clauses.length - 1);
+    this.syncNdaPagesFromClauses();
   }
 
   onNdaInsertClausePlaceholder(clauseIndex: number, event: Event): void {
@@ -1747,6 +2021,46 @@ export abstract class AdminWorkspaceController implements OnInit {
     setTimeout(() => { select.value = ''; }, 0);
   }
 
+  focusNdaClause(index: number, scroll = true): void {
+    if (index < 0) return;
+    this.activeNdaClauseIndex = index;
+    this.activeNdaParagraphIndex = -1;
+    if (scroll) this.scrollNdaSidebarTo(`nda-clause-card-${index}`);
+  }
+
+  focusNdaParagraph(index: number, scroll = true): void {
+    if (index < 0) return;
+    const paragraph = this.currentNdaPage.paragraphs[index];
+    if (paragraph) paragraph.isCollapsed = false;
+    this.activeNdaParagraphIndex = index;
+    this.activeNdaClauseIndex = -1;
+    if (scroll) this.scrollNdaSidebarTo(`nda-para-editor-${index}`);
+  }
+
+  focusNdaParagraphFromCanvas(index: number, paragraph: any, event?: Event): void {
+    event?.stopPropagation();
+    const sourceClauseIndex = Number(paragraph?.sourceClauseIndex);
+    if (Number.isInteger(sourceClauseIndex) && sourceClauseIndex >= 0) {
+      this.focusNdaClause(sourceClauseIndex);
+      return;
+    }
+    const sourceClauseId = String(paragraph?.sourceClauseId || '');
+    const clauseIndex = sourceClauseId
+      ? (this.currentNdaTemplate.clauses || []).findIndex((clause: any) => String(clause.id || '') === sourceClauseId)
+      : -1;
+    if (clauseIndex >= 0) {
+      this.focusNdaClause(clauseIndex);
+      return;
+    }
+    this.focusNdaParagraph(index);
+  }
+
+  private scrollNdaSidebarTo(id: string): void {
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }
+
   onNdaCanvasMouseDown(event: MouseEvent, type: 'placeholder' | 'paragraph' | 'highlight', index: number): void {
     this.ndaDraggingType = type;
     this.ndaDraggingIndex = index;
@@ -1805,6 +2119,11 @@ export abstract class AdminWorkspaceController implements OnInit {
         this.crmActionMessage = err?.error?.message || 'Unable to open NDA PDF.';
       },
     });
+  }
+
+  openCrmContractPrintView(contract: any, event?: Event): void {
+    event?.stopPropagation();
+    this.downloadCrmContractPdf(contract);
   }
 
   generateCrmContract(type: 'SLA' | 'NDA', client = this.selectedCrmClient): void {

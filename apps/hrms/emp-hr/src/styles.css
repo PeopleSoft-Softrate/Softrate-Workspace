@@ -25,6 +25,8 @@
   --text-secondary: #475569;
   --text-muted: #94A3B8;
   --border-color: #E2E8F0;
+  --success-color: #16A34A;
+  --success-strong: #15803D;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
   
   /* Transitions */
@@ -58,6 +60,16 @@
   --hc-transition: 150ms cubic-bezier(.4,0,.2,1);
 
   --border-radius: 8px;
+
+  /* Top Bar Profile */
+  --profile-trigger-height: 2.75rem;
+  --profile-trigger-min-width: 11rem;
+  --profile-trigger-max-width: 13.75rem;
+  --profile-trigger-mobile-width: 10rem;
+  --profile-trigger-avatar-size: 2.125rem;
+  --profile-dropdown-width: 18.75rem;
+  --profile-dropdown-avatar-size: 3.25rem;
+  --profile-menu-action-height: 3.375rem;
 
 }
 

@@ -237,20 +237,6 @@
       </ng-container>
     </nav>
 
-    <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="user-avatar">
-          <span>{{ userName()?.charAt(0) || 'U' }}</span>
-        </div>
-        <div class="user-info">
-          <p class="user-name">{{ userName() }}</p>
-          <p class="user-role">{{ userRole()?.toLowerCase() === 'hr_admin' ? 'System Admin' : (userRole()?.toLowerCase() === 'hr' ? 'HR Specialist' : (userRole()?.toLowerCase() === 'manager' ? 'Management' : 'Staff')) }}</p>
-        </div>
-        <button class="logout-btn" title="Logout" (click)="logout()">
-          <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        </button>
-      </div>
-    </div>
   </aside>
 
   <!-- Main Content -->
@@ -299,10 +285,47 @@
         </div>
         
         <div class="top-bar-divider"></div>
-        <div class="greeting-container">
-          <span class="greeting-text">{{ getGreeting() }},</span>
-          <span class="user-display-name">{{ userName() }}</span>
-          <span class="user-role-badge">{{ userRole()?.toLowerCase() === 'hr_admin' ? 'System Admin' : (userRole()?.toLowerCase() === 'hr' ? 'HR Manager' : 'Team Member') }}</span>
+        <div class="profile-menu-wrapper">
+          <input #profilePhotoInput type="file" class="profile-photo-input" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="onProfilePhotoSelected($event)">
+
+          <button type="button" class="profile-trigger" [class.open]="showUserMenu()" (click)="toggleUserMenu()" aria-label="Open profile menu">
+            <span class="profile-trigger-avatar" title="Change profile photo" (click)="openProfilePhotoPicker(profilePhotoInput, $event)">
+              <img *ngIf="profilePhotoUrl() as photoUrl" [src]="photoUrl" [alt]="displayName() + ' profile photo'" class="profile-avatar-image">
+              <span *ngIf="!profilePhotoUrl()">{{ userInitials() }}</span>
+              <span class="profile-status-dot"></span>
+            </span>
+            <span class="profile-trigger-name">{{ displayName() }}</span>
+            <i class="fa-solid fa-chevron-down profile-trigger-icon"></i>
+          </button>
+
+          <div class="profile-dropdown" *ngIf="showUserMenu()">
+            <div class="profile-summary">
+              <button type="button" class="profile-avatar-large" title="Change profile photo" (click)="openProfilePhotoPicker(profilePhotoInput, $event)" [disabled]="profilePhotoSaving()">
+                <img *ngIf="profilePhotoUrl() as photoUrl" [src]="photoUrl" [alt]="displayName() + ' profile photo'" class="profile-avatar-image">
+                <span *ngIf="!profilePhotoUrl()">{{ userInitials() }}</span>
+              </button>
+              <div class="profile-summary-copy">
+                <h3>{{ displayName() }}</h3>
+                <p *ngIf="userPhone()">{{ userPhone() }}</p>
+                <p class="profile-code">{{ userCode() || roleLabel() }}</p>
+                <p class="profile-online">Active now</p>
+              </div>
+            </div>
+
+            <button type="button" class="profile-menu-action" (click)="removeProfilePhoto()">
+              <i class="fa-regular fa-trash-can"></i>
+              <span>{{ profilePhotoSaving() ? 'Saving...' : 'Remove photo' }}</span>
+            </button>
+
+            <p class="profile-photo-feedback" *ngIf="profilePhotoError()">{{ profilePhotoError() }}</p>
+
+            <div class="profile-menu-separator"></div>
+
+            <button type="button" class="profile-menu-action sign-out" (click)="logout()">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>

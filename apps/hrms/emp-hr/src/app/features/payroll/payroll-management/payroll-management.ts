@@ -73,7 +73,8 @@ export class PayrollManagement implements OnInit {
     return ints.filter(i => 
       i.fullName?.toLowerCase().includes(query) ||
       (i.internid || i.internId || '').toLowerCase().includes(query) ||
-      (i.department || '').toLowerCase().includes(query)
+      (i.department || '').toLowerCase().includes(query) ||
+      (i.status || '').toLowerCase().includes(query)
     );
   });
 
@@ -334,7 +335,7 @@ export class PayrollManagement implements OnInit {
     forkJoin({
       settings: this.apiService.getCompanySettings(),
       employees: this.apiService.getAllEmployees('all', 'approved'),
-      interns: this.apiService.getAllActiveInterns('all', 'approved'),
+      interns: this.apiService.getAllActiveInterns('all', 'all'),
       holidays: this.apiService.getHolidays().pipe(catchError(() => of([])))
     }).subscribe({
       next: (res) => {
@@ -374,7 +375,7 @@ export class PayrollManagement implements OnInit {
           );
         });
 
-        // Parallel fetch attendance and leaves for all approved interns
+        // Parallel fetch attendance and leaves for all active interns, including ongoing interns.
         const intFetches = res.interns.map(intern => {
           const internId = intern.internid || intern.internId || intern._id;
           return forkJoin({

@@ -61,6 +61,7 @@ app.use('/api/onboarding', require('./routes/onboarding.routes'));
 app.use('/api/settings', require('./routes/settings.routes'));
 app.use('/api/performance-templates', require('./routes/performance.routes'));
 app.use('/api/convert', require('./routes/conversion.routes'));
+app.use('/api/fund-requests', require('./routes/fundRequest.routes'));
 
 // ============================
 // Test Route

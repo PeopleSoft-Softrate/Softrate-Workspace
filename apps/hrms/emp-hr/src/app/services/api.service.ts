@@ -39,6 +39,16 @@ export class ApiService {
     return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/auth/me`), { headers: this.getHeaders() });
   }
 
+  updateProfilePhoto(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('profilePhoto', file);
+    return this.http.patch(`${this.baseUrl}/api/auth/me/profile-photo`, formData);
+  }
+
+  removeProfilePhoto(): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/api/auth/me/profile-photo`);
+  }
+
   hrLogin(email: string, password: string): Observable<any> {
     return this.login(email, password);
   }

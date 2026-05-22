@@ -78,6 +78,12 @@ const UserSchema = new mongoose.Schema({
     hra: { type: Number, default: 0 },
     allowances: { type: Number, default: 0 },
     deductions: { type: Number, default: 0 }
+  },
+  profilePhoto: {
+    data: { type: Buffer, select: false },
+    contentType: { type: String },
+    size: { type: Number },
+    updatedAt: { type: Date }
   }
 });
 

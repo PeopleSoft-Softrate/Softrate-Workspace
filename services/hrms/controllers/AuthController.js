@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const Employee = require("../models/EmployeeModel");
+const Intern = require("../models/Intern");
 const Role = require("../models/Role");
 const PasswordReset = require("../models/PasswordReset");
 const { sendEmail, LOGO_URL } = require("../utilities/sendEmail");
@@ -6,6 +8,79 @@ const { getSignature } = require("../utilities/emailSignature");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const PROFILE_PHOTO_SELECT = "+profilePhoto.data";
+
+function profilePhotoToDataUrl(profilePhoto) {
+  const rawData = profilePhoto?.data;
+  if (!rawData) return null;
+
+  let buffer = null;
+  if (Buffer.isBuffer(rawData)) {
+    buffer = rawData;
+  } else if (rawData.buffer && Buffer.isBuffer(rawData.buffer)) {
+    buffer = rawData.buffer;
+  } else if (Array.isArray(rawData.data)) {
+    buffer = Buffer.from(rawData.data);
+  }
+
+  if (!buffer?.length) return null;
+
+  const contentType = profilePhoto.contentType || "image/png";
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
+}
+
+function serializeUser(userDoc) {
+  const user = userDoc?.toObject ? userDoc.toObject() : userDoc;
+  if (!user) return user;
+
+  const profilePhotoUrl = profilePhotoToDataUrl(user.profilePhoto);
+  if (profilePhotoUrl) {
+    user.profilePhotoUrl = profilePhotoUrl;
+    user.profilePhoto = {
+      contentType: user.profilePhoto.contentType,
+      size: user.profilePhoto.size,
+      updatedAt: user.profilePhoto.updatedAt,
+      url: profilePhotoUrl
+    };
+  } else {
+    delete user.profilePhoto;
+  }
+
+  if (user.password) delete user.password;
+  return user;
+}
+
+async function findCurrentUser(req, includePhoto = false) {
+  const photoSelect = includePhoto ? PROFILE_PHOTO_SELECT : "";
+  let role = "employee";
+
+  let query = User.findById(req.user.id).populate("roleId companyId departmentId branchId");
+  if (photoSelect) query = query.select(photoSelect);
+  let user = await query;
+  if (user) {
+    role = user.roleId?.name?.toLowerCase() || "hr";
+    return { user, role, Model: User };
+  }
+
+  query = Employee.findById(req.user.id);
+  if (photoSelect) query = query.select(photoSelect);
+  user = await query;
+  if (user) {
+    role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");
+    return { user, role, Model: Employee };
+  }
+
+  query = Intern.findById(req.user.id);
+  if (photoSelect) query = query.select(photoSelect);
+  user = await query;
+  if (user) {
+    role = user.isHr ? "hr" : "intern";
+    return { user, role, Model: Intern };
+  }
+
+  return { user: null, role, Model: null };
+}
 
 /**
  * Unified Login for all user types (HR, Employee, Intern, Manager)
@@ -22,14 +97,11 @@ exports.login = async (req, res) => {
 
     // ── Special Reviewer Bypass Handling ──
     if (id.toLowerCase() === "test@peoplesoft" && password === "123456") {
-      const Intern = require("../models/Intern");
-      const Employee = require("../models/EmployeeModel");
-
-      let reviewerUser = await Intern.findOne({ email: "demo001@gmail.com" });
+      let reviewerUser = await Intern.findOne({ email: "demo001@gmail.com" }).select(PROFILE_PHOTO_SELECT);
       let reviewerRole = "intern";
 
       if (!reviewerUser) {
-        reviewerUser = await Employee.findOne({ isManager: false });
+        reviewerUser = await Employee.findOne({ isManager: false }).select(PROFILE_PHOTO_SELECT);
         reviewerRole = "employee";
       }
 
@@ -49,24 +121,21 @@ exports.login = async (req, res) => {
           { expiresIn: "7d" }
         );
 
+        const responseUser = serializeUser(reviewerUser);
+
         return res.json({ 
           success: true,
           role: reviewerRole, 
           token, 
           auth_token: token, 
-          user: reviewerUser,
-          intern: reviewerUser,
-          employee: reviewerUser
+          user: responseUser,
+          intern: responseUser,
+          employee: responseUser
         });
       }
     }
     let user = null;
     let role = null;
-
-    // ── 1. Models ──
-    const Intern = require("../models/Intern");
-    const Employee = require("../models/EmployeeModel");
-    // User model is already imported at top
 
     // ── 2. Lookup ──
     console.log(`[LOGIN] Identifier: ${id}`);
@@ -77,7 +146,7 @@ exports.login = async (req, res) => {
         { internid: { $regex: new RegExp(`^${id}$`, "i") } },
         { email:    { $regex: new RegExp(`^${id}$`, "i") } }
       ]
-    });
+    }).select(PROFILE_PHOTO_SELECT);
     if (user) {
       role = user.isHr ? "hr" : "intern";
       console.log(`[LOGIN] Found in Intern collection. Role: ${role}`);
@@ -90,7 +159,7 @@ exports.login = async (req, res) => {
           { EmployeeId: { $regex: new RegExp(`^${id}$`, "i") } },
           { email:      { $regex: new RegExp(`^${id}$`, "i") } }
         ]
-      });
+      }).select(PROFILE_PHOTO_SELECT);
       if (user) {
         role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");
         console.log(`[LOGIN] Found in Employee collection. Role: ${role}`);
@@ -104,7 +173,7 @@ exports.login = async (req, res) => {
           { employeeId: { $regex: new RegExp(`^${id}$`, "i") } },
           { email:      { $regex: new RegExp(`^${id}$`, "i") } }
         ]
-      }).select('+password').populate('roleId');
+      }).select(`+password ${PROFILE_PHOTO_SELECT}`).populate('roleId');
       
       if (user) {
         // Use the actual name from Role model if available, fallback to 'hr'
@@ -163,12 +232,12 @@ exports.login = async (req, res) => {
       role, 
       token, 
       auth_token: token, 
-      user 
+      user: serializeUser(user)
     };
 
     // Web portal compatibility
     if (role === 'employee' || role === 'manager') {
-      response.employee = user;
+      response.employee = response.user;
     }
 
     res.json(response);
@@ -183,40 +252,92 @@ exports.login = async (req, res) => {
  */
 exports.getMe = async (req, res) => {
   try {
-    let role = "employee";
-
-    // 1. Try User collection first
-    let user = await User.findById(req.user.id).populate('roleId companyId departmentId branchId');
-    if (user) {
-      role = user.roleId?.name?.toLowerCase() || "hr";
-    }
-    
-    // 2. If not found in User, try Employee (for managers/employees who logged in directly)
-    if (!user) {
-      const Employee = require("../models/EmployeeModel");
-      user = await Employee.findById(req.user.id);
-      if (user) {
-        role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");
-      }
-    }
-    
-    // 3. If still not found, try Intern
-    if (!user) {
-      const Intern = require("../models/Intern");
-      user = await Intern.findById(req.user.id);
-      if (user) {
-        role = user.isHr ? "hr" : "intern";
-      }
-    }
+    const { user, role } = await findCurrentUser(req, true);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.status(200).json({ success: true, user, role });
+    res.status(200).json({ success: true, user: serializeUser(user), role });
   } catch (err) {
     console.error("getMe Error:", err);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.updateProfilePhoto = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ success: false, message: "Profile photo is required" });
+    }
+
+    if (!file.mimetype?.startsWith("image/")) {
+      return res.status(400).json({ success: false, message: "Only image files are allowed" });
+    }
+
+    const { user, role, Model } = await findCurrentUser(req);
+    if (!user || !Model) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const updatedUser = await Model.findOneAndUpdate(
+      { _id: user._id, companyId: req.tenant.companyId },
+      {
+        $set: {
+          profilePhoto: {
+            data: file.buffer,
+            contentType: file.mimetype,
+            size: file.size,
+            updatedAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    ).select(PROFILE_PHOTO_SELECT);
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile photo updated",
+      user: serializeUser(updatedUser),
+      role
+    });
+  } catch (err) {
+    console.error("updateProfilePhoto Error:", err);
+    res.status(500).json({ success: false, message: "Unable to update profile photo" });
+  }
+};
+
+exports.removeProfilePhoto = async (req, res) => {
+  try {
+    const { user, role, Model } = await findCurrentUser(req);
+    if (!user || !Model) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const updatedUser = await Model.findOneAndUpdate(
+      { _id: user._id, companyId: req.tenant.companyId },
+      { $unset: { profilePhoto: "" } },
+      { new: true }
+    ).select(PROFILE_PHOTO_SELECT);
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile photo removed",
+      user: serializeUser(updatedUser),
+      role
+    });
+  } catch (err) {
+    console.error("removeProfilePhoto Error:", err);
+    res.status(500).json({ success: false, message: "Unable to remove profile photo" });
   }
 };
 

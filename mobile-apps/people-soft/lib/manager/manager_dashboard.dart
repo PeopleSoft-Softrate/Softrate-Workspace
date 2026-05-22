@@ -21,6 +21,7 @@ import 'package:hrmappfrontend/manager/manageroffboarding.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
+import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
 
 class ManagerDashboard extends StatefulWidget {
   const ManagerDashboard({super.key});
@@ -45,6 +46,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
   int recruitment = 3;
   int leaveCount = 0;
   List<dynamic> _leaveRecords = [];
+  int fundRequestCount = 0;
 
   // Lighter & Professional Color Palette
   static const Color primaryColor = Color(
@@ -112,13 +114,14 @@ class _ManagerDashboardState extends State<ManagerDashboard>
 
       if (recruitmentRes.statusCode == 200) {
         final List<dynamic> data = jsonDecode(recruitmentRes.body);
-        final pendingCount = data
-            .where(
-              (intern) =>
-                  intern['managerApprovalStatus'] == null ||
-                  intern['managerApprovalStatus'] == 'pending',
-            )
-            .length;
+        final pendingCount =
+            data
+                .where(
+                  (intern) =>
+                      intern['managerApprovalStatus'] == null ||
+                      intern['managerApprovalStatus'] == 'pending',
+                )
+                .length;
 
         setState(() {
           recruitment = pendingCount;
@@ -185,6 +188,19 @@ class _ManagerDashboardState extends State<ManagerDashboard>
         });
       }
 
+      final fundRes = await http.get(
+        Uri.parse(
+          "${getBaseUrl()}/api/fund-requests/manager-pending/$managerMongoId",
+        ),
+      );
+
+      if (fundRes.statusCode == 200) {
+        final List<dynamic> fundData = jsonDecode(fundRes.body);
+        setState(() {
+          fundRequestCount = fundData.length;
+        });
+      }
+
       setState(() => _isLoading = false);
 
       // 🔥 Check for role changes (Promotion/Demotion)
@@ -204,7 +220,8 @@ class _ManagerDashboardState extends State<ManagerDashboard>
       if (res.statusCode == 200) {
         final fullData = jsonDecode(res.body);
         final data = fullData['employee'] ?? fullData['user'] ?? fullData;
-        final String role = (data['role']?.toString() ?? '').toLowerCase().trim();
+        final String role =
+            (data['role']?.toString() ?? '').toLowerCase().trim();
         debugPrint("Role change check: Current backend role is '$role'");
 
         // 1. Check for HR Promotion
@@ -216,8 +233,8 @@ class _ManagerDashboardState extends State<ManagerDashboard>
         // 2. Check for Demotion to Employee
         final isManager =
             (data['isManager'] == true ||
-            data['isManager']?.toString() == 'true' ||
-            data['role']?.toString().toLowerCase() == 'manager');
+                data['isManager']?.toString() == 'true' ||
+                data['role']?.toString().toLowerCase() == 'manager');
 
         if (!isManager) {
           _handleManagerDemotion();
@@ -246,13 +263,13 @@ class _ManagerDashboardState extends State<ManagerDashboard>
 
   Future<void> _handleHrPromotion() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 1. Set HR permissions
     await prefs.setBool('hr_logged_in', true);
     await prefs.setString('hr_id', managerId ?? 'hr_default');
     final String? mName = prefs.getString('manager_name');
     await prefs.setString('hr_name', mName ?? 'HR Manager');
-    
+
     // 2. Clear Manager permissions
     await prefs.setBool('manager_logged_in', false);
     await prefs.setBool('employeeLoggedIn', false);
@@ -264,7 +281,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
           backgroundColor: Colors.green,
         ),
       );
-      
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HrdashBoard()),
@@ -293,37 +310,43 @@ class _ManagerDashboardState extends State<ManagerDashboard>
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          "Confirm Logout",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          "Are you sure you want to log out from the Manager Portal?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel", style: TextStyle(color: subtitleColor)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text("Logout"),
+            title: const Text(
+              "Confirm Logout",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "Are you sure you want to log out from the Manager Portal?",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(color: subtitleColor),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _logout();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text("Logout"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -598,7 +621,22 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                           },
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(child: SizedBox()),
+                        _buildSimpleStat(
+                          "Fund Requests",
+                          fundRequestCount.toString().padLeft(2, '0'),
+                          Icons.receipt_long_rounded,
+                          const Color(0xFF7C3AED),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              _createRoute(
+                                const FundRequestApprovalPage(
+                                  role: FundApprovalRole.manager,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
 

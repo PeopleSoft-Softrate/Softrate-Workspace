@@ -1,0 +1,82 @@
+name: hrmappfrontend
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Core
+  http: ^1.2.2
+  dio: ^5.3.0
+  intl: ^0.20.2
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.0
+  url_launcher: ^6.3.0
+  permission_handler: ^11.3.0
+  media_store_plus: ^0.1.3
+  device_info_plus: ^12.1.2
+  dropdown_button2: ^2.3.9
+
+
+
+  # Location
+  location: ^8.0.1
+  geolocator: ^10.0.0
+
+  # Files & PDF
+  file_picker: ^10.3.7
+  pdf: ^3.10.0
+  webview_flutter: ^4.2.1
+  webview_flutter_android: ^3.10.0
+  webview_flutter_wkwebview: ^3.10.0
+  syncfusion_flutter_pdfviewer: ^32.1.19
+  printing: ^5.14.2
+  image_picker: ^1.2.1
+  image_cropper: ^12.2.1
+  connectivity_plus: ^7.1.1
+  hugeicons: ^1.1.6
+
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/peoplesoft.png"
+
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/pdf/Softrate_Internship_Annexure.pdf
+    - assets/pdf/Internship NDA.pdf
+    - assets/pdf/Softrate Project final.pdf
+    - assets/pdf/Softrate_India_Holiday_List.pdf
+    - assets/fonts/TimesNewRoman.ttf
+    - assets/fonts/TimesNewRomanBold.ttf
+    - assets/fonts/Canterbury.ttf
+
+  fonts:
+    - family: TimesNewRoman
+      fonts:
+        - asset: assets/fonts/TimesNewRoman.ttf
+        - asset: assets/fonts/TimesNewRomanBold.ttf
+          weight: 700
+
+    - family: Roman
+      fonts:
+        - asset: assets/fonts/Canterbury.ttf

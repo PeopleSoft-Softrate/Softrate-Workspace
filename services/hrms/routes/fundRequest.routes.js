@@ -37,6 +37,7 @@ async function findRequester(companyId, requesterType, requesterId) {
     requesterName: employee.fullName,
     department: employee.department || employee.role || "",
     managerId: employee.assignedManager ? employee.assignedManager.toString() : null,
+    isManager: employee.isManager === true || employee.role?.toString().toLowerCase() === "manager",
   };
 }
 
@@ -74,6 +75,15 @@ router.post("/apply", verifyTenant, async (req, res) => {
       return res.status(404).json({ success: false, message: "Requester not found" });
     }
 
+    const skipManagerApproval = requester.type === "employee" && requester.isManager;
+
+    if (!skipManagerApproval && !requester.managerId) {
+      return res.status(400).json({
+        success: false,
+        message: "No manager assigned. Please contact HR before submitting a fund request",
+      });
+    }
+
     const fundRequest = await FundRequest.create({
       companyId: req.tenant.companyId,
       requesterType: requester.type,
@@ -85,17 +95,17 @@ router.post("/apply", verifyTenant, async (req, res) => {
       amount: numericAmount,
       expenseDate: new Date(expenseDate),
       description,
-      managerId: requester.managerId,
-      managerStatus: requester.managerId ? "pending" : "accepted",
+      managerId: skipManagerApproval ? null : requester.managerId,
+      managerStatus: skipManagerApproval ? "accepted" : "pending",
       hrStatus: "pending",
       isFinanceTeamApprove: false,
     });
 
     res.status(201).json({
       success: true,
-      message: requester.managerId
-        ? "Fund request submitted to manager"
-        : "Fund request submitted to HR",
+      message: skipManagerApproval
+        ? "Fund request submitted to HR"
+        : "Fund request submitted to manager",
       fundRequest,
     });
   } catch (err) {

@@ -25,6 +25,7 @@ import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:hrmappfrontend/intern/ProjectViewPage.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
+import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -84,7 +85,10 @@ class _AttendancePageState extends State<AttendancePage>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => Employeedashboard(employeeId: prefs.getString('employeeId') ?? ''),
+          builder:
+              (_) => Employeedashboard(
+                employeeId: prefs.getString('employeeId') ?? '',
+              ),
         ),
       );
     }
@@ -221,7 +225,7 @@ class _AttendancePageState extends State<AttendancePage>
 
   Future<void> _handleHrPromotion() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 1. Set HR permissions
     await prefs.setBool('hr_logged_in', true);
     await prefs.setString('hr_id', internId ?? 'hr_default');
@@ -363,7 +367,7 @@ class _AttendancePageState extends State<AttendancePage>
         "college": "Softrate Tech University",
         "qualification": "B.Tech Computer Science",
         "branch": "Main Office",
-        "phone": "9876543210"
+        "phone": "9876543210",
       };
       internStatus = "ongoing";
       if (mounted) {
@@ -382,21 +386,26 @@ class _AttendancePageState extends State<AttendancePage>
 
       if (response.statusCode == 200) {
         final fullData = jsonDecode(response.body);
-        internData = fullData['intern'] ?? fullData['employee'] ?? fullData['user'] ?? fullData;
+        internData =
+            fullData['intern'] ??
+            fullData['employee'] ??
+            fullData['user'] ??
+            fullData;
         internStatus = internData?['status']?.toString().toLowerCase();
 
         // 🔥 HR ROLE CHECK (PROMOTION)
         final role = internData?['role']?.toString().toLowerCase();
-        final isHr = internData?['isHr'] == true || internData?['isHr']?.toString() == 'true';
-        
+        final isHr =
+            internData?['isHr'] == true ||
+            internData?['isHr']?.toString() == 'true';
+
         if (role == 'hr' || role == 'hr_admin' || isHr) {
           _handleHrPromotion();
           return;
         }
 
         // 🔥 EMPLOYEE/MANAGER PROMOTION CHECK
-        if (role == 'employee' ||
-            role == 'manager') {
+        if (role == 'employee' || role == 'manager') {
           _handleEmployeePromotion();
           return;
         }
@@ -709,17 +718,18 @@ class _AttendancePageState extends State<AttendancePage>
             ),
           ),
           InkWell(
-            onTap: internData == null
-                ? null
-                : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            InternProfilepage(internData: internData!),
-                      ),
-                    ).then((_) => _loadProfileImage());
-                  },
+            onTap:
+                internData == null
+                    ? null
+                    : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (_) => InternProfilepage(internData: internData!),
+                        ),
+                      ).then((_) => _loadProfileImage());
+                    },
             borderRadius: BorderRadius.circular(30),
             child: Container(
               width: 52,
@@ -743,25 +753,28 @@ class _AttendancePageState extends State<AttendancePage>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF0EA5E9),
-                  gradient: (_profileImagePath == null)
-                      ? const LinearGradient(
-                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                        )
-                      : null,
-                  image: (_profileImagePath != null)
-                      ? DecorationImage(
-                          image: FileImage(File(_profileImagePath!)),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  gradient:
+                      (_profileImagePath == null)
+                          ? const LinearGradient(
+                            colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                          )
+                          : null,
+                  image:
+                      (_profileImagePath != null)
+                          ? DecorationImage(
+                            image: FileImage(File(_profileImagePath!)),
+                            fit: BoxFit.cover,
+                          )
+                          : null,
                 ),
-                child: (_profileImagePath == null)
-                    ? const Icon(
-                        Icons.person_rounded,
-                        size: 28,
-                        color: Colors.white,
-                      )
-                    : null,
+                child:
+                    (_profileImagePath == null)
+                        ? const Icon(
+                          Icons.person_rounded,
+                          size: 28,
+                          color: Colors.white,
+                        )
+                        : null,
               ),
             ),
           ),
@@ -811,9 +824,12 @@ class _AttendancePageState extends State<AttendancePage>
                         buildNetworkStatusBanner(),
                         _buildHeader(theme),
                         Expanded(
-                          child: loading
-                              ? const Center(child: CircularProgressIndicator())
-                              : _buildMainUI(name, now, isLast5Days),
+                          child:
+                              loading
+                                  ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                  : _buildMainUI(name, now, isLast5Days),
                         ),
                       ],
                     ),
@@ -918,10 +934,11 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => InternAttendanceDetails(
-                              internId: internId ?? '',
-                              internName: name,
-                            ),
+                            builder:
+                                (_) => InternAttendanceDetails(
+                                  internId: internId ?? '',
+                                  internName: name,
+                                ),
                           ),
                         );
                       },
@@ -936,10 +953,11 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => LeaveApplyScreen(
-                              internId: internId ?? '',
-                              internName: name,
-                            ),
+                            builder:
+                                (_) => LeaveApplyScreen(
+                                  internId: internId ?? '',
+                                  internName: name,
+                                ),
                           ),
                         );
                       },
@@ -958,10 +976,11 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => InternProcess(
-                              internId: internId ?? '',
-                              internName: name,
-                            ),
+                            builder:
+                                (_) => InternProcess(
+                                  internId: internId ?? '',
+                                  internName: name,
+                                ),
                           ),
                         );
                       },
@@ -1012,8 +1031,8 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                const intern_Organizational_Hierarchy(),
+                            builder:
+                                (_) => const intern_Organizational_Hierarchy(),
                           ),
                         );
                       },
@@ -1047,14 +1066,44 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => UserProjectPage(
-                              userId: internData?['_id'] ?? '',
-                              userName: name,
-                            ),
+                            builder:
+                                (_) => UserProjectPage(
+                                  userId: internData?['_id'] ?? '',
+                                  userName: name,
+                                ),
                           ),
                         );
                       },
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildManagerStyleBox(
+                      "Fund Request",
+                      "Company Claims",
+                      Icons.receipt_long_rounded,
+                      const Color(0xFF7C3AED),
+                      onTap:
+                          internId == null
+                              ? null
+                              : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => FundRequestPage(
+                                          requesterId: internId!,
+                                          requesterName: name,
+                                          requesterType: 'intern',
+                                        ),
+                                  ),
+                                );
+                              },
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(child: SizedBox()),
                   ],
                 ),
               ],
@@ -1429,41 +1478,43 @@ class _AttendancePageState extends State<AttendancePage>
             child: Center(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: punchLoading
-                    ? null
-                    : () async {
-                        if (hasPunchedIn && hasPunchedOut) {
-                          showDialog(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              content: const Text(
-                                "Attendance locked - you are good 😄",
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("OK"),
-                                ),
-                              ],
-                            ),
-                          );
-                          return;
-                        }
+                onTap:
+                    punchLoading
+                        ? null
+                        : () async {
+                          if (hasPunchedIn && hasPunchedOut) {
+                            showDialog(
+                              context: context,
+                              builder:
+                                  (_) => AlertDialog(
+                                    content: const Text(
+                                      "Attendance locked - you are good 😄",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("OK"),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                            return;
+                          }
 
-                        if (mounted) setState(() => punchLoading = true);
+                          if (mounted) setState(() => punchLoading = true);
 
-                        // Note: checkDistanceFromOffice is not present in intern dashboard,
-                        // but it seems the punchIn/punchOut methods might handle location.
-                        // I will stick to the existing logic but update the UI.
+                          // Note: checkDistanceFromOffice is not present in intern dashboard,
+                          // but it seems the punchIn/punchOut methods might handle location.
+                          // I will stick to the existing logic but update the UI.
 
-                        if (!hasPunchedIn) {
-                          await punchIn();
-                        } else if (!hasPunchedOut) {
-                          await punchOut();
-                        }
+                          if (!hasPunchedIn) {
+                            await punchIn();
+                          } else if (!hasPunchedOut) {
+                            await punchOut();
+                          }
 
-                        if (mounted) setState(() => punchLoading = false);
-                      },
+                          if (mounted) setState(() => punchLoading = false);
+                        },
                 child: Material(
                   elevation: 8,
                   borderRadius: BorderRadius.circular(32),
@@ -1487,24 +1538,25 @@ class _AttendancePageState extends State<AttendancePage>
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: punchLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.4,
+                    child:
+                        punchLoading
+                            ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.4,
+                              ),
+                            )
+                            : Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1,
+                              ),
                             ),
-                          )
-                        : Text(
-                            label,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1,
-                            ),
-                          ),
                   ),
                 ),
               ),
@@ -1971,12 +2023,10 @@ class LeaveRecord {
       perDay = Map<String, String>.from(json['perDayDurations']);
     }
 
-    final from = json['fromDate'] is Map
-        ? json['fromDate']['\$date']
-        : json['fromDate'];
-    final to = json['toDate'] is Map
-        ? json['toDate']['\$date']
-        : json['toDate'];
+    final from =
+        json['fromDate'] is Map ? json['fromDate']['\$date'] : json['fromDate'];
+    final to =
+        json['toDate'] is Map ? json['toDate']['\$date'] : json['toDate'];
 
     return LeaveRecord(
       id: json['_id'] ?? '',

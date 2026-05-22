@@ -13,6 +13,7 @@ import 'package:hrmappfrontend/Employee/Employee_profile_page.dart';
 import 'package:hrmappfrontend/Employee/Employee_progress.dart';
 import 'package:hrmappfrontend/Employee/employee_leave_request.dart';
 import 'package:hrmappfrontend/Employee/employeepayroll.dart';
+import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
@@ -24,7 +25,6 @@ import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:hrmappfrontend/intern/ProjectViewPage.dart';
 import 'package:hrmappfrontend/employee_to_manager/manager_access_section.dart';
-import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
 
 class Employeedashboard extends StatefulWidget {
@@ -236,7 +236,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
         "companyCode": "SOFTRATE",
         "department": "Engineering",
         "phone": "9876543211",
-        "isManager": false
+        "isManager": false,
       };
       if (mounted) {
         setState(() {});
@@ -277,8 +277,8 @@ class _EmployeedashboardState extends State<Employeedashboard>
         // 🔥 Save manager info if they are a manager
         final isManager =
             (data['isManager'] == true ||
-            data['isManager']?.toString() == 'true' ||
-            data['role']?.toString().toLowerCase() == 'manager');
+                data['isManager']?.toString() == 'true' ||
+                data['role']?.toString().toLowerCase() == 'manager');
         if (isManager) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("manager_email", data['email'] ?? '');
@@ -304,66 +304,67 @@ class _EmployeedashboardState extends State<Employeedashboard>
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.work_off_rounded,
-                color: Colors.red.shade500,
-                size: 28,
+        builder:
+            (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Account Terminated',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.red,
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.work_off_rounded,
+                    color: Colors.red.shade500,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Account Terminated',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your employment has been terminated.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Your account access has been revoked.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    logout();
+                  },
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedLogout03,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  label: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade500,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your employment has been terminated.',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Your account access has been revoked.',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                logout();
-              },
-              icon: const HugeIcon(
-                icon: HugeIcons.strokeRoundedLogout03,
-                color: Colors.white,
-                size: 20,
-              ),
-              label: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade500,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
       );
     }
   }
@@ -812,9 +813,12 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         buildNetworkStatusBanner(),
                         _buildHeader(theme),
                         Expanded(
-                          child: loading
-                              ? const Center(child: CircularProgressIndicator())
-                              : _buildMainUI(name, now, isLast5Days),
+                          child:
+                              loading
+                                  ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                  : _buildMainUI(name, now, isLast5Days),
                         ),
                       ],
                     ),
@@ -866,8 +870,8 @@ class _EmployeedashboardState extends State<Employeedashboard>
 
     final isManager =
         (employeeData?['isManager'] == true ||
-        employeeData?['isManager']?.toString() == 'true' ||
-        employeeData?['role']?.toString().toLowerCase() == 'manager');
+            employeeData?['isManager']?.toString() == 'true' ||
+            employeeData?['role']?.toString().toLowerCase() == 'manager');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
@@ -903,21 +907,24 @@ class _EmployeedashboardState extends State<Employeedashboard>
             ),
           ),
           InkWell(
-            onTap: (employeeData == null && !isTestAccount)
-                ? null
-                : () {
-                    if (isTestAccount) {
-                      logout();
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              EmployeeProfilePage(employeeData: employeeData),
-                        ),
-                      ).then((_) => _loadProfileImage());
-                    }
-                  },
+            onTap:
+                (employeeData == null && !isTestAccount)
+                    ? null
+                    : () {
+                      if (isTestAccount) {
+                        logout();
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (_) => EmployeeProfilePage(
+                                  employeeData: employeeData,
+                                ),
+                          ),
+                        ).then((_) => _loadProfileImage());
+                      }
+                    },
             borderRadius: BorderRadius.circular(30),
             child: Container(
               width: 52,
@@ -941,27 +948,30 @@ class _EmployeedashboardState extends State<Employeedashboard>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF0EA5E9),
-                  gradient: (isTestAccount || _profileImagePath == null)
-                      ? const LinearGradient(
-                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                        )
-                      : null,
-                  image: (!isTestAccount && _profileImagePath != null)
-                      ? DecorationImage(
-                          image: FileImage(File(_profileImagePath!)),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  gradient:
+                      (isTestAccount || _profileImagePath == null)
+                          ? const LinearGradient(
+                            colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                          )
+                          : null,
+                  image:
+                      (!isTestAccount && _profileImagePath != null)
+                          ? DecorationImage(
+                            image: FileImage(File(_profileImagePath!)),
+                            fit: BoxFit.cover,
+                          )
+                          : null,
                 ),
-                child: (isTestAccount || _profileImagePath == null)
-                    ? Icon(
-                        isTestAccount
-                            ? Icons.logout_rounded
-                            : Icons.person_rounded,
-                        size: 28,
-                        color: Colors.white,
-                      )
-                    : null,
+                child:
+                    (isTestAccount || _profileImagePath == null)
+                        ? Icon(
+                          isTestAccount
+                              ? Icons.logout_rounded
+                              : Icons.person_rounded,
+                          size: 28,
+                          color: Colors.white,
+                        )
+                        : null,
               ),
             ),
           ),
@@ -995,20 +1005,21 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       "Analytics",
                       Icons.analytics_rounded,
                       const Color(0xFF00B4D8),
-                      onTap: employeeId == null
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      Employeeattendancedetails(
-                                        employeeId: employeeId!,
-                                        employeeName: name,
-                                      ),
-                                ),
-                              );
-                            },
+                      onTap:
+                          employeeId == null
+                              ? null
+                              : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => Employeeattendancedetails(
+                                          employeeId: employeeId!,
+                                          employeeName: name,
+                                        ),
+                                  ),
+                                );
+                              },
                     ),
                     const SizedBox(width: 12),
                     _buildManagerStyleBox(
@@ -1016,19 +1027,21 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       "Management",
                       Icons.event_note_rounded,
                       const Color(0xFF00657F),
-                      onTap: employeeId == null
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EmployeeLeaveRequest(
-                                    employeeId: employeeId!,
-                                    employeeName: name,
+                      onTap:
+                          employeeId == null
+                              ? null
+                              : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => EmployeeLeaveRequest(
+                                          employeeId: employeeId!,
+                                          employeeName: name,
+                                        ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
                     ),
                   ],
                 ),
@@ -1040,19 +1053,21 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       "Appraisal",
                       Icons.rate_review_rounded,
                       const Color(0xFFF59E0B),
-                      onTap: employeeId == null
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EmployeeProgress(
-                                    employeeId: employeeId!,
-                                    employeeName: name,
+                      onTap:
+                          employeeId == null
+                              ? null
+                              : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => EmployeeProgress(
+                                          employeeId: employeeId!,
+                                          employeeName: name,
+                                        ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
                     ),
                     const SizedBox(width: 12),
                     _buildManagerStyleBox(
@@ -1100,8 +1115,8 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                intern_Organizational_Hierarchy(),
+                            builder:
+                                (context) => intern_Organizational_Hierarchy(),
                           ),
                         );
                       },
@@ -1134,21 +1149,54 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       onTap: () {
                         final isManager =
                             (employeeData?['isManager'] == true ||
-                            employeeData?['isManager']?.toString() == 'true' ||
-                            employeeData?['role']?.toString().toLowerCase() ==
-                                'manager');
+                                employeeData?['isManager']?.toString() ==
+                                    'true' ||
+                                employeeData?['role']
+                                        ?.toString()
+                                        .toLowerCase() ==
+                                    'manager');
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => UserProjectPage(
-                              userId: employeeData?['_id'] ?? '',
-                              userName: name,
-                              isManager: isManager,
-                            ),
+                            builder:
+                                (_) => UserProjectPage(
+                                  userId: employeeData?['_id'] ?? '',
+                                  userName: name,
+                                  isManager: isManager,
+                                ),
                           ),
                         );
                       },
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildManagerStyleBox(
+                      "Fund Request",
+                      "Company Claims",
+                      Icons.receipt_long_rounded,
+                      const Color(0xFF7C3AED),
+                      onTap:
+                          employeeId == null
+                              ? null
+                              : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => FundRequestPage(
+                                          requesterId: employeeId!,
+                                          requesterName: name,
+                                          requesterType: 'employee',
+                                        ),
+                                  ),
+                                );
+                              },
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(child: SizedBox()),
                   ],
                 ),
               ],
@@ -1346,45 +1394,47 @@ class _EmployeedashboardState extends State<Employeedashboard>
             child: Center(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: punchLoading
-                    ? null
-                    : () async {
-                        if (hasPunchedIn && hasPunchedOut) {
-                          showDialog(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              content: const Text(
-                                "Attendance locked - you are good 😄",
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("OK"),
-                                ),
-                              ],
-                            ),
-                          );
-                          return;
-                        }
+                onTap:
+                    punchLoading
+                        ? null
+                        : () async {
+                          if (hasPunchedIn && hasPunchedOut) {
+                            showDialog(
+                              context: context,
+                              builder:
+                                  (_) => AlertDialog(
+                                    content: const Text(
+                                      "Attendance locked - you are good 😄",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("OK"),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                            return;
+                          }
 
-                        setState(() => punchLoading = true);
+                          setState(() => punchLoading = true);
 
-                        final inside = await checkDistanceFromOffice();
-                        if (!inside) {
-                          setState(() => punchLoading = false);
-                          if (!mounted) return;
-                          _showLocationWarning();
-                          return;
-                        }
+                          final inside = await checkDistanceFromOffice();
+                          if (!inside) {
+                            setState(() => punchLoading = false);
+                            if (!mounted) return;
+                            _showLocationWarning();
+                            return;
+                          }
 
-                        if (!hasPunchedIn) {
-                          await punchIn();
-                        } else if (!hasPunchedOut) {
-                          await punchOut();
-                        }
+                          if (!hasPunchedIn) {
+                            await punchIn();
+                          } else if (!hasPunchedOut) {
+                            await punchOut();
+                          }
 
-                        if (mounted) setState(() => punchLoading = false);
-                      },
+                          if (mounted) setState(() => punchLoading = false);
+                        },
                 child: Material(
                   elevation: 8,
                   borderRadius: BorderRadius.circular(32),
@@ -1499,9 +1549,10 @@ class _EmployeedashboardState extends State<Employeedashboard>
                 color: finalColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: icon is IconData
-                  ? Icon(icon, size: 16, color: finalColor)
-                  : HugeIcon(icon: icon, color: finalColor, size: 16),
+              child:
+                  icon is IconData
+                      ? Icon(icon, size: 16, color: finalColor)
+                      : HugeIcon(icon: icon, color: finalColor, size: 16),
             ),
             const SizedBox(width: 12),
             Text(

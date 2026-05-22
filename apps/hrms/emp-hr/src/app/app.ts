@@ -40,9 +40,14 @@ export class App {
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   userName = signal<string | null>(null);
+  currentUser = signal<any>(null);
   hasNotifications = signal<boolean>(false);
   notificationItems = signal<any[]>([]);
   showNotifications = signal<boolean>(false);
+  showUserMenu = signal<boolean>(false);
+  profilePhotoSaving = signal<boolean>(false);
+  profilePhotoError = signal<string | null>(null);
+  readonly profilePhotoMaxSizeMb = 2;
   apiService = inject(ApiService);
 
   currentUrl = signal<string>('');
@@ -51,6 +56,8 @@ export class App {
     this.currentUrl.set(this.router.url);
     this.router.events.subscribe(() => {
       this.currentUrl.set(this.router.url);
+      this.showNotifications.set(false);
+      this.showUserMenu.set(false);
     });
 
     this.loadUserData();
@@ -81,10 +88,17 @@ export class App {
   }
 
   toggleNotifications() {
+    this.showUserMenu.set(false);
     this.showNotifications.update(v => !v);
     if (this.showNotifications()) {
       this.checkNotifications();
     }
+  }
+
+  toggleUserMenu() {
+    this.showNotifications.set(false);
+    this.profilePhotoError.set(null);
+    this.showUserMenu.update(v => !v);
   }
 
   checkNotifications() {
@@ -159,28 +173,181 @@ export class App {
     if (data) {
       try {
         const user = JSON.parse(data);
-        // Extremely flexible name lookup
-        const name = user.profile?.firstName || user.firstName || user.fullName || user.profile?.name || 'User';
-        this.userName.set(name);
+        this.setCurrentUser(user);
       } catch (e) {
+        this.currentUser.set(null);
         this.userName.set('User');
       }
+    } else {
+      this.currentUser.set(null);
+      this.userName.set('User');
     }
+  }
+
+  private setCurrentUser(user: any, persist = false) {
+    this.currentUser.set(user);
+    this.userName.set(this.resolveUserName(user));
+
+    if (persist) {
+      localStorage.setItem('user_data', JSON.stringify(user));
+    }
+  }
+
+  private resolveUserName(user: any): string {
+    const profile = user?.profile || {};
+    const composedName = [
+      profile.firstName || user?.firstName,
+      profile.lastName || user?.lastName
+    ].filter(Boolean).join(' ').trim();
+
+    return user?.fullName
+      || user?.name
+      || profile.fullName
+      || profile.name
+      || composedName
+      || 'User';
+  }
+
+  private pickUserField(keys: string[]): string | null {
+    const user = this.currentUser();
+    const profile = user?.profile || {};
+
+    for (const key of keys) {
+      const value = user?.[key] || profile?.[key];
+      if (value) return String(value);
+    }
+
+    return null;
+  }
+
+  displayName(): string {
+    return this.userName() || 'User';
+  }
+
+  userInitials(): string {
+    const words = this.displayName().trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return 'U';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+
+    return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+  }
+
+  userPhone(): string | null {
+    return this.pickUserField(['phone', 'phoneNumber', 'contact', 'mobile', 'mobileNumber']);
+  }
+
+  userCode(): string | null {
+    return this.pickUserField(['employeeId', 'EmployeeId', 'internId', 'internid', 'staffId', 'code']);
+  }
+
+  roleLabel(): string {
+    const role = this.userRole()?.toLowerCase();
+    if (role === 'hr_admin') return 'System Admin';
+    if (role === 'hr') return 'HR Manager';
+    if (role === 'manager') return 'Management';
+
+    return 'Team Member';
+  }
+
+  profilePhotoUrl(): string | null {
+    const user = this.currentUser();
+    const profile = user?.profile || {};
+    const candidates = [
+      user?.profilePhotoUrl,
+      user?.profilePhoto?.url,
+      profile?.avatar,
+      profile?.photo,
+      profile?.photoUrl,
+      profile?.profilePhoto,
+      user?.avatar,
+      user?.avatarUrl,
+      user?.photo,
+      user?.photoUrl,
+      user?.image,
+      user?.imageUrl
+    ];
+
+    for (const value of candidates) {
+      if (typeof value === 'string' && value.trim()) return value;
+    }
+
+    return null;
+  }
+
+  openProfilePhotoPicker(input: HTMLInputElement, event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.profilePhotoError.set(null);
+    input.click();
+  }
+
+  onProfilePhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.profilePhotoError.set(null);
+
+    if (!file.type.startsWith('image/')) {
+      this.profilePhotoError.set('Choose an image file.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > this.profilePhotoMaxSizeMb * 1024 * 1024) {
+      this.profilePhotoError.set(`Image must be ${this.profilePhotoMaxSizeMb} MB or smaller.`);
+      input.value = '';
+      return;
+    }
+
+    this.profilePhotoSaving.set(true);
+    this.apiService.updateProfilePhoto(file).subscribe({
+      next: (res: any) => {
+        if (res.user) this.setCurrentUser(res.user, true);
+        if (res.role) {
+          localStorage.setItem('user_role', res.role);
+          this.userRole.set(res.role);
+        }
+
+        this.profilePhotoSaving.set(false);
+        input.value = '';
+      },
+      error: (err) => {
+        this.profilePhotoSaving.set(false);
+        this.profilePhotoError.set(err.error?.message || 'Unable to update profile photo.');
+        input.value = '';
+      }
+    });
+  }
+
+  removeProfilePhoto() {
+    if (this.profilePhotoSaving()) return;
+
+    this.profilePhotoSaving.set(true);
+    this.profilePhotoError.set(null);
+    this.apiService.removeProfilePhoto().subscribe({
+      next: (res: any) => {
+        if (res.user) this.setCurrentUser(res.user, true);
+        this.profilePhotoSaving.set(false);
+      },
+      error: (err) => {
+        this.profilePhotoSaving.set(false);
+        this.profilePhotoError.set(err.error?.message || 'Unable to remove profile photo.');
+      }
+    });
   }
 
   refreshMe() {
     this.apiService.getMe().subscribe({
       next: (res: any) => {
         if (res.success && res.user) {
-          localStorage.setItem('user_data', JSON.stringify(res.user));
+          this.setCurrentUser(res.user, true);
           
           // Also sync the role from the exact backend calculation
           if (res.role) {
             localStorage.setItem('user_role', res.role);
             this.userRole.set(res.role);
           }
-          
-          this.loadUserData();
         }
       }
     });
@@ -202,6 +369,8 @@ export class App {
     localStorage.removeItem('user_role');
     localStorage.removeItem('user_data');
     this.userRole.set(null);
+    this.currentUser.set(null);
+    this.showUserMenu.set(false);
     this.router.navigate(['/login']);
   }
 }

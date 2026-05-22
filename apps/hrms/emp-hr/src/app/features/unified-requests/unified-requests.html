@@ -76,6 +76,18 @@
             <span class="stat-label">Pending Corrections</span>
           </div>
         </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item fund">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="WalletDone02Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingFundsCount() }}</span>
+            <span class="stat-label">Fund Requests</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -121,6 +133,11 @@
             [class.active]="activeCategory() === 'correction'"
             class="tab-btn"
           >Attendance Corrections</button>
+          <button
+            (click)="activeCategory.set('fund')"
+            [class.active]="activeCategory() === 'fund'"
+            class="tab-btn"
+          >Fund Requests</button>
         </div>
       </div>
     </div>
@@ -260,7 +277,7 @@
           </div>
         </div>
         <span class="badge" [ngClass]="req.type">
-          {{ req.type === 'leave' ? 'Leave' : (req.type === 'offboarding' ? 'Offboarding' : 'Correction') }}
+          {{ req.type === 'leave' ? 'Leave' : (req.type === 'offboarding' ? 'Offboarding' : (req.type === 'fund' ? 'Fund Request' : 'Correction')) }}
         </span>
       </div>
 
@@ -273,6 +290,10 @@
         <div class="detail-row" *ngIf="req.days">
           <span class="detail-label">Duration:</span>
           <span class="detail-value">{{ req.days }} Days</span>
+        </div>
+        <div class="detail-row" *ngIf="req.type === 'fund'">
+          <span class="detail-label">Requested Amount:</span>
+          <span class="detail-value highlight">₹{{ req.amount || 0 | number:'1.0-0' }}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Timeline:</span>
@@ -328,7 +349,7 @@
     <div class="modal-container card slide-in">
       <div class="modal-header">
         <h3>
-          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Attendance Correction' : 'Onboarding')) }} Decision
+          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Attendance Correction' : (selectedRequest()?.type === 'fund' ? 'Fund Request' : 'Onboarding'))) }} Decision
         </h3>
         <button (click)="closeModal()" class="close-btn">&times;</button>
       </div>

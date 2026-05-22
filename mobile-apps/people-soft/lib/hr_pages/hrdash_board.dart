@@ -33,6 +33,7 @@ import 'package:hrmappfrontend/Employee/Employee_policy.dart';
 import 'package:hrmappfrontend/Employee/employee_leave_request.dart';
 import 'package:hrmappfrontend/Employee/employeepayroll.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
+import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
 
 import 'package:hrmappfrontend/hr_pages/adding_intern.dart';
 import 'package:hrmappfrontend/hr_pages/intern_leave_approval.dart';
@@ -63,24 +64,30 @@ class _HrdashBoardState extends State<HrdashBoard>
   Map<String, dynamic>? hrData;
   DateTime _currentTime = DateTime.now();
   Timer? _clockTimer;
-  
+
   bool isTodayHoliday = false;
   String? holidayReason;
   List<dynamic> _officeLocations = [];
 
   Future<void> fetchOfficeLocations() async {
     try {
-      final res = await http.get(Uri.parse("${getBaseUrl()}/api/settings/public"));
+      final res = await http.get(
+        Uri.parse("${getBaseUrl()}/api/settings/public"),
+      );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) setState(() => _officeLocations = data['locations'] ?? []);
       }
-    } catch (e) { debugPrint("Fetch locations error: $e"); }
+    } catch (e) {
+      debugPrint("Fetch locations error: $e");
+    }
   }
 
   Future<void> checkTodayHoliday() async {
     try {
-      final res = await http.get(Uri.parse("${getBaseUrl()}/api/holidays/is-today-holiday"));
+      final res = await http.get(
+        Uri.parse("${getBaseUrl()}/api/holidays/is-today-holiday"),
+      );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (mounted) {
@@ -90,7 +97,9 @@ class _HrdashBoardState extends State<HrdashBoard>
           });
         }
       }
-    } catch (e) { debugPrint("Holiday check error: $e"); }
+    } catch (e) {
+      debugPrint("Holiday check error: $e");
+    }
   }
 
   Future<bool> handleLocationPermission() async {
@@ -100,25 +109,35 @@ class _HrdashBoardState extends State<HrdashBoard>
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-    return permission == LocationPermission.always || permission == LocationPermission.whileInUse;
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
   }
 
   Future<String> getLocation() async {
-    final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
     return "${pos.latitude}, ${pos.longitude}";
   }
 
   Future<bool> checkDistanceFromOffice() async {
     bool hasPermission = await handleLocationPermission();
     if (!hasPermission) return false;
-    final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
     if (_officeLocations.isEmpty) return true;
     for (var loc in _officeLocations) {
       try {
         final double officeLat = double.parse(loc['latitude'].toString());
         final double officeLng = double.parse(loc['longitude'].toString());
         final double radius = double.parse((loc['radius'] ?? 200).toString());
-        final distance = Geolocator.distanceBetween(position.latitude, position.longitude, officeLat, officeLng);
+        final distance = Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          officeLat,
+          officeLng,
+        );
         if (distance <= radius) return true;
       } catch (e) {
         debugPrint("Distance calculation error for ${loc['name']}: $e");
@@ -130,7 +149,12 @@ class _HrdashBoardState extends State<HrdashBoard>
 
   Future<void> punchIn() async {
     if (isTodayHoliday) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Holiday: $holidayReason"), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Holiday: $holidayReason"),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
     if (_punchInTime != null) return;
@@ -139,7 +163,12 @@ class _HrdashBoardState extends State<HrdashBoard>
     final inside = await checkDistanceFromOffice();
     if (!inside) {
       if (mounted) setState(() => _isPunchLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Must be within 200m of office"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Must be within 200m of office"),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
     try {
@@ -153,10 +182,18 @@ class _HrdashBoardState extends State<HrdashBoard>
         final record = jsonDecode(response.body)['record'];
         if (mounted) setState(() => _punchInTime = record['punchInTime']);
         await _savePunchData();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Punch In successful"), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Punch In successful"),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
-    } catch (e) { debugPrint("Punch in error: $e"); }
-    finally { if (mounted) setState(() => _isPunchLoading = false); }
+    } catch (e) {
+      debugPrint("Punch in error: $e");
+    } finally {
+      if (mounted) setState(() => _isPunchLoading = false);
+    }
   }
 
   Future<void> punchOut() async {
@@ -167,7 +204,12 @@ class _HrdashBoardState extends State<HrdashBoard>
     final inside = await checkDistanceFromOffice();
     if (!inside) {
       if (mounted) setState(() => _isPunchLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Must be within 200m of office"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Must be within 200m of office"),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
     try {
@@ -181,10 +223,18 @@ class _HrdashBoardState extends State<HrdashBoard>
         final record = jsonDecode(response.body)['record'];
         if (mounted) setState(() => _punchOutTime = record['punchOutTime']);
         await _savePunchData();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Punch Out successful"), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Punch Out successful"),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
-    } catch (e) { debugPrint("Punch out error: $e"); }
-    finally { if (mounted) setState(() => _isPunchLoading = false); }
+    } catch (e) {
+      debugPrint("Punch out error: $e");
+    } finally {
+      if (mounted) setState(() => _isPunchLoading = false);
+    }
   }
 
   @override
@@ -210,7 +260,10 @@ class _HrdashBoardState extends State<HrdashBoard>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => Employeedashboard(employeeId: prefs.getString('employeeId') ?? ''),
+            builder:
+                (_) => Employeedashboard(
+                  employeeId: prefs.getString('employeeId') ?? '',
+                ),
           ),
         );
       } else if (prefs.getBool('internLoggedIn') == true) {
@@ -288,10 +341,10 @@ class _HrdashBoardState extends State<HrdashBoard>
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['employee'];
         if (data == null) return;
-        
+
         final role = data['role']?.toString().toLowerCase();
         final isHr = data['isHr'] == true || data['isHr']?.toString() == 'true';
-        
+
         if (role != 'hr' && role != 'hr_admin' && !isHr) {
           _handleHrDemotion();
           return;
@@ -321,7 +374,7 @@ class _HrdashBoardState extends State<HrdashBoard>
 
   Future<void> _handleHrDemotion() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Get the actual role from the latest data if available
     final roleObj = hrData?['roleId'];
     String role = '';
@@ -332,12 +385,12 @@ class _HrdashBoardState extends State<HrdashBoard>
     }
 
     await prefs.setBool('hr_logged_in', false);
-    
+
     if (role == 'intern') {
       await prefs.setBool('internLoggedIn', true);
       await prefs.setBool('employeeLoggedIn', false);
       await prefs.setString('internId', hrId ?? '');
-      
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -413,65 +466,66 @@ class _HrdashBoardState extends State<HrdashBoard>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                Icons.camera_alt_rounded,
-                color: Color(0xFF00657F),
-              ),
-              title: const Text(
-                "Take Photo",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.photo_library_rounded,
-                color: Color(0xFF00657F),
-              ),
-              title: const Text(
-                "Choose from Gallery",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(
-                Icons.logout_rounded,
-                color: Colors.redAccent,
-              ),
-              title: const Text(
-                "Logout",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.redAccent,
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: Color(0xFF00657F),
+                  ),
+                  title: const Text(
+                    "Take Photo",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
                 ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showLogoutDialog();
-              },
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_rounded,
+                    color: Color(0xFF00657F),
+                  ),
+                  title: const Text(
+                    "Choose from Gallery",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text(
+                    "Logout",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showLogoutDialog();
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   Future<void> _loadPunchData() async {
     if (hrId == null || hrId == 'hr_default') return;
-    
+
     try {
       final response = await http.get(
         Uri.parse("${getBaseUrl()}/api/employeeAttanance/today/$hrId"),
@@ -542,61 +596,71 @@ class _HrdashBoardState extends State<HrdashBoard>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-        contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        title: Row(
-          children: [
-            const Icon(
-              Icons.logout_outlined,
-              color: Color(0xFF00657F),
-              size: 26,
+      builder:
+          (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 10),
-            const Text(
-              "Confirm Logout",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.logout_outlined,
+                  color: Color(0xFF00657F),
+                  size: 26,
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  "Confirm Logout",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ],
             ),
-          ],
-        ),
-        content: const Text(
-          "Are you sure you want to log out of your account?",
-          style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancel",
+            content: const Text(
+              "Are you sure you want to log out of your account?",
               style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF00657F),
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00657F),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF00657F),
+                  ),
+                ),
               ),
-            ),
-            child: const Text(
-              "Logout",
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _logout();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00657F),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Logout",
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -613,11 +677,12 @@ class _HrdashBoardState extends State<HrdashBoard>
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected
-                  ? Colors.white
-                  : const Color(
-                      0xFF00657F,
-                    ).withOpacity(0.8), // Improved contrast
+              color:
+                  isSelected
+                      ? Colors.white
+                      : const Color(
+                        0xFF00657F,
+                      ).withOpacity(0.8), // Improved contrast
               letterSpacing: 0.1,
             ),
           ),
@@ -734,19 +799,21 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Analytics",
                                     Icons.analytics_rounded,
                                     const Color(0xFF00B4D8),
-                                    onTap: hrId == null
-                                        ? null
-                                        : () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  Employeeattendancedetails(
-                                                    employeeId: hrId!,
-                                                    employeeName:
-                                                        hrName ?? 'HR',
-                                                  ),
+                                    onTap:
+                                        hrId == null
+                                            ? null
+                                            : () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) =>
+                                                        Employeeattendancedetails(
+                                                          employeeId: hrId!,
+                                                          employeeName:
+                                                              hrName ?? 'HR',
+                                                        ),
+                                              ),
                                             ),
-                                          ),
                                   ),
                                   const SizedBox(width: 12),
                                   _buildManagerStyleBox(
@@ -754,19 +821,20 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Management",
                                     Icons.event_note_rounded,
                                     const Color(0xFF00657F),
-                                    onTap: hrId == null
-                                        ? null
-                                        : () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  EmployeeLeaveRequest(
-                                                    employeeId: hrId!,
-                                                    employeeName:
-                                                        hrName ?? 'HR',
-                                                  ),
+                                    onTap:
+                                        hrId == null
+                                            ? null
+                                            : () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) => EmployeeLeaveRequest(
+                                                      employeeId: hrId!,
+                                                      employeeName:
+                                                          hrName ?? 'HR',
+                                                    ),
+                                              ),
                                             ),
-                                          ),
                                   ),
                                 ],
                               ),
@@ -778,17 +846,20 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Appraisal",
                                     Icons.rate_review_rounded,
                                     const Color(0xFFF59E0B),
-                                    onTap: hrId == null
-                                        ? null
-                                        : () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => EmployeeProgress(
-                                                employeeId: hrId!,
-                                                employeeName: hrName ?? 'HR',
+                                    onTap:
+                                        hrId == null
+                                            ? null
+                                            : () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) => EmployeeProgress(
+                                                      employeeId: hrId!,
+                                                      employeeName:
+                                                          hrName ?? 'HR',
+                                                    ),
                                               ),
                                             ),
-                                          ),
                                   ),
                                   const SizedBox(width: 12),
                                   _buildManagerStyleBox(
@@ -796,12 +867,14 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Calendar",
                                     Icons.calendar_today_rounded,
                                     const Color(0xFF0EA5E9),
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const HrHolidayScreen(),
-                                      ),
-                                    ),
+                                    onTap:
+                                        () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => const HrHolidayScreen(),
+                                          ),
+                                        ),
                                   ),
                                 ],
                               ),
@@ -813,13 +886,15 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Organization",
                                     Icons.business_rounded,
                                     const Color(0xFF004E61),
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const OrganizationalHierarchy(),
-                                      ),
-                                    ),
+                                    onTap:
+                                        () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) =>
+                                                    const OrganizationalHierarchy(),
+                                          ),
+                                        ),
                                   ),
                                   const SizedBox(width: 12),
                                   _buildManagerStyleBox(
@@ -827,13 +902,15 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Self Service",
                                     Icons.account_balance_wallet_rounded,
                                     const Color(0xFF0D9488),
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const EmployeePayrollPage(),
-                                      ),
-                                    ),
+                                    onTap:
+                                        () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) =>
+                                                    const EmployeePayrollPage(),
+                                          ),
+                                        ),
                                   ),
                                 ],
                               ),
@@ -845,13 +922,15 @@ class _HrdashBoardState extends State<HrdashBoard>
                                     "Guidelines",
                                     Icons.policy_rounded,
                                     const Color(0xFF0284C7),
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const EmployeePolicyPage(),
-                                      ),
-                                    ),
+                                    onTap:
+                                        () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) =>
+                                                    const EmployeePolicyPage(),
+                                          ),
+                                        ),
                                   ),
                                   const SizedBox(width: 12),
                                   const Spacer(),
@@ -942,25 +1021,28 @@ class _HrdashBoardState extends State<HrdashBoard>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF0EA5E9),
-                  gradient: (_profileImagePath == null)
-                      ? const LinearGradient(
-                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                        )
-                      : null,
-                  image: (_profileImagePath != null)
-                      ? DecorationImage(
-                          image: FileImage(File(_profileImagePath!)),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  gradient:
+                      (_profileImagePath == null)
+                          ? const LinearGradient(
+                            colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                          )
+                          : null,
+                  image:
+                      (_profileImagePath != null)
+                          ? DecorationImage(
+                            image: FileImage(File(_profileImagePath!)),
+                            fit: BoxFit.cover,
+                          )
+                          : null,
                 ),
-                child: (_profileImagePath == null)
-                    ? const Icon(
-                        Icons.person_rounded,
-                        size: 28,
-                        color: Colors.white,
-                      )
-                    : null,
+                child:
+                    (_profileImagePath == null)
+                        ? const Icon(
+                          Icons.person_rounded,
+                          size: 28,
+                          color: Colors.white,
+                        )
+                        : null,
               ),
             ),
           ),
@@ -1135,10 +1217,13 @@ class _HrdashBoardState extends State<HrdashBoard>
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HrHolidayScreen()),
-                ),
+                onTap:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const HrHolidayScreen(),
+                      ),
+                    ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -1401,10 +1486,11 @@ class _HrdashBoardState extends State<HrdashBoard>
         const SizedBox(height: 16),
         TodayAttendanceCard(
           key: _internCardKey,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const TodayAttendancePage()),
-          ),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TodayAttendancePage()),
+              ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -1414,10 +1500,11 @@ class _HrdashBoardState extends State<HrdashBoard>
               "New Entry",
               Icons.person_add_outlined,
               const Color(0xFF0EA5E9),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddingIntern()),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddingIntern()),
+                  ),
             ),
             const SizedBox(width: 12),
             _buildManagerStyleBox(
@@ -1425,10 +1512,11 @@ class _HrdashBoardState extends State<HrdashBoard>
               "Directory",
               Icons.groups_outlined,
               const Color(0xFF0D9488),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InternManagement()),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InternManagement()),
+                  ),
             ),
           ],
         ),
@@ -1440,10 +1528,13 @@ class _HrdashBoardState extends State<HrdashBoard>
               "Approvals",
               Icons.event_note_outlined,
               const Color(0xFFF59E0B),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InternLeaveApproval()),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const InternLeaveApproval(),
+                    ),
+                  ),
             ),
             const SizedBox(width: 12),
             _buildManagerStyleBox(
@@ -1451,11 +1542,37 @@ class _HrdashBoardState extends State<HrdashBoard>
               "Exit Process",
               Icons.badge_outlined,
               const Color(0xFFEF4444),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InternResignation()),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const InternResignation(),
+                    ),
+                  ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildManagerStyleBox(
+              "Fund Approval",
+              "HR Review",
+              Icons.receipt_long_outlined,
+              const Color(0xFF7C3AED),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) => const FundRequestApprovalPage(
+                            role: FundApprovalRole.hr,
+                          ),
+                    ),
+                  ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 24),
@@ -1472,12 +1589,13 @@ class _HrdashBoardState extends State<HrdashBoard>
         const SizedBox(height: 16),
         EmployeeTodayAttendanceCard(
           key: _employeeCardKey,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const TodayEmployeeAttendancePage(),
-            ),
-          ),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TodayEmployeeAttendancePage(),
+                ),
+              ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -1487,10 +1605,11 @@ class _HrdashBoardState extends State<HrdashBoard>
               "New Hire",
               Icons.person_add_outlined,
               const Color(0xFF0EA5E9),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddingEmployee()),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddingEmployee()),
+                  ),
             ),
             const SizedBox(width: 12),
             _buildManagerStyleBox(
@@ -1498,10 +1617,13 @@ class _HrdashBoardState extends State<HrdashBoard>
               "Team Info",
               Icons.groups_outlined,
               const Color(0xFF0D9488),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EmployeeManagement()),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EmployeeManagement(),
+                    ),
+                  ),
             ),
           ],
         ),
@@ -1513,12 +1635,13 @@ class _HrdashBoardState extends State<HrdashBoard>
               "Requests",
               Icons.event_note_outlined,
               const Color(0xFFF59E0B),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const EmployeeLeaveApproval(),
-                ),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EmployeeLeaveApproval(),
+                    ),
+                  ),
             ),
             const SizedBox(width: 12),
             _buildManagerStyleBox(
@@ -1526,13 +1649,37 @@ class _HrdashBoardState extends State<HrdashBoard>
               "Offboarding",
               Icons.exit_to_app_outlined,
               const Color(0xFFEF4444),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HRResignationListPage(),
-                ),
-              ),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HRResignationListPage(),
+                    ),
+                  ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildManagerStyleBox(
+              "Fund Approval",
+              "HR Review",
+              Icons.receipt_long_outlined,
+              const Color(0xFF7C3AED),
+              onTap:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) => const FundRequestApprovalPage(
+                            role: FundApprovalRole.hr,
+                          ),
+                    ),
+                  ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 24),
@@ -1672,15 +1819,16 @@ class _HrdashBoardState extends State<HrdashBoard>
             child: Center(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: _isPunchLoading
-                    ? null
-                    : () async {
-                        if (!hasPunchedIn) {
-                          await punchIn();
-                        } else if (!hasPunchedOut) {
-                          await punchOut();
-                        }
-                      },
+                onTap:
+                    _isPunchLoading
+                        ? null
+                        : () async {
+                          if (!hasPunchedIn) {
+                            await punchIn();
+                          } else if (!hasPunchedOut) {
+                            await punchOut();
+                          }
+                        },
                 child: Material(
                   elevation: 8,
                   borderRadius: BorderRadius.circular(32),
@@ -1704,24 +1852,25 @@ class _HrdashBoardState extends State<HrdashBoard>
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: _isPunchLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.4,
+                    child:
+                        _isPunchLoading
+                            ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.4,
+                              ),
+                            )
+                            : Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1,
+                              ),
                             ),
-                          )
-                        : Text(
-                            label,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1,
-                            ),
-                          ),
                   ),
                 ),
               ),
@@ -1924,9 +2073,8 @@ class _TodayAttendanceCardState extends State<TodayAttendanceCard> {
       future: _attendanceFuture,
       builder: (context, snapshot) {
         final attendance = snapshot.data ?? [];
-        final punchedInCount = attendance
-            .where((a) => a['punchInTime'] != null)
-            .length;
+        final punchedInCount =
+            attendance.where((a) => a['punchInTime'] != null).length;
 
         return Container(
           decoration: BoxDecoration(
@@ -2069,9 +2217,8 @@ class _EmployeeTodayAttendanceCardState
       future: _attendanceFuture,
       builder: (context, snapshot) {
         final attendance = snapshot.data ?? [];
-        final punchedInCount = attendance
-            .where((a) => a['punchInTime'] != null)
-            .length;
+        final punchedInCount =
+            attendance.where((a) => a['punchInTime'] != null).length;
 
         return Container(
           decoration: BoxDecoration(

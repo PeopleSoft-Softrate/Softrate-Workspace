@@ -39,6 +39,16 @@ export class ApiService {
     return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/auth/me`), { headers: this.getHeaders() });
   }
 
+  updateProfilePhoto(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('profilePhoto', file);
+    return this.http.patch(`${this.baseUrl}/api/auth/me/profile-photo`, formData);
+  }
+
+  removeProfilePhoto(): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/api/auth/me/profile-photo`);
+  }
+
   hrLogin(email: string, password: string): Observable<any> {
     return this.login(email, password);
   }
@@ -603,5 +613,26 @@ export class ApiService {
 
   getManagerAllLeaves(managerId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/employee-leave/manager-all/${managerId}`);
+  }
+
+  // Fund Requests
+  getHrAllFundRequests(): Observable<any[]> {
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/fund-requests/hr-all`), {
+      headers: this.getHeaders()
+    });
+  }
+
+  getManagerAllFundRequests(managerId: string): Observable<any[]> {
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/fund-requests/manager-all/${managerId}`), {
+      headers: this.getHeaders()
+    });
+  }
+
+  hrReviewFundRequest(requestId: string, status: 'accepted' | 'rejected', remarks: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/api/fund-requests/hr-action/${requestId}`, { status, remarks });
+  }
+
+  managerReviewFundRequest(requestId: string, status: 'accepted' | 'rejected', remarks: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/api/fund-requests/manager-action/${requestId}`, { status, remarks });
   }
 }

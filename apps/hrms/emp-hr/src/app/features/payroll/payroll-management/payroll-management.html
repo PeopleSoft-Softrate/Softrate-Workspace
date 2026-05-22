@@ -14,7 +14,7 @@
       <div class="header-title-row">
         <div class="header-content">
           <h1>Payroll Management</h1>
-          <p>Monitor, audit, and structure the compensation for all approved staff.</p>
+          <p>Monitor, audit, and structure compensation for approved staff and ongoing interns.</p>
         </div>
       </div>
     </div>
@@ -162,9 +162,7 @@
             <thead>
               <tr>
                 <th>Intern</th>
-                <th>ID</th>
                 <th>Department</th>
-                <th>Status</th>
                 <th class="text-right">Basic Stipend</th>
                 <th class="text-right">HRA</th>
                 <th class="text-right">Allowances</th>
@@ -181,17 +179,11 @@
                     <div class="avatar-initial color-intern">{{ intern.fullName[0] }}</div>
                     <div class="user-info-cell">
                       <span class="user-name">{{ intern.fullName }}</span>
-                      <span class="user-sub">Intern</span>
+                      <span class="user-sub">{{ intern.status ? (intern.status | titlecase) + ' Intern' : 'Intern' }}</span>
                     </div>
                   </div>
                 </td>
-                <td class="id-cell">{{ intern.internid || intern.internId || intern._id.substring(0, 8) }}</td>
                 <td class="dept-cell">{{ intern.department || '—' }}</td>
-                <td>
-                  <span class="payroll-badge" [class.configured]="intern.payroll.basicSalary > 0" [class.default-pay]="intern.payroll.basicSalary === 0">
-                    {{ intern.payroll.basicSalary > 0 ? 'Configured' : 'Default' }}
-                  </span>
-                </td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.basicSalary | number:'1.0-0' }}</td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.hra | number:'1.0-0' }}</td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.allowances | number:'1.0-0' }}</td>

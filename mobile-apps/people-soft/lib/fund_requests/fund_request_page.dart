@@ -69,7 +69,9 @@ class _FundRequestPageState extends State<FundRequestPage> {
     setState(() => _isLoadingHistory = true);
     try {
       final response = await http.get(
-        Uri.parse('${getBaseUrl()}/api/fund-requests/user/${widget.requesterId}'),
+        Uri.parse(
+          '${getBaseUrl()}/api/fund-requests/user/${widget.requesterId}',
+        ),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -90,12 +92,13 @@ class _FundRequestPageState extends State<FundRequestPage> {
       initialDate: _expenseDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now(),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: primary),
-        ),
-        child: child!,
-      ),
+      builder:
+          (context, child) => Theme(
+            data: Theme.of(
+              context,
+            ).copyWith(colorScheme: const ColorScheme.light(primary: primary)),
+            child: child!,
+          ),
     );
 
     if (picked != null) {
@@ -128,8 +131,14 @@ class _FundRequestPageState extends State<FundRequestPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(body['message'] ?? (success ? 'Fund request submitted' : 'Unable to submit request')),
-          backgroundColor: success ? Colors.green.shade700 : Colors.red.shade700,
+          content: Text(
+            body['message'] ??
+                (success
+                    ? 'Fund request submitted'
+                    : 'Unable to submit request'),
+          ),
+          backgroundColor:
+              success ? Colors.green.shade700 : Colors.red.shade700,
         ),
       );
 
@@ -145,7 +154,10 @@ class _FundRequestPageState extends State<FundRequestPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to submit request: $e'), backgroundColor: Colors.red.shade700),
+        SnackBar(
+          content: Text('Unable to submit request: $e'),
+          backgroundColor: Colors.red.shade700,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -167,7 +179,9 @@ class _FundRequestPageState extends State<FundRequestPage> {
   String _formatDate(dynamic value) {
     if (value == null) return '-';
     try {
-      return DateFormat('d MMM yyyy').format(DateTime.parse(value.toString()).toLocal());
+      return DateFormat(
+        'd MMM yyyy',
+      ).format(DateTime.parse(value.toString()).toLocal());
     } catch (_) {
       return value.toString();
     }
@@ -183,14 +197,21 @@ class _FundRequestPageState extends State<FundRequestPage> {
       ),
       child: Text(
         '$label: ${status.toUpperCase()}',
-        style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w800),
+        style: TextStyle(
+          color: color,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
 
   Widget _historyCard(dynamic item) {
-    final amount = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0)
-        .format(NumberFormat().parse((item['amount'] ?? 0).toString()));
+    final amount = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    ).format(NumberFormat().parse((item['amount'] ?? 0).toString()));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -208,16 +229,33 @@ class _FundRequestPageState extends State<FundRequestPage> {
               Expanded(
                 child: Text(
                   item['category'] ?? 'Fund Request',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF0F172A)),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
-              Text(amount, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: primary)),
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: primary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(_formatDate(item['expenseDate']), style: const TextStyle(color: muted, fontSize: 12)),
+          Text(
+            _formatDate(item['expenseDate']),
+            style: const TextStyle(color: muted, fontSize: 12),
+          ),
           const SizedBox(height: 10),
-          Text(item['description'] ?? '', style: const TextStyle(color: Color(0xFF334155), height: 1.4)),
+          Text(
+            item['description'] ?? '',
+            style: const TextStyle(color: Color(0xFF334155), height: 1.4),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -225,7 +263,10 @@ class _FundRequestPageState extends State<FundRequestPage> {
             children: [
               _statusChip('Manager', item['managerStatus'] ?? 'pending'),
               _statusChip('HR', item['hrStatus'] ?? 'pending'),
-              _statusChip('Finance', item['isFinanceTeamApprove'] == true ? 'accepted' : 'pending'),
+              _statusChip(
+                'Finance',
+                item['isFinanceTeamApprove'] == true ? 'accepted' : 'pending',
+              ),
             ],
           ),
         ],
@@ -241,7 +282,10 @@ class _FundRequestPageState extends State<FundRequestPage> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
-        title: const Text('Fund Request', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Fund Request',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -256,22 +300,42 @@ class _FundRequestPageState extends State<FundRequestPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Company expense claim', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                const Text(
+                  'Company expense claim',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                ),
                 const SizedBox(height: 6),
-                const Text('Submit reimbursements for petrol, snacks, travel, or other company expenses.', style: TextStyle(color: muted)),
+                const Text(
+                  'Submit reimbursements for petrol, snacks, travel, or other company expenses.',
+                  style: TextStyle(color: muted),
+                ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<String>(
                   value: _category,
-                  items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (value) => setState(() => _category = value ?? _category),
+                  items:
+                      _categories
+                          .map(
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
+                          )
+                          .toList(),
+                  onChanged:
+                      (value) => setState(() => _category = value ?? _category),
                   decoration: _inputDecoration('Category'),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                  decoration: _inputDecoration('Amount').copyWith(prefixText: '₹ '),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,2}'),
+                    ),
+                  ],
+                  decoration: _inputDecoration(
+                    'Amount',
+                  ).copyWith(prefixText: '₹ '),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 14),
@@ -301,23 +365,40 @@ class _FundRequestPageState extends State<FundRequestPage> {
                       backgroundColor: primary,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    child: Text(_isSubmitting ? 'Submitting...' : 'Submit to manager'),
+                    child: Text(
+                      _isSubmitting ? 'Submitting...' : 'Submit to manager',
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Request history', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const Text(
+            'Request history',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          ),
           const SizedBox(height: 12),
           if (_isLoadingHistory)
-            const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator(color: primary)))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(color: primary),
+              ),
+            )
           else if (_history.isEmpty)
             const Padding(
               padding: EdgeInsets.all(24),
-              child: Center(child: Text('No fund requests submitted yet.', style: TextStyle(color: muted))),
+              child: Center(
+                child: Text(
+                  'No fund requests submitted yet.',
+                  style: TextStyle(color: muted),
+                ),
+              ),
             )
           else
             ..._history.map(_historyCard),
@@ -331,9 +412,18 @@ class _FundRequestPageState extends State<FundRequestPage> {
       labelText: label,
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: primary, width: 1.6)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: primary, width: 1.6),
+      ),
     );
   }
 }

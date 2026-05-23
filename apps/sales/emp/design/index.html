@@ -1,0 +1,1430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales Employee Design Components</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --surface-canvas: #f5f6f8;
+      --surface-primary: #ffffff;
+      --surface-selected: #f3f7ff;
+      --border: #e5e7eb;
+      --border-strong: #e5e7eb;
+      --accent: #3d7dfe;
+      --accent-strong: #245fe0;
+      --text-strong: #111827;
+      --text-muted: #6b7280;
+      --text-subtle: #9ca3af;
+      --status-positive: #2c6e49;
+      --status-warning: #8a641a;
+      --status-negative: #b34a3a;
+      --status-info: #2b5f9e;
+      --font-ui: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-heading: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-mono: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    html {
+      color-scheme: light;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--surface-canvas);
+      color: var(--text-strong);
+      font-family: var(--font-ui);
+      font-feature-settings: "cv02", "cv05", "cv11";
+      -webkit-font-smoothing: antialiased;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .design-shell {
+      display: grid;
+      grid-template-columns: 224px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .crm-sidebar {
+      position: sticky;
+      top: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
+      z-index: 5;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      min-height: 92px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .sidebar-logo {
+      display: block;
+      width: 154px;
+      height: auto;
+    }
+
+    .sidebar-nav {
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      padding: 14px 12px 18px;
+      overflow: auto;
+    }
+
+    .sidebar-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      margin: 20px 0 8px;
+      padding: 0 14px;
+      border: 1px solid #d6d9df;
+      border-radius: 22px;
+      background: #ffffff;
+    }
+
+    .sidebar-search-icon,
+    .topbar-search-icon,
+    .topbar-metric-icon,
+    .profile-menu-item-icon,
+    .summary-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      color: currentColor;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .sidebar-search-icon {
+      width: 17px;
+      height: 17px;
+      color: #6b7280;
+    }
+
+    .sidebar-search input {
+      min-width: 0;
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #111827;
+      font-size: 13px;
+    }
+
+    .sidebar-group-label {
+      margin: 16px 0 6px;
+      padding-left: 10px;
+      color: #71717a;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .sidebar-link {
+      position: relative;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      min-height: 40px;
+      padding: 0 10px 0 16px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #52525b;
+      font-family: var(--font-heading);
+      text-align: left;
+      transition: background 140ms ease, color 140ms ease;
+    }
+
+    .sidebar-link::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: transparent;
+    }
+
+    .sidebar-link:hover {
+      background: #f4f4f5;
+      color: #18181b;
+    }
+
+    .sidebar-link.active {
+      color: #09090b;
+      font-weight: 700;
+    }
+
+    .sidebar-link.active::before {
+      background: #09090b;
+    }
+
+    .sidebar-icon {
+      color: #a1a1aa;
+    }
+
+    .sidebar-link:hover .sidebar-icon,
+    .sidebar-link.active .sidebar-icon {
+      color: #09090b;
+    }
+
+    .sidebar-label {
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .design-main {
+      min-width: 0;
+    }
+
+    .crm-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(120px, 220px) minmax(240px, 1fr) max-content;
+      align-items: center;
+      gap: 14px;
+      min-height: 72px;
+      padding: 0 24px;
+      border-bottom: 1px solid #e4e4e7;
+      background: #ffffff;
+    }
+
+    .topbar-page-title {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--text-strong);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-search {
+      display: flex;
+      align-items: center;
+      justify-self: center;
+      gap: 10px;
+      width: min(100%, 520px);
+      min-height: 40px;
+      padding: 0 10px 0 14px;
+      border: 1px solid #d6d9df;
+      border-radius: 8px;
+      background: #f3f4f6;
+      cursor: text;
+      transition: background 140ms ease, border-color 140ms ease;
+    }
+
+    .topbar-search:hover {
+      border-color: #cfd4dc;
+      background: #eef0f3;
+    }
+
+    .topbar-search:focus-within {
+      border-color: #09090b;
+      background: #f3f4f6;
+    }
+
+    .topbar-search-icon {
+      width: 16px;
+      height: 16px;
+      color: #6f7785;
+    }
+
+    .topbar-input {
+      min-width: 0;
+      min-height: 40px;
+      flex: 1 1 auto;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #09090b;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .topbar-input::placeholder {
+      color: #8b95a5;
+      font-size: 13px;
+      font-weight: 400;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+      margin-left: auto;
+    }
+
+    .topbar-metric {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 10px;
+      border: 0;
+      background: transparent;
+      color: var(--text-strong);
+      text-align: left;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .topbar-metric:hover {
+      background: #f4f4f5;
+      color: #09090b;
+    }
+
+    .topbar-metric-icon {
+      width: 20px;
+      height: 20px;
+      color: #22c55e;
+    }
+
+    .topbar-metric-copy {
+      display: grid;
+      justify-items: center;
+      min-width: 92px;
+      gap: 2px;
+      text-align: center;
+    }
+
+    .utility-label {
+      color: #71717a;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .utility-value {
+      color: #09090b;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .design-content {
+      display: grid;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .workspace {
+      display: grid;
+      align-content: start;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-primary);
+    }
+
+    .workspace-header,
+    .section-header,
+    .table-pane-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .workspace-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .workspace-title {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .workspace-meta,
+    .workspace-copy {
+      color: var(--text-subtle);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .workspace-copy {
+      max-width: 68ch;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .section {
+      display: grid;
+      gap: 18px;
+      padding: 24px;
+      border-bottom: 1px solid var(--border-strong);
+    }
+
+    .section:last-child {
+      border-bottom: 0;
+    }
+
+    .section-header h3,
+    .table-pane-header h3 {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .section-kicker {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .component-panel {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid #dbe2ec;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .panel-label {
+      margin: 0;
+      color: #52525b;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .auth-title {
+      max-width: 14ch;
+      margin: 0;
+      color: var(--text-strong);
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .auth-panel-heading {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .lead-record-title {
+      margin: 0;
+      color: #111827;
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .text-scale {
+      display: grid;
+      gap: 10px;
+    }
+
+    .text-row {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 16px;
+      align-items: baseline;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .text-row:last-child {
+      border-bottom: 0;
+    }
+
+    .text-size {
+      color: #71717a;
+      font-size: 12px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field,
+    .mini-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-label,
+    .mini-field span {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .field-input,
+    .field-select,
+    .field-textarea {
+      width: 100%;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 0;
+      outline: none;
+      background: var(--surface-primary);
+      color: var(--text-strong);
+      font-size: 14px;
+      transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .field-select {
+      appearance: none;
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25 7 9l4-3.75' stroke='%23566171' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-position: right 12px center;
+      background-repeat: no-repeat;
+      background-size: 14px 14px;
+    }
+
+    .field-select.filter-select-field,
+    .field-input.filter-date-field {
+      min-height: 40px;
+      padding-left: 16px;
+      padding-right: 40px;
+      border-radius: 14px;
+      background-color: #ffffff;
+    }
+
+    .field-input.filter-date-field {
+      padding-right: 16px;
+    }
+
+    .field-textarea {
+      min-height: 96px;
+      padding: 12px;
+      resize: vertical;
+    }
+
+    .field-input:focus,
+    .field-select:focus,
+    .field-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .control-row,
+    .filter-cluster,
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .primary-action,
+    .secondary-action,
+    .utility-button,
+    .filter-button,
+    .toolbar-button {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 0;
+      background: var(--surface-primary);
+      color: var(--text-strong);
+      font-size: 14px;
+      font-weight: 600;
+      transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+    }
+
+    .primary-action {
+      border-color: var(--accent-strong);
+      background: var(--accent);
+      color: var(--surface-primary);
+      padding: 0 16px;
+    }
+
+    .primary-action:hover {
+      background: var(--accent-strong);
+      color: var(--surface-primary);
+    }
+
+    .secondary-action:hover,
+    .utility-button:hover,
+    .filter-button:hover,
+    .toolbar-button:hover,
+    .filter-button.active,
+    .toolbar-button.active {
+      border-color: var(--accent);
+      background: var(--surface-selected);
+      color: var(--accent-strong);
+    }
+
+    .history-summary-panel {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      padding: 14px 18px;
+      border: 1px solid var(--border-strong);
+      background: #f8fafc;
+      overflow-x: auto;
+    }
+
+    .history-summary-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 156px;
+      min-height: 58px;
+      padding: 10px 14px;
+      border: 1px solid #dfe5ee;
+      border-radius: 14px;
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .summary-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #eef2ff;
+      color: #3157c8;
+    }
+
+    .history-summary-copy {
+      display: grid;
+      gap: 2px;
+    }
+
+    .history-summary-copy span {
+      color: #667085;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .history-summary-copy strong {
+      color: #111827;
+      font-size: 22px;
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .history-status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 12px;
+      border: 1px solid #dfe5ee;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+      transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    .history-status-chip strong {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #111827;
+      font-size: 12px;
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-status-chip.active,
+    .history-status-chip:hover {
+      border-color: #3157c8;
+      background: #eef4ff;
+      color: #3157c8;
+    }
+
+    .history-status-chip.active strong {
+      background: #3157c8;
+      color: #ffffff;
+    }
+
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      border: 1px solid var(--border-strong);
+      background: #ffffff;
+    }
+
+    .metric-cell {
+      padding: 16px 20px;
+      border-left: 1px solid var(--border);
+    }
+
+    .metric-cell:first-child {
+      border-left: 0;
+    }
+
+    .metric-label {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      color: var(--text-strong);
+      font-size: 30px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .table-shell {
+      display: grid;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-primary);
+      overflow: hidden;
+    }
+
+    .table-pane-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-strong);
+      background: var(--surface-primary);
+    }
+
+    .table-pane-meta {
+      color: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-scroll {
+      overflow: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--surface-primary);
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      font-size: 12px;
+    }
+
+    .data-table th {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.4;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .data-table tbody tr {
+      cursor: pointer;
+      transition: background 160ms ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--surface-canvas);
+    }
+
+    .data-table tbody tr.row-active {
+      background: var(--surface-selected);
+    }
+
+    .table-primary {
+      color: var(--text-strong);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .table-secondary {
+      margin-top: 6px;
+      overflow: hidden;
+      color: var(--text-subtle);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lead-record-card {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+      min-height: 312px;
+      padding: 18px 20px;
+      border: 1px solid #dbe2ec;
+      border-radius: 18px;
+      background: #ffffff;
+      color: #111827;
+      box-shadow: 0 10px 24px -28px rgba(15, 23, 42, 0.32);
+      transition: border-color 100ms ease, box-shadow 100ms ease, transform 100ms ease, background 100ms ease;
+    }
+
+    .lead-record-card:hover {
+      border-color: #cbd5e1;
+      background: #fcfdff;
+      box-shadow: 0 18px 30px -28px rgba(15, 23, 42, 0.42);
+      transform: translateY(-1px);
+    }
+
+    .lead-record-card-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .lead-card-star {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #f3b629;
+      flex: 0 0 32px;
+    }
+
+    .lead-card-star svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .lead-card-star.active svg {
+      fill: currentColor;
+    }
+
+    .lead-contact-meta-line,
+    .lead-contact-context,
+    .lead-contact-remark {
+      color: #71717a;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .lead-contact-remark {
+      padding-left: 12px;
+      border-left: 2px solid #d4d4d8;
+      color: #52525b;
+      line-height: 1.55;
+    }
+
+    .lead-status-outline {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      width: fit-content;
+      padding: 0 10px;
+      border: 1px solid #d4d4d8;
+      color: #52525b;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-new {
+      border-color: rgba(59, 130, 246, 0.22);
+      color: #1d4ed8;
+    }
+
+    .status-interested {
+      border-color: rgba(34, 197, 94, 0.24);
+      color: #166534;
+    }
+
+    .status-not-interested {
+      border-color: rgba(239, 68, 68, 0.22);
+      color: #b91c1c;
+    }
+
+    .status-converted {
+      border-color: rgba(14, 165, 233, 0.24);
+      color: #0369a1;
+    }
+
+    .status-followup {
+      border-color: rgba(245, 158, 11, 0.24);
+      color: #b45309;
+    }
+
+    .profile-dropdown {
+      position: relative;
+      margin-left: 10px;
+      padding-left: 10px;
+      border-left: 1px solid var(--border);
+    }
+
+    .profile-trigger {
+      border: 1px solid #dfe5ee;
+      border-radius: 999px;
+      background: #ffffff;
+      padding: 0;
+      color: inherit;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 40px;
+      padding: 4px 10px 4px 5px;
+    }
+
+    .user-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border: 2px solid #f3f4f6;
+      border-radius: 999px;
+      background: #141a24;
+      color: #f8fafc;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .user-name {
+      max-width: 112px;
+      overflow: hidden;
+      color: var(--text-strong);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-menu {
+      width: 264px;
+      overflow: hidden;
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      background: var(--surface-primary);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+    }
+
+    .profile-menu-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .profile-menu-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #141a24;
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .profile-menu-copy {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .profile-menu-name {
+      color: var(--text-strong);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .profile-menu-meta {
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .profile-menu-divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    .profile-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 46px;
+      padding: 0 16px;
+      border: 0;
+      background: transparent;
+      color: var(--text-strong);
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .profile-menu-item:hover {
+      background: #f8fafc;
+    }
+
+    .profile-menu-item-danger {
+      color: var(--status-negative);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .swatch {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .swatch-color {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(17, 24, 39, 0.12);
+    }
+
+    .swatch-name {
+      color: #111827;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .swatch-value {
+      color: #71717a;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .note {
+      margin: 0;
+      color: #71717a;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .design-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .crm-sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .crm-topbar {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .topbar-search,
+      .topbar-actions {
+        justify-self: stretch;
+      }
+
+      .metrics-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="design-shell">
+    <aside class="crm-sidebar">
+      <div class="sidebar-brand">
+        <img src="../public/assets/icon/logo.png" alt="DealVoice Logo" class="sidebar-logo">
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Design sections">
+        <label class="sidebar-search">
+          <span class="sidebar-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+          </span>
+          <input type="text" placeholder="Search features">
+        </label>
+
+        <div class="sidebar-group-label">Components</div>
+        <a class="sidebar-link active" href="#typography">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"></path><path d="M9 20h6"></path><path d="M12 4v16"></path></svg></span>
+          <span class="sidebar-label">Typography</span>
+        </a>
+        <a class="sidebar-link" href="#controls">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M4 8h16"></path><path d="M4 16h16"></path><circle cx="8" cy="8" r="2"></circle><circle cx="16" cy="16" r="2"></circle></svg></span>
+          <span class="sidebar-label">Controls</span>
+        </a>
+        <a class="sidebar-link" href="#tables">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M4 10h16"></path><path d="M10 4v16"></path></svg></span>
+          <span class="sidebar-label">Tables</span>
+        </a>
+        <a class="sidebar-link" href="#cards">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 10h8"></path><path d="M8 14h5"></path></svg></span>
+          <span class="sidebar-label">Cards</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="design-main">
+      <header class="crm-topbar">
+        <div class="topbar-page-title">Design System</div>
+        <label class="topbar-search">
+          <span class="topbar-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+          </span>
+          <input class="topbar-input" type="text" placeholder="Search leads, phone, or company...">
+        </label>
+        <div class="topbar-actions">
+          <button class="topbar-metric" type="button">
+            <span class="topbar-metric-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3v4"></path><path d="M17 3v4"></path><path d="M4 9h16"></path><path d="M5 6h14v13H5z"></path><path d="m9 14 2 2 4-5"></path></svg>
+            </span>
+            <span class="topbar-metric-copy">
+              <span class="utility-label">Today Follow-ups</span>
+              <span class="utility-value">12</span>
+            </span>
+          </button>
+          <div class="profile-dropdown">
+            <button class="profile-trigger" type="button">
+              <span class="topbar-user">
+                <span class="user-avatar">DV</span>
+                <span class="user-name">Employee</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="design-content">
+        <section class="workspace">
+          <div class="workspace-header">
+            <div>
+              <div class="section-kicker">Apps / Sales / Employee</div>
+              <h1 class="workspace-title">Reusable HTML Component Reference</h1>
+              <div class="workspace-meta">Use this file as a visual source for tables, search bars, font sizes, buttons, filters, headings, nav, dropdowns, cards, and status styles.</div>
+            </div>
+          </div>
+
+          <section class="section" id="typography">
+            <div class="section-header">
+              <h3>Typography and Text Size</h3>
+            </div>
+            <div class="component-grid">
+              <div class="component-panel">
+                <p class="panel-label">Text Scale</p>
+                <div class="text-scale">
+                  <div class="text-row"><span class="text-size">42px</span><h2 class="auth-title">Auth hero heading</h2></div>
+                  <div class="text-row"><span class="text-size">30px</span><h2 class="workspace-title">Workspace title</h2></div>
+                  <div class="text-row"><span class="text-size">28px</span><h2 class="auth-panel-heading">Panel heading</h2></div>
+                  <div class="text-row"><span class="text-size">20px</span><h3>Section heading</h3></div>
+                  <div class="text-row"><span class="text-size">17px</span><h4 class="lead-record-title">Lead card title</h4></div>
+                  <div class="text-row"><span class="text-size">14px</span><span>Default body and button text</span></div>
+                  <div class="text-row"><span class="text-size">13px</span><span class="workspace-meta">Topbar input, sidebar labels, table primary</span></div>
+                  <div class="text-row"><span class="text-size">12px</span><span class="field-label">Labels, table headers, meta, chips</span></div>
+                  <div class="text-row"><span class="text-size">11px</span><span class="sidebar-group-label">Sidebar group label</span></div>
+                  <div class="text-row"><span class="text-size">10px</span><span class="utility-label">Metric label</span></div>
+                </div>
+              </div>
+
+              <div class="component-panel">
+                <p class="panel-label">Font and Colors</p>
+                <p class="note">Primary font: Inter, then system UI. Body default is 14px with 1.5 line-height. Headings use negative letter spacing only where the app already does.</p>
+                <div class="color-grid">
+                  <div class="swatch"><span class="swatch-color" style="background:#f5f6f8"></span><span><span class="swatch-name">Canvas</span><br><span class="swatch-value">#f5f6f8</span></span></div>
+                  <div class="swatch"><span class="swatch-color" style="background:#ffffff"></span><span><span class="swatch-name">Surface</span><br><span class="swatch-value">#ffffff</span></span></div>
+                  <div class="swatch"><span class="swatch-color" style="background:#111827"></span><span><span class="swatch-name">Text</span><br><span class="swatch-value">#111827</span></span></div>
+                  <div class="swatch"><span class="swatch-color" style="background:#6b7280"></span><span><span class="swatch-name">Muted</span><br><span class="swatch-value">#6b7280</span></span></div>
+                  <div class="swatch"><span class="swatch-color" style="background:#3d7dfe"></span><span><span class="swatch-name">Accent</span><br><span class="swatch-value">#3d7dfe</span></span></div>
+                  <div class="swatch"><span class="swatch-color" style="background:#e5e7eb"></span><span><span class="swatch-name">Border</span><br><span class="swatch-value">#e5e7eb</span></span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="controls">
+            <div class="section-header">
+              <h3>Buttons, Search, Filters, and Dropdowns</h3>
+            </div>
+
+            <div class="component-grid">
+              <div class="component-panel">
+                <p class="panel-label">Buttons</p>
+                <div class="control-row">
+                  <button class="primary-action" type="button">Primary Action</button>
+                  <button class="secondary-action" type="button">Secondary</button>
+                  <button class="utility-button" type="button">Utility</button>
+                  <button class="filter-button active" type="button">Active Filter</button>
+                  <button class="toolbar-button" type="button">Toolbar</button>
+                </div>
+              </div>
+
+              <div class="component-panel">
+                <p class="panel-label">Inputs</p>
+                <label class="field">
+                  <span class="field-label">Company Code</span>
+                  <input class="field-input" type="text" placeholder="e.g. STP-1603-2026">
+                </label>
+                <label class="field">
+                  <span class="field-label">Message</span>
+                  <textarea class="field-textarea" placeholder="Add a remark"></textarea>
+                </label>
+              </div>
+
+              <div class="component-panel">
+                <p class="panel-label">Filters</p>
+                <div class="filter-cluster">
+                  <label class="mini-field">
+                    <span>Status</span>
+                    <select class="field-select filter-select-field">
+                      <option>All statuses</option>
+                      <option>New</option>
+                      <option>Interested</option>
+                      <option>Converted</option>
+                    </select>
+                  </label>
+                  <label class="mini-field">
+                    <span>Date</span>
+                    <input class="field-input filter-date-field" type="date">
+                  </label>
+                </div>
+              </div>
+
+              <div class="component-panel">
+                <p class="panel-label">Profile Dropdown</p>
+                <div class="profile-menu">
+                  <div class="profile-menu-header">
+                    <span class="profile-menu-avatar">DV</span>
+                    <span class="profile-menu-copy">
+                      <span class="profile-menu-name">Employee Name</span>
+                      <span class="profile-menu-meta">STP-1603-2026</span>
+                    </span>
+                  </div>
+                  <div class="profile-menu-divider"></div>
+                  <button class="profile-menu-item" type="button">
+                    <span class="profile-menu-item-icon"><svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 1 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+                    Edit Profile
+                  </button>
+                  <button class="profile-menu-item profile-menu-item-danger" type="button">
+                    <span class="profile-menu-item-icon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></span>
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-header">
+              <h3>Metrics and Status Chips</h3>
+            </div>
+            <div class="metrics-strip">
+              <div class="metric-cell"><div class="metric-label">Total Leads</div><div class="metric-value">248</div></div>
+              <div class="metric-cell"><div class="metric-label">Interested</div><div class="metric-value">38</div></div>
+              <div class="metric-cell"><div class="metric-label">Follow-ups</div><div class="metric-value">19</div></div>
+              <div class="metric-cell"><div class="metric-label">Converted</div><div class="metric-value">11</div></div>
+              <div class="metric-cell"><div class="metric-label">Missed</div><div class="metric-value">7</div></div>
+            </div>
+
+            <div class="history-summary-panel">
+              <div class="history-summary-card">
+                <span class="summary-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span>
+                <span class="history-summary-copy"><span>Connected</span><strong>42</strong></span>
+              </div>
+              <button class="history-status-chip active" type="button">New <strong>18</strong></button>
+              <button class="history-status-chip" type="button">Interested <strong>9</strong></button>
+              <button class="history-status-chip" type="button">Converted <strong>4</strong></button>
+              <button class="history-status-chip" type="button">Follow-up <strong>11</strong></button>
+            </div>
+          </section>
+
+          <section class="section" id="tables">
+            <div class="section-header">
+              <h3>Table</h3>
+            </div>
+            <div class="table-shell">
+              <div class="table-pane-header">
+                <h3>Lead Table</h3>
+                <span class="table-pane-meta">124 records</span>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th>Contact</th>
+                      <th>Status</th>
+                      <th>Phone</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="row-active">
+                      <td><div class="table-primary">Acme Industries</div><div class="table-secondary">Manufacturing</div></td>
+                      <td>Priya Shah</td>
+                      <td><span class="lead-status-outline status-interested">Interested</span></td>
+                      <td>+91 98765 43210</td>
+                      <td>Today</td>
+                    </tr>
+                    <tr>
+                      <td><div class="table-primary">Northwind Traders</div><div class="table-secondary">Distribution</div></td>
+                      <td>Rahul Mehta</td>
+                      <td><span class="lead-status-outline status-followup">Follow-up</span></td>
+                      <td>+91 91234 56780</td>
+                      <td>Yesterday</td>
+                    </tr>
+                    <tr>
+                      <td><div class="table-primary">Bluepeak Systems</div><div class="table-secondary">Software</div></td>
+                      <td>Anita Rao</td>
+                      <td><span class="lead-status-outline status-new">New</span></td>
+                      <td>+91 90000 11122</td>
+                      <td>2 days ago</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="cards">
+            <div class="section-header">
+              <h3>Cards</h3>
+            </div>
+            <div class="component-grid">
+              <article class="lead-record-card">
+                <div class="lead-record-card-head">
+                  <h4 class="lead-record-title">Acme Industries</h4>
+                  <button class="lead-card-star active" type="button" aria-label="Favorite">
+                    <svg viewBox="0 0 24 24"><path d="m12 2 3.09 6.26L22 9.27l-5 4.88L18.18 21 12 17.77 5.82 21 7 14.15l-5-4.88 6.91-1.01L12 2z"></path></svg>
+                  </button>
+                </div>
+                <span class="lead-status-outline status-interested">Interested</span>
+                <div class="lead-contact-meta-line">Priya Shah | Sales Head | +91 98765 43210</div>
+                <div class="lead-contact-context">Looking for an invoice and quotation workflow for a 35-person sales team.</div>
+                <div class="lead-contact-remark">Latest remark: Requested pricing options and a demo slot for next week.</div>
+                <div class="action-row">
+                  <button class="primary-action" type="button">Call</button>
+                  <button class="secondary-action" type="button">Add Remark</button>
+                </div>
+              </article>
+
+              <article class="component-panel">
+                <p class="panel-label">Simple Contact Card</p>
+                <h4 class="lead-record-title">Northwind Traders</h4>
+                <span class="lead-status-outline status-followup">Follow-up</span>
+                <p class="lead-contact-meta-line">Rahul Mehta | Procurement | +91 91234 56780</p>
+                <p class="lead-contact-remark">Follow-up scheduled after product comparison is reviewed internally.</p>
+              </article>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -5187,6 +5187,19 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.loadCompanyInvoiceProfile();
   }
 
+  get visibleProducts(): any[] {
+    const employeeTags = new Set((this.employee?.tags || []).map((tag) => String(tag).trim()).filter(Boolean));
+    return (this.products || [])
+      .filter((product) => {
+        const productTags = Array.isArray(product?.tags)
+          ? product.tags.map((tag: any) => String(tag).trim()).filter(Boolean)
+          : [];
+        if (productTags.length === 0) return true;
+        return productTags.some((tag: string) => employeeTags.has(tag));
+      })
+      .sort((left, right) => String(left?.name || '').localeCompare(String(right?.name || ''), undefined, { sensitivity: 'base' }));
+  }
+
   private async loadCompanyInvoiceProfile(): Promise<void> {
     if (!this.employee?.companyCode) return;
     try {

@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "migrate:product-tags": "node scripts/backfill-product-tags.js",
     "test": "node --test"
   },
   "author": "",

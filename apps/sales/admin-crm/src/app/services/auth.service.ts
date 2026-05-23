@@ -116,6 +116,7 @@ export class AuthService {
       name: string;
       minPrice: number;
       maxPrice: number;
+      tags?: string[];
     }>;
     productRemarks?: string[];
   }): Observable<any> {

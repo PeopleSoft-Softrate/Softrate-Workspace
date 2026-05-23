@@ -11,6 +11,21 @@ const crypto = require('crypto');
 
 const router = express.Router();
 
+function normalizeProducts(products) {
+  if (!Array.isArray(products)) return [];
+  return products
+    .map((product) => ({
+      ...product,
+      name: String(product?.name || '').trim(),
+      minPrice: Number(product?.minPrice || 0),
+      maxPrice: Number(product?.maxPrice || 0),
+      tags: Array.isArray(product?.tags)
+        ? product.tags.map((tag) => String(tag || '').trim()).filter(Boolean)
+        : [],
+    }))
+    .filter((product) => product.name);
+}
+
 // Password strength validator
 // Must have: min 8 chars, 1 uppercase, 1 number, 1 symbol
 function isStrongPassword(pwd) {
@@ -568,7 +583,7 @@ router.put('/company/:companyCode/settings', async (req, res) => {
     if (invoiceFooter !== undefined) update.invoiceFooter = invoiceFooter;
     if (bankDetails !== undefined) update.bankDetails = bankDetails;
     if (contactDetails !== undefined) update.contactDetails = contactDetails;
-    if (products !== undefined) update.products = Array.isArray(products) ? products : [];
+    if (products !== undefined) update.products = normalizeProducts(products);
     
     // Explicitly handle productRemarks to ensure they are saved
     if (productRemarks !== undefined) {

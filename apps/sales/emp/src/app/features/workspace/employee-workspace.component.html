@@ -2322,7 +2322,7 @@
           <span>Product</span>
           <select class="field-select" [(ngModel)]="selectedInvoiceProduct" (change)="onProductSelect()">
             <option [ngValue]="null">Select product</option>
-            <option *ngFor="let product of products" [ngValue]="product">{{ product.name }}</option>
+            <option *ngFor="let product of visibleProducts" [ngValue]="product">{{ product.name }}</option>
           </select>
         </label>
         <label class="mini-field">

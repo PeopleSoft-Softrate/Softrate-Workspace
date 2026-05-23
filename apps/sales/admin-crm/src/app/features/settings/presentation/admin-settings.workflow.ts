@@ -203,8 +203,25 @@ export class AdminSettingsWorkflow {
     if (!vm.newProductInput.name || vm.newProductInput.minPrice < 0 || vm.newProductInput.maxPrice < vm.newProductInput.minPrice) {
       return;
     }
-    vm.settingsProducts.push({ ...vm.newProductInput });
-    vm.newProductInput = { name: '', minPrice: 0, maxPrice: 0 };
+    vm.settingsProducts.push({
+      ...vm.newProductInput,
+      tags: Array.isArray(vm.newProductInput.tags) ? [...vm.newProductInput.tags] : [],
+    });
+    vm.newProductInput = { name: '', minPrice: 0, maxPrice: 0, tags: [] };
+  }
+
+  toggleNewProductTag(vm: any, tag: string): void {
+    if (!Array.isArray(vm.newProductInput.tags)) vm.newProductInput.tags = [];
+    const index = vm.newProductInput.tags.indexOf(tag);
+    if (index >= 0) vm.newProductInput.tags.splice(index, 1);
+    else vm.newProductInput.tags.push(tag);
+  }
+
+  toggleProductTag(vm: any, product: any, tag: string): void {
+    if (!Array.isArray(product.tags)) product.tags = [];
+    const index = product.tags.indexOf(tag);
+    if (index >= 0) product.tags.splice(index, 1);
+    else product.tags.push(tag);
   }
 
   addProductRemark(vm: any): void {

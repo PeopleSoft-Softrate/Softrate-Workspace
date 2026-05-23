@@ -2411,6 +2411,19 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
+  get visibleProducts(): any[] {
+    const employeeTags = new Set((this.employee?.tags || []).map((tag) => String(tag).trim()).filter(Boolean));
+    return (this.products || [])
+      .filter((product) => {
+        const productTags = Array.isArray(product?.tags)
+          ? product.tags.map((tag: any) => String(tag).trim()).filter(Boolean)
+          : [];
+        if (productTags.length === 0) return true;
+        return productTags.some((tag: string) => employeeTags.has(tag));
+      })
+      .sort((left, right) => String(left?.name || '').localeCompare(String(right?.name || ''), undefined, { sensitivity: 'base' }));
+  }
+
   // ── Break Button Logic ──
   fetchBreakStatus(): void {
     if (!this.employee) return;

@@ -129,9 +129,9 @@
 .dashboard-wrapper .admin-employee-fullview-title h2 {
   margin: 0 !important;
   color: #111827 !important;
-  font-size: clamp(24px, 2.2vw, 34px) !important;
+  font-size: 28px !important;
   font-weight: 800 !important;
-  letter-spacing: -0.04em !important;
+  letter-spacing: 0 !important;
   line-height: 1.1 !important;
 }
 
@@ -171,7 +171,8 @@
 
 .dashboard-wrapper .admin-employee-fullview-actions .filter-select-field {
   min-width: 180px !important;
-  min-height: 42px !important;
+  height: 48px !important;
+  min-height: 48px !important;
   border-radius: 14px !important;
   background: #ffffff !important;
 }
@@ -185,6 +186,13 @@
   border-radius: 14px !important;
   background: #ffffff !important;
   justify-content: center !important;
+}
+
+.dashboard-wrapper .admin-employee-import-errors {
+  display: grid !important;
+  gap: 6px !important;
+  max-height: 180px !important;
+  overflow: auto !important;
 }
 
 .dashboard-wrapper .admin-employee-fullview-loading {

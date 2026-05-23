@@ -160,6 +160,7 @@ const userSchema = new mongoose.Schema(
       name: { type: String, required: true },
       minPrice: { type: Number, required: true },
       maxPrice: { type: Number, required: true },
+      tags: [{ type: String, trim: true }],
     }],
     productRemarks: [String],
     resetPasswordToken: String,

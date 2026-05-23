@@ -634,8 +634,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     email: '',
     phone: '',
   };
-  settingsProducts: Array<{ name: string, minPrice: number, maxPrice: number }> = [];
-  newProductInput = { name: '', minPrice: 0, maxPrice: 0 };
+  settingsProducts: Array<{ name: string, minPrice: number, maxPrice: number, tags?: string[] }> = [];
+  newProductInput = { name: '', minPrice: 0, maxPrice: 0, tags: [] as string[] };
+  productTagDropdownOpenKey = '';
   settingsProductRemarks: string[] = [];
   newProductRemarkInput: string = '';
 
@@ -703,6 +704,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   addLeadLoading = false;
   addLeadError = '';
   addLeadSuccess = '';
+  leadImportRowErrors: string[] = [];
 
   // Follow-up addition (Interested Clients)
   followupUploadStep: 'idle' | 'mapping' | 'uploading' = 'idle';
@@ -3817,12 +3819,16 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (this.crmProjectOpenMenuKey && (!target || !target.closest('.crm-manage-cell'))) {
       this.crmProjectOpenMenuKey = '';
     }
+    if (this.productTagDropdownOpenKey && (!target || !target.closest('.product-tag-dropdown'))) {
+      this.productTagDropdownOpenKey = '';
+    }
   }
 
   handleGlobalEscape(): void {
     this.closeProfileMenu();
     this.crmAmcOpenMenuKey = '';
     this.crmProjectOpenMenuKey = '';
+    this.productTagDropdownOpenKey = '';
   }
 
   private adminProfilePhotoStorageKey(): string {
@@ -3934,6 +3940,26 @@ export abstract class AdminWorkspaceController implements OnInit {
   onLogoUpload(event: any): void { return this.adminSettingsWorkflow.onLogoUpload(this, event); }
 
   addProduct(): void { return this.adminSettingsWorkflow.addProduct(this); }
+
+  toggleNewProductTag(tag: string): void { return this.adminSettingsWorkflow.toggleNewProductTag(this, tag); }
+
+  toggleProductTag(product: any, tag: string): void { return this.adminSettingsWorkflow.toggleProductTag(this, product, tag); }
+
+  toggleProductTagDropdown(key: string, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.productTagDropdownOpenKey = this.productTagDropdownOpenKey === key ? '' : key;
+  }
+
+  isProductTagDropdownOpen(key: string): boolean {
+    return !!key && this.productTagDropdownOpenKey === key;
+  }
+
+  productTagDropdownLabel(tags?: string[]): string {
+    const selected = Array.isArray(tags) ? tags.filter(Boolean) : [];
+    if (selected.length === 0) return 'All employee tags';
+    if (selected.length <= 2) return selected.join(', ');
+    return `${selected.length} tags selected`;
+  }
 
   addProductRemark(): void { return this.adminSettingsWorkflow.addProductRemark(this); }
 
@@ -5157,6 +5183,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (!file) return;
 
     this.addLeadError = '';
+    this.leadImportRowErrors = [];
     this.leadUploadStep = 'mapping';
     this.parsedExcelData = [];
     this.excelHeaders = [];
@@ -5187,10 +5214,13 @@ export abstract class AdminWorkspaceController implements OnInit {
         for (let i = 1; i < rawJson.length; i++) {
           const row = rawJson[i];
           if (!row || row.length === 0) continue;
+          const hasData = row.some((cell: any) => cell !== undefined && cell !== null && cell.toString().trim() !== '');
+          if (!hasData) continue;
           let rowData: any = {};
           this.excelHeaders.forEach((header, index) => {
             if (header) rowData[header] = row[index];
           });
+          rowData.__excelRowNumber = i + 1;
           this.parsedExcelData.push(rowData);
         }
 
@@ -5218,6 +5248,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.leadUploadStep = 'idle';
     this.parsedExcelData = [];
     this.excelHeaders = [];
+    this.leadImportRowErrors = [];
     this.leadColumnMapping = { firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '' };
     this.batchDefaultStatus = 'New';
   }
@@ -5231,12 +5262,24 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.leadUploadStep = 'uploading';
     this.addLeadLoading = true;
     this.addLeadError = '';
+    this.leadImportRowErrors = [];
 
     const setLabel = this.newLeadSetLabel.trim();
-    const mappedLeads: Partial<Lead>[] = this.parsedExcelData
-      .map(row => {
+    const validationErrors: string[] = [];
+    const mappedLeads: Partial<Lead>[] = [];
+
+    this.parsedExcelData.forEach(row => {
         const contactNumber = row[this.leadColumnMapping.contactNumber]?.toString().trim() || '';
         const leadCompanyName = row[this.leadColumnMapping.leadCompanyName]?.toString().trim() || '';
+        const missingFields = [
+          !leadCompanyName ? 'Company Name' : '',
+          !contactNumber ? 'Contact Number' : ''
+        ].filter(Boolean);
+
+        if (missingFields.length) {
+          validationErrors.push(`Row ${row.__excelRowNumber || '?'}: missing ${missingFields.join(', ')}`);
+          return;
+        }
         
         const fName = this.leadColumnMapping.firstName ? (row[this.leadColumnMapping.firstName]?.toString().trim() || '') : '';
         const lName = this.leadColumnMapping.lastName ? (row[this.leadColumnMapping.lastName]?.toString().trim() || '') : '';
@@ -5248,7 +5291,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         const status = this.batchDefaultStatus;
         const companyDescription = this.leadColumnMapping.companyDescription ? (row[this.leadColumnMapping.companyDescription]?.toString().trim() || '') : '';
 
-        return {
+        mappedLeads.push({
           companyCode: this.dashboardCode,
           assignedEmployeePhone: this.selectedEmployee!.mobile,
           contactNumber,
@@ -5263,9 +5306,16 @@ export abstract class AdminWorkspaceController implements OnInit {
           isStarred: false,
           isFavourite: false,
           createdAt: new Date().toISOString()
-        };
-      })
-      .filter(l => l.contactNumber && l.leadCompanyName); // Drop rows missing required fields
+        });
+      });
+
+    if (validationErrors.length > 0) {
+      this.leadImportRowErrors = validationErrors;
+      this.addLeadError = 'Please fix the rows listed below and import again.';
+      this.leadUploadStep = 'mapping';
+      this.addLeadLoading = false;
+      return;
+    }
 
     if (mappedLeads.length === 0) {
       this.addLeadError = 'No valid leads found in Excel after mapping. Ensure rows are not empty.';

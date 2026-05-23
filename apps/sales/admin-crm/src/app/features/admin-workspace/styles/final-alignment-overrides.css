@@ -85,8 +85,8 @@
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame {
-  height: min(760px, calc(100vh - 180px)) !important;
-  min-height: 680px !important;
+  height: clamp(760px, calc(100vh - 120px), 980px) !important;
+  min-height: 760px !important;
   overflow: hidden !important;
 }
 
@@ -96,19 +96,23 @@
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid {
+  height: 100% !important;
+  min-height: 0 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
   align-content: start !important;
   gap: 28px !important;
   row-gap: 32px !important;
-  grid-auto-rows: auto !important;
-  padding-bottom: 48px !important;
+  grid-auto-rows: minmax(600px, auto) !important;
+  padding-right: 36px !important;
+  padding-bottom: 96px !important;
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-style-card {
-  min-height: 456px !important;
-  height: auto !important;
-  overflow: visible !important;
+  min-height: 600px !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 .dashboard-wrapper .employee-followup-record-card .followup-card-edit {
@@ -3440,4 +3444,78 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
   font-weight: 500 !important;
   line-height: 1.35 !important;
   letter-spacing: 0 !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid,
+.dashboard-wrapper .admin-employee-followups-frame .admin-employee-card-grid {
+  align-items: start !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-lead-record-card.admin-employee-style-card {
+  grid-template-rows: 44px 28px 44px 28px 28px minmax(220px, 1fr) 44px !important;
+  height: 100% !important;
+  min-height: 600px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-frame .admin-lead-record-card.admin-employee-style-card,
+.dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card.admin-employee-style-card {
+  grid-template-rows: 44px 28px 44px 28px 28px minmax(168px, 1fr) 44px !important;
+  height: 100% !important;
+  min-height: 560px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-frame .admin-employee-card-grid {
+  grid-auto-rows: minmax(620px, auto) !important;
+}
+
+.dashboard-wrapper .admin-employee-followups-frame .admin-lead-record-card.admin-employee-style-card,
+.dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card.admin-employee-style-card {
+  min-height: 620px !important;
+}
+
+/* Assigned employee leads: keep two cards per row and make the card pane, not the page, scroll. */
+.dashboard-wrapper .admin-employee-assigned-frame {
+  height: clamp(700px, calc(100vh - 180px), 820px) !important;
+  min-height: 700px !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-employee-company-pane {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid.admin-employee-style-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-auto-rows: minmax(560px, auto) !important;
+  align-items: start !important;
+  align-content: start !important;
+  gap: 24px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable both-edges !important;
+  padding: 24px 36px 96px 24px !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-frame .admin-lead-record-card.admin-employee-style-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 560px !important;
+  height: 100% !important;
+  grid-template-rows: 44px 28px 44px 28px 28px minmax(176px, 1fr) 44px !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid.admin-employee-style-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
 }

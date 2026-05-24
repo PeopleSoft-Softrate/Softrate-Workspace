@@ -298,6 +298,75 @@
                     </span>
                     <input class="topbar-input" type="text" placeholder="Search follow-ups" [(ngModel)]="followupSearch">
                   </label>
+                  <label class="cta-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; transition: all 0.2s; height: 34px; box-sizing: border-box; margin-left: 0.5rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Upload Follow-up
+                    <input type="file" (change)="onFollowupExcelUpload($event)" accept=".xlsx, .xls" style="display:none;">
+                  </label>
+                </div>
+              </div>
+
+              <!-- Excel Mapping UI -->
+              <div *ngIf="followupUploadStep === 'mapping' || followupUploadStep === 'uploading'" class="animate-fade-in"
+                style="background: #fff; border: 1px solid #4f46e5; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 10px 25px -5px rgba(79,70,229,0.1);">
+                <h4 style="margin: 0 0 4px; font-size: 1rem; font-weight: 700; color: #4f46e5;">Map Follow-ups</h4>
+                <p style="margin: 0 0 1.25rem; font-size: 0.8rem; color: #64748b;">Mapping <strong>{{ parsedExcelData.length }}</strong> rows for {{ selectedEmployee!.name }}</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">Contact Number *</label>
+                    <select [(ngModel)]="followupColumnMapping.contactNumber" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">First Name</label>
+                    <select [(ngModel)]="followupColumnMapping.firstName" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">Last Name</label>
+                    <select [(ngModel)]="followupColumnMapping.lastName" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">Company Name</label>
+                    <select [(ngModel)]="followupColumnMapping.companyName" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">Requirement / Desc</label>
+                    <select [(ngModel)]="followupColumnMapping.description" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">History / Remarks</label>
+                    <select [(ngModel)]="followupColumnMapping.remarks" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">Follow-up Date</label>
+                    <select [(ngModel)]="followupColumnMapping.reminderDate" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+                      <option value="">-- Select --</option>
+                      <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                  <button class="cta-primary" (click)="confirmFollowupMapping()" [disabled]="followupUploadStep === 'uploading'" style="padding: 0.7rem 1.5rem; border-radius: 10px; font-weight: 700;">
+                    {{ followupUploadStep === 'uploading' ? 'Importing...' : 'Complete Import' }}
+                  </button>
+                  <button class="btn-login" (click)="followupUploadStep = 'idle'" style="padding: 0.7rem 1.2rem; border-radius: 10px;">Cancel</button>
                 </div>
               </div>
 

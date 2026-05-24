@@ -1215,7 +1215,7 @@
               <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <label class="cta-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; transition: all 0.2s;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                  Import Interested
+                  Upload Follow-up
                   <input type="file" (change)="onFollowupExcelUpload($event)" accept=".xlsx, .xls" style="display:none;">
                 </label>
                 <span style="font-size: 0.7rem; font-weight: 700; color: #ef4444; background: #fee2e2; padding: 3px 10px; border-radius: 20px;">{{ selectedEmpBookmarks.length }} ACTIVE</span>
@@ -1225,7 +1225,7 @@
             <!-- Excel Mapping UI -->
             <div *ngIf="followupUploadStep === 'mapping' || followupUploadStep === 'uploading'" class="animate-fade-in"
               style="background: #fff; border: 1px solid #4f46e5; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 10px 25px -5px rgba(79,70,229,0.1);">
-              <h4 style="margin: 0 0 4px; font-size: 1rem; font-weight: 700; color: #4f46e5;">Map Interested Clients</h4>
+              <h4 style="margin: 0 0 4px; font-size: 1rem; font-weight: 700; color: #4f46e5;">Map Follow-ups</h4>
               <p style="margin: 0 0 1.25rem; font-size: 0.8rem; color: #64748b;">Mapping <strong>{{ parsedExcelData.length }}</strong> rows for {{ selectedEmployee!.name }}</p>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
                 <div>
@@ -1293,7 +1293,7 @@
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
               <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600;">No follow-ups yet</h4>
-              <p style="margin: 4px 0 0; font-size: 0.8rem;">Click "Import Interested" above to upload a client list.</p>
+              <p style="margin: 4px 0 0; font-size: 0.8rem;">Click "Upload Follow-up" above to upload a client list.</p>
             </div>
 
             <!-- START Follow-ups (Emp UI Style) -->

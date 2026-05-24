@@ -140,6 +140,12 @@ export class CrmService {
     });
   }
 
+  updateClient(id: string, payload: Partial<CrmClient>): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/api/crm/clients/${encodeURIComponent(id)}`, payload, {
+      headers: this.headers(),
+    });
+  }
+
   getContracts(type: 'SLA' | 'NDA', params: { companyCode?: string; clientCompanyName?: string } = {}): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/api/crm/contracts${this.query({ ...params, type })}`, {
       headers: this.headers(),

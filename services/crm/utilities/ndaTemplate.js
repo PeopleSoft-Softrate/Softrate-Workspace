@@ -31,9 +31,9 @@ const NDA_PLACEHOLDERS = [
 
 const DEFAULT_HEADER = {
   enabled: true,
-  companyTitle: 'SOFTRATE TECHNOLOGIES (P) LTD',
-  addressLine: 'SOFTRATE TECH PARK, MANGADU, CHENNAI, INDIA, 600 122',
-  contactLine: '(+91) 8148633580  |  helpdesk@softrateglobal.com',
+  companyTitle: 'SOFTRATE TECHNOLOGIES PRIVATE LIMITED',
+  addressLine: '60A, Velleeswaran Street, Mangadu, Chennai, Tamil Nadu, 600122, India',
+  contactLine: '(+91) 8148633580  |  helpdesk@softrate.com  |  www.softrateglobal.com',
 };
 
 const DEFAULT_BLOCKS = [
@@ -332,7 +332,7 @@ function styleForBlock(block) {
     y: 140,
     width: 487,
     fontSize: 10,
-    fontFamily: 'Times-Roman',
+    fontFamily: 'Helvetica',
     alignment: block.type === 'body' || block.type === 'bullet' ? 'justify' : 'left',
     letterSpacing: 0,
     lineHeight: 1.3,
@@ -381,8 +381,8 @@ function newPage(index = 0) {
 function paginateBlocks(blocks) {
   const pages = [newPage(0)];
   const pageHeight = A4.portrait.height;
-  const firstPageTop = 132;
-  const continuationTop = 84;
+  const firstPageTop = 128;   // After header divider at y=108 + 20px padding
+  const continuationTop = 72; // No header on continuation pages
   const bottom = 64;
   const gap = 5;
   let y = firstPageTop;

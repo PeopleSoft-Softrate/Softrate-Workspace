@@ -201,6 +201,59 @@
     </form>
   </div>
 </div>
+
+<!-- ========== EDIT CLIENT MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.isEditCrmClientOpen" (click)="vm.closeEditCrmClient()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">
+    <button class="modal-close" (click)="vm.closeEditCrmClient()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">Edit Client Details</h2>
+    <p class="modal-subtitle">Update client company, contact info, and profile details.</p>
+
+    <form class="modal-form" (submit)="vm.onEditCrmClientSubmit($event)">
+      <div class="form-error" *ngIf="vm.editCrmClientError">{{ vm.editCrmClientError }}</div>
+
+      <div class="form-group">
+        <label for="edit-client-companyName">Company Name</label>
+        <input type="text" id="edit-client-companyName" [(ngModel)]="vm.editingCrmClient.companyName" name="companyName" placeholder="Enter company name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="edit-client-contact">Primary Contact Name</label>
+        <input type="text" id="edit-client-contact" [(ngModel)]="vm.editingCrmClient.primaryContactName" name="primaryContactName" placeholder="Enter primary contact name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="edit-client-phone">Phone Number</label>
+        <input type="text" id="edit-client-phone" [(ngModel)]="vm.editingCrmClient.primaryPhone" name="primaryPhone" placeholder="Enter phone number" />
+      </div>
+
+      <div class="form-group">
+        <label for="edit-client-email">Email Address</label>
+        <input type="email" id="edit-client-email" [(ngModel)]="vm.editingCrmClient.primaryEmail" name="primaryEmail" placeholder="Enter email address" />
+      </div>
+
+      <div class="form-group">
+        <label for="edit-client-address">Registered Address</label>
+        <textarea id="edit-client-address" [(ngModel)]="vm.editingCrmClient.address" name="address" placeholder="Enter registered address" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="edit-client-description">Description / Notes</label>
+        <textarea id="edit-client-description" [(ngModel)]="vm.editingCrmClient.description" name="description" placeholder="Enter description or notes" rows="2"></textarea>
+      </div>
+
+      <button type="submit" class="cta-primary" [disabled]="vm.editCrmClientLoading" style="margin-top: 1rem; width: 100%;">
+        {{ vm.editCrmClientLoading ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- ========== LOGOUT CONFIRMATION MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isLogoutConfirmOpen" (click)="vm.closeLogoutConfirm()">
   <div class="modal vm.logout-confirm-modal" (click)="$event.stopPropagation()" style="max-width: 400px;">

@@ -59,12 +59,18 @@ async function isConvertedStatus(companyCode, status) {
 }
 
 function clientPayloadFromLead(lead) {
+  let email = stringValue(lead.directorEmailAddress);
+  if (email) {
+    const parts = email.split(/[\s,;/]+/).map(p => p.trim()).filter(Boolean);
+    email = parts.find(p => p.includes('@')) || parts[0] || '';
+  }
+
   return {
     companyCode: stringValue(lead.companyCode),
     companyName: stringValue(lead.leadCompanyName),
     primaryContactName: stringValue(lead.contactName),
     primaryPhone: stringValue(lead.contactNumber),
-    primaryEmail: stringValue(lead.directorEmailAddress),
+    primaryEmail: email,
     description: stringValue(lead.mainDivisionDescription || lead.companyDescription),
     source: 'converted_lead',
     sourceLeadIds: [lead._id],
@@ -165,12 +171,18 @@ async function createManualClient(payload = {}) {
     });
   }
 
+  let email = payload.primaryEmail || payload.email || sourceLead?.directorEmailAddress || '';
+  if (email) {
+    const parts = String(email).split(/[\s,;/]+/).map(p => p.trim()).filter(Boolean);
+    email = parts.find(p => p.includes('@')) || parts[0] || '';
+  }
+
   const result = await createClientPayload({
     companyCode: payload.companyCode,
     companyName: payload.companyName || sourceLead?.leadCompanyName,
     primaryContactName: payload.primaryContactName || payload.contactName || sourceLead?.contactName,
     primaryPhone: payload.primaryPhone || payload.contactNumber || sourceLead?.contactNumber,
-    primaryEmail: payload.primaryEmail || payload.email || sourceLead?.directorEmailAddress,
+    primaryEmail: email,
     address: payload.address,
     description: payload.description || sourceLead?.mainDivisionDescription || sourceLead?.companyDescription,
     source: sourceLead ? 'converted_lead' : 'manual',

@@ -110,9 +110,9 @@
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-style-card {
-  min-height: 600px !important;
+  min-height: 620px !important;
   height: 100% !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 .dashboard-wrapper .employee-followup-record-card .followup-card-edit {
@@ -1404,6 +1404,7 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
   border: 0 !important;
   border-radius: 10px !important;
   background: #f8fafc !important;
+  overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-style-card.admin-followup-contact-card .lead-card-remarks,
@@ -1411,6 +1412,7 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
   grid-template-rows: 24px minmax(0, 1fr) 42px !important;
   min-height: 168px !important;
   max-height: 168px !important;
+  overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-style-card .lead-card-remarks-title {
@@ -3454,16 +3456,16 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
 .dashboard-wrapper .admin-employee-assigned-frame .admin-lead-record-card.admin-employee-style-card {
   grid-template-rows: 44px 28px 44px 28px 28px minmax(220px, 1fr) 44px !important;
   height: 100% !important;
-  min-height: 600px !important;
-  overflow: hidden !important;
+  min-height: 620px !important;
+  overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .admin-lead-record-card.admin-employee-style-card,
 .dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card.admin-employee-style-card {
   grid-template-rows: 44px 28px 44px 28px 28px minmax(168px, 1fr) 44px !important;
   height: 100% !important;
-  min-height: 560px !important;
-  overflow: hidden !important;
+  min-height: 620px !important;
+  overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .admin-employee-card-grid {
@@ -3473,6 +3475,7 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
 .dashboard-wrapper .admin-employee-followups-frame .admin-lead-record-card.admin-employee-style-card,
 .dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card.admin-employee-style-card {
   min-height: 620px !important;
+  overflow: visible !important;
 }
 
 /* Assigned employee leads: keep two cards per row and make the card pane, not the page, scroll. */
@@ -3493,7 +3496,7 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid.admin-employee-style-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-auto-rows: minmax(560px, auto) !important;
+  grid-auto-rows: minmax(620px, auto) !important;
   align-items: start !important;
   align-content: start !important;
   gap: 24px !important;
@@ -3508,10 +3511,10 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
 .dashboard-wrapper .admin-employee-assigned-frame .admin-lead-record-card.admin-employee-style-card {
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 560px !important;
+  min-height: 620px !important;
   height: 100% !important;
   grid-template-rows: 44px 28px 44px 28px 28px minmax(176px, 1fr) 44px !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 @media (max-width: 1180px) {

@@ -83,10 +83,14 @@ async function getAssetBuffer(source) {
     return Buffer.from(await response.arrayBuffer());
   }
 
+  const cleanValue = value.startsWith('/') ? value.substring(1) : value;
   const candidates = [
     value,
     path.resolve(__dirname, '..', value),
     path.resolve(__dirname, '..', '..', '..', value),
+    // Resolve frontend assets relative to workspace root
+    path.resolve(__dirname, '..', '..', '..', 'apps/sales/admin-crm/public', cleanValue),
+    path.resolve(__dirname, '..', '..', '..', 'apps/sales/admin-crm/public/assets/icon', path.basename(cleanValue)),
   ];
   const existing = candidates.find((candidate) => fs.existsSync(candidate));
   return existing ? fs.readFileSync(existing) : null;
@@ -108,48 +112,126 @@ function findHeaderImagePath() {
   return candidates.find((candidate) => fs.existsSync(candidate)) || '';
 }
 
-function drawHeader(doc, template, width) {
+async function drawHeader(doc, template, width, data) {
   const header = template.header || {};
   if (header.enabled === false) return;
 
-  const headerImagePath = header.imagePath || findHeaderImagePath();
-  if (headerImagePath) {
+  const margin = 54;
+  const logoAreaWidth = 130;
+  const cursorY = 46;
+
+  // Resolve company details from data, fallback to header template defaults
+  const companyName = data?.companyName || header.companyTitle || 'SOFTRATE TECHNOLOGIES PRIVATE LIMITED';
+  const companyAddress = data?.companyAddress || header.addressLine || '';
+  const companyPhone = data?.companyPhone || '';
+  const companyEmail = data?.companyEmail || '';
+  const companyWebsite = data?.companyWebsite || '';
+
+  // ------------------------------------------------------------------
+  // Draw Logo (fixed max fit: 120 × 50) — resolves via getAssetBuffer
+  // so it handles data:, http(s):, absolute paths AND relative paths
+  // stored in the database (e.g. /assets/icon/softrate-transparent-logo.png)
+  // ------------------------------------------------------------------
+  let logoBuffer = data?.companyLogo || null;
+  let logoResolved = false;
+
+  if (logoBuffer) {
     try {
-      doc.image(headerImagePath, 18, 14, { width: width - 36 });
-      doc.moveTo(28, 116).lineTo(width - 28, 116).lineWidth(0.5).strokeColor('#d5d5d5').stroke();
-      return;
-    } catch {
-      // Fall back to constructed text header.
+      let buf = null;
+      if (Buffer.isBuffer(logoBuffer)) {
+        buf = logoBuffer;
+      } else if (typeof logoBuffer === 'string' && logoBuffer.startsWith('data:')) {
+        buf = Buffer.from(logoBuffer.split(',')[1], 'base64');
+      } else if (typeof logoBuffer === 'string') {
+        // Could be a relative path like /assets/icon/... — try getAssetBuffer
+        buf = await getAssetBuffer(logoBuffer);
+      }
+      if (buf) {
+        doc.image(buf, margin, cursorY, { fit: [120, 50] });
+        logoResolved = true;
+      }
+    } catch (e) {
+      console.error('[NDA Header] Failed to draw logo from companyLogo:', e.message);
     }
   }
 
-  const logoPath = header.logoPath || findLogoPath();
-  if (logoPath) {
-    try {
-      doc.image(logoPath, 30, 18, { width: 138, fit: [138, 62] });
-    } catch {
-      // Continue without a logo if PDFKit cannot read the asset.
+  if (!logoResolved) {
+    // Fallback: try well-known Softrate logo path on disk
+    const logoPath = header.logoPath || findLogoPath();
+    if (logoPath) {
+      try {
+        doc.image(logoPath, margin, cursorY, { fit: [120, 50] });
+        logoResolved = true;
+      } catch {
+        // fall through
+      }
     }
   }
 
-  doc
-    .font('Times-Bold')
-    .fontSize(18)
-    .fillColor('#444444')
-    .text(header.companyTitle || 'SOFTRATE TECHNOLOGIES (P) LTD', 190, 28, {
-      width: width - 210,
-      align: 'center',
-      characterSpacing: 2,
-    });
+  if (!logoResolved) {
+    // Last resort: render company name text where logo would go
+    doc.font('Helvetica-Bold').fontSize(11).fillColor('#1e293b')
+       .text(companyName, margin, cursorY + 10, { width: logoAreaWidth });
+  }
 
-  doc
-    .font('Times-Roman')
-    .fontSize(10.5)
-    .fillColor('#444444')
-    .text(header.addressLine || '', 190, 62, { width: width - 210, align: 'center', characterSpacing: 1.5 })
-    .text(header.contactLine || '', 190, 86, { width: width - 210, align: 'center', characterSpacing: 1.2 });
+  // ------------------------------------------------------------------
+  // Company info block — right side of the header
+  // ------------------------------------------------------------------
+  const textX = margin + logoAreaWidth + 10;
+  const textWidth = width - margin - textX;
 
-  doc.moveTo(28, 116).lineTo(width - 28, 116).lineWidth(0.5).strokeColor('#d5d5d5').stroke();
+  // Company Name
+  doc.font('Helvetica-Bold')
+     .fontSize(10)
+     .fillColor('#0f172a')
+     .text(companyName.toUpperCase(), textX, cursorY + 2, {
+       align: 'right',
+       width: textWidth,
+       characterSpacing: 0.8,
+     });
+
+  // Address
+  if (companyAddress) {
+    doc.font('Helvetica')
+       .fontSize(7.5)
+       .fillColor('#64748b')
+       .text(companyAddress.toUpperCase(), textX, cursorY + 16, {
+         align: 'right',
+         width: textWidth,
+         characterSpacing: 0.3,
+       });
+  }
+
+  // Contact Info Line (Phone | Email | Website)
+  const contactParts = [];
+  if (companyPhone) {
+    let p = companyPhone;
+    if (p.startsWith('+91')) p = `(+91) ${p.substring(3).trim()}`;
+    contactParts.push(p);
+  }
+  if (companyEmail) contactParts.push(companyEmail.toLowerCase());
+  if (companyWebsite) contactParts.push(companyWebsite.toLowerCase());
+
+  // Fallback to template contactLine if no data
+  if (contactParts.length === 0 && header.contactLine) contactParts.push(header.contactLine);
+
+  if (contactParts.length > 0) {
+    doc.font('Helvetica')
+       .fontSize(7.5)
+       .fillColor('#64748b')
+       .text(contactParts.join('  |  '), textX, cursorY + 30, {
+         align: 'right',
+         width: textWidth,
+         characterSpacing: 0.3,
+       });
+  }
+
+  // Divider line
+  doc.moveTo(margin, 108)
+     .lineTo(width - margin, 108)
+     .lineWidth(0.75)
+     .strokeColor('#cbd5e1')
+     .stroke();
 }
 
 async function drawBackground(doc, page, width, height) {
@@ -160,7 +242,7 @@ async function drawBackground(doc, page, width, height) {
 
 function drawPlaceholder(doc, placeholder, data) {
   const fontSize = safeNumber(placeholder.fontSize, 12, 6, 120);
-  setPdfFont(doc, placeholder.fontFamily || 'Times-Roman', placeholder.isBold, false);
+  setPdfFont(doc, placeholder.fontFamily || 'Helvetica', placeholder.isBold, false);
   doc
     .fontSize(fontSize)
     .fillColor(safeColor(placeholder.color, '#000000'))
@@ -177,7 +259,7 @@ function drawHighlightedArea(doc, area, data) {
   const height = safeNumber(area.height, 20, 10, 200);
   const fontSize = safeNumber(area.fontSize, 11, 6, 80);
 
-  setPdfFont(doc, area.fontFamily || 'Times-Roman', area.isBold, area.isItalic);
+  setPdfFont(doc, area.fontFamily || 'Helvetica', area.isBold, area.isItalic);
   doc
     .fontSize(fontSize)
     .fillColor(safeColor(area.color, '#111111'))
@@ -198,50 +280,13 @@ function splitDrawablePieces(segment) {
     .filter((piece) => piece.length);
 }
 
-function drawInlineText(doc, paragraph, data) {
-  const x = safeNumber(paragraph.x, 54);
-  const y = safeNumber(paragraph.y, 140);
-  const width = safeNumber(paragraph.width, 487, 20, 820);
-  const fontSize = safeNumber(paragraph.fontSize, 10, 6, 120);
-  const lineHeight = fontSize * safeNumber(paragraph.lineHeight, 1.3, 1, 3);
-  let cursorX = x;
-  let cursorY = y;
-
-  setPdfFont(doc, paragraph.fontFamily || 'Times-Roman', paragraph.isBold, paragraph.isItalic);
-  doc.fontSize(fontSize).fillColor(safeColor(paragraph.color, '#111111'));
-
-  for (const segment of tokenizeParagraph(paragraph.text, data)) {
-    for (const piece of splitDrawablePieces(segment)) {
-      if (piece === '\n') {
-        cursorX = x;
-        cursorY += lineHeight;
-        continue;
-      }
-
-      const measured = doc.widthOfString(piece);
-      if (!/^\s+$/.test(piece) && cursorX > x && cursorX + measured > x + width) {
-        cursorX = x;
-        cursorY += lineHeight;
-      }
-
-      doc.fillColor(safeColor(paragraph.color, '#111111')).text(piece, cursorX, cursorY, { lineBreak: false });
-      cursorX += measured;
-    }
-  }
-}
-
 function drawParagraph(doc, paragraph, data) {
   const text = resolveParagraphText(paragraph.text, data);
   if (!text && !paragraph.text) return;
 
   const fontSize = safeNumber(paragraph.fontSize, 10, 6, 120);
-  setPdfFont(doc, paragraph.fontFamily || 'Times-Roman', paragraph.isBold, paragraph.isItalic);
+  setPdfFont(doc, paragraph.fontFamily || 'Helvetica', paragraph.isBold, paragraph.isItalic);
   doc.fontSize(fontSize).fillColor(safeColor(paragraph.color, '#111111'));
-
-  if (paragraph.highlightPlaceholders && /\{\{[^}]+\}\}/.test(String(paragraph.text || ''))) {
-    drawInlineText(doc, paragraph, data);
-    return;
-  }
 
   const desiredLineHeight = safeNumber(paragraph.lineHeight, 1.3, 1, 3);
   const lineGap = Math.max(0, (desiredLineHeight - 1.15) * fontSize);
@@ -254,6 +299,7 @@ function drawParagraph(doc, paragraph, data) {
 }
 
 async function generateDynamicNdaPDF(data, rawTemplate = {}) {
+
   const template = normalizeTemplate(rawTemplate);
   const orientation = template.orientation || 'portrait';
   const { width, height } = A4[orientation] || A4.portrait;
@@ -276,7 +322,7 @@ async function generateDynamicNdaPDF(data, rawTemplate = {}) {
         doc.addPage({ size: 'A4', layout: orientation, margin: 0 });
         doc.rect(0, 0, width, height).fill('#ffffff');
         await drawBackground(doc, page, width, height);
-        if (index === 0 && page.showHeader !== false) drawHeader(doc, template, width);
+        if (index === 0 && page.showHeader !== false) await drawHeader(doc, template, width, data);
         (page.paragraphs || []).forEach((paragraph) => drawParagraph(doc, paragraph, data));
         (page.highlightedAreas || []).forEach((area) => drawHighlightedArea(doc, area, data));
         (page.placeholders || []).forEach((placeholder) => drawPlaceholder(doc, placeholder, data));

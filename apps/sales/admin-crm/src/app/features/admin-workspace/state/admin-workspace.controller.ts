@@ -764,6 +764,10 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmClients: CrmClient[] = [];
   crmClientsLoading = false;
   crmClientSearch = '';
+  isEditCrmClientOpen = false;
+  editCrmClientLoading = false;
+  editCrmClientError = '';
+  editingCrmClient: any = { _id: '', companyName: '', primaryContactName: '', primaryPhone: '', primaryEmail: '', address: '', description: '' };
   selectedCrmClientCompany = '';
   crmContractView: 'generate' | 'history' = 'generate';
   crmContractsLoading = false;
@@ -1446,6 +1450,45 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.selectedCrmClientCompany = companyName;
     this.selectedLeadCompany = companyName;
     this.closeAdminLeadPanels();
+  }
+
+  openEditCrmClientModal(client: any): void {
+    this.editCrmClientError = '';
+    this.editingCrmClient = {
+      _id: client._id || client.id || '',
+      companyName: client.companyName || '',
+      primaryContactName: client.primaryContactName || client.primaryContact || '',
+      primaryPhone: client.primaryPhone || '',
+      primaryEmail: client.primaryEmail || '',
+      address: client.address || '',
+      description: client.description || ''
+    };
+    this.isEditCrmClientOpen = true;
+  }
+
+  closeEditCrmClient(): void {
+    this.isEditCrmClientOpen = false;
+  }
+
+  onEditCrmClientSubmit(event: Event): void {
+    event.preventDefault();
+    if (!this.editingCrmClient._id) {
+      this.editCrmClientError = 'Client ID is missing.';
+      return;
+    }
+    this.editCrmClientLoading = true;
+    this.editCrmClientError = '';
+    this.crmService.updateClient(this.editingCrmClient._id, this.editingCrmClient).subscribe({
+      next: (res) => {
+        this.editCrmClientLoading = false;
+        this.isEditCrmClientOpen = false;
+        this.fetchCrmClients();
+      },
+      error: (err) => {
+        this.editCrmClientLoading = false;
+        this.editCrmClientError = err?.error?.message || 'Failed to update client details.';
+      }
+    });
   }
 
   get selectedCrmClient(): CrmClient | null {

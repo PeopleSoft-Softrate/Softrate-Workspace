@@ -437,7 +437,7 @@
             <tr><th>Document</th><th>Client</th><th>Status</th><th>Generated</th></tr>
           </thead>
           <tbody>
-            <tr *ngFor="let contract of vm.crmContractsByType(type)">
+            <tr *ngFor="let contract of vm.crmContractsByType(type)" class="history-click-row" (click)="vm.openCrmContractPrintView(contract, $event)" tabindex="0" role="button" (keydown.enter)="vm.openCrmContractPrintView(contract, $event)" (keydown.space)="$event.preventDefault(); vm.openCrmContractPrintView(contract, $event)">
               <td>{{ contract.documentNumber }}</td>
               <td>{{ contract.clientCompanyName }}</td>
               <td><span class="crm-status-pill">{{ contract.status }}</span></td>

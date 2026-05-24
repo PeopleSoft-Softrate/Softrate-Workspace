@@ -22,7 +22,7 @@ const clientSchema = new mongoose.Schema({
   onboardedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
-clientSchema.pre('validate', function normalizeClient(next) {
+clientSchema.pre('validate', function normalizeClient() {
   this.companyCode = String(this.companyCode || '').trim();
   this.clientId = String(this.clientId || '').trim();
   this.companyName = String(this.companyName || '').trim();
@@ -34,7 +34,6 @@ clientSchema.pre('validate', function normalizeClient(next) {
   this.address = String(this.address || '').trim();
   this.description = String(this.description || '').trim();
   this.assignedEmployeePhones = Array.from(new Set((this.assignedEmployeePhones || []).map((phone) => String(phone || '').trim()).filter(Boolean)));
-  next();
 });
 
 clientSchema.index({ companyCode: 1, clientId: 1 }, { unique: true });

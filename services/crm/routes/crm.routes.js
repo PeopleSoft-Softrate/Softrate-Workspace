@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { getConvertedClients } = require('../services/clientService');
 const CrmContract = require('../models/CrmContract');
+const Client = require('../models/Client');
 const CrmDocumentTemplate = require('../models/CrmDocumentTemplate');
 const CrmAmc = require('../models/CrmAmc');
 const CrmPayment = require('../models/CrmPayment');
@@ -10,6 +11,7 @@ const CrmTicket = require('../models/CrmTicket');
 const User = require('../models/User');
 const { NDA_PLACEHOLDERS, createDefaultNdaTemplate, normalizeTemplate } = require('../utilities/ndaTemplate');
 const { generateDynamicNdaPDF } = require('../utilities/ndaPdfGenerator');
+const { generateSlaPDF } = require('../utilities/slaPdfGenerator');
 const { fetchHostingerDomains } = require('../services/hostingerService');
 const {
   addYears,
@@ -110,9 +112,22 @@ async function buildNdaDocData(req, clientCompanyName) {
 
   return {
     companyName: stringValue(req.body.companyName) || company?.companyName || 'Softrate Technologies Private Limited',
-    companyAddress: stringValue(req.body.companyAddress) || company?.companyAddress || '60A, Velleeswaran Street, Mangadu, Chennai, Tamil Nadu, 600122, India',
-    companyEmail: stringValue(req.body.companyEmail) || company?.email || 'helpdesk@softrateglobal.com',
-    companyPhone: stringValue(req.body.companyPhone) || company?.mobile || '+91 8148633580',
+    companyAddress: stringValue(req.body.companyAddress)
+      || company?.invoiceRegisteredAddress
+      || company?.companyAddress
+      || '60A, Velleeswaran Street, Mangadu, Chennai, Tamil Nadu, 600122, India',
+    companyEmail: stringValue(req.body.companyEmail)
+      || company?.contactDetails?.email
+      || company?.email
+      || 'helpdesk@softrateglobal.com',
+    companyPhone: stringValue(req.body.companyPhone)
+      || company?.contactDetails?.phone
+      || company?.mobile
+      || '+91 8148633580',
+    companyWebsite: stringValue(req.body.companyWebsite)
+      || company?.contactDetails?.website
+      || 'www.softrateglobal.com',
+    companyLogo: company?.invoiceLogo || null,
     clientName: stringValue(req.body.contactName || req.body.clientName) || 'Client Representative',
     clientCompanyName,
     clientAddress: stringValue(req.body.clientAddress) || '#, Street Name, Area Name, City, State, 600001, India',
@@ -267,6 +282,31 @@ router.get('/clients', async (req, res) => {
   }
 });
 
+router.put('/clients/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyCode = scopedCompany(req);
+    const client = await Client.findOne({ _id: id, companyCode });
+    if (!client) {
+      return res.status(404).json({ success: false, message: 'Client not found.' });
+    }
+
+    if (req.body.companyName !== undefined) client.companyName = String(req.body.companyName).trim();
+    if (req.body.primaryContactName !== undefined) client.primaryContactName = String(req.body.primaryContactName).trim();
+    if (req.body.primaryPhone !== undefined) client.primaryPhone = String(req.body.primaryPhone).trim();
+    if (req.body.primaryEmail !== undefined) client.primaryEmail = String(req.body.primaryEmail).trim().toLowerCase();
+    if (req.body.address !== undefined) client.address = String(req.body.address).trim();
+    if (req.body.description !== undefined) client.description = String(req.body.description).trim();
+    if (req.body.status !== undefined) client.status = String(req.body.status).trim();
+
+    await client.save();
+    return res.json({ success: true, client });
+  } catch (err) {
+    console.error('[crm client update]', err);
+    return res.status(500).json({ success: false, message: 'Failed to update client.' });
+  }
+});
+
 router.get('/nda-template', async (req, res) => {
   try {
     const companyCode = scopedCompany(req);
@@ -386,6 +426,37 @@ router.post('/contracts/generate', async (req, res) => {
       pdfBuffer = await generateDynamicNdaPDF(docData, templateSnapshot);
       pdfFileName = `${documentNumber}-${clientCompanyName.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
       content = `NDA generated for ${clientCompanyName} using ${templateSnapshot.name || 'NDA Format Sample'}.`;
+    } else if (type === 'SLA') {
+      const companyCode = scopedCompany(req);
+      const [company, client] = await Promise.all([
+        companyCode ? User.findOne({ companyCode }).lean() : null,
+        companyCode && clientCompanyName
+          ? Client.findOne({ companyCode, companyName: clientCompanyName }).lean()
+          : null,
+      ]);
+
+      const docData = {
+        companyName: company?.companyName || 'Softrate Technologies Private Limited',
+        companyAddress: company?.invoiceRegisteredAddress || '60A, Velleeswaran Street, Mangadu, Chennai, Tamil Nadu, 600122, India',
+        companyPhone: company?.contactDetails?.phone || '+91 8148633580',
+        companyEmail: company?.contactDetails?.email || 'helpdesk@softrateglobal.com',
+        companyWebsite: company?.contactDetails?.website || 'www.softrateglobal.com',
+        companyLogo: company?.invoiceLogo || null,
+
+        clientCompanyName,
+        clientName: client?.primaryContactName || req.body.contactName || 'Client Representative',
+        clientAddress: client?.address || req.body.clientAddress || '#, Street Name, Area Name, City, State, India',
+        clientEmail: client?.primaryEmail || req.body.contactEmail || '',
+
+        effectiveDate: parseDate(req.body.effectiveFrom) || new Date(),
+        signatoryName: company?.name || 'Authorized Signatory',
+        signatoryTitle: 'Authorized Signatory',
+        clientSignatoryTitle: 'Authorized Signatory',
+      };
+
+      pdfBuffer = await generateSlaPDF(docData);
+      pdfFileName = `${documentNumber}-${clientCompanyName.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      content = `SLA generated for ${clientCompanyName}.`;
     }
 
     const contract = await CrmContract.create({

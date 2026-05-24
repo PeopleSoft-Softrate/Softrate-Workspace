@@ -100,6 +100,9 @@ app.use('/api/leads', require('./src/modules/leads/lead.routes'));
 // Invoice routes
 app.use('/api/invoices', require('./src/modules/invoices/invoice.routes'));
 
+// Client onboarding routes
+app.use('/api/clients', require('./src/modules/clients/client.routes'));
+
 // Quotation routes
 app.use('/api/quotations', require('./src/modules/quotations/quotation.routes'));
 

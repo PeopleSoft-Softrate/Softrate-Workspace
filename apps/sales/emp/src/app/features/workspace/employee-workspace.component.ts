@@ -80,6 +80,37 @@ interface Bookmark {
 interface LeadCompanyFacet {
   name: string;
   count: number;
+  clientId?: string;
+  primaryContactName?: string;
+  primaryPhone?: string;
+  primaryEmail?: string;
+  address?: string;
+  source?: string;
+  sourceLeadIds?: string[];
+  onboardedAt?: string;
+  updatedAt?: string;
+}
+
+interface ClientRecord {
+  _id: string;
+  id?: string;
+  companyCode: string;
+  clientId: string;
+  companyName: string;
+  leadCompanyName?: string;
+  primaryContact?: string;
+  primaryContactName?: string;
+  primaryPhone?: string;
+  primaryEmail?: string;
+  address?: string;
+  description?: string;
+  status?: string;
+  source?: string;
+  sourceLeadIds?: string[];
+  assignedEmployeePhones?: string[];
+  onboardedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface CachedLeadCompanyPage {
@@ -94,6 +125,7 @@ interface CachedLeadCompanyPage {
 interface InvoiceRecord {
   _id: string;
   invoiceNumber: string;
+  clientId?: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;
@@ -167,6 +199,16 @@ interface CallStats {
 type DrawerSection = LeadDrawerSection;
 type OverviewPeriod = 'today' | 'yesterday' | 'lastweek';
 const DEFAULT_QUOTATION_KIND_NOTE = 'We aim to provide the best software to automate your business with high quality at affordable cost.';
+const DEFAULT_QUOTATION_TERMS = [
+  'All rates quoted are valid for 14 days.',
+  '40% payment should be done in advance.',
+  'The remaining amount should be paid within 7 days of invoice.',
+];
+
+interface QuotationBankRow {
+  label: string;
+  value: string;
+}
 
 interface OverviewPeriodCache {
   stats: CallStats | null;
@@ -393,6 +435,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.invoiceHistorySearch = trimmed;
         this.onInvoiceSearchChange();
         this.onInvoiceHistoryQueryChange();
+      } else if (this.dashTab === 'client-onboarding') {
+        this.clientOnboardingSearch = trimmed;
+        this.onClientOnboardingSearchChange();
       } else if (this.dashTab === 'quotations') {
         this.quotationSearch = trimmed;
         this.quotationHistorySearch = trimmed;
@@ -419,6 +464,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       this.todayCallsLoading ||
       this.invoiceEligibleLeadsLoading ||
       this.invoiceRecordsLoading ||
+      this.clientOnboardingLoading ||
       this.quotationLeadsLoading ||
       this.quotationRecordsLoading;
     if (!hasActiveLoad) this.isSearching = false;
@@ -444,6 +490,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     favourite: '',
     'today-calls': '',
     invoices: '',
+    'client-onboarding': '',
     quotations: ''
   };
   private leadSetSelections: Partial<Record<EmployeePageId, string>> = {
@@ -1670,6 +1717,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   contactDetails: any = null;
   companyAddress: string = '';
   products: any[] = [];
+  readonly currentYear = new Date().getFullYear();
+  readonly quotationTerms = DEFAULT_QUOTATION_TERMS;
 
   invoiceItems: any[] = [];
   invoiceDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -1678,6 +1727,10 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   quoteNumber = Math.floor(100000 + Math.random() * 900000);
   showInvoiceModal = false;
   invoiceLead: Lead | null = null;
+  selectedInvoiceClient: ClientRecord | null = null;
+  showGstSelectionModal = false;
+  documentGstPercentageOverride: number | null = null;
+  private gstSelectionConfirmed = false;
   invoiceSaving = false;
   currentInvoiceNumber = '';
   invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
@@ -1701,6 +1754,25 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceDateFilterOpen = false;
   invoiceDateFrom = '';
   invoiceDateTo = '';
+  clientOnboardingRecords: ClientRecord[] = [];
+  clientOnboardingSearch = '';
+  clientOnboardingLoading = false;
+  clientOnboardingLoadingMore = false;
+  clientOnboardingPage = 1;
+  clientOnboardingHasMore = false;
+  clientOnboardingTotal = 0;
+  clientOnboardingLoaded = false;
+  selectedOnboardingClientId = '';
+  clientOnboardingDraft = {
+    companyName: '',
+    primaryContactName: '',
+    primaryPhone: '',
+    primaryEmail: '',
+    address: '',
+  };
+  clientOnboardingSaving = false;
+  clientOnboardingError = '';
+  clientOnboardingSuccess = '';
   quoteMode = false;
   quotationRecords: QuotationRecord[] = [];
   quotationRecordsLoading = false;
@@ -1738,6 +1810,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   followupsTotal = 0;
   private readonly dashboardCacheTtlMs = 5 * 60 * 1000;
   private invoiceSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
+  private clientOnboardingSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   private quotationSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
 
   get todayInputDate(): string {
@@ -1758,6 +1831,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.openedInvoiceRecord = null;
     this.openedQuotationRecord = null;
     this.invoiceLead = lead;
+    this.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
     this.invoicePaymentStatus = 'unpaid';
     this.quotationKindNoteDraft = DEFAULT_QUOTATION_KIND_NOTE;
@@ -1768,11 +1843,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   openQuotationModal(lead: any): void {
+    void this.loadCompanySettings();
     this.quoteMode = true;
     this.viewingSavedDocument = false;
     this.openedInvoiceRecord = null;
     this.openedQuotationRecord = null;
     this.invoiceLead = lead;
+    this.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
     this.quotationKindNoteDraft = this.defaultQuotationKindNote();
     this.showInvoiceModal = true;
@@ -1786,6 +1864,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quoteMode = false;
     this.viewingSavedDocument = false;
     this.invoiceLead = null;
+    this.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection();
     this.openedInvoiceRecord = null;
     this.openedQuotationRecord = null;
     this.resetInvoiceBuilderDraftState();
@@ -2075,6 +2155,22 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return String(this.activeInvoiceCompanySnapshot()?.gstNumber || this.gstNumber || '').trim();
   }
 
+  quotationBankRows(): QuotationBankRow[] {
+    const bankDetails = this.activeCompanyBankDetails();
+    return [
+      { label: 'Bank', value: bankDetails.bankName },
+      { label: 'Acc', value: bankDetails.accountNumber },
+      { label: 'IFSC', value: bankDetails.ifscCode },
+      { label: 'Branch', value: bankDetails.branchName },
+    ]
+      .map((row) => ({ ...row, value: String(row.value || '').trim() }))
+      .filter((row) => row.value);
+  }
+
+  private activeCompanyBankDetails(): any {
+    return this.activeInvoiceCompanySnapshot()?.bankDetails || this.bankDetails || {};
+  }
+
   invoicePreparedByName(): string {
     return String(
       (this.quoteMode ? '' : this.openedInvoiceRecord?.employeeName) ||
@@ -2121,9 +2217,45 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       const savedPercentage = Number(
         (this.quoteMode ? this.openedQuotationRecord?.gstPercentage : this.openedInvoiceRecord?.gstPercentage) || 0,
       );
-      if (savedPercentage > 0) return savedPercentage;
+      return savedPercentage;
     }
+    if (this.documentGstPercentageOverride !== null) return this.documentGstPercentageOverride;
     return Number(this.gstPercentage || 0);
+  }
+
+  private resetDocumentGstSelection(): void {
+    this.showGstSelectionModal = false;
+    this.documentGstPercentageOverride = null;
+    this.gstSelectionConfirmed = false;
+  }
+
+  private requestDocumentGstSelection(): void {
+    this.showGstSelectionModal = true;
+  }
+
+  confirmDocumentGstSelection(useZeroGst: boolean): void {
+    this.documentGstPercentageOverride = useZeroGst ? 0 : null;
+    this.gstSelectionConfirmed = true;
+    this.showGstSelectionModal = false;
+    this.refreshInvoiceItemGstFromSelection();
+    this.printInvoice();
+  }
+
+  cancelDocumentGstSelection(): void {
+    this.showGstSelectionModal = false;
+  }
+
+  private refreshInvoiceItemGstFromSelection(): void {
+    if (this.viewingSavedDocument) return;
+    this.invoiceItems.forEach((item) => {
+      if (item?.taxable === undefined && item?.gst === undefined && item?.total === undefined) return;
+      const quantity = Math.max(1, Number(item.quantity || 1));
+      const taxable = Number(item.price || 0) * quantity;
+      const gst = taxable * (this.invoicePreviewGstPercentage() / 100);
+      item.taxable = taxable;
+      item.gst = gst;
+      item.total = taxable + gst;
+    });
   }
 
   private invoiceItemKey(item: any): string {
@@ -2151,6 +2283,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceClientCompanyName(): string {
     return String(
       this.openedInvoiceRecord?.clientSnapshot?.companyName ||
+      this.selectedInvoiceClient?.companyName ||
       this.invoiceLead?.leadCompanyName ||
       '',
     ).trim() || 'Client Company';
@@ -2159,6 +2292,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceClientContactName(): string {
     return String(
       this.openedInvoiceRecord?.clientSnapshot?.contactName ||
+      this.selectedInvoiceClient?.primaryContactName ||
+      this.selectedInvoiceClient?.primaryContact ||
       this.invoiceLead?.contactName ||
       '',
     ).trim();
@@ -2167,6 +2302,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceClientPhone(): string {
     return String(
       this.openedInvoiceRecord?.clientSnapshot?.phone ||
+      this.selectedInvoiceClient?.primaryPhone ||
       this.invoiceLead?.contactNumber ||
       '',
     ).trim();
@@ -2175,6 +2311,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceClientEmail(): string {
     return String(
       this.openedInvoiceRecord?.clientSnapshot?.email ||
+      this.selectedInvoiceClient?.primaryEmail ||
       this.invoiceLead?.directorEmailAddress ||
       '',
     ).trim();
@@ -2208,12 +2345,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       setTimeout(() => window.print(), 50);
       return;
     }
+    if (!this.gstSelectionConfirmed) {
+      this.requestDocumentGstSelection();
+      return;
+    }
     if (this.quoteMode) {
       this.saveAndPrintQuotation();
       return;
     }
     if (!this.invoiceLead || !this.employee || this.invoiceSaving) return;
 
+    const invoiceClient = this.selectedInvoiceClient;
+    const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id;
     this.invoiceSaving = true;
     this.api.post<any>('/api/invoices', {
       companyCode: this.employee.companyCode,
@@ -2222,9 +2365,10 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       createdByRole: 'employee',
       createdByName: this.employee.name,
       createdByPhone: this.employee.mobile,
-      leadId: this.invoiceLead._id,
+      clientId: invoiceClient?.clientId || undefined,
+      leadId: sourceLeadId,
       contactNumber: this.invoiceLead.contactNumber,
-      gstPercentage: this.gstPercentage,
+      gstPercentage: this.invoicePreviewGstPercentage(),
       invoiceDate: this.invoiceIssuedAt,
       dueDate: this.dueDate,
       paymentStatus: this.invoicePaymentStatus,
@@ -2267,7 +2411,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       createdByPhone: this.employee.mobile,
       leadId: this.invoiceLead._id,
       contactNumber: this.invoiceLead.contactNumber,
-      gstPercentage: this.gstPercentage,
+      gstPercentage: this.invoicePreviewGstPercentage(),
       quotationDate: this.invoiceIssuedAt,
       kindNote: this.quotationKindNoteText(),
       items: this.invoiceItems.map((item) => ({
@@ -2414,6 +2558,97 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }, SEARCH_DEBOUNCE_MS);
   }
 
+  fetchClientOnboardingRecords(force = false): void {
+    if (!this.employee) return;
+    if (this.clientOnboardingLoaded && !force) return;
+    void this.loadClientOnboardingPage(1, { reset: true, forceRefresh: true });
+  }
+
+  onClientOnboardingSearchChange(): void {
+    if (this.clientOnboardingSearchTimeoutRef) clearTimeout(this.clientOnboardingSearchTimeoutRef);
+    this.clientOnboardingSearchTimeoutRef = setTimeout(() => {
+      this.clientOnboardingLoaded = false;
+      this.selectedOnboardingClientId = '';
+      void this.loadClientOnboardingPage(1, { reset: true, forceRefresh: true });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  selectOnboardingClient(client: ClientRecord): void {
+    this.selectedOnboardingClientId = client.clientId;
+  }
+
+  get selectedOnboardingClient(): ClientRecord | null {
+    return this.clientOnboardingRecords.find((client) => client.clientId === this.selectedOnboardingClientId) || null;
+  }
+
+  resetClientOnboardingDraft(): void {
+    this.clientOnboardingDraft = {
+      companyName: '',
+      primaryContactName: '',
+      primaryPhone: '',
+      primaryEmail: '',
+      address: '',
+    };
+    this.clientOnboardingError = '';
+    this.clientOnboardingSuccess = '';
+  }
+
+  submitClientOnboarding(): void {
+    if (!this.employee || this.clientOnboardingSaving) return;
+    const companyName = this.clientOnboardingDraft.companyName.trim();
+    if (!companyName) {
+      this.clientOnboardingError = 'Company name is required.';
+      return;
+    }
+
+    this.clientOnboardingSaving = true;
+    this.clientOnboardingError = '';
+    this.clientOnboardingSuccess = '';
+    this.api.post<any>('/api/clients', {
+      companyCode: this.employee.companyCode,
+      employeePhone: this.employee.mobile,
+      createdByRole: 'employee',
+      createdByName: this.employee.name,
+      createdByPhone: this.employee.mobile,
+      companyName,
+      primaryContactName: this.clientOnboardingDraft.primaryContactName.trim(),
+      primaryPhone: this.clientOnboardingDraft.primaryPhone.trim(),
+      primaryEmail: this.clientOnboardingDraft.primaryEmail.trim(),
+      address: this.clientOnboardingDraft.address.trim(),
+    }).subscribe({
+      next: (res) => {
+        this.clientOnboardingSaving = false;
+        if (!res?.success || !res.client) {
+          this.clientOnboardingError = res?.message || 'Failed to onboard client.';
+          return;
+        }
+        const client = this.normalizeClientRecord(res.client);
+        this.selectedOnboardingClientId = client.clientId;
+        this.clientOnboardingSuccess = `Client ${client.clientId} onboarded.`;
+        this.clientOnboardingDraft = {
+          companyName: '',
+          primaryContactName: '',
+          primaryPhone: '',
+          primaryEmail: '',
+          address: '',
+        };
+        this.invalidateInvoiceCaches();
+        this.clientOnboardingLoaded = false;
+        this.invoiceEligibleLeadsLoaded = false;
+        this.fetchClientOnboardingRecords(true);
+        this.fetchInvoiceEligibleLeads(true);
+      },
+      error: (err) => {
+        this.clientOnboardingSaving = false;
+        this.clientOnboardingError = err?.error?.message || 'Failed to onboard client.';
+        const duplicateClient = err?.error?.client ? this.normalizeClientRecord(err.error.client) : null;
+        if (duplicateClient?.clientId) {
+          this.selectedOnboardingClientId = duplicateClient.clientId;
+        }
+      },
+    });
+  }
+
   onQuotationSearchChange(): void {
     if (this.quotationSearchTimeoutRef) clearTimeout(this.quotationSearchTimeoutRef);
     this.quotationSearchTimeoutRef = setTimeout(() => {
@@ -2427,6 +2662,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.viewingSavedDocument = true;
     this.openedInvoiceRecord = record;
     this.openedQuotationRecord = null;
+    this.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection();
     this.invoiceTransferredFromQuotation = false;
     this.quotationTransferLoading = false;
     this.transferredQuotationRecord = null;
@@ -2455,6 +2692,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.viewingSavedDocument = true;
     this.openedInvoiceRecord = null;
     this.openedQuotationRecord = record;
+    this.resetDocumentGstSelection();
     this.invoiceTransferredFromQuotation = false;
     this.quotationTransferLoading = false;
     this.transferredQuotationRecord = null;
@@ -3857,6 +4095,12 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.invoiceLeadCompanyPage = 1;
     this.invoiceLeadCompanyHasMore = false;
     this.invoiceLeadCompanyTotal = 0;
+    this.clientOnboardingRecords = [];
+    this.clientOnboardingPage = 1;
+    this.clientOnboardingHasMore = false;
+    this.clientOnboardingTotal = 0;
+    this.selectedOnboardingClientId = '';
+    this.selectedInvoiceClient = null;
     this.quotationRecords = [];
     this.quotationLeadCompanies = [];
     this.quotationLeadCompanyContacts = {};
@@ -3866,6 +4110,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.todayCallsLoaded = false;
     this.invoiceRecordsLoaded = false;
     this.invoiceEligibleLeadsLoaded = false;
+    this.clientOnboardingLoaded = false;
     this.quotationRecordsLoaded = false;
     this.quotationLeadCompaniesLoaded = false;
     this.followupsLoaded = false;
@@ -4196,6 +4441,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return {
       _id: String(record?._id || record?.id || ''),
       invoiceNumber: String(record?.invoiceNumber || ''),
+      clientId: String(record?.clientId || record?.clientSnapshot?.clientId || ''),
       leadCompanyName: String(record?.leadCompanyName || record?.companyName || ''),
       contactName: String(record?.contactName || ''),
       contactNumber: String(record?.contactNumber || ''),
@@ -4501,10 +4747,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   private invoiceLeadCompaniesCacheKey(page = 1): string {
     return [
-      'invoice-lead-companies',
+      'invoice-client-companies',
       this.employee?.companyCode || '',
       this.employee?.mobile || '',
-      this.CONVERTED_PAGE_STATUSES.join(','),
       this.invoiceSearch.trim(),
       page,
     ].join('|');
@@ -4540,8 +4785,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   private invalidateInvoiceCaches(): void {
     this.dashboardCache.invalidate('invoice|');
-    this.dashboardCache.invalidate('invoice-eligible|');
-    this.dashboardCache.invalidate('invoice-lead-companies|');
+    this.dashboardCache.invalidate('invoice-client-companies|');
   }
 
   private invalidateQuotationCaches(): void {
@@ -5117,6 +5361,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       this.fetchInvoiceRecords();
       this.fetchInvoiceEligibleLeads();
     }
+    if (tab === 'client-onboarding') {
+      this.fetchClientOnboardingRecords();
+    }
     if (tab === 'quotations') {
       this.quotationLeadRenderCount = OPERATIONAL_PAGE_SIZE;
       void this.loadQuotationLeadCompaniesOnce();
@@ -5662,6 +5909,86 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }, {});
   }
 
+  private normalizeClientRecord(raw: any): ClientRecord {
+    return {
+      _id: String(raw?._id || raw?.id || ''),
+      id: String(raw?.id || raw?._id || ''),
+      companyCode: String(raw?.companyCode || ''),
+      clientId: String(raw?.clientId || ''),
+      companyName: String(raw?.companyName || raw?.leadCompanyName || ''),
+      leadCompanyName: String(raw?.leadCompanyName || raw?.companyName || ''),
+      primaryContact: String(raw?.primaryContact || raw?.primaryContactName || ''),
+      primaryContactName: String(raw?.primaryContactName || raw?.primaryContact || ''),
+      primaryPhone: String(raw?.primaryPhone || raw?.contactNumber || ''),
+      primaryEmail: String(raw?.primaryEmail || raw?.directorEmailAddress || ''),
+      address: String(raw?.address || ''),
+      description: String(raw?.description || ''),
+      status: String(raw?.status || 'Onboarded'),
+      source: String(raw?.source || ''),
+      sourceLeadIds: Array.isArray(raw?.sourceLeadIds) ? raw.sourceLeadIds.map((id: any) => String(id || '')).filter(Boolean) : [],
+      assignedEmployeePhones: Array.isArray(raw?.assignedEmployeePhones) ? raw.assignedEmployeePhones.map((phone: any) => String(phone || '')).filter(Boolean) : [],
+      onboardedAt: String(raw?.onboardedAt || ''),
+      createdAt: String(raw?.createdAt || ''),
+      updatedAt: String(raw?.updatedAt || ''),
+    };
+  }
+
+  private clientToInvoiceFacet(client: ClientRecord): LeadCompanyFacet {
+    return {
+      name: client.companyName,
+      count: 1,
+      clientId: client.clientId,
+      primaryContactName: client.primaryContactName || client.primaryContact || '',
+      primaryPhone: client.primaryPhone || '',
+      primaryEmail: client.primaryEmail || '',
+      address: client.address || '',
+      source: client.source || '',
+      sourceLeadIds: client.sourceLeadIds || [],
+      onboardedAt: client.onboardedAt || client.createdAt || '',
+      updatedAt: client.updatedAt || '',
+    };
+  }
+
+  private clientFromInvoiceFacet(facet: LeadCompanyFacet): ClientRecord {
+    return {
+      _id: facet.clientId || this.normalizeCompanyName(facet.name),
+      id: facet.clientId || this.normalizeCompanyName(facet.name),
+      companyCode: this.employee?.companyCode || '',
+      clientId: facet.clientId || '',
+      companyName: facet.name,
+      leadCompanyName: facet.name,
+      primaryContact: facet.primaryContactName || '',
+      primaryContactName: facet.primaryContactName || '',
+      primaryPhone: facet.primaryPhone || '',
+      primaryEmail: facet.primaryEmail || '',
+      address: facet.address || '',
+      source: facet.source || '',
+      sourceLeadIds: facet.sourceLeadIds || [],
+      onboardedAt: facet.onboardedAt || '',
+      updatedAt: facet.updatedAt || '',
+      status: 'Onboarded',
+    };
+  }
+
+  private clientToInvoiceLead(client: ClientRecord): Lead {
+    return {
+      _id: client.sourceLeadIds?.[0] || `client:${client.clientId}`,
+      companyCode: this.employee?.companyCode || client.companyCode || '',
+      assignedEmployeePhone: this.employee?.mobile || client.assignedEmployeePhones?.[0] || '',
+      leadCompanyName: client.companyName,
+      contactName: client.primaryContactName || client.primaryContact || 'Primary Contact',
+      contactNumber: client.primaryPhone || '',
+      directorEmailAddress: client.primaryEmail || '',
+      status: 'Onboarded',
+      setLabel: '',
+      companyDescription: client.description || '',
+    };
+  }
+
+  private mergeClientRecords(current: ClientRecord[], incoming: ClientRecord[]): ClientRecord[] {
+    return this.mergePagedItems(current, incoming, (client) => client.clientId || client._id || client.companyName);
+  }
+
   private mergeWorkspaceLeadCompanies(current: LeadCompanyFacet[], incoming: LeadCompanyFacet[]): LeadCompanyFacet[] {
     const merged = [...current];
     const existingByName = new Map(merged.map((company, index) => [this.normalizeCompanyName(company.name), index]));
@@ -5711,35 +6038,36 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      phone: this.employee.mobile,
-      statuses: this.CONVERTED_PAGE_STATUSES.join(','),
+      employeePhone: this.employee.mobile,
       search: this.invoiceSearch.trim(),
       page: String(page),
       pageSize: String(OPERATIONAL_PAGE_SIZE),
-      paginated: 'true',
-      includeContacts: 'true',
-      contactPageSize: '1',
     });
 
     try {
-      const response = await firstValueFrom(this.api.get<any>(`/api/leads/employee/companies?${params.toString()}`));
-      const incomingCompanies = this.normalizeWorkspaceLeadCompanies(response?.companies);
-      const incomingContacts = this.normalizeWorkspaceLeadCompanyContacts(response?.contactsByCompany);
+      const response = await firstValueFrom(this.api.get<any>(`/api/clients?${params.toString()}`));
+      const rawClients = Array.isArray(response?.clients) ? response.clients : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<ClientRecord>(
+        response,
+        rawClients.map((client: any) => this.normalizeClientRecord(client)),
+        page,
+      );
+      const incomingCompanies = pageResult.items
+        .map((client) => this.clientToInvoiceFacet(client))
+        .filter((company) => !!company.name && !!company.clientId);
       this.invoiceLeadCompanies = options.append
         ? this.mergeWorkspaceLeadCompanies(this.invoiceLeadCompanies, incomingCompanies)
         : incomingCompanies;
-      this.invoiceLeadCompanyContacts = options.append
-        ? this.mergeWorkspaceLeadCompanyContacts(this.invoiceLeadCompanyContacts, incomingContacts)
-        : incomingContacts;
-      this.invoiceLeadCompanyPage = Number(response?.page || page);
-      this.invoiceLeadCompanyHasMore = !!response?.hasMore;
-      this.invoiceLeadCompanyTotal = Number(response?.total || this.invoiceLeadCompanies.length);
+      this.invoiceLeadCompanyContacts = {};
+      this.invoiceLeadCompanyPage = pageResult.page;
+      this.invoiceLeadCompanyHasMore = pageResult.hasMore;
+      this.invoiceLeadCompanyTotal = pageResult.total;
       this.invoiceEligibleLeadsLoaded = true;
       this.dashboardCache.set(this.invoiceLeadCompaniesCacheKey(page), {
         companies: incomingCompanies,
-        contactsByCompany: incomingContacts,
+        contactsByCompany: {},
         page: this.invoiceLeadCompanyPage,
-        pageSize: Number(response?.pageSize || OPERATIONAL_PAGE_SIZE),
+        pageSize: pageResult.pageSize,
         total: this.invoiceLeadCompanyTotal,
         hasMore: this.invoiceLeadCompanyHasMore,
       }, { ttlMs: this.dashboardCacheTtlMs });
@@ -5754,6 +6082,63 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     } finally {
       this.invoiceEligibleLeadsLoading = false;
       this.invoiceLeadCompaniesLoadingMore = false;
+      this.finishGlobalSearchIfSettled();
+    }
+  }
+
+  private async loadClientOnboardingPage(
+    page: number,
+    options: { append?: boolean; reset?: boolean; silent?: boolean; forceRefresh?: boolean } = {},
+  ): Promise<void> {
+    if (!this.employee) return;
+    if (options.reset && !options.silent) {
+      this.clientOnboardingRecords = [];
+      this.clientOnboardingPage = 1;
+      this.clientOnboardingHasMore = false;
+      this.clientOnboardingTotal = 0;
+    }
+    if (options.append) {
+      this.clientOnboardingLoadingMore = true;
+    } else if (!options.silent) {
+      this.clientOnboardingLoading = true;
+    }
+
+    const params = new URLSearchParams({
+      companyCode: this.employee.companyCode,
+      employeePhone: this.employee.mobile,
+      search: this.clientOnboardingSearch.trim(),
+      page: String(page),
+      pageSize: String(OPERATIONAL_PAGE_SIZE),
+    });
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/clients?${params.toString()}`));
+      const rawClients = Array.isArray(response?.clients) ? response.clients : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<ClientRecord>(
+        response,
+        rawClients.map((client: any) => this.normalizeClientRecord(client)),
+        page,
+      );
+      this.clientOnboardingRecords = options.append
+        ? this.mergeClientRecords(this.clientOnboardingRecords, pageResult.items)
+        : pageResult.items;
+      this.clientOnboardingPage = pageResult.page;
+      this.clientOnboardingHasMore = pageResult.hasMore;
+      this.clientOnboardingTotal = pageResult.total;
+      this.clientOnboardingLoaded = true;
+      if (!this.selectedOnboardingClientId && this.clientOnboardingRecords.length) {
+        this.selectedOnboardingClientId = this.clientOnboardingRecords[0].clientId;
+      }
+    } catch {
+      if (!options.append && !options.silent) {
+        this.clientOnboardingRecords = [];
+        this.clientOnboardingPage = 1;
+        this.clientOnboardingHasMore = false;
+        this.clientOnboardingTotal = 0;
+      }
+    } finally {
+      this.clientOnboardingLoading = false;
+      this.clientOnboardingLoadingMore = false;
       this.finishGlobalSearchIfSettled();
     }
   }
@@ -5845,14 +6230,16 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   openInvoiceModalForCompany(companyName: string): void {
-    const convertedStatuses = new Set(this.CONVERTED_PAGE_STATUSES.map((status) => status.toLowerCase()));
-    const lead = this.primaryLeadForCompany(
-      companyName,
-      this.invoiceLeadCompanyContacts,
-      (candidate) => convertedStatuses.has(String(candidate.status || '').toLowerCase()),
-    );
-    if (!lead) return;
+    const clientFacet = this.invoiceLeadCompanies.find((company) => this.normalizeCompanyName(company.name) === this.normalizeCompanyName(companyName));
+    if (!clientFacet) return;
+    this.openInvoiceModalForClient(clientFacet);
+  }
+
+  openInvoiceModalForClient(clientFacet: LeadCompanyFacet): void {
+    const client = this.clientFromInvoiceFacet(clientFacet);
+    const lead = this.clientToInvoiceLead(client);
     this.openInvoiceModal(lead);
+    this.selectedInvoiceClient = client;
   }
 
   openQuotationModalForCompany(companyName: string): void {
@@ -5959,6 +6346,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (!target || this.invoiceEligibleLeadsLoading || this.invoiceLeadCompaniesLoadingMore || !this.invoiceLeadCompanyHasMore) return;
     if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
       void this.loadInvoiceLeadCompaniesPage(this.invoiceLeadCompanyPage + 1, { append: true });
+    }
+  }
+
+  onClientOnboardingScroll(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || this.clientOnboardingLoading || this.clientOnboardingLoadingMore || !this.clientOnboardingHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadClientOnboardingPage(this.clientOnboardingPage + 1, { append: true, forceRefresh: true });
     }
   }
 
@@ -6459,6 +6854,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         return 'Today History';
       case 'invoices':
         return 'Invoices';
+      case 'client-onboarding':
+        return 'Client Onboarding';
       case 'quotations':
         return 'Quotations';
       default:
@@ -6470,6 +6867,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (this.dashTab === 'overview') return 'Overview';
     if (this.dashTab === 'followups') return 'Follow-ups';
     if (this.dashTab === 'invoices') return 'Invoices';
+    if (this.dashTab === 'client-onboarding') return 'Client Onboarding';
     if (this.dashTab === 'quotations') return 'Quotations';
     return this.activeWorkspaceTitle || 'DealVoice';
   }
@@ -6489,7 +6887,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       case 'today-calls':
         return 'Today’s updated records and live work history.';
       case 'invoices':
-        return 'Create invoices for converted leads and review saved invoice history.';
+        return 'Create invoices for onboarded clients and review saved invoice history.';
+      case 'client-onboarding':
+        return 'Onboard client companies and keep their generated client IDs ready for delivery workflows.';
       case 'quotations':
         return 'Create quotations for leads and review saved quotation history.';
       default:

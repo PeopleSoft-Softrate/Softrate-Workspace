@@ -141,6 +141,12 @@ router.post('/', async (req, res) => {
         website: user.contactDetails?.website || '',
         gstNumber: user.gstNumber || '',
         footer: user.invoiceFooter || '',
+        bankDetails: {
+          bankName: user.bankDetails?.bankName || '',
+          accountNumber: user.bankDetails?.accountNumber || '',
+          ifscCode: user.bankDetails?.ifscCode || '',
+          branchName: user.bankDetails?.branchName || '',
+        },
       },
     });
 

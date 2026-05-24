@@ -50,6 +50,7 @@
         <thead>
           <tr>
             <th>Client</th>
+            <th>Client ID</th>
             <th>Domain</th>
             <th>Purchase Date</th>
             <th>Annual Renewal</th>
@@ -62,6 +63,7 @@
         <tbody>
           <tr *ngFor="let row of vm.crmAmcRows">
             <td>{{ row.clientCompanyName }}</td>
+            <td>{{ row.clientId || '-' }}</td>
             <td><strong>{{ row.domainName || '-' }}</strong></td>
             <td>{{ row.domainPurchaseDate ? vm.fmtDate(row.domainPurchaseDate) : '-' }}</td>
             <td>
@@ -90,8 +92,8 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="!vm.crmAmcLoading && vm.crmAmcRows.length===0"><td colspan="8" class="empty-cell">No mapped AMC domains found.</td></tr>
-          <tr *ngIf="vm.crmAmcLoading"><td colspan="8" class="empty-cell">Loading AMC tracking...</td></tr>
+          <tr *ngIf="!vm.crmAmcLoading && vm.crmAmcRows.length===0"><td colspan="9" class="empty-cell">No mapped AMC domains found.</td></tr>
+          <tr *ngIf="vm.crmAmcLoading"><td colspan="9" class="empty-cell">Loading AMC tracking...</td></tr>
         </tbody>
       </table>
     </div>
@@ -136,16 +138,16 @@
             <span class="topbar-search-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
             </span>
-            <input class="topbar-input" id="crmClientMapSearch" type="search" [(ngModel)]="vm.crmMappingClientSearch" placeholder="Search converted clients">
+            <input class="topbar-input" id="crmClientMapSearch" type="search" [(ngModel)]="vm.crmMappingClientSearch" placeholder="Search onboarded clients">
           </label>
           <div class="crm-map-list">
-            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let client of vm.filteredCrmMappingClients" [class.active]="vm.selectedCrmMappingClientCompany===client.companyName" (click)="vm.selectCrmClientForHostingerMapping(client)">
+            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let client of vm.filteredCrmMappingClients" [class.active]="vm.selectedCrmMappingClientId===client.clientId" (click)="vm.selectCrmClientForHostingerMapping(client)">
               <span class="rail-item-copy">
                 <span class="rail-item-name">{{ client.companyName }}</span>
-                <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }} · {{ client.contactCount }} contacts</span>
+                <span class="rail-item-meta">{{ client.clientId }} · {{ client.primaryContact || 'Primary Contact' }}</span>
               </span>
             </button>
-            <div class="empty-state-inline" *ngIf="vm.filteredCrmMappingClients.length===0">No converted clients match.</div>
+            <div class="empty-state-inline" *ngIf="vm.filteredCrmMappingClients.length===0">No onboarded clients match.</div>
           </div>
         </section>
         <section class="followup-modal-panel crm-map-detail-panel">
@@ -166,6 +168,10 @@
             <div class="crm-map-static-field">
               <span>Client</span>
               <strong>{{ vm.selectedCrmMappingClient?.companyName || '-' }}</strong>
+            </div>
+            <div class="crm-map-static-field">
+              <span>Client ID</span>
+              <strong>{{ vm.selectedCrmMappingClient?.clientId || '-' }}</strong>
             </div>
             <label class="mini-field crm-map-input-field">
               <span>Annual Fee</span>

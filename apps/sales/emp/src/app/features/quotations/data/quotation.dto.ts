@@ -30,5 +30,11 @@ export interface QuotationDto {
     website?: string;
     gstNumber?: string;
     footer?: string;
+    bankDetails?: {
+      bankName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      branchName?: string;
+    };
   };
 }

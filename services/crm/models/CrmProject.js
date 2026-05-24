@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const crmProjectSchema = new mongoose.Schema(
   {
     companyCode: { type: String, trim: true, default: '' },
+    clientId: { type: String, trim: true, default: '' },
     clientCompanyName: { type: String, required: true, trim: true },
-    clientStatus: { type: String, trim: true, default: 'Converted' },
+    clientStatus: { type: String, trim: true, default: 'Onboarded' },
     projectManagerName: { type: String, trim: true, default: '' },
     projectManagerPhone: { type: String, trim: true, default: '' },
     projectManagerEmail: { type: String, trim: true, default: '' },
@@ -21,6 +22,10 @@ const crmProjectSchema = new mongoose.Schema(
 );
 
 crmProjectSchema.index({ companyCode: 1, clientCompanyName: 1 }, { unique: true });
+crmProjectSchema.index(
+  { companyCode: 1, clientId: 1 },
+  { unique: true, partialFilterExpression: { clientId: { $exists: true, $ne: '' } } }
+);
 crmProjectSchema.index({ companyCode: 1, projectManagerPhone: 1 });
 crmProjectSchema.index({ companyCode: 1, status: 1 });
 

@@ -14,9 +14,10 @@ const invoiceItemSchema = new mongoose.Schema({
 
 const invoiceSchema = new mongoose.Schema({
   companyCode: { type: String, required: true, index: true },
+  clientId: { type: String, default: '', index: true },
   employeePhone: { type: String, default: '', index: true },
   employeeName: { type: String, default: '' },
-  leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
+  leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', default: null, index: true },
   leadCompanyName: { type: String, required: true },
   contactName: { type: String, default: '' },
   contactNumber: { type: String, default: '' },
@@ -47,15 +48,18 @@ const invoiceSchema = new mongoose.Schema({
     footer: { type: String, default: '' },
   },
   clientSnapshot: {
+    clientId: { type: String, default: '' },
     companyName: { type: String, default: '' },
     contactName: { type: String, default: '' },
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
+    address: { type: String, default: '' },
   },
 }, { timestamps: true });
 
 invoiceSchema.index({ companyCode: 1, employeePhone: 1, invoiceDate: -1 });
 invoiceSchema.index({ companyCode: 1, invoiceDate: -1 });
 invoiceSchema.index({ companyCode: 1, leadCompanyName: 1 });
+invoiceSchema.index({ companyCode: 1, clientId: 1, invoiceDate: -1 });
 
 module.exports = mongoose.model('Invoice', invoiceSchema);

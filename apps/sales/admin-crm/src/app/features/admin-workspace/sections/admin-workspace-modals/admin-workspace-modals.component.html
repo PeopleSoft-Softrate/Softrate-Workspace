@@ -923,8 +923,8 @@
                   <th>Units</th>
                   <th>Rate</th>
                   <th>Taxable</th>
-                  <th>CGST ({{ vm.settingsGstPercentage / 2 }}%)</th>
-                  <th>SGST ({{ vm.settingsGstPercentage / 2 }}%)</th>
+                  <th>CGST ({{ vm.invoicePreviewGstPercentage() / 2 }}%)</th>
+                  <th>SGST ({{ vm.invoicePreviewGstPercentage() / 2 }}%)</th>
                   <th>Total</th>
                 </tr>
               </thead>
@@ -1004,7 +1004,7 @@
               </div>
               <div class="quotation-total-panel">
                 <div><span>Sub Total</span><strong>{{ vm.invoiceSubtotal | number:'1.0-0' }}</strong></div>
-                <div><span>GST ({{ vm.settingsGstPercentage }}%)</span><strong>{{ vm.invoiceGstAmount | number:'1.0-0' }}</strong></div>
+                <div><span>GST ({{ vm.invoicePreviewGstPercentage() }}%)</span><strong>{{ vm.invoiceGstAmount | number:'1.0-0' }}</strong></div>
                 <div><span>Grand Total</span><strong>{{ vm.invoiceTotal | number:'1.0-0' }}</strong></div>
               </div>
             </div>
@@ -1023,6 +1023,28 @@
           {{ vm.viewingSavedDocument ? 'Print' : ((vm.invoiceSaving || vm.quotationSaving) ? 'Saving...' : (vm.quoteMode ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+<div class="invoice-overlay gst-selection-overlay" *ngIf="vm.showGstSelectionModal" (click)="vm.cancelDocumentGstSelection()">
+  <div class="invoice-modal gst-selection-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">GST Selection</div>
+        <h3>{{ vm.quoteMode ? 'Quotation' : 'Invoice' }} GST Rate</h3>
+      </div>
+      <button class="secondary-action" type="button" (click)="vm.cancelDocumentGstSelection()">Close</button>
+    </div>
+    <p class="gst-selection-copy">
+      Choose the GST rate for this {{ vm.quoteMode ? 'quotation' : 'invoice' }} before saving and printing.
+    </p>
+    <div class="gst-selection-options">
+      <button class="secondary-action gst-selection-option" type="button" (click)="vm.confirmDocumentGstSelection(false)">
+        Use {{ vm.settingsGstPercentage || 0 }}% GST
+      </button>
+      <button class="primary-action gst-selection-option" type="button" (click)="vm.confirmDocumentGstSelection(true)">
+        Use 0% GST
+      </button>
     </div>
   </div>
 </div>

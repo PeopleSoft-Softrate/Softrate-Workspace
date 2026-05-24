@@ -554,12 +554,14 @@ router.get('/company/:companyCode/settings', async (req, res) => {
 router.put('/company/:companyCode/settings', async (req, res) => {
   try {
     const { companyCode } = req.params;
-    const { 
+    const {
+      companyName,
       breakHourLimit, connectedCallDuration, leadStatuses, interestedPageStatuses, dnpPageStatuses, convertedPageStatuses,
       invoiceLogo, showCompanyNameOnInvoice, gstNumber, gstPercentage, invoiceRegisteredAddress, invoiceFooter, bankDetails, contactDetails, products, productRemarks 
     } = req.body;
 
     const update = {};
+    if (companyName !== undefined) update.companyName = String(companyName).trim();
     if (breakHourLimit !== undefined) update.breakHourLimit = Number(breakHourLimit);
     if (connectedCallDuration !== undefined) update.connectedCallDuration = Number(connectedCallDuration);
     if (leadStatuses !== undefined) {
@@ -610,6 +612,7 @@ router.put('/company/:companyCode/settings', async (req, res) => {
       success: true,
       message: 'Settings updated.',
       settings: {
+        companyName: user.companyName,
         breakHourLimit: user.breakHourLimit,
         connectedCallDuration: user.connectedCallDuration,
         leadStatuses: user.leadStatuses,

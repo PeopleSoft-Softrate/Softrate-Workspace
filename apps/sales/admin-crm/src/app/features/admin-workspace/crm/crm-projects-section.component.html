@@ -52,7 +52,8 @@
         <thead>
           <tr>
             <th>Client</th>
-            <th>Lead Status</th>
+            <th>Client ID</th>
+            <th>Client Status</th>
             <th>Project Manager</th>
             <th>Contact</th>
             <th>Project Status</th>
@@ -63,6 +64,7 @@
         <tbody>
           <tr *ngFor="let project of vm.filteredCrmProjectRows">
             <td>{{ project.clientCompanyName }}</td>
+            <td>{{ project.clientId || '-' }}</td>
             <td><span class="crm-status-pill">{{ project.clientStatus || vm.crmProjectClientStatus(project.clientCompanyName) }}</span></td>
             <td><strong>{{ project.projectManagerName || '-' }}</strong></td>
             <td>{{ project.projectManagerPhone || project.projectManagerEmail || '-' }}</td>
@@ -84,8 +86,8 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="!vm.crmProjectsLoading && vm.filteredCrmProjectRows.length===0"><td colspan="7" class="empty-cell">No project manager mappings found.</td></tr>
-          <tr *ngIf="vm.crmProjectsLoading"><td colspan="7" class="empty-cell">Loading project mappings...</td></tr>
+          <tr *ngIf="!vm.crmProjectsLoading && vm.filteredCrmProjectRows.length===0"><td colspan="8" class="empty-cell">No project manager mappings found.</td></tr>
+          <tr *ngIf="vm.crmProjectsLoading"><td colspan="8" class="empty-cell">Loading project mappings...</td></tr>
         </tbody>
       </table>
     </div>
@@ -110,16 +112,16 @@
             <span class="topbar-search-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
             </span>
-            <input class="topbar-input" id="crmProjectClientSearch" type="search" [(ngModel)]="vm.crmProjectClientSearch" placeholder="Search converted clients">
+            <input class="topbar-input" id="crmProjectClientSearch" type="search" [(ngModel)]="vm.crmProjectClientSearch" placeholder="Search onboarded clients">
           </label>
           <div class="crm-map-list">
-            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let client of vm.filteredCrmProjectMappingClients" [class.active]="vm.selectedCrmProjectClientCompany===client.companyName" (click)="vm.selectCrmProjectClientForMapping(client)">
+            <button class="rail-item admin-leads-rail-item crm-map-option" type="button" *ngFor="let client of vm.filteredCrmProjectMappingClients" [class.active]="vm.selectedCrmProjectClientId===client.clientId" (click)="vm.selectCrmProjectClientForMapping(client)">
               <span class="rail-item-copy">
                 <span class="rail-item-name">{{ client.companyName }}</span>
-                <span class="rail-item-meta">{{ client.primaryContact || 'Primary Contact' }} · {{ client.contactCount }} contacts</span>
+                <span class="rail-item-meta">{{ client.clientId }} · {{ client.primaryContact || 'Primary Contact' }}</span>
               </span>
             </button>
-            <div class="empty-state-inline" *ngIf="vm.filteredCrmProjectMappingClients.length===0">No converted clients match.</div>
+            <div class="empty-state-inline" *ngIf="vm.filteredCrmProjectMappingClients.length===0">No onboarded clients match.</div>
           </div>
         </section>
         <section class="followup-modal-panel crm-map-list-panel">
@@ -153,6 +155,10 @@
             <div class="crm-map-static-field">
               <span>Client</span>
               <strong>{{ vm.selectedCrmProjectClient?.companyName || '-' }}</strong>
+            </div>
+            <div class="crm-map-static-field">
+              <span>Client ID</span>
+              <strong>{{ vm.selectedCrmProjectClient?.clientId || '-' }}</strong>
             </div>
             <div class="crm-map-static-field">
               <span>Project Manager</span>

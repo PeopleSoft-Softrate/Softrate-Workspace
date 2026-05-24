@@ -30,6 +30,7 @@ const {
   parsePagination,
 } = require('../../../services/leadQueryService');
 const { enrichLeadForStorage, normalizeRemarks, normalizeText } = require('../../../services/leadNormalization');
+const { ensureClientForLead } = require('../../../services/clientService');
 const { getAiBriefForLead } = require('../../../services/ai/researchWorkflow');
 const { getAiSuggestionForLead } = require('../../../services/ai/suggestionWorkflow');
 
@@ -276,6 +277,8 @@ router.post('/', async (req, res) => {
       newValue: lead.status,
       changedBy: lead.assignedEmployeePhone,
     });
+
+    await ensureClientForLead(lead);
 
     return res.status(201).json({ success: true, lead: responseLead });
   } catch (err) {
@@ -786,6 +789,8 @@ router.patch('/:id/status', async (req, res) => {
       newValue: lead.status,
       changedBy: lead.assignedEmployeePhone,
     });
+
+    await ensureClientForLead(lead);
 
     return res.status(200).json({ success: true, lead: responseLead });
   } catch (err) {

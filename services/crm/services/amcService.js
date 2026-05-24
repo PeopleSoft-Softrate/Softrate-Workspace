@@ -108,6 +108,7 @@ function clientSuggestionsForDomain(domainName, clients) {
       else if (normalizedClient.includes(root)) score = Math.min(95, 55 + root.length);
       else if (root.includes(normalizedClient) && normalizedClient.length >= 4) score = Math.min(90, 70 + normalizedClient.length);
       return {
+        clientId: client.clientId || '',
         clientCompanyName: clientName,
         companyCode: client.companyCode || '',
         primaryEmail: client.primaryEmail || '',

@@ -7,6 +7,41 @@ import { formatInvoiceMoney as formatInvoiceMoneyValue } from '../domain/invoice
 export class AdminInvoiceQuotationWorkflow {
   constructor(private api: ApiService) {}
 
+  private normalizeClient(raw: any): any {
+    return {
+      _id: String(raw?._id || raw?.id || ''),
+      id: String(raw?.id || raw?._id || ''),
+      companyCode: String(raw?.companyCode || ''),
+      clientId: String(raw?.clientId || ''),
+      companyName: String(raw?.companyName || raw?.leadCompanyName || ''),
+      primaryContact: String(raw?.primaryContact || raw?.primaryContactName || ''),
+      primaryContactName: String(raw?.primaryContactName || raw?.primaryContact || ''),
+      primaryPhone: String(raw?.primaryPhone || raw?.contactNumber || ''),
+      primaryEmail: String(raw?.primaryEmail || raw?.directorEmailAddress || ''),
+      address: String(raw?.address || ''),
+      description: String(raw?.description || ''),
+      source: String(raw?.source || ''),
+      status: String(raw?.status || 'Onboarded'),
+      sourceLeadIds: Array.isArray(raw?.sourceLeadIds) ? raw.sourceLeadIds.map((id: any) => String(id || '')).filter(Boolean) : [],
+      assignedEmployeePhones: Array.isArray(raw?.assignedEmployeePhones) ? raw.assignedEmployeePhones.map((phone: any) => String(phone || '')).filter(Boolean) : [],
+      onboardedAt: String(raw?.onboardedAt || raw?.createdAt || ''),
+      updatedAt: String(raw?.updatedAt || ''),
+    };
+  }
+
+  private clientToLead(vm: any, client: any): any {
+    return {
+      _id: client.sourceLeadIds?.[0] || `client:${client.clientId}`,
+      companyCode: vm.dashboardCode,
+      assignedEmployeePhone: client.assignedEmployeePhones?.[0] || '',
+      leadCompanyName: client.companyName,
+      contactName: client.primaryContactName || client.primaryContact || 'Primary Contact',
+      contactNumber: client.primaryPhone || '',
+      directorEmailAddress: client.primaryEmail || '',
+      status: 'Onboarded',
+    };
+  }
+
   fetchInvoiceRecords(vm: any): void {
     if (!vm.dashboardCode) return;
     vm.invoiceRecordsLoading = true;
@@ -20,6 +55,122 @@ export class AdminInvoiceQuotationWorkflow {
         vm.invoiceRecordsLoading = false;
       },
     });
+  }
+
+  fetchAdminInvoiceClients(vm: any): void {
+    if (!vm.dashboardCode) return;
+    vm.adminInvoiceClientsLoading = true;
+    const params = new URLSearchParams({
+      companyCode: vm.dashboardCode,
+      search: vm.invoiceSearch.trim(),
+      page: '1',
+      pageSize: '200',
+    });
+    this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
+      next: (res) => {
+        vm.adminInvoiceClientsLoading = false;
+        const rawClients = Array.isArray(res?.clients) ? res.clients : (res?.items || []);
+        vm.adminInvoiceClients = rawClients.map((client: any) => this.normalizeClient(client));
+      },
+      error: () => {
+        vm.adminInvoiceClientsLoading = false;
+        vm.adminInvoiceClients = [];
+      },
+    });
+  }
+
+  fetchClientOnboardingRecords(vm: any): void {
+    if (!vm.dashboardCode) return;
+    vm.clientOnboardingLoading = true;
+    const params = new URLSearchParams({
+      companyCode: vm.dashboardCode,
+      search: vm.clientOnboardingSearch.trim(),
+      page: '1',
+      pageSize: '200',
+    });
+    this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
+      next: (res) => {
+        vm.clientOnboardingLoading = false;
+        const rawClients = Array.isArray(res?.clients) ? res.clients : (res?.items || []);
+        vm.clientOnboardingRecords = rawClients.map((client: any) => this.normalizeClient(client));
+        if (!vm.selectedOnboardingClientId && vm.clientOnboardingRecords.length) {
+          vm.selectedOnboardingClientId = vm.clientOnboardingRecords[0].clientId;
+        }
+      },
+      error: () => {
+        vm.clientOnboardingLoading = false;
+        vm.clientOnboardingRecords = [];
+      },
+    });
+  }
+
+  submitClientOnboarding(vm: any): void {
+    if (!vm.dashboardCode || vm.clientOnboardingSaving) return;
+    const companyName = String(vm.clientOnboardingDraft.companyName || '').trim();
+    if (!companyName) {
+      vm.clientOnboardingError = 'Company name is required.';
+      return;
+    }
+
+    vm.clientOnboardingSaving = true;
+    vm.clientOnboardingError = '';
+    vm.clientOnboardingSuccess = '';
+    this.api.post<any>('/api/clients', {
+      companyCode: vm.dashboardCode,
+      createdByRole: 'admin',
+      createdByName: vm.dashboardCompany,
+      companyName,
+      primaryContactName: String(vm.clientOnboardingDraft.primaryContactName || '').trim(),
+      primaryPhone: String(vm.clientOnboardingDraft.primaryPhone || '').trim(),
+      primaryEmail: String(vm.clientOnboardingDraft.primaryEmail || '').trim(),
+      address: String(vm.clientOnboardingDraft.address || '').trim(),
+    }).subscribe({
+      next: (res) => {
+        vm.clientOnboardingSaving = false;
+        if (!res?.success || !res.client) {
+          vm.clientOnboardingError = res?.message || 'Failed to onboard client.';
+          return;
+        }
+        const client = this.normalizeClient(res.client);
+        vm.selectedOnboardingClientId = client.clientId;
+        vm.clientOnboardingSuccess = `Client ${client.clientId} onboarded.`;
+        vm.clientOnboardingDraft = {
+          companyName: '',
+          primaryContactName: '',
+          primaryPhone: '',
+          primaryEmail: '',
+          address: '',
+        };
+        this.fetchClientOnboardingRecords(vm);
+        this.fetchAdminInvoiceClients(vm);
+      },
+      error: (err) => {
+        vm.clientOnboardingSaving = false;
+        vm.clientOnboardingError = err?.error?.message || 'Failed to onboard client.';
+        const duplicateClient = err?.error?.client ? this.normalizeClient(err.error.client) : null;
+        if (duplicateClient?.clientId) vm.selectedOnboardingClientId = duplicateClient.clientId;
+      },
+    });
+  }
+
+  resetClientOnboardingDraft(vm: any): void {
+    vm.clientOnboardingDraft = {
+      companyName: '',
+      primaryContactName: '',
+      primaryPhone: '',
+      primaryEmail: '',
+      address: '',
+    };
+    vm.clientOnboardingError = '';
+    vm.clientOnboardingSuccess = '';
+  }
+
+  selectOnboardingClient(vm: any, client: any): void {
+    vm.selectedOnboardingClientId = client.clientId;
+  }
+
+  selectedOnboardingClient(vm: any): any {
+    return (vm.clientOnboardingRecords || []).find((client: any) => client.clientId === vm.selectedOnboardingClientId) || null;
   }
 
   adminConvertedInvoiceLeads(vm: any): Lead[] {
@@ -62,6 +213,8 @@ export class AdminInvoiceQuotationWorkflow {
     return vm.invoiceRecords.filter((invoice: any) => {
       const matchesSearch = !query || [
         invoice.invoiceNumber,
+        invoice.clientId,
+        invoice.clientSnapshot?.clientId,
         invoice.leadCompanyName,
         invoice.contactName,
         invoice.contactNumber,
@@ -149,15 +302,17 @@ export class AdminInvoiceQuotationWorkflow {
   openSavedInvoice(vm: any, record: any): void {
     vm.quoteMode = false;
     vm.viewingSavedDocument = true;
+    vm.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection(vm);
     vm.currentInvoiceNumber = record.invoiceNumber || '';
     vm.invoiceLead = {
       _id: record.leadId || '',
       companyCode: vm.dashboardCode,
       assignedEmployeePhone: record.employeePhone || '',
-      leadCompanyName: record.leadCompanyName || '',
-      contactName: record.contactName || '',
-      contactNumber: record.contactNumber || '',
-      directorEmailAddress: record.directorEmailAddress || '',
+      leadCompanyName: record.clientSnapshot?.companyName || record.leadCompanyName || '',
+      contactName: record.clientSnapshot?.contactName || record.contactName || '',
+      contactNumber: record.clientSnapshot?.phone || record.contactNumber || '',
+      directorEmailAddress: record.clientSnapshot?.email || record.directorEmailAddress || '',
       status: '',
     };
     vm.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
@@ -173,6 +328,8 @@ export class AdminInvoiceQuotationWorkflow {
   openSavedQuotation(vm: any, record: any): void {
     vm.quoteMode = true;
     vm.viewingSavedDocument = true;
+    vm.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection(vm);
     vm.currentQuotationNumber = record.quotationNumber || '';
     vm.invoiceLead = {
       _id: record.leadId || '',
@@ -198,9 +355,17 @@ export class AdminInvoiceQuotationWorkflow {
     return formatInvoiceMoneyValue(value);
   }
 
+  private resetDocumentGstSelection(vm: any): void {
+    vm.showGstSelectionModal = false;
+    vm.documentGstPercentageOverride = null;
+    vm.gstSelectionConfirmed = false;
+  }
+
   openQuotationModal(vm: any, lead: Lead): void {
     vm.quoteMode = true;
     vm.viewingSavedDocument = false;
+    vm.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection(vm);
     vm.invoiceLead = lead;
     vm.invoiceItems = [];
     vm.selectedInvoiceProduct = null;
@@ -215,7 +380,26 @@ export class AdminInvoiceQuotationWorkflow {
   openAdminInvoiceModal(vm: any, lead: Lead): void {
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
+    vm.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection(vm);
     vm.invoiceLead = lead;
+    vm.invoiceItems = [];
+    vm.selectedInvoiceProduct = null;
+    vm.invoicePrice = 0;
+    vm.invoiceQuantity = 1;
+    vm.invoiceIssuedAt = new Date();
+    vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
+    vm.currentInvoiceNumber = '';
+    vm.showInvoiceModal = true;
+  }
+
+  openAdminInvoiceModalForClient(vm: any, client: any): void {
+    const normalizedClient = this.normalizeClient(client);
+    vm.quoteMode = false;
+    vm.viewingSavedDocument = false;
+    vm.selectedInvoiceClient = normalizedClient;
+    this.resetDocumentGstSelection(vm);
+    vm.invoiceLead = this.clientToLead(vm, normalizedClient);
     vm.invoiceItems = [];
     vm.selectedInvoiceProduct = null;
     vm.invoicePrice = 0;
@@ -230,6 +414,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.showInvoiceModal = false;
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
+    vm.selectedInvoiceClient = null;
+    this.resetDocumentGstSelection(vm);
   }
 
   onProductSelect(vm: any): void {
@@ -267,7 +453,7 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   invoiceGstAmount(vm: any): number {
-    return vm.invoiceSubtotal * (Number(vm.settingsGstPercentage || 0) / 100);
+    return vm.invoiceSubtotal * (this.invoicePreviewGstPercentage(vm) / 100);
   }
 
   invoiceCgstAmount(vm: any): number {
@@ -287,7 +473,7 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   invoiceItemGst(vm: any, item: { price: number; quantity: number }): number {
-    return this.invoiceItemTaxable(vm, item) * (Number(vm.settingsGstPercentage || 0) / 100);
+    return this.invoiceItemTaxable(vm, item) * (this.invoicePreviewGstPercentage(vm) / 100);
   }
 
   invoiceItemTotal(vm: any, item: { price: number; quantity: number }): number {
@@ -311,6 +497,30 @@ export class AdminInvoiceQuotationWorkflow {
     return vm.settingsInvoiceRegisteredAddress || vm.companyProfile?.companyAddress || '';
   }
 
+  invoicePreviewGstPercentage(vm: any): number {
+    if (vm.viewingSavedDocument) {
+      const record = vm.quoteMode
+        ? vm.quotationRecords?.find((item: any) => item.quotationNumber === vm.currentQuotationNumber)
+        : vm.invoiceRecords?.find((item: any) => item.invoiceNumber === vm.currentInvoiceNumber);
+      return Number(record?.gstPercentage || 0);
+    }
+    if (vm.documentGstPercentageOverride !== null && vm.documentGstPercentageOverride !== undefined) {
+      return Number(vm.documentGstPercentageOverride || 0);
+    }
+    return Number(vm.settingsGstPercentage || 0);
+  }
+
+  confirmDocumentGstSelection(vm: any, useZeroGst: boolean): void {
+    vm.documentGstPercentageOverride = useZeroGst ? 0 : null;
+    vm.gstSelectionConfirmed = true;
+    vm.showGstSelectionModal = false;
+    this.printInvoice(vm);
+  }
+
+  cancelDocumentGstSelection(vm: any): void {
+    vm.showGstSelectionModal = false;
+  }
+
   printInvoice(vm: any): void {
     if (vm.invoiceItems.length === 0) {
       alert(`Please add at least one product to the ${vm.quoteMode ? 'quotation' : 'invoice'}.`);
@@ -320,12 +530,18 @@ export class AdminInvoiceQuotationWorkflow {
       setTimeout(() => window.print(), 50);
       return;
     }
+    if (!vm.gstSelectionConfirmed) {
+      vm.showGstSelectionModal = true;
+      return;
+    }
     if (vm.quoteMode) {
       vm.saveAndPrintQuotation();
       return;
     }
     if (!vm.invoiceLead || vm.invoiceSaving) return;
 
+    const invoiceClient = vm.selectedInvoiceClient;
+    const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || vm.invoiceLead._id;
     vm.invoiceSaving = true;
     this.api.post<any>('/api/invoices', {
       companyCode: vm.dashboardCode,
@@ -333,9 +549,10 @@ export class AdminInvoiceQuotationWorkflow {
       employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeePhone),
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
-      leadId: vm.invoiceLead._id,
+      clientId: invoiceClient?.clientId || undefined,
+      leadId: sourceLeadId,
       contactNumber: vm.invoiceLead.contactNumber,
-      gstPercentage: vm.settingsGstPercentage,
+      gstPercentage: this.invoicePreviewGstPercentage(vm),
       invoiceDate: vm.invoiceIssuedAt,
       items: vm.invoiceItems.map((item: any) => ({
         productId: item.product?._id,
@@ -373,7 +590,7 @@ export class AdminInvoiceQuotationWorkflow {
       createdByName: vm.dashboardCompany,
       leadId: vm.invoiceLead._id,
       contactNumber: vm.invoiceLead.contactNumber,
-      gstPercentage: vm.settingsGstPercentage,
+      gstPercentage: this.invoicePreviewGstPercentage(vm),
       quotationDate: vm.invoiceIssuedAt,
       items: vm.invoiceItems.map((item: any) => ({
         productId: item.product?._id,

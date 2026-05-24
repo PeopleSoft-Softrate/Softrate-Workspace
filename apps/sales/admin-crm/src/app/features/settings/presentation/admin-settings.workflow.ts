@@ -247,6 +247,7 @@ export class AdminSettingsWorkflow {
     vm.settingsSaveSuccess = '';
 
     this.authService.updateCompanySettings(vm.dashboardCode, {
+      companyName: vm.settingsCompanyName,
       breakHourLimit: vm.settingsBreakHourLimit,
       connectedCallDuration: vm.settingsConnectedCallDuration,
       leadStatuses: vm.settingsLeadStatuses,
@@ -267,6 +268,8 @@ export class AdminSettingsWorkflow {
       next: (res: any) => {
         vm.settingsLoading = false;
         if (res.success) {
+          vm.settingsCompanyName = res.settings?.companyName || vm.settingsCompanyName;
+          vm.dashboardCompany = vm.settingsCompanyName || vm.dashboardCompany;
           vm.settingsSaveSuccess = 'Settings saved successfully!';
           setTimeout(() => vm.settingsSaveSuccess = '', 3000);
         } else {

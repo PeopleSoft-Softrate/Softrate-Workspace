@@ -157,8 +157,9 @@ function amcAnalytics(rows) {
 function projectPayload(body = {}, companyCode = '', crmUser = {}) {
   return {
     companyCode,
+    clientId: stringValue(body.clientId),
     clientCompanyName: stringValue(body.clientCompanyName),
-    clientStatus: stringValue(body.clientStatus) || 'Converted',
+    clientStatus: stringValue(body.clientStatus) || 'Onboarded',
     projectManagerName: stringValue(body.projectManagerName),
     projectManagerPhone: stringValue(body.projectManagerPhone),
     projectManagerEmail: stringValue(body.projectManagerEmail),
@@ -169,23 +170,25 @@ function projectPayload(body = {}, companyCode = '', crmUser = {}) {
   };
 }
 
-function buildRecordQuery({ companyCode, clientCompanyName, domainName }) {
-  const clauses = [];
-  if (clientCompanyName) clauses.push({ companyCode, clientCompanyName });
-  if (domainName) clauses.push({ companyCode, domainName });
-  return clauses.length > 1 ? { $or: clauses } : clauses[0];
-}
-
-async function findAmcRecord({ id, companyCode, clientCompanyName, domainName }) {
+async function findAmcRecord({ id, companyCode, clientId, clientCompanyName, domainName }) {
   if (id) return CrmAmc.findById(id);
-  const query = buildRecordQuery({ companyCode, clientCompanyName, domainName });
-  return query ? CrmAmc.findOne(query) : null;
+  if (clientId && domainName) return CrmAmc.findOne({ companyCode, clientId, domainName });
+  if (domainName) return CrmAmc.findOne({ companyCode, domainName });
+  if (clientId) return CrmAmc.findOne({ companyCode, clientId });
+  if (clientCompanyName) return CrmAmc.findOne({ companyCode, clientCompanyName });
+  return null;
 }
 
 async function saveAmcRecordFromPayload(payload, crmUser = {}) {
   const companyCode = String(payload.companyCode || crmUser.companyCode || '').trim();
+  const clientId = String(payload.clientId || '').trim();
   const clientCompanyName = String(payload.clientCompanyName || '').trim();
   const domainName = normalizeDomainName(payload.domainName);
+  if (!clientId && !(payload.id || payload._id)) {
+    const error = new Error('Client ID is required for AMC mapping.');
+    error.statusCode = 400;
+    throw error;
+  }
   if (!clientCompanyName) {
     const error = new Error('Client company is required.');
     error.statusCode = 400;
@@ -197,12 +200,14 @@ async function saveAmcRecordFromPayload(payload, crmUser = {}) {
   const record = await findAmcRecord({
     id: payload.id || payload._id,
     companyCode,
+    clientId,
     clientCompanyName,
     domainName,
-  }) || new CrmAmc({ companyCode, clientCompanyName });
+  }) || new CrmAmc({ companyCode, clientId, clientCompanyName });
   const previousPaymentStatus = record.paymentStatus;
 
   record.companyCode = companyCode;
+  if (clientId) record.clientId = clientId;
   record.clientCompanyName = clientCompanyName;
   if (domainName) record.domainName = domainName;
   if (payload.hostingerDomainId !== undefined) record.hostingerDomainId = String(payload.hostingerDomainId || '').trim();
@@ -457,17 +462,26 @@ router.post('/amc/hostinger/import', async (req, res) => {
       const explicitMapping = mappingByDomain.get(domain.domainName);
       const suggestions = clientSuggestionsForDomain(domain.domainName, clients);
       const suggestedClient = suggestions[0]?.score >= 85 ? suggestions[0] : null;
-      const clientCompanyName = String(explicitMapping?.clientCompanyName || (autoMap ? suggestedClient?.clientCompanyName : '') || '').trim();
+      const mappedClientId = String(explicitMapping?.clientId || (autoMap ? suggestedClient?.clientId : '') || '').trim();
+      const fallbackCompanyName = String(explicitMapping?.clientCompanyName || (autoMap ? suggestedClient?.clientCompanyName : '') || '').trim();
 
-      if (!clientCompanyName) {
+      if (!mappedClientId && !fallbackCompanyName) {
         unmapped.push({ ...domain, suggestions });
         continue;
       }
 
-      const mappedClient = clients.find((client) => client.companyName === clientCompanyName);
+      const mappedClient = clients.find((client) => (
+        (mappedClientId && client.clientId === mappedClientId) ||
+        (!mappedClientId && client.companyName === fallbackCompanyName)
+      ));
+      if (!mappedClient?.clientId) {
+        unmapped.push({ ...domain, suggestions });
+        continue;
+      }
       const record = await saveAmcRecordFromPayload({
         companyCode: mappedClient?.companyCode || companyCode,
-        clientCompanyName,
+        clientId: mappedClient.clientId,
+        clientCompanyName: mappedClient.companyName,
         domainName: domain.domainName,
         hostingerDomainId: domain.hostingerDomainId,
         hostingerStatus: domain.hostingerStatus,
@@ -512,13 +526,19 @@ router.get('/amc', async (req, res) => {
       CrmAmc.find(query).sort({ renewalDate: 1, updatedAt: -1 }).lean(),
     ]);
 
+    const clientsById = new Map(clients.map((client) => [String(client.clientId || '').trim(), client]).filter(([clientId]) => !!clientId));
     const clientsByName = new Map(clients.map((client) => [String(client.companyName || '').toLowerCase(), client]));
     const allRows = records
-      .filter((record) => clientsByName.has(String(record.clientCompanyName || '').toLowerCase()))
+      .filter((record) => (
+        (record.clientId && clientsById.has(String(record.clientId || '').trim())) ||
+        clientsByName.has(String(record.clientCompanyName || '').toLowerCase())
+      ))
       .map((record) => {
-        const client = clientsByName.get(String(record.clientCompanyName || '').toLowerCase());
+        const client = clientsById.get(String(record.clientId || '').trim()) ||
+          clientsByName.get(String(record.clientCompanyName || '').toLowerCase());
         return serializeAmcRecord({
           ...record,
+          clientId: client?.clientId || record.clientId,
           clientCompanyName: client?.companyName || record.clientCompanyName,
           companyCode: client?.companyCode || record.companyCode,
           owner: record.owner || client?.managers?.[0] || '',
@@ -526,6 +546,7 @@ router.get('/amc', async (req, res) => {
       })
       .filter((row) => !searchValue
         || String(row.clientCompanyName || '').toLowerCase().includes(searchValue)
+        || String(row.clientId || '').toLowerCase().includes(searchValue)
         || String(row.domainName || '').toLowerCase().includes(searchValue)
         || String(row.owner || '').toLowerCase().includes(searchValue));
     const amc = allRows.filter((row) => amcViewFilter(row, req.query.view));
@@ -717,21 +738,22 @@ router.post('/projects/map', async (req, res) => {
   try {
     const companyCode = scopedCompany(req);
     const payload = projectPayload(req.body, companyCode, req.crmUser);
-    if (!payload.clientCompanyName || !payload.projectManagerName) {
-      return res.status(400).json({ success: false, message: 'Converted client and project manager are required.' });
+    if (!payload.clientId || !payload.projectManagerName) {
+      return res.status(400).json({ success: false, message: 'Onboarded client and project manager are required.' });
     }
 
     const clients = await getConvertedClients({ companyCode });
-    const client = clients.find((item) => item.companyName.toLowerCase() === payload.clientCompanyName.toLowerCase());
+    const client = clients.find((item) => item.clientId === payload.clientId);
     if (!client) {
-      return res.status(400).json({ success: false, message: 'Only converted clients can be mapped to a project manager.' });
+      return res.status(400).json({ success: false, message: 'Only onboarded clients can be mapped to a project manager.' });
     }
 
+    payload.clientId = client.clientId;
     payload.clientCompanyName = client.companyName;
     payload.clientStatus = client.status || payload.clientStatus;
 
     const project = await CrmProject.findOneAndUpdate(
-      { companyCode, clientCompanyName: payload.clientCompanyName },
+      { companyCode, clientId: payload.clientId },
       { $set: payload },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     ).lean();

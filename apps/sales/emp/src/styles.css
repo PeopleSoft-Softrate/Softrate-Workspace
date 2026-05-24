@@ -204,7 +204,7 @@ textarea {
     flex-direction: column !important;
   }
 
-  #invoice-preview.quotation-preview .quotation-sample-page {
+  #invoice-preview.quotation-preview .quotation-terms-page {
     break-before: auto;
     page-break-before: auto;
   }
@@ -291,8 +291,9 @@ textarea {
   #invoice-preview.quotation-preview .quotation-service-header,
   #invoice-preview.quotation-preview .quotation-service-body,
   #invoice-preview.quotation-preview .quotation-kind-note,
-  #invoice-preview.quotation-preview .quotation-sample-page,
-  #invoice-preview.quotation-preview .quotation-sample-page img {
+  #invoice-preview.quotation-preview .quotation-terms-page,
+  #invoice-preview.quotation-preview .quotation-partner-panel,
+  #invoice-preview.quotation-preview .quotation-terms-box {
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
@@ -351,14 +352,75 @@ textarea {
     background-color: #eefaf1 !important;
   }
 
-  #invoice-preview.quotation-preview .quotation-sample-page img {
-    position: absolute !important;
-    inset: 0 !important;
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    object-fit: fill !important;
+  #invoice-preview.quotation-preview .quotation-terms-page {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 18mm 12mm 10mm !important;
+    gap: 8mm !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-partner-panel {
+    min-height: 118mm !important;
+    padding: 12mm 14mm !important;
+    border-radius: 7mm !important;
+    background: #cfb466 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-partner-panel h2 {
+    max-width: 92mm !important;
+    font-size: 19mm !important;
+    line-height: 1.06 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-terms-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 7mm !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-terms-box {
+    min-height: 66mm !important;
+    padding: 8mm !important;
+    border-radius: 5mm !important;
+    background: #f0fff5 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-terms-box h3 {
+    margin-bottom: 3.5mm !important;
+    font-size: 14pt !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-payable-box strong,
+  #invoice-preview.quotation-preview .quotation-bank-row,
+  #invoice-preview.quotation-preview .quotation-muted-line {
+    font-size: 10pt !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-bank-heading {
+    margin-top: 7mm !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-bank-row {
+    grid-template-columns: 18mm minmax(0, 1fr) !important;
+    gap: 3mm !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-conditions-box ul {
+    gap: 2.5mm !important;
+    padding-left: 6mm !important;
+    font-size: 12pt !important;
+    line-height: 1.42 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-terms-footer {
+    gap: 1mm !important;
+    font-size: 12pt !important;
+    line-height: 1.25 !important;
+  }
+
+  #invoice-preview.quotation-preview .quotation-terms-footer strong {
+    font-size: 13pt !important;
   }
 
   .invoice-service-section {

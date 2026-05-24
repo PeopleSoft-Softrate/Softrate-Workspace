@@ -103,7 +103,7 @@
         />
       </label>
 
-      <div class="sidebar-group-label" *ngIf="sidebarSectionHas(['Invoice', 'Quotation'])">Quick Access</div>
+      <div class="sidebar-group-label" *ngIf="sidebarSectionHas(['Invoice', 'Client Onboarding', 'Quotation'])">Quick Access</div>
       <button class="sidebar-link sidebar-link-invoice" [class.active]="dashTab==='invoices'" (click)="switchTab('invoices')" *ngIf="sidebarFeatureMatches('Invoice')" [title]="sidebarMinimized ? 'Invoice' : ''">
         <span class="sidebar-icon sidebar-icon-invoice" aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -115,6 +115,17 @@
           </svg>
         </span>
         <span class="sidebar-label">Invoice</span>
+      </button>
+      <button class="sidebar-link sidebar-link-client-onboarding" [class.active]="dashTab==='client-onboarding'" (click)="switchTab('client-onboarding')" *ngIf="sidebarFeatureMatches('Client Onboarding')" [title]="sidebarMinimized ? 'Client Onboarding' : ''">
+        <span class="sidebar-icon sidebar-icon-client-onboarding" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+            <circle cx="9.5" cy="7" r="4" />
+            <path d="M19 8v6" />
+            <path d="M22 11h-6" />
+          </svg>
+        </span>
+        <span class="sidebar-label">Client Onboarding</span>
       </button>
       <button class="sidebar-link sidebar-link-quotation" [class.active]="dashTab==='quotations'" (click)="switchTab('quotations')" *ngIf="sidebarFeatureMatches('Quotation')" [title]="sidebarMinimized ? 'Quotation' : ''">
         <span class="sidebar-icon sidebar-icon-quotation" aria-hidden="true">
@@ -331,7 +342,6 @@
                 <div class="profile-menu-name">{{ employee?.name }}</div>
                 <div class="profile-menu-meta">{{ employee?.mobile }}</div>
                 <div class="profile-menu-code" *ngIf="employee?.companyCode">{{ employee?.companyCode }}</div>
-                <div class="profile-menu-status" [class.profile-menu-status-break]="breakActive">{{ breakActive ? 'On break' : 'Active now' }}</div>
               </div>
             </div>
 
@@ -657,7 +667,7 @@
                 id="invoiceSearch"
                 class="topbar-input"
                 type="text"
-                placeholder="Search converted leads..."
+                placeholder="Search onboarded clients..."
                 [(ngModel)]="invoiceSearch"
                 (ngModelChange)="onInvoiceSearchChange()"
               />
@@ -669,19 +679,20 @@
           <section class="invoice-feature-pane invoice-converted-pane">
             <div class="invoice-pane-header">
               <div>
-                <h2>Converted Leads</h2>
-                <p>{{ invoiceEligibleLeadsLoading ? 'Loading companies' : (invoiceLeadCompanyTotal + ' listed') }}</p>
+                <h2>Onboarded Clients</h2>
+                <p>{{ invoiceEligibleLeadsLoading ? 'Loading clients' : (invoiceLeadCompanyTotal + ' listed') }}</p>
               </div>
             </div>
             <div class="invoice-lead-list" (scroll)="onInvoiceLeadListScroll($event)">
-              <article class="invoice-lead-row" *ngFor="let company of invoiceLeadCompanies" (click)="openInvoiceModalForCompany(company.name)" tabindex="0" role="button">
+              <article class="invoice-lead-row" *ngFor="let company of invoiceLeadCompanies" (click)="openInvoiceModalForClient(company)" tabindex="0" role="button">
                 <div class="invoice-lead-main">
                   <span class="invoice-lead-company">{{ company.name }}</span>
+                  <span>{{ company.clientId }} · {{ company.primaryContactName || 'Primary Contact' }}</span>
                 </div>
               </article>
-              <div *ngIf="invoiceEligibleLeadsLoading" class="empty-state-inline">Loading converted leads...</div>
-              <div *ngIf="invoiceLeadCompaniesLoadingMore" class="empty-state-inline">Loading more converted leads...</div>
-              <div *ngIf="!invoiceEligibleLeadsLoading && !invoiceLeadCompaniesLoadingMore && invoiceLeadCompanies.length===0" class="empty-state-inline">No converted leads match the current search.</div>
+              <div *ngIf="invoiceEligibleLeadsLoading" class="empty-state-inline">Loading onboarded clients...</div>
+              <div *ngIf="invoiceLeadCompaniesLoadingMore" class="empty-state-inline">Loading more onboarded clients...</div>
+              <div *ngIf="!invoiceEligibleLeadsLoading && !invoiceLeadCompaniesLoadingMore && invoiceLeadCompanies.length===0" class="empty-state-inline">No onboarded clients match the current search.</div>
             </div>
           </section>
 
@@ -729,6 +740,7 @@
                 <thead>
                   <tr>
                     <th>Invoice</th>
+                    <th>Client ID</th>
                     <th>Company</th>
                     <th>Contact</th>
                     <th>Status</th>
@@ -739,6 +751,7 @@
                 <tbody>
                   <tr *ngFor="let invoice of filteredInvoiceRecords" class="history-click-row" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
                     <td>{{ invoice.invoiceNumber }}</td>
+                    <td>{{ invoice.clientId || invoice.clientSnapshot?.clientId || '—' }}</td>
                     <td>{{ invoice.leadCompanyName }}</td>
                     <td>{{ invoice.contactName || invoice.contactNumber }}</td>
                     <td><span class="invoice-status-chip" [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
@@ -746,16 +759,126 @@
                     <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
                   </tr>
                   <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
-                    <td colspan="6" class="empty-cell">No invoices saved yet.</td>
+                    <td colspan="7" class="empty-cell">No invoices saved yet.</td>
                   </tr>
                   <tr *ngIf="invoiceRecordsLoading">
-                    <td colspan="6" class="empty-cell">Loading invoices...</td>
+                    <td colspan="7" class="empty-cell">Loading invoices...</td>
                   </tr>
                   <tr *ngIf="invoiceRecordsLoadingMore">
-                    <td colspan="6" class="empty-cell">Loading more invoices...</td>
+                    <td colspan="7" class="empty-cell">Loading more invoices...</td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="workspace invoice-workspace client-onboarding-workspace" *ngIf="dashTab==='client-onboarding'">
+        <div class="workspace-header invoice-feature-header">
+          <div class="workspace-controls invoice-feature-controls">
+            <label class="topbar-search invoice-feature-search" for="clientOnboardingSearch">
+              <span class="topbar-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="6"></circle>
+                  <path d="m20 20-4.35-4.35"></path>
+                </svg>
+              </span>
+              <input
+                id="clientOnboardingSearch"
+                class="topbar-input"
+                type="text"
+                placeholder="Search onboarded clients..."
+                [(ngModel)]="clientOnboardingSearch"
+                (ngModelChange)="onClientOnboardingSearchChange()"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="invoice-feature-grid client-onboarding-grid">
+          <section class="invoice-feature-pane invoice-converted-pane">
+            <div class="invoice-pane-header">
+              <div>
+                <h2>Onboarded Clients</h2>
+                <p>{{ clientOnboardingLoading ? 'Loading clients' : (clientOnboardingTotal + ' listed') }}</p>
+              </div>
+            </div>
+            <div class="invoice-lead-list" (scroll)="onClientOnboardingScroll($event)">
+              <article
+                class="invoice-lead-row client-onboarding-row"
+                *ngFor="let client of clientOnboardingRecords"
+                [class.active]="selectedOnboardingClientId===client.clientId"
+                (click)="selectOnboardingClient(client)"
+                tabindex="0"
+                role="button"
+              >
+                <div class="invoice-lead-main">
+                  <span class="invoice-lead-company">{{ client.companyName }}</span>
+                  <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || 'Primary Contact' }}</span>
+                </div>
+              </article>
+              <div *ngIf="clientOnboardingLoading" class="empty-state-inline">Loading onboarded clients...</div>
+              <div *ngIf="clientOnboardingLoadingMore" class="empty-state-inline">Loading more onboarded clients...</div>
+              <div *ngIf="!clientOnboardingLoading && !clientOnboardingLoadingMore && clientOnboardingRecords.length===0" class="empty-state-inline">No onboarded clients match the current search.</div>
+            </div>
+          </section>
+
+          <section class="invoice-feature-pane client-onboarding-form-pane">
+            <div class="invoice-pane-header">
+              <div>
+                <h2>New Client</h2>
+                <p>Client IDs are generated automatically.</p>
+              </div>
+            </div>
+            <div class="client-onboarding-form-scroll">
+              <form class="client-onboarding-form" (ngSubmit)="submitClientOnboarding()">
+                <label class="mini-field">
+                  <span>Company Name</span>
+                  <input class="field-input" type="text" name="clientCompanyName" [(ngModel)]="clientOnboardingDraft.companyName" required />
+                </label>
+                <label class="mini-field">
+                  <span>Primary Contact</span>
+                  <input class="field-input" type="text" name="clientPrimaryContactName" [(ngModel)]="clientOnboardingDraft.primaryContactName" />
+                </label>
+                <label class="mini-field">
+                  <span>Phone</span>
+                  <input class="field-input" type="tel" name="clientPrimaryPhone" [(ngModel)]="clientOnboardingDraft.primaryPhone" />
+                </label>
+                <label class="mini-field">
+                  <span>Email</span>
+                  <input class="field-input" type="email" name="clientPrimaryEmail" [(ngModel)]="clientOnboardingDraft.primaryEmail" />
+                </label>
+                <label class="mini-field client-onboarding-full">
+                  <span>Address</span>
+                  <textarea class="field-textarea" name="clientAddress" rows="3" [(ngModel)]="clientOnboardingDraft.address"></textarea>
+                </label>
+
+                <div class="form-error" *ngIf="clientOnboardingError">{{ clientOnboardingError }}</div>
+                <div class="form-error form-success" *ngIf="clientOnboardingSuccess">{{ clientOnboardingSuccess }}</div>
+
+                <div class="action-row client-onboarding-actions">
+                  <button class="secondary-action" type="button" (click)="resetClientOnboardingDraft()">Clear</button>
+                  <button class="primary-action" type="submit" [disabled]="clientOnboardingSaving">
+                    {{ clientOnboardingSaving ? 'Saving...' : 'Onboard Client' }}
+                  </button>
+                </div>
+              </form>
+
+              <section class="invoice-control-card client-onboarding-selected-card" *ngIf="selectedOnboardingClient as client">
+                <div class="invoice-pane-header client-onboarding-selected-header">
+                  <div>
+                    <h2>{{ client.companyName }}</h2>
+                    <p>{{ client.clientId }}</p>
+                  </div>
+                </div>
+                <div class="client-onboarding-selected-grid">
+                  <div><span>Contact</span><strong>{{ client.primaryContactName || client.primaryContact || 'Primary Contact' }}</strong></div>
+                  <div><span>Phone</span><strong>{{ client.primaryPhone || '—' }}</strong></div>
+                  <div><span>Email</span><strong>{{ client.primaryEmail || '—' }}</strong></div>
+                  <div><span>Source</span><strong>{{ client.source === 'converted_lead' ? 'Converted Lead' : 'Manual' }}</strong></div>
+                </div>
+              </section>
             </div>
           </section>
         </div>
@@ -2420,8 +2543,43 @@
             <ng-container [ngTemplateOutlet]="quotationPrintBody"></ng-container>
           </section>
 
-          <section class="quotation-page quotation-sample-page">
-            <img src="/assets/quotation/softrate-sample-quotation-page-2.png" alt="Softrate quotation terms page">
+          <section class="quotation-page quotation-terms-page">
+            <div class="quotation-partner-panel">
+              <h2>Your Trusted Tech Partner</h2>
+            </div>
+
+            <div class="quotation-terms-grid">
+              <section class="quotation-terms-box quotation-payable-box">
+                <h3>Payable To</h3>
+                <strong>{{ invoiceCompanyDisplayName() }}</strong>
+                <p *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</p>
+
+                <h3 class="quotation-bank-heading">Bank Details</h3>
+                <div class="quotation-bank-list" *ngIf="quotationBankRows().length; else quotationNoBankDetails">
+                  <div class="quotation-bank-row" *ngFor="let row of quotationBankRows()">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.value }}</strong>
+                  </div>
+                </div>
+                <ng-template #quotationNoBankDetails>
+                  <p class="quotation-muted-line">Bank details not configured.</p>
+                </ng-template>
+              </section>
+
+              <section class="quotation-terms-box quotation-conditions-box">
+                <h3>Terms and conditions:</h3>
+                <ul>
+                  <li *ngFor="let term of quotationTerms">{{ term }}</li>
+                </ul>
+              </section>
+            </div>
+
+            <footer class="quotation-terms-footer">
+              <strong>{{ invoiceCompanyDisplayName() }}</strong>
+              <span *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</span>
+              <span *ngIf="invoiceContactLine()">{{ invoiceContactLine() }}</span>
+              <span>Copyright © {{ currentYear }} All Rights Reserved</span>
+            </footer>
           </section>
         </ng-container>
 
@@ -2584,6 +2742,29 @@
           {{ viewingSavedDocument ? 'Print' : ((invoiceSaving || quotationSaving) ? 'Saving...' : (quoteMode ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="invoice-overlay gst-selection-overlay" *ngIf="showGstSelectionModal" (click)="cancelDocumentGstSelection()">
+  <div class="invoice-modal gst-selection-modal" (click)="$event.stopPropagation()">
+    <div class="followup-modal-head">
+      <div class="followup-modal-title">
+        <div class="section-kicker">GST Selection</div>
+        <h3>{{ quoteMode ? 'Quotation' : 'Invoice' }} GST Rate</h3>
+      </div>
+      <button class="secondary-action" type="button" (click)="cancelDocumentGstSelection()">Close</button>
+    </div>
+    <p class="gst-selection-copy">
+      Choose the GST rate for this {{ quoteMode ? 'quotation' : 'invoice' }} before saving and printing.
+    </p>
+    <div class="gst-selection-options">
+      <button class="secondary-action gst-selection-option" type="button" (click)="confirmDocumentGstSelection(false)">
+        Use {{ gstPercentage || 0 }}% GST
+      </button>
+      <button class="primary-action gst-selection-option" type="button" (click)="confirmDocumentGstSelection(true)">
+        Use 0% GST
+      </button>
     </div>
   </div>
 </div>

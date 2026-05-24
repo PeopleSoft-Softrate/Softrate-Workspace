@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const Invoice = require('../../../models/Invoice');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
+const { getClientByClientId, ensureClientForLead, mapClient } = require('../../../services/clientService');
+const { normalizeText } = require('../../../services/leadNormalization');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
 
 const router = express.Router();
@@ -40,18 +42,19 @@ function parseInvoiceSeries(invoiceNumber) {
   };
 }
 
-function buildCompanyInvoiceFilter(companyCode, lead) {
+function buildCompanyInvoiceFilter(companyCode, lead, client) {
   const conditions = [];
+  if (client?.clientId) conditions.push({ clientId: client.clientId });
   if (lead?._id) conditions.push({ leadId: lead._id });
-  const leadCompanyName = normalize(lead?.leadCompanyName);
+  const leadCompanyName = normalize(lead?.leadCompanyName || client?.companyName);
   if (leadCompanyName) {
     conditions.push({ leadCompanyName: new RegExp(`^${escapeRegex(leadCompanyName)}$`, 'i') });
   }
   return conditions.length ? { companyCode, $or: conditions } : { companyCode };
 }
 
-async function generateInvoiceNumber(companyCode, lead, invoiceDate) {
-  const existingInvoice = await Invoice.findOne(buildCompanyInvoiceFilter(companyCode, lead))
+async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = null) {
+  const existingInvoice = await Invoice.findOne(buildCompanyInvoiceFilter(companyCode, lead, client))
     .sort({ versionNo: -1, createdAt: -1 })
     .select('invoiceNumber versionNo')
     .lean();
@@ -122,6 +125,21 @@ async function findInvoiceLead(body) {
   return null;
 }
 
+async function findClientPrimaryLead(client) {
+  const sourceLeadIds = Array.isArray(client?.sourceLeadIds) ? client.sourceLeadIds : [];
+  const firstLeadId = sourceLeadIds.find((id) => mongoose.Types.ObjectId.isValid(id));
+  if (firstLeadId) {
+    const lead = await Lead.findOne({ _id: firstLeadId, companyCode: client.companyCode, isArchived: { $ne: true } });
+    if (lead) return lead;
+  }
+
+  return Lead.findOne({
+    companyCode: client.companyCode,
+    leadCompanyNameLower: normalizeText(client.companyName),
+    isArchived: { $ne: true },
+  }).sort({ updatedAt: -1, createdAt: -1 });
+}
+
 router.post('/', async (req, res) => {
   try {
     const companyCode = normalize(req.body.companyCode);
@@ -134,16 +152,25 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Company settings not found.' });
     }
 
-    const lead = await findInvoiceLead(req.body);
-    if (!lead) {
-      return res.status(404).json({ success: false, message: 'Lead not found for invoice.' });
+    let client = await getClientByClientId(companyCode, req.body.clientId);
+    let lead = await findInvoiceLead(req.body);
+
+    if (!client && lead) {
+      if (!isConvertedLead(lead, user)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invoices can only be generated for onboarded clients.',
+        });
+      }
+      client = await ensureClientForLead(lead);
     }
 
-    if (!isConvertedLead(lead, user)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoices can only be generated for converted leads.',
-      });
+    if (!client) {
+      return res.status(404).json({ success: false, message: 'Client not found for invoice.' });
+    }
+
+    if (!lead) {
+      lead = await findClientPrimaryLead(client);
     }
 
     const gstPercentage = Number(req.body.gstPercentage ?? user.gstPercentage ?? 18);
@@ -155,17 +182,20 @@ router.post('/', async (req, res) => {
     const subtotal = items.reduce((sum, item) => sum + item.taxable, 0);
     const gstAmount = items.reduce((sum, item) => sum + item.cgst + item.sgst, 0);
     const invoiceDate = req.body.invoiceDate ? new Date(req.body.invoiceDate) : new Date();
-    const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate);
+    const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate, client);
+    const clientDto = mapClient(client);
+    const clientCompanyName = clientDto.companyName || lead?.leadCompanyName || 'Client Company';
 
     const invoice = await Invoice.create({
       companyCode,
-      employeePhone: normalize(req.body.employeePhone || lead.assignedEmployeePhone),
+      clientId: client.clientId,
+      employeePhone: normalize(req.body.employeePhone || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]),
       employeeName: normalize(req.body.employeeName),
-      leadId: lead._id,
-      leadCompanyName: lead.leadCompanyName,
-      contactName: lead.contactName,
-      contactNumber: lead.contactNumber,
-      directorEmailAddress: lead.directorEmailAddress,
+      leadId: lead?._id || null,
+      leadCompanyName: clientCompanyName,
+      contactName: clientDto.primaryContactName || lead?.contactName || '',
+      contactNumber: clientDto.primaryPhone || lead?.contactNumber || '',
+      directorEmailAddress: clientDto.primaryEmail || lead?.directorEmailAddress || '',
       invoiceNumber,
       versionNo,
       items,
@@ -192,10 +222,12 @@ router.post('/', async (req, res) => {
         footer: user.invoiceFooter || '',
       },
       clientSnapshot: {
-        companyName: lead.leadCompanyName,
-        contactName: lead.contactName,
-        phone: lead.contactNumber,
-        email: lead.directorEmailAddress,
+        clientId: client.clientId,
+        companyName: clientCompanyName,
+        contactName: clientDto.primaryContactName || lead?.contactName || '',
+        phone: clientDto.primaryPhone || lead?.contactNumber || '',
+        email: clientDto.primaryEmail || lead?.directorEmailAddress || '',
+        address: clientDto.address || '',
       },
     });
 
@@ -214,6 +246,8 @@ router.get('/', async (req, res) => {
     }
 
     const filter = { companyCode };
+    const clientId = normalize(req.query.clientId);
+    if (clientId) filter.clientId = clientId;
     const employeePhone = normalize(req.query.employeePhone);
     if (employeePhone) filter.employeePhone = employeePhone;
 
@@ -221,6 +255,7 @@ router.get('/', async (req, res) => {
     if (search) {
       filter.$or = [
         { invoiceNumber: new RegExp(search, 'i') },
+        { clientId: new RegExp(search, 'i') },
         { leadCompanyName: new RegExp(search, 'i') },
         { contactName: new RegExp(search, 'i') },
         { contactNumber: new RegExp(search, 'i') },

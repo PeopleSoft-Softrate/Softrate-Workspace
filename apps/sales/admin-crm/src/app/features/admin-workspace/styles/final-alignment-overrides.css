@@ -3519,3 +3519,39 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+.gst-selection-overlay {
+  z-index: 3600 !important;
+}
+
+.gst-selection-modal {
+  width: min(100%, 420px) !important;
+  max-height: none !important;
+  padding: 22px !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+}
+
+.gst-selection-copy {
+  margin: 10px 0 18px !important;
+  color: #667085 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.gst-selection-options {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+.gst-selection-option {
+  justify-content: center !important;
+  min-height: 42px !important;
+}
+
+@media (max-width: 620px) {
+  .gst-selection-options {
+    grid-template-columns: 1fr !important;
+  }
+}

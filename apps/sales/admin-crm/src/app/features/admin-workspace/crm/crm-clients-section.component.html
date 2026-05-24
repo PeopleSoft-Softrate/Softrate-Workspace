@@ -5,7 +5,7 @@
         <span class="topbar-search-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
         </span>
-        <input class="topbar-input" id="crmClientSearch" type="search" [(ngModel)]="vm.crmClientSearch" placeholder="Search converted clients">
+        <input class="topbar-input" id="crmClientSearch" type="search" [(ngModel)]="vm.crmClientSearch" placeholder="Search onboarded clients">
       </label>
       <button class="toolbar-button crm-icon-refresh" type="button" (click)="vm.fetchCrmClients()" [disabled]="vm.crmClientsLoading" aria-label="Refresh CRM clients" title="Refresh">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -51,11 +51,11 @@
         >
           <span class="rail-item-copy">
             <span class="rail-item-name">{{ client.companyName || 'Unnamed Client' }}</span>
-            <span class="rail-item-meta">{{ client.contactCount }} contacts · {{ client.amcStatus }}</span>
+            <span class="rail-item-meta">{{ client.clientId }} · {{ client.amcStatus }}</span>
           </span>
         </button>
         <div *ngIf="vm.crmClientsLoading" class="scroll-page-state">Loading clients...</div>
-        <div *ngIf="!vm.crmClientsLoading && vm.filteredCrmClients.length === 0" class="empty-state-inline empty-state-inline-minimal">No converted clients found.</div>
+        <div *ngIf="!vm.crmClientsLoading && vm.filteredCrmClients.length === 0" class="empty-state-inline empty-state-inline-minimal">No onboarded clients found.</div>
       </div>
     </aside>
 
@@ -64,7 +64,7 @@
         <div class="table-pane-header lead-company-pane-header admin-leads-company-header">
           <div>
             <h3>{{ client.companyName }}</h3>
-            <div class="lead-company-pane-subtitle">{{ client.description || 'Converted client account' }}</div>
+            <div class="lead-company-pane-subtitle">{{ client.clientId }} · {{ client.description || 'Onboarded client account' }}</div>
           </div>
           <div class="admin-leads-pane-actions">
             <button class="ai-summary-button ai-summary-anchor admin-ai-summary-button" type="button" (click)="vm.openCrmClientAiSummary(client, $event)">
@@ -81,7 +81,7 @@
               <div class="lead-record-card-head admin-lead-card-head">
                 <div class="lead-record-title-row">
                   <h4>{{ contact.contactName || 'Primary Contact' }}</h4>
-                  <span class="crm-status-pill">{{ contact.status || 'Converted' }}</span>
+                  <span class="crm-status-pill">{{ contact.status || 'Onboarded' }}</span>
                 </div>
               </div>
               <div class="lead-record-line">
@@ -113,7 +113,7 @@
       </ng-container>
 
       <ng-template #emptyCrmClient>
-        <div class="empty-state-inline empty-state-inline-pane">Select a converted client from the list.</div>
+        <div class="empty-state-inline empty-state-inline-pane">Select an onboarded client from the list.</div>
       </ng-template>
     </section>
   </div>

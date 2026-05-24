@@ -40,6 +40,12 @@ const quotationSchema = new mongoose.Schema({
     website: { type: String, default: '' },
     gstNumber: { type: String, default: '' },
     footer: { type: String, default: '' },
+    bankDetails: {
+      bankName: { type: String, default: '' },
+      accountNumber: { type: String, default: '' },
+      ifscCode: { type: String, default: '' },
+      branchName: { type: String, default: '' },
+    },
   },
 }, { timestamps: true });
 

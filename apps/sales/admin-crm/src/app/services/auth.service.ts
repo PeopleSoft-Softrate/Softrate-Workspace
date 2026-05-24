@@ -89,6 +89,7 @@ export class AuthService {
   }
 
   updateCompanySettings(companyCode: string, settings: { 
+    companyName?: string;
     breakHourLimit?: number; 
     connectedCallDuration?: number; 
     leadStatuses?: string[];

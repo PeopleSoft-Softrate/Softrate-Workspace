@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const crmAmcSchema = new mongoose.Schema(
   {
     companyCode: { type: String, trim: true, default: '' },
+    clientId: { type: String, trim: true, default: '' },
     clientCompanyName: { type: String, required: true, trim: true },
     domainName: { type: String, trim: true, lowercase: true, default: '' },
     hostingerDomainId: { type: String, trim: true, default: '' },
@@ -35,6 +36,8 @@ const crmAmcSchema = new mongoose.Schema(
 );
 
 crmAmcSchema.index({ companyCode: 1, clientCompanyName: 1 });
+crmAmcSchema.index({ companyCode: 1, clientId: 1 });
+crmAmcSchema.index({ companyCode: 1, clientId: 1, domainName: 1 });
 crmAmcSchema.index({ companyCode: 1, domainName: 1 });
 crmAmcSchema.index({ companyCode: 1, renewalDate: 1 });
 crmAmcSchema.index({ companyCode: 1, paymentStatus: 1, blocked: 1 });

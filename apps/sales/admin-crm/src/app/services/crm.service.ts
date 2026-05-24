@@ -23,6 +23,7 @@ export interface CrmLoginResponse {
 
 export interface CrmClient {
   id: string;
+  clientId?: string;
   companyCode: string;
   companyName: string;
   leadCompanyName: string;
@@ -45,6 +46,7 @@ export interface CrmAmcRow {
   _id?: string;
   id?: string;
   companyCode?: string;
+  clientId?: string;
   clientCompanyName: string;
   domainName?: string;
   hostingerDomainId?: string;
@@ -67,6 +69,7 @@ export interface CrmAmcRow {
 
 export interface CrmAmcUpdatePayload {
   companyCode?: string;
+  clientId?: string;
   clientCompanyName: string;
   domainName?: string;
   hostingerDomainId?: string;
@@ -93,6 +96,7 @@ export interface CrmHostingerDomain {
   existingMapping?: CrmAmcRow | null;
   suggestions?: Array<{
     clientCompanyName: string;
+    clientId?: string;
     companyCode?: string;
     primaryEmail?: string;
     score: number;
@@ -104,6 +108,7 @@ export interface CrmProjectRow {
   _id?: string;
   id?: string;
   companyCode?: string;
+  clientId?: string;
   clientCompanyName: string;
   clientStatus?: string;
   projectManagerName?: string;
@@ -232,7 +237,7 @@ export class CrmService {
   importHostingerDomains(payload: {
     companyCode?: string;
     autoMap?: boolean;
-    mappings?: Array<{ domainName: string; clientCompanyName: string; annualFee?: number; owner?: string }>;
+    mappings?: Array<{ domainName: string; clientId?: string; clientCompanyName: string; annualFee?: number; owner?: string }>;
   }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/api/crm/amc/hostinger/import`, payload, {
       headers: this.headers(),
@@ -283,6 +288,7 @@ export class CrmService {
 
   mapProject(payload: {
     companyCode?: string;
+    clientId: string;
     clientCompanyName: string;
     clientStatus?: string;
     projectManagerName: string;

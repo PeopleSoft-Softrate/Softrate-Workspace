@@ -963,16 +963,6 @@
   letter-spacing: 0.02em;
 }
 
-.profile-menu-status {
-  color: #0f766e;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.profile-menu-status.profile-menu-status-break {
-  color: #b45309;
-}
-
 .profile-menu-divider {
   height: 1px;
   background: var(--border);

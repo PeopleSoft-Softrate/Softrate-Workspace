@@ -413,6 +413,23 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceRecords: any[] = [];
   invoiceRecordsLoading = false;
   invoiceSearch = '';
+  adminInvoiceClients: any[] = [];
+  adminInvoiceClientsLoading = false;
+  selectedInvoiceClient: any = null;
+  clientOnboardingRecords: any[] = [];
+  clientOnboardingSearch = '';
+  clientOnboardingLoading = false;
+  selectedOnboardingClientId = '';
+  clientOnboardingDraft = {
+    companyName: '',
+    primaryContactName: '',
+    primaryPhone: '',
+    primaryEmail: '',
+    address: '',
+  };
+  clientOnboardingSaving = false;
+  clientOnboardingError = '';
+  clientOnboardingSuccess = '';
   invoiceHistorySearch = '';
   invoiceDateFilter: 'all' | 'today' | '7d' | '30d' = 'all';
   invoiceDateFilterOpen = false;
@@ -430,6 +447,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   quoteNumber = Math.floor(100000 + Math.random() * 900000);
   currentInvoiceNumber = '';
   currentQuotationNumber = '';
+  showGstSelectionModal = false;
+  documentGstPercentageOverride: number | null = null;
+  gstSelectionConfirmed = false;
   invoiceSaving = false;
   quotationSaving = false;
   quotationRecords: any[] = [];
@@ -821,10 +841,11 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmHostingerMappingOpen = false;
   crmHostingerDomainsLoading = false;
   crmHostingerDomains: CrmHostingerDomain[] = [];
-  crmHostingerMappingDrafts: Record<string, { clientCompanyName: string; annualFee: number; owner: string }> = {};
+  crmHostingerMappingDrafts: Record<string, { clientId: string; clientCompanyName: string; annualFee: number; owner: string }> = {};
   crmMappingDomainSearch = '';
   crmMappingClientSearch = '';
   selectedCrmHostingerDomainName = '';
+  selectedCrmMappingClientId = '';
   selectedCrmMappingClientCompany = '';
   crmMappingAnnualFee = 0;
   crmMappingOwner = '';
@@ -849,9 +870,11 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmProjectMappingOpen = false;
   crmProjectClientSearch = '';
   crmProjectManagerSearch = '';
+  selectedCrmProjectClientId = '';
   selectedCrmProjectClientCompany = '';
   selectedCrmProjectManagerKey = '';
   crmProjectDraft = {
+    clientId: '',
     clientCompanyName: '',
     projectManagerName: '',
     projectManagerPhone: '',
@@ -1083,11 +1106,19 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (tab === 'settings' || tab === 'remarks_filter' || tab === 'invoice_settings') {
       this.fetchSettings();
     }
-    if (tab === 'invoice' || tab === 'quotation') {
+    if (tab === 'invoice') {
+      this.fetchSettings();
+      this.fetchInvoiceRecords();
+      this.fetchAdminInvoiceClients();
+    }
+    if (tab === 'client_onboarding') {
+      this.fetchClientOnboardingRecords();
+    }
+    if (tab === 'quotation') {
       this.fetchSettings();
       this.fetchAdminLeads();
       this.fetchInvoiceRecords();
-      if (tab === 'quotation') this.fetchQuotationRecords();
+      this.fetchQuotationRecords();
     }
   }
 
@@ -1104,6 +1135,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'support': return 'Help & Support';
       case 'settings': return 'App Settings';
       case 'invoice': return 'Invoice';
+      case 'client_onboarding': return 'Client Onboarding';
       case 'invoice_settings': return 'Invoice Settings';
       case 'quotation': return 'Quotation';
       case 'crm_clients': return 'CRM Clients';
@@ -1123,6 +1155,8 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'remarks_filter': return 'Search companies, contacts, or remarks...';
       case 'followups': return 'Search follow-ups, phone, or company...';
       case 'quotation': return 'Search quotations, leads, or company...';
+      case 'invoice': return 'Search onboarded clients...';
+      case 'client_onboarding': return 'Search onboarded clients...';
       case 'invoice_settings': return 'Search leads, phone, or company...';
       case 'employees': return 'Search employees, phone, or tag...';
       case 'emp_dashboard': return 'Search assigned leads or follow-ups...';
@@ -1140,6 +1174,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (this.dashTab === 'remarks_filter') return this.remarkFilterSearch;
     if (this.dashTab === 'followups' || this.dashTab === 'emp_dashboard') return this.followupSearch;
     if (this.dashTab === 'invoice') return this.invoiceSearch;
+    if (this.dashTab === 'client_onboarding') return this.clientOnboardingSearch;
     if (this.dashTab === 'quotation') return this.quotationSearch;
     if (this.dashTab === 'employees') return this.employeeSearchQuery;
     if (this.isCrmPage(this.dashTab)) return this.crmClientSearch;
@@ -1157,6 +1192,12 @@ export abstract class AdminWorkspaceController implements OnInit {
     }
     if (this.dashTab === 'invoice') {
       this.invoiceSearch = value;
+      this.fetchAdminInvoiceClients();
+      return;
+    }
+    if (this.dashTab === 'client_onboarding') {
+      this.clientOnboardingSearch = value;
+      this.fetchClientOnboardingRecords();
       return;
     }
     if (this.dashTab === 'quotation') {
@@ -1182,7 +1223,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   onAdminGlobalSearchEnter(): void {
     const query = this.adminGlobalSearch.trim();
     if (!query) return;
-    if (!['leads', 'remarks_filter', 'followups', 'employees', 'emp_dashboard', 'invoice', 'quotation', 'crm_clients', 'crm_sla', 'crm_nda', 'crm_amc', 'crm_payments', 'crm_tickets'].includes(this.dashTab)) {
+    if (!['leads', 'remarks_filter', 'followups', 'employees', 'emp_dashboard', 'invoice', 'client_onboarding', 'quotation', 'crm_clients', 'crm_sla', 'crm_nda', 'crm_amc', 'crm_payments', 'crm_tickets'].includes(this.dashTab)) {
       this.leadSearchQuery = query;
       this.switchTab('leads');
       this.onAdminLeadSearchChange();
@@ -2191,6 +2232,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     const domainPurchaseDate = this.inputDateValue(row.domainPurchaseDate);
     return {
       ...row,
+      id: row.id || row._id,
+      clientId: row.clientId || '',
       domainPurchaseDate,
       renewalDate: this.inputDateValue(row.renewalDate) || this.nextAnnualRenewalDate(domainPurchaseDate),
       annualFee: Number(row.annualFee || 0),
@@ -2327,6 +2370,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.crmMappingDomainSearch = '';
     this.crmMappingClientSearch = '';
     this.selectedCrmHostingerDomainName = '';
+    this.selectedCrmMappingClientId = '';
     this.selectedCrmMappingClientCompany = '';
     this.crmMappingAnnualFee = 0;
     this.crmMappingOwner = '';
@@ -2371,6 +2415,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       const key = this.crmHostingerDomainKey(domain);
       if (this.crmHostingerMappingDrafts[key]) return;
       this.crmHostingerMappingDrafts[key] = {
+        clientId: domain.existingMapping?.clientId || '',
         clientCompanyName: domain.existingMapping?.clientCompanyName || '',
         annualFee: Number(domain.existingMapping?.annualFee || 0),
         owner: domain.existingMapping?.owner || '',
@@ -2383,19 +2428,19 @@ export abstract class AdminWorkspaceController implements OnInit {
     return String(value || '').trim().toLowerCase();
   }
 
-  crmHostingerDraft(domain: CrmHostingerDomain): { clientCompanyName: string; annualFee: number; owner: string } {
+  crmHostingerDraft(domain: CrmHostingerDomain): { clientId: string; clientCompanyName: string; annualFee: number; owner: string } {
     const key = this.crmHostingerDomainKey(domain);
     if (!this.crmHostingerMappingDrafts[key]) {
-      this.crmHostingerMappingDrafts[key] = { clientCompanyName: '', annualFee: 0, owner: '' };
+      this.crmHostingerMappingDrafts[key] = { clientId: '', clientCompanyName: '', annualFee: 0, owner: '' };
     }
     return this.crmHostingerMappingDrafts[key];
   }
 
-  crmHostingerDraftValue(domain: CrmHostingerDomain, field: 'clientCompanyName' | 'annualFee' | 'owner'): string | number {
+  crmHostingerDraftValue(domain: CrmHostingerDomain, field: 'clientId' | 'clientCompanyName' | 'annualFee' | 'owner'): string | number {
     return this.crmHostingerDraft(domain)[field];
   }
 
-  updateCrmHostingerDraft(domain: CrmHostingerDomain, field: 'clientCompanyName' | 'annualFee' | 'owner', value: string | number): void {
+  updateCrmHostingerDraft(domain: CrmHostingerDomain, field: 'clientId' | 'clientCompanyName' | 'annualFee' | 'owner', value: string | number): void {
     const draft = this.crmHostingerDraft(domain);
     if (field === 'annualFee') {
       draft.annualFee = Number(value || 0);
@@ -2408,28 +2453,30 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this.crmHostingerSelectedMappings().length;
   }
 
-  crmHostingerSelectedMappings(): Array<{ domainName: string; clientCompanyName: string; annualFee?: number; owner?: string }> {
+  crmHostingerSelectedMappings(): Array<{ domainName: string; clientId: string; clientCompanyName: string; annualFee?: number; owner?: string }> {
     return this.crmHostingerDomains
       .map((domain) => {
         const draft = this.crmHostingerDraft(domain);
         return {
           domainName: domain.domainName,
+          clientId: draft.clientId,
           clientCompanyName: draft.clientCompanyName,
           annualFee: Number(draft.annualFee || 0),
           owner: draft.owner,
         };
       })
-      .filter((mapping) => !!mapping.domainName && !!mapping.clientCompanyName);
+      .filter((mapping) => !!mapping.domainName && !!mapping.clientId && !!mapping.clientCompanyName);
   }
 
   saveCrmHostingerDomainMapping(domain: CrmHostingerDomain): void {
     const draft = this.crmHostingerDraft(domain);
-    if (!draft.clientCompanyName) {
+    if (!draft.clientId) {
       this.crmActionMessage = 'Select a CRM client before saving this Hostinger domain mapping.';
       return;
     }
     this.importCrmHostingerMappings([{
       domainName: domain.domainName,
+      clientId: draft.clientId,
       clientCompanyName: draft.clientCompanyName,
       annualFee: Number(draft.annualFee || 0),
       owner: draft.owner,
@@ -2445,7 +2492,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.importCrmHostingerMappings(mappings);
   }
 
-  importCrmHostingerMappings(mappings: Array<{ domainName: string; clientCompanyName: string; annualFee?: number; owner?: string }>): void {
+  importCrmHostingerMappings(mappings: Array<{ domainName: string; clientId?: string; clientCompanyName: string; annualFee?: number; owner?: string }>): void {
     this.crmHostingerImportLoading = true;
     this.crmService.importHostingerDomains({ companyCode: this.dashboardCode, autoMap: false, mappings }).subscribe({
       next: (res) => {
@@ -2468,6 +2515,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       ? this.crmHostingerDomains.filter((domain) => [
         domain.domainName,
         domain.hostingerStatus,
+        domain.existingMapping?.clientId,
         domain.existingMapping?.clientCompanyName,
       ].some((value) => String(value || '').toLowerCase().includes(query)))
       : this.crmHostingerDomains;
@@ -2479,6 +2527,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const clients = query
       ? this.crmClients.filter((client) => [
         client.companyName,
+        client.clientId,
         client.primaryContact,
         client.primaryEmail,
         client.primaryPhone,
@@ -2492,30 +2541,39 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   get selectedCrmMappingClient(): CrmClient | null {
-    return this.crmClients.find((client) => client.companyName === this.selectedCrmMappingClientCompany) || null;
+    return this.crmClients.find((client) => client.clientId === this.selectedCrmMappingClientId) || null;
   }
 
   selectCrmHostingerDomainForMapping(domain: CrmHostingerDomain): void {
     this.selectedCrmHostingerDomainName = domain.domainName;
     const draft = this.crmHostingerDraft(domain);
+    this.selectedCrmMappingClientId = draft.clientId || domain.existingMapping?.clientId || '';
     this.selectedCrmMappingClientCompany = draft.clientCompanyName || domain.existingMapping?.clientCompanyName || '';
     this.crmMappingAnnualFee = Number(draft.annualFee || domain.existingMapping?.annualFee || 0);
     this.crmMappingOwner = draft.owner || domain.existingMapping?.owner || '';
   }
 
   selectCrmClientForHostingerMapping(client: CrmClient): void {
+    this.selectedCrmMappingClientId = client.clientId || '';
     this.selectedCrmMappingClientCompany = client.companyName;
+    const domain = this.selectedCrmHostingerDomain;
+    if (domain) {
+      const draft = this.crmHostingerDraft(domain);
+      draft.clientId = client.clientId || '';
+      draft.clientCompanyName = client.companyName;
+    }
     if (!this.crmMappingOwner) this.crmMappingOwner = client.managers?.[0] || '';
   }
 
   saveCrmHostingerModalMapping(): void {
     const domain = this.selectedCrmHostingerDomain;
-    if (!domain || !this.selectedCrmMappingClientCompany) {
-      this.crmActionMessage = 'Select one Hostinger domain and one converted client before saving.';
+    if (!domain || !this.selectedCrmMappingClientId || !this.selectedCrmMappingClientCompany) {
+      this.crmActionMessage = 'Select one Hostinger domain and one onboarded client before saving.';
       return;
     }
     this.importCrmHostingerMappings([{
       domainName: domain.domainName,
+      clientId: this.selectedCrmMappingClientId,
       clientCompanyName: this.selectedCrmMappingClientCompany,
       annualFee: Number(this.crmMappingAnnualFee || 0),
       owner: this.crmMappingOwner,
@@ -2547,7 +2605,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   crmAmcRowKey(row: CrmAmcRow): string {
-    return row.id || row._id || `${row.clientCompanyName}:${row.domainName}`;
+    return row.id || row._id || `${row.clientId || row.clientCompanyName}:${row.domainName}`;
   }
 
   toggleCrmAmcRowMenu(row: CrmAmcRow, event?: Event): void {
@@ -2563,6 +2621,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmAmcPayload(row: CrmAmcRow & { blockClient?: boolean; blockReason?: string }) {
     return {
       companyCode: row.companyCode || this.dashboardCode,
+      clientId: row.clientId || '',
       clientCompanyName: row.clientCompanyName,
       domainName: row.domainName,
       hostingerDomainId: row.hostingerDomainId,
@@ -2579,6 +2638,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   sameCrmAmcRow(a: CrmAmcRow, b: CrmAmcRow): boolean {
     return (!!a._id && a._id === b._id)
       || (!!a.id && a.id === b.id)
+      || (!!a.clientId && a.clientId === b.clientId && a.domainName === b.domainName)
       || a.clientCompanyName === b.clientCompanyName;
   }
 
@@ -2806,6 +2866,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     return {
       ...project,
       id: project.id || project._id,
+      clientId: project.clientId || '',
       status: project.status || 'Assigned',
       clientStatus: project.clientStatus || this.crmProjectClientStatus(project.clientCompanyName),
     };
@@ -2848,6 +2909,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const clients = query
       ? this.crmClients.filter((client) => [
         client.companyName,
+        client.clientId,
         client.primaryContact,
         client.primaryEmail,
         client.primaryPhone,
@@ -2869,7 +2931,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   get selectedCrmProjectClient(): CrmClient | null {
-    return this.crmClients.find((client) => client.companyName === this.selectedCrmProjectClientCompany) || null;
+    return this.crmClients.find((client) => client.clientId === this.selectedCrmProjectClientId) || null;
   }
 
   get selectedCrmProjectManager(): { name: string; mobile: string; email?: string } | null {
@@ -2884,9 +2946,11 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.crmProjectMappingOpen = true;
     this.crmProjectClientSearch = '';
     this.crmProjectManagerSearch = '';
+    this.selectedCrmProjectClientId = '';
     this.selectedCrmProjectClientCompany = '';
     this.selectedCrmProjectManagerKey = '';
     this.crmProjectDraft = {
+      clientId: '',
       clientCompanyName: '',
       projectManagerName: '',
       projectManagerPhone: '',
@@ -2906,11 +2970,13 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   crmProjectClientStatus(clientCompanyName = ''): string {
-    return this.crmClients.find((client) => client.companyName === clientCompanyName)?.status || 'Converted';
+    return this.crmClients.find((client) => client.companyName === clientCompanyName)?.status || 'Onboarded';
   }
 
   selectCrmProjectClientForMapping(client: CrmClient): void {
+    this.selectedCrmProjectClientId = client.clientId || '';
     this.selectedCrmProjectClientCompany = client.companyName;
+    this.crmProjectDraft.clientId = client.clientId || '';
     this.crmProjectDraft.clientCompanyName = client.companyName;
   }
 
@@ -2930,14 +2996,15 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   saveCrmProjectMapping(): void {
-    const client = this.crmClients.find((item) => item.companyName === this.crmProjectDraft.clientCompanyName);
-    if (!this.crmProjectDraft.clientCompanyName || !this.crmProjectDraft.projectManagerName) return;
+    const client = this.crmClients.find((item) => item.clientId === this.crmProjectDraft.clientId);
+    if (!this.crmProjectDraft.clientId || !this.crmProjectDraft.clientCompanyName || !this.crmProjectDraft.projectManagerName) return;
 
     this.crmProjectsLoading = true;
     this.crmService.mapProject({
       companyCode: client?.companyCode || this.dashboardCode,
+      clientId: this.crmProjectDraft.clientId,
       clientCompanyName: this.crmProjectDraft.clientCompanyName,
-      clientStatus: client?.status || 'Converted',
+      clientStatus: client?.status || 'Onboarded',
       projectManagerName: this.crmProjectDraft.projectManagerName,
       projectManagerPhone: this.crmProjectDraft.projectManagerPhone,
       projectManagerEmail: this.crmProjectDraft.projectManagerEmail,
@@ -2947,9 +3014,10 @@ export abstract class AdminWorkspaceController implements OnInit {
       next: (res) => {
         this.crmProjectsLoading = false;
         const updated = this.normalizeCrmProjectRow(res?.project || this.crmProjectDraft as CrmProjectRow);
-        this.crmProjectRows = [updated, ...this.crmProjectRows.filter((item) => item.clientCompanyName !== updated.clientCompanyName)];
+        this.crmProjectRows = [updated, ...this.crmProjectRows.filter((item) => (item.clientId || item.clientCompanyName) !== (updated.clientId || updated.clientCompanyName))];
         this.closeCrmProjectMappingModal();
         this.crmProjectDraft = {
+          clientId: '',
           clientCompanyName: '',
           projectManagerName: '',
           projectManagerPhone: '',
@@ -2983,7 +3051,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   crmProjectRowKey(project: CrmProjectRow): string {
-    return project.id || project._id || project.clientCompanyName;
+    return project.id || project._id || project.clientId || project.clientCompanyName;
   }
 
   toggleCrmProjectRowMenu(project: CrmProjectRow, event?: Event): void {
@@ -4112,6 +4180,18 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   fetchInvoiceRecords(): void { return this.invoiceQuotationWorkflow.fetchInvoiceRecords(this); }
 
+  fetchAdminInvoiceClients(): void { return this.invoiceQuotationWorkflow.fetchAdminInvoiceClients(this); }
+
+  fetchClientOnboardingRecords(): void { return this.invoiceQuotationWorkflow.fetchClientOnboardingRecords(this); }
+
+  submitClientOnboarding(): void { return this.invoiceQuotationWorkflow.submitClientOnboarding(this); }
+
+  resetClientOnboardingDraft(): void { return this.invoiceQuotationWorkflow.resetClientOnboardingDraft(this); }
+
+  selectOnboardingClient(client: any): void { return this.invoiceQuotationWorkflow.selectOnboardingClient(this, client); }
+
+  get selectedOnboardingClient(): any { return this.invoiceQuotationWorkflow.selectedOnboardingClient(this); }
+
   get adminConvertedInvoiceLeads(): Lead[] { return this.invoiceQuotationWorkflow.adminConvertedInvoiceLeads(this); }
 
   get adminQuotationLeads(): Lead[] { return this.invoiceQuotationWorkflow.adminQuotationLeads(this); }
@@ -4137,6 +4217,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   openQuotationModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openQuotationModal(this, lead); }
 
   openAdminInvoiceModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModal(this, lead); }
+
+  openAdminInvoiceModalForClient(client: any): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModalForClient(this, client); }
 
   closeInvoiceModal(): void { return this.invoiceQuotationWorkflow.closeInvoiceModal(this); }
 
@@ -4167,6 +4249,12 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceCompanyDisplayName(): string { return this.invoiceQuotationWorkflow.invoiceCompanyDisplayName(this); }
 
   invoiceCompanyAddress(): string { return this.invoiceQuotationWorkflow.invoiceCompanyAddress(this); }
+
+  invoicePreviewGstPercentage(): number { return this.invoiceQuotationWorkflow.invoicePreviewGstPercentage(this); }
+
+  confirmDocumentGstSelection(useZeroGst: boolean): void { return this.invoiceQuotationWorkflow.confirmDocumentGstSelection(this, useZeroGst); }
+
+  cancelDocumentGstSelection(): void { return this.invoiceQuotationWorkflow.cancelDocumentGstSelection(this); }
 
   printInvoice(): void { return this.invoiceQuotationWorkflow.printInvoice(this); }
 

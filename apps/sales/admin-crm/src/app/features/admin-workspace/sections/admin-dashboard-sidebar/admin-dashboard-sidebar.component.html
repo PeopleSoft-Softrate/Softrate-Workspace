@@ -137,7 +137,7 @@
     </ng-container>
 
     <ng-template #adminNavigation>
-    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Import Leads', 'Add Employee', 'Invoice', 'Quotation'])">Quick Access</div>
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Import Leads', 'Add Employee', 'Invoice', 'Client Onboarding', 'Quotation'])">Quick Access</div>
 
     <button
       class="sidebar-link sidebar-link-import"
@@ -192,6 +192,25 @@
         </svg>
       </span>
       <span class="sidebar-label">Invoice</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-client-onboarding"
+      type="button"
+      [class.active]="vm.dashTab==='client_onboarding'"
+      (click)="vm.switchTab('client_onboarding')"
+      *ngIf="vm.sidebarFeatureMatches('Client Onboarding')"
+      [title]="vm.sidebarMinimized ? 'Client Onboarding' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+          <circle cx="9.5" cy="7" r="4" />
+          <path d="M19 8v6" />
+          <path d="M22 11h-6" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Client Onboarding</span>
     </button>
 
     <button

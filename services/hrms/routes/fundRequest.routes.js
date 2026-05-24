@@ -228,4 +228,44 @@ router.put("/hr-action/:id", verifyTenant, async (req, res) => {
   }
 });
 
+router.put("/finance-action/:id", verifyTenant, async (req, res) => {
+  try {
+    const isApproved = req.body.isFinanceTeamApprove === true || req.body.status === "accepted" || req.body.status === "approved";
+    const isRejected = req.body.isFinanceTeamApprove === false || req.body.status === "rejected";
+
+    if (!isApproved && !isRejected) {
+      return res.status(400).json({
+        success: false,
+        message: "Finance status must approve or reject the fund request",
+      });
+    }
+
+    const request = await FundRequest.findOne({ _id: req.params.id, companyId: req.tenant.companyId });
+    if (!request) {
+      return res.status(404).json({ success: false, message: "Fund request not found" });
+    }
+
+    if (request.hrStatus !== "accepted") {
+      return res.status(400).json({ success: false, message: "HR approval required before finance approval" });
+    }
+
+    request.financeRemarks = req.body.remarks || "";
+    request.financeActionDate = new Date();
+    request.isFinanceTeamApprove = isApproved;
+
+    await request.save();
+
+    res.json({
+      success: true,
+      message: isApproved
+        ? "Fund request approved by finance and will be included in payroll for its expense month"
+        : "Fund request rejected by finance",
+      fundRequest: request,
+    });
+  } catch (err) {
+    console.error("Finance fund request action error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

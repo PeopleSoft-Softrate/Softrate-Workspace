@@ -38,6 +38,7 @@ export class PayrollManagement implements OnInit {
   isLoading = signal<boolean>(true);
   searchQuery = signal<string>('');
   activeTab = signal<'employees' | 'interns'>('employees');
+  payrollMonth = signal<string>(this.currentMonthKey());
 
   // Edit Modal Signals
   showEditModal = signal<boolean>(false);
@@ -120,8 +121,10 @@ export class PayrollManagement implements OnInit {
   modalLopDays = signal<number>(0);
 
   // Real-time calculation in modal
+  modalApprovedFundAmount = computed(() => Number(this.selectedPerson()?.payroll?.approvedFundAmount) || 0);
+
   modalGross = computed(() => {
-    return (this.basicSalary() || 0) + (this.hra() || 0) + (this.allowances() || 0) - (this.deductions() || 0);
+    return (this.basicSalary() || 0) + (this.hra() || 0) + (this.allowances() || 0) + this.modalApprovedFundAmount() - (this.deductions() || 0);
   });
 
   modalPF = computed(() => {
@@ -147,7 +150,7 @@ export class PayrollManagement implements OnInit {
     if (!person) return 0;
     const basic = this.basicSalary() || 0;
     const hra = this.hra() || 0;
-    const allowances = this.allowances() || 0;
+    const allowances = (this.allowances() || 0) + this.modalApprovedFundAmount();
     const deductions = this.deductions() || 0;
     const lopDays = this.modalLopDays() || 0;
     return this.calculateNetSalary(basic, hra, allowances, deductions, person.payrollType, lopDays);
@@ -336,7 +339,8 @@ export class PayrollManagement implements OnInit {
       settings: this.apiService.getCompanySettings(),
       employees: this.apiService.getAllEmployees('all', 'approved'),
       interns: this.apiService.getAllActiveInterns('all', 'all'),
-      holidays: this.apiService.getHolidays().pipe(catchError(() => of([])))
+      holidays: this.apiService.getHolidays().pipe(catchError(() => of([]))),
+      fundRequests: this.apiService.getHrAllFundRequests().pipe(catchError(() => of([])))
     }).subscribe({
       next: (res) => {
         // Load settings from backend if available
@@ -363,6 +367,9 @@ export class PayrollManagement implements OnInit {
         }
 
         const holidays = res.holidays || [];
+        const approvedFunds = (res.fundRequests || []).filter((fund: any) =>
+          fund.isFinanceTeamApprove === true && this.monthKey(fund.expenseDate) === this.payrollMonth()
+        );
 
         // Parallel fetch attendance and leaves for all approved employees
         const empFetches = res.employees.map(emp => {
@@ -398,11 +405,13 @@ export class PayrollManagement implements OnInit {
               const lopDays = this.calculateAutoLopDaysForPerson(att, leaves, holidays, emp.onboardingDate);
 
               const payroll = this.getPayrollDetails(emp, 'employee');
-              const net = this.calculateNetSalary(payroll.basicSalary, payroll.hra, payroll.allowances, payroll.deductions, 'employee', lopDays);
+              const approvedFundAmount = this.getApprovedFundAmountForPerson(approvedFunds, 'employee', emp.EmployeeId || emp._id, emp._id);
+              const payrollWithFunds = { ...payroll, approvedFundAmount, payrollAllowances: payroll.allowances, allowances: payroll.allowances + approvedFundAmount };
+              const net = this.calculateNetSalary(payrollWithFunds.basicSalary, payrollWithFunds.hra, payrollWithFunds.allowances, payrollWithFunds.deductions, 'employee', lopDays);
               return {
                 ...emp,
                 payrollType: 'employee',
-                payroll,
+                payroll: payrollWithFunds,
                 lopDays,
                 netSalary: net
               };
@@ -415,11 +424,13 @@ export class PayrollManagement implements OnInit {
               const lopDays = this.calculateAutoLopDaysForPerson(att, leaves, holidays, intern.onboardingDate);
 
               const payroll = this.getPayrollDetails(intern, 'intern');
-              const net = this.calculateNetSalary(payroll.basicSalary, payroll.hra || 0, payroll.allowances, payroll.deductions, 'intern', lopDays);
+              const approvedFundAmount = this.getApprovedFundAmountForPerson(approvedFunds, 'intern', intern.internid || intern.internId || intern._id, intern._id);
+              const payrollWithFunds = { ...payroll, approvedFundAmount, payrollAllowances: payroll.allowances, allowances: payroll.allowances + approvedFundAmount };
+              const net = this.calculateNetSalary(payrollWithFunds.basicSalary, payrollWithFunds.hra || 0, payrollWithFunds.allowances, payrollWithFunds.deductions, 'intern', lopDays);
               return {
                 ...intern,
                 payrollType: 'intern',
-                payroll,
+                payroll: payrollWithFunds,
                 lopDays,
                 netSalary: net
               };
@@ -434,13 +445,17 @@ export class PayrollManagement implements OnInit {
             // Fallback load without auto-calculated LOP
             const enrichedEmployees = res.employees.map(emp => {
               const payroll = this.getPayrollDetails(emp, 'employee');
-              const net = this.calculateNetSalary(payroll.basicSalary, payroll.hra, payroll.allowances, payroll.deductions, 'employee', 0);
-              return { ...emp, payrollType: 'employee', payroll, lopDays: 0, netSalary: net };
+              const approvedFundAmount = this.getApprovedFundAmountForPerson(approvedFunds, 'employee', emp.EmployeeId || emp._id, emp._id);
+              const payrollWithFunds = { ...payroll, approvedFundAmount, payrollAllowances: payroll.allowances, allowances: payroll.allowances + approvedFundAmount };
+              const net = this.calculateNetSalary(payrollWithFunds.basicSalary, payrollWithFunds.hra, payrollWithFunds.allowances, payrollWithFunds.deductions, 'employee', 0);
+              return { ...emp, payrollType: 'employee', payroll: payrollWithFunds, lopDays: 0, netSalary: net };
             });
             const enrichedInterns = res.interns.map(intern => {
               const payroll = this.getPayrollDetails(intern, 'intern');
-              const net = this.calculateNetSalary(payroll.basicSalary, payroll.hra || 0, payroll.allowances, payroll.deductions, 'intern', 0);
-              return { ...intern, payrollType: 'intern', payroll, lopDays: 0, netSalary: net };
+              const approvedFundAmount = this.getApprovedFundAmountForPerson(approvedFunds, 'intern', intern.internid || intern.internId || intern._id, intern._id);
+              const payrollWithFunds = { ...payroll, approvedFundAmount, payrollAllowances: payroll.allowances, allowances: payroll.allowances + approvedFundAmount };
+              const net = this.calculateNetSalary(payrollWithFunds.basicSalary, payrollWithFunds.hra || 0, payrollWithFunds.allowances, payrollWithFunds.deductions, 'intern', 0);
+              return { ...intern, payrollType: 'intern', payroll: payrollWithFunds, lopDays: 0, netSalary: net };
             });
             this.allEmployees.set(enrichedEmployees);
             this.allInterns.set(enrichedInterns);
@@ -454,6 +469,31 @@ export class PayrollManagement implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  onPayrollMonthChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.payrollMonth.set(value || this.currentMonthKey());
+    this.fetchData();
+  }
+
+  private currentMonthKey(): string {
+    return this.monthKey(new Date());
+  }
+
+  private monthKey(value: string | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private getApprovedFundAmountForPerson(funds: any[], requesterType: 'employee' | 'intern', requesterId: string, mongoId: string): number {
+    return funds
+      .filter((fund: any) =>
+        fund.requesterType === requesterType &&
+        (fund.requesterId === requesterId || fund.requesterMongoId === mongoId)
+      )
+      .reduce((sum: number, fund: any) => sum + (Number(fund.amount) || 0), 0);
   }
 
   getPayrollDetails(person: any, type: 'employee' | 'intern') {
@@ -506,7 +546,7 @@ export class PayrollManagement implements OnInit {
     this.selectedPerson.set(person);
     this.basicSalary.set(person.payroll.basicSalary);
     this.hra.set(person.payroll.hra);
-    this.allowances.set(person.payroll.allowances);
+    this.allowances.set(person.payroll.payrollAllowances ?? person.payroll.allowances);
     this.deductions.set(person.payroll.deductions);
     this.modalLopDays.set(person.lopDays || 0); // set to auto-calculated LOP days
     this.showEditModal.set(true);
@@ -540,10 +580,17 @@ export class PayrollManagement implements OnInit {
         if (person.payrollType === 'employee') {
           const updated = this.allEmployees().map(emp => {
             if ((emp.EmployeeId || emp._id) === id) {
-              const net = this.calculateNetSalary(updatedPayroll.basicSalary, updatedPayroll.hra, updatedPayroll.allowances, updatedPayroll.deductions, 'employee', this.modalLopDays());
+              const approvedFundAmount = Number(emp.payroll?.approvedFundAmount) || 0;
+              const payrollWithFunds = {
+                ...updatedPayroll,
+                approvedFundAmount,
+                payrollAllowances: updatedPayroll.allowances,
+                allowances: updatedPayroll.allowances + approvedFundAmount
+              };
+              const net = this.calculateNetSalary(payrollWithFunds.basicSalary, payrollWithFunds.hra, payrollWithFunds.allowances, payrollWithFunds.deductions, 'employee', this.modalLopDays());
               return {
                 ...emp,
-                payroll: updatedPayroll,
+                payroll: payrollWithFunds,
                 lopDays: this.modalLopDays(), // preserve manually overridden LOP days
                 netSalary: net
               };
@@ -555,10 +602,17 @@ export class PayrollManagement implements OnInit {
           const updated = this.allInterns().map(intern => {
             const internIdVal = intern.internid || intern.internId || intern._id;
             if (internIdVal === id) {
-              const net = this.calculateNetSalary(updatedPayroll.basicSalary, updatedPayroll.hra, updatedPayroll.allowances, updatedPayroll.deductions, 'intern', this.modalLopDays());
+              const approvedFundAmount = Number(intern.payroll?.approvedFundAmount) || 0;
+              const payrollWithFunds = {
+                ...updatedPayroll,
+                approvedFundAmount,
+                payrollAllowances: updatedPayroll.allowances,
+                allowances: updatedPayroll.allowances + approvedFundAmount
+              };
+              const net = this.calculateNetSalary(payrollWithFunds.basicSalary, payrollWithFunds.hra, payrollWithFunds.allowances, payrollWithFunds.deductions, 'intern', this.modalLopDays());
               return {
                 ...intern,
-                payroll: updatedPayroll,
+                payroll: payrollWithFunds,
                 lopDays: this.modalLopDays(), // preserve manually overridden LOP days
                 netSalary: net
               };

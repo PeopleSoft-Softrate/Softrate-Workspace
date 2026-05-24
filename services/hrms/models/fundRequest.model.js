@@ -38,6 +38,8 @@ const FundRequestSchema = new mongoose.Schema(
 
     // Phase 2 finance handoff. HR approval does not mark this true yet.
     isFinanceTeamApprove: { type: Boolean, default: false },
+    financeRemarks: { type: String, default: "" },
+    financeActionDate: { type: Date },
   },
   { timestamps: true }
 );

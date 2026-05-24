@@ -57,17 +57,37 @@ export class ManagerAssignments implements OnInit {
   });
 
   ngOnInit(): void {
-    const data = localStorage.getItem('user_data');
-    if (data) {
-      const user = JSON.parse(data);
-      const role = (user.role || '').toLowerCase();
-      this.isHr.set(role === 'hr' || role === 'hr_admin');
-    }
+    this.isHr.set(this.resolveIsHrUser());
+    
     if (!this.isHr()) {
       this.isLoading.set(false);
       return;
     }
+
     this.fetchData();
+  }
+
+  private resolveIsHrUser(): boolean {
+    const storedRole = localStorage.getItem('user_role');
+    if (this.isHrRole(storedRole)) return true;
+
+    const data = localStorage.getItem('user_data');
+    if (data) {
+      try {
+        const user = JSON.parse(data);
+        const role = user.role || user.roleName || user.roleId?.name;
+        return user.isHr === true || this.isHrRole(role);
+      } catch (error) {
+        console.error('Failed to parse user_data', error);
+      }
+    }
+
+    return false;
+  }
+
+  private isHrRole(role: unknown): boolean {
+    const normalized = String(role || '').toLowerCase().replace(/[\s_-]/g, '');
+    return normalized === 'hr' || normalized === 'hradmin';
   }
 
   fetchData(): void {

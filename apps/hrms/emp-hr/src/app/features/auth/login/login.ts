@@ -39,6 +39,9 @@ export class Login {
         if (userData && !userData.profile && userData.firstName) {
           userData.profile = { firstName: userData.firstName };
         }
+        if (userData) {
+          userData.role = actualRole;
+        }
 
         localStorage.setItem('user_role', actualRole);
         localStorage.setItem('user_data', JSON.stringify(userData));
@@ -47,9 +50,11 @@ export class Login {
         this.app.userRole.set(actualRole);
         this.app.loadUserData();
 
-        if (actualRole === 'hr' || actualRole === 'hr_admin') {
+        const normalizedRole = String(actualRole || '').toLowerCase().replace(/[\s_-]/g, '');
+
+        if (normalizedRole === 'hr' || normalizedRole === 'hradmin') {
           this.router.navigate(['/dashboard']);
-        } else if (actualRole === 'employee' || actualRole === 'manager') {
+        } else if (normalizedRole === 'employee' || normalizedRole === 'manager') {
           this.router.navigate(['/employee/dashboard']);
         } else {
           this.errorMessage.set('Unauthorized role for this portal');

@@ -87,6 +87,16 @@
           class="search-input"
         >
       </div>
+
+      <div class="search-wrapper">
+        <input
+          type="month"
+          [value]="payrollMonth()"
+          (change)="onPayrollMonthChange($event)"
+          class="search-input"
+          aria-label="Payroll month"
+        >
+      </div>
     </div>
 
     <!-- Table Container -->
@@ -104,6 +114,7 @@
                 <th class="text-right">Basic</th>
                 <th class="text-right">HRA</th>
                 <th class="text-right">Allowances</th>
+                <th class="text-right">Approved Funds</th>
                 <th class="text-right">Deductions</th>
                 <th class="text-center">LOP Days</th>
                 <th class="text-right highlight-head">Net Salary</th>
@@ -129,7 +140,8 @@
                 </td>
                 <td class="text-right amount-cell">₹{{ emp.payroll.basicSalary | number:'1.0-0' }}</td>
                 <td class="text-right amount-cell">₹{{ emp.payroll.hra | number:'1.0-0' }}</td>
-                <td class="text-right amount-cell">₹{{ emp.payroll.allowances | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ emp.payroll.payrollAllowances | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ emp.payroll.approvedFundAmount | number:'1.0-0' }}</td>
                 <td class="text-right text-deductions">₹{{ emp.payroll.deductions | number:'1.0-0' }}</td>
                 <td class="text-center">
                   <span class="lop-days-badge" [class.has-lop]="emp.lopDays > 0">
@@ -166,6 +178,7 @@
                 <th class="text-right">Basic Stipend</th>
                 <th class="text-right">HRA</th>
                 <th class="text-right">Allowances</th>
+                <th class="text-right">Approved Funds</th>
                 <th class="text-right">Deductions</th>
                 <th class="text-center">LOP Days</th>
                 <th class="text-right highlight-head">Net Stipend</th>
@@ -186,7 +199,8 @@
                 <td class="dept-cell">{{ intern.department || '—' }}</td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.basicSalary | number:'1.0-0' }}</td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.hra | number:'1.0-0' }}</td>
-                <td class="text-right amount-cell">₹{{ intern.payroll.allowances | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ intern.payroll.payrollAllowances | number:'1.0-0' }}</td>
+                <td class="text-right amount-cell">₹{{ intern.payroll.approvedFundAmount | number:'1.0-0' }}</td>
                 <td class="text-right text-deductions">₹{{ intern.payroll.deductions | number:'1.0-0' }}</td>
                 <td class="text-center">
                   <span class="lop-days-badge" [class.has-lop]="intern.lopDays > 0">
@@ -241,8 +255,12 @@
 
         <div class="breakdown-section">
           <div class="breakdown-row">
-            <span class="breakdown-label">Gross (Basic + HRA + Allowances − Deductions)</span>
+            <span class="breakdown-label">Gross (Basic + HRA + Allowances + Approved Funds − Deductions)</span>
             <span class="breakdown-amount">₹{{ modalGross() | number:'1.0-0' }}</span>
+          </div>
+          <div class="breakdown-row" *ngIf="modalApprovedFundAmount() > 0">
+            <span class="breakdown-label">Finance-approved fund requests for {{ payrollMonth() }}</span>
+            <span class="breakdown-amount">₹{{ modalApprovedFundAmount() | number:'1.0-0' }}</span>
           </div>
           <div class="breakdown-row" *ngIf="modalPF() > 0">
             <span class="breakdown-label">PF Deduction ({{ pfPercentage() }}% of Basic)</span>

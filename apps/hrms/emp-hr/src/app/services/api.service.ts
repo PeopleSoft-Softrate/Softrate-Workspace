@@ -628,8 +628,18 @@ export class ApiService {
     });
   }
 
+  getUserFundRequests(requesterId: string): Observable<any[]> {
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/fund-requests/user/${requesterId}`), {
+      headers: this.getHeaders()
+    });
+  }
+
   hrReviewFundRequest(requestId: string, status: 'accepted' | 'rejected', remarks: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/fund-requests/hr-action/${requestId}`, { status, remarks });
+  }
+
+  financeReviewFundRequest(requestId: string, isFinanceTeamApprove: boolean, remarks: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/api/fund-requests/finance-action/${requestId}`, { isFinanceTeamApprove, remarks });
   }
 
   managerReviewFundRequest(requestId: string, status: 'accepted' | 'rejected', remarks: string): Observable<any> {

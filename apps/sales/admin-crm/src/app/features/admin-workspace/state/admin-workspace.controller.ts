@@ -446,6 +446,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceIssuedAt = new Date();
   quoteNumber = Math.floor(100000 + Math.random() * 900000);
   currentInvoiceNumber = '';
+  currentInvoicePublicUrl = '';
+  currentInvoiceQrDataUrl = '';
   currentQuotationNumber = '';
   showGstSelectionModal = false;
   documentGstPercentageOverride: number | null = null;

@@ -745,6 +745,15 @@
   box-shadow: inset 0 0 0 8px #ffffff !important;
 }
 
+.admin-quote-modal .invoice-qr-image {
+  display: block !important;
+  width: 78px !important;
+  height: 78px !important;
+  border: 1px solid #111827 !important;
+  background: #ffffff !important;
+  object-fit: contain !important;
+}
+
 .admin-quote-modal .invoice-print-section {
   padding: 12px 20px !important;
   border-bottom: 1px solid #b8c6d8 !important;

@@ -5,6 +5,8 @@ export function mapInvoiceDto(dto: InvoiceDto): InvoiceRecord {
   return {
     id: String(dto._id || ''),
     invoiceNumber: String(dto.invoiceNumber || ''),
+    publicToken: String(dto.publicToken || ''),
+    publicUrl: String(dto.publicUrl || ''),
     companyName: String(dto.leadCompanyName || ''),
     contactName: String(dto.contactName || ''),
     contactNumber: String(dto.contactNumber || ''),

@@ -125,6 +125,8 @@ interface CachedLeadCompanyPage {
 interface InvoiceRecord {
   _id: string;
   invoiceNumber: string;
+  publicToken?: string;
+  publicUrl?: string;
   clientId?: string;
   leadCompanyName: string;
   contactName: string;
@@ -1733,6 +1735,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private gstSelectionConfirmed = false;
   invoiceSaving = false;
   currentInvoiceNumber = '';
+  currentInvoicePublicUrl = '';
+  currentInvoiceQrDataUrl = '';
   invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
   invoiceRecords: InvoiceRecord[] = [];
   invoiceRecordsLoading = false;
@@ -1840,6 +1844,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     this.invoiceIssuedAt = new Date();
     this.currentInvoiceNumber = '';
+    this.resetInvoicePublicLink();
   }
 
   openQuotationModal(lead: any): void {
@@ -1857,12 +1862,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     this.invoiceIssuedAt = new Date();
     this.currentQuotationNumber = '';
+    this.resetInvoicePublicLink();
   }
 
   closeInvoiceModal(): void {
     this.showInvoiceModal = false;
     this.quoteMode = false;
     this.viewingSavedDocument = false;
+    this.resetInvoicePublicLink();
     this.invoiceLead = null;
     this.selectedInvoiceClient = null;
     this.resetDocumentGstSelection();
@@ -2229,6 +2236,40 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.gstSelectionConfirmed = false;
   }
 
+  private async setInvoiceQrFromUrl(publicUrl: string): Promise<void> {
+    this.currentInvoicePublicUrl = publicUrl || '';
+    this.currentInvoiceQrDataUrl = '';
+    if (!publicUrl) return;
+    try {
+      const QRCode = await import('qrcode');
+      this.currentInvoiceQrDataUrl = await QRCode.toDataURL(publicUrl, {
+        width: 136,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+        color: {
+          dark: '#111827',
+          light: '#ffffff',
+        },
+      });
+    } catch {
+      this.currentInvoiceQrDataUrl = '';
+    }
+  }
+
+  private async ensureInvoiceQr(): Promise<void> {
+    if (!this.currentInvoicePublicUrl || this.currentInvoiceQrDataUrl) return;
+    await this.setInvoiceQrFromUrl(this.currentInvoicePublicUrl);
+  }
+
+  private printCurrentDocument(): void {
+    setTimeout(() => window.print(), 50);
+  }
+
+  private resetInvoicePublicLink(): void {
+    this.currentInvoicePublicUrl = '';
+    this.currentInvoiceQrDataUrl = '';
+  }
+
   private requestDocumentGstSelection(): void {
     this.showGstSelectionModal = true;
   }
@@ -2342,7 +2383,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.viewingSavedDocument) {
-      setTimeout(() => window.print(), 50);
+      void this.ensureInvoiceQr().finally(() => this.printCurrentDocument());
       return;
     }
     if (!this.gstSelectionConfirmed) {
@@ -2387,10 +2428,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           return;
         }
         this.currentInvoiceNumber = res.invoice.invoiceNumber;
+        this.currentInvoicePublicUrl = String(res.invoice.publicUrl || '');
         this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(res.invoice.paymentStatus);
         this.invalidateInvoiceCaches();
         this.fetchInvoiceRecords(true);
-        setTimeout(() => window.print(), 50);
+        void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
       },
       error: (err) => {
         this.invoiceSaving = false;
@@ -2669,6 +2711,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.transferredQuotationRecord = null;
     this.currentInvoiceNumber = record.invoiceNumber;
     this.currentQuotationNumber = '';
+    void this.setInvoiceQrFromUrl(record.publicUrl || '');
     this.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
     this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(record.paymentStatus);
     this.dueDate = record.dueDate ? new Date(record.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
@@ -2698,6 +2741,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.transferredQuotationRecord = null;
     this.currentQuotationNumber = record.quotationNumber;
     this.currentInvoiceNumber = '';
+    this.resetInvoicePublicLink();
     this.invoiceIssuedAt = record.quotationDate ? new Date(record.quotationDate) : new Date(record.createdAt || Date.now());
     this.quotationKindNoteDraft = String(record.kindNote || record.companySnapshot?.footer || this.defaultQuotationKindNote());
     this.invoiceLead = {
@@ -4441,6 +4485,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return {
       _id: String(record?._id || record?.id || ''),
       invoiceNumber: String(record?.invoiceNumber || ''),
+      publicToken: String(record?.publicToken || ''),
+      publicUrl: String(record?.publicUrl || ''),
       clientId: String(record?.clientId || record?.clientSnapshot?.clientId || ''),
       leadCompanyName: String(record?.leadCompanyName || record?.companyName || ''),
       contactName: String(record?.contactName || ''),

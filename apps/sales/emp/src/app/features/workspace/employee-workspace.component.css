@@ -6396,6 +6396,15 @@ body.column-resizing * {
   box-shadow: inset 0 0 0 8px #ffffff;
 }
 
+.invoice-qr-image {
+  display: block;
+  width: 78px;
+  height: 78px;
+  border: 1px solid #111827;
+  background: #ffffff;
+  object-fit: contain;
+}
+
 .invoice-print-section {
   padding: 12px 20px;
   border-bottom: 1px solid #b8c6d8;

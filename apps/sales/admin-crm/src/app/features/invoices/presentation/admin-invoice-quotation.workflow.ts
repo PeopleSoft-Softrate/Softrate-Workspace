@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import QRCode from 'qrcode';
 import { ApiService } from '../../../services/api.service';
 import { Lead } from '../../../services/lead.service';
 import { formatInvoiceMoney as formatInvoiceMoneyValue } from '../domain/invoice-formatters';
@@ -6,6 +7,39 @@ import { formatInvoiceMoney as formatInvoiceMoneyValue } from '../domain/invoice
 @Injectable({ providedIn: 'root' })
 export class AdminInvoiceQuotationWorkflow {
   constructor(private api: ApiService) {}
+
+  private async setInvoiceQrFromUrl(vm: any, publicUrl: string): Promise<void> {
+    vm.currentInvoicePublicUrl = publicUrl || '';
+    vm.currentInvoiceQrDataUrl = '';
+    if (!publicUrl) return;
+    try {
+      vm.currentInvoiceQrDataUrl = await QRCode.toDataURL(publicUrl, {
+        width: 136,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+        color: {
+          dark: '#111827',
+          light: '#ffffff',
+        },
+      });
+    } catch {
+      vm.currentInvoiceQrDataUrl = '';
+    }
+  }
+
+  private async ensureInvoiceQr(vm: any): Promise<void> {
+    if (!vm.currentInvoicePublicUrl || vm.currentInvoiceQrDataUrl) return;
+    await this.setInvoiceQrFromUrl(vm, vm.currentInvoicePublicUrl);
+  }
+
+  private printCurrentDocument(): void {
+    setTimeout(() => window.print(), 50);
+  }
+
+  private resetInvoicePublicLink(vm: any): void {
+    vm.currentInvoicePublicUrl = '';
+    vm.currentInvoiceQrDataUrl = '';
+  }
 
   private normalizeClient(raw: any): any {
     return {
@@ -305,6 +339,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.selectedInvoiceClient = null;
     this.resetDocumentGstSelection(vm);
     vm.currentInvoiceNumber = record.invoiceNumber || '';
+    void this.setInvoiceQrFromUrl(vm, record.publicUrl || '');
     vm.invoiceLead = {
       _id: record.leadId || '',
       companyCode: vm.dashboardCode,
@@ -331,6 +366,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.selectedInvoiceClient = null;
     this.resetDocumentGstSelection(vm);
     vm.currentQuotationNumber = record.quotationNumber || '';
+    this.resetInvoicePublicLink(vm);
     vm.invoiceLead = {
       _id: record.leadId || '',
       companyCode: vm.dashboardCode,
@@ -374,6 +410,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentQuotationNumber = '';
+    this.resetInvoicePublicLink(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -390,6 +427,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
+    this.resetInvoicePublicLink(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -407,6 +445,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
+    this.resetInvoicePublicLink(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -415,6 +454,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
     vm.selectedInvoiceClient = null;
+    this.resetInvoicePublicLink(vm);
     this.resetDocumentGstSelection(vm);
   }
 
@@ -527,7 +567,7 @@ export class AdminInvoiceQuotationWorkflow {
       return;
     }
     if (vm.viewingSavedDocument) {
-      setTimeout(() => window.print(), 50);
+      this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument());
       return;
     }
     if (!vm.gstSelectionConfirmed) {
@@ -570,7 +610,7 @@ export class AdminInvoiceQuotationWorkflow {
         }
         vm.currentInvoiceNumber = res.invoice.invoiceNumber;
         vm.fetchInvoiceRecords();
-        setTimeout(() => window.print(), 50);
+        void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
       },
       error: (err) => {
         vm.invoiceSaving = false;

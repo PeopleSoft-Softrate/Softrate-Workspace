@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { AdminWorkspaceComponent } from '../../features/admin-workspace/admin-workspace.component';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [AdminWorkspaceComponent],
+  imports: [RouterOutlet],
   templateUrl: './admin-shell.component.html',
   styleUrl: './admin-shell.component.css',
 })

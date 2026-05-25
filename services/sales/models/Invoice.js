@@ -24,6 +24,7 @@ const invoiceSchema = new mongoose.Schema({
   directorEmailAddress: { type: String, default: '' },
   invoiceNumber: { type: String, required: true, unique: true },
   versionNo: { type: Number, default: 1 },
+  publicToken: { type: String },
   items: { type: [invoiceItemSchema], default: [] },
   subtotal: { type: Number, default: 0 },
   gstPercentage: { type: Number, default: 18 },
@@ -61,5 +62,12 @@ invoiceSchema.index({ companyCode: 1, employeePhone: 1, invoiceDate: -1 });
 invoiceSchema.index({ companyCode: 1, invoiceDate: -1 });
 invoiceSchema.index({ companyCode: 1, leadCompanyName: 1 });
 invoiceSchema.index({ companyCode: 1, clientId: 1, invoiceDate: -1 });
+invoiceSchema.index(
+  { publicToken: 1 },
+  {
+    unique: true,
+    sparse: true,
+  },
+);
 
 module.exports = mongoose.model('Invoice', invoiceSchema);

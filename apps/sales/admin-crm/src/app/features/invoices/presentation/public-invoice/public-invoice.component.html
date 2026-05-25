@@ -1,0 +1,140 @@
+<main class="public-invoice-page">
+  <section class="invoice-state" *ngIf="loading" aria-live="polite">
+    <strong>Loading invoice</strong>
+  </section>
+
+  <section class="invoice-state invoice-state-error" *ngIf="!loading && error" aria-live="polite">
+    <strong>{{ error }}</strong>
+  </section>
+
+  <ng-container *ngIf="!loading && !error && invoice as current">
+    <header class="public-invoice-toolbar">
+      <div>
+        <span>Invoice</span>
+        <strong>{{ current.invoiceNumber }}</strong>
+      </div>
+      <button type="button" (click)="printPage()">Print</button>
+    </header>
+
+    <article class="invoice-sheet" aria-label="Invoice document">
+      <header class="invoice-print-header">
+        <div class="invoice-logo-block">
+          <img *ngIf="current.companySnapshot?.logo; else textLogo" [src]="current.companySnapshot?.logo" [alt]="companyName(current) + ' logo'">
+          <ng-template #textLogo>
+            <div class="invoice-text-logo">{{ companyName(current) }}</div>
+          </ng-template>
+        </div>
+
+        <div class="invoice-company">
+          <h1>{{ companyName(current) }}</h1>
+          <div class="invoice-subtitle">Invoice</div>
+          <p *ngIf="companyAddress(current)">{{ companyAddress(current) }}</p>
+          <p *ngIf="current.companySnapshot?.phone">Ph No: {{ current.companySnapshot?.phone }}</p>
+          <p *ngIf="current.companySnapshot?.email">Mail: {{ current.companySnapshot?.email }}</p>
+          <p *ngIf="current.companySnapshot?.website">Website: {{ current.companySnapshot?.website }}</p>
+          <p *ngIf="current.companySnapshot?.gstNumber">GSTIN: {{ current.companySnapshot?.gstNumber }}</p>
+        </div>
+
+        <div class="invoice-qr-block">
+          <img *ngIf="qrDataUrl" class="invoice-qr-image" [src]="qrDataUrl" alt="Invoice QR code">
+          <div class="invoice-qr-fallback" *ngIf="!qrDataUrl">#</div>
+          <div>Scan to See E-Invoice</div>
+        </div>
+      </header>
+
+      <section class="invoice-info-panel">
+        <div class="invoice-info-column">
+          <h2>Invoice Details</h2>
+          <dl>
+            <dt>Invoice No</dt>
+            <dd>{{ current.invoiceNumber }}</dd>
+            <dt>Date</dt>
+            <dd>{{ current.invoiceDate | date:'dd MMM yyyy, hh:mm a' }}</dd>
+            <dt>Billed by</dt>
+            <dd>{{ billedBy(current) }}</dd>
+            <dt>Status</dt>
+            <dd><span class="status-pill" [class.paid]="statusClass(current)==='paid'">{{ statusLabel(current) }}</span></dd>
+          </dl>
+        </div>
+
+        <div class="invoice-info-column">
+          <h2>Bill To</h2>
+          <strong class="client-name">{{ clientCompany(current) }}</strong>
+          <p *ngIf="clientContact(current)">Contact: {{ clientContact(current) }}</p>
+          <p *ngIf="clientPhone(current)">Ph No: {{ clientPhone(current) }}</p>
+          <p *ngIf="clientEmail(current)">Mail: {{ clientEmail(current) }}</p>
+          <p *ngIf="current.clientSnapshot?.address">Address: {{ current.clientSnapshot?.address }}</p>
+        </div>
+      </section>
+
+      <section class="invoice-service-section">
+        <h2>Service / Product Intended</h2>
+        <div class="invoice-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>S.No.</th>
+                <th>Service / Product</th>
+                <th>SAC/HSN</th>
+                <th>Units</th>
+                <th>Rate</th>
+                <th>Taxable</th>
+                <th>CGST ({{ (current.gstPercentage || 0) / 2 }}%)</th>
+                <th>SGST ({{ (current.gstPercentage || 0) / 2 }}%)</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items(current); let i = index; trackBy: trackByItem">
+                <td>{{ i + 1 }}</td>
+                <td>{{ item.name || 'Service' }}</td>
+                <td>{{ item.sacHsn || '-' }}</td>
+                <td>{{ item.quantity || 1 }}</td>
+                <td>{{ formatMoney(item.rate) }}</td>
+                <td>{{ formatMoney(itemTaxable(item)) }}</td>
+                <td>{{ formatMoney(itemCgst(item)) }}</td>
+                <td>{{ formatMoney(itemSgst(item)) }}</td>
+                <td><strong>{{ formatMoney(itemTotal(item)) }}</strong></td>
+              </tr>
+              <tr class="invoice-total-row">
+                <td colspan="3">Total</td>
+                <td>{{ items(current).length }}</td>
+                <td>-</td>
+                <td>{{ formatMoney(current.subtotal) }}</td>
+                <td>{{ formatMoney(current.cgst) }}</td>
+                <td>{{ formatMoney(current.sgst) }}</td>
+                <td><strong>{{ formatMoney(current.total) }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="invoice-payment-section">
+        <h2>Payment Receipt</h2>
+        <dl>
+          <dt>Taxable amount</dt>
+          <dd>{{ formatMoney(current.subtotal) }}</dd>
+          <dt>CGST</dt>
+          <dd>{{ formatMoney(current.cgst) }}</dd>
+          <dt>SGST / UTGST</dt>
+          <dd>{{ formatMoney(current.sgst) }}</dd>
+          <dt>Amount received</dt>
+          <dd>{{ formatMoney(current.total) }}</dd>
+          <dt>Net total</dt>
+          <dd class="net-total">{{ formatMoney(current.total) }}</dd>
+        </dl>
+      </section>
+
+      <footer class="invoice-footer">
+        <h2>Company Details</h2>
+        <p *ngIf="companyAddress(current)">{{ companyAddress(current) }}</p>
+        <p *ngIf="current.companySnapshot?.phone">Ph No: {{ current.companySnapshot?.phone }}</p>
+        <p *ngIf="current.companySnapshot?.gstNumber">GSTIN: {{ current.companySnapshot?.gstNumber }}</p>
+        <p *ngIf="current.companySnapshot?.email">Mail: {{ current.companySnapshot?.email }}</p>
+        <p *ngIf="current.companySnapshot?.website">Website: {{ current.companySnapshot?.website }}</p>
+        <p class="footer-note">{{ current.companySnapshot?.footer || 'This is a system-generated invoice. Please verify service details before processing payment.' }}</p>
+      </footer>
+    </article>
+  </ng-container>
+</main>

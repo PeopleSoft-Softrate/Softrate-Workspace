@@ -29,6 +29,10 @@
               "src/styles.css"
             ],
             "polyfills": ["zone.js"],
+            "allowedCommonJsDependencies": [
+              "qrcode",
+              "dijkstrajs"
+            ],
             "optimization": {
               "fonts": { "inline": false }
             }
@@ -38,7 +42,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1mb",
+                  "maximumWarning": "1.05mb",
                   "maximumError": "2mb"
                 },
                 {

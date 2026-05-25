@@ -938,7 +938,10 @@
             </div>
 
             <div class="invoice-qr-block">
-              <div class="invoice-qr-code" aria-label="E invoice QR placeholder"></div>
+              <img *ngIf="vm.currentInvoiceQrDataUrl; else invoiceQrPlaceholder" class="invoice-qr-image" [src]="vm.currentInvoiceQrDataUrl" alt="Invoice QR code">
+              <ng-template #invoiceQrPlaceholder>
+                <div class="invoice-qr-code invoice-qr-placeholder" aria-label="E invoice QR placeholder"></div>
+              </ng-template>
               <div>Scan to See E-Invoice</div>
             </div>
           </header>

@@ -1,6 +1,8 @@
 export interface InvoiceRecord {
   id: string;
   invoiceNumber: string;
+  publicToken?: string;
+  publicUrl?: string;
   companyName: string;
   contactName: string;
   contactNumber: string;

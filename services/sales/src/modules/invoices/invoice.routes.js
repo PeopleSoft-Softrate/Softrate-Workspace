@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const Invoice = require('../../../models/Invoice');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
@@ -19,6 +20,94 @@ function escapeRegex(value) {
 
 function normalizePaymentStatus(value) {
   return normalize(value).toLowerCase() === 'paid' ? 'paid' : 'unpaid';
+}
+
+function generatePublicToken() {
+  return crypto.randomBytes(24).toString('base64url');
+}
+
+function frontendBaseUrl(req) {
+  const configuredUrl = normalize(process.env.FRONTEND_URL);
+  if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
+  const requestOrigin = normalize(req.get('origin'));
+  if (requestOrigin) return requestOrigin.replace(/\/+$/, '');
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+function publicInvoiceUrl(req, publicToken) {
+  return `${frontendBaseUrl(req)}/invoice/${encodeURIComponent(publicToken || '')}`;
+}
+
+function serializeInvoice(invoice, req, publicOnly = false) {
+  const source = typeof invoice?.toObject === 'function' ? invoice.toObject() : invoice;
+  if (!source) return source;
+  const publicToken = normalize(source.publicToken);
+  const serialized = {
+    ...source,
+    publicToken,
+    publicUrl: publicToken ? publicInvoiceUrl(req, publicToken) : '',
+  };
+  if (!publicOnly) return serialized;
+  return {
+    invoiceNumber: serialized.invoiceNumber || '',
+    publicToken: serialized.publicToken,
+    publicUrl: serialized.publicUrl,
+    leadCompanyName: serialized.leadCompanyName || '',
+    contactName: serialized.contactName || '',
+    contactNumber: serialized.contactNumber || '',
+    directorEmailAddress: serialized.directorEmailAddress || '',
+    items: Array.isArray(serialized.items) ? serialized.items : [],
+    subtotal: Number(serialized.subtotal || 0),
+    gstPercentage: Number(serialized.gstPercentage || 0),
+    cgst: Number(serialized.cgst || 0),
+    sgst: Number(serialized.sgst || 0),
+    gstAmount: Number(serialized.gstAmount || 0),
+    total: Number(serialized.total || 0),
+    invoiceDate: serialized.invoiceDate || serialized.createdAt || null,
+    dueDate: serialized.dueDate || null,
+    paymentStatus: serialized.paymentStatus || 'unpaid',
+    createdByRole: serialized.createdByRole || '',
+    createdByName: serialized.createdByName || '',
+    employeeName: serialized.employeeName || '',
+    companySnapshot: serialized.companySnapshot || {},
+    clientSnapshot: serialized.clientSnapshot || {},
+  };
+}
+
+async function ensurePublicTokens(invoices) {
+  const records = Array.isArray(invoices) ? invoices : [invoices];
+  const missingRecords = records.filter((invoice) => invoice && !normalize(invoice.publicToken));
+  if (!missingRecords.length) return;
+
+  const usedTokens = new Set(records.map((invoice) => normalize(invoice?.publicToken)).filter(Boolean));
+  const operations = missingRecords.map((invoice) => {
+    let publicToken = generatePublicToken();
+    while (usedTokens.has(publicToken)) publicToken = generatePublicToken();
+    usedTokens.add(publicToken);
+    invoice.publicToken = publicToken;
+    return {
+      updateOne: {
+        filter: {
+          _id: invoice._id,
+          $or: [
+            { publicToken: { $exists: false } },
+            { publicToken: '' },
+            { publicToken: null },
+          ],
+        },
+        update: { $set: { publicToken } },
+      },
+    };
+  });
+
+  await Invoice.bulkWrite(operations, { ordered: false });
+  const refreshed = await Invoice.find({ _id: { $in: missingRecords.map((invoice) => invoice._id) } })
+    .select('_id publicToken')
+    .lean();
+  const tokenById = new Map(refreshed.map((invoice) => [String(invoice._id), invoice.publicToken]));
+  missingRecords.forEach((invoice) => {
+    invoice.publicToken = tokenById.get(String(invoice._id)) || invoice.publicToken;
+  });
 }
 
 function getConvertedStatuses(user) {
@@ -198,6 +287,7 @@ router.post('/', async (req, res) => {
       directorEmailAddress: clientDto.primaryEmail || lead?.directorEmailAddress || '',
       invoiceNumber,
       versionNo,
+      publicToken: generatePublicToken(),
       items,
       subtotal,
       gstPercentage,
@@ -231,10 +321,29 @@ router.post('/', async (req, res) => {
       },
     });
 
-    return res.status(201).json({ success: true, invoice });
+    return res.status(201).json({ success: true, invoice: serializeInvoice(invoice, req) });
   } catch (err) {
     console.error('Create invoice error:', err);
     return res.status(500).json({ success: false, message: 'Failed to save invoice.' });
+  }
+});
+
+router.get('/public/:publicToken', async (req, res) => {
+  try {
+    const publicToken = normalize(req.params.publicToken);
+    if (!publicToken) {
+      return res.status(404).json({ success: false, message: 'Invoice not found.' });
+    }
+
+    const invoice = await Invoice.findOne({ publicToken }).lean();
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found.' });
+    }
+
+    return res.json({ success: true, invoice: serializeInvoice(invoice, req, true) });
+  } catch (err) {
+    console.error('Public invoice error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch invoice.' });
   }
 });
 
@@ -283,9 +392,10 @@ router.get('/', async (req, res) => {
         .limit(pagination.isPaginated ? pagination.pageSize : 300)
         .lean(),
     ]);
+    await ensurePublicTokens(invoices);
 
     const page = buildPageResponse({
-      items: invoices,
+      items: invoices.map((invoice) => serializeInvoice(invoice, req)),
       total,
       page: pagination.page,
       pageSize: pagination.isPaginated ? pagination.pageSize : invoices.length,

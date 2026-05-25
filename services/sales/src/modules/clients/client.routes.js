@@ -3,6 +3,7 @@ const {
   createManualClient,
   listClients,
   mapClient,
+  updateClient,
 } = require('../../../services/clientService');
 
 const router = express.Router();
@@ -32,6 +33,21 @@ router.post('/', async (req, res) => {
       success: false,
       message: err.message || 'Failed to onboard client.',
       client: err.client,
+    });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  try {
+    const client = await updateClient(req.params.id, req.body || {});
+    return res.json({
+      success: true,
+      client: mapClient(client),
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || 'Failed to update client.',
     });
   }
 });

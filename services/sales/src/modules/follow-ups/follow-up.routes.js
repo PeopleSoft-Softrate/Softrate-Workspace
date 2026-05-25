@@ -28,6 +28,20 @@ function applyReminderDateRange(query, fromValue, toValue = fromValue) {
   if (to) query.reminderDate.$lt = to;
 }
 
+function applyScheduledReminderFilter(query) {
+  query.reminderDate = {
+    ...(query.reminderDate || {}),
+    $exists: true,
+    $nin: [null, ''],
+  };
+}
+
+function employeeBookmarkSort(reqQuery) {
+  return reqQuery.sort === 'reminderDateAsc'
+    ? { reminderDate: 1, createdAt: -1 }
+    : { createdAt: -1 };
+}
+
 function buildEmployeeBookmarkQuery(reqQuery) {
   const query = {
     companyCode: String(reqQuery.companyCode || '').trim(),
@@ -57,6 +71,10 @@ function buildEmployeeBookmarkQuery(reqQuery) {
     applyReminderDateRange(query, reqQuery.reminderDate);
   } else if (reqQuery.dateFrom || reqQuery.dateTo) {
     applyReminderDateRange(query, reqQuery.dateFrom || reqQuery.dateTo, reqQuery.dateTo || reqQuery.dateFrom);
+  }
+
+  if (String(reqQuery.hasReminder || '').toLowerCase() === 'true') {
+    applyScheduledReminderFilter(query);
   }
 
   return query;
@@ -255,16 +273,17 @@ router.get('/', async (req, res) => {
 
     const query = buildEmployeeBookmarkQuery(req.query);
     const pagination = parsePageQuery(req.query);
+    const sort = employeeBookmarkSort(req.query);
 
     if (!pagination.isPaginated) {
-      const bookmarks = await Bookmark.find(query).sort({ createdAt: -1 }).lean();
+      const bookmarks = await Bookmark.find(query).sort(sort).lean();
       return res.status(200).json({ success: true, bookmarks, items: bookmarks });
     }
 
     const [total, bookmarks] = await Promise.all([
       Bookmark.countDocuments(query),
       Bookmark.find(query)
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(pagination.skip)
         .limit(pagination.pageSize)
         .lean(),

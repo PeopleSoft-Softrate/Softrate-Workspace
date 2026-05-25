@@ -2293,6 +2293,20 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
   color: #111827 !important;
 }
 
+.dashboard-wrapper .client-onboarding-board .crm-map-client-button {
+  border-color: #1d4ed8 !important;
+  border-radius: 8px !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16) !important;
+}
+
+.dashboard-wrapper .client-onboarding-board .crm-map-client-button:hover:not(:disabled) {
+  border-color: #1d4ed8 !important;
+  background: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
 .dashboard-wrapper .crm-amc-metrics-strip.metrics-strip {
   min-height: 112px !important;
   border-top: 0 !important;

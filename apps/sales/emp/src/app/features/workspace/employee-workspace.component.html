@@ -258,7 +258,7 @@
       </label>
 
       <div class="topbar-actions">
-        <button class="topbar-metric topbar-metric-followups" type="button" (click)="switchTab('followups'); followupFilter='today'">
+        <button class="topbar-metric topbar-metric-followups" type="button" (click)="switchTab('followups'); followupFilter='today'; onFollowupQueryChange()">
           <span class="topbar-metric-icon topbar-metric-icon-followups" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M7 3v4" />
@@ -607,47 +607,42 @@
             <div class="section-header">
               <div>
                 <div class="section-kicker">Next Actions</div>
-                <h3>Upcoming follow-ups</h3>
+                <h3>Follow-ups</h3>
               </div>
             </div>
-            <div class="table-scroll overview-table-scroll">
-              <table class="data-table compact-table overview-upcoming-table overview-resizable-table">
-                <colgroup>
-                  <col [style.width.%]="overviewUpcomingColumnWidths[0]" />
-                  <col [style.width.%]="overviewUpcomingColumnWidths[1]" />
-                  <col [style.width.%]="overviewUpcomingColumnWidths[2]" />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>
-                      <div class="overview-header-cell">
-                        <span>Company</span>
-                      </div>
-                      <button class="table-column-resizer" type="button" aria-label="Resize company column" (mousedown)="startOverviewColumnResize('upcoming', 0, $event)"></button>
-                    </th>
-                    <th>
-                      <div class="overview-header-cell">
-                        <span>Contact</span>
-                      </div>
-                      <button class="table-column-resizer" type="button" aria-label="Resize contact column" (mousedown)="startOverviewColumnResize('upcoming', 1, $event)"></button>
-                    </th>
-                    <th><div class="overview-header-cell"><span>Reminder</span></div></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    *ngFor="let bookmark of overviewUpcomingFollowups"
-                    (click)="openFollowupInWorkspace(bookmark)"
-                  >
-                    <td>{{ bookmark.companyName }}</td>
-                    <td>{{ bookmark.contactName || 'Primary Contact' }}</td>
-                    <td>{{ bookmark.reminderDate | date:'dd MMM yyyy' }}</td>
-                  </tr>
-                  <tr *ngIf="overviewUpcomingFollowups.length === 0">
-                    <td colspan="3" class="empty-cell overview-empty-cell">No follow-ups scheduled.</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="overview-table-scroll overview-followup-scroll">
+              <div class="overview-followup-list" aria-label="Employee follow-ups">
+                <div class="overview-followup-list-head" aria-hidden="true">
+                  <span>Company</span>
+                  <span>Contact</span>
+                  <span>Reminder</span>
+                </div>
+
+                <button
+                  *ngFor="let bookmark of overviewUpcomingFollowups"
+                  class="overview-followup-row"
+                  type="button"
+                  (click)="openFollowupInWorkspace(bookmark)"
+                >
+                  <span class="overview-followup-company">{{ bookmark.companyName || 'Unnamed Company' }}</span>
+                  <span class="overview-followup-contact">{{ bookmark.contactName || bookmark.contactNumber || 'Contact not set' }}</span>
+                  <span class="overview-followup-reminder">
+                    <span class="overview-followup-date-main">
+                      {{ bookmark.reminderDate ? (bookmark.reminderDate | date:'dd MMM') : 'Not set' }}
+                    </span>
+                    <span class="overview-followup-date-sub" *ngIf="bookmark.reminderDate">
+                      {{ bookmark.reminderDate | date:'yyyy' }}
+                    </span>
+                  </span>
+                </button>
+
+                <div *ngIf="overviewFollowupsLoading" class="empty-cell overview-empty-cell overview-followup-empty">
+                  Loading follow-ups...
+                </div>
+                <div *ngIf="!overviewFollowupsLoading && overviewUpcomingFollowups.length === 0" class="empty-cell overview-empty-cell overview-followup-empty">
+                  No follow-ups marked yet.
+                </div>
+              </div>
             </div>
           </section>
         </div>
@@ -793,94 +788,64 @@
                 (ngModelChange)="onClientOnboardingSearchChange()"
               />
             </label>
+            <button class="primary-action client-onboarding-create-button" type="button" (click)="openClientOnboardingCreateModal()">
+              Create Client
+            </button>
           </div>
         </div>
 
-        <div class="invoice-feature-grid client-onboarding-grid">
-          <section class="invoice-feature-pane invoice-converted-pane">
-            <div class="invoice-pane-header">
-              <div>
-                <h2>Onboarded Clients</h2>
-                <p>{{ clientOnboardingLoading ? 'Loading clients' : (clientOnboardingTotal + ' listed') }}</p>
-              </div>
-            </div>
-            <div class="invoice-lead-list" (scroll)="onClientOnboardingScroll($event)">
-              <article
-                class="invoice-lead-row client-onboarding-row"
-                *ngFor="let client of clientOnboardingRecords"
-                [class.active]="selectedOnboardingClientId===client.clientId"
-                (click)="selectOnboardingClient(client)"
-                tabindex="0"
-                role="button"
-              >
-                <div class="invoice-lead-main">
-                  <span class="invoice-lead-company">{{ client.companyName }}</span>
-                  <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || 'Primary Contact' }}</span>
-                </div>
-              </article>
-              <div *ngIf="clientOnboardingLoading" class="empty-state-inline">Loading onboarded clients...</div>
-              <div *ngIf="clientOnboardingLoadingMore" class="empty-state-inline">Loading more onboarded clients...</div>
-              <div *ngIf="!clientOnboardingLoading && !clientOnboardingLoadingMore && clientOnboardingRecords.length===0" class="empty-state-inline">No onboarded clients match the current search.</div>
-            </div>
-          </section>
+        <div class="client-onboarding-summary">
+          <div>
+            <span>Onboarded Clients</span>
+            <strong>{{ clientOnboardingLoading ? '...' : clientOnboardingTotal }}</strong>
+          </div>
+        </div>
 
-          <section class="invoice-feature-pane client-onboarding-form-pane">
-            <div class="invoice-pane-header">
-              <div>
-                <h2>New Client</h2>
-                <p>Client IDs are generated automatically.</p>
-              </div>
-            </div>
-            <div class="client-onboarding-form-scroll">
-              <form class="client-onboarding-form" (ngSubmit)="submitClientOnboarding()">
-                <label class="mini-field">
-                  <span>Company Name</span>
-                  <input class="field-input" type="text" name="clientCompanyName" [(ngModel)]="clientOnboardingDraft.companyName" required />
-                </label>
-                <label class="mini-field">
-                  <span>Primary Contact</span>
-                  <input class="field-input" type="text" name="clientPrimaryContactName" [(ngModel)]="clientOnboardingDraft.primaryContactName" />
-                </label>
-                <label class="mini-field">
-                  <span>Phone</span>
-                  <input class="field-input" type="tel" name="clientPrimaryPhone" [(ngModel)]="clientOnboardingDraft.primaryPhone" />
-                </label>
-                <label class="mini-field">
-                  <span>Email</span>
-                  <input class="field-input" type="email" name="clientPrimaryEmail" [(ngModel)]="clientOnboardingDraft.primaryEmail" />
-                </label>
-                <label class="mini-field client-onboarding-full">
-                  <span>Address</span>
-                  <textarea class="field-textarea" name="clientAddress" rows="3" [(ngModel)]="clientOnboardingDraft.address"></textarea>
-                </label>
-
-                <div class="form-error" *ngIf="clientOnboardingError">{{ clientOnboardingError }}</div>
-                <div class="form-error form-success" *ngIf="clientOnboardingSuccess">{{ clientOnboardingSuccess }}</div>
-
-                <div class="action-row client-onboarding-actions">
-                  <button class="secondary-action" type="button" (click)="resetClientOnboardingDraft()">Clear</button>
-                  <button class="primary-action" type="submit" [disabled]="clientOnboardingSaving">
-                    {{ clientOnboardingSaving ? 'Saving...' : 'Onboard Client' }}
-                  </button>
-                </div>
-              </form>
-
-              <section class="invoice-control-card client-onboarding-selected-card" *ngIf="selectedOnboardingClient as client">
-                <div class="invoice-pane-header client-onboarding-selected-header">
-                  <div>
-                    <h2>{{ client.companyName }}</h2>
-                    <p>{{ client.clientId }}</p>
+        <div class="table-scroll client-onboarding-table-scroll" (scroll)="onClientOnboardingScroll($event)">
+          <table class="data-table compact-table client-onboarding-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Client ID</th>
+                <th>Contact</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Source</th>
+                <th>Updated</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let client of clientOnboardingRecords" [class.row-active]="selectedOnboardingClientId===client.clientId" (click)="selectOnboardingClient(client)">
+                <td>
+                  <div class="table-primary">{{ client.companyName }}</div>
+                </td>
+                <td>{{ client.clientId || '—' }}</td>
+                <td>{{ client.primaryContactName || client.primaryContact || '—' }}</td>
+                <td>{{ client.primaryPhone || '—' }}</td>
+                <td>{{ client.primaryEmail || '—' }}</td>
+                <td><span class="client-onboarding-source-pill">{{ client.source === 'converted_lead' ? 'Converted Lead' : 'Manual' }}</span></td>
+                <td>{{ fmtDate(client.updatedAt || client.onboardedAt || client.createdAt) }}</td>
+                <td class="client-onboarding-manage-cell">
+                  <button class="client-onboarding-kebab-button" type="button" (click)="toggleClientOnboardingRowMenu(client, $event)" aria-label="Manage client">⋮</button>
+                  <div class="profile-menu client-onboarding-row-menu" *ngIf="isClientOnboardingRowMenuOpen(client)" role="menu" (click)="$event.stopPropagation()">
+                    <button class="profile-menu-item" type="button" role="menuitem" (click)="openClientOnboardingEditModal(client)">
+                      Edit
+                    </button>
                   </div>
-                </div>
-                <div class="client-onboarding-selected-grid">
-                  <div><span>Contact</span><strong>{{ client.primaryContactName || client.primaryContact || 'Primary Contact' }}</strong></div>
-                  <div><span>Phone</span><strong>{{ client.primaryPhone || '—' }}</strong></div>
-                  <div><span>Email</span><strong>{{ client.primaryEmail || '—' }}</strong></div>
-                  <div><span>Source</span><strong>{{ client.source === 'converted_lead' ? 'Converted Lead' : 'Manual' }}</strong></div>
-                </div>
-              </section>
-            </div>
-          </section>
+                </td>
+              </tr>
+              <tr *ngIf="clientOnboardingLoading">
+                <td colspan="8" class="empty-cell">Loading onboarded clients...</td>
+              </tr>
+              <tr *ngIf="clientOnboardingLoadingMore">
+                <td colspan="8" class="empty-cell">Loading more onboarded clients...</td>
+              </tr>
+              <tr *ngIf="!clientOnboardingLoading && !clientOnboardingLoadingMore && clientOnboardingRecords.length===0">
+                <td colspan="8" class="empty-cell">No onboarded clients match the current search.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -1271,312 +1236,57 @@
           </div>
         </div>
 
-        <div class="record-frame lead-record-frame followup-record-frame">
-          <aside class="company-rail lead-company-rail followup-company-rail">
-            <div class="rail-header">
-              <div class="rail-heading">Companies</div>
-              <div class="rail-total">{{ uniqueFollowupCompanies.length }} listed</div>
+        <div class="record-frame lead-record-frame followup-record-frame followup-list-frame">
+          <section class="record-table-pane lead-table-pane lead-table-pane-full followup-list-pane">
+            <div class="table-pane-header followup-list-header">
+              <h3>Follow-ups</h3>
+              <div class="table-pane-meta">{{ filteredFollowups.length }} follow-ups</div>
             </div>
-            <div class="rail-list">
-              <button
-                class="rail-item"
-                *ngFor="let company of uniqueFollowupCompanies"
-                [class.active]="activeFollowupCompany===company"
-                (click)="selectLeadCompany(company)"
-              >
-                <span class="rail-item-copy">
-                  <span class="rail-item-name">{{ company }}</span>
-                  <span class="rail-item-meta">{{ followupsInCompanyCount(company) }} follow-ups</span>
-                </span>
-              </button>
-              <div *ngIf="uniqueFollowupCompanies.length===0" class="empty-state-inline empty-state-inline-minimal">No records.</div>
+
+            <div class="table-scroll followup-simple-table-scroll" (scroll)="onFollowupScroll($event)">
+              <table class="data-table compact-table followup-simple-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="let bookmark of filteredFollowups"
+                    class="history-click-row followup-simple-row"
+                    tabindex="0"
+                    role="button"
+                    [attr.title]="'Open company profile for ' + (bookmark.companyName || 'follow-up company')"
+                    (click)="openLeadFromFollowup(bookmark)"
+                    (keydown.enter)="openLeadFromFollowup(bookmark)"
+                    (keydown.space)="$event.preventDefault(); openLeadFromFollowup(bookmark)"
+                  >
+                    <td>
+                      <div class="followup-company-cell">
+                        <span>{{ bookmark.companyName || 'Unnamed Company' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="followup-contact-cell">
+                        <span class="followup-contact-name">{{ bookmark.contactName || 'Primary Contact' }}</span>
+                        <span class="followup-contact-phone">{{ bookmark.contactNumber || 'No number' }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="followupsLoading">
+                    <td colspan="2" class="empty-cell">Loading follow-ups...</td>
+                  </tr>
+                  <tr *ngIf="followupsLoadingMore">
+                    <td colspan="2" class="empty-cell">Loading more follow-ups...</td>
+                  </tr>
+                  <tr *ngIf="!followupsLoading && !followupsLoadingMore && filteredFollowups.length===0">
+                    <td colspan="2" class="empty-cell">No follow-ups found.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </aside>
-
-          <ng-container *ngIf="showFollowupRecordView; else followupListMode">
-            <ng-template [ngTemplateOutlet]="followupDrawerTemplate"></ng-template>
-          </ng-container>
-
-          <ng-template #followupListMode>
-            <section class="record-table-pane lead-table-pane lead-table-pane-full lead-company-pane">
-              <div class="table-pane-header lead-company-pane-header">
-                <div>
-                  <h3>{{ activeFollowupCompany || 'Follow-up queue' }}</h3>
-                  <div class="lead-company-pane-subtitle" *ngIf="activeFollowupCompany && followupCompanyPreviewLine(activeFollowupCompany)">
-                    {{ followupCompanyPreviewLine(activeFollowupCompany) }}
-                  </div>
-                </div>
-                <div class="lead-pane-actions">
-                  <div class="table-pane-meta">{{ followupsInActiveCompany.length }} follow-ups</div>
-                  <button
-                    class="ai-summary-button ai-summary-anchor"
-                    type="button"
-                    *ngIf="activeFollowupHeroLead()"
-                    (click)="openAiBriefForCurrentCompany($event)"
-                  >
-                    <span aria-hidden="true">✦</span>
-                    <span>AI Summary</span>
-                  </button>
-                  <button
-                    class="toolbar-button invoice-date-filter-button"
-                    type="button"
-                    *ngIf="activeFollowupHeroLead()"
-                    (click)="openAiBriefFullView($event)"
-                  >
-                    Full View
-                  </button>
-                </div>
-              </div>
-
-              <ng-container *ngIf="isAiBriefPopupOpen(currentAiSummaryTargetKey()); else followupCardsContent">
-                <section class="ai-summary-tab-panel ai-summary-anchor" (click)="$event.stopPropagation()">
-                  <div class="ai-summary-tab-head">
-                    <div>
-                      <div class="ai-summary-tab-kicker">AI Summary</div>
-                      <h4>{{ aiBriefCompany || activeFollowupCompany || 'Follow-up queue' }}</h4>
-                    </div>
-                    <button class="secondary-action back-action-inline" type="button" (click)="closeAiBriefPopup()">
-                      <span class="back-action-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                          <path d="m15 18-6-6 6-6" />
-                          <path d="M21 12H9" />
-                        </svg>
-                      </span>
-                      <span>Back to Follow-ups</span>
-                    </button>
-                  </div>
-
-                  <div class="empty-state-inline empty-state-inline-minimal" *ngIf="aiBriefLoading">Loading summary.</div>
-                  <div class="ai-summary-empty-panel" *ngIf="!aiBriefLoading && aiBriefError">
-                    <h4>Summary unavailable</h4>
-                    <p>{{ aiBriefError }}</p>
-                  </div>
-
-                  <div class="ai-summary-tab-body" *ngIf="!aiBriefLoading && aiBrief">
-                    <ng-template [ngTemplateOutlet]="aiSummaryFullTemplate"></ng-template>
-                  </div>
-                </section>
-              </ng-container>
-
-              <ng-template #followupCardsContent>
-              <div class="lead-company-pane-scroll" (scroll)="onFollowupScroll($event)">
-                <div
-                  class="lead-card-grid lead-card-grid-followups"
-                  [class.lead-card-grid-single]="followupsInActiveCompany.length===1"
-                  *ngIf="followupsInActiveCompany.length > 0; else emptyFollowupCompanyState"
-                >
-                  <ng-container *ngFor="let bookmark of followupsInActiveCompany">
-                    <ng-container *ngIf="{ matchedLead: getMatchedLeadForBookmark(bookmark) } as ctx">
-                      <article
-                        class="lead-record-card followup-record-card"
-                        role="button"
-                        tabindex="0"
-                        [attr.title]="'Open full details for ' + (bookmark.contactName || 'follow-up contact')"
-                        (click)="openLeadFromFollowup(bookmark)"
-                        (keydown.enter)="openLeadFromFollowup(bookmark)"
-                      >
-                        <div class="lead-record-card-head">
-                          <div class="lead-record-title-row">
-                            <h4 [title]="bookmark.contactName || 'Follow-up Contact'">{{ bookmark.contactName || 'Follow-up Contact' }}</h4>
-                            <button
-                              class="lead-card-star"
-                              type="button"
-                              [class.active]="ctx.matchedLead?.isStarred"
-                              [disabled]="!ctx.matchedLead"
-                              [attr.aria-label]="ctx.matchedLead ? (ctx.matchedLead.isStarred ? 'Unstar lead' : 'Star lead') : 'Star unavailable'"
-                              [attr.title]="ctx.matchedLead ? (ctx.matchedLead.isStarred ? 'Unstar lead' : 'Star lead') : 'Star unavailable'"
-                              (click)="$event.stopPropagation(); ctx.matchedLead && toggleStar(ctx.matchedLead)"
-                            >
-                              <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-
-                        <div class="lead-record-line" [title]="bookmark.contactNumber || '-'">
-                          <span class="lead-record-line-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                          </span>
-                          <span class="lead-record-line-value">{{ bookmark.contactNumber || '-' }}</span>
-                        </div>
-
-                        <button
-                          class="lead-card-invoice-action"
-                          type="button"
-                          *ngIf="ctx.matchedLead; else followupOpenDetailsAction"
-                          title="Generate invoice"
-                          (click)="$event.stopPropagation(); openInvoiceModal(ctx.matchedLead)"
-                        >
-                          <span aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
-                          </span>
-                          <span>Generate Invoice</span>
-                        </button>
-                        <ng-template #followupOpenDetailsAction>
-                          <button
-                            class="lead-card-invoice-action"
-                            type="button"
-                            title="Open full details"
-                            (click)="$event.stopPropagation(); openLeadFromFollowup(bookmark)"
-                          >
-                            <span aria-hidden="true">
-                              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /><path d="M5 12h10" /></svg>
-                            </span>
-                            <span>Open Full Details</span>
-                          </button>
-                        </ng-template>
-
-                        <div class="lead-record-line" [title]="followupReminderLabel(bookmark)">
-                          <span class="lead-record-line-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M8 2v4" /><path d="M16 2v4" /><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M3 10h18" /></svg>
-                          </span>
-                          <span class="lead-record-line-value">{{ followupReminderLabel(bookmark) }}</span>
-                        </div>
-
-                        <div class="lead-record-line lead-record-email" [title]="ctx.matchedLead?.directorEmailAddress || 'No email available'">
-                          <span class="lead-record-line-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
-                          </span>
-                          <span class="lead-record-line-value">{{ ctx.matchedLead?.directorEmailAddress || 'No email available' }}</span>
-                        </div>
-
-                        <div class="lead-card-remarks">
-                          <div class="lead-card-remarks-title">
-                            <span class="lead-record-line-icon" aria-hidden="true">
-                              <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></svg>
-                            </span>
-                            <span>Remarks</span>
-                            <button
-                              class="text-action"
-                              type="button"
-                              title="View remark history"
-                              (click)="$event.stopPropagation(); openFollowupHistory(bookmark)"
-                            >
-                              History
-                            </button>
-                          </div>
-                          <div class="lead-card-remark-list" *ngIf="followupCardNotePreviewList(bookmark).length; else emptyFollowupCardRemarks">
-                            <div class="lead-card-remark-item" *ngFor="let remark of followupCardNotePreviewList(bookmark)" [title]="remark">{{ remark }}</div>
-                          </div>
-                          <ng-template #emptyFollowupCardRemarks>
-                            <div class="lead-card-empty">No remarks added.</div>
-                          </ng-template>
-                          <div class="lead-card-remark-entry">
-                            <div class="lead-card-remark-combobox" (click)="$event.stopPropagation()">
-                              <input
-                                class="field-input lead-card-remark-input"
-                                type="text"
-                                [ngModel]="followupRemarkInputs[bookmark._id] || ''"
-                                (ngModelChange)="handleFollowupRemarkInput(bookmark, $event)"
-                                (click)="$event.stopPropagation()"
-                                (focus)="openFollowupRemarkMenu(bookmark._id)"
-                                (blur)="queueCloseFollowupRemarkMenu(bookmark._id)"
-                                (keyup.enter)="$event.stopPropagation(); addFollowupRemark(bookmark)"
-                                autocomplete="off"
-                                autocapitalize="off"
-                                autocorrect="off"
-                                spellcheck="false"
-                                placeholder="Type remark..."
-                                [title]="followupRemarkInputs[bookmark._id] || 'Type remark'"
-                              />
-                              <button
-                                class="lead-card-remark-toggle"
-                                type="button"
-                                title="Show admin remark options"
-                                aria-label="Show admin remark options"
-                                (mousedown)="$event.preventDefault()"
-                                (click)="toggleFollowupRemarkMenu(bookmark._id)"
-                              >
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-                              </button>
-                              <div class="lead-card-remark-options" *ngIf="isFollowupRemarkMenuOpen(bookmark._id) && filteredFollowupAdminRemarkOptions(bookmark).length > 0">
-                                <button
-                                  class="lead-card-remark-option"
-                                  type="button"
-                                  *ngFor="let remark of filteredFollowupAdminRemarkOptions(bookmark)"
-                                  [title]="remark"
-                                  (mousedown)="$event.preventDefault()"
-                                  (click)="selectFollowupAdminRemark(bookmark, remark)"
-                                >
-                                  {{ remark }}
-                                </button>
-                              </div>
-                            </div>
-                            <button
-                              class="lead-card-add-remark"
-                              type="button"
-                              title="Add remark"
-                              aria-label="Add remark"
-                              (click)="$event.stopPropagation(); addFollowupRemark(bookmark)"
-                              [disabled]="!canAddFollowupRemark(bookmark)"
-                            >
-                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
-                            </button>
-                          </div>
-                        </div>
-
-                        <div class="lead-card-actions">
-                          <ng-container *ngIf="ctx.matchedLead; else followupUnavailableStatus">
-                            <select
-                              class="field-select lead-card-status-select"
-                              [ngModel]="ctx.matchedLead.status"
-                              (click)="$event.stopPropagation()"
-                              (ngModelChange)="updateLeadStatus(ctx.matchedLead, $event)"
-                              [style.color]="leadStatusColor(ctx.matchedLead.status)"
-                              [disabled]="updatingLeadId===ctx.matchedLead._id"
-                              [title]="ctx.matchedLead.status || 'Lead status'"
-                              aria-label="Lead status"
-                            >
-                              <option *ngFor="let st of LEAD_STATUSES" [value]="st" [style.color]="leadStatusColor(st)">{{ st }}</option>
-                            </select>
-                          </ng-container>
-                          <ng-template #followupUnavailableStatus>
-                            <select
-                              class="field-select lead-card-status-select"
-                              [ngModel]="'Follow-up'"
-                              disabled
-                              title="Lead status unavailable"
-                              aria-label="Lead status unavailable"
-                            >
-                              <option value="Follow-up">Follow-up</option>
-                            </select>
-                          </ng-template>
-
-                          <button
-                            class="lead-card-icon-action lead-card-followup-action"
-                            type="button"
-                            title="Edit follow-up"
-                            aria-label="Edit follow-up"
-                            (click)="$event.stopPropagation(); openEditFollowupModal(bookmark)"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                          </button>
-
-                          <button
-                            class="lead-card-icon-action lead-card-favourite-action"
-                            type="button"
-                            [class.active]="ctx.matchedLead?.isFavourite"
-                            [disabled]="!ctx.matchedLead"
-                            [attr.aria-label]="ctx.matchedLead ? (ctx.matchedLead.isFavourite ? 'Remove from Favorites' : 'Add to Favorites') : 'Favorites unavailable'"
-                            [attr.title]="ctx.matchedLead ? (ctx.matchedLead.isFavourite ? 'Remove from Favorites' : 'Add to Favorites') : 'Favorites unavailable'"
-                            (click)="$event.stopPropagation(); ctx.matchedLead && toggleFavourite(ctx.matchedLead)"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-                          </button>
-                        </div>
-                      </article>
-                    </ng-container>
-                  </ng-container>
-                </div>
-
-                <ng-template #emptyFollowupCompanyState>
-                  <div class="empty-state-inline empty-state-inline-pane">No follow-ups available in this queue.</div>
-                </ng-template>
-              </div>
-              </ng-template>
-            </section>
-          </ng-template>
+          </section>
         </div>
       </section>
     </main>
@@ -2372,6 +2082,95 @@
         <ng-template [ngTemplateOutlet]="aiSummaryFullTemplate"></ng-template>
       </ng-container>
     </div>
+  </div>
+</div>
+
+<div class="invoice-overlay" *ngIf="clientOnboardingCreateOpen" (click)="closeClientOnboardingCreateModal()">
+  <div class="invoice-modal client-onboarding-modal" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="closeClientOnboardingCreateModal()" aria-label="Close create client">✕</button>
+    <div class="client-onboarding-modal-brand">
+      <img src="assets/icon/logo.png" alt="DealVoice Logo">
+    </div>
+    <h2 class="client-onboarding-modal-title">Create Client</h2>
+    <p class="client-onboarding-modal-subtitle">Client IDs are generated automatically.</p>
+
+    <form class="client-onboarding-form client-onboarding-modal-form" (ngSubmit)="submitClientOnboarding()">
+      <label class="mini-field client-onboarding-full">
+        <span>Company Name</span>
+        <input class="field-input" type="text" name="modalClientCompanyName" placeholder="Enter company name" [(ngModel)]="clientOnboardingDraft.companyName" required />
+      </label>
+      <label class="mini-field">
+        <span>Primary Contact Name</span>
+        <input class="field-input" type="text" name="modalClientPrimaryContactName" placeholder="Enter primary contact name" [(ngModel)]="clientOnboardingDraft.primaryContactName" />
+      </label>
+      <label class="mini-field">
+        <span>Phone Number</span>
+        <input class="field-input" type="tel" name="modalClientPrimaryPhone" placeholder="Enter phone number" [(ngModel)]="clientOnboardingDraft.primaryPhone" />
+      </label>
+      <label class="mini-field">
+        <span>Email Address</span>
+        <input class="field-input" type="email" name="modalClientPrimaryEmail" placeholder="Enter email address" [(ngModel)]="clientOnboardingDraft.primaryEmail" />
+      </label>
+      <label class="mini-field client-onboarding-full">
+        <span>Registered Address</span>
+        <textarea class="field-textarea" name="modalClientAddress" rows="3" placeholder="Enter registered address" [(ngModel)]="clientOnboardingDraft.address"></textarea>
+      </label>
+
+      <div class="form-error" *ngIf="clientOnboardingError">{{ clientOnboardingError }}</div>
+      <div class="form-error form-success" *ngIf="clientOnboardingSuccess">{{ clientOnboardingSuccess }}</div>
+
+      <div class="action-row client-onboarding-actions">
+        <button class="secondary-action" type="button" (click)="resetClientOnboardingDraft()">Clear</button>
+        <button class="primary-action" type="submit" [disabled]="clientOnboardingSaving">
+          {{ clientOnboardingSaving ? 'Saving...' : 'Onboard Client' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="invoice-overlay" *ngIf="clientOnboardingEditOpen" (click)="closeClientOnboardingEditModal()">
+  <div class="invoice-modal client-onboarding-modal" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="closeClientOnboardingEditModal()" aria-label="Close edit client">✕</button>
+    <div class="client-onboarding-modal-brand">
+      <img src="assets/icon/logo.png" alt="DealVoice Logo">
+    </div>
+    <h2 class="client-onboarding-modal-title">Edit Client</h2>
+    <p class="client-onboarding-modal-subtitle">
+      {{ editingClientOnboarding?.clientId || editingClientOnboarding?.companyName || 'Update client details.' }}
+    </p>
+
+    <form class="client-onboarding-form client-onboarding-modal-form" (ngSubmit)="submitClientOnboardingEdit()">
+      <label class="mini-field client-onboarding-full">
+        <span>Company Name</span>
+        <input class="field-input" type="text" name="editClientCompanyName" placeholder="Enter company name" [(ngModel)]="clientOnboardingEditDraft.companyName" required />
+      </label>
+      <label class="mini-field">
+        <span>Primary Contact Name</span>
+        <input class="field-input" type="text" name="editClientPrimaryContactName" placeholder="Enter primary contact name" [(ngModel)]="clientOnboardingEditDraft.primaryContactName" />
+      </label>
+      <label class="mini-field">
+        <span>Phone Number</span>
+        <input class="field-input" type="tel" name="editClientPrimaryPhone" placeholder="Enter phone number" [(ngModel)]="clientOnboardingEditDraft.primaryPhone" />
+      </label>
+      <label class="mini-field">
+        <span>Email Address</span>
+        <input class="field-input" type="email" name="editClientPrimaryEmail" placeholder="Enter email address" [(ngModel)]="clientOnboardingEditDraft.primaryEmail" />
+      </label>
+      <label class="mini-field client-onboarding-full">
+        <span>Registered Address</span>
+        <textarea class="field-textarea" name="editClientAddress" rows="3" placeholder="Enter registered address" [(ngModel)]="clientOnboardingEditDraft.address"></textarea>
+      </label>
+
+      <div class="form-error" *ngIf="clientOnboardingEditError">{{ clientOnboardingEditError }}</div>
+
+      <div class="action-row client-onboarding-actions">
+        <button class="secondary-action" type="button" (click)="closeClientOnboardingEditModal()">Cancel</button>
+        <button class="primary-action" type="submit" [disabled]="clientOnboardingEditSaving">
+          {{ clientOnboardingEditSaving ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 

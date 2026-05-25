@@ -305,6 +305,28 @@ export class AdminInvoiceQuotationWorkflow {
     });
   }
 
+  fetchAdminQuotationClients(vm: any): void {
+    if (!vm.dashboardCode) return;
+    vm.adminInvoiceClientsLoading = true;
+    const params = new URLSearchParams({
+      companyCode: vm.dashboardCode,
+      search: vm.quotationSearch.trim(),
+      page: '1',
+      pageSize: '200',
+    });
+    this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
+      next: (res) => {
+        vm.adminInvoiceClientsLoading = false;
+        const rawClients = Array.isArray(res?.clients) ? res.clients : (res?.items || []);
+        vm.adminInvoiceClients = rawClients.map((client: any) => this.normalizeClient(client));
+      },
+      error: () => {
+        vm.adminInvoiceClientsLoading = false;
+        vm.adminInvoiceClients = [];
+      },
+    });
+  }
+
   fetchClientOnboardingRecords(vm: any): void {
     if (!vm.dashboardCode) return;
     vm.clientOnboardingLoading = true;
@@ -367,6 +389,9 @@ export class AdminInvoiceQuotationWorkflow {
           primaryEmail: '',
           address: '',
         };
+        if (typeof vm.closeClientOnboardingCreateModal === 'function') {
+          vm.closeClientOnboardingCreateModal();
+        }
         this.fetchClientOnboardingRecords(vm);
         this.fetchAdminInvoiceClients(vm);
       },
@@ -653,6 +678,27 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
+    this.resetInvoicePublicLink(vm);
+    vm.showInvoiceModal = true;
+  }
+
+  openAdminQuotationModalForClient(vm: any, client: any): void {
+    const normalizedClient = this.normalizeClient(client);
+    vm.quoteMode = true;
+    vm.viewingSavedDocument = false;
+    vm.currentInvoiceRecord = null;
+    vm.selectedInvoiceClient = normalizedClient;
+    this.resetDocumentGstSelection(vm);
+    vm.invoiceLead = this.clientToLead(vm, normalizedClient);
+    vm.invoiceItems = [];
+    vm.selectedInvoiceProduct = null;
+    vm.invoicePrice = 0;
+    vm.invoiceQuantity = 1;
+    vm.invoicePaymentStatus = 'unpaid';
+    vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
+    vm.invoiceIssuedAt = new Date();
+    vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
+    vm.currentQuotationNumber = '';
     this.resetInvoicePublicLink(vm);
     vm.showInvoiceModal = true;
   }

@@ -432,6 +432,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   clientOnboardingSearch = '';
   clientOnboardingLoading = false;
   selectedOnboardingClientId = '';
+  clientOnboardingCreateOpen = false;
+  clientOnboardingOpenMenuKey = '';
   clientOnboardingDraft = {
     companyName: '',
     primaryContactName: '',
@@ -1141,8 +1143,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     }
     if (tab === 'quotation') {
       this.fetchSettings();
-      this.fetchAdminLeads();
-      this.fetchInvoiceRecords();
+      this.fetchAdminQuotationClients();
       this.fetchQuotationRecords();
     }
   }
@@ -1179,7 +1180,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'leads': return 'Search leads, phone, or company...';
       case 'remarks_filter': return 'Search companies, contacts, or remarks...';
       case 'followups': return 'Search follow-ups, phone, or company...';
-      case 'quotation': return 'Search quotations, leads, or company...';
+      case 'quotation': return 'Search onboarded clients...';
       case 'invoice': return 'Search onboarded clients...';
       case 'client_onboarding': return 'Search onboarded clients...';
       case 'invoice_settings': return 'Search leads, phone, or company...';
@@ -1227,6 +1228,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     }
     if (this.dashTab === 'quotation') {
       this.quotationSearch = value;
+      this.fetchAdminQuotationClients();
       return;
     }
     if (this.dashTab === 'employees') {
@@ -1504,6 +1506,8 @@ export abstract class AdminWorkspaceController implements OnInit {
         this.editCrmClientLoading = false;
         this.isEditCrmClientOpen = false;
         this.fetchCrmClients();
+        this.fetchClientOnboardingRecords();
+        this.fetchAdminInvoiceClients();
       },
       error: (err) => {
         this.editCrmClientLoading = false;
@@ -3986,6 +3990,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (this.crmProjectOpenMenuKey && (!target || !target.closest('.crm-manage-cell'))) {
       this.crmProjectOpenMenuKey = '';
     }
+    if (this.clientOnboardingOpenMenuKey && (!target || !target.closest('.client-onboarding-manage-cell'))) {
+      this.clientOnboardingOpenMenuKey = '';
+    }
     if (this.productTagDropdownOpenKey && (!target || !target.closest('.product-tag-dropdown'))) {
       this.productTagDropdownOpenKey = '';
     }
@@ -3995,6 +4002,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.closeProfileMenu();
     this.crmAmcOpenMenuKey = '';
     this.crmProjectOpenMenuKey = '';
+    this.clientOnboardingOpenMenuKey = '';
+    this.closeClientOnboardingCreateModal();
     this.productTagDropdownOpenKey = '';
   }
 
@@ -4283,15 +4292,45 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   fetchAdminInvoiceClients(): void { return this.invoiceQuotationWorkflow.fetchAdminInvoiceClients(this); }
 
+  fetchAdminQuotationClients(): void { return this.invoiceQuotationWorkflow.fetchAdminQuotationClients(this); }
+
   fetchClientOnboardingRecords(): void { return this.invoiceQuotationWorkflow.fetchClientOnboardingRecords(this); }
 
   submitClientOnboarding(): void { return this.invoiceQuotationWorkflow.submitClientOnboarding(this); }
 
   resetClientOnboardingDraft(): void { return this.invoiceQuotationWorkflow.resetClientOnboardingDraft(this); }
 
+  openClientOnboardingCreateModal(): void {
+    this.resetClientOnboardingDraft();
+    this.clientOnboardingCreateOpen = true;
+  }
+
+  closeClientOnboardingCreateModal(): void {
+    this.clientOnboardingCreateOpen = false;
+  }
+
   selectOnboardingClient(client: any): void { return this.invoiceQuotationWorkflow.selectOnboardingClient(this, client); }
 
   get selectedOnboardingClient(): any { return this.invoiceQuotationWorkflow.selectedOnboardingClient(this); }
+
+  clientOnboardingRowKey(client: any): string {
+    return String(client?._id || client?.id || client?.clientId || client?.companyName || '');
+  }
+
+  toggleClientOnboardingRowMenu(client: any, event?: Event): void {
+    event?.stopPropagation();
+    const key = this.clientOnboardingRowKey(client);
+    this.clientOnboardingOpenMenuKey = this.clientOnboardingOpenMenuKey === key ? '' : key;
+  }
+
+  isClientOnboardingRowMenuOpen(client: any): boolean {
+    return !!this.clientOnboardingOpenMenuKey && this.clientOnboardingOpenMenuKey === this.clientOnboardingRowKey(client);
+  }
+
+  editOnboardingClient(client: any): void {
+    this.clientOnboardingOpenMenuKey = '';
+    this.openEditCrmClientModal(client);
+  }
 
   get adminConvertedInvoiceLeads(): Lead[] { return this.invoiceQuotationWorkflow.adminConvertedInvoiceLeads(this); }
 
@@ -4320,6 +4359,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   openAdminInvoiceModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModal(this, lead); }
 
   openAdminInvoiceModalForClient(client: any): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModalForClient(this, client); }
+
+  openAdminQuotationModalForClient(client: any): void { return this.invoiceQuotationWorkflow.openAdminQuotationModalForClient(this, client); }
 
   closeInvoiceModal(): void { return this.invoiceQuotationWorkflow.closeInvoiceModal(this); }
 

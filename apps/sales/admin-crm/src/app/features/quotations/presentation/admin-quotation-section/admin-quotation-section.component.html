@@ -6,7 +6,7 @@
               <span class="topbar-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
               </span>
-              <input id="adminQuotationSearch" class="topbar-input" type="text" placeholder="Search leads..." [(ngModel)]="quotationSearch">
+              <input id="adminQuotationSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="quotationSearch" (ngModelChange)="fetchAdminQuotationClients()">
             </label>
           </div>
         </div>
@@ -15,18 +15,19 @@
           <section class="invoice-feature-pane invoice-converted-pane">
             <div class="invoice-pane-header">
               <div>
-                <h2>All Leads</h2>
-                <p>{{ adminQuotationLeads.length }} available leads</p>
+                <h2>Onboarded Clients</h2>
+                <p>{{ adminInvoiceClientsLoading ? 'Loading clients' : (adminInvoiceClients.length + ' listed') }}</p>
               </div>
             </div>
             <div class="invoice-lead-list">
-              <article class="invoice-lead-row" *ngFor="let lead of adminQuotationLeads" (click)="openQuotationModal(lead)" tabindex="0" role="button">
+              <article class="invoice-lead-row" *ngFor="let client of adminInvoiceClients" (click)="openAdminQuotationModalForClient(client)" tabindex="0" role="button">
                 <div class="invoice-lead-main">
-                  <strong>{{ lead.leadCompanyName }}</strong>
-                  <span>{{ lead.contactName || 'Primary Contact' }} · {{ lead.contactNumber }}</span>
+                  <span class="invoice-lead-company">{{ client.companyName }}</span>
+                  <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || client.primaryPhone || 'Primary Contact' }}</span>
                 </div>
               </article>
-              <div *ngIf="adminQuotationLeads.length===0" class="empty-state-inline">No leads match the current search.</div>
+              <div *ngIf="adminInvoiceClientsLoading" class="empty-state-inline">Loading onboarded clients...</div>
+              <div *ngIf="!adminInvoiceClientsLoading && adminInvoiceClients.length===0" class="empty-state-inline">No onboarded clients match the current search.</div>
             </div>
           </section>
 

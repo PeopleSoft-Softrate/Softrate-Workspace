@@ -2,6 +2,72 @@
   display: contents;
 }
 
+.invoice-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid #dfe5ee;
+  background: #ffffff;
+}
+
+.invoice-list-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.invoice-list-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d6d9df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.invoice-list-refresh:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.invoice-list-refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.invoice-list-refresh svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
 .invoice-data-table {
   min-width: 980px;
+}
+
+@media (max-width: 720px) {
+  .invoice-list-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .invoice-list-refresh {
+    width: 100%;
+  }
 }

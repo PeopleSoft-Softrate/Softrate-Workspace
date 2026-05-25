@@ -5,6 +5,17 @@
   </div>
 </div>
 
+<div class="invoice-list-header">
+  <h2>Invoices</h2>
+  <button class="invoice-list-refresh" type="button" (click)="refresh.emit()" [disabled]="loading">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+      <path d="M21 3v6h-6" />
+    </svg>
+    <span>{{ loading ? 'Refreshing...' : 'Refresh' }}</span>
+  </button>
+</div>
+
 <div class="table-scroll finance-table-scroll" *ngIf="rows.length; else emptyList">
   <table class="data-table compact-table finance-data-table invoice-data-table">
     <thead>

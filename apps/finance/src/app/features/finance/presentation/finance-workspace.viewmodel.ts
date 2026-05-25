@@ -3,7 +3,7 @@ import { finalize } from 'rxjs';
 import { FinanceApiService } from '../data/finance-api.service';
 import { amcDetailRows, employeeClaimDetailRows, invoiceDetailRows, moneyOrCount, paymentStatus, titleize } from '../domain/finance-formatters';
 import { FINANCE_NAV_GROUPS, FinanceGroupId, FinanceNavGroup, isIntegratedFinanceView } from '../domain/finance-navigation.model';
-import { FinanceAnalyticsItem, FinanceDetailItem, FinanceListResponse, FinanceRecord } from '../domain/finance-record.model';
+import { FinanceAnalyticsItem, FinanceDetailItem, FinanceListResponse, FinanceQuery, FinanceRecord } from '../domain/finance-record.model';
 
 const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';
 
@@ -13,7 +13,7 @@ export class FinanceWorkspaceViewModel {
   dateFrom = '';
   dateTo = '';
   search = '';
-  statusFilter = 'All Status';
+  statusFilter = 'Unpaid';
   sidebarFeatureSearch = '';
   sidebarOpen = false;
   sidebarMinimized = false;
@@ -113,9 +113,16 @@ export class FinanceWorkspaceViewModel {
     this.activeGroup = group.id;
     this.activeView = view;
     this.search = '';
-    this.statusFilter = 'All Status';
+    this.statusFilter = this.defaultStatusForView(view);
     this.sidebarOpen = false;
     this.loadActive();
+  }
+
+  onStatusFilterChange(status: string): void {
+    this.statusFilter = status;
+    if (this.activeView === 'invoices') {
+      this.loadActive();
+    }
   }
 
   loadActive(): void {
@@ -164,12 +171,20 @@ export class FinanceWorkspaceViewModel {
       });
   }
 
-  private activeQuery(): { companyCode: string; from: string; to: string } {
-    return {
+  private defaultStatusForView(view = this.activeView): string {
+    return view === 'invoices' ? 'Unpaid' : 'All Status';
+  }
+
+  private activeQuery(): FinanceQuery {
+    const query: FinanceQuery = {
       companyCode: this.companyCode.trim(),
       from: this.dateFrom,
       to: this.dateTo,
     };
+    if (this.activeView === 'invoices' && this.statusFilter !== 'All Status') {
+      query.status = this.statusFilter;
+    }
+    return query;
   }
 
   rows(): FinanceRecord[] {
@@ -178,6 +193,7 @@ export class FinanceWorkspaceViewModel {
 
     return rows.filter((row) => {
       const matchesSearch = !search || JSON.stringify(row || {}).toLowerCase().includes(search);
+      if (this.activeView === 'invoices') return matchesSearch;
       const status = paymentStatus(row).toLowerCase();
       const matchesStatus = this.statusFilter === 'All Status' || status === this.statusFilter.toLowerCase();
       return matchesSearch && matchesStatus;

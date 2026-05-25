@@ -8,4 +8,12 @@ import { AdminWorkspaceSectionProxy } from '../../../admin-workspace/sections/ad
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-quotation-section.component.html'
 })
-export class AdminQuotationSectionComponent extends AdminWorkspaceSectionProxy {}
+export class AdminQuotationSectionComponent extends AdminWorkspaceSectionProxy {
+  override fetchAdminQuotationClients(): void {
+    this.vm.fetchAdminQuotationClients();
+  }
+
+  override openAdminQuotationModalForClient(client: any): void {
+    this.vm.openAdminQuotationModalForClient(client);
+  }
+}

@@ -163,9 +163,9 @@
               [value]="vm.statusFilter"
               [options]="vm.statusOptions"
               label="Status filter"
-              (valueChange)="vm.statusFilter = $event"
+              (valueChange)="vm.onStatusFilterChange($event)"
             ></app-status-select>
-            <button class="toolbar-button crm-icon-refresh finance-refresh-button" type="button" title="Sync finance data" aria-label="Sync finance data" (click)="vm.loadActive()">
+            <button class="toolbar-button crm-icon-refresh finance-refresh-button" type="button" title="Sync finance data" aria-label="Sync finance data" (click)="vm.loadActive()" [disabled]="vm.loading">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M21 12a9 9 0 1 1-2.64-6.36" />
                 <path d="M21 3v6h-6" />
@@ -178,7 +178,9 @@
           *ngIf="vm.activeView === 'invoices'"
           [rows]="vm.rows()"
           [analytics]="vm.analytics()"
+          [loading]="vm.loading"
           (openRecord)="vm.openDetail($event)"
+          (refresh)="vm.loadActive()"
         ></app-finance-invoices-view>
 
         <app-finance-amc-renewals-view

@@ -202,6 +202,57 @@
   </div>
 </div>
 
+<!-- ========== CREATE CLIENT MODAL ========== -->
+<div class="modal-overlay" [class.open]="vm.clientOnboardingCreateOpen" (click)="vm.closeClientOnboardingCreateModal()">
+  <div class="modal admin-client-onboarding-modal" (click)="$event.stopPropagation()" style="max-width: 560px;">
+    <button class="modal-close" (click)="vm.closeClientOnboardingCreateModal()">✕</button>
+    <div class="modal-brand">
+      <div class="brand-icon">
+        <img src="assets/icon/logo.png" alt="DealVoice Logo">
+      </div>
+    </div>
+    <h2 class="modal-title">Create Client</h2>
+    <p class="modal-subtitle">Client IDs are generated automatically.</p>
+
+    <form class="modal-form admin-client-onboarding-form" (ngSubmit)="vm.submitClientOnboarding()">
+      <div class="form-error" *ngIf="vm.clientOnboardingError">{{ vm.clientOnboardingError }}</div>
+      <div class="form-error form-success" *ngIf="vm.clientOnboardingSuccess">{{ vm.clientOnboardingSuccess }}</div>
+
+      <div class="form-group">
+        <label for="admin-create-client-companyName">Company Name</label>
+        <input type="text" id="admin-create-client-companyName" [(ngModel)]="vm.clientOnboardingDraft.companyName" name="adminCreateClientCompanyName" placeholder="Enter company name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="admin-create-client-contact">Primary Contact Name</label>
+        <input type="text" id="admin-create-client-contact" [(ngModel)]="vm.clientOnboardingDraft.primaryContactName" name="adminCreateClientPrimaryContactName" placeholder="Enter primary contact name" />
+      </div>
+
+      <div class="form-group">
+        <label for="admin-create-client-phone">Phone Number</label>
+        <input type="text" id="admin-create-client-phone" [(ngModel)]="vm.clientOnboardingDraft.primaryPhone" name="adminCreateClientPrimaryPhone" placeholder="Enter phone number" />
+      </div>
+
+      <div class="form-group">
+        <label for="admin-create-client-email">Email Address</label>
+        <input type="email" id="admin-create-client-email" [(ngModel)]="vm.clientOnboardingDraft.primaryEmail" name="adminCreateClientPrimaryEmail" placeholder="Enter email address" />
+      </div>
+
+      <div class="form-group">
+        <label for="admin-create-client-address">Registered Address</label>
+        <textarea id="admin-create-client-address" [(ngModel)]="vm.clientOnboardingDraft.address" name="adminCreateClientAddress" placeholder="Enter registered address" rows="2"></textarea>
+      </div>
+
+      <div class="action-row admin-client-onboarding-actions" style="justify-content:flex-end; gap:.75rem; margin-top:1rem;">
+        <button class="toolbar-button admin-client-onboarding-clear" type="button" (click)="vm.resetClientOnboardingDraft()">Clear</button>
+        <button type="submit" class="cta-primary admin-client-onboarding-submit" [disabled]="vm.clientOnboardingSaving">
+          {{ vm.clientOnboardingSaving ? 'Saving...' : 'Onboard Client' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ========== EDIT CLIENT MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isEditCrmClientOpen" (click)="vm.closeEditCrmClient()">
   <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">

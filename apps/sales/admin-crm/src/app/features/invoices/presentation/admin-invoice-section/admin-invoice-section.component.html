@@ -19,51 +19,29 @@
 
         <div class="invoice-feature-grid">
           <section class="invoice-feature-pane invoice-converted-pane">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+            <div class="invoice-pane-header">
               <div>
-                <h3 class="settings-section-title">Onboarded Clients</h3>
-                <p style="margin-top:6px; color:#64748b;">{{ adminInvoiceClientsLoading ? 'Loading clients' : (adminInvoiceClients.length + ' listed') }}</p>
+                <h2>Onboarded Clients</h2>
+                <p>{{ adminInvoiceClientsLoading ? 'Loading clients' : (adminInvoiceClients.length + ' listed') }}</p>
               </div>
             </div>
-            <div style="max-height: 340px; overflow:auto; border:1px solid #e5e7eb;">
-              <table style="width:100%; border-collapse:collapse;">
-                <thead style="position:sticky; top:0; background:#fff; z-index:1;">
-                  <tr>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Client ID</th>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Company</th>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Contact</th>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Source</th>
-                    <th style="padding:12px; text-align:right; color:#6b7280; font-weight:600;">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let client of adminInvoiceClients" style="border-top:1px solid #e5e7eb;">
-                    <td style="padding:12px; color:#111827;">{{ client.clientId }}</td>
-                    <td style="padding:12px; color:#111827;">{{ client.companyName }}</td>
-                    <td style="padding:12px; color:#4b5563;">{{ client.primaryContactName || client.primaryContact || client.primaryPhone || 'Primary Contact' }}</td>
-                    <td style="padding:12px; color:#4b5563;">{{ client.source === 'converted_lead' ? 'Converted Lead' : 'Manual' }}</td>
-                    <td style="padding:12px; text-align:right;">
-                      <button class="cta-primary" style="padding:.5rem .8rem; border-radius:8px;" (click)="openAdminInvoiceModalForClient(client)">
-                        Generate
-                      </button>
-                    </td>
-                  </tr>
-                  <tr *ngIf="adminInvoiceClientsLoading">
-                    <td colspan="5" style="padding:32px; text-align:center; color:#94a3b8;">Loading onboarded clients...</td>
-                  </tr>
-                  <tr *ngIf="!adminInvoiceClientsLoading && adminInvoiceClients.length===0">
-                    <td colspan="5" style="padding:32px; text-align:center; color:#94a3b8;">No onboarded clients found.</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="invoice-lead-list">
+              <article class="invoice-lead-row" *ngFor="let client of adminInvoiceClients" (click)="openAdminInvoiceModalForClient(client)" tabindex="0" role="button">
+                <div class="invoice-lead-main">
+                  <span class="invoice-lead-company">{{ client.companyName }}</span>
+                  <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || client.primaryPhone || 'Primary Contact' }}</span>
+                </div>
+              </article>
+              <div *ngIf="adminInvoiceClientsLoading" class="empty-state-inline">Loading onboarded clients...</div>
+              <div *ngIf="!adminInvoiceClientsLoading && adminInvoiceClients.length===0" class="empty-state-inline">No onboarded clients found.</div>
             </div>
           </section>
 
           <section class="invoice-feature-pane invoice-history-pane">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
+            <div class="invoice-pane-header invoice-pane-header-stacked">
               <div>
-                <h3 class="settings-section-title">Invoice History</h3>
-                <p style="margin-top:6px; color:#64748b;">{{ filteredInvoiceRecords.length }} saved invoices</p>
+                <h2>Invoice History</h2>
+                <p>{{ filteredInvoiceRecords.length }} saved invoices</p>
               </div>
               <div class="invoice-history-tools">
                 <label class="topbar-search invoice-history-search" for="adminInvoiceHistorySearch">
@@ -80,30 +58,34 @@
               <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="invoiceDateTo"></label>
               <button class="toolbar-button invoice-date-clear" type="button" (click)="invoiceDateFrom=''; invoiceDateTo=''">Clear</button>
             </div>
-            <div style="max-height: 340px; overflow:auto; border:1px solid #e5e7eb;">
-              <table style="width:100%; border-collapse:collapse;">
-                <thead style="position:sticky; top:0; background:#fff; z-index:1;">
+            <div class="table-scroll invoice-history-table">
+              <table class="data-table compact-table">
+                <thead>
                   <tr>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Invoice</th>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Client ID</th>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Company</th>
-                    <th style="padding:12px; text-align:left; color:#6b7280; font-weight:600;">Employee</th>
-                    <th style="padding:12px; text-align:right; color:#6b7280; font-weight:600;">Total</th>
+                    <th>Invoice</th>
+                    <th>Client ID</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let invoice of filteredInvoiceRecords" style="border-top:1px solid #e5e7eb; cursor:pointer;" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
-                    <td style="padding:12px; color:#111827;">{{ invoice.invoiceNumber }}</td>
-                    <td style="padding:12px; color:#4b5563;">{{ invoice.clientId || invoice.clientSnapshot?.clientId || '—' }}</td>
-                    <td style="padding:12px; color:#4b5563;">{{ invoice.clientSnapshot?.companyName || invoice.leadCompanyName }}</td>
-                    <td style="padding:12px; color:#4b5563;">{{ invoice.employeeName || invoice.employeePhone || '—' }}</td>
-                    <td style="padding:12px; color:#111827; text-align:right;">{{ formatInvoiceMoney(invoice.total) }}</td>
+                  <tr *ngFor="let invoice of filteredInvoiceRecords" class="history-click-row" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
+                    <td>{{ invoice.invoiceNumber }}</td>
+                    <td>{{ invoice.clientId || invoice.clientSnapshot?.clientId || '—' }}</td>
+                    <td>{{ invoice.clientSnapshot?.companyName || invoice.leadCompanyName }}</td>
+                    <td>{{ invoice.clientSnapshot?.contactName || invoice.contactName || invoice.contactNumber || '—' }}</td>
+                    <td><span class="invoice-status-chip" [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
+                    <td>{{ formatInvoiceMoney(invoice.total) }}</td>
+                    <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
                   </tr>
                   <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
-                    <td colspan="5" style="padding:32px; text-align:center; color:#94a3b8;">No invoices saved yet.</td>
+                    <td colspan="7" class="empty-cell">No invoices saved yet.</td>
                   </tr>
                   <tr *ngIf="invoiceRecordsLoading">
-                    <td colspan="5" style="padding:32px; text-align:center; color:#94a3b8;">Loading invoices...</td>
+                    <td colspan="7" class="empty-cell">Loading invoices...</td>
                   </tr>
                 </tbody>
               </table>
@@ -368,92 +350,67 @@
 
       <div
         *ngIf="dashTab==='client_onboarding'"
-        class="workspace invoice-workspace admin-invoice-settings-view"
+        class="workspace invoice-workspace admin-invoice-settings-view crm-amc-board client-onboarding-board"
         style="animation: fadeIn 0.4s ease-out; min-height: calc(100vh - 64px);"
       >
-        <div class="workspace-header invoice-feature-header">
-          <div class="workspace-controls invoice-feature-controls">
+        <div class="workspace-header workspace-header-filters-only crm-filter-bar crm-amc-toolbar crm-project-toolbar">
+          <div class="workspace-controls crm-filter-controls crm-amc-controls">
             <label class="topbar-search invoice-feature-search" for="adminClientOnboardingSearch">
               <span class="topbar-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
               </span>
               <input id="adminClientOnboardingSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="clientOnboardingSearch" (ngModelChange)="fetchClientOnboardingRecords()">
             </label>
+            <div class="crm-filter-actions">
+              <button class="toolbar-button invoice-date-filter-button crm-map-client-button" type="button" (click)="openClientOnboardingCreateModal()">
+                Create Client
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="invoice-feature-grid" style="grid-template-columns:minmax(360px, .9fr) minmax(0, 1.35fr);">
-          <section class="invoice-feature-pane invoice-converted-pane">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem;">
-              <div>
-                <h3 class="settings-section-title">Onboarded Clients</h3>
-                <p style="margin-top:6px; color:#64748b;">{{ clientOnboardingLoading ? 'Loading clients' : (clientOnboardingRecords.length + ' listed') }}</p>
-              </div>
-            </div>
-            <div style="max-height: 540px; overflow:auto; border:1px solid #e5e7eb;">
-              <button
-                type="button"
-                class="rail-item admin-leads-rail-item"
-                style="width:100%; border-width:0 0 1px 0; border-radius:0; text-align:left;"
-                *ngFor="let client of clientOnboardingRecords"
-                [class.active]="selectedOnboardingClientId===client.clientId"
-                (click)="selectOnboardingClient(client)"
-              >
-                <span class="rail-item-copy">
-                  <span class="rail-item-name">{{ client.companyName }}</span>
-                  <span class="rail-item-meta">{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || 'Primary Contact' }}</span>
-                </span>
-              </button>
-              <div *ngIf="clientOnboardingLoading" style="padding:32px; text-align:center; color:#94a3b8;">Loading onboarded clients...</div>
-              <div *ngIf="!clientOnboardingLoading && clientOnboardingRecords.length===0" style="padding:32px; text-align:center; color:#94a3b8;">No onboarded clients found.</div>
-            </div>
-          </section>
+        <div class="metrics-strip crm-metrics-strip crm-amc-metrics-strip client-onboarding-metrics-strip">
+          <div class="metric-cell">
+            <div class="metric-label">Onboarded Clients</div>
+            <div class="metric-value">{{ clientOnboardingLoading ? '...' : clientOnboardingRecords.length }}</div>
+          </div>
+        </div>
 
-          <section class="invoice-feature-pane">
-            <div class="premium-card" style="margin-bottom:1rem;">
-              <h3 class="settings-section-title" style="margin-bottom:1rem;">New Client</h3>
-              <form (ngSubmit)="submitClientOnboarding()" style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem;">
-                <div style="grid-column:1 / -1;">
-                  <label class="input-label">Company Name</label>
-                  <input class="glass-input" type="text" name="adminClientCompanyName" [(ngModel)]="clientOnboardingDraft.companyName" required>
-                </div>
-                <div>
-                  <label class="input-label">Primary Contact</label>
-                  <input class="glass-input" type="text" name="adminClientPrimaryContact" [(ngModel)]="clientOnboardingDraft.primaryContactName">
-                </div>
-                <div>
-                  <label class="input-label">Phone</label>
-                  <input class="glass-input" type="tel" name="adminClientPrimaryPhone" [(ngModel)]="clientOnboardingDraft.primaryPhone">
-                </div>
-                <div>
-                  <label class="input-label">Email</label>
-                  <input class="glass-input" type="email" name="adminClientPrimaryEmail" [(ngModel)]="clientOnboardingDraft.primaryEmail">
-                </div>
-                <div>
-                  <label class="input-label">Address</label>
-                  <input class="glass-input" type="text" name="adminClientAddress" [(ngModel)]="clientOnboardingDraft.address">
-                </div>
-                <div *ngIf="clientOnboardingError" class="form-error" style="grid-column:1 / -1; padding:1rem; border-radius:10px;">{{ clientOnboardingError }}</div>
-                <div *ngIf="clientOnboardingSuccess" style="grid-column:1 / -1; padding:1rem; background:#ecfdf5; color:#059669; border-radius:10px; font-weight:700; border:1px solid #10b981;">{{ clientOnboardingSuccess }}</div>
-                <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:.75rem;">
-                  <button class="toolbar-button invoice-date-filter-button" type="button" (click)="resetClientOnboardingDraft()">Clear</button>
-                  <button class="cta-primary" type="submit" [disabled]="clientOnboardingSaving" style="padding:.75rem 1.15rem; border-radius:10px;">
-                    {{ clientOnboardingSaving ? 'Saving...' : 'Onboard Client' }}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div class="premium-card" *ngIf="selectedOnboardingClient as client">
-              <h3 class="settings-section-title">{{ client.companyName }}</h3>
-              <p style="margin:.35rem 0 1rem; color:#64748b;">{{ client.clientId }}</p>
-              <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem;">
-                <div><label class="input-label">Contact</label><div style="color:#111827; font-weight:700;">{{ client.primaryContactName || client.primaryContact || 'Primary Contact' }}</div></div>
-                <div><label class="input-label">Phone</label><div style="color:#111827; font-weight:700;">{{ client.primaryPhone || '—' }}</div></div>
-                <div><label class="input-label">Email</label><div style="color:#111827; font-weight:700;">{{ client.primaryEmail || '—' }}</div></div>
-                <div><label class="input-label">Source</label><div style="color:#111827; font-weight:700;">{{ client.source === 'converted_lead' ? 'Converted Lead' : 'Manual' }}</div></div>
-              </div>
-            </div>
-          </section>
+        <div class="table-scroll crm-amc-table-scroll crm-project-table-scroll client-onboarding-table-scroll">
+          <table class="data-table compact-table crm-amc-table crm-project-table client-onboarding-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Client ID</th>
+                <th>Contact</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Source</th>
+                <th>Updated</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let client of clientOnboardingRecords" [class.row-active]="selectedOnboardingClientId===client.clientId" (click)="selectOnboardingClient(client)">
+                <td><strong>{{ client.companyName }}</strong></td>
+                <td>{{ client.clientId || '-' }}</td>
+                <td>{{ client.primaryContactName || client.primaryContact || '-' }}</td>
+                <td>{{ client.primaryPhone || '-' }}</td>
+                <td>{{ client.primaryEmail || '-' }}</td>
+                <td><span class="crm-status-pill">{{ client.source === 'converted_lead' ? 'Converted Lead' : 'Manual' }}</span></td>
+                <td>{{ fmtDate(client.updatedAt || client.onboardedAt || client.createdAt) }}</td>
+                <td class="crm-manage-cell client-onboarding-manage-cell">
+                  <button class="crm-kebab-button" type="button" (click)="toggleClientOnboardingRowMenu(client, $event)" aria-label="Manage client">⋮</button>
+                  <div class="profile-menu crm-row-menu" *ngIf="isClientOnboardingRowMenuOpen(client)" role="menu" (click)="$event.stopPropagation()">
+                    <button class="profile-menu-item" type="button" role="menuitem" (click)="editOnboardingClient(client)">
+                      Edit
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="clientOnboardingLoading"><td colspan="8" class="empty-cell">Loading onboarded clients...</td></tr>
+              <tr *ngIf="!clientOnboardingLoading && clientOnboardingRecords.length===0"><td colspan="8" class="empty-cell">No onboarded clients found.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>

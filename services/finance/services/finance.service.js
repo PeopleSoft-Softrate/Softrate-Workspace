@@ -30,6 +30,10 @@ function normalize(value) {
   return String(value || '').trim();
 }
 
+function normalizeKey(value) {
+  return normalize(value).toLowerCase().replace(/\s+/g, ' ');
+}
+
 function defaultFinanceCompanyCode() {
   return normalize(process.env.DEFAULT_FINANCE_COMPANY_CODE) || DEFAULT_FINANCE_COMPANY_CODE;
 }
@@ -119,6 +123,13 @@ function salesInvoiceStatus(invoice) {
   return String(invoice.paymentStatus || '').toLowerCase() === 'paid' ? 'Paid' : 'Unpaid';
 }
 
+function invoiceVersionNo(invoice) {
+  const explicit = toNumber(invoice.versionNo);
+  if (explicit > 0) return explicit;
+  const match = normalize(invoice.invoiceNumber).match(/_v(\d+)(?:\.\w+)?$/i);
+  return match ? toNumber(match[1]) : 0;
+}
+
 function serializeSalesInvoice(invoice) {
   const total = toNumber(invoice.total);
   const status = salesInvoiceStatus(invoice);
@@ -131,8 +142,10 @@ function serializeSalesInvoice(invoice) {
     source: 'sales',
     stream: 'Sales Invoice',
     companyCode: invoice.companyCode || '',
+    clientId: invoice.clientId || invoice.clientSnapshot?.clientId || '',
     clientName: invoice.leadCompanyName || invoice.clientSnapshot?.companyName || '',
     invoiceNumber: invoice.invoiceNumber || '',
+    versionNo: invoiceVersionNo(invoice),
     invoiceDate: invoice.invoiceDate || invoice.createdAt,
     dueDate: invoice.dueDate || null,
     taxableAmount: toNumber(invoice.subtotal),
@@ -148,6 +161,8 @@ function serializeSalesInvoice(invoice) {
     contactName: invoice.contactName || '',
     contactNumber: invoice.contactNumber || '',
     email: invoice.directorEmailAddress || '',
+    createdAt: invoice.createdAt || null,
+    updatedAt: invoice.updatedAt || null,
   };
 }
 
@@ -490,6 +505,61 @@ function buildAging(rows, amountField = 'balanceAmount', dateField = 'dueDate') 
   return Object.entries(buckets).map(([bucket, amount]) => ({ bucket, amount }));
 }
 
+function statusFilterFromQuery(query = {}) {
+  const status = normalize(query.status || query.paymentStatus);
+  return status && status.toLowerCase() !== 'all status' ? status.toLowerCase() : '';
+}
+
+function invoiceMatchesStatus(invoice, statusFilter) {
+  if (!statusFilter) return true;
+  const paymentStatus = normalize(invoice.paymentStatus).toLowerCase();
+  const lifecycleStatus = normalize(invoice.status).toLowerCase();
+  if (statusFilter === 'unpaid') return paymentStatus === 'unpaid';
+  return paymentStatus === statusFilter || lifecycleStatus === statusFilter;
+}
+
+function invoiceDateMs(invoice, fields = ['invoiceDate', 'createdAt']) {
+  for (const field of fields) {
+    const date = parseDate(invoice[field]);
+    if (date) return date.getTime();
+  }
+  return 0;
+}
+
+function compareInvoiceVersion(left, right) {
+  const versionGap = toNumber(left.versionNo) - toNumber(right.versionNo);
+  if (versionGap !== 0) return versionGap;
+  const invoiceDateGap = invoiceDateMs(left, ['invoiceDate']) - invoiceDateMs(right, ['invoiceDate']);
+  if (invoiceDateGap !== 0) return invoiceDateGap;
+  const createdGap = invoiceDateMs(left, ['createdAt']) - invoiceDateMs(right, ['createdAt']);
+  if (createdGap !== 0) return createdGap;
+  return normalize(left.id).localeCompare(normalize(right.id));
+}
+
+function invoiceSortDesc(left, right) {
+  const dateGap = invoiceDateMs(right, ['invoiceDate', 'paidAt', 'createdAt']) - invoiceDateMs(left, ['invoiceDate', 'paidAt', 'createdAt']);
+  if (dateGap !== 0) return dateGap;
+  return compareInvoiceVersion(right, left);
+}
+
+function invoiceCompanyKey(invoice) {
+  return normalizeKey(invoice.clientName)
+    || normalize(invoice.clientId).toLowerCase()
+    || `invoice:${normalize(invoice.id)}`;
+}
+
+function latestInvoiceByCompany(invoices) {
+  const latestByCompany = new Map();
+  for (const invoice of invoices) {
+    const key = invoiceCompanyKey(invoice);
+    const current = latestByCompany.get(key);
+    if (!current || compareInvoiceVersion(invoice, current) > 0) {
+      latestByCompany.set(key, invoice);
+    }
+  }
+  return Array.from(latestByCompany.values()).sort(invoiceSortDesc);
+}
+
 function buildDashboard(data, range = {}) {
   const incomeStreams = buildIncomeStreams(data, range);
   const expenseStreams = buildExpenseStreams(data, range);
@@ -571,9 +641,14 @@ async function getReceivables(companyCode, view = 'invoices', query = {}) {
   const data = await getFinanceCollections(companyCode);
   const range = dateRangeFromQuery(query);
   const hasRequestedRange = !!(range.from || range.to);
-  const invoices = data.invoices
+  const statusFilter = statusFilterFromQuery(query);
+  const statusMatchedInvoices = data.invoices.filter((item) => invoiceMatchesStatus(item, statusFilter));
+  const groupedInvoices = statusFilter === 'unpaid'
+    ? latestInvoiceByCompany(statusMatchedInvoices)
+    : statusMatchedInvoices;
+  const invoices = groupedInvoices
     .filter((item) => !hasRequestedRange || withinRange(item.invoiceDate || item.paidAt, range))
-    .sort((a, b) => new Date(b.invoiceDate || b.paidAt || 0) - new Date(a.invoiceDate || a.paidAt || 0));
+    .sort(invoiceSortDesc);
   const payments = data.invoices.filter((item) => item.paidAmount > 0)
     .filter((item) => withinRange(item.paidAt || item.invoiceDate, range));
   const outstanding = buildOutstanding(data);

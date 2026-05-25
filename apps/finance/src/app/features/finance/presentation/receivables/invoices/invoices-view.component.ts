@@ -14,7 +14,9 @@ import { FinanceAnalyticsItem, FinanceRecord } from '../../../domain/finance-rec
 export class InvoicesViewComponent {
   @Input() rows: FinanceRecord[] = [];
   @Input() analytics: FinanceAnalyticsItem[] = [];
+  @Input() loading = false;
   @Output() openRecord = new EventEmitter<FinanceRecord>();
+  @Output() refresh = new EventEmitter<void>();
 
   clientName = clientName;
   formatDate = formatDate;

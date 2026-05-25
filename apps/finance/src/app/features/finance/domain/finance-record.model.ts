@@ -2,6 +2,7 @@ export interface FinanceQuery {
   companyCode: string;
   from?: string;
   to?: string;
+  status?: string;
 }
 
 export interface FinanceListResponse<T = FinanceRecord> {
@@ -17,9 +18,11 @@ export interface FinanceRecord {
   source?: string;
   sourceId?: string;
   stream?: string;
+  clientId?: string;
   clientName?: string;
   clientCompanyName?: string;
   invoiceNumber?: string;
+  versionNo?: number;
   invoiceDate?: string;
   dueDate?: string | null;
   domainName?: string;
@@ -49,6 +52,8 @@ export interface FinanceRecord {
   approvalStage?: string;
   financeApprovedAt?: string | null;
   financeApprovedBy?: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
   [key: string]: unknown;
 }
 

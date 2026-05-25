@@ -37,6 +37,7 @@ export function clientName(record: FinanceRecord | undefined): string {
 }
 
 export function paymentStatus(record: FinanceRecord | undefined): string {
+  if (record?.status === 'Overdue') return 'Overdue';
   return record?.paymentStatus || record?.status || '-';
 }
 

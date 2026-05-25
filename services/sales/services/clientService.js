@@ -243,6 +243,62 @@ async function listClients(query = {}) {
   };
 }
 
+async function updateClient(clientId, payload = {}) {
+  const id = stringValue(clientId);
+  const companyCode = stringValue(payload.companyCode);
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    const error = new Error('Valid client ID is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+  if (!companyCode) {
+    const error = new Error('companyCode is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const filter = { _id: id, companyCode, status: { $ne: 'Inactive' } };
+  const employeePhone = stringValue(payload.employeePhone || payload.phone);
+  if (employeePhone) filter.assignedEmployeePhones = employeePhone;
+
+  const client = await Client.findOne(filter);
+  if (!client) {
+    const error = new Error('Client not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (payload.companyName !== undefined) {
+    const companyName = stringValue(payload.companyName);
+    if (!companyName) {
+      const error = new Error('Company name is required.');
+      error.statusCode = 400;
+      throw error;
+    }
+    const normalizedCompanyName = normalizeText(companyName);
+    const duplicate = await Client.findOne({
+      _id: { $ne: client._id },
+      companyCode,
+      normalizedCompanyName,
+    }).select('_id companyName').lean();
+    if (duplicate) {
+      const error = new Error('Client already exists for this company.');
+      error.statusCode = 409;
+      throw error;
+    }
+    client.companyName = companyName;
+  }
+
+  if (payload.primaryContactName !== undefined) client.primaryContactName = stringValue(payload.primaryContactName);
+  if (payload.primaryPhone !== undefined) client.primaryPhone = stringValue(payload.primaryPhone);
+  if (payload.primaryEmail !== undefined) client.primaryEmail = stringValue(payload.primaryEmail).toLowerCase();
+  if (payload.address !== undefined) client.address = stringValue(payload.address);
+  if (payload.description !== undefined) client.description = stringValue(payload.description);
+
+  await client.save();
+  return client;
+}
+
 async function getClientByClientId(companyCode, clientId) {
   if (!companyCode || !clientId) return null;
   return Client.findOne({ companyCode: stringValue(companyCode), clientId: stringValue(clientId) });
@@ -254,5 +310,6 @@ module.exports = {
   ensureClientForLead,
   createManualClient,
   listClients,
+  updateClient,
   getClientByClientId,
 };

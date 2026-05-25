@@ -77,6 +77,7 @@ interface Bookmark {
   whatsappGrp: boolean;
   reminderDate?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 interface LeadCompanyFacet {
@@ -1309,6 +1310,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (this.profileMenuOpen && (!target || !target.closest('.profile-dropdown'))) {
       this.closeProfileMenu();
     }
+    if (this.clientOnboardingOpenMenuKey && (!target || !target.closest('.client-onboarding-manage-cell'))) {
+      this.clientOnboardingOpenMenuKey = '';
+    }
 
     if (!this.aiBriefOpenTarget) return;
     if (!target || target.closest('.ai-summary-anchor')) return;
@@ -1323,6 +1327,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.closeAiBriefFullView();
     this.closeCompanyFullView();
     this.closeProfileEditor();
+    this.clientOnboardingOpenMenuKey = '';
+    this.closeClientOnboardingCreateModal();
+    this.closeClientOnboardingEditModal();
   }
 
   @HostListener('document:mousemove', ['$event'])
@@ -1771,6 +1778,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   clientOnboardingTotal = 0;
   clientOnboardingLoaded = false;
   selectedOnboardingClientId = '';
+  clientOnboardingCreateOpen = false;
+  clientOnboardingEditOpen = false;
+  clientOnboardingOpenMenuKey = '';
   clientOnboardingDraft = {
     companyName: '',
     primaryContactName: '',
@@ -1778,8 +1788,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     primaryEmail: '',
     address: '',
   };
+  clientOnboardingEditDraft = {
+    companyName: '',
+    primaryContactName: '',
+    primaryPhone: '',
+    primaryEmail: '',
+    address: '',
+  };
+  editingClientOnboarding: ClientRecord | null = null;
   clientOnboardingSaving = false;
+  clientOnboardingEditSaving = false;
   clientOnboardingError = '';
+  clientOnboardingEditError = '';
   clientOnboardingSuccess = '';
   quoteMode = false;
   quotationRecords: QuotationRecord[] = [];
@@ -1812,6 +1832,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private invoiceEligibleLeadsLoaded = false;
   private quotationLeadCompaniesLoaded = false;
   private followupsLoaded = false;
+  private overviewFollowupsLoaded = false;
   followupsLoadingMore = false;
   followupsPage = 1;
   followupsHasMore = false;
@@ -2817,6 +2838,48 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return this.clientOnboardingRecords.find((client) => client.clientId === this.selectedOnboardingClientId) || null;
   }
 
+  openClientOnboardingCreateModal(): void {
+    this.resetClientOnboardingDraft();
+    this.clientOnboardingCreateOpen = true;
+  }
+
+  closeClientOnboardingCreateModal(): void {
+    this.clientOnboardingCreateOpen = false;
+  }
+
+  clientOnboardingRowKey(client: ClientRecord): string {
+    return String(client._id || client.id || client.clientId || client.companyName || '');
+  }
+
+  toggleClientOnboardingRowMenu(client: ClientRecord, event?: Event): void {
+    event?.stopPropagation();
+    const key = this.clientOnboardingRowKey(client);
+    this.clientOnboardingOpenMenuKey = this.clientOnboardingOpenMenuKey === key ? '' : key;
+  }
+
+  isClientOnboardingRowMenuOpen(client: ClientRecord): boolean {
+    return !!this.clientOnboardingOpenMenuKey && this.clientOnboardingOpenMenuKey === this.clientOnboardingRowKey(client);
+  }
+
+  openClientOnboardingEditModal(client: ClientRecord): void {
+    this.clientOnboardingOpenMenuKey = '';
+    this.editingClientOnboarding = client;
+    this.clientOnboardingEditDraft = {
+      companyName: client.companyName || '',
+      primaryContactName: client.primaryContactName || client.primaryContact || '',
+      primaryPhone: client.primaryPhone || '',
+      primaryEmail: client.primaryEmail || '',
+      address: client.address || '',
+    };
+    this.clientOnboardingEditError = '';
+    this.clientOnboardingEditOpen = true;
+  }
+
+  closeClientOnboardingEditModal(): void {
+    this.clientOnboardingEditOpen = false;
+    this.clientOnboardingEditError = '';
+  }
+
   resetClientOnboardingDraft(): void {
     this.clientOnboardingDraft = {
       companyName: '',
@@ -2871,6 +2934,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.invalidateInvoiceCaches();
         this.clientOnboardingLoaded = false;
         this.invoiceEligibleLeadsLoaded = false;
+        this.closeClientOnboardingCreateModal();
         this.fetchClientOnboardingRecords(true);
         this.fetchInvoiceEligibleLeads(true);
       },
@@ -2881,6 +2945,52 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         if (duplicateClient?.clientId) {
           this.selectedOnboardingClientId = duplicateClient.clientId;
         }
+      },
+    });
+  }
+
+  submitClientOnboardingEdit(): void {
+    if (!this.employee || this.clientOnboardingEditSaving || !this.editingClientOnboarding) return;
+    const clientId = this.editingClientOnboarding._id || this.editingClientOnboarding.id || '';
+    const companyName = this.clientOnboardingEditDraft.companyName.trim();
+    if (!clientId) {
+      this.clientOnboardingEditError = 'Client ID is missing.';
+      return;
+    }
+    if (!companyName) {
+      this.clientOnboardingEditError = 'Company name is required.';
+      return;
+    }
+
+    this.clientOnboardingEditSaving = true;
+    this.clientOnboardingEditError = '';
+    this.api.put<any>(`/api/clients/${encodeURIComponent(clientId)}`, {
+      companyCode: this.employee.companyCode,
+      employeePhone: this.employee.mobile,
+      companyName,
+      primaryContactName: this.clientOnboardingEditDraft.primaryContactName.trim(),
+      primaryPhone: this.clientOnboardingEditDraft.primaryPhone.trim(),
+      primaryEmail: this.clientOnboardingEditDraft.primaryEmail.trim(),
+      address: this.clientOnboardingEditDraft.address.trim(),
+    }).subscribe({
+      next: (res) => {
+        this.clientOnboardingEditSaving = false;
+        if (!res?.success || !res.client) {
+          this.clientOnboardingEditError = res?.message || 'Failed to update client.';
+          return;
+        }
+        const client = this.normalizeClientRecord(res.client);
+        this.selectedOnboardingClientId = client.clientId;
+        this.closeClientOnboardingEditModal();
+        this.invalidateInvoiceCaches();
+        this.clientOnboardingLoaded = false;
+        this.invoiceEligibleLeadsLoaded = false;
+        this.fetchClientOnboardingRecords(true);
+        this.fetchInvoiceEligibleLeads(true);
+      },
+      error: (err) => {
+        this.clientOnboardingEditSaving = false;
+        this.clientOnboardingEditError = err?.error?.message || 'Failed to update client.';
       },
     });
   }
@@ -3882,6 +3992,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   // ── Follow-ups ────────────────────────────────────────────────
   followups: Bookmark[] = [];
   followupsLoading = false;
+  overviewFollowups: Bookmark[] = [];
+  overviewFollowupsLoading = false;
   followupFilter: 'all' | 'today' | 'custom' = 'all';
   selectedFollowupDate = '';
 
@@ -4390,6 +4502,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quotationRecordsLoaded = false;
     this.quotationLeadCompaniesLoaded = false;
     this.followupsLoaded = false;
+    this.overviewFollowupsLoaded = false;
+    this.overviewFollowups = [];
+    this.overviewFollowupsLoading = false;
     this.cancelStartupSplashFallback();
     this.startupWarmupRunId += 1;
     this.startupWarmupPromise = null;
@@ -4931,6 +5046,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           preferCache: restoredOverview,
           silent: restoredOverview,
         }),
+        this.loadOverviewFollowupsOnce(),
         this.warmDefaultLeadScopes(),
       ]);
       void this.warmBackgroundDashboardData(runId);
@@ -4985,6 +5101,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       this.leadSearch.trim(),
       this.followupReminderDateFilter(),
       page,
+    ].join('|');
+  }
+
+  private overviewFollowupsCacheKey(): string {
+    return [
+      'overview-followups-v2',
+      this.employee?.companyCode || '',
+      this.employee?.mobile || '',
     ].join('|');
   }
 
@@ -5055,6 +5179,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   private invalidateFollowupCaches(): void {
     this.dashboardCache.invalidate('followups|');
+    this.dashboardCache.invalidate('overview-followups|');
+    this.overviewFollowupsLoaded = false;
+    if (this.dashTab === 'overview') {
+      this.fetchOverviewFollowups(true);
+    }
   }
 
   private invalidateTodayHistoryCaches(): void {
@@ -5139,6 +5268,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.followupsLoaded = true;
     this.followupsLoading = false;
     this.touchFollowups();
+    return true;
+  }
+
+  private restoreCachedOverviewFollowups(): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<Bookmark>>(this.overviewFollowupsCacheKey());
+    if (!cached) return false;
+    this.overviewFollowups = cached.items;
+    this.overviewFollowupsLoaded = true;
+    this.overviewFollowupsLoading = false;
     return true;
   }
 
@@ -5266,6 +5404,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private async warmExecutionAndDocuments(): Promise<void> {
     await Promise.all([
       this.loadFollowupsOnce(true),
+      this.loadOverviewFollowupsOnce(true),
       this.loadTodayCallsOnce(true),
       this.loadInvoiceRecordsOnce(true),
       this.loadInvoiceEligibleLeadsOnce(),
@@ -5278,6 +5417,37 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (!this.employee) return;
     const restored = force ? false : this.restoreCachedFollowups();
     await this.loadFollowupsPage(1, { reset: true, silent: restored, forceRefresh: true });
+  }
+
+  private async loadOverviewFollowupsOnce(force = false): Promise<void> {
+    if (!this.employee || (this.overviewFollowupsLoaded && !force)) return;
+    const restored = !force && this.restoreCachedOverviewFollowups();
+    if (restored) return;
+
+    this.overviewFollowupsLoading = true;
+    const pageSize = 20;
+    const params = new URLSearchParams({
+      companyCode: this.employee.companyCode,
+      phone: this.employee.mobile,
+      page: '1',
+      pageSize: String(pageSize),
+      paginated: 'true',
+    });
+
+    try {
+      const res = await firstValueFrom(this.api.get<any>(`/api/bookmarks?${params.toString()}`));
+      const rawItems = Array.isArray(res?.items) ? res.items : (res?.bookmarks || []);
+      const pageResult = this.resolvePagedResponse<Bookmark>(res, rawItems, 1, pageSize);
+      this.overviewFollowups = pageResult.items;
+      this.overviewFollowupsLoaded = true;
+      this.dashboardCache.set(this.overviewFollowupsCacheKey(), pageResult, {
+        ttlMs: this.dashboardCacheTtlMs,
+      });
+    } catch {
+      this.overviewFollowupsLoaded = false;
+    } finally {
+      this.overviewFollowupsLoading = false;
+    }
   }
 
   private async loadTodayCallsOnce(force = false): Promise<void> {
@@ -5649,6 +5819,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
     if (tab === 'overview') {
       this.fetchStats();
+      this.fetchOverviewFollowups();
       setTimeout(() => {
         this.renderDonutChart();
         this.renderTimelineChart();
@@ -6859,8 +7030,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       uniqueFollowupCompanies: this.uniqueCompanyNames(filteredFollowups, (bookmark) => bookmark.companyName),
       followupCompanyCounts,
       overviewUpcomingFollowups: [...this.followups]
-        .filter((bookmark) => !!bookmark.reminderDate)
-        .sort((a, b) => this.toDateStamp(a.reminderDate || a.createdAt) - this.toDateStamp(b.reminderDate || b.createdAt))
+        .sort((a, b) => this.toDateStamp(b.updatedAt || b.createdAt) - this.toDateStamp(a.updatedAt || a.createdAt))
         .slice(0, 20),
       todayFollowupsCount,
     };
@@ -7091,11 +7261,19 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     void this.loadFollowupsPage(1, { reset: true, silent: restored, forceRefresh: true });
   }
 
+  fetchOverviewFollowups(force = false): void {
+    if (!this.employee) return;
+    void this.loadOverviewFollowupsOnce(force);
+  }
+
   get overviewRecentLeads(): Lead[] {
     return this.getLeadCollections().overviewRecentLeads;
   }
 
   get overviewUpcomingFollowups(): Bookmark[] {
+    if (this.overviewFollowupsLoaded || this.overviewFollowupsLoading) {
+      return this.overviewFollowups;
+    }
     return this.getFollowupCollections().overviewUpcomingFollowups;
   }
 

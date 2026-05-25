@@ -19,7 +19,23 @@ require("./cron/leaveReset.cron");
 
 const app = express();
 app.use(compression());
-app.use(cors({ origin: '*' }));
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'DELETE', 'PATCH', 'POST', 'PUT', 'OPTIONS'],
+  allowedHeaders: [
+    'X-CSRF-Token',
+    'X-Requested-With',
+    'Accept',
+    'Accept-Version',
+    'Content-Length',
+    'Content-MD5',
+    'Content-Type',
+    'Date',
+    'X-Api-Version',
+    'Authorization'
+  ]
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
@@ -81,8 +97,9 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true
   }
 });
 

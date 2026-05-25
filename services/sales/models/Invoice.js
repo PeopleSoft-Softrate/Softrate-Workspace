@@ -41,12 +41,20 @@ const invoiceSchema = new mongoose.Schema({
   companySnapshot: {
     name: { type: String, default: '' },
     logo: { type: String, default: '' },
+    seal: { type: String, default: '' },
+    terms: { type: String, default: '' },
     gstNumber: { type: String, default: '' },
     registeredAddress: { type: String, default: '' },
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
     website: { type: String, default: '' },
     footer: { type: String, default: '' },
+    bankDetails: {
+      bankName: { type: String, default: '' },
+      accountNumber: { type: String, default: '' },
+      ifscCode: { type: String, default: '' },
+      branchName: { type: String, default: '' },
+    },
   },
   clientSnapshot: {
     clientId: { type: String, default: '' },

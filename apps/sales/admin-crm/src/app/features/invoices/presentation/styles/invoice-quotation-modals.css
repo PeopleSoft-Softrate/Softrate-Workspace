@@ -650,254 +650,600 @@
 }
 
 .admin-quote-modal .invoice-preview {
-  display: grid !important;
-  gap: 0 !important;
+  display: block !important;
   width: 794px !important;
   max-width: 100% !important;
   min-height: 1123px !important;
   margin: 0 auto !important;
-  border: 0 !important;
+  border: 1.5px solid #000000 !important;
   background: #ffffff !important;
-  color: #1f2a44 !important;
+  color: #111827 !important;
   font-family: var(--font-ui) !important;
+  box-sizing: border-box !important;
 }
 
-.admin-quote-modal .invoice-print-header {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 1.4fr) minmax(0, 1fr) !important;
+.admin-quote-modal .tax-invoice-bar {
+  display: flex !important;
+  justify-content: space-between !important;
   align-items: center !important;
-  gap: 18px !important;
-  min-height: 126px !important;
-  padding: 14px 20px !important;
-  border-bottom: 1px solid #b8c6d8 !important;
+  padding: 6px 12px !important;
+  background-color: #f8fafc !important;
+  border-bottom: 1.5px solid #000000 !important;
 }
 
-.admin-quote-modal .invoice-print-logo-block {
+.admin-quote-modal .invoice-title-main {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #2563eb !important;
+  letter-spacing: 0.1em !important;
+}
+
+.admin-quote-modal .invoice-title-sub {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  letter-spacing: 0.05em !important;
+}
+
+.admin-quote-modal .invoice-grid-header {
+  display: grid !important;
+  grid-template-columns: 1.15fr 0.85fr !important;
+  border-bottom: 1.5px solid #000000 !important;
+}
+
+.admin-quote-modal .invoice-grid-col-left {
+  display: flex !important;
+  flex-direction: column !important;
+  border-right: 1.5px solid #000000 !important;
+}
+
+.admin-quote-modal .invoice-grid-col-right {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-quote-modal .sender-info-block {
+  display: flex !important;
+  gap: 16px !important;
+  padding: 12px !important;
+  border-bottom: 1px solid #000000 !important;
+  min-height: 110px !important;
+}
+
+.admin-quote-modal .sender-logo-wrap {
+  flex: 0 0 80px !important;
+  height: 80px !important;
   display: flex !important;
   align-items: center !important;
-  min-width: 0 !important;
+  justify-content: center !important;
 }
 
-.admin-quote-modal .invoice-logo {
-  max-width: 160px !important;
-  max-height: 68px !important;
+.admin-quote-modal .sender-logo-img {
+  max-width: 100% !important;
+  max-height: 100% !important;
   object-fit: contain !important;
 }
 
-.admin-quote-modal .invoice-text-logo {
-  color: #111827 !important;
-  font-size: 26px !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.03em !important;
-}
-
-.admin-quote-modal .invoice-print-company {
-  min-width: 0 !important;
+.admin-quote-modal .sender-text-logo {
+  flex: 0 0 80px !important;
+  height: 80px !important;
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   text-align: center !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
 }
 
-.admin-quote-modal .invoice-print-company h2 {
+.admin-quote-modal .sender-details {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.admin-quote-modal .company-title {
   margin: 0 0 4px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
   color: #111827 !important;
-  font-size: 17px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.02em !important;
   text-transform: uppercase !important;
 }
 
-.admin-quote-modal .invoice-print-company p {
-  margin: 1px 0 !important;
-  color: #334155 !important;
+.admin-quote-modal .company-gst {
+  margin: 0 0 2px !important;
+  font-size: 11px !important;
+  color: #1f2937 !important;
+}
+
+.admin-quote-modal .company-addr {
+  margin: 0 0 4px !important;
   font-size: 10.5px !important;
-  line-height: 1.22 !important;
+  color: #4b5563 !important;
+  line-height: 1.3 !important;
 }
 
-.admin-quote-modal .invoice-print-subtitle,
-.admin-quote-modal .invoice-print-kicker {
-  color: #667085 !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.18em !important;
+.admin-quote-modal .company-contact {
+  margin: 0 !important;
+  font-size: 10.5px !important;
+  color: #4b5563 !important;
+}
+
+.admin-quote-modal .client-info-block {
+  padding: 12px !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-quote-modal .block-kicker {
+  margin: 0 0 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #4b5563 !important;
   text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
 }
 
-.admin-quote-modal .invoice-qr-block {
+.admin-quote-modal .client-company-title {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #111827 !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+.admin-quote-modal .client-billing-address {
+  font-size: 11px !important;
+  color: #374151 !important;
+  line-height: 1.4 !important;
+}
+
+.admin-quote-modal .client-billing-address p {
+  margin: 2px 0 4px !important;
+  color: #4b5563 !important;
+}
+
+.admin-quote-modal .client-phone {
+  margin-top: 4px !important;
+  font-weight: 600 !important;
+}
+
+.admin-quote-modal .meta-field-row {
   display: grid !important;
-  justify-items: center !important;
-  gap: 6px !important;
-  padding: 7px !important;
-  color: #667085 !important;
-  font-size: 8px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.12em !important;
+  grid-template-columns: 1fr 1fr !important;
+  border-bottom: 1px solid #000000 !important;
+}
+
+.admin-quote-modal .meta-field-cell {
+  padding: 8px 12px !important;
+  border-right: 1px solid #000000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  min-height: 48px !important;
+  box-sizing: border-box !important;
+}
+
+.admin-quote-modal .meta-field-cell:last-child {
+  border-right: none !important;
+}
+
+.admin-quote-modal .field-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #4b5563 !important;
   text-transform: uppercase !important;
 }
 
-.admin-quote-modal .invoice-qr-code {
-  width: 66px !important;
-  height: 66px !important;
-  border: 6px solid #111827 !important;
-  background:
-    linear-gradient(90deg, #111827 50%, transparent 50%) 0 0 / 16px 16px,
-    linear-gradient(#111827 50%, transparent 50%) 0 0 / 16px 16px,
-    linear-gradient(90deg, transparent 50%, #111827 50%) 8px 8px / 16px 16px,
-    #ffffff !important;
-  box-shadow: inset 0 0 0 8px #ffffff !important;
+.admin-quote-modal .field-val {
+  font-size: 11px !important;
+  color: #111827 !important;
+}
+
+.admin-quote-modal .meta-field-full-row {
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #000000 !important;
+  min-height: 70px !important;
+}
+
+.admin-quote-modal .invoice-qr-row {
+  display: grid !important;
+  grid-template-rows: auto 1fr !important;
+  align-items: start !important;
+  justify-items: center !important;
+  gap: 8px !important;
+  min-height: 112px !important;
+  padding: 10px 12px 12px !important;
+}
+
+.admin-quote-modal .invoice-qr-label {
+  width: 100% !important;
+  margin: 0 !important;
+  background: #ffffff !important;
+  color: #4b5563 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.admin-quote-modal .invoice-qr-wrap {
+  width: 100% !important;
+  min-height: 76px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .admin-quote-modal .invoice-qr-image {
   display: block !important;
-  width: 78px !important;
-  height: 78px !important;
-  border: 1px solid #111827 !important;
+  width: 76px !important;
+  height: 76px !important;
+  border: 1px solid #cbd5e1 !important;
   background: #ffffff !important;
   object-fit: contain !important;
 }
 
-.admin-quote-modal .invoice-print-section {
-  padding: 12px 20px !important;
-  border-bottom: 1px solid #b8c6d8 !important;
+.admin-quote-modal .invoice-qr-placeholder-box {
+  width: 76px !important;
+  height: 76px !important;
+  background: #f1f5f9 !important;
+  border: 1px dashed #cbd5e1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 10px !important;
+  color: #94a3b8 !important;
+}
+
+.admin-quote-modal .shipping-addr-val {
+  margin: 4px 0 0 !important;
+  font-size: 11px !important;
+  color: #4b5563 !important;
+  line-height: 1.35 !important;
+}
+
+.admin-quote-modal .meta-filler-space {
+  flex-grow: 1 !important;
   background: #ffffff !important;
 }
 
-.admin-quote-modal .invoice-detail-grid {
-  display: grid !important;
-  grid-template-columns: 120px minmax(0, 1fr) !important;
-  gap: 6px 18px !important;
-  max-width: 480px !important;
-  margin-top: 10px !important;
+.admin-quote-modal .invoice-main-table-wrap {
+  width: 100% !important;
 }
 
-.admin-quote-modal .invoice-detail-grid span,
-.admin-quote-modal .invoice-payment-grid span {
-  color: #334155 !important;
-  font-size: 12px !important;
+.admin-quote-modal .invoice-main-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
 }
 
-.admin-quote-modal .invoice-detail-grid strong,
-.admin-quote-modal .invoice-payment-grid strong {
+.admin-quote-modal .invoice-main-table th,
+.admin-quote-modal .invoice-main-table td {
+  border: 1px solid #000000 !important;
+  padding: 8px !important;
+  vertical-align: top !important;
+  font-size: 11px !important;
+}
+
+.admin-quote-modal .invoice-main-table th {
+  background-color: #f8fafc !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.02em !important;
+}
+
+.admin-quote-modal .col-sno { width: 5% !important; }
+.admin-quote-modal .col-desc { width: 30% !important; }
+.admin-quote-modal .col-hsn { width: 10% !important; }
+.admin-quote-modal .col-rate { width: 12% !important; }
+.admin-quote-modal .col-qty { width: 6% !important; }
+.admin-quote-modal .col-taxable { width: 12% !important; }
+.admin-quote-modal .col-tax { width: 12% !important; }
+.admin-quote-modal .col-amount { width: 13% !important; }
+
+/* GST breakdown table column widths */
+.admin-quote-modal .gst-breakdown-table th:nth-child(1),
+.admin-quote-modal .gst-breakdown-table td:nth-child(1) { width: 14% !important; }
+.admin-quote-modal .gst-breakdown-table th:nth-child(2),
+.admin-quote-modal .gst-breakdown-table td:nth-child(2) { width: 16% !important; }
+.admin-quote-modal .gst-breakdown-table th:nth-child(3),
+.admin-quote-modal .gst-breakdown-table td:nth-child(3) { width: 10% !important; }
+.admin-quote-modal .gst-breakdown-table th:nth-child(4),
+.admin-quote-modal .gst-breakdown-table td:nth-child(4) { width: 15% !important; }
+.admin-quote-modal .gst-breakdown-table th:nth-child(5),
+.admin-quote-modal .gst-breakdown-table td:nth-child(5) { width: 10% !important; }
+.admin-quote-modal .gst-breakdown-table th:nth-child(6),
+.admin-quote-modal .gst-breakdown-table td:nth-child(6) { width: 15% !important; }
+.admin-quote-modal .gst-breakdown-table th:nth-child(7),
+.admin-quote-modal .gst-breakdown-table td:nth-child(7) { width: 20% !important; }
+
+.admin-quote-modal .text-center { text-align: center !important; }
+.admin-quote-modal .text-right { text-align: right !important; }
+
+.admin-quote-modal .item-main-name {
   color: #111827 !important;
-  font-size: 12px !important;
-  font-weight: 400 !important;
 }
 
-.admin-quote-modal .invoice-bill-section {
-  display: grid !important;
-  gap: 7px !important;
+.admin-quote-modal .item-tax-pct {
+  font-size: 9px !important;
+  color: #64748b !important;
+  margin-top: 1px !important;
 }
 
-.admin-quote-modal .invoice-bill-section strong {
-  color: #111827 !important;
+.admin-quote-modal .filler-row {
+  height: 60px !important;
+}
+
+.admin-quote-modal .filler-row td {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.admin-quote-modal .table-summary-row td {
+  border: 1.5px solid #000000 !important;
+  background-color: #ffffff !important;
+}
+
+.admin-quote-modal .summary-left-cell {
+  font-weight: 700 !important;
+  color: #374151 !important;
+  vertical-align: middle !important;
+}
+
+.admin-quote-modal .summary-right-cell {
+  padding: 0 !important;
+}
+
+.admin-quote-modal .summary-line {
+  display: flex !important;
+  justify-content: space-between !important;
+  padding: 6px 10px !important;
+  border-bottom: 1px solid #000000 !important;
+  font-size: 11px !important;
+}
+
+.admin-quote-modal .summary-line:last-child {
+  border-bottom: none !important;
+}
+
+.admin-quote-modal .grand-total-line {
+  background-color: #f8fafc !important;
+  font-size: 13px !important;
+  border-top: 1px solid #000000 !important;
+}
+
+.admin-quote-modal .grand-total-val {
   font-size: 14px !important;
-}
-
-.admin-quote-modal .invoice-bill-section div:not(.invoice-print-kicker) {
-  color: #334155 !important;
-  font-size: 12px !important;
-}
-
-.admin-quote-modal .invoice-service-section {
-  display: grid !important;
-  gap: 8px !important;
-  padding: 0 0 10px !important;
-  border-bottom: 1px solid #b8c6d8 !important;
-}
-
-.admin-quote-modal .invoice-service-section h3 {
-  margin: 10px 0 0 !important;
   color: #111827 !important;
-  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+.admin-quote-modal .total-in-words-row {
+  padding: 8px 12px !important;
+  border-bottom: 1.5px solid #000000 !important;
+  font-size: 11px !important;
+  color: #374151 !important;
+}
+
+.admin-quote-modal .gst-breakdown-section {
+  width: 100% !important;
+}
+
+.admin-quote-modal .gst-breakdown-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.admin-quote-modal .gst-breakdown-table th,
+.admin-quote-modal .gst-breakdown-table td {
+  border: 1px solid #000000 !important;
+  padding: 6px 8px !important;
+  font-size: 10px !important;
+}
+
+.admin-quote-modal .gst-breakdown-table th {
+  background-color: #f8fafc !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  text-transform: uppercase !important;
+}
+
+.admin-quote-modal .border-b {
+  border-bottom: 1px solid #000000 !important;
+}
+
+.admin-quote-modal .gst-breakdown-total-row td {
+  background-color: #f8fafc !important;
+  border-top: 1.5px solid #000000 !important;
+}
+
+.admin-quote-modal .payment-badge-container {
+  display: flex !important;
+  justify-content: flex-end !important;
+  padding: 6px 12px !important;
+  border-bottom: 1px solid #000000 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.admin-quote-modal .payment-badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: #15803d !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.admin-quote-modal .badge-icon {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.admin-quote-modal .invoice-grid-footer {
+  display: grid !important;
+  grid-template-columns: 1.2fr 1fr !important;
+  border-bottom: 1.5px solid #000000 !important;
+}
+
+.admin-quote-modal .footer-col-bank {
+  padding: 12px !important;
+  border-right: 1px solid #000000 !important;
+}
+
+.admin-quote-modal .footer-kicker {
+  margin: 0 0 6px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: #4b5563 !important;
+  text-transform: uppercase !important;
+}
+
+.admin-quote-modal .bank-details-list {
+  display: grid !important;
+  grid-template-columns: 70px minmax(0, 1fr) !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+}
+
+.admin-quote-modal .bank-details-list dt {
+  color: #4b5563 !important;
   font-weight: 600 !important;
+}
+
+.admin-quote-modal .bank-details-list dd {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-weight: 500 !important;
+}
+
+.admin-quote-modal .footer-col-upi {
+  padding: 12px !important;
+  border-right: 1px solid #000000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-quote-modal .upi-qr-wrap {
+  flex-grow: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+}
+
+.admin-quote-modal .upi-qr-image {
+  width: 72px !important;
+  height: 72px !important;
+  border: 1px solid #e2e8f0 !important;
+  display: block !important;
+}
+
+.admin-quote-modal .upi-qr-placeholder-box {
+  width: 72px !important;
+  height: 72px !important;
+  background: #f1f5f9 !important;
+  border: 1px dashed #cbd5e1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 10px !important;
+  color: #94a3b8 !important;
+}
+
+.admin-quote-modal .footer-col-sig {
+  padding: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
   text-align: center !important;
 }
 
-.admin-quote-modal .invoice-print-table {
-  width: 100% !important;
-  border-collapse: collapse !important;
-  table-layout: fixed !important;
-}
-
-.admin-quote-modal .invoice-print-table th,
-.admin-quote-modal .invoice-print-table td {
-  padding: 5px 6px !important;
-  border: 1px solid #c8d3e1 !important;
-  color: #334155 !important;
+.admin-quote-modal .sig-header {
   font-size: 9px !important;
-  line-height: 1.35 !important;
-  text-align: right !important;
-  vertical-align: top !important;
+  font-weight: 700 !important;
+  color: #374151 !important;
+  line-height: 1.2 !important;
 }
 
-.admin-quote-modal .invoice-print-table th {
-  background: #f8fafc !important;
-  color: #475569 !important;
+.admin-quote-modal .sig-stamp-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 75px !important;
+}
+
+.admin-quote-modal .signature-stamp {
+  display: block !important;
+}
+
+.admin-quote-modal .sig-footer {
+  font-size: 9.5px !important;
   font-weight: 600 !important;
+  color: #4b5563 !important;
 }
 
-.admin-quote-modal .invoice-print-table th:nth-child(1),
-.admin-quote-modal .invoice-print-table td:nth-child(1) {
-  width: 44px !important;
-  text-align: left !important;
-}
-
-.admin-quote-modal .invoice-print-table th:nth-child(2),
-.admin-quote-modal .invoice-print-table td:nth-child(2) {
-  width: 24% !important;
-  text-align: left !important;
-}
-
-.admin-quote-modal .invoice-print-table th:nth-child(3),
-.admin-quote-modal .invoice-print-table td:nth-child(3) {
-  width: 78px !important;
-  text-align: left !important;
-}
-
-.admin-quote-modal .invoice-table-total-row td {
-  background: #f8fafc !important;
-  font-weight: 600 !important;
-}
-
-.admin-quote-modal .invoice-payment-section {
-  min-height: 205px !important;
-}
-
-.admin-quote-modal .invoice-payment-grid {
+.admin-quote-modal .invoice-notes-terms-grid {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 180px !important;
-  gap: 7px 24px !important;
-  margin-top: 12px !important;
+  grid-template-columns: 1fr 1fr !important;
+  border-bottom: 1.5px solid #000000 !important;
 }
 
-.admin-quote-modal .invoice-payment-grid strong {
-  text-align: right !important;
+.admin-quote-modal .notes-block {
+  padding: 12px !important;
+  border-right: 1px solid #000000 !important;
 }
 
-.admin-quote-modal .invoice-net-total-label,
-.admin-quote-modal .invoice-net-total {
-  margin-top: 8px !important;
-  padding-top: 10px !important;
-  border-top: 1px solid #b8c6d8 !important;
+.admin-quote-modal .notes-kicker,
+.admin-quote-modal .terms-kicker {
+  margin: 0 0 6px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: #4b5563 !important;
+  text-transform: uppercase !important;
 }
 
-.admin-quote-modal .invoice-print-footer {
-  display: grid !important;
-  gap: 5px !important;
-  min-height: 130px !important;
-  padding: 14px 20px !important;
-  border-top: 1px solid #b8c6d8 !important;
-  background: #ffffff !important;
-}
-
-.admin-quote-modal .invoice-print-footer p {
+.admin-quote-modal .notes-block p {
   margin: 0 !important;
-  color: #334155 !important;
-  font-size: 11px !important;
-  line-height: 1.32 !important;
+  font-size: 10.5px !important;
+  color: #4b5563 !important;
 }
 
-.admin-quote-modal .invoice-footer-note {
-  margin-top: 8px !important;
-  color: #667085 !important;
+.admin-quote-modal .terms-block {
+  padding: 12px !important;
+}
+
+.admin-quote-modal .terms-block ol {
+  margin: 0 !important;
+  padding-left: 14px !important;
+  font-size: 9px !important;
+  color: #4b5563 !important;
+  line-height: 1.35 !important;
+}
+
+.admin-quote-modal .terms-block li {
+  margin-bottom: 2px !important;
+}
+
+.admin-quote-modal .invoice-bottom-page-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  padding: 6px 12px !important;
+  font-size: 9px !important;
+  color: #64748b !important;
+}
+
+.admin-quote-modal .digitally-signed-note {
+  font-weight: 500 !important;
 }
 
 .admin-quote-modal .quotation-preview {
@@ -1136,6 +1482,484 @@
   text-transform: uppercase !important;
 }
 
+/* Admin parity pass: invoice status, flexible invoice footer stack, and employee quotation format. */
+.admin-quote-modal .invoice-form-grid {
+  grid-template-columns: minmax(260px, 2fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr) auto !important;
+}
+
+.admin-quote-modal .invoice-form-grid.invoice-form-grid-quotation {
+  grid-template-columns: minmax(260px, 2fr) minmax(140px, 1fr) minmax(140px, 1fr) auto !important;
+}
+
+.admin-quote-modal .field-textarea {
+  width: 100% !important;
+  min-height: 96px !important;
+  padding: 12px 16px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  resize: vertical !important;
+  box-shadow: none !important;
+}
+
+.admin-quote-modal .field-textarea:focus {
+  outline: none !important;
+  border-color: #3157c8 !important;
+  box-shadow: inset 0 0 0 1px #3157c8 !important;
+}
+
+.admin-quote-modal .quotation-note-editor {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.admin-quote-modal .quotation-note-editor span {
+  color: #667085 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-quote-modal .invoice-footer-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  margin-top: auto !important;
+}
+
+.admin-quote-modal .meta-status-space {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  min-height: 68px !important;
+  padding: 10px 12px !important;
+}
+
+.admin-quote-modal .invoice-status-line {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+}
+
+.admin-quote-modal .invoice-status-line .field-label {
+  margin: 0 !important;
+}
+
+.admin-quote-modal .invoice-status-value {
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+.admin-quote-modal .invoice-status-value.invoice-status-value-paid {
+  color: #111827 !important;
+}
+
+.admin-quote-modal .quotation-preview {
+  display: grid !important;
+  gap: 0 !important;
+  min-height: 1123px !important;
+  border: 0 !important;
+  color: #151b23 !important;
+  background: #ffffff !important;
+}
+
+.admin-quote-modal .quotation-page {
+  min-height: 1123px !important;
+  border: 1px solid #8fa1bb !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.admin-quote-modal .quotation-main-page {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 1123px !important;
+}
+
+.admin-quote-modal .quotation-page + .quotation-page {
+  margin-top: 28px !important;
+}
+
+.admin-quote-modal .quotation-hero {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(160px, 0.72fr) minmax(230px, 0.72fr) !important;
+  justify-content: space-between !important;
+  align-items: start !important;
+  min-height: 252px !important;
+  padding: 32px 52px !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
+    url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-hero::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  opacity: 1 !important;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.42)) !important;
+  transform: none !important;
+}
+
+.admin-quote-modal .quotation-logo {
+  width: 228px !important;
+  max-width: 100% !important;
+  max-height: 72px !important;
+  object-fit: contain !important;
+}
+
+.admin-quote-modal .quotation-hero-title {
+  align-self: end !important;
+  justify-self: end !important;
+  display: grid !important;
+  gap: 0 !important;
+  width: min(100%, 236px) !important;
+  margin-bottom: 4px !important;
+  justify-items: end !important;
+  color: #ffffff !important;
+  text-align: right !important;
+}
+
+.admin-quote-modal .quotation-hero-title h2 {
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 48px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1 !important;
+}
+
+.admin-quote-modal .quotation-hero-title span,
+.admin-quote-modal .quotation-hero-title strong {
+  display: block !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  line-height: 1.08 !important;
+}
+
+.admin-quote-modal .quotation-letter {
+  display: grid !important;
+  gap: 14px !important;
+  padding: 28px 52px 18px !important;
+}
+
+.admin-quote-modal .quotation-letter h3 {
+  margin: 0 !important;
+  color: #1d2a8a !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.admin-quote-modal .quotation-letter strong {
+  margin-top: -14px !important;
+  color: #000000 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.admin-quote-modal .quotation-letter p {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 15px !important;
+  line-height: 1.42 !important;
+}
+
+.admin-quote-modal .quotation-service-card {
+  --quotation-table-columns: minmax(0, 1fr) 78px 104px 112px;
+  width: calc(100% - 96px) !important;
+  max-width: calc(100% - 96px) !important;
+  margin: 0 auto !important;
+}
+
+.admin-quote-modal .quotation-service-header {
+  display: grid !important;
+  grid-template-columns: var(--quotation-table-columns) !important;
+  gap: 12px !important;
+  padding: 18px 30px !important;
+  border-radius: 24px !important;
+  background-color: #5f9b76 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-service-header span,
+.admin-quote-modal .quotation-service-row span {
+  min-width: 0 !important;
+}
+
+.admin-quote-modal .quotation-service-header span:first-child {
+  white-space: nowrap !important;
+}
+
+.admin-quote-modal .quotation-service-header span:nth-child(2),
+.admin-quote-modal .quotation-service-row span:nth-child(2) {
+  text-align: center !important;
+}
+
+.admin-quote-modal .quotation-service-header span:nth-child(3),
+.admin-quote-modal .quotation-service-header span:nth-child(4),
+.admin-quote-modal .quotation-service-row span:nth-child(3),
+.admin-quote-modal .quotation-service-row span:nth-child(4) {
+  text-align: right !important;
+}
+
+.admin-quote-modal .quotation-service-body {
+  display: grid !important;
+  gap: 14px !important;
+  margin-top: 18px !important;
+  padding: 28px 30px 24px !important;
+  border-radius: 24px !important;
+  background-color: #eefaf1 !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-service-row {
+  display: grid !important;
+  grid-template-columns: var(--quotation-table-columns) !important;
+  gap: 12px !important;
+  align-items: center !important;
+  color: #263238 !important;
+  font-size: 15px !important;
+  line-height: 1.28 !important;
+}
+
+.admin-quote-modal .quotation-service-row span:first-child {
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.admin-quote-modal .quotation-service-row span:not(:first-child) {
+  white-space: nowrap !important;
+}
+
+.admin-quote-modal .quotation-total-panel {
+  display: grid !important;
+  gap: 4px !important;
+  justify-self: end !important;
+  width: min(100%, 340px) !important;
+  min-width: 0 !important;
+  margin-top: 12px !important;
+  padding-top: 14px !important;
+  border-top: 1px solid #6aa283 !important;
+}
+
+.admin-quote-modal .quotation-total-panel div {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 92px !important;
+  gap: 16px !important;
+  align-items: baseline !important;
+}
+
+.admin-quote-modal .quotation-total-panel span {
+  color: #263238 !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-quote-modal .quotation-total-panel strong {
+  color: #263238 !important;
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+}
+
+.admin-quote-modal .quotation-total-panel div:last-child strong {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+}
+
+.admin-quote-modal .quotation-kind-note {
+  display: grid !important;
+  grid-template-columns: 108px minmax(0, 1fr) !important;
+  gap: 18px !important;
+  margin: 24px 48px 0 !important;
+  padding: 22px 28px !important;
+  border-radius: 20px !important;
+  background-color: #eefaf1 !important;
+  color: #5b6472 !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.08em !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-main-page .quotation-kind-note {
+  margin: auto 48px 32px !important;
+}
+
+.admin-quote-modal .quotation-kind-note strong {
+  color: #5b6472 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+}
+
+.admin-quote-modal .quotation-terms-page {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 1123px !important;
+  padding: 72px 54px 48px !important;
+  gap: 36px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.admin-quote-modal .quotation-partner-panel {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 486px !important;
+  padding: 52px 58px !important;
+  border-radius: 24px !important;
+  background: #cfb466 !important;
+  color: #ffffff !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-partner-panel h2 {
+  max-width: 430px !important;
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 78px !important;
+  font-weight: 800 !important;
+  line-height: 1.06 !important;
+}
+
+.admin-quote-modal .quotation-terms-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 26px !important;
+}
+
+.admin-quote-modal .quotation-terms-box {
+  min-height: 260px !important;
+  padding: 30px 32px !important;
+  border-radius: 16px !important;
+  background: #f0fff5 !important;
+  color: #5f6d7c !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-terms-box h3 {
+  margin: 0 0 14px !important;
+  color: #409168 !important;
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+.admin-quote-modal .quotation-payable-box strong {
+  display: block !important;
+  color: #5f6d7c !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.1em !important;
+}
+
+.admin-quote-modal .quotation-payable-box p {
+  margin: 8px 0 0 !important;
+  color: #5f6d7c !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+.admin-quote-modal .quotation-bank-heading {
+  margin-top: 28px !important;
+}
+
+.admin-quote-modal .quotation-bank-list {
+  display: grid !important;
+  gap: 9px !important;
+}
+
+.admin-quote-modal .quotation-bank-row {
+  display: grid !important;
+  grid-template-columns: 68px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  align-items: baseline !important;
+  color: #5f6d7c !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+}
+
+.admin-quote-modal .quotation-bank-row span {
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-quote-modal .quotation-bank-row strong {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  letter-spacing: 0 !important;
+}
+
+.admin-quote-modal .quotation-muted-line {
+  color: #7b8794 !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+
+.admin-quote-modal .quotation-conditions-box ul {
+  display: grid !important;
+  gap: 11px !important;
+  margin: 0 !important;
+  padding-left: 24px !important;
+  color: #5f6d7c !important;
+  font-size: 19px !important;
+  line-height: 1.45 !important;
+}
+
+.admin-quote-modal .quotation-terms-footer {
+  display: grid !important;
+  justify-items: center !important;
+  gap: 4px !important;
+  margin-top: auto !important;
+  color: #111827 !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  line-height: 1.28 !important;
+}
+
+.admin-quote-modal .quotation-terms-footer strong {
+  color: #111827 !important;
+  font-size: 23px !important;
+  font-weight: 600 !important;
+}
+
+.admin-quote-modal .quotation-terms-footer span {
+  max-width: 680px !important;
+}
+
 @media (max-width: 900px) {
   .admin-quote-modal .invoice-form-grid,
   .admin-quote-modal .quotation-hero,
@@ -1143,9 +1967,162 @@
     grid-template-columns: 1fr !important;
   }
 
+  .admin-quote-modal .invoice-form-grid.invoice-form-grid-quotation {
+    grid-template-columns: 1fr !important;
+  }
+
   .admin-quote-modal .quotation-hero-title,
   .admin-quote-modal .quotation-hero-company {
     justify-self: start !important;
     text-align: left !important;
+  }
+
+  .admin-quote-modal .quotation-service-header,
+  .admin-quote-modal .quotation-service-row {
+    grid-template-columns: minmax(0, 1fr) 64px 88px 96px !important;
+  }
+
+  .admin-quote-modal .quotation-terms-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-quote-modal .quotation-partner-panel h2 {
+    font-size: 52px !important;
+  }
+
+  .admin-quote-modal .quotation-page + .quotation-page {
+    margin-top: 16px !important;
+  }
+}
+
+/* --- Print View Media Queries for Admin Invoice Preview --- */
+@media print {
+  /* 1. Hide everything by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide the rest of the application interface to remove layout space */
+  app-admin-landing,
+  app-admin-dashboard-shell {
+    display: none !important;
+  }
+
+  /* 2. Make the invoice overlay fully transparent and non-blocking */
+  .admin-employee-modal-overlay {
+    visibility: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    z-index: auto !important;
+    display: block !important; /* Reset from flex to block to prevent vertical centering */
+  }
+
+  /* 3. The modal wrapper: reset to full-page container with high specificity */
+  .admin-employee-modal-overlay .admin-quote-modal {
+    visibility: visible !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  /* 4. Invoice builder container: block layout, no scroll, no padding, high specificity */
+  .admin-quote-modal .invoice-builder {
+    visibility: visible !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  /* 5. Explicitly hide ALL non-invoice UI — both display:none AND visibility:hidden */
+  .invoice-builder-header,
+  .invoice-control-card,
+  .invoice-items-card,
+  .invoice-builder-actions,
+  .action-row,
+  .quotation-hero {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 6. The invoice preview sheet: take full width, no clipping, high specificity */
+  .admin-quote-modal .invoice-preview {
+    visibility: visible !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    border-width: 1.5px !important;
+    border-color: #000000 !important;
+    box-shadow: none !important;
+    margin: 20px 0 0 0 !important; /* Slightly bring it down so the full page is seen beautifully with proper margins */
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+
+  /* 7. Make all invoice content visible */
+  .admin-quote-modal .invoice-preview,
+  .admin-quote-modal .invoice-preview * {
+    visibility: visible !important;
+  }
+
+  /* 8. Ensure tables, grid rows, and footer don't get clipped */
+  .invoice-grid-footer,
+  .invoice-notes-terms-grid,
+  .invoice-bottom-page-footer,
+  .gst-breakdown-section,
+  .total-in-words-row {
+    visibility: visible !important;
+    overflow: visible !important;
+    display: grid !important;
+  }
+
+  .invoice-grid-footer {
+    display: grid !important;
+    grid-template-columns: 1.2fr 1fr !important;
+  }
+
+  .invoice-notes-terms-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 1cm 0.8cm;
   }
 }

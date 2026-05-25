@@ -97,6 +97,8 @@ export class AuthService {
     dnpPageStatuses?: string[];
     convertedPageStatuses?: string[];
     invoiceLogo?: string;
+    invoiceSeal?: string;
+    invoiceTerms?: string;
     showCompanyNameOnInvoice?: boolean;
     gstNumber?: string;
     gstPercentage?: number;

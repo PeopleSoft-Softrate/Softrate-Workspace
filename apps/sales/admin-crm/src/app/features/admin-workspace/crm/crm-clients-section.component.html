@@ -95,7 +95,7 @@
               </div>
               <div class="lead-record-line">
                 <span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg></span>
-                <span>{{ contact.assignedEmployeePhone || '-' }}</span>
+                <span>{{ vm.crmManagerNames(client.managers) || vm.crmManagerName(contact.assignedEmployeePhone) || '-' }}</span>
               </div>
               <div class="lead-card-remarks">
                 <div class="lead-card-remarks-title">Latest Notes</div>

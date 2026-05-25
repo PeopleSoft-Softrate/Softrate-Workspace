@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgIf, NgFor, DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { NgIf, NgFor, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -8,6 +8,7 @@ import { ApiService } from '../../api.service';
 import { DashboardCacheService } from '../../core/cache/dashboard-cache.service';
 import { OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../core/config/pagination.config';
 import { AiBrief, AiBriefService } from '../../ai-brief.service';
+import { numberToWords } from '../invoices/domain/invoice-formatters';
 import {
   AiSuggestion,
   AiSuggestionScenario,
@@ -50,6 +51,7 @@ interface Lead {
   companyDescription?: string;
   mainDivisionDescription?: string;
   directorEmailAddress?: string;
+  address?: string;
   remarks?: string[];
   isStarred?: boolean;
   isFavourite?: boolean;
@@ -293,7 +295,7 @@ interface PagedResponse<T> {
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent],
+  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -1715,6 +1717,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   gstPercentage: number = 18;
   invoiceRegisteredAddress: string = '';
   invoiceFooter: string = '';
+  invoiceSeal: string = '';
+  invoiceTerms: string = '';
   bankDetails: any = null;
   contactDetails: any = null;
   companyAddress: string = '';
@@ -2178,6 +2182,27 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return this.activeInvoiceCompanySnapshot()?.bankDetails || this.bankDetails || {};
   }
 
+  invoiceBankDetails(): any {
+    return this.activeCompanyBankDetails();
+  }
+
+  invoiceSealSrc(): string {
+    return String(this.activeInvoiceCompanySnapshot()?.seal || this.invoiceSeal || '').trim();
+  }
+
+  invoiceTermsText(): string {
+    return String(this.activeInvoiceCompanySnapshot()?.terms || this.invoiceTerms || '').trim();
+  }
+
+  invoiceClientAddress(): string {
+    return String(
+      this.openedInvoiceRecord?.clientSnapshot?.address ||
+      this.selectedInvoiceClient?.address ||
+      this.invoiceLead?.address ||
+      '',
+    ).trim();
+  }
+
   invoicePreparedByName(): string {
     return String(
       (this.quoteMode ? '' : this.openedInvoiceRecord?.employeeName) ||
@@ -2261,8 +2286,177 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     await this.setInvoiceQrFromUrl(this.currentInvoicePublicUrl);
   }
 
+  private printFallback(): void {
+    window.setTimeout(() => window.print(), 50);
+  }
+
+  private collectPrintHeadMarkup(): string {
+    return Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((node) => node.outerHTML)
+      .join('\n');
+  }
+
+  private waitForPrintAssets(doc: Document): Promise<void> {
+    const images = Array.from(doc.images || []);
+    const imageReady = Promise.all(images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const complete = () => resolve();
+        img.addEventListener('load', complete, { once: true });
+        img.addEventListener('error', complete, { once: true });
+      });
+    }));
+    const fontSet = (doc as Document & { fonts?: { ready?: Promise<unknown> } }).fonts;
+    const fontsReady = fontSet?.ready ? fontSet.ready.catch(() => undefined) : Promise.resolve();
+    return Promise.all([imageReady, fontsReady]).then(() => undefined);
+  }
+
+  private buildPrintDocument(previewHtml: string): string {
+    const headMarkup = this.collectPrintHeadMarkup();
+    const baseHref = String(document.baseURI || window.location.href).replace(/"/g, '&quot;');
+    return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <base href="${baseHref}">
+    ${headMarkup}
+    <style>
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .employee-print-root,
+      .employee-print-root * {
+        visibility: visible !important;
+      }
+
+      .employee-print-root {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 auto !important;
+        padding: 8mm !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+      }
+
+      .employee-print-root .invoice-modal,
+      .employee-print-root .invoice-builder {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+      }
+
+      .employee-print-root .invoice-preview {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 281mm !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+      }
+
+      .employee-print-root .invoice-preview:not(.quotation-preview) {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      .employee-print-root .quotation-page {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+
+      .employee-print-root .quotation-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+
+      .employee-print-root .quotation-page + .quotation-page {
+        margin-top: 0 !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="employee-print-root">
+      <div class="invoice-modal">
+        <div class="invoice-builder">
+          ${previewHtml}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+  }
+
   private printCurrentDocument(): void {
-    setTimeout(() => window.print(), 50);
+    window.setTimeout(() => {
+      const preview = document.getElementById('invoice-preview');
+      if (!preview) {
+        this.printFallback();
+        return;
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      document.body.appendChild(iframe);
+
+      const frameDoc = iframe.contentDocument;
+      const frameWindow = iframe.contentWindow;
+      if (!frameDoc || !frameWindow) {
+        iframe.remove();
+        this.printFallback();
+        return;
+      }
+
+      frameDoc.open();
+      frameDoc.write(this.buildPrintDocument(preview.outerHTML));
+      frameDoc.close();
+
+      const cleanup = () => window.setTimeout(() => iframe.remove(), 0);
+
+      this.waitForPrintAssets(frameDoc).finally(() => {
+        window.setTimeout(() => {
+          const activeWindow = iframe.contentWindow;
+          if (!activeWindow) {
+            cleanup();
+            this.printFallback();
+            return;
+          }
+          activeWindow.addEventListener('afterprint', cleanup, { once: true });
+          activeWindow.focus();
+          activeWindow.print();
+          window.setTimeout(cleanup, 2000);
+        }, 120);
+      });
+    }, 50);
   }
 
   private resetInvoicePublicLink(): void {
@@ -2473,7 +2667,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText());
         this.invalidateQuotationCaches();
         this.fetchQuotationRecords(true);
-        setTimeout(() => window.print(), 50);
+        this.printCurrentDocument();
       },
       error: (err) => {
         this.quotationSaving = false;
@@ -2723,6 +2917,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       contactName: record.contactName,
       contactNumber: record.contactNumber,
       directorEmailAddress: record.directorEmailAddress,
+      address: '',
       status: '',
       setLabel: '',
     };
@@ -2752,6 +2947,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       contactName: record.contactName,
       contactNumber: record.contactNumber,
       directorEmailAddress: record.directorEmailAddress,
+      address: '',
       status: '',
       setLabel: '',
     };
@@ -2775,6 +2971,42 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   formatInvoicePaymentStatus(status?: string): string {
     return this.normalizeInvoicePaymentStatus(status) === 'paid' ? 'Paid' : 'Unpaid';
+  }
+
+  numberToWords(value: number): string {
+    return numberToWords(value);
+  }
+
+  getGstBreakdown(): any[] {
+    const breakdownMap = new Map<string, any>();
+    const gstPct = this.invoicePreviewGstPercentage();
+
+    this.invoiceItems.forEach((item: any) => {
+      const hsn = item.product?.sacHsn || item.product?.hsn || '—';
+      const taxable = this.invoiceItemTaxable(item);
+      const cgst = this.invoiceItemGst(item) / 2;
+      const sgst = this.invoiceItemGst(item) / 2;
+
+      if (breakdownMap.has(hsn)) {
+        const existing = breakdownMap.get(hsn)!;
+        existing.taxableValue += taxable;
+        existing.cgstAmount += cgst;
+        existing.sgstAmount += sgst;
+        existing.totalTax += cgst + sgst;
+      } else {
+        breakdownMap.set(hsn, {
+          hsnSac: hsn,
+          taxableValue: taxable,
+          cgstRate: gstPct / 2,
+          cgstAmount: cgst,
+          sgstRate: gstPct / 2,
+          sgstAmount: sgst,
+          totalTax: cgst + sgst,
+        });
+      }
+    });
+
+    return Array.from(breakdownMap.values());
   }
 
   get filteredQuotationRecords(): QuotationRecord[] {
@@ -5469,6 +5701,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.gstPercentage = settings.gstPercentage ?? 18;
     this.invoiceRegisteredAddress = settings.invoiceRegisteredAddress || '';
     this.invoiceFooter = settings.invoiceFooter || '';
+    this.invoiceSeal = settings.invoiceSeal || '';
+    this.invoiceTerms = settings.invoiceTerms || '';
     this.bankDetails = settings.bankDetails;
     this.contactDetails = settings.contactDetails;
     this.products = settings.products || [];
@@ -6025,6 +6259,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       contactName: client.primaryContactName || client.primaryContact || 'Primary Contact',
       contactNumber: client.primaryPhone || '',
       directorEmailAddress: client.primaryEmail || '',
+      address: client.address || '',
       status: 'Onboarded',
       setLabel: '',
       companyDescription: client.description || '',

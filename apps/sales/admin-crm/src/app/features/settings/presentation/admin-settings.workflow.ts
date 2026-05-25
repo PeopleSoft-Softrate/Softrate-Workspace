@@ -169,6 +169,8 @@ export class AdminSettingsWorkflow {
           vm.settingsConvertedPageStatuses = res.settings.convertedPageStatuses || [];
           vm.settingsCompanyName = res.settings.companyName || '';
           vm.settingsInvoiceLogo = res.settings.invoiceLogo || DEFAULT_INVOICE_LOGO;
+          vm.settingsInvoiceSeal = res.settings.invoiceSeal || '';
+          vm.settingsInvoiceTerms = res.settings.invoiceTerms || '';
           vm.settingsShowCompanyNameOnInvoice = res.settings.showCompanyNameOnInvoice ?? true;
           vm.settingsGstNumber = res.settings.gstNumber || '';
           vm.settingsGstPercentage = res.settings.gstPercentage ?? 18;
@@ -194,6 +196,21 @@ export class AdminSettingsWorkflow {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         vm.settingsInvoiceLogo = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onSealUpload(vm: any, event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        vm.settingsSaveError = 'Seal size must be under 3MB.';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        vm.settingsInvoiceSeal = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -255,6 +272,8 @@ export class AdminSettingsWorkflow {
       dnpPageStatuses: vm.settingsDnpPageStatuses,
       convertedPageStatuses: vm.settingsConvertedPageStatuses,
       invoiceLogo: vm.settingsInvoiceLogo,
+      invoiceSeal: vm.settingsInvoiceSeal,
+      invoiceTerms: vm.settingsInvoiceTerms,
       showCompanyNameOnInvoice: vm.settingsShowCompanyNameOnInvoice,
       gstNumber: vm.settingsGstNumber,
       gstPercentage: vm.settingsGstPercentage,

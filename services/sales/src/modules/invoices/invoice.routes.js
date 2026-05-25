@@ -304,12 +304,20 @@ router.post('/', async (req, res) => {
       companySnapshot: {
         name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
         logo: user.invoiceLogo || '',
+        seal: user.invoiceSeal || '',
+        terms: user.invoiceTerms || '',
         gstNumber: user.gstNumber || '',
         registeredAddress: user.invoiceRegisteredAddress || user.companyAddress || '',
         phone: user.contactDetails?.phone || '',
         email: user.contactDetails?.email || '',
         website: user.contactDetails?.website || '',
         footer: user.invoiceFooter || '',
+        bankDetails: {
+          bankName: user.bankDetails?.bankName || '',
+          accountNumber: user.bankDetails?.accountNumber || '',
+          ifscCode: user.bankDetails?.ifscCode || '',
+          branchName: user.bankDetails?.branchName || '',
+        },
       },
       clientSnapshot: {
         clientId: client.clientId,

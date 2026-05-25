@@ -41,6 +41,18 @@ import {
   formatShortDuration,
 } from '../../reports/domain/call-formatters';
 
+interface QuotationBankRow {
+  label: string;
+  value: string;
+}
+
+const DEFAULT_QUOTATION_KIND_NOTE = 'We aim to provide the best software to automate your business with high quality at affordable cost.';
+const DEFAULT_QUOTATION_TERMS = [
+  'All rates quoted are valid for 14 days.',
+  '40% payment should be done in advance.',
+  'The remaining amount should be paid within 7 days of invoice.',
+];
+
 @Directive()
 export abstract class AdminWorkspaceController implements OnInit {
   readonly self = this;
@@ -448,7 +460,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   currentInvoiceNumber = '';
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
+  invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
   currentQuotationNumber = '';
+  quotationKindNoteDraft = DEFAULT_QUOTATION_KIND_NOTE;
   showGstSelectionModal = false;
   documentGstPercentageOverride: number | null = null;
   gstSelectionConfirmed = false;
@@ -461,6 +475,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   quotationDateFilterOpen = false;
   quotationDateFrom = '';
   quotationDateTo = '';
+  readonly currentYear = new Date().getFullYear();
+  readonly quotationTerms = DEFAULT_QUOTATION_TERMS;
   companyFullViewOpen = false;
   companyRemarkLead: Lead | null = null;
   adminAiSummaryOpen = false;
@@ -640,6 +656,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   settingsSaveSuccess = '';
   settingsCompanyName: string = '';
   settingsInvoiceLogo: string = '';
+  settingsInvoiceSeal: string = '';
+  settingsInvoiceTerms: string = '';
+  currentInvoiceRecord: any = null;
   settingsShowCompanyNameOnInvoice: boolean = true;
   settingsGstNumber: string = '';
   settingsGstPercentage: number = 18;
@@ -1846,7 +1865,42 @@ export abstract class AdminWorkspaceController implements OnInit {
   private ndaEstimateParagraphHeight(paragraph: any): number {
     const fontSize = Number(paragraph.fontSize || 10);
     const width = Number(paragraph.width || 487);
-    const charsPerLine = Math.max(30, Math.floor(width / (fontSize * 0.47)));
+    
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const family = paragraph.fontFamily || 'Helvetica';
+        const weight = paragraph.isBold ? 'bold' : 'normal';
+        const style = paragraph.isItalic ? 'italic' : 'normal';
+        ctx.font = `${style} ${weight} ${fontSize}px "${family}"`;
+        
+        const words = String(paragraph.text || '').split(' ');
+        let lines = 0;
+        let currentLine = '';
+        
+        for (let i = 0; i < words.length; i++) {
+          const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > width && currentLine) {
+            lines++;
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          lines++;
+        }
+        
+        const lineCount = Math.max(1, lines);
+        return Math.ceil(lineCount * fontSize * Number(paragraph.lineHeight || 1.3)) + 7;
+      }
+    } catch (e) {
+      console.warn('Canvas measureText failed, falling back to heuristic:', e);
+    }
+
+    const charsPerLine = Math.max(30, Math.floor(width / (fontSize * 0.44)));
     const lineCount = Math.max(1, Math.ceil(String(paragraph.text || '').length / charsPerLine));
     return Math.ceil(lineCount * fontSize * Number(paragraph.lineHeight || 1.3)) + 7;
   }
@@ -4052,6 +4106,8 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   onLogoUpload(event: any): void { return this.adminSettingsWorkflow.onLogoUpload(this, event); }
 
+  onSealUpload(event: any): void { return this.adminSettingsWorkflow.onSealUpload(this, event); }
+
   addProduct(): void { return this.adminSettingsWorkflow.addProduct(this); }
 
   toggleNewProductTag(tag: string): void { return this.adminSettingsWorkflow.toggleNewProductTag(this, tag); }
@@ -4295,7 +4351,27 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   invoiceCompanyAddress(): string { return this.invoiceQuotationWorkflow.invoiceCompanyAddress(this); }
 
+  invoiceContactLine(): string { return this.invoiceQuotationWorkflow.invoiceContactLine(this); }
+
+  quotationBankRows(): QuotationBankRow[] { return this.invoiceQuotationWorkflow.quotationBankRows(this); }
+
+  quotationKindNoteText(): string { return this.invoiceQuotationWorkflow.quotationKindNoteText(this); }
+
+  formatInvoicePaymentStatus(status?: string): string { return this.invoiceQuotationWorkflow.formatInvoicePaymentStatus(this, status); }
+
+  invoiceBankDetails(): any { return this.invoiceQuotationWorkflow.invoiceBankDetails(this); }
+
+  invoiceSealSrc(): string { return this.invoiceQuotationWorkflow.invoiceSealSrc(this); }
+
+  invoiceTermsText(): string { return this.invoiceQuotationWorkflow.invoiceTermsText(this); }
+
   invoicePreviewGstPercentage(): number { return this.invoiceQuotationWorkflow.invoicePreviewGstPercentage(this); }
+
+  numberToWords(value: number): string { return this.invoiceQuotationWorkflow.numberToWords(this, value); }
+
+  getGstBreakdown(): any[] { return this.invoiceQuotationWorkflow.getGstBreakdown(this); }
+
+  getTotalItemsQty(): number { return this.invoiceQuotationWorkflow.getTotalItemsQty(this); }
 
   confirmDocumentGstSelection(useZeroGst: boolean): void { return this.invoiceQuotationWorkflow.confirmDocumentGstSelection(this, useZeroGst); }
 

@@ -290,10 +290,37 @@ function drawParagraph(doc, paragraph, data) {
 
   const desiredLineHeight = safeNumber(paragraph.lineHeight, 1.3, 1, 3);
   const lineGap = Math.max(0, (desiredLineHeight - 1.15) * fontSize);
-  doc.text(text, safeNumber(paragraph.x, 54), safeNumber(paragraph.y, 140), {
-    width: safeNumber(paragraph.width, 487, 20, 820),
+  const x = safeNumber(paragraph.x, 54);
+  const y = safeNumber(paragraph.y, 140);
+  const width = safeNumber(paragraph.width, 487, 20, 820);
+  const characterSpacing = safeNumber(paragraph.letterSpacing, 0, 0, 0.5) * fontSize;
+
+  // Hanging indent for bullet items: draw the bullet marker at x, text body indented +12
+  if (text.startsWith('- ') && paragraph.isBullet !== false) {
+    const bulletMarker = '\u2022';
+    const markerWidth = 12;
+    // Draw the bullet marker
+    doc.text(bulletMarker, x, y, {
+      width: markerWidth,
+      align: 'left',
+      characterSpacing,
+      lineGap,
+      continued: false,
+    });
+    // Draw the text body with hanging indent
+    doc.text(text.slice(2), x + markerWidth, y, {
+      width: Math.max(20, width - markerWidth),
+      align: 'justify',
+      characterSpacing,
+      lineGap,
+    });
+    return;
+  }
+
+  doc.text(text, x, y, {
+    width,
     align: paragraph.alignment || 'left',
-    characterSpacing: safeNumber(paragraph.letterSpacing, 0, 0, 0.5) * fontSize,
+    characterSpacing,
     lineGap,
   });
 }

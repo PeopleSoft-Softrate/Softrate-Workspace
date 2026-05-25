@@ -3558,3 +3558,94 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* --- Styled Table Row Remove Button --- */
+.admin-quote-modal .invoice-items-card .remove-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 14px !important;
+  background: #fff5f5 !important;
+  color: #e53e3e !important;
+  border: 1px solid #fed7d7 !important;
+  border-radius: 8px !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.admin-quote-modal .invoice-items-card .remove-btn:hover {
+  background: #e53e3e !important;
+  color: #ffffff !important;
+  border-color: #e53e3e !important;
+}
+
+/* --- GST Selection Modal Custom Action Buttons --- */
+.gst-selection-modal .followup-modal-head .secondary-action {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 36px !important;
+  padding: 0 14px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #4b5563 !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.gst-selection-modal .followup-modal-head .secondary-action:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1f2937 !important;
+}
+
+.gst-selection-modal .gst-selection-option {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 10px !important;
+  font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.gst-selection-modal .gst-selection-option.primary-action {
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+.gst-selection-modal .gst-selection-option.primary-action:hover {
+  background: #4338ca !important;
+  border-color: #4338ca !important;
+}
+
+.gst-selection-modal .gst-selection-option.secondary-action {
+  background: #ffffff !important;
+  border-color: #d8dee8 !important;
+  color: #1f2937 !important;
+}
+
+.gst-selection-modal .gst-selection-option.secondary-action:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}

@@ -1,3 +1,6 @@
+const PDFDocument = require('pdfkit');
+let dummyDoc = null;
+
 const A4 = {
   portrait: { width: 595.28, height: 841.89 },
   landscape: { width: 841.89, height: 595.28 },
@@ -354,7 +357,7 @@ function styleForBlock(block) {
     return { ...base, fontSize: 10.5, isBold: true, lineHeight: 1.2 };
   }
   if (block.type === 'bullet') {
-    return { ...base, x: 70, width: 471, text: `- ${block.text}` };
+    return { ...base, x: 70, width: 471, text: `- ${block.text}`, isBullet: true };
   }
   if (block.boldLead) {
     return { ...base, isBold: false };
@@ -363,7 +366,55 @@ function styleForBlock(block) {
 }
 
 function estimateHeight(paragraph) {
-  const charsPerLine = Math.max(30, Math.floor((paragraph.width || 487) / ((paragraph.fontSize || 10) * 0.47)));
+  if (!dummyDoc) {
+    try {
+      dummyDoc = new PDFDocument({ size: 'A4' });
+    } catch (e) {
+      console.error('Failed to initialize PDFKit dummyDoc in estimateHeight:', e);
+    }
+  }
+
+  if (dummyDoc) {
+    const family = String(paragraph.fontFamily || 'Helvetica').toLowerCase();
+    const isBold = paragraph.isBold;
+    const isItalic = paragraph.isItalic;
+    
+    if (family.includes('courier')) {
+      if (isBold && isItalic) dummyDoc.font('Courier-BoldOblique');
+      else if (isBold) dummyDoc.font('Courier-Bold');
+      else if (isItalic) dummyDoc.font('Courier-Oblique');
+      else dummyDoc.font('Courier');
+    } else if (family.includes('helvetica') || family.includes('inter') || family.includes('outfit') || family.includes('montserrat')) {
+      if (isBold && isItalic) dummyDoc.font('Helvetica-BoldOblique');
+      else if (isBold) dummyDoc.font('Helvetica-Bold');
+      else if (isItalic) dummyDoc.font('Helvetica-Oblique');
+      else dummyDoc.font('Helvetica');
+    } else {
+      if (isBold && isItalic) dummyDoc.font('Times-BoldItalic');
+      else if (isBold) dummyDoc.font('Times-Bold');
+      else if (isItalic) dummyDoc.font('Times-Italic');
+      else dummyDoc.font('Times-Roman');
+    }
+    
+    dummyDoc.fontSize(paragraph.fontSize || 10);
+    
+    const desiredLineHeight = paragraph.lineHeight || 1.3;
+    const lineGap = Math.max(0, (desiredLineHeight - 1.15) * (paragraph.fontSize || 10));
+    
+    let text = paragraph.text || '';
+    let width = paragraph.width || 487;
+
+    // Bullets are rendered with a hanging indent: bullet marker + text body at x+12 with width-12
+    if (text.startsWith('- ') && paragraph.isBullet !== false) {
+      text = text.slice(2);
+      width = Math.max(20, width - 12);
+    }
+    
+    const height = dummyDoc.heightOfString(text, { width, lineGap });
+    return Math.ceil(height) + 7;
+  }
+
+  const charsPerLine = Math.max(30, Math.floor((paragraph.width || 487) / ((paragraph.fontSize || 10) * 0.44)));
   const lineCount = Math.max(1, Math.ceil(String(paragraph.text || '').length / charsPerLine));
   return Math.ceil(lineCount * (paragraph.fontSize || 10) * (paragraph.lineHeight || 1.3)) + 7;
 }
@@ -392,15 +443,27 @@ function paginateBlocks(blocks) {
     y = pages[pages.length - 1].showHeader ? firstPageTop : continuationTop;
   };
 
-  blocks.forEach((block) => {
+  blocks.forEach((block, blockIndex) => {
     const paragraph = styleForBlock(block);
     const height = estimateHeight(paragraph);
-    if (y + height > pageHeight - bottom && pages[pages.length - 1].paragraphs.length > 0) {
+
+    // Add extra pre-gap before heading blocks (section separation), but not for the very first block
+    const isHeading = block.type === 'heading';
+    const isSubheading = block.type === 'subheading';
+    const preGap = isHeading && blockIndex > 0 ? 10 : (isSubheading && blockIndex > 0 ? 4 : 0);
+
+    if (y + preGap + height > pageHeight - bottom && pages[pages.length - 1].paragraphs.length > 0) {
       addPage();
+    } else {
+      y += preGap;
     }
+
     paragraph.y = y;
     pages[pages.length - 1].paragraphs.push(paragraph);
-    y += height + gap;
+
+    // Type-specific post-gap for better visual separation
+    const postGap = isHeading ? 4 : (isSubheading ? 3 : gap);
+    y += height + postGap;
   });
 
   const signatureIntroHeight = 32;

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import QRCode from 'qrcode';
 import { ApiService } from '../../../services/api.service';
 import { Lead } from '../../../services/lead.service';
-import { formatInvoiceMoney as formatInvoiceMoneyValue } from '../domain/invoice-formatters';
+import { formatInvoiceMoney as formatInvoiceMoneyValue, numberToWords } from '../domain/invoice-formatters';
 
 @Injectable({ providedIn: 'root' })
 export class AdminInvoiceQuotationWorkflow {
@@ -32,13 +32,204 @@ export class AdminInvoiceQuotationWorkflow {
     await this.setInvoiceQrFromUrl(vm, vm.currentInvoicePublicUrl);
   }
 
+  private printFallback(): void {
+    window.setTimeout(() => window.print(), 50);
+  }
+
+  private collectPrintHeadMarkup(): string {
+    return Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((node) => node.outerHTML)
+      .join('\n');
+  }
+
+  private waitForPrintAssets(doc: Document): Promise<void> {
+    const images = Array.from(doc.images || []);
+    const imageReady = Promise.all(images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const complete = () => resolve();
+        img.addEventListener('load', complete, { once: true });
+        img.addEventListener('error', complete, { once: true });
+      });
+    }));
+    const fontSet = (doc as Document & { fonts?: { ready?: Promise<unknown> } }).fonts;
+    const fontsReady = fontSet?.ready ? fontSet.ready.catch(() => undefined) : Promise.resolve();
+    return Promise.all([imageReady, fontsReady]).then(() => undefined);
+  }
+
+  private buildPrintDocument(previewHtml: string): string {
+    const headMarkup = this.collectPrintHeadMarkup();
+    const baseHref = String(document.baseURI || window.location.href).replace(/"/g, '&quot;');
+    return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <base href="${baseHref}">
+    ${headMarkup}
+    <style>
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .admin-print-root,
+      .admin-print-root * {
+        visibility: visible !important;
+      }
+
+      .admin-print-root {
+        width: 194mm !important;
+        margin: 8mm auto !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+      }
+
+      .admin-print-root .admin-quote-modal,
+      .admin-print-root .invoice-builder {
+        display: block !important;
+        width: 194mm !important;
+        max-width: 194mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+      }
+
+      .admin-print-root .invoice-preview {
+        display: block !important;
+        width: 194mm !important;
+        max-width: 194mm !important;
+        min-height: 281mm !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+      }
+
+      .admin-print-root .invoice-preview:not(.quotation-preview) {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      .admin-print-root .quotation-hero {
+        display: grid !important;
+        visibility: visible !important;
+      }
+
+      .admin-print-root .quotation-page {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+
+      .admin-print-root .quotation-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+
+      .admin-print-root .quotation-page + .quotation-page {
+        margin-top: 0 !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-print-root">
+      <div class="admin-quote-modal">
+        <div class="invoice-builder">
+          ${previewHtml}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+  }
+
   private printCurrentDocument(): void {
-    setTimeout(() => window.print(), 50);
+    window.setTimeout(() => {
+      const preview = document.getElementById('invoice-preview');
+      if (!preview) {
+        this.printFallback();
+        return;
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      document.body.appendChild(iframe);
+
+      const frameDoc = iframe.contentDocument;
+      const frameWindow = iframe.contentWindow;
+      if (!frameDoc || !frameWindow) {
+        iframe.remove();
+        this.printFallback();
+        return;
+      }
+
+      frameDoc.open();
+      frameDoc.write(this.buildPrintDocument(preview.outerHTML));
+      frameDoc.close();
+
+      const cleanup = () => window.setTimeout(() => iframe.remove(), 0);
+
+      this.waitForPrintAssets(frameDoc).finally(() => {
+        window.setTimeout(() => {
+          const activeWindow = iframe.contentWindow;
+          if (!activeWindow) {
+            cleanup();
+            this.printFallback();
+            return;
+          }
+          const onAfterPrint = () => cleanup();
+          activeWindow.addEventListener('afterprint', onAfterPrint, { once: true });
+          activeWindow.focus();
+          activeWindow.print();
+          window.setTimeout(cleanup, 2000);
+        }, 120);
+      });
+    }, 50);
   }
 
   private resetInvoicePublicLink(vm: any): void {
     vm.currentInvoicePublicUrl = '';
     vm.currentInvoiceQrDataUrl = '';
+  }
+
+  private activeInvoiceCompanySnapshot(vm: any): any {
+    if (!vm.viewingSavedDocument) return null;
+    return vm.currentInvoiceRecord?.companySnapshot || null;
+  }
+
+  private activeCompanyBankDetails(vm: any): any {
+    return this.activeInvoiceCompanySnapshot(vm)?.bankDetails || vm.settingsBankDetails || {};
+  }
+
+  private normalizeInvoicePaymentStatus(status?: string): 'paid' | 'unpaid' {
+    return String(status || '').trim().toLowerCase() === 'paid' ? 'paid' : 'unpaid';
+  }
+
+  private defaultQuotationKindNote(vm: any): string {
+    return String(vm.settingsInvoiceFooter || 'We aim to provide the best software to automate your business with high quality at affordable cost.').trim();
   }
 
   private normalizeClient(raw: any): any {
@@ -72,6 +263,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactName: client.primaryContactName || client.primaryContact || 'Primary Contact',
       contactNumber: client.primaryPhone || '',
       directorEmailAddress: client.primaryEmail || '',
+      address: client.address || '',
       status: 'Onboarded',
     };
   }
@@ -336,6 +528,7 @@ export class AdminInvoiceQuotationWorkflow {
   openSavedInvoice(vm: any, record: any): void {
     vm.quoteMode = false;
     vm.viewingSavedDocument = true;
+    vm.currentInvoiceRecord = record;
     vm.selectedInvoiceClient = null;
     this.resetDocumentGstSelection(vm);
     vm.currentInvoiceNumber = record.invoiceNumber || '';
@@ -348,9 +541,11 @@ export class AdminInvoiceQuotationWorkflow {
       contactName: record.clientSnapshot?.contactName || record.contactName || '',
       contactNumber: record.clientSnapshot?.phone || record.contactNumber || '',
       directorEmailAddress: record.clientSnapshot?.email || record.directorEmailAddress || '',
+      address: record.clientSnapshot?.address || record.address || '',
       status: '',
     };
     vm.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
+    vm.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(record.paymentStatus);
     vm.invoiceItems = (record.items || []).map((item: any) => ({
       product: item.product || { name: item.name, sacHsn: item.sacHsn || '' },
       name: item.name || item.product?.name || 'Service',
@@ -363,6 +558,7 @@ export class AdminInvoiceQuotationWorkflow {
   openSavedQuotation(vm: any, record: any): void {
     vm.quoteMode = true;
     vm.viewingSavedDocument = true;
+    vm.currentInvoiceRecord = record;
     vm.selectedInvoiceClient = null;
     this.resetDocumentGstSelection(vm);
     vm.currentQuotationNumber = record.quotationNumber || '';
@@ -375,9 +571,12 @@ export class AdminInvoiceQuotationWorkflow {
       contactName: record.contactName || '',
       contactNumber: record.contactNumber || '',
       directorEmailAddress: record.directorEmailAddress || '',
+      address: record.clientSnapshot?.address || record.address || '',
       status: '',
     };
     vm.invoiceIssuedAt = record.quotationDate ? new Date(record.quotationDate) : new Date(record.createdAt || Date.now());
+    vm.invoicePaymentStatus = 'unpaid';
+    vm.quotationKindNoteDraft = String(record.kindNote || record.companySnapshot?.footer || this.defaultQuotationKindNote(vm));
     vm.invoiceItems = (record.items || []).map((item: any) => ({
       product: item.product || { name: item.name, sacHsn: item.sacHsn || '' },
       name: item.name || item.product?.name || 'Service',
@@ -400,6 +599,7 @@ export class AdminInvoiceQuotationWorkflow {
   openQuotationModal(vm: any, lead: Lead): void {
     vm.quoteMode = true;
     vm.viewingSavedDocument = false;
+    vm.currentInvoiceRecord = null;
     vm.selectedInvoiceClient = null;
     this.resetDocumentGstSelection(vm);
     vm.invoiceLead = lead;
@@ -407,6 +607,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.selectedInvoiceProduct = null;
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
+    vm.invoicePaymentStatus = 'unpaid';
+    vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentQuotationNumber = '';
@@ -417,6 +619,7 @@ export class AdminInvoiceQuotationWorkflow {
   openAdminInvoiceModal(vm: any, lead: Lead): void {
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
+    vm.currentInvoiceRecord = null;
     vm.selectedInvoiceClient = null;
     this.resetDocumentGstSelection(vm);
     vm.invoiceLead = lead;
@@ -424,6 +627,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.selectedInvoiceProduct = null;
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
+    vm.invoicePaymentStatus = 'unpaid';
+    vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
@@ -435,6 +640,7 @@ export class AdminInvoiceQuotationWorkflow {
     const normalizedClient = this.normalizeClient(client);
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
+    vm.currentInvoiceRecord = null;
     vm.selectedInvoiceClient = normalizedClient;
     this.resetDocumentGstSelection(vm);
     vm.invoiceLead = this.clientToLead(vm, normalizedClient);
@@ -442,6 +648,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.selectedInvoiceProduct = null;
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
+    vm.invoicePaymentStatus = 'unpaid';
+    vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
@@ -453,9 +661,12 @@ export class AdminInvoiceQuotationWorkflow {
     vm.showInvoiceModal = false;
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
+    vm.currentInvoiceRecord = null;
     vm.selectedInvoiceClient = null;
     this.resetInvoicePublicLink(vm);
     this.resetDocumentGstSelection(vm);
+    vm.invoicePaymentStatus = 'unpaid';
+    vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
   }
 
   onProductSelect(vm: any): void {
@@ -530,19 +741,73 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   invoiceCompanyDisplayName(vm: any): string {
+    const snapshotName = String(this.activeInvoiceCompanySnapshot(vm)?.name || '').trim();
+    if (snapshotName) return snapshotName;
     return (vm.settingsShowCompanyNameOnInvoice ? (vm.settingsCompanyName || vm.dashboardCompany) : '') || 'DealVoice';
   }
 
   invoiceCompanyAddress(vm: any): string {
-    return vm.settingsInvoiceRegisteredAddress || vm.companyProfile?.companyAddress || '';
+    return String(
+      this.activeInvoiceCompanySnapshot(vm)?.registeredAddress ||
+      this.activeInvoiceCompanySnapshot(vm)?.address ||
+      vm.settingsInvoiceRegisteredAddress ||
+      vm.companyProfile?.companyAddress ||
+      '',
+    ).trim();
+  }
+
+  invoiceContactLine(vm: any): string {
+    const snapshot = this.activeInvoiceCompanySnapshot(vm);
+    const parts = [
+      snapshot?.phone || vm.settingsContactDetails?.phone || '',
+      snapshot?.email || vm.settingsContactDetails?.email || '',
+      snapshot?.website || vm.settingsContactDetails?.website || '',
+    ]
+      .map((value: any) => String(value || '').trim())
+      .filter(Boolean);
+    return parts.join(' · ');
+  }
+
+  quotationBankRows(vm: any): Array<{ label: string; value: string }> {
+    const bankDetails = this.activeCompanyBankDetails(vm);
+    return [
+      { label: 'Bank', value: bankDetails.bankName },
+      { label: 'Acc', value: bankDetails.accountNumber },
+      { label: 'IFSC', value: bankDetails.ifscCode },
+      { label: 'Branch', value: bankDetails.branchName },
+    ]
+      .map((row) => ({ ...row, value: String(row.value || '').trim() }))
+      .filter((row) => row.value);
+  }
+
+  quotationKindNoteText(vm: any): string {
+    return String(
+      vm.currentInvoiceRecord?.kindNote ||
+      vm.quotationKindNoteDraft ||
+      this.activeInvoiceCompanySnapshot(vm)?.footer ||
+      this.defaultQuotationKindNote(vm),
+    ).trim();
+  }
+
+  formatInvoicePaymentStatus(vm: any, status?: string): string {
+    return this.normalizeInvoicePaymentStatus(status || vm.invoicePaymentStatus) === 'paid' ? 'Paid' : 'Unpaid';
+  }
+
+  invoiceBankDetails(vm: any): any {
+    return this.activeCompanyBankDetails(vm);
+  }
+
+  invoiceSealSrc(vm: any): string {
+    return String(this.activeInvoiceCompanySnapshot(vm)?.seal || vm.settingsInvoiceSeal || '').trim();
+  }
+
+  invoiceTermsText(vm: any): string {
+    return String(this.activeInvoiceCompanySnapshot(vm)?.terms || vm.settingsInvoiceTerms || '').trim();
   }
 
   invoicePreviewGstPercentage(vm: any): number {
     if (vm.viewingSavedDocument) {
-      const record = vm.quoteMode
-        ? vm.quotationRecords?.find((item: any) => item.quotationNumber === vm.currentQuotationNumber)
-        : vm.invoiceRecords?.find((item: any) => item.invoiceNumber === vm.currentInvoiceNumber);
-      return Number(record?.gstPercentage || 0);
+      return Number(vm.currentInvoiceRecord?.gstPercentage || 0);
     }
     if (vm.documentGstPercentageOverride !== null && vm.documentGstPercentageOverride !== undefined) {
       return Number(vm.documentGstPercentageOverride || 0);
@@ -594,6 +859,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactNumber: vm.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(vm),
       invoiceDate: vm.invoiceIssuedAt,
+      paymentStatus: this.normalizeInvoicePaymentStatus(vm.invoicePaymentStatus),
       items: vm.invoiceItems.map((item: any) => ({
         productId: item.product?._id,
         name: item.name,
@@ -632,6 +898,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactNumber: vm.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(vm),
       quotationDate: vm.invoiceIssuedAt,
+      kindNote: this.quotationKindNoteText(vm),
       items: vm.invoiceItems.map((item: any) => ({
         productId: item.product?._id,
         name: item.name,
@@ -646,8 +913,9 @@ export class AdminInvoiceQuotationWorkflow {
           return;
         }
         vm.currentQuotationNumber = res.quotation.quotationNumber;
+        vm.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText(vm));
         vm.fetchQuotationRecords();
-        setTimeout(() => window.print(), 50);
+        this.printCurrentDocument();
       },
       error: (err) => {
         vm.quotationSaving = false;
@@ -695,4 +963,43 @@ export class AdminInvoiceQuotationWorkflow {
     });
   }
 
+  numberToWords(vm: any, value: number): string {
+    return numberToWords(value);
+  }
+
+  getGstBreakdown(vm: any): any[] {
+    const breakdownMap = new Map<string, any>();
+    const gstPct = this.invoicePreviewGstPercentage(vm);
+
+    (vm.invoiceItems || []).forEach((item: any) => {
+      const hsn = item.product?.sacHsn || item.product?.hsn || '—';
+      const taxable = this.invoiceItemTaxable(vm, item);
+      const cgst = this.invoiceItemGst(vm, item) / 2;
+      const sgst = this.invoiceItemGst(vm, item) / 2;
+
+      if (breakdownMap.has(hsn)) {
+        const existing = breakdownMap.get(hsn)!;
+        existing.taxableValue += taxable;
+        existing.cgstAmount += cgst;
+        existing.sgstAmount += sgst;
+        existing.totalTax += (cgst + sgst);
+      } else {
+        breakdownMap.set(hsn, {
+          hsnSac: hsn,
+          taxableValue: taxable,
+          cgstRate: gstPct / 2,
+          cgstAmount: cgst,
+          sgstRate: gstPct / 2,
+          sgstAmount: sgst,
+          totalTax: cgst + sgst
+        });
+      }
+    });
+
+    return Array.from(breakdownMap.values());
+  }
+
+  getTotalItemsQty(vm: any): number {
+    return (vm.invoiceItems || []).reduce((sum: number, item: any) => sum + Number(item.quantity || 1), 0);
+  }
 }

@@ -2584,122 +2584,249 @@
         </ng-container>
 
         <ng-template #invoicePreviewDocument>
-          <header class="invoice-print-header">
-            <div class="invoice-print-logo-block">
-              <img *ngIf="invoiceCompanyLogo(); else invoiceTextLogo" [src]="invoiceCompanyLogo()" alt="Invoice logo" class="invoice-logo">
-              <ng-template #invoiceTextLogo>
-                <div class="invoice-text-logo">{{ invoiceCompanyDisplayName() }}</div>
-              </ng-template>
-            </div>
+          <div class="tax-invoice-bar">
+            <span class="invoice-title-main">TAX INVOICE</span>
+            <span class="invoice-title-sub">ORIGINAL FOR RECIPIENT</span>
+          </div>
 
-            <div class="invoice-print-company">
-              <h2>{{ invoiceCompanyDisplayName() }}</h2>
-              <div class="invoice-print-subtitle">Invoice</div>
-              <p *ngIf="invoiceCompanyAddress()"><strong>Address:</strong> {{ invoiceCompanyAddress() }}</p>
-              <p *ngIf="invoiceCompanyPhone()"><strong>Ph No:</strong> {{ invoiceCompanyPhone() }}</p>
-              <p *ngIf="invoiceCompanyEmail()"><strong>Mail:</strong> {{ invoiceCompanyEmail() }}</p>
-              <p *ngIf="invoiceCompanyWebsite()"><strong>Website:</strong> {{ invoiceCompanyWebsite() }}</p>
-              <p *ngIf="invoiceCompanyGstNumber()"><strong>GSTIN:</strong> {{ invoiceCompanyGstNumber() }}</p>
-            </div>
+          <div class="invoice-grid-header">
+            <div class="invoice-grid-col-left">
+              <div class="sender-info-block">
+                <div class="sender-logo-wrap" *ngIf="invoiceCompanyLogo(); else invoiceTextLogo">
+                  <img [src]="invoiceCompanyLogo()" alt="Invoice logo" class="sender-logo-img">
+                </div>
+                <ng-template #invoiceTextLogo>
+                  <div class="sender-text-logo">{{ invoiceCompanyDisplayName() }}</div>
+                </ng-template>
+                <div class="sender-details">
+                  <h2 class="company-title">{{ invoiceCompanyDisplayName() }}</h2>
+                  <p *ngIf="invoiceCompanyGstNumber()" class="company-gst">GSTIN: <strong>{{ invoiceCompanyGstNumber() }}</strong></p>
+                  <p *ngIf="invoiceCompanyAddress()" class="company-addr">{{ invoiceCompanyAddress() }}</p>
+                  <p class="company-contact">
+                    <span *ngIf="invoiceCompanyPhone()">Mobile: {{ invoiceCompanyPhone() }}</span>
+                    <span *ngIf="invoiceCompanyPhone() && invoiceCompanyEmail()"> | </span>
+                    <span *ngIf="invoiceCompanyEmail()">Email: {{ invoiceCompanyEmail() }}</span>
+                  </p>
+                </div>
+              </div>
 
-            <div class="invoice-qr-block">
-              <img *ngIf="currentInvoiceQrDataUrl; else invoiceQrPlaceholder" class="invoice-qr-image" [src]="currentInvoiceQrDataUrl" alt="Invoice QR code">
-              <ng-template #invoiceQrPlaceholder>
-                <div class="invoice-qr-code invoice-qr-placeholder" aria-label="E invoice QR placeholder"></div>
-              </ng-template>
-              <div>Scan to See E-Invoice</div>
-            </div>
-          </header>
-
-          <section class="invoice-print-section invoice-summary-section">
-            <div class="invoice-summary-column">
-              <div class="invoice-section-heading">Invoice Details</div>
-              <div class="invoice-detail-lines">
-                <div class="invoice-detail-line"><strong>Invoice No:</strong> {{ invoiceNumber() }}</div>
-                <div class="invoice-detail-line"><strong>Date:</strong> {{ invoiceIssuedAt | date:'dd MMM yyyy, hh:mm a' }}</div>
-                <div class="invoice-detail-line"><strong>Billed by:</strong> {{ invoicePreparedByName() }}</div>
-                <div class="invoice-detail-line"><strong>Status:</strong> {{ formatInvoicePaymentStatus(invoicePaymentStatus) }}</div>
+              <div class="client-info-block">
+                <h3 class="block-kicker">Customer Details:</h3>
+                <strong class="client-company-title">{{ invoiceClientCompanyName() }}</strong>
+                <div class="client-billing-address">
+                  <strong>Billing address:</strong>
+                  <p *ngIf="invoiceClientAddress(); else noClientAddr">{{ invoiceClientAddress() }}</p>
+                  <ng-template #noClientAddr>
+                    <p>—</p>
+                  </ng-template>
+                  <p *ngIf="invoiceClientPhone()" class="client-phone">Ph: {{ invoiceClientPhone() }}</p>
+                </div>
               </div>
             </div>
-            <div class="invoice-summary-column">
-              <div class="invoice-section-heading">Bill To</div>
-              <div class="invoice-detail-lines">
-                <div class="invoice-detail-line invoice-company-name">{{ invoiceClientCompanyName() }}</div>
-                <div class="invoice-detail-line" *ngIf="invoiceClientContactName()"><strong>Contact:</strong> {{ invoiceClientContactName() }}</div>
-                <div class="invoice-detail-line" *ngIf="invoiceClientPhone()"><strong>Ph No:</strong> {{ invoiceClientPhone() }}</div>
-                <div class="invoice-detail-line" *ngIf="invoiceClientEmail()"><strong>Mail:</strong> {{ invoiceClientEmail() }}</div>
+
+            <div class="invoice-grid-col-right">
+              <div class="meta-field-row">
+                <div class="meta-field-cell">
+                  <span class="field-label">Invoice #:</span>
+                  <strong class="field-val">{{ invoiceNumber() }}</strong>
+                </div>
+                <div class="meta-field-cell">
+                  <span class="field-label">Invoice Date:</span>
+                  <strong class="field-val">{{ invoiceIssuedAt | date:'dd MMM yyyy' }}</strong>
+                </div>
+              </div>
+              <div class="meta-field-full-row">
+                <span class="field-label invoice-qr-label">Scan to View E-Invoice</span>
+                <div class="invoice-qr-wrap">
+                  <img *ngIf="currentInvoiceQrDataUrl; else invoiceQrPlaceholder" class="invoice-qr-image" [src]="currentInvoiceQrDataUrl" alt="Scan to View E-Invoice QR Code">
+                  <ng-template #invoiceQrPlaceholder>
+                    <div class="invoice-qr-placeholder-box">QR</div>
+                  </ng-template>
+                </div>
+              </div>
+              <div class="meta-filler-space meta-status-space">
+                <div class="invoice-status-line">
+                  <span class="field-label">Invoice Status:</span>
+                  <strong class="invoice-status-value" [class.invoice-status-value-paid]="invoicePaymentStatus === 'paid'">
+                  {{ formatInvoicePaymentStatus(invoicePaymentStatus) }}
+                  </strong>
+                </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          <section class="invoice-service-section">
-            <h3>Service / Product Intended</h3>
-            <table class="invoice-print-table">
+          <div class="invoice-main-table-wrap">
+            <table class="invoice-main-table">
               <thead>
                 <tr>
-                  <th>S.No.</th>
-                  <th>Service / Product</th>
-                  <th>SAC/HSN</th>
-                  <th>Units</th>
-                  <th>Rate</th>
-                  <th>Taxable</th>
-                  <th>CGST ({{ invoicePreviewGstPercentage() / 2 }}%)</th>
-                  <th>SGST ({{ invoicePreviewGstPercentage() / 2 }}%)</th>
-                  <th>Total</th>
+                  <th class="col-sno">#</th>
+                  <th class="col-desc">Item</th>
+                  <th class="col-hsn">HSN/SAC</th>
+                  <th class="col-rate">Rate/ Item</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-taxable">Taxable Value</th>
+                  <th class="col-tax">Tax Amount</th>
+                  <th class="col-amount">Amount</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of invoiceItems; let i = index">
-                  <td>{{ i + 1 }}</td>
-                  <td>{{ item.name }}</td>
-                  <td>{{ item.product?.sacHsn || item.product?.hsn || '—' }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ formatInvoiceMoney(item.price) }}</td>
-                  <td>{{ formatInvoiceMoney(invoiceItemTaxable(item)) }}</td>
-                  <td>{{ formatInvoiceMoney(invoiceItemGst(item) / 2) }}</td>
-                  <td>{{ formatInvoiceMoney(invoiceItemGst(item) / 2) }}</td>
-                  <td><strong>{{ formatInvoiceMoney(invoiceItemTotal(item)) }}</strong></td>
+                <tr *ngFor="let item of invoiceItems; let i = index" class="item-row">
+                  <td class="text-center">{{ i + 1 }}</td>
+                  <td>
+                    <div class="item-main-name"><strong>{{ item.name || 'Service / Product' }}</strong></div>
+                  </td>
+                  <td class="text-center">{{ item.product?.sacHsn || item.product?.hsn || '—' }}</td>
+                  <td class="text-right">{{ formatInvoiceMoney(item.price) }}</td>
+                  <td class="text-center">{{ item.quantity || 1 }}</td>
+                  <td class="text-right">{{ formatInvoiceMoney(invoiceItemTaxable(item)) }}</td>
+                  <td class="text-right">
+                    {{ formatInvoiceMoney(invoiceItemGst(item)) }}
+                    <div class="item-tax-pct">({{ invoicePreviewGstPercentage() }}%)</div>
+                  </td>
+                  <td class="text-right"><strong>{{ formatInvoiceMoney(invoiceItemTotal(item)) }}</strong></td>
                 </tr>
-                <tr class="invoice-table-total-row">
-                  <td colspan="3">Total</td>
-                  <td>{{ invoiceTotalUnits }}</td>
-                  <td>—</td>
-                  <td>{{ formatInvoiceMoney(invoiceSubtotal) }}</td>
-                  <td>{{ formatInvoiceMoney(invoiceCgstAmount) }}</td>
-                  <td>{{ formatInvoiceMoney(invoiceSgstAmount) }}</td>
-                  <td><strong>{{ formatInvoiceMoney(invoiceTotal) }}</strong></td>
+                <tr class="filler-row" *ngIf="invoiceItems.length < 3">
+                  <td colspan="8">&nbsp;</td>
+                </tr>
+                <tr class="table-summary-row">
+                  <td colspan="5" class="summary-left-cell">
+                    Total Items / Qty : {{ invoiceItems.length }} / {{ invoiceTotalUnits }}.000
+                  </td>
+                  <td colspan="3" class="summary-right-cell">
+                    <div class="summary-line">
+                      <span>Taxable Amount</span>
+                      <strong>{{ formatInvoiceMoney(invoiceSubtotal) }}</strong>
+                    </div>
+                    <div class="summary-line" *ngIf="invoiceCgstAmount > 0">
+                      <span>CGST ({{ invoicePreviewGstPercentage() / 2 }}%)</span>
+                      <strong>{{ formatInvoiceMoney(invoiceCgstAmount) }}</strong>
+                    </div>
+                    <div class="summary-line" *ngIf="invoiceSgstAmount > 0">
+                      <span>SGST ({{ invoicePreviewGstPercentage() / 2 }}%)</span>
+                      <strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong>
+                    </div>
+                    <div class="summary-line grand-total-line">
+                      <span>Total</span>
+                      <strong class="grand-total-val">{{ formatInvoiceMoney(invoiceTotal) }}</strong>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
-          </section>
+          </div>
 
-          <section class="invoice-print-section invoice-payment-section">
-            <div class="invoice-section-heading">Payment Receipt</div>
-            <div class="invoice-payment-grid">
-              <span>Taxable amount</span>
-              <strong>{{ formatInvoiceMoney(invoiceSubtotal) }}</strong>
-              <span>CGST</span>
-              <strong>{{ formatInvoiceMoney(invoiceCgstAmount) }}</strong>
-              <span>SGST / UTGST</span>
-              <strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong>
-              <span>Amount received</span>
-              <strong>{{ formatInvoiceMoney(invoiceAmountReceived) }}</strong>
-              <span>Balance due</span>
-              <strong>{{ formatInvoiceMoney(invoiceBalanceDue) }}</strong>
-              <span class="invoice-net-total-label">Net total</span>
-              <strong class="invoice-net-total">{{ formatInvoiceMoney(invoiceTotal) }}</strong>
+          <div class="invoice-footer-stack">
+            <div class="total-in-words-row">
+              Total amount (in words): <strong>{{ numberToWords(invoiceTotal) }}</strong>
             </div>
-          </section>
 
-          <footer class="invoice-print-footer">
-            <div class="invoice-section-heading">Company Details</div>
-            <p *ngIf="invoiceCompanyAddress()"><strong>Address:</strong> {{ invoiceCompanyAddress() }}</p>
-            <p *ngIf="invoiceCompanyPhone()"><strong>Ph No:</strong> {{ invoiceCompanyPhone() }}</p>
-            <p *ngIf="invoiceCompanyGstNumber()"><strong>GSTIN:</strong> {{ invoiceCompanyGstNumber() }}</p>
-            <p *ngIf="invoiceCompanyEmail()"><strong>Mail:</strong> {{ invoiceCompanyEmail() }}</p>
-            <p *ngIf="invoiceCompanyWebsite()"><strong>Website:</strong> {{ invoiceCompanyWebsite() }}</p>
-            <p class="invoice-footer-note">{{ invoiceFooterText() }}</p>
-          </footer>
+            <div class="gst-breakdown-section">
+              <table class="gst-breakdown-table">
+                <thead>
+                  <tr>
+                    <th rowspan="2">HSN/SAC</th>
+                    <th rowspan="2">Taxable Value</th>
+                    <th colspan="2" class="text-center border-b">Central Tax</th>
+                    <th colspan="2" class="text-center border-b">State Tax</th>
+                    <th rowspan="2">Total Tax Amount</th>
+                  </tr>
+                  <tr>
+                    <th class="text-center">Rate</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">Rate</th>
+                    <th class="text-center">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of getGstBreakdown()">
+                    <td class="text-center">{{ row.hsnSac }}</td>
+                    <td class="text-right">{{ formatInvoiceMoney(row.taxableValue) }}</td>
+                    <td class="text-center">{{ row.cgstRate }}%</td>
+                    <td class="text-right">{{ formatInvoiceMoney(row.cgstAmount) }}</td>
+                    <td class="text-center">{{ row.sgstRate }}%</td>
+                    <td class="text-right">{{ formatInvoiceMoney(row.sgstAmount) }}</td>
+                    <td class="text-right"><strong>{{ formatInvoiceMoney(row.totalTax) }}</strong></td>
+                  </tr>
+                  <tr class="gst-breakdown-total-row">
+                    <td class="text-center"><strong>TOTAL</strong></td>
+                    <td class="text-right"><strong>{{ formatInvoiceMoney(invoiceSubtotal) }}</strong></td>
+                    <td class="text-center">—</td>
+                    <td class="text-right"><strong>{{ formatInvoiceMoney(invoiceCgstAmount) }}</strong></td>
+                    <td class="text-center">—</td>
+                    <td class="text-right"><strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong></td>
+                    <td class="text-right"><strong>{{ formatInvoiceMoney(invoiceCgstAmount + invoiceSgstAmount) }}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="invoice-grid-footer">
+              <div class="footer-col-bank">
+                <h3 class="footer-kicker">Bank Details:</h3>
+                <dl class="bank-details-list">
+                  <dt>Bank:</dt>
+                  <dd>{{ invoiceBankDetails().bankName || 'YES BANK' }}</dd>
+                  <dt>Account #:</dt>
+                  <dd>{{ invoiceBankDetails().accountNumber || '66789999222445' }}</dd>
+                  <dt>IFSC:</dt>
+                  <dd>{{ invoiceBankDetails().ifscCode || 'YESBBIN4567' }}</dd>
+                  <dt>Branch:</dt>
+                  <dd>{{ invoiceBankDetails().branchName || 'Kodihalli' }}</dd>
+                </dl>
+              </div>
+
+              <div class="footer-col-sig">
+                <span class="sig-header">For {{ invoiceCompanyDisplayName() | uppercase }}</span>
+                <div class="sig-stamp-container">
+                  <img *ngIf="invoiceSealSrc(); else defaultSeal" [src]="invoiceSealSrc()" class="signature-stamp-img" style="width: 95px; height: 95px; object-fit: contain;">
+                  <ng-template #defaultSeal>
+                    <svg viewBox="0 0 120 120" width="95" height="95" class="signature-stamp">
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3 3"/>
+                      <circle cx="60" cy="60" r="45" fill="none" stroke="#2563eb" stroke-width="1.2"/>
+                      <path id="emp-stamp-text-path-top" d="M 20 60 A 40 40 0 0 1 100 60" fill="none" stroke="none"/>
+                      <path id="emp-stamp-text-path-bottom" d="M 100 60 A 40 40 0 0 1 20 60" fill="none" stroke="none"/>
+                      <text fill="#2563eb" font-size="7.5" font-family="monospace" letter-spacing="1">
+                        <textPath href="#emp-stamp-text-path-top" startOffset="50%" text-anchor="middle">★ SIGNATURE ★</textPath>
+                      </text>
+                      <text fill="#2563eb" font-size="7" font-family="monospace" letter-spacing="1">
+                        <textPath href="#emp-stamp-text-path-bottom" startOffset="50%" text-anchor="middle">OFFICIAL SEAL</textPath>
+                      </text>
+                      <g transform="rotate(-15 60 60)">
+                        <rect x="20" y="47" width="80" height="26" rx="3" fill="#ffffff" fill-opacity="0.9" stroke="#2563eb" stroke-width="1.2"/>
+                        <text x="60" y="61" fill="#2563eb" font-size="9.5" font-weight="bold" font-family="sans-serif" text-anchor="middle">{{ invoiceCompanyDisplayName() | uppercase }}</text>
+                        <text x="60" y="70" fill="#2563eb" font-size="6.5" font-family="sans-serif" text-anchor="middle">VERIFIED</text>
+                      </g>
+                    </svg>
+                  </ng-template>
+                </div>
+                <span class="sig-footer">Authorized Signatory</span>
+              </div>
+            </div>
+
+            <div class="invoice-notes-terms-grid">
+              <div class="notes-block">
+                <h3 class="notes-kicker">Notes:</h3>
+                <p>Thank you for the Business</p>
+              </div>
+              <div class="terms-block">
+                <h3 class="terms-kicker">Terms and Conditions:</h3>
+                <div *ngIf="invoiceTermsText(); else defaultTerms" style="white-space: pre-wrap; font-size: 0.8rem; line-height: 1.4; color: #475569;">{{ invoiceTermsText() }}</div>
+                <ng-template #defaultTerms>
+                  <ol>
+                    <li>Goods once sold cannot be taken back or exchanged.</li>
+                    <li>We are not the manufacturers, company will stand for warranty as per their terms and conditions.</li>
+                    <li>Interest &#64;24% p.a. will be charged for uncleared bills beyond 15 days.</li>
+                    <li>Subject to local Jurisdiction.</li>
+                  </ol>
+                </ng-template>
+              </div>
+            </div>
+
+            <div class="invoice-bottom-page-footer">
+              <span>Page 1/1</span>
+              <span class="digitally-signed-note">This is a digitally signed document.</span>
+            </div>
+          </div>
         </ng-template>
 
         <ng-template #quotationPrintBody>

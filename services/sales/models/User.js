@@ -125,6 +125,13 @@ const userSchema = new mongoose.Schema(
     invoiceLogo: {
       type: String, // Base64 or URL
     },
+    invoiceSeal: {
+      type: String, // Base64 or URL
+    },
+    invoiceTerms: {
+      type: String,
+      trim: true,
+    },
     showCompanyNameOnInvoice: {
       type: Boolean,
       default: true,

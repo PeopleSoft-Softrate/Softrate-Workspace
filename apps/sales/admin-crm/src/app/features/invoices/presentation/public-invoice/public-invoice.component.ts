@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import QRCode from 'qrcode';
 import { ApiService } from '../../../../services/api.service';
-import { formatInvoiceMoney } from '../../domain/invoice-formatters';
+import { formatInvoiceMoney, numberToWords } from '../../domain/invoice-formatters';
 
 interface PublicInvoiceItem {
   name?: string;
@@ -19,12 +19,20 @@ interface PublicInvoiceItem {
 interface InvoiceCompanySnapshot {
   name?: string;
   logo?: string;
+  seal?: string;
+  terms?: string;
   gstNumber?: string;
   registeredAddress?: string;
   phone?: string;
   email?: string;
   website?: string;
   footer?: string;
+  bankDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    branchName?: string;
+  };
 }
 
 interface InvoiceClientSnapshot {
@@ -178,6 +186,47 @@ export class PublicInvoiceComponent implements OnInit {
 
   formatMoney(value?: number): string {
     return formatInvoiceMoney(Number(value || 0));
+  }
+
+  numberToWords(val?: number): string {
+    return numberToWords(Number(val || 0));
+  }
+
+  getGstBreakdown(invoice: PublicInvoice): any[] {
+    const items = this.items(invoice);
+    const breakdownMap = new Map<string, any>();
+    const gstPct = invoice.gstPercentage || 0;
+
+    items.forEach(item => {
+      const hsn = item.sacHsn || '—';
+      const taxable = this.itemTaxable(item);
+      const cgst = this.itemCgst(item);
+      const sgst = this.itemSgst(item);
+
+      if (breakdownMap.has(hsn)) {
+        const existing = breakdownMap.get(hsn)!;
+        existing.taxableValue += taxable;
+        existing.cgstAmount += cgst;
+        existing.sgstAmount += sgst;
+        existing.totalTax += (cgst + sgst);
+      } else {
+        breakdownMap.set(hsn, {
+          hsnSac: hsn,
+          taxableValue: taxable,
+          cgstRate: gstPct / 2,
+          cgstAmount: cgst,
+          sgstRate: gstPct / 2,
+          sgstAmount: sgst,
+          totalTax: cgst + sgst
+        });
+      }
+    });
+
+    return Array.from(breakdownMap.values());
+  }
+
+  getTotalItemsQty(invoice: PublicInvoice): number {
+    return this.items(invoice).reduce((sum, item) => sum + Number(item.quantity || 1), 0);
   }
 
   trackByItem(index: number): number {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:in_app_update/in_app_update.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
@@ -40,7 +42,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Show image immediately, wait 2 seconds, then fade out and go to next screen
+    _checkForUpdatesAndProceed();
+  }
+
+  Future<void> _checkForUpdatesAndProceed() async {
+    // 1. Check for Play Store Updates
+    if (Platform.isAndroid) {
+      try {
+        final info = await InAppUpdate.checkForUpdate();
+        if (info.updateAvailability == UpdateAvailability.updateAvailable) {
+          await InAppUpdate.performImmediateUpdate();
+        }
+      } catch (e) {
+        debugPrint("Update Check Failed: $e");
+      }
+    }
+
+    // 2. Wait 2 seconds, then fade out and go to next screen
     Timer(const Duration(seconds: 2), () {
       if (mounted) {
         _controller.forward().then((_) => _navigate());

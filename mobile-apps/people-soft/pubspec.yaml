@@ -41,6 +41,7 @@ dependencies:
   image_cropper: ^12.2.1
   connectivity_plus: ^7.1.1
   hugeicons: ^1.1.6
+  in_app_update: ^4.1.0
 
 
 

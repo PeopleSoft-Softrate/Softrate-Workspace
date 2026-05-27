@@ -204,7 +204,7 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
 
     // 2. Fetch Employees with Attendance
     const employees = await Employee.aggregate([
-      { $match: matchQuery },
+      { $match: { ...matchQuery, status: { $nin: ["initial", "drop"] } } },
       {
         $lookup: {
           from: "employeeattendances",

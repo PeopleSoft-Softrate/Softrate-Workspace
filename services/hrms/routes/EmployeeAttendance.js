@@ -447,7 +447,7 @@ router.get("/employee/today/all", verifyTenant, async (req, res) => {
 
     const attendanceData = await Employee.aggregate([
       {
-        $match: { status: { $ne: "inactive" } },
+        $match: { status: { $nin: ["inactive", "initial", "drop"] } },
       },
       {
         $lookup: {

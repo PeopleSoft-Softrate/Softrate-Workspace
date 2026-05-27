@@ -17,7 +17,8 @@ class TodayEmployeeAttendanceService {
         final data = jsonDecode(response.body);
 
         if (data is Map && data.containsKey('attendance')) {
-          return data['attendance'] ?? [];
+          final List<dynamic> list = data['attendance'] ?? [];
+          return list.where((a) => a['status']?.toString().toLowerCase() != 'initial').toList();
         }
         return [];
       } else {

@@ -261,7 +261,10 @@ class _TodayAttendancePageState extends State<TodayAttendancePage> {
             );
           }
 
-          final allAttendance = snapshot.data ?? [];
+          final rawAttendance = snapshot.data ?? [];
+          final allAttendance = rawAttendance.where((a) {
+            return a['status']?.toString().toLowerCase() != 'initial';
+          }).toList();
           final punchedIn = _getPunchedIn(allAttendance);
           final notPunchedIn = _getNotPunchedIn(allAttendance);
 

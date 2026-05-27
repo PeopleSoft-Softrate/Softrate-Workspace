@@ -75,8 +75,18 @@ export class ApiService {
       activeInterns: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/intern/all/active`), { headers: this.getHeaders() }),
       initialInterns: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/intern/all/initial`), { headers: this.getHeaders() }),
       activeEmployees: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/employee/all/active`), { headers: this.getHeaders() }),
-      internAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/attendance/today/all`), { headers: this.getHeaders() }),
-      employeeAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/employeeAttanance/employee/today/all`), { headers: this.getHeaders() }),
+      internAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/attendance/today/all`), { headers: this.getHeaders() }).pipe(
+        map(res => {
+          if (res && res.attendance) res.attendance = res.attendance.filter((a: any) => a.status?.toLowerCase() !== 'initial');
+          return res;
+        })
+      ),
+      employeeAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/employeeAttanance/employee/today/all`), { headers: this.getHeaders() }).pipe(
+        map(res => {
+          if (res && res.attendance) res.attendance = res.attendance.filter((a: any) => a.status?.toLowerCase() !== 'initial');
+          return res;
+        })
+      ),
       pendingLeaves: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/employee-leave/hr-pending`), { headers: this.getHeaders() }),
       activeProjects: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/projects/all`), { headers: this.getHeaders() }),
       internTrend: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance/trend`), { headers: this.getHeaders() }),
@@ -581,7 +591,14 @@ export class ApiService {
     let url = `${this.baseUrl}/api/attendance/today/unified`;
     const params: any = {};
     if (managerId) params.managerId = managerId;
-    return this.http.get<any>(this.addCacheBuster(url), { params, headers: this.getHeaders() });
+    return this.http.get<any>(this.addCacheBuster(url), { params, headers: this.getHeaders() }).pipe(
+      map(data => {
+        if (data && data.attendance) {
+          data.attendance = data.attendance.filter((a: any) => a.status?.toLowerCase() !== 'initial');
+        }
+        return data;
+      })
+    );
   }
 
   // Manager leaves and onboarding requests reviews

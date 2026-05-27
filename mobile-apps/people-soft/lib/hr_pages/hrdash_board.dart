@@ -11,8 +11,6 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hrmappfrontend/hr_pages/OrganizationalHierarchy.dart';
 import 'package:hrmappfrontend/hr_pages/emplyee/EmployeeLeaveApproval.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
-import 'package:hrmappfrontend/hr_pages/emplyee/HRResignationListPage.dart';
-import 'package:hrmappfrontend/hr_pages/emplyee/adding_employee.dart';
 import 'package:hrmappfrontend/hr_pages/emplyee/employee_management.dart';
 import 'package:hrmappfrontend/hr_pages/hr_holiday_screen.dart';
 import 'package:hrmappfrontend/hr_pages/hr_policy.dart';
@@ -35,10 +33,8 @@ import 'package:hrmappfrontend/Employee/employeepayroll.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
 
-import 'package:hrmappfrontend/hr_pages/adding_intern.dart';
 import 'package:hrmappfrontend/hr_pages/intern_leave_approval.dart';
 import 'package:hrmappfrontend/hr_pages/intern_management.dart';
-import 'package:hrmappfrontend/hr_pages/intern_resignation.dart';
 import 'package:hrmappfrontend/hr_pages/hr_payroll_management.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1496,18 +1492,6 @@ class _HrdashBoardState extends State<HrdashBoard>
         Row(
           children: [
             _buildManagerStyleBox(
-              "Add Intern",
-              "New Entry",
-              Icons.person_add_outlined,
-              const Color(0xFF0EA5E9),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddingIntern()),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
               "Manage Intern",
               "Directory",
               Icons.groups_outlined,
@@ -1518,11 +1502,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                     MaterialPageRoute(builder: (_) => const InternManagement()),
                   ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
+            const SizedBox(width: 12),
             _buildManagerStyleBox(
               "Leave Requests",
               "Approvals",
@@ -1533,20 +1513,6 @@ class _HrdashBoardState extends State<HrdashBoard>
                     context,
                     MaterialPageRoute(
                       builder: (_) => const InternLeaveApproval(),
-                    ),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
-              "Offboarding",
-              "Exit Process",
-              Icons.badge_outlined,
-              const Color(0xFFEF4444),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const InternResignation(),
                     ),
                   ),
             ),
@@ -1601,18 +1567,6 @@ class _HrdashBoardState extends State<HrdashBoard>
         Row(
           children: [
             _buildManagerStyleBox(
-              "Add Employee",
-              "New Hire",
-              Icons.person_add_outlined,
-              const Color(0xFF0EA5E9),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddingEmployee()),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
               "Manage Staff",
               "Team Info",
               Icons.groups_outlined,
@@ -1625,11 +1579,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                     ),
                   ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
+            const SizedBox(width: 12),
             _buildManagerStyleBox(
               "Leave Approval",
               "Requests",
@@ -1640,20 +1590,6 @@ class _HrdashBoardState extends State<HrdashBoard>
                     context,
                     MaterialPageRoute(
                       builder: (_) => const EmployeeLeaveApproval(),
-                    ),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
-              "Employee Exit",
-              "Offboarding",
-              Icons.exit_to_app_outlined,
-              const Color(0xFFEF4444),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const HRResignationListPage(),
                     ),
                   ),
             ),

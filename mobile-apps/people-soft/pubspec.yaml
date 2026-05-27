@@ -62,21 +62,4 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/pdf/Softrate_Internship_Annexure.pdf
-    - assets/pdf/Internship NDA.pdf
-    - assets/pdf/Softrate Project final.pdf
     - assets/pdf/Softrate_India_Holiday_List.pdf
-    - assets/fonts/TimesNewRoman.ttf
-    - assets/fonts/TimesNewRomanBold.ttf
-    - assets/fonts/Canterbury.ttf
-
-  fonts:
-    - family: TimesNewRoman
-      fonts:
-        - asset: assets/fonts/TimesNewRoman.ttf
-        - asset: assets/fonts/TimesNewRomanBold.ttf
-          weight: 700
-
-    - family: Roman
-      fonts:
-        - asset: assets/fonts/Canterbury.ttf

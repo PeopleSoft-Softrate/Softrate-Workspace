@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-const bool useLocalBackend = true;
+const bool useLocalBackend = false;
 const bool isEmulator = false;
 
 String getBaseUrl() {

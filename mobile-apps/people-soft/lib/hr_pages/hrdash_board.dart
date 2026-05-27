@@ -126,7 +126,7 @@ class _HrdashBoardState extends State<HrdashBoard>
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
-    if (_officeLocations.isEmpty) return true;
+    if (_officeLocations.isEmpty) return false;
     for (var loc in _officeLocations) {
       try {
         final double officeLat = double.parse(loc['latitude'].toString());
@@ -1852,25 +1852,15 @@ class _HrdashBoardState extends State<HrdashBoard>
                       ],
                     ),
                     alignment: Alignment.center,
-                    child:
-                        _isPunchLoading
-                            ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.4,
-                              ),
-                            )
-                            : Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),

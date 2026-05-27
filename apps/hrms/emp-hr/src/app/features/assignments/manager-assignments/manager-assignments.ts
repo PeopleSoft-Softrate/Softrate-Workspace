@@ -57,12 +57,17 @@ export class ManagerAssignments implements OnInit {
   });
 
   ngOnInit(): void {
+    const userRoleStr = localStorage.getItem('user_role');
     const data = localStorage.getItem('user_data');
-    if (data) {
+    let role = userRoleStr ? userRoleStr.toLowerCase() : '';
+    
+    if (!role && data) {
       const user = JSON.parse(data);
-      const role = (user.role || '').toLowerCase();
-      this.isHr.set(role === 'hr' || role === 'hr_admin');
+      role = (user.role || '').toLowerCase();
     }
+    
+    this.isHr.set(role === 'hr' || role === 'hr_admin' || role === 'admin');
+    
     if (!this.isHr()) {
       this.isLoading.set(false);
       return;

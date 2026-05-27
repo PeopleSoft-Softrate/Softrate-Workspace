@@ -499,6 +499,19 @@ class _AttendancePageState extends State<AttendancePage>
 
     if (mounted) setState(() => punchLoading = true);
 
+    final inside = await checkDistanceFromOffice();
+    if (!inside) {
+      if (mounted) setState(() => punchLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You must be within the authorized office area."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     try {
       final location = await getLocation();
 
@@ -592,6 +605,19 @@ class _AttendancePageState extends State<AttendancePage>
     }
 
     if (mounted) setState(() => punchLoading = true);
+
+    final inside = await checkDistanceFromOffice();
+    if (!inside) {
+      if (mounted) setState(() => punchLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You must be within the authorized office area."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     try {
       final location = await getLocation();
@@ -1538,25 +1564,15 @@ class _AttendancePageState extends State<AttendancePage>
                       ],
                     ),
                     alignment: Alignment.center,
-                    child:
-                        punchLoading
-                            ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.4,
-                              ),
-                            )
-                            : Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1739,9 +1755,9 @@ class _AttendancePageState extends State<AttendancePage>
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    // 🔥 If no locations defined, allow from anywhere (or could default to 50m if intended)
+    // 🔥 If no locations defined, block punch in
     if (_officeLocations.isEmpty) {
-      return true;
+      return false;
     }
 
     // 🔥 Check against all authorized locations

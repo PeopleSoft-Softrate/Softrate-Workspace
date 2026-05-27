@@ -480,9 +480,9 @@ class _EmployeedashboardState extends State<Employeedashboard>
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    // 🔥 If no locations defined, allow from anywhere
+    // 🔥 If no locations defined, block punch in
     if (_officeLocations.isEmpty) {
-      return true;
+      return false;
     }
 
     // 🔥 Check against all authorized locations

@@ -169,7 +169,11 @@ module.exports = router;
    GET INITIAL EMPLOYEES
 ============================ */
 router.get("/all/initial", verifyTenant, async (req, res) => {
-  const employees = await Employee.find({ status: "initial", companyId: req.tenant.companyId });
+  const query = { status: "initial", companyId: req.tenant.companyId };
+  if (req.user && req.user.role === 'manager') {
+    query.assignedManager = req.user.id;
+  }
+  const employees = await Employee.find(query);
   res.json(employees);
 });
 
@@ -181,10 +185,14 @@ router.get("/all/initial", verifyTenant, async (req, res) => {
 =================================================== */
 router.get("/all/pending", verifyTenant, async (req, res) => {
   try {
-    const employees = await Employee.find({
+    const query = {
       status: "initial",
       companyId: req.tenant.companyId
-    })
+    };
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
+    const employees = await Employee.find(query)
       .sort({ submittedAt: -1 })
       .lean();
     res.json(employees);
@@ -201,6 +209,10 @@ router.get("/all/active", verifyTenant, async (req, res) => {
     const statusFilter = status === "all" ? ["approved", "ongoing"] : [status];
 
     const query = { status: { $in: statusFilter }, companyId: req.tenant.companyId };
+
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
 
     const now = new Date();
     let start, end;
@@ -482,7 +494,9 @@ router.get("/export/excel/all-employees", verifyTenant, async (req, res) => {
         ? { companyId: req.tenant.companyId }
         : { status, companyId: req.tenant.companyId };
 
-    if (managerId) {
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    } else if (managerId) {
       query.assignedManager = managerId;
     }
 

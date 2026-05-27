@@ -145,7 +145,8 @@ exports.login = async (req, res) => {
       $or: [
         { internid: { $regex: new RegExp(`^${id}$`, "i") } },
         { email:    { $regex: new RegExp(`^${id}$`, "i") } }
-      ]
+      ],
+      status: { $nin: ['completed', 'drop'] }
     }).select(PROFILE_PHOTO_SELECT);
     if (user) {
       role = user.isHr ? "hr" : "intern";
@@ -158,7 +159,8 @@ exports.login = async (req, res) => {
         $or: [
           { EmployeeId: { $regex: new RegExp(`^${id}$`, "i") } },
           { email:      { $regex: new RegExp(`^${id}$`, "i") } }
-        ]
+        ],
+        status: { $nin: ['resigned', 'terminated'] }
       }).select(PROFILE_PHOTO_SELECT);
       if (user) {
         role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");

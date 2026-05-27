@@ -48,6 +48,8 @@ const EmployeeSchema = new mongoose.Schema({
   managerApprovalStatus: { type: String, enum: ['pending', 'approved', 'rejected', null], default: null },
   managerRemarks: { type: String, default: "" },
   submittedAt: { type: Date, default: Date.now },
+  terminationReason: { type: String, default: null },
+  terminationDate: { type: Date, default: null },
   payroll: {
     basicSalary: { type: Number, default: 0 },
     hra: { type: Number, default: 0 },

@@ -36,6 +36,8 @@ const InternSchema = new mongoose.Schema({
   leaveCount: { type: Number, default: 0 },
 
   createdAt: { type: Date, default: Date.now },
+  terminationReason: { type: String, default: null },
+  terminationDate: { type: Date, default: null },
   payroll: {
     basicSalary: { type: Number, default: 0 },
     hra: { type: Number, default: 0 },

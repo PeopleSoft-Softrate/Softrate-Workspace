@@ -171,7 +171,11 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
 // GET intern by internid
 router.get("/all/initial", verifyTenant, async (req, res) => {
   try {
-    const interns = await Intern.find({ status: "initial" });
+    const query = { status: "initial", companyId: req.tenant.companyId };
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
+    const interns = await Intern.find(query);
     res.json(interns);
   } catch (error) {
     console.error("Fetch Error:", error);
@@ -186,14 +190,13 @@ router.get("/all/initial", verifyTenant, async (req, res) => {
 =================================================== */
 router.get("/all/pending", verifyTenant, async (req, res) => {
   try {
-    const interns = await Intern.findOne
-      ? await Intern.find({
-          status: "initial",
-          companyId: req.tenant.companyId
-        })
+    const query = { status: "initial", companyId: req.tenant.companyId };
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
+    const interns = await Intern.find(query)
           .populate("assignedManager", "fullName department")
-          .sort({ createdAt: -1 })
-      : [];
+          .sort({ createdAt: -1 });
     res.json(interns);
   } catch (err) {
     console.error("Fetch Pending Interns Error:", err);
@@ -210,7 +213,11 @@ router.get("/all/active", verifyTenant, async (req, res) => {
     const statusFilter =
       status === "all" ? ["approved", "ongoing", "remote"] : [status];
 
-    const query = { status: { $in: statusFilter } };
+    const query = { status: { $in: statusFilter }, companyId: req.tenant.companyId };
+
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
 
     const now = new Date();
     let start, end;
@@ -533,7 +540,9 @@ router.get("/export/excel", verifyTenant, async (req, res) => {
         ? { companyId: req.tenant.companyId }
         : { status, companyId: req.tenant.companyId };
         
-    if (managerId) {
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    } else if (managerId) {
       query.assignedManager = managerId;
     }
 

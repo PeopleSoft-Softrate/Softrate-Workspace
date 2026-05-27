@@ -1,5 +1,6 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, UserCircleIcon, Share05Icon } from '@hugeicons/core-free-icons';
@@ -9,7 +10,7 @@ import { InternSidebar } from '../intern-sidebar/intern-sidebar';
 @Component({
   selector: 'app-intern-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, InternSidebar, HugeiconsIconComponent],
+  imports: [CommonModule, FormsModule, RouterModule, InternSidebar, HugeiconsIconComponent],
   templateUrl: './intern-details.html',
   styleUrls: ['./intern-details.css', '../intern-list/intern-list.css'],
 })
@@ -28,6 +29,9 @@ export class InternDetails implements OnInit {
   intern = signal<any>(null);
   isLoading = signal(true);
   isConverting = signal(false);
+  isTerminating = signal(false);
+  showTerminateForm = signal(false);
+  terminationReason = signal('');
   userRole = signal<string | null>(localStorage.getItem('user_role'));
 
   navigateTo(path: string[]) {
@@ -115,5 +119,44 @@ export class InternDetails implements OnInit {
 
   editProfile() {
     this.router.navigate(['/interns/add', this.internId()], { queryParams: { edit: 'true' } });
+  }
+
+  canTerminate(): boolean {
+    const role = this.userRole()?.toLowerCase();
+    const isHr = this.intern()?.isHr;
+    if (isHr) {
+      return role === 'hr_admin';
+    }
+    return role === 'hr' || role === 'hr_admin';
+  }
+
+  toggleTerminateForm() {
+    this.showTerminateForm.set(!this.showTerminateForm());
+    if (!this.showTerminateForm()) {
+      this.terminationReason.set('');
+    }
+  }
+
+  terminateIntern() {
+    if (!this.terminationReason().trim()) {
+      alert("Please provide a reason for termination.");
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to terminate this intern? This action will disable their login access.')) return;
+
+    this.isTerminating.set(true);
+    this.apiService.terminateStaff(this.internId(), 'intern', this.terminationReason()).subscribe({
+      next: () => {
+        alert('Intern terminated successfully!');
+        this.fetchDetails();
+        this.isTerminating.set(false);
+        this.showTerminateForm.set(false);
+      },
+      error: (err: any) => {
+        alert('Termination failed: ' + (err.error?.message || err.message));
+        this.isTerminating.set(false);
+      }
+    });
   }
 }

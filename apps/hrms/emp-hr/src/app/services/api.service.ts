@@ -6,7 +6,7 @@ import { Observable, forkJoin, map } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private useLocalBackend = false;
+  private useLocalBackend = true;
   private baseUrl = this.useLocalBackend 
     ? 'http://localhost:5001' 
     : 'https://peoplesoft-develop.onrender.com';
@@ -579,7 +579,6 @@ export class ApiService {
   convertToHr(staffId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/convert/to-hr/${staffId}`, {});
   }
-
   demoteToManager(staffId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/convert/hr-to-manager/${staffId}`, {});
   }
@@ -587,6 +586,11 @@ export class ApiService {
   demoteManagerToEmployee(staffId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/convert/manager-to-employee/${staffId}`, {});
   }
+
+  terminateStaff(staffId: string, type: 'intern' | 'employee', reason: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/convert/terminate/${staffId}`, { type, reason });
+  }
+
   getTodayUnifiedAttendance(managerId?: string): Observable<any> {
     let url = `${this.baseUrl}/api/attendance/today/unified`;
     const params: any = {};

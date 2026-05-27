@@ -1,5 +1,6 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UserCircleIcon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, Money03Icon, Share05Icon } from '@hugeicons/core-free-icons';
@@ -9,7 +10,7 @@ import { ApiService } from '../../../services/api.service';
 @Component({
   selector: 'app-employee-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, HugeiconsIconComponent, EmployeeSidebar],
+  imports: [CommonModule, FormsModule, RouterModule, HugeiconsIconComponent, EmployeeSidebar],
   templateUrl: './employee-details.html',
   styleUrl: './employee-details.css',
 })
@@ -37,6 +38,9 @@ export class EmployeeDetails implements OnInit {
   employee = signal<any>(null);
   isLoading = signal(true);
   isPromoting = signal(false);
+  isTerminating = signal(false);
+  showTerminateForm = signal(false);
+  terminationReason = signal('');
   userRole = signal<string | null>(localStorage.getItem('user_role'));
 
   ngOnInit() {
@@ -166,5 +170,44 @@ export class EmployeeDetails implements OnInit {
 
   editProfile() {
     this.router.navigate(['/employees/add', this.employeeId()], { queryParams: { edit: 'true' } });
+  }
+
+  canTerminate(): boolean {
+    const role = this.userRole()?.toLowerCase();
+    const isHr = this.employee()?.isHr;
+    if (isHr) {
+      return role === 'hr_admin';
+    }
+    return role === 'hr' || role === 'hr_admin';
+  }
+
+  toggleTerminateForm() {
+    this.showTerminateForm.set(!this.showTerminateForm());
+    if (!this.showTerminateForm()) {
+      this.terminationReason.set('');
+    }
+  }
+
+  terminateEmployee() {
+    if (!this.terminationReason().trim()) {
+      alert("Please provide a reason for termination.");
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to terminate this staff member? This action will disable their login access.')) return;
+
+    this.isTerminating.set(true);
+    this.apiService.terminateStaff(this.employeeId(), 'employee', this.terminationReason()).subscribe({
+      next: () => {
+        alert('Staff member terminated successfully!');
+        this.fetchDetails();
+        this.isTerminating.set(false);
+        this.showTerminateForm.set(false);
+      },
+      error: (err: any) => {
+        alert('Termination failed: ' + (err.error?.message || err.message));
+        this.isTerminating.set(false);
+      }
+    });
   }
 }

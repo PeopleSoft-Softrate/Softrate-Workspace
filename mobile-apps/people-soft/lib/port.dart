@@ -11,9 +11,9 @@ String getBaseUrl() {
     }
     if (Platform.isAndroid) {
       if (isEmulator) {
-        return 'http://192.168.0.2:5001';
+        return 'http://192.168.29.10:5001';
       } else {
-        return 'http://192.168.0.2:5001';
+        return 'http://192.168.29.10:5001';
       }
     }
     return 'http://localhost:5001';

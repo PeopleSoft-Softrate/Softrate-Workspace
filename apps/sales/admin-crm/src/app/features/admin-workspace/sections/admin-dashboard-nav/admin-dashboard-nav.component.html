@@ -8,7 +8,7 @@
 
     <div class="topbar-page-title admin-topbar-page-title">{{ vm.adminTopbarTitle }}</div>
 
-    <label class="topbar-search admin-global-search" for="adminGlobalSearch">
+    <label class="topbar-search admin-global-search" for="adminGlobalSearch" [class.search-loading]="vm.adminGlobalSearchLoading">
       <span class="topbar-search-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="6"></circle>
@@ -21,9 +21,11 @@
         type="text"
         [placeholder]="vm.adminSearchPlaceholder"
         autocomplete="off"
+        [attr.aria-busy]="vm.adminGlobalSearchLoading"
         [(ngModel)]="vm.adminGlobalSearch"
         (keyup.enter)="vm.onAdminGlobalSearchEnter()"
       />
+      <span *ngIf="vm.adminGlobalSearchLoading" class="topbar-search-spinner" aria-hidden="true"></span>
     </label>
 
     <div class="nav-auth topbar-actions">

@@ -27,6 +27,7 @@ import {
 } from '../../leads/domain/lead-status-ui';
 import { AdminInvoiceQuotationWorkflow } from '../../invoices/presentation/admin-invoice-quotation.workflow';
 import { AdminSettingsWorkflow } from '../../settings/presentation/admin-settings.workflow';
+import { OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../../core/config/pagination.config';
 import {
   CALL_TYPE_OPTIONS,
   DASHBOARD_PALETTE,
@@ -245,6 +246,14 @@ export abstract class AdminWorkspaceController implements OnInit {
   adminLeadStatusFilter = '';
   remarkLeads: any[] = [];
   remarkLeadsLoading: boolean = false;
+  remarkLeadCompanies: Array<{ name: string; count: number }> = [];
+  remarkLeadCompanyPage = 1;
+  remarkLeadCompanyHasMore = false;
+  remarkLeadCompanyTotal = 0;
+  remarkLeadCompaniesLoading = false;
+  remarkLeadContactsPage = 1;
+  remarkLeadContactsHasMore = false;
+  remarkLeadContactsLoadingMore = false;
 
   selectedEmpFollowupCompany: string = '';
 
@@ -342,19 +351,19 @@ export abstract class AdminWorkspaceController implements OnInit {
   lastAllBookmarksRefForEmp: any[] | null = null;
   selectedEmpBookmarksCache: Bookmark[] = [];
 
-  get selectedEmpBookmarks(): Bookmark[] { return this.adminFollowupsWorkflow.selectedEmpBookmarks(this); }
+  get selectedEmpBookmarks(): Bookmark[] { return this.adminEmployeesWorkflow.selectedEmpBookmarks(this); }
 
   selectedEmpBookmarksFilteredDepsStr = '';
   lastSelectedEmpBookmarksRefForFiltered: any[] | null = null;
   selectedEmpBookmarksFilteredCache: Bookmark[] = [];
 
-  get selectedEmpBookmarksFiltered(): Bookmark[] { return this.adminFollowupsWorkflow.selectedEmpBookmarksFiltered(this); }
+  get selectedEmpBookmarksFiltered(): Bookmark[] { return this.adminEmployeesWorkflow.selectedEmpBookmarksFiltered(this); }
 
   selectedEmpBookmarksByCompanyDepsStr = '';
   lastSelectedEmpBookmarksFilteredRef: any[] | null = null;
   selectedEmpBookmarksByCompanyCache: Bookmark[] = [];
 
-  get selectedEmpBookmarksByCompany(): Bookmark[] { return this.adminFollowupsWorkflow.selectedEmpBookmarksByCompany(this); }
+  get selectedEmpBookmarksByCompany(): Bookmark[] { return this.adminEmployeesWorkflow.selectedEmpBookmarksByCompany(this); }
 
   get todayFollowupCount(): number { return this.adminFollowupsWorkflow.todayFollowupCount(this); }
 
@@ -363,9 +372,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   groupedEmpBookmarksCache: { company: string, count: number }[] = [];
   lastGroupedEmpBookmarksRef: any[] | null = null;
 
-  get groupedEmpBookmarks(): { company: string, count: number }[] { return this.adminFollowupsWorkflow.groupedEmpBookmarks(this); }
+  get groupedEmpBookmarks(): { company: string, count: number }[] { return this.adminEmployeesWorkflow.groupedEmpBookmarks(this); }
 
-  private ensureSelectedEmpFollowupCompany(): void { return this.adminFollowupsWorkflow.ensureSelectedEmpFollowupCompany(this); }
+  private ensureSelectedEmpFollowupCompany(): void { return this.adminEmployeesWorkflow.ensureSelectedEmpFollowupCompany(this); }
 
   leadMapCache: { [phone: string]: Lead } | null = null;
   lastAllLeadsRef: any[] | null = null;
@@ -424,13 +433,28 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceLead: any = null;
   invoiceRecords: any[] = [];
   invoiceRecordsLoading = false;
+  invoiceRecordsLoadingMore = false;
+  invoiceRecordsPage = 1;
+  invoiceRecordsHasMore = false;
+  invoiceRecordsTotal = 0;
+  invoiceRecordsLoaded = false;
   invoiceSearch = '';
   adminInvoiceClients: any[] = [];
   adminInvoiceClientsLoading = false;
+  adminInvoiceClientsLoadingMore = false;
+  adminInvoiceClientsLoaded = false;
+  adminInvoiceClientPage = 1;
+  adminInvoiceClientHasMore = false;
+  adminInvoiceClientTotal = 0;
   selectedInvoiceClient: any = null;
   clientOnboardingRecords: any[] = [];
   clientOnboardingSearch = '';
   clientOnboardingLoading = false;
+  clientOnboardingLoadingMore = false;
+  clientOnboardingLoaded = false;
+  clientOnboardingPage = 1;
+  clientOnboardingHasMore = false;
+  clientOnboardingTotal = 0;
   selectedOnboardingClientId = '';
   clientOnboardingCreateOpen = false;
   clientOnboardingOpenMenuKey = '';
@@ -450,6 +474,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceDateFrom = '';
   invoiceDateTo = '';
   invoiceSavingLeadId = '';
+  private invoiceSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   showInvoiceModal = false;
   quoteMode = false;
   viewingSavedDocument = false;
@@ -472,11 +497,30 @@ export abstract class AdminWorkspaceController implements OnInit {
   quotationSaving = false;
   quotationRecords: any[] = [];
   quotationRecordsLoading = false;
+  quotationRecordsLoadingMore = false;
+  quotationRecordsLoaded = false;
+  quotationRecordsPage = 1;
+  quotationRecordsHasMore = false;
+  quotationRecordsTotal = 0;
   quotationSearch = '';
+  quotationLeads: Lead[] = [];
+  quotationLeadsLoading = false;
+  quotationLeadsLoadingMore = false;
+  quotationLeadsLoaded = false;
+  quotationLeadsPage = 1;
+  quotationLeadsHasMore = false;
+  quotationLeadsTotal = 0;
+  quotationClientsLoadingMore = false;
+  quotationClientsLoaded = false;
+  quotationClientPage = 1;
+  quotationClientHasMore = false;
+  quotationClientTotal = 0;
   quotationHistorySearch = '';
   quotationDateFilterOpen = false;
   quotationDateFrom = '';
   quotationDateTo = '';
+  private quotationSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
+  private clientOnboardingSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   readonly currentYear = new Date().getFullYear();
   readonly quotationTerms = DEFAULT_QUOTATION_TERMS;
   companyFullViewOpen = false;
@@ -784,6 +828,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   adminLeadContactsLoadingMore = false;
   crmFeatureOpen = true;
   adminFeatureOpen = true;
+  isAdminSearching = false;
   crmClients: CrmClient[] = [];
   crmClientsLoading = false;
   crmClientSearch = '';
@@ -881,6 +926,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmPaymentRows: any[] = [];
   crmPaymentsLoading = false;
   crmPaymentAnalytics: any = null;
+  crmPaymentSearch = '';
   crmPaidInvoiceAmount = 0;
   crmTicketRows: CrmTicket[] = [];
   crmTicketsLoading = false;
@@ -892,6 +938,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   crmTicketRemarkDraft = '';
   crmProjectRows: CrmProjectRow[] = [];
   crmProjectsLoading = false;
+  crmProjectSearch = '';
   crmProjectStatusFilter: 'all' | 'Assigned' | 'In Progress' | 'On Hold' | 'Completed' = 'all';
   crmProjectOpenMenuKey = '';
   crmProjectMappingOpen = false;
@@ -914,9 +961,21 @@ export abstract class AdminWorkspaceController implements OnInit {
   private readonly adminLeadCompanyCachePrefix = 'admin-lead-companies|';
   private readonly adminLeadContactCachePrefix = 'admin-lead-contacts|';
   private readonly adminLeadSetsCachePrefix = 'admin-lead-sets|';
+  readonly adminInvoiceHistoryCachePrefix = 'admin-invoice-history|';
+  readonly adminInvoiceClientCachePrefix = 'admin-invoice-clients|';
+  readonly adminQuotationHistoryCachePrefix = 'admin-quotation-history|';
+  readonly adminQuotationLeadCachePrefix = 'admin-quotation-leads|';
+  readonly adminQuotationClientCachePrefix = 'admin-quotation-clients|';
+  readonly adminClientOnboardingCachePrefix = 'admin-client-onboarding|';
+  readonly remarkLeadCompanyCachePrefix = 'admin-remark-lead-companies|';
+  readonly remarkLeadContactCachePrefix = 'admin-remark-lead-contacts|';
   private readonly adminLeadHydrationConcurrency = 12;
   private adminLeadRequestRun = 0;
   private adminLeadSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  private remarkLeadRequestRun = 0;
+  private remarkFilterSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  private adminGlobalSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  private adminGlobalSearchSettleTimer: ReturnType<typeof setInterval> | null = null;
 
   // Bookmarks (Follow-up)
   allBookmarks: Bookmark[] = [];
@@ -939,10 +998,37 @@ export abstract class AdminWorkspaceController implements OnInit {
   selectedLeadSet = '';              // Currently viewed set filter ('' = all)
   newLeadSetLabel = '';              // User types a label before uploading
   deleteSetLoading = false;
+  empLeadCompanies: Array<{ name: string; count: number }> = [];
+  empLeadCompanyPage = 1;
+  empLeadCompanyHasMore = false;
+  empLeadCompanyTotal = 0;
+  empLeadCompaniesLoading = false;
+  empLeadContactsPage = 1;
+  empLeadContactsHasMore = false;
+  empLeadContactsLoadingMore = false;
+  private empLeadRequestRun = 0;
+  private empLeadSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly empLeadSetCachePrefix = 'admin-employee-lead-sets|';
+  readonly empLeadCompanyCachePrefix = 'admin-employee-lead-companies|';
+  readonly empLeadContactCachePrefix = 'admin-employee-lead-contacts|';
+  empFollowupBookmarks: Bookmark[] = [];
+  empFollowupsLoading = false;
+  empFollowupLoadingMore = false;
+  empFollowupPage = 1;
+  empFollowupHasMore = false;
+  empFollowupTotal = 0;
+  private empFollowupSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly empFollowupCachePrefix = 'admin-employee-followups|';
 
   // ── Chart state ────────────────────────────────────────────
   chartType: 'line' | 'pie' | 'bar' = 'line';
+  employeeChartType: 'line' | 'bar' = 'line';
   chart: Chart | null = null;
+  private employeeChartRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private employeeDonutRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private overviewTimelineRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private overviewDonutRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly maxChartRetryAttempts = 8;
 
   overviewChartType: 'pie' | 'bar' = 'pie';
   overviewChart: Chart | null = null;
@@ -1089,8 +1175,11 @@ export abstract class AdminWorkspaceController implements OnInit {
     // If switching away from employee dashboard, clear selected employee state 
     // so legacy side-drilldown doesn't show up.
     if (prevTab === 'emp_dashboard' && tab !== 'emp_dashboard') {
+      this.destroyEmployeeCharts();
       this.selectedEmployee = null;
       this.selectedEmpStats = null;
+      this.selectedEmpCalls = [];
+      this.employeeChartType = 'line';
     }
 
     this.dashTab = tab;
@@ -1114,6 +1203,8 @@ export abstract class AdminWorkspaceController implements OnInit {
         if (this.summaryStats) this.renderDonutChart();
         if (this.timelineData.length) this.renderTimelineChart();
       }, 100);
+    } else if (tab !== 'overview') {
+      this.clearOverviewChartRetries();
     }
 
     if (tab === 'leads' || tab === 'followups' || tab === 'remarks_filter') {
@@ -1125,7 +1216,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         if (this.selectedRemarkFilter) this.fetchLeadsByRemark(this.selectedRemarkFilter);
       }
       
-      if (tab === 'leads' || tab === 'remarks_filter') this.fetchAdminLeads();
+      if (tab === 'leads') this.fetchAdminLeads();
       if (tab === 'followups') this.fetchCompanyBookmarks();
     }
 
@@ -1143,7 +1234,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     }
     if (tab === 'quotation') {
       this.fetchSettings();
-      this.fetchAdminQuotationClients();
+      this.fetchAdminQuotationLeads();
       this.fetchQuotationRecords();
     }
   }
@@ -1180,80 +1271,249 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'leads': return 'Search leads, phone, or company...';
       case 'remarks_filter': return 'Search companies, contacts, or remarks...';
       case 'followups': return 'Search follow-ups, phone, or company...';
-      case 'quotation': return 'Search onboarded clients...';
+      case 'quotation': return 'Search leads, phone, or company...';
       case 'invoice': return 'Search onboarded clients...';
       case 'client_onboarding': return 'Search onboarded clients...';
-      case 'invoice_settings': return 'Search leads, phone, or company...';
+      case 'invoice_settings': return 'Search invoice settings...';
       case 'employees': return 'Search employees, phone, or tag...';
       case 'emp_dashboard': return 'Search assigned leads or follow-ups...';
       case 'crm_clients': return 'Search CRM clients, contacts, or managers...';
       case 'crm_sla': return 'Search SLA history or clients...';
       case 'crm_nda': return 'Search NDA history or clients...';
       case 'crm_amc': return 'Search AMC clients...';
-      case 'crm_payments': return 'Search payment history...';
+      case 'crm_payments': return 'Search payments, invoices, or clients...';
+      case 'crm_projects': return 'Search projects, clients, or managers...';
       case 'crm_tickets': return 'Search tickets or client queries...';
       default: return 'Search leads, phone, or company...';
     }
   }
 
   get adminGlobalSearch(): string {
-    if (this.dashTab === 'remarks_filter') return this.remarkFilterSearch;
-    if (this.dashTab === 'followups' || this.dashTab === 'emp_dashboard') return this.followupSearch;
-    if (this.dashTab === 'invoice') return this.invoiceSearch;
-    if (this.dashTab === 'client_onboarding') return this.clientOnboardingSearch;
-    if (this.dashTab === 'quotation') return this.quotationSearch;
-    if (this.dashTab === 'employees') return this.employeeSearchQuery;
-    if (this.isCrmPage(this.dashTab)) return this.crmClientSearch;
-    return this.leadSearchQuery;
+    return this.currentAdminGlobalSearchValue();
   }
 
   set adminGlobalSearch(value: string) {
-    if (this.dashTab === 'remarks_filter') {
-      this.remarkFilterSearch = value;
+    const sourceTab = this.dashTab;
+    const previousTrimmed = this.currentAdminGlobalSearchValue(sourceTab).trim();
+    this.setCurrentAdminGlobalSearchValue(value, sourceTab);
+
+    const trimmed = value.trim();
+    const shouldRunAsyncSearch = this.isAdminGlobalSearchAsyncTab(sourceTab, trimmed);
+    this.isAdminSearching = shouldRunAsyncSearch && previousTrimmed !== trimmed;
+
+    if (this.adminGlobalSearchTimer) clearTimeout(this.adminGlobalSearchTimer);
+    if (!shouldRunAsyncSearch) {
+      this.stopAdminGlobalSearchTracking();
+      this.isAdminSearching = false;
       return;
     }
-    if (this.dashTab === 'followups' || this.dashTab === 'emp_dashboard') {
-      this.followupSearch = value;
-      return;
-    }
-    if (this.dashTab === 'invoice') {
-      this.invoiceSearch = value;
-      this.fetchAdminInvoiceClients();
-      return;
-    }
-    if (this.dashTab === 'client_onboarding') {
-      this.clientOnboardingSearch = value;
-      this.fetchClientOnboardingRecords();
-      return;
-    }
-    if (this.dashTab === 'quotation') {
-      this.quotationSearch = value;
-      this.fetchAdminQuotationClients();
-      return;
-    }
-    if (this.dashTab === 'employees') {
-      this.employeeSearchQuery = value;
-      return;
-    }
-    if (this.isCrmPage(this.dashTab)) {
-      this.crmClientSearch = value;
-      this.loadCrmTab(this.dashTab);
-      return;
-    }
-    this.leadSearchQuery = value;
-    if (this.dashTab !== 'leads') {
-      this.switchTab('leads');
-    }
-    this.onAdminLeadSearchChange();
+
+    this.adminGlobalSearchTimer = setTimeout(() => {
+      if (trimmed !== this.currentAdminGlobalSearchValue(sourceTab).trim()) return;
+      this.runAdminGlobalSearch(sourceTab, trimmed);
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   onAdminGlobalSearchEnter(): void {
     const query = this.adminGlobalSearch.trim();
-    if (!query) return;
-    if (!['leads', 'remarks_filter', 'followups', 'employees', 'emp_dashboard', 'invoice', 'client_onboarding', 'quotation', 'crm_clients', 'crm_sla', 'crm_nda', 'crm_amc', 'crm_payments', 'crm_tickets'].includes(this.dashTab)) {
-      this.leadSearchQuery = query;
-      this.switchTab('leads');
-      this.onAdminLeadSearchChange();
+    const sourceTab = this.dashTab;
+    if (this.adminGlobalSearchTimer) clearTimeout(this.adminGlobalSearchTimer);
+    if (!this.isAdminGlobalSearchAsyncTab(sourceTab, query)) {
+      this.stopAdminGlobalSearchTracking();
+      this.isAdminSearching = false;
+      return;
+    }
+    this.isAdminSearching = true;
+    this.runAdminGlobalSearch(sourceTab, query);
+  }
+
+  get adminGlobalSearchLoading(): boolean {
+    return this.isAdminSearching;
+  }
+
+  private currentAdminGlobalSearchValue(tab: AdminPageId = this.dashTab): string {
+    switch (tab) {
+      case 'remarks_filter':
+        return this.remarkFilterSearch;
+      case 'followups':
+        return this.followupSearch;
+      case 'emp_dashboard':
+        return this.empLeadSearchQuery || this.followupSearch;
+      case 'invoice':
+      case 'invoice_settings':
+        return this.invoiceSearch;
+      case 'client_onboarding':
+        return this.clientOnboardingSearch;
+      case 'quotation':
+        return this.quotationSearch;
+      case 'employees':
+        return this.employeeSearchQuery;
+      case 'crm_clients':
+      case 'crm_sla':
+      case 'crm_nda':
+      case 'crm_amc':
+        return this.crmClientSearch;
+      case 'crm_tickets':
+        return this.crmTicketSearch;
+      case 'crm_payments':
+        return this.crmPaymentSearch;
+      case 'crm_projects':
+        return this.crmProjectSearch;
+      default:
+        return this.leadSearchQuery;
+    }
+  }
+
+  private setCurrentAdminGlobalSearchValue(value: string, tab: AdminPageId = this.dashTab): void {
+    switch (tab) {
+      case 'remarks_filter':
+        this.remarkFilterSearch = value;
+        return;
+      case 'followups':
+        this.followupSearch = value;
+        return;
+      case 'emp_dashboard':
+        this.empLeadSearchQuery = value;
+        this.followupSearch = value;
+        return;
+      case 'invoice':
+      case 'invoice_settings':
+        this.invoiceSearch = value;
+        return;
+      case 'client_onboarding':
+        this.clientOnboardingSearch = value;
+        return;
+      case 'quotation':
+        this.quotationSearch = value;
+        return;
+      case 'employees':
+        this.employeeSearchQuery = value;
+        return;
+      case 'crm_clients':
+      case 'crm_sla':
+      case 'crm_nda':
+      case 'crm_amc':
+        this.crmClientSearch = value;
+        return;
+      case 'crm_tickets':
+        this.crmTicketSearch = value;
+        return;
+      case 'crm_payments':
+        this.crmPaymentSearch = value;
+        return;
+      case 'crm_projects':
+        this.crmProjectSearch = value;
+        return;
+      default:
+        this.leadSearchQuery = value;
+    }
+  }
+
+  private isAdminGlobalSearchAsyncTab(tab: AdminPageId, query: string): boolean {
+    if (tab === 'overview') return !!query;
+    return ['leads', 'followups', 'remarks_filter', 'emp_dashboard', 'invoice', 'client_onboarding', 'quotation', 'crm_clients', 'crm_amc', 'crm_tickets'].includes(tab);
+  }
+
+  private runAdminGlobalSearch(sourceTab: AdminPageId, query: string): void {
+    switch (sourceTab) {
+      case 'overview':
+        this.leadSearchQuery = query;
+        if (!query) {
+          this.isAdminSearching = false;
+          this.stopAdminGlobalSearchTracking();
+          return;
+        }
+        if (this.dashTab !== 'leads') {
+          this.switchTab('leads');
+        } else {
+          this.fetchAdminLeads();
+        }
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'leads':
+        this.fetchAdminLeads();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'followups':
+        this.fetchCompanyBookmarks();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'remarks_filter':
+        this.fetchLeadsByRemark(this.selectedRemarkFilter);
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'emp_dashboard':
+        this.fetchEmpLeads();
+        this.fetchEmpFollowups();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'invoice':
+        this.fetchAdminInvoiceClients();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'client_onboarding':
+        this.fetchClientOnboardingRecords();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'quotation':
+        this.fetchAdminQuotationLeads();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'crm_clients':
+        this.fetchCrmClients();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'crm_amc':
+        this.fetchCrmAmc();
+        this.startAdminGlobalSearchTracking();
+        return;
+      case 'crm_tickets':
+        this.fetchCrmTickets();
+        this.startAdminGlobalSearchTracking();
+        return;
+      default:
+        this.isAdminSearching = false;
+        this.stopAdminGlobalSearchTracking();
+    }
+  }
+
+  private startAdminGlobalSearchTracking(): void {
+    if (this.adminGlobalSearchSettleTimer) clearInterval(this.adminGlobalSearchSettleTimer);
+    this.adminGlobalSearchSettleTimer = setInterval(() => this.finishAdminGlobalSearchIfSettled(), 80);
+    this.finishAdminGlobalSearchIfSettled();
+  }
+
+  private stopAdminGlobalSearchTracking(): void {
+    if (this.adminGlobalSearchSettleTimer) clearInterval(this.adminGlobalSearchSettleTimer);
+    this.adminGlobalSearchSettleTimer = null;
+  }
+
+  private finishAdminGlobalSearchIfSettled(): void {
+    if (!this.isAdminSearching) {
+      this.stopAdminGlobalSearchTracking();
+      return;
+    }
+    const hasActiveLoad = this.allLeadsLoading ||
+      this.adminLeadCompaniesLoading ||
+      this.adminLeadContactsLoadingMore ||
+      this.remarkLeadsLoading ||
+      this.remarkLeadCompaniesLoading ||
+      this.remarkLeadContactsLoadingMore ||
+      this.allBookmarksLoading ||
+      this.adminFollowupCompaniesLoading ||
+      this.empLeadsLoading ||
+      this.empLeadCompaniesLoading ||
+      this.empLeadContactsLoadingMore ||
+      this.empFollowupsLoading ||
+      this.empFollowupLoadingMore ||
+      this.adminInvoiceClientsLoading ||
+      this.clientOnboardingLoading ||
+      this.crmClientsLoading ||
+      this.crmAmcLoading ||
+      this.crmTicketsLoading;
+    if (!hasActiveLoad) {
+      this.isAdminSearching = false;
+      this.stopAdminGlobalSearchTracking();
     }
   }
 
@@ -1506,8 +1766,9 @@ export abstract class AdminWorkspaceController implements OnInit {
         this.editCrmClientLoading = false;
         this.isEditCrmClientOpen = false;
         this.fetchCrmClients();
-        this.fetchClientOnboardingRecords();
-        this.fetchAdminInvoiceClients();
+        this.fetchClientOnboardingRecords(true);
+        this.fetchAdminInvoiceClients(true);
+        this.fetchAdminQuotationClients(true);
       },
       error: (err) => {
         this.editCrmClientLoading = false;
@@ -3002,9 +3263,33 @@ export abstract class AdminWorkspaceController implements OnInit {
     }, { assigned: 0, inProgress: 0, onHold: 0, completed: 0 });
   }
 
+  get filteredCrmPaymentRows(): any[] {
+    const query = this.crmPaymentSearch.trim().toLowerCase();
+    if (!query) return this.crmPaymentRows;
+    return this.crmPaymentRows.filter((payment) => [
+      payment.invoiceNumber,
+      payment.clientCompanyName,
+      payment.status,
+      payment.amount,
+      payment.paidAmount,
+      payment.paymentMode,
+    ].some((value) => String(value || '').toLowerCase().includes(query)));
+  }
+
   get filteredCrmProjectRows(): CrmProjectRow[] {
-    if (this.crmProjectStatusFilter === 'all') return this.crmProjectRows;
-    return this.crmProjectRows.filter((project) => project.status === this.crmProjectStatusFilter);
+    const query = this.crmProjectSearch.trim().toLowerCase();
+    return this.crmProjectRows
+      .filter((project) => this.crmProjectStatusFilter === 'all' || project.status === this.crmProjectStatusFilter)
+      .filter((project) => !query || [
+        project.clientCompanyName,
+        project.clientId,
+        project.clientStatus,
+        project.projectManagerName,
+        project.projectManagerPhone,
+        project.projectManagerEmail,
+        project.status,
+        project.notes,
+      ].some((value) => String(value || '').toLowerCase().includes(query)));
   }
 
   get filteredCrmProjectMappingClients(): CrmClient[] {
@@ -3266,8 +3551,10 @@ export abstract class AdminWorkspaceController implements OnInit {
           this.fetchPreviousStats(res.from, res.to);
 
           setTimeout(() => {
-            this.renderDonutChart();
-            if (this.timelineData.length) this.renderTimelineChart();
+            if (this.dashTab === 'overview') {
+              this.renderDonutChart();
+              if (this.timelineData.length) this.renderTimelineChart();
+            }
           }, 500);
 
         } else {
@@ -3285,7 +3572,9 @@ export abstract class AdminWorkspaceController implements OnInit {
       next: (res: any) => {
         if (res.success) {
           this.timelineData = res.timeline;
-          setTimeout(() => this.renderTimelineChart(), 350);
+          setTimeout(() => {
+            if (this.dashTab === 'overview') this.renderTimelineChart();
+          }, 350);
         }
       },
       error: () => { }
@@ -3420,8 +3709,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       }
 
       setTimeout(() => {
-        // Only render overview charts when actually on the overview tab
-        if (this.dashTab !== 'emp_dashboard') {
+        if (this.dashTab === 'overview') {
           if (this.summaryStats) this.renderDonutChart();
           if (this.timelineData && this.timelineData.length) this.renderTimelineChart();
         }
@@ -3466,10 +3754,80 @@ export abstract class AdminWorkspaceController implements OnInit {
 
 
   empDonutChart: Chart | null = null;
-  renderEmpDonutChart(): void {
+  private clearEmployeeChartRetries(): void {
+    if (this.employeeChartRetryTimer) {
+      clearTimeout(this.employeeChartRetryTimer);
+      this.employeeChartRetryTimer = null;
+    }
+    if (this.employeeDonutRetryTimer) {
+      clearTimeout(this.employeeDonutRetryTimer);
+      this.employeeDonutRetryTimer = null;
+    }
+  }
+
+  private clearOverviewChartRetries(): void {
+    if (this.overviewTimelineRetryTimer) {
+      clearTimeout(this.overviewTimelineRetryTimer);
+      this.overviewTimelineRetryTimer = null;
+    }
+    if (this.overviewDonutRetryTimer) {
+      clearTimeout(this.overviewDonutRetryTimer);
+      this.overviewDonutRetryTimer = null;
+    }
+  }
+
+  private scheduleEmployeeChartRetry(retryCount: number, target: 'chart' | 'donut'): void {
+    if (retryCount >= this.maxChartRetryAttempts - 1) return;
+    const timer = target === 'chart' ? this.employeeChartRetryTimer : this.employeeDonutRetryTimer;
+    if (timer) clearTimeout(timer);
+    const nextRetry = retryCount + 1;
+    const handle = setTimeout(() => {
+      if (target === 'chart') this.employeeChartRetryTimer = null;
+      else this.employeeDonutRetryTimer = null;
+      if (target === 'chart') this.renderChart(nextRetry);
+      else this.renderEmpDonutChart(nextRetry);
+    }, 120);
+    if (target === 'chart') this.employeeChartRetryTimer = handle;
+    else this.employeeDonutRetryTimer = handle;
+  }
+
+  private scheduleOverviewChartRetry(retryCount: number, target: 'timeline' | 'donut'): void {
+    if (retryCount >= this.maxChartRetryAttempts - 1) return;
+    const timer = target === 'timeline' ? this.overviewTimelineRetryTimer : this.overviewDonutRetryTimer;
+    if (timer) clearTimeout(timer);
+    const nextRetry = retryCount + 1;
+    const handle = setTimeout(() => {
+      if (target === 'timeline') this.overviewTimelineRetryTimer = null;
+      else this.overviewDonutRetryTimer = null;
+      if (target === 'timeline') this.renderTimelineChart(nextRetry);
+      else this.renderDonutChart(nextRetry);
+    }, 200);
+    if (target === 'timeline') this.overviewTimelineRetryTimer = handle;
+    else this.overviewDonutRetryTimer = handle;
+  }
+
+  destroyEmployeeCharts(): void {
+    this.clearEmployeeChartRetries();
+    if (this.chart) { this.chart.destroy(); this.chart = null; }
+    if (this.timelineChart) { this.timelineChart.destroy(); this.timelineChart = null; }
     if (this.empDonutChart) { this.empDonutChart.destroy(); this.empDonutChart = null; }
+  }
+
+  renderEmpDonutChart(retryCount = 0): void {
+    if (this.empDonutChart) { this.empDonutChart.destroy(); this.empDonutChart = null; }
+    if (this.dashTab !== 'emp_dashboard' || !this.selectedEmployee || !this.selectedEmpStats) {
+      this.clearEmployeeChartRetries();
+      return;
+    }
     const canvas = document.getElementById('empDonutChart') as HTMLCanvasElement;
-    if (!canvas || !this.selectedEmpStats) return;
+    if (!canvas || !canvas.offsetParent) {
+      this.scheduleEmployeeChartRetry(retryCount, 'donut');
+      return;
+    }
+    if (this.employeeDonutRetryTimer) {
+      clearTimeout(this.employeeDonutRetryTimer);
+      this.employeeDonutRetryTimer = null;
+    }
 
     const s = this.selectedEmpStats;
     this.empDonutChart = new Chart(canvas, {
@@ -3516,6 +3874,15 @@ export abstract class AdminWorkspaceController implements OnInit {
         return;
       }
       this.renderChart();
+    });
+  }
+
+  setEmployeeChartType(type: 'line' | 'bar'): void {
+    this.employeeChartType = type;
+    requestAnimationFrame(() => {
+      if (this.dashTab === 'emp_dashboard') {
+        this.renderChart();
+      }
     });
   }
 
@@ -3581,12 +3948,20 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.overviewChart = new Chart(canvas, { type: this.overviewChartType, data, options });
   }
 
-  renderTimelineChart(): void {
+  renderTimelineChart(retryCount = 0): void {
     if (this.timelineChart) { this.timelineChart.destroy(); this.timelineChart = null; }
+    if (this.dashTab !== 'overview' || !this.summaryStats) {
+      this.clearOverviewChartRetries();
+      return;
+    }
     const canvas = document.getElementById('timelineChart') as HTMLCanvasElement;
     if (!canvas || !canvas.offsetParent) {
-      setTimeout(() => this.renderTimelineChart(), 200);
+      this.scheduleOverviewChartRetry(retryCount, 'timeline');
       return;
+    }
+    if (this.overviewTimelineRetryTimer) {
+      clearTimeout(this.overviewTimelineRetryTimer);
+      this.overviewTimelineRetryTimer = null;
     }
 
     const isHourly = this.timelineData.length > 0 && this.timelineData[0]._isHourly;
@@ -3677,21 +4052,27 @@ export abstract class AdminWorkspaceController implements OnInit {
     });
   }
 
-  renderDonutChart(): void {
+  renderDonutChart(retryCount = 0): void {
     if (this.donutChart) {
       this.donutChart.destroy();
       this.donutChart = null;
+    }
+    if (this.dashTab !== 'overview' || !this.summaryStats) {
+      this.clearOverviewChartRetries();
+      return;
     }
 
     const canvas = document.getElementById('donutChart') as HTMLCanvasElement;
 
     // Guard: canvas not in DOM yet or hidden
     if (!canvas || !canvas.offsetParent) {
-      setTimeout(() => this.renderDonutChart(), 200);
+      this.scheduleOverviewChartRetry(retryCount, 'donut');
       return;
     }
-
-    if (!this.summaryStats) return;
+    if (this.overviewDonutRetryTimer) {
+      clearTimeout(this.overviewDonutRetryTimer);
+      this.overviewDonutRetryTimer = null;
+    }
 
     const s = this.summaryStats;
     this.donutChart = new Chart(canvas, {
@@ -3727,79 +4108,28 @@ export abstract class AdminWorkspaceController implements OnInit {
     });
   }
 
-  renderChart(): void {
+  renderChart(retryCount = 0): void {
     if (this.chart) { this.chart.destroy(); this.chart = null; }
-    // Also destroy timelineChart if it previously owned the same canvas
     if (this.timelineChart) { this.timelineChart.destroy(); this.timelineChart = null; }
+    if (this.dashTab !== 'emp_dashboard' || !this.selectedEmployee) {
+      this.clearEmployeeChartRetries();
+      return;
+    }
     const canvas = (document.getElementById('empChart') || document.getElementById('timelineChart')) as HTMLCanvasElement;
-    if (!canvas) return;
+    if (!canvas || !canvas.offsetParent) {
+      this.scheduleEmployeeChartRetry(retryCount, 'chart');
+      return;
+    }
+    if (this.employeeChartRetryTimer) {
+      clearTimeout(this.employeeChartRetryTimer);
+      this.employeeChartRetryTimer = null;
+    }
 
     const textColor = 'rgba(59,59,59,0.7)';
     const gridColor = 'rgba(0,0,0,0.04)';
     let data: any, options: any, chartType: any;
 
-    if (this.chartType === 'pie') {
-      // Thick doughnut matching reference image
-      const counts = { incoming: 0, outgoing: 0, missed: 0, rejected: 0 };
-      this.selectedEmpCalls.forEach(c => {
-        if (c.callType in counts) (counts as any)[c.callType]++;
-      });
-      const total = counts.incoming + counts.outgoing + counts.missed + counts.rejected;
-
-      chartType = 'doughnut';
-      data = {
-        labels: ['Outgoing', 'Incoming', 'Missed', 'Rejected'],
-        datasets: [{
-          data: [counts.outgoing, counts.incoming, counts.missed, counts.rejected],
-          backgroundColor: [
-            this.dashboardPalette.outgoing,
-            this.dashboardPalette.incoming,
-            this.dashboardPalette.missed,
-            this.dashboardPalette.rejected
-          ],
-          borderWidth: 3,
-          borderColor: '#ffffff',
-          hoverOffset: 4
-        }]
-      };
-      options = {
-        responsive: true, maintainAspectRatio: false,
-        cutout: '78%',
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e293b',
-            titleColor: '#fff', bodyColor: '#94a3b8',
-            padding: 10, cornerRadius: 8
-          }
-        },
-        // Center text via plugin
-        centerText: { total }
-      };
-
-      // Register center-text plugin inline
-      const centerPlugin = {
-        id: 'centerTextPlugin_' + Date.now(),
-        beforeDraw: (chart: any) => {
-          const { width, height, ctx } = chart;
-          ctx.save();
-          const centerX = width / 2;
-          const centerY = height / 2;
-          ctx.fillStyle = '#1e293b';
-          ctx.font = `800 ${Math.round(height / 5.5)}px Inter, sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(total.toString(), centerX, centerY - 10);
-          ctx.fillStyle = '#64748b';
-          ctx.font = `600 ${Math.round(height / 12)}px Inter, sans-serif`;
-          ctx.fillText('Total', centerX, centerY + Math.round(height / 9));
-          ctx.restore();
-        }
-      };
-      this.chart = new Chart(canvas, { type: chartType, data, options, plugins: [centerPlugin] });
-      return;
-
-    } else if (this.chartType === 'bar') {
+    if (this.employeeChartType === 'bar') {
       const counts = { incoming: 0, outgoing: 0, missed: 0, rejected: 0 };
       this.selectedEmpCalls.forEach(c => {
         if (c.callType in counts) (counts as any)[c.callType]++;
@@ -4247,7 +4577,19 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   closeEmployee(): void { return this.adminEmployeesWorkflow.closeEmployee(this); }
 
-  fetchEmpLeads(): void { return this.adminEmployeesWorkflow.fetchEmpLeads(this); }
+  fetchEmpLeads(forceRefresh = false): void { return this.adminEmployeesWorkflow.fetchEmpLeads(this, forceRefresh); }
+
+  onEmployeeLeadSearchChange(): void { return this.adminEmployeesWorkflow.onEmployeeLeadSearchChange(this); }
+
+  onEmployeeLeadCompanyScroll(event: Event): void { return this.adminEmployeesWorkflow.onEmployeeLeadCompanyScroll(this, event); }
+
+  onEmployeeLeadContactsScroll(event: Event): void { return this.adminEmployeesWorkflow.onEmployeeLeadContactsScroll(this, event); }
+
+  fetchEmpFollowups(forceRefresh = false): void { return this.adminEmployeesWorkflow.fetchEmpFollowups(this, forceRefresh); }
+
+  onEmployeeFollowupFiltersChange(): void { return this.adminEmployeesWorkflow.onEmployeeFollowupFiltersChange(this); }
+
+  onEmployeeFollowupScroll(event: Event): void { return this.adminEmployeesWorkflow.onEmployeeFollowupScroll(this, event); }
 
     fetchAdminLeads(forceRefresh = false): void { return this.adminLeadsWorkflow.fetchAdminLeads(this, forceRefresh); }
 
@@ -4288,13 +4630,37 @@ export abstract class AdminWorkspaceController implements OnInit {
 
     private invalidateAdminDashboardCaches(): void { return this.adminLeadsWorkflow.invalidateAdminDashboardCaches(this); }
 
-  fetchInvoiceRecords(): void { return this.invoiceQuotationWorkflow.fetchInvoiceRecords(this); }
+  fetchInvoiceRecords(force = false): void { return this.invoiceQuotationWorkflow.fetchInvoiceRecords(this, force); }
 
-  fetchAdminInvoiceClients(): void { return this.invoiceQuotationWorkflow.fetchAdminInvoiceClients(this); }
+  fetchAdminInvoiceClients(force = false): void { return this.invoiceQuotationWorkflow.fetchAdminInvoiceClients(this, force); }
 
-  fetchAdminQuotationClients(): void { return this.invoiceQuotationWorkflow.fetchAdminQuotationClients(this); }
+  fetchAdminQuotationClients(force = false): void { return this.invoiceQuotationWorkflow.fetchAdminQuotationClients(this, force); }
 
-  fetchClientOnboardingRecords(): void { return this.invoiceQuotationWorkflow.fetchClientOnboardingRecords(this); }
+  fetchAdminQuotationLeads(force = false): void { return this.invoiceQuotationWorkflow.fetchAdminQuotationLeads(this, force); }
+
+  fetchClientOnboardingRecords(force = false): void { return this.invoiceQuotationWorkflow.fetchClientOnboardingRecords(this, force); }
+
+  onAdminInvoiceSearchChange(): void { return this.invoiceQuotationWorkflow.onAdminInvoiceSearchChange(this); }
+
+  onAdminInvoiceHistoryQueryChange(): void { return this.invoiceQuotationWorkflow.onAdminInvoiceHistoryQueryChange(this); }
+
+  onAdminQuotationSearchChange(): void { return this.invoiceQuotationWorkflow.onAdminQuotationSearchChange(this); }
+
+  onAdminQuotationHistoryQueryChange(): void { return this.invoiceQuotationWorkflow.onAdminQuotationHistoryQueryChange(this); }
+
+  onAdminClientOnboardingSearchChange(): void { return this.invoiceQuotationWorkflow.onAdminClientOnboardingSearchChange(this); }
+
+  onAdminInvoiceClientScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminInvoiceClientScroll(this, event); }
+
+  onAdminInvoiceHistoryScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminInvoiceHistoryScroll(this, event); }
+
+  onAdminClientOnboardingScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminClientOnboardingScroll(this, event); }
+
+  onAdminQuotationClientScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminQuotationClientScroll(this, event); }
+
+  onAdminQuotationLeadScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminQuotationLeadScroll(this, event); }
+
+  onAdminQuotationHistoryScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminQuotationHistoryScroll(this, event); }
 
   submitClientOnboarding(): void { return this.invoiceQuotationWorkflow.submitClientOnboarding(this); }
 
@@ -4346,7 +4712,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   matchesQuotationDateRange(rawDate?: string): boolean { return this.invoiceQuotationWorkflow.matchesQuotationDateRange(this, rawDate); }
 
-  fetchQuotationRecords(): void { return this.invoiceQuotationWorkflow.fetchQuotationRecords(this); }
+  fetchQuotationRecords(force = false): void { return this.invoiceQuotationWorkflow.fetchQuotationRecords(this, force); }
 
   openSavedInvoice(record: any): void { return this.invoiceQuotationWorkflow.openSavedInvoice(this, record); }
 
@@ -5146,71 +5512,316 @@ export abstract class AdminWorkspaceController implements OnInit {
   selectRemarkFilter(remark: string): void {
     this.selectedRemarkFilter = remark;
     this.selectedRemarksFilterCompany = '';
-    this.remarkLeads = [];
-    if (!remark) {
-      this.remarkLeadsLoading = false;
-      return;
-    }
     this.fetchLeadsByRemark(remark);
   }
 
-  fetchLeadsByRemark(remark: string): void {
-    if (!this.dashboardCode) return;
-    this.remarkLeadsLoading = true;
-    this.leadService.getAdminLeads(this.dashboardCode, undefined, remark).subscribe({
+  onRemarkFilterSearchChange(): void {
+    if (this.remarkFilterSearchTimer) clearTimeout(this.remarkFilterSearchTimer);
+    this.remarkFilterSearchTimer = setTimeout(() => this.fetchLeadsByRemark(this.selectedRemarkFilter), SEARCH_DEBOUNCE_MS);
+  }
+
+  fetchLeadsByRemark(remark: string = this.selectedRemarkFilter, forceRefresh = false): void {
+    this.selectedRemarkFilter = remark;
+    this.remarkLeadRequestRun++;
+    this.remarkLeadCompanyPage = 1;
+    this.remarkLeadCompanyHasMore = false;
+    this.remarkLeadContactsPage = 1;
+    this.remarkLeadContactsHasMore = false;
+
+    if (!this.dashboardCode || !this.selectedRemarkFilter) {
+      this.remarkLeads = [];
+      this.remarkLeadCompanies = [];
+      this.remarkLeadCompanyTotal = 0;
+      this.selectedRemarksFilterCompany = '';
+      this.remarkLeadsLoading = false;
+      this.remarkLeadCompaniesLoading = false;
+      this.remarkLeadContactsLoadingMore = false;
+      return;
+    }
+
+    if (forceRefresh || !this.restoreCachedRemarkLeadCompanyPage(1)) {
+      this.remarkLeads = [];
+      this.remarkLeadCompanies = [];
+      this.remarkLeadCompanyTotal = 0;
+      this.selectedRemarksFilterCompany = '';
+      this.remarkLeadsLoading = true;
+    }
+
+    this.closeAdminLeadPanels();
+    this.loadRemarkLeadCompanies(false, forceRefresh);
+  }
+
+  onRemarkFilterSidebarScroll(event: Event): void {
+    const element = event.target as HTMLElement;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 100) {
+      this.loadRemarkLeadCompanies(true);
+    }
+  }
+
+  onRemarkFilterContactsScroll(event: Event): void {
+    const element = event.target as HTMLElement;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 120) {
+      this.loadRemarkLeadContacts(true);
+    }
+  }
+
+  private remarkLeadCompanyCacheKey(page: number): string {
+    return [
+      this.remarkLeadCompanyCachePrefix,
+      this.dashboardCode,
+      this.selectedRemarkFilter || 'all',
+      this.remarkFilterSearch.trim().toLowerCase() || 'all',
+      `page:${page}`,
+    ].join('|');
+  }
+
+  private remarkLeadContactCacheKey(page: number, company = this.selectedRemarksFilterCompany): string {
+    return [
+      this.remarkLeadContactCachePrefix,
+      this.dashboardCode,
+      this.selectedRemarkFilter || 'all',
+      this.remarkFilterSearch.trim().toLowerCase() || 'all',
+      company || 'none',
+      `page:${page}`,
+    ].join('|');
+  }
+
+  private restoreCachedRemarkLeadCompanyPage(page: number, append = false): boolean {
+    const payload = this.dashboardCache.get<{
+      companies: Array<{ name: string; count: number }>;
+      leads: Lead[];
+      page: number;
+      hasMore: boolean;
+      total: number;
+    }>(this.remarkLeadCompanyCacheKey(page));
+    if (!payload) return false;
+
+    this.remarkLeadCompanies = append
+      ? this.mergeRemarkLeadCompanies(this.remarkLeadCompanies, payload.companies || [])
+      : (payload.companies || []);
+    this.remarkLeads = append
+      ? this.mergeRemarkHydratedLeads(this.remarkLeads, payload.leads || [])
+      : (payload.leads || []);
+    this.remarkLeadCompanyPage = payload.page;
+    this.remarkLeadCompanyHasMore = payload.hasMore;
+    this.remarkLeadCompanyTotal = payload.total || this.remarkLeadCompanies.length;
+    this.remarkLeadsLoading = false;
+    this.remarkLeadCompaniesLoading = false;
+
+    if (!append) {
+      const selectedStillVisible = this.remarkLeadCompanies.some((company) => company.name === this.selectedRemarksFilterCompany);
+      if (!selectedStillVisible) this.selectedRemarksFilterCompany = this.remarkLeadCompanies[0]?.name || '';
+      this.ensureSelectedRemarkLeadContactsLoaded();
+    }
+
+    return true;
+  }
+
+  private restoreCachedRemarkLeadContactPage(page: number, append = false): boolean {
+    const payload = this.dashboardCache.get<{ leads: Lead[]; page: number; hasMore: boolean }>(
+      this.remarkLeadContactCacheKey(page)
+    );
+    if (!payload) return false;
+
+    const selectedCompany = this.remarkLeadCompanies.find((company) => company.name === this.selectedRemarksFilterCompany);
+    const expectedCount = selectedCompany?.count || 0;
+    if (!append && expectedCount > 0 && (!payload.leads || payload.leads.length === 0)) return false;
+
+    const otherCompanyLeads = this.remarkLeads.filter((lead: Lead) => lead.leadCompanyName !== this.selectedRemarksFilterCompany);
+    const selectedCompanyLeads = append
+      ? [...this.remarksFilterLeadsInCompany, ...(payload.leads || [])]
+      : (payload.leads || []);
+
+    this.remarkLeads = [...otherCompanyLeads, ...selectedCompanyLeads];
+    this.remarkLeadContactsPage = payload.page;
+    this.remarkLeadContactsHasMore = payload.hasMore;
+    this.remarkLeadsLoading = false;
+    this.remarkLeadContactsLoadingMore = false;
+    return true;
+  }
+
+  private loadRemarkLeadCompanies(append: boolean, forceRefresh = false): void {
+    if (!this.dashboardCode || !this.selectedRemarkFilter) return;
+    if (append && (this.remarkLeadCompaniesLoading || !this.remarkLeadCompanyHasMore)) return;
+
+    const run = this.remarkLeadRequestRun;
+    const page = append ? this.remarkLeadCompanyPage + 1 : 1;
+    if (!forceRefresh && this.restoreCachedRemarkLeadCompanyPage(page, append)) {
+      if (!this.isAdminDashboardCacheRefreshDue(this.remarkLeadCompanyCacheKey(page))) return;
+    }
+
+    this.remarkLeadCompaniesLoading = true;
+
+    this.leadService.getAdminLeadCompanies(this.dashboardCode, {
+      remark: this.selectedRemarkFilter,
+      search: this.remarkFilterSearch || undefined,
+      page,
+      pageSize: OPERATIONAL_PAGE_SIZE,
+      paginated: true,
+      includeContacts: true,
+      contactPageSize: OPERATIONAL_PAGE_SIZE,
+    }).subscribe({
       next: (res: any) => {
+        if (run !== this.remarkLeadRequestRun) return;
+
+        const companies = res?.companies || [];
+        const hydratedLeads = this.flattenAdminContactsByCompany(res?.contactsByCompany);
+        this.remarkLeadCompanies = append ? this.mergeRemarkLeadCompanies(this.remarkLeadCompanies, companies) : companies;
+        this.remarkLeads = append ? this.mergeRemarkHydratedLeads(this.remarkLeads, hydratedLeads) : hydratedLeads;
+        this.remarkLeadCompanyPage = res?.page || page;
+        this.remarkLeadCompanyHasMore = !!res?.hasMore;
+        this.remarkLeadCompanyTotal = Number(res?.totalCompanies || res?.total || res?.count || this.remarkLeadCompanies.length) || this.remarkLeadCompanies.length;
         this.remarkLeadsLoading = false;
-        if (res.success) {
-          this.remarkLeads = (res.leads || []).map((l: any) => this.normalizeLead(l));
-          const companies = Array.from(new Set(
-            this.remarkLeads
-              .map((lead: any) => lead.leadCompanyName)
-              .filter((company: string) => !!company)
-          ));
-          if (!this.selectedRemarksFilterCompany || !companies.includes(this.selectedRemarksFilterCompany)) {
-            this.selectedRemarksFilterCompany = companies[0] || '';
-          }
+        this.remarkLeadCompaniesLoading = false;
+
+        if (!append) {
+          this.selectedRemarksFilterCompany = this.remarkLeadCompanies[0]?.name || '';
+          const selectedHydratedCount = hydratedLeads.filter((lead: Lead) => lead.leadCompanyName === this.selectedRemarksFilterCompany).length;
+          this.remarkLeadContactsPage = 1;
+          this.remarkLeadContactsHasMore = selectedHydratedCount < (this.remarkLeadCompanies[0]?.count || 0);
+          if (this.selectedRemarksFilterCompany && !selectedHydratedCount) this.loadRemarkLeadContacts(false);
         }
+
+        this.dashboardCache.set(this.remarkLeadCompanyCacheKey(page), {
+          companies,
+          leads: hydratedLeads,
+          page: this.remarkLeadCompanyPage,
+          hasMore: this.remarkLeadCompanyHasMore,
+          total: this.remarkLeadCompanyTotal,
+        }, { ttlMs: this.adminDashboardCacheTtlMs });
+      },
+      error: () => {
+        this.remarkLeadCompaniesLoading = false;
+        this.remarkLeadsLoading = false;
+      },
+    });
+  }
+
+  private loadRemarkLeadContacts(append: boolean, forceRefresh = false): void {
+    if (!this.dashboardCode || !this.selectedRemarkFilter || !this.selectedRemarksFilterCompany) return;
+    if (append && (this.remarkLeadContactsLoadingMore || !this.remarkLeadContactsHasMore)) return;
+
+    const run = this.remarkLeadRequestRun;
+    const page = append ? this.remarkLeadContactsPage + 1 : 1;
+    if (!forceRefresh && this.restoreCachedRemarkLeadContactPage(page, append)) {
+      if (!this.isAdminDashboardCacheRefreshDue(this.remarkLeadContactCacheKey(page))) return;
+    }
+
+    if (append) this.remarkLeadContactsLoadingMore = true;
+    else this.remarkLeadsLoading = true;
+
+    this.leadService.getAdminLeadPage(this.dashboardCode, {
+      remark: this.selectedRemarkFilter,
+      search: this.remarkFilterSearch || undefined,
+      company: this.selectedRemarksFilterCompany,
+      page,
+      pageSize: OPERATIONAL_PAGE_SIZE,
+      paginated: true,
+    }).subscribe({
+      next: (res: any) => {
+        if (run !== this.remarkLeadRequestRun) return;
+
+        const leads = (res?.leads || res?.items || []).map((lead: any) => this.normalizeLead(lead));
+        const otherCompanyLeads = this.remarkLeads.filter((lead: Lead) => lead.leadCompanyName !== this.selectedRemarksFilterCompany);
+        const selectedCompanyLeads = append ? [...this.remarksFilterLeadsInCompany, ...leads] : leads;
+
+        this.remarkLeads = [...otherCompanyLeads, ...selectedCompanyLeads];
+        this.remarkLeadContactsPage = res?.page || page;
+        this.remarkLeadContactsHasMore = !!res?.hasMore;
+        this.remarkLeadsLoading = false;
+        this.remarkLeadContactsLoadingMore = false;
+
+        this.dashboardCache.set(this.remarkLeadContactCacheKey(page), {
+          leads,
+          page: this.remarkLeadContactsPage,
+          hasMore: this.remarkLeadContactsHasMore,
+        }, { ttlMs: this.adminDashboardCacheTtlMs });
       },
       error: () => {
         this.remarkLeadsLoading = false;
-      }
+        this.remarkLeadContactsLoadingMore = false;
+      },
     });
+  }
+
+  private ensureSelectedRemarkLeadContactsLoaded(): void {
+    if (!this.selectedRemarksFilterCompany) return;
+    const selectedCompany = this.remarkLeadCompanies.find((company) => company.name === this.selectedRemarksFilterCompany);
+    const expectedCount = selectedCompany?.count || 0;
+    if (expectedCount <= 0) return;
+    if (this.remarksFilterLeadsInCompany.length > 0) return;
+    this.loadRemarkLeadContacts(false, true);
+  }
+
+  private mergeRemarkLeadCompanies(
+    existing: Array<{ name: string; count: number }>,
+    incoming: Array<{ name: string; count: number }>,
+  ): Array<{ name: string; count: number }> {
+    const byName = new Map<string, { name: string; count: number }>();
+    [...existing, ...incoming].forEach((company) => {
+      if (!company?.name) return;
+      byName.set(company.name, company);
+    });
+    return Array.from(byName.values());
+  }
+
+  private mergeRemarkHydratedLeads(existing: Lead[], incoming: Lead[]): Lead[] {
+    const byKey = new Map<string, Lead>();
+    const pickKey = (lead: Lead): string => {
+      const id = String(lead._id || '').trim();
+      if (id) return `id:${id}`;
+      return [
+        'contact',
+        String(lead.leadCompanyName || '').trim(),
+        String(lead.contactNumber || '').trim(),
+      ].join('|');
+    };
+
+    [...existing, ...incoming].forEach((lead) => {
+      if (!lead) return;
+      byKey.set(pickKey(lead), lead);
+    });
+
+    return Array.from(byKey.values());
   }
 
   get remarksFilteredLeads(): any[] {
     if (!this.selectedRemarkFilter) return [];
-    const searchLower = this.remarkFilterSearch.toLowerCase();
-    
-    // Base results come from remarkLeads (fetched from DB)
-    // We then apply the local search filter if any
-    return this.remarkLeads.filter(lead => {
-      const remarks: string[] = Array.isArray(lead.remarks) ? lead.remarks : [];
-
-      const matchesSearch = !this.remarkFilterSearch ||
-        (lead.contactName?.toLowerCase().includes(searchLower)) ||
-        (lead.contactNumber?.includes(this.remarkFilterSearch)) ||
-        (lead.leadCompanyName?.toLowerCase().includes(searchLower)) ||
-        (remarks.some(r => r.toLowerCase().includes(searchLower)));
-        
-      return matchesSearch;
-    });
+    return this.remarkLeads;
   }
 
   get remarksFilterUniqueCompanies(): string[] {
-    const companies = this.remarksFilteredLeads.map(l => l.leadCompanyName);
-    return [...new Set(companies)].filter(Boolean) as string[];
+    return this.remarkLeadCompanies.map((company) => company.name);
   }
 
   selectedRemarksFilterCompany: string = '';
 
+  selectRemarksFilterCompany(company: string): void {
+    this.selectedRemarksFilterCompany = company;
+    this.closeAdminLeadPanels();
+    const currentCount = this.remarksFilterLeadsInCompany.length;
+    const expectedCount = this.getRemarksFilterCompanyCount(company);
+    if (expectedCount > currentCount) {
+      this.remarkLeadContactsPage = 1;
+      this.remarkLeadContactsHasMore = true;
+      this.loadRemarkLeadContacts(false);
+    }
+  }
+
   getRemarksFilterCompanyCount(company: string): number {
-    return this.remarksFilteredLeads.filter(l => l.leadCompanyName === company).length;
+    return this.remarkLeadCompanies.find((item) => item.name === company)?.count
+      || this.remarksFilteredLeads.filter((lead) => lead.leadCompanyName === company).length;
   }
 
   get remarksFilterLeadsInCompany(): any[] {
     if (!this.selectedRemarksFilterCompany) return [];
     return this.remarksFilteredLeads.filter(l => l.leadCompanyName === this.selectedRemarksFilterCompany);
+  }
+
+  remarkFilterCompanyPreviewLine(company: string): string {
+    const lead = this.remarksFilterLeadsInCompany.find((item) => item.mainDivisionDescription || item.companyDescription)
+      || this.remarkLeads.find((item) => item.leadCompanyName === company && (item.mainDivisionDescription || item.companyDescription));
+    return lead?.mainDivisionDescription || lead?.companyDescription || '';
   }
 
   get leadsInSelectedCompany(): any[] {
@@ -5223,9 +5834,12 @@ export abstract class AdminWorkspaceController implements OnInit {
         const q = this.leadSearchQuery.toLowerCase();
         const remarks: string[] = Array.isArray(l.remarks) ? l.remarks : [];
         const searchMatches = !this.leadSearchQuery ||
+          l.leadCompanyName?.toLowerCase().includes(q) ||
           l.contactName?.toLowerCase().includes(q) ||
           l.contactNumber?.includes(this.leadSearchQuery) ||
           l.directorEmailAddress?.toLowerCase().includes(q) ||
+          l.mainDivisionDescription?.toLowerCase().includes(q) ||
+          l.companyDescription?.toLowerCase().includes(q) ||
           remarks.some((remark) => remark.toLowerCase().includes(q));
         return companyMatches && statusMatches && employeeMatches && searchMatches;
       });
@@ -5265,6 +5879,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   lastFilteredEmpLeadsRefForCompany: any[] | null = null;
 
   getEmpLeadsByCompany(company: string): any[] { return this.adminEmployeesWorkflow.getEmpLeadsByCompany(this, company); }
+
+  getEmpLeadCompanyCount(company: string): number { return this.adminEmployeesWorkflow.getEmpLeadCompanyCount(this, company); }
 
   selectEmpLeadCompany(company: string): void { return this.adminEmployeesWorkflow.selectEmpLeadCompany(this, company); }
 
@@ -5641,31 +6257,15 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   get filteredEmpLeads(): any[] {
-    return this.empLeads.filter(l => {
-      // Search filter
-      if (this.empLeadSearchQuery) {
-        const q = this.empLeadSearchQuery.toLowerCase();
-        const match = (l.contactName?.toLowerCase().includes(q) ||
-          l.contactNumber?.toLowerCase().includes(q) ||
-          l.leadCompanyName?.toLowerCase().includes(q));
-        if (!match) return false;
-      }
-      // Set filter
-      if (this.empLeadSetFilter && l.setLabel !== this.empLeadSetFilter) {
-        return false;
-      }
-      return true;
-    });
+    return this.empLeads;
   }
 
   get empUniqueCompaniesFiltered(): string[] {
-    const cos = this.filteredEmpLeads.map(l => l.leadCompanyName || 'Unknown');
-    return Array.from(new Set(cos)).sort();
+    return this.empUniqueCompanies;
   }
 
   get leadsInSelectedEmpCompanyFiltered(): any[] {
-    if (!this.selectedEmpLeadCompany) return [];
-    return this.filteredEmpLeads.filter(l => (l.leadCompanyName || 'Unknown') === this.selectedEmpLeadCompany);
+    return this.leadsInSelectedEmpCompany;
   }
 
   switchDrilldownTab(tab: 'stats' | 'calls' | 'leads' | 'followups'): void {
@@ -5674,10 +6274,8 @@ export abstract class AdminWorkspaceController implements OnInit {
       this.fetchEmpLeads();
     }
     if (tab === 'followups') {
-      this.fetchCompanyBookmarks();
-      if (!this.selectedEmpFollowupCompany && this.selectedEmpBookmarks.length > 0) {
-        this.selectedEmpFollowupCompany = this.selectedEmpBookmarks[0].companyName || 'Unnamed Company';
-      }
+      this.fetchEmpFollowups();
+      this.ensureSelectedEmpFollowupCompany();
     }
     if (tab === 'stats' && this.selectedEmpStats) {
       setTimeout(() => {

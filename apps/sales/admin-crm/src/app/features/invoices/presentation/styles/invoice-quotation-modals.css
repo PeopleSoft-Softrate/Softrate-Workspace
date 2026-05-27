@@ -1172,7 +1172,7 @@
 }
 
 .admin-quote-modal .table-summary-row td {
-  border: 1.5px solid #000000 !important;
+  border: 1px solid #d6dde7 !important;
   background-color: #ffffff !important;
 }
 
@@ -1190,7 +1190,7 @@
   display: flex !important;
   justify-content: space-between !important;
   padding: 6px 10px !important;
-  border-bottom: 1px solid #000000 !important;
+  border-bottom: 1px solid #d6dde7 !important;
   font-size: 11px !important;
 }
 
@@ -1201,7 +1201,7 @@
 .admin-quote-modal .grand-total-line {
   background-color: #f8fafc !important;
   font-size: 13px !important;
-  border-top: 1px solid #000000 !important;
+  border-top: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .grand-total-val {
@@ -1212,7 +1212,7 @@
 
 .admin-quote-modal .total-in-words-row {
   padding: 8px 12px !important;
-  border-bottom: 1.5px solid #000000 !important;
+  border-bottom: 1px solid #d6dde7 !important;
   font-size: 11px !important;
   color: #374151 !important;
 }
@@ -1228,7 +1228,7 @@
 
 .admin-quote-modal .gst-breakdown-table th,
 .admin-quote-modal .gst-breakdown-table td {
-  border: 1px solid #000000 !important;
+  border: 1px solid #d6dde7 !important;
   padding: 6px 8px !important;
   font-size: 10px !important;
 }
@@ -1241,19 +1241,19 @@
 }
 
 .admin-quote-modal .border-b {
-  border-bottom: 1px solid #000000 !important;
+  border-bottom: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .gst-breakdown-total-row td {
   background-color: #f8fafc !important;
-  border-top: 1.5px solid #000000 !important;
+  border-top: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .payment-badge-container {
   display: flex !important;
   justify-content: flex-end !important;
   padding: 6px 12px !important;
-  border-bottom: 1px solid #000000 !important;
+  border-bottom: 1px solid #d6dde7 !important;
   background-color: #f0fdf4 !important;
 }
 
@@ -1276,12 +1276,12 @@
 .admin-quote-modal .invoice-grid-footer {
   display: grid !important;
   grid-template-columns: 1.2fr 1fr !important;
-  border-bottom: 1.5px solid #000000 !important;
+  border-bottom: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .footer-col-bank {
   padding: 12px !important;
-  border-right: 1px solid #000000 !important;
+  border-right: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .footer-kicker {
@@ -1380,13 +1380,13 @@
 
 .admin-quote-modal .invoice-notes-terms-grid {
   display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  border-bottom: 1.5px solid #000000 !important;
+  grid-template-columns: 1.2fr 1fr !important;
+  border-bottom: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .notes-block {
   padding: 12px !important;
-  border-right: 1px solid #000000 !important;
+  border-right: 1px solid #d6dde7 !important;
 }
 
 .admin-quote-modal .notes-kicker,
@@ -2010,8 +2010,9 @@
   display: flex !important;
   flex-direction: column !important;
   min-height: 1123px !important;
-  padding: 72px 54px 48px !important;
-  gap: 36px !important;
+  height: 1123px !important;
+  padding: 54px 54px 40px !important;
+  gap: 28px !important;
   background: #ffffff !important;
   color: #111827 !important;
 }
@@ -2019,8 +2020,8 @@
 .admin-quote-modal .quotation-partner-panel {
   display: flex !important;
   align-items: center !important;
-  min-height: 486px !important;
-  padding: 52px 58px !important;
+  min-height: 360px !important;
+  padding: 44px 58px !important;
   border-radius: 24px !important;
   background: #cfb466 !important;
   color: #ffffff !important;
@@ -2032,7 +2033,7 @@
   max-width: 430px !important;
   margin: 0 !important;
   color: #ffffff !important;
-  font-size: 78px !important;
+  font-size: 72px !important;
   font-weight: 800 !important;
   line-height: 1.06 !important;
 }
@@ -2045,7 +2046,7 @@
 }
 
 .admin-quote-modal .quotation-terms-box {
-  min-height: 260px !important;
+  min-height: 238px !important;
   padding: 30px 32px !important;
   border-radius: 16px !important;
   background: #f0fff5 !important;
@@ -2117,33 +2118,122 @@
 
 .admin-quote-modal .quotation-conditions-box ul {
   display: grid !important;
-  gap: 11px !important;
+  gap: 10px !important;
   margin: 0 !important;
   padding-left: 24px !important;
   color: #5f6d7c !important;
-  font-size: 19px !important;
-  line-height: 1.45 !important;
+  font-size: 18px !important;
+  line-height: 1.42 !important;
 }
 
 .admin-quote-modal .quotation-terms-footer {
   display: grid !important;
   justify-items: center !important;
-  gap: 4px !important;
+  gap: 3px !important;
   margin-top: auto !important;
   color: #111827 !important;
   text-align: center !important;
-  font-size: 22px !important;
-  line-height: 1.28 !important;
+  font-size: 20px !important;
+  line-height: 1.24 !important;
 }
 
 .admin-quote-modal .quotation-terms-footer strong {
   color: #111827 !important;
-  font-size: 23px !important;
+  font-size: 22px !important;
   font-weight: 600 !important;
 }
 
 .admin-quote-modal .quotation-terms-footer span {
   max-width: 680px !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table {
+  table-layout: fixed;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) strong,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) b {
+  font-weight: 500;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .company-title,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .client-company-title,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .field-val,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-status-value,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .grand-total-val,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .sig-header,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .block-kicker,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .footer-kicker,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .notes-kicker,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .terms-kicker {
+  font-weight: 500 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table th,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table td,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table th,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table td {
+  vertical-align: top;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .summary-line,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-status-line,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .meta-field-cell,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .meta-field-full-row {
+  align-items: flex-start;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-grid-header,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table th,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table td,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table th,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table td {
+  border-color: #d6dde7 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-main-table th,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table th,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .summary-line span,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-status-line .field-label {
+  font-weight: 600 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .item-main-name strong,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .total-in-words-row strong,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-table strong,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .summary-line strong,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .company-gst strong,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .client-billing-address strong {
+  font-weight: 500 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) {
+  border-width: 1px !important;
+  border-color: #d6dde7 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .tax-invoice-bar,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-grid-header,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-grid-col-left,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .table-summary-row td,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .total-in-words-row,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .gst-breakdown-total-row td,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-grid-footer,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .invoice-notes-terms-grid {
+  border-width: 1px !important;
+  border-color: #d6dde7 !important;
+}
+
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .meta-field-row,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .meta-field-cell,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .meta-field-full-row,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .sender-info-block,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .payment-badge-container,
+.admin-quote-modal .invoice-preview:not(.quotation-preview) .notes-block {
+  border-color: #d6dde7 !important;
 }
 
 @media (max-width: 900px) {
@@ -2211,134 +2301,29 @@
   }
 }
 
-/* --- Print View Media Queries for Admin Invoice Preview --- */
 @media print {
-  /* 1. Hide everything by default */
-  body * {
-    visibility: hidden !important;
-  }
-
-  body {
-    background: #ffffff !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Hide the rest of the application interface to remove layout space */
-  app-admin-landing,
-  app-admin-dashboard-shell {
-    display: none !important;
-  }
-
-  /* 2. Make the invoice overlay fully transparent and non-blocking */
-  .admin-employee-modal-overlay {
-    visibility: visible !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    position: static !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    z-index: auto !important;
-    display: block !important; /* Reset from flex to block to prevent vertical centering */
-  }
-
-  /* 3. The modal wrapper: reset to full-page container with high specificity */
-  .admin-employee-modal-overlay .admin-quote-modal {
-    visibility: visible !important;
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    overflow: visible !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    display: block !important;
-  }
-
-  /* 4. Invoice builder container: block layout, no scroll, no padding, high specificity */
-  .admin-quote-modal .invoice-builder {
-    visibility: visible !important;
-    padding: 0 !important;
-    display: block !important;
-    overflow: visible !important;
-    max-height: none !important;
-    height: auto !important;
-  }
-
-  /* 5. Explicitly hide ALL non-invoice UI — both display:none AND visibility:hidden */
-  .invoice-builder-header,
-  .invoice-control-card,
-  .invoice-items-card,
-  .invoice-builder-actions,
-  .action-row,
-  .quotation-hero {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  /* 6. The invoice preview sheet: take full width, no clipping, high specificity */
-  .admin-quote-modal .invoice-preview {
-    visibility: visible !important;
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-    border-width: 1.5px !important;
-    border-color: #000000 !important;
-    box-shadow: none !important;
-    margin: 20px 0 0 0 !important; /* Slightly bring it down so the full page is seen beautifully with proper margins */
-    padding: 0 !important;
-    border-radius: 0 !important;
-    background: #ffffff !important;
-    page-break-inside: avoid;
-  }
-
-  /* 7. Make all invoice content visible */
   .admin-quote-modal .invoice-preview,
   .admin-quote-modal .invoice-preview * {
-    visibility: visible !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
-  /* 8. Ensure tables, grid rows, and footer don't get clipped */
-  .invoice-grid-footer,
-  .invoice-notes-terms-grid,
-  .invoice-bottom-page-footer,
-  .gst-breakdown-section,
-  .total-in-words-row {
-    visibility: visible !important;
-    overflow: visible !important;
-    display: grid !important;
+  .admin-quote-modal .quotation-preview .quotation-page {
+    page-break-after: always !important;
+    break-after: page !important;
   }
 
-  .invoice-grid-footer {
-    display: grid !important;
-    grid-template-columns: 1.2fr 1fr !important;
+  .admin-quote-modal .quotation-preview .quotation-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
-  .invoice-notes-terms-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
+  .admin-quote-modal .quotation-preview .quotation-page + .quotation-page {
+    margin-top: 0 !important;
   }
 
   @page {
     size: A4 portrait;
-    margin: 1cm 0.8cm;
+    margin: 0;
   }
 }

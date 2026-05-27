@@ -102,6 +102,10 @@
   box-shadow: none !important;
 }
 
+.topbar-search.search-loading {
+  border-color: #b8c0cc !important;
+}
+
 .topbar-search-icon,
 .search-icon {
   display: inline-flex !important;
@@ -124,6 +128,16 @@ svg.search-icon {
   stroke-width: 1.7 !important;
   stroke-linecap: round !important;
   stroke-linejoin: round !important;
+}
+
+.topbar-search-spinner {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 auto !important;
+  border: 2px solid #c8ced8 !important;
+  border-top-color: #111827 !important;
+  border-radius: 999px !important;
+  animation: admin-topbar-spin 0.75s linear infinite !important;
 }
 
 .topbar-input,
@@ -1175,6 +1189,12 @@ svg.search-icon {
   box-shadow: none !important;
 }
 
+@keyframes admin-topbar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 1180px) {
   .admin-organization-view .company-tab-grid,
   .admin-settings-view > div[style*="display:grid"],
@@ -1193,4 +1213,3 @@ svg.search-icon {
     border-right: 0 !important;
   }
 }
-

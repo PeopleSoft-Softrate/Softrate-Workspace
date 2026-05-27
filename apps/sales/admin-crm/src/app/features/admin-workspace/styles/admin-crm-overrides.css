@@ -3552,12 +3552,6 @@ body,
   color: #111827;
   font-size: 14px;
 }
-.dashboard-wrapper .animate-fade-in:has(.leads-toolbar) .lead-card {
-  border-radius: 8px;
-  border: 1px solid #e7ebf2;
-  box-shadow: none;
-}
-
 .dashboard-wrapper .emp-table-wrap {
   border: 1px solid #dfe5ee;
   border-radius: 0;

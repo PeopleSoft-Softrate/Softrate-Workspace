@@ -1,14 +1,40 @@
 import { Injectable } from '@angular/core';
+import { DashboardCacheService } from '../../../core/cache/dashboard-cache.service';
+import { OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../../core/config/pagination.config';
+import { BookmarkService, Bookmark } from '../../../services/bookmark.service';
 import { CallLogService } from '../../../services/calllog.service';
 import { EmployeeService, Employee } from '../../../services/employee.service';
 import { LeadService, Lead } from '../../../services/lead.service';
+
+interface EmployeeLeadCompanyCachePayload {
+  companies: Array<{ name: string; count: number }>;
+  leads: Lead[];
+  page: number;
+  hasMore: boolean;
+  total: number;
+}
+
+interface EmployeeLeadContactCachePayload {
+  leads: Lead[];
+  page: number;
+  hasMore: boolean;
+}
+
+interface EmployeeFollowupCachePayload {
+  bookmarks: Bookmark[];
+  page: number;
+  hasMore: boolean;
+  total: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminEmployeesWorkflow {
   constructor(
     private employeeService: EmployeeService,
     private callLogService: CallLogService,
-    private leadService: LeadService
+    private leadService: LeadService,
+    private bookmarkService: BookmarkService,
+    private dashboardCache: DashboardCacheService,
   ) {}
 
   filteredEmployeesForTable(vm: any): Employee[] {
@@ -20,7 +46,6 @@ export class AdminEmployeesWorkflow {
         emp.name,
         emp.mobile,
         tags,
-        emp.appVersion,
         emp.lastCallTime,
         emp.lastSyncTime,
       ].some((value) => String(value || '').toLowerCase().includes(query));
@@ -132,11 +157,14 @@ export class AdminEmployeesWorkflow {
   }
 
   openEmployee(vm: any, emp: Employee): void {
+    vm.clearOverviewChartRetries?.();
+    vm.destroyEmployeeCharts?.();
     vm.selectedEmployee = emp;
     vm.selectedEmpStats = null;
     vm.selectedEmpCalls = [];
     vm.selectedEmpLoading = true;
     vm.selectedEmpCallsLoading = true;
+    vm.employeeChartType = 'line';
     vm.drilldownTab = 'stats';
     vm.dashTab = 'emp_dashboard';
     vm.selectedEmpLeadCompany = '';
@@ -144,6 +172,17 @@ export class AdminEmployeesWorkflow {
     vm.followupFilter = 'all';
     vm.followupSearch = '';
     vm.selectedFollowupDate = '';
+    vm.empLeads = [];
+    vm.empLeadCompanies = [];
+    vm.empLeadCompanyPage = 1;
+    vm.empLeadCompanyHasMore = false;
+    vm.empLeadCompanyTotal = 0;
+    vm.empLeadContactsPage = 1;
+    vm.empLeadContactsHasMore = false;
+    vm.empFollowupBookmarks = [];
+    vm.empFollowupPage = 1;
+    vm.empFollowupHasMore = false;
+    vm.empFollowupTotal = 0;
 
     window.scrollTo({ top: 0, behavior: 'instant' });
 
@@ -184,7 +223,7 @@ export class AdminEmployeesWorkflow {
     });
 
     vm.fetchEmpLeads();
-    vm.fetchCompanyBookmarks();
+    vm.fetchEmpFollowups();
   }
 
   selectEmployee(vm: any, emp: Employee): void {
@@ -361,6 +400,12 @@ export class AdminEmployeesWorkflow {
     vm.drilldownTab = 'stats';
     vm.dashTab = 'employees';
     vm.empLeads = [];
+    vm.empLeadCompanies = [];
+    vm.empLeadCompanyPage = 1;
+    vm.empLeadCompanyHasMore = false;
+    vm.empLeadCompanyTotal = 0;
+    vm.empLeadContactsPage = 1;
+    vm.empLeadContactsHasMore = false;
     vm.leadSets = [];
     vm.selectedLeadSet = '';
     vm.newLeadSetLabel = '';
@@ -368,39 +413,251 @@ export class AdminEmployeesWorkflow {
     vm.leadUploadStep = 'idle';
     vm.empLeadSearchQuery = '';
     vm.empLeadSetFilter = '';
+    vm.empFollowupBookmarks = [];
+    vm.empFollowupPage = 1;
+    vm.empFollowupHasMore = false;
+    vm.empFollowupTotal = 0;
     vm.followupUploadStep = 'idle';
-    if (vm.chart) {
-      vm.chart.destroy();
-      vm.chart = null;
-    }
+    vm.destroyEmployeeCharts?.();
   }
 
-  fetchEmpLeads(vm: any): void {
-    if (!vm.selectedEmployee) return;
-    vm.empLeadsLoading = true;
-    const setFilter = vm.selectedLeadSet || undefined;
-    this.leadService.getEmployeeLeads(vm.dashboardCode, vm.selectedEmployee.mobile, setFilter).subscribe({
+  fetchEmpLeads(vm: any, forceRefresh = false): void {
+    if (!vm.selectedEmployee || !vm.dashboardCode) return;
+
+    vm.empLeadRequestRun++;
+    vm.empLeadCompanyPage = 1;
+    vm.empLeadCompanyHasMore = false;
+
+    const setsKey = this.employeeLeadSetCacheKey(vm);
+    const cachedSets = !forceRefresh ? this.dashboardCache.get<string[]>(setsKey) : null;
+    if (cachedSets) vm.leadSets = cachedSets;
+
+    if (forceRefresh || !this.restoreCachedEmployeeLeadCompanyPage(vm, 1)) {
+      vm.empLeadCompanies = [];
+      vm.empLeads = [];
+      vm.selectedEmpLeadCompany = '';
+      vm.empLeadsLoading = true;
+    }
+
+    this.leadService.getEmployeeLeadSets(vm.dashboardCode, vm.selectedEmployee.mobile).subscribe({
       next: (res: any) => {
-        vm.empLeadsLoading = false;
-        if (res.success) {
-          vm.empLeads = res.leads;
+        if (res?.success) {
           vm.leadSets = res.sets || [];
-          const companies = Array.from(new Set(vm.empLeads.map((lead: Lead) => lead.leadCompanyName || 'Unnamed Company')));
-          if (!vm.selectedEmpLeadCompany || !companies.includes(vm.selectedEmpLeadCompany)) {
-            vm.selectedEmpLeadCompany = companies[0] || '';
-          }
+          this.dashboardCache.set(setsKey, vm.leadSets, { ttlMs: vm.adminDashboardCacheTtlMs });
         }
+        this.loadEmployeeLeadCompanies(vm, false, forceRefresh);
       },
       error: () => {
         vm.empLeadsLoading = false;
+        vm.empLeadCompaniesLoading = false;
+      },
+    });
+  }
+
+  onEmployeeLeadSearchChange(vm: any): void {
+    if (vm.empLeadSearchTimer) clearTimeout(vm.empLeadSearchTimer);
+    vm.empLeadSearchTimer = setTimeout(() => vm.fetchEmpLeads(), SEARCH_DEBOUNCE_MS);
+  }
+
+  onEmployeeLeadCompanyScroll(vm: any, event: Event): void {
+    const element = event.target as HTMLElement;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 100) {
+      this.loadEmployeeLeadCompanies(vm, true);
+    }
+  }
+
+  onEmployeeLeadContactsScroll(vm: any, event: Event): void {
+    const element = event.target as HTMLElement;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 120) {
+      this.loadEmployeeLeadContacts(vm, true);
+    }
+  }
+
+  private employeeLeadSetCacheKey(vm: any): string {
+    return [
+      vm.empLeadSetCachePrefix,
+      vm.dashboardCode,
+      vm.selectedEmployee?.mobile || 'all',
+    ].join('|');
+  }
+
+  private employeeLeadCompanyCacheKey(vm: any, page: number): string {
+    return [
+      vm.empLeadCompanyCachePrefix,
+      vm.dashboardCode,
+      vm.selectedEmployee?.mobile || 'all',
+      vm.selectedLeadSet || 'all',
+      vm.empLeadSearchQuery.trim().toLowerCase() || 'all',
+      `page:${page}`,
+    ].join('|');
+  }
+
+  private employeeLeadContactCacheKey(vm: any, page: number, company = vm.selectedEmpLeadCompany): string {
+    return [
+      vm.empLeadContactCachePrefix,
+      vm.dashboardCode,
+      vm.selectedEmployee?.mobile || 'all',
+      company || 'all',
+      vm.selectedLeadSet || 'all',
+      vm.empLeadSearchQuery.trim().toLowerCase() || 'all',
+      `page:${page}`,
+    ].join('|');
+  }
+
+  private restoreCachedEmployeeLeadCompanyPage(vm: any, page: number, append = false): boolean {
+    const payload = this.dashboardCache.get<EmployeeLeadCompanyCachePayload>(this.employeeLeadCompanyCacheKey(vm, page));
+    if (!payload) return false;
+
+    const companies = payload.companies || [];
+    vm.empLeadCompanies = append ? this.mergeEmployeeLeadCompanies(vm.empLeadCompanies, companies) : companies;
+    vm.empLeads = append ? this.mergeEmployeeHydratedLeads(vm.empLeads, payload.leads || []) : (payload.leads || []);
+    vm.empLeadCompanyPage = payload.page;
+    vm.empLeadCompanyHasMore = payload.hasMore;
+    vm.empLeadCompanyTotal = payload.total || vm.empLeadCompanies.length;
+    vm.empLeadsLoading = false;
+    vm.empLeadCompaniesLoading = false;
+
+    if (!append) {
+      const selectedStillVisible = vm.empLeadCompanies.some((company: { name: string; count: number }) => company.name === vm.selectedEmpLeadCompany);
+      if (!selectedStillVisible) vm.selectedEmpLeadCompany = vm.empLeadCompanies[0]?.name || '';
+      this.ensureSelectedEmployeeLeadContactsLoaded(vm);
+    }
+
+    return true;
+  }
+
+  private restoreCachedEmployeeLeadContactPage(vm: any, page: number, append = false): boolean {
+    const payload = this.dashboardCache.get<EmployeeLeadContactCachePayload>(this.employeeLeadContactCacheKey(vm, page));
+    if (!payload) return false;
+
+    const otherCompanyLeads = vm.empLeads.filter((lead: Lead) => lead.leadCompanyName !== vm.selectedEmpLeadCompany);
+    const selectedCompanyLeads = append
+      ? [...this.leadsInSelectedEmpCompany(vm), ...(payload.leads || [])]
+      : (payload.leads || []);
+
+    vm.empLeads = [...otherCompanyLeads, ...selectedCompanyLeads];
+    vm.empLeadContactsPage = payload.page;
+    vm.empLeadContactsHasMore = payload.hasMore;
+    vm.empLeadsLoading = false;
+    vm.empLeadContactsLoadingMore = false;
+    return true;
+  }
+
+  private ensureSelectedEmployeeLeadContactsLoaded(vm: any): void {
+    if (!vm.selectedEmpLeadCompany) return;
+    const selectedCompany = vm.empLeadCompanies.find((company: { name: string; count: number }) => company.name === vm.selectedEmpLeadCompany);
+    const expectedCount = selectedCompany?.count || 0;
+    if (expectedCount <= 0) return;
+    if (this.leadsInSelectedEmpCompany(vm).length > 0) return;
+    this.loadEmployeeLeadContacts(vm, false, true);
+  }
+
+  private loadEmployeeLeadCompanies(vm: any, append: boolean, forceRefresh = false): void {
+    if (!vm.selectedEmployee || !vm.dashboardCode) return;
+    if (append && (vm.empLeadCompaniesLoading || !vm.empLeadCompanyHasMore)) return;
+
+    const run = vm.empLeadRequestRun;
+    const page = append ? vm.empLeadCompanyPage + 1 : 1;
+    if (!forceRefresh && this.restoreCachedEmployeeLeadCompanyPage(vm, page, append)) {
+      if (!this.isCacheRefreshDue(vm, this.employeeLeadCompanyCacheKey(vm, page))) return;
+    }
+
+    vm.empLeadCompaniesLoading = true;
+
+    this.leadService.getEmployeeLeadCompanies(vm.dashboardCode, vm.selectedEmployee.mobile, {
+      setLabel: vm.selectedLeadSet || undefined,
+      search: vm.empLeadSearchQuery || undefined,
+      page,
+      pageSize: OPERATIONAL_PAGE_SIZE,
+      paginated: true,
+      includeContacts: true,
+      contactPageSize: OPERATIONAL_PAGE_SIZE,
+    }).subscribe({
+      next: (res: any) => {
+        if (run !== vm.empLeadRequestRun) return;
+
+        const companies = res?.companies || [];
+        const hydratedLeads = this.flattenEmployeeContactsByCompany(vm, res?.contactsByCompany);
+        vm.empLeadCompanies = append ? this.mergeEmployeeLeadCompanies(vm.empLeadCompanies, companies) : companies;
+        vm.empLeads = append ? this.mergeEmployeeHydratedLeads(vm.empLeads, hydratedLeads) : hydratedLeads;
+        vm.empLeadCompanyPage = res?.page || page;
+        vm.empLeadCompanyHasMore = !!res?.hasMore;
+        vm.empLeadCompanyTotal = Number(res?.total || res?.count || vm.empLeadCompanies.length) || vm.empLeadCompanies.length;
+        vm.empLeadsLoading = false;
+        vm.empLeadCompaniesLoading = false;
+
+        if (!append) {
+          vm.selectedEmpLeadCompany = vm.empLeadCompanies[0]?.name || '';
+          const selectedHydratedCount = hydratedLeads.filter((lead: Lead) => lead.leadCompanyName === vm.selectedEmpLeadCompany).length;
+          vm.empLeadContactsPage = 1;
+          vm.empLeadContactsHasMore = selectedHydratedCount < (vm.empLeadCompanies[0]?.count || 0);
+          if (vm.selectedEmpLeadCompany && !selectedHydratedCount) this.loadEmployeeLeadContacts(vm, false);
+        }
+
+        this.dashboardCache.set(this.employeeLeadCompanyCacheKey(vm, page), {
+          companies,
+          leads: hydratedLeads,
+          page: vm.empLeadCompanyPage,
+          hasMore: vm.empLeadCompanyHasMore,
+          total: vm.empLeadCompanyTotal,
+        } satisfies EmployeeLeadCompanyCachePayload, { ttlMs: vm.adminDashboardCacheTtlMs });
+      },
+      error: () => {
+        vm.empLeadsLoading = false;
+        vm.empLeadCompaniesLoading = false;
+      },
+    });
+  }
+
+  private loadEmployeeLeadContacts(vm: any, append: boolean, forceRefresh = false): void {
+    if (!vm.selectedEmployee || !vm.selectedEmpLeadCompany || !vm.dashboardCode) return;
+    if (append && (vm.empLeadContactsLoadingMore || !vm.empLeadContactsHasMore)) return;
+
+    const run = vm.empLeadRequestRun;
+    const page = append ? vm.empLeadContactsPage + 1 : 1;
+    if (!forceRefresh && this.restoreCachedEmployeeLeadContactPage(vm, page, append)) {
+      if (!this.isCacheRefreshDue(vm, this.employeeLeadContactCacheKey(vm, page))) return;
+    }
+
+    if (append) vm.empLeadContactsLoadingMore = true;
+    else vm.empLeadsLoading = true;
+
+    this.leadService.getEmployeeLeadPage(vm.dashboardCode, vm.selectedEmployee.mobile, {
+      setLabel: vm.selectedLeadSet || undefined,
+      search: vm.empLeadSearchQuery || undefined,
+      company: vm.selectedEmpLeadCompany,
+      page,
+      pageSize: OPERATIONAL_PAGE_SIZE,
+      paginated: true,
+    }).subscribe({
+      next: (res: any) => {
+        if (run !== vm.empLeadRequestRun) return;
+
+        const leads = (res?.leads || res?.items || []).map((lead: any) => vm.normalizeLead(lead));
+        const otherCompanyLeads = vm.empLeads.filter((lead: Lead) => lead.leadCompanyName !== vm.selectedEmpLeadCompany);
+        const selectedCompanyLeads = append ? [...this.leadsInSelectedEmpCompany(vm), ...leads] : leads;
+
+        vm.empLeads = [...otherCompanyLeads, ...selectedCompanyLeads];
+        vm.empLeadContactsPage = res?.page || page;
+        vm.empLeadContactsHasMore = !!res?.hasMore;
+        vm.empLeadsLoading = false;
+        vm.empLeadContactsLoadingMore = false;
+
+        this.dashboardCache.set(this.employeeLeadContactCacheKey(vm, page), {
+          leads,
+          page: vm.empLeadContactsPage,
+          hasMore: vm.empLeadContactsHasMore,
+        } satisfies EmployeeLeadContactCachePayload, { ttlMs: vm.adminDashboardCacheTtlMs });
+      },
+      error: () => {
+        vm.empLeadsLoading = false;
+        vm.empLeadContactsLoadingMore = false;
       },
     });
   }
 
   empUniqueCompanies(vm: any): string[] {
-    if (!vm.empLeads) return [];
-    const companies: string[] = vm.empLeads.map((lead: Lead) => lead.leadCompanyName || 'Unnamed Company');
-    return [...new Set(companies)].sort();
+    return (vm.empLeadCompanies || []).map((company: { name: string; count: number }) => company.name);
   }
 
   leadsInSelectedEmpCompany(vm: any): any[] {
@@ -425,6 +682,13 @@ export class AdminEmployeesWorkflow {
 
   selectEmpLeadCompany(vm: any, company: string): void {
     vm.selectedEmpLeadCompany = company;
+    const currentCount = this.leadsInSelectedEmpCompany(vm).length;
+    const expectedCount = this.getEmpLeadCompanyCount(vm, company);
+    if (expectedCount > currentCount) {
+      vm.empLeadContactsPage = 1;
+      vm.empLeadContactsHasMore = true;
+      this.loadEmployeeLeadContacts(vm, false);
+    }
   }
 
   selectLeadSet(vm: any, set: string): void {
@@ -445,6 +709,235 @@ export class AdminEmployeesWorkflow {
       },
       error: () => { vm.deleteSetLoading = false; },
     });
+  }
+
+  getEmpLeadCompanyCount(vm: any, company: string): number {
+    return vm.empLeadCompanies.find((item: { name: string; count: number }) => item.name === company)?.count
+      || this.getEmpLeadsByCompany(vm, company).length;
+  }
+
+  fetchEmpFollowups(vm: any, forceRefresh = false): void {
+    if (!vm.selectedEmployee || !vm.dashboardCode) return;
+    const page = 1;
+
+    if (forceRefresh || !this.restoreCachedEmployeeFollowupPage(vm, page)) {
+      vm.empFollowupBookmarks = [];
+      vm.empFollowupsLoading = true;
+      vm.empFollowupPage = 1;
+      vm.empFollowupHasMore = false;
+      vm.empFollowupTotal = 0;
+    }
+
+    this.loadEmployeeFollowupPage(vm, page, { reset: true, forceRefresh });
+  }
+
+  onEmployeeFollowupFiltersChange(vm: any): void {
+    if (vm.empFollowupSearchTimer) clearTimeout(vm.empFollowupSearchTimer);
+    vm.empFollowupSearchTimer = setTimeout(() => vm.fetchEmpFollowups(), SEARCH_DEBOUNCE_MS);
+  }
+
+  onEmployeeFollowupScroll(vm: any, event: Event): void {
+    const element = event.target as HTMLElement;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 120) {
+      this.loadEmployeeFollowupPage(vm, vm.empFollowupPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  selectedEmpBookmarks(vm: any): Bookmark[] {
+    return vm.empFollowupBookmarks || [];
+  }
+
+  selectedEmpBookmarksFiltered(vm: any): Bookmark[] {
+    const depsStr = JSON.stringify([
+      vm.followupFilter,
+      vm.selectedFollowupDate,
+      vm.followupSearch,
+    ]);
+
+    if (
+      vm.lastSelectedEmpBookmarksRefForFiltered !== vm.selectedEmpBookmarks
+      || vm.selectedEmpBookmarksFilteredDepsStr !== depsStr
+    ) {
+      let list = vm.selectedEmpBookmarks;
+
+      if (vm.followupFilter === 'today') {
+        const today = new Date().toISOString().substring(0, 10);
+        list = list.filter((bookmark: Bookmark) => bookmark.reminderDate && bookmark.reminderDate.substring(0, 10) === today);
+      }
+
+      if (vm.selectedFollowupDate) {
+        list = list.filter((bookmark: Bookmark) => bookmark.reminderDate && bookmark.reminderDate.substring(0, 10) === vm.selectedFollowupDate);
+      }
+
+      if (vm.followupSearch) {
+        const q = vm.followupSearch.toLowerCase();
+        list = list.filter((bookmark: Bookmark) => (
+          bookmark.contactName?.toLowerCase().includes(q) ||
+          bookmark.contactNumber?.toLowerCase().includes(q) ||
+          bookmark.companyName?.toLowerCase().includes(q) ||
+          String(bookmark.description || '').toLowerCase().includes(q) ||
+          (bookmark.remarks || []).some((remark: string) => remark.toLowerCase().includes(q))
+        ));
+      }
+
+      vm.selectedEmpBookmarksFilteredCache = list;
+      vm.lastSelectedEmpBookmarksRefForFiltered = vm.selectedEmpBookmarks;
+      vm.selectedEmpBookmarksFilteredDepsStr = depsStr;
+    }
+
+    return vm.selectedEmpBookmarksFilteredCache;
+  }
+
+  selectedEmpBookmarksByCompany(vm: any): Bookmark[] {
+    if (!vm.selectedEmpFollowupCompany) return [];
+    const depsStr = vm.selectedEmpFollowupCompany;
+    if (
+      vm.lastSelectedEmpBookmarksFilteredRef !== vm.selectedEmpBookmarksFiltered
+      || vm.selectedEmpBookmarksByCompanyDepsStr !== depsStr
+    ) {
+      vm.selectedEmpBookmarksByCompanyCache = vm.selectedEmpBookmarksFiltered.filter((bookmark: Bookmark) => (
+        (bookmark.companyName || 'Unnamed Company') === vm.selectedEmpFollowupCompany
+      ));
+      vm.lastSelectedEmpBookmarksFilteredRef = vm.selectedEmpBookmarksFiltered;
+      vm.selectedEmpBookmarksByCompanyDepsStr = depsStr;
+    }
+    return vm.selectedEmpBookmarksByCompanyCache;
+  }
+
+  groupedEmpBookmarks(vm: any): { company: string; count: number }[] {
+    if (vm.lastGroupedEmpBookmarksRef !== vm.selectedEmpBookmarksFiltered) {
+      const groups = new Map<string, number>();
+      vm.selectedEmpBookmarksFiltered.forEach((bookmark: Bookmark) => {
+        const company = bookmark.companyName || 'Unnamed Company';
+        groups.set(company, (groups.get(company) || 0) + 1);
+      });
+      vm.groupedEmpBookmarksCache = Array.from(groups.entries())
+        .map(([company, count]) => ({ company, count }))
+        .sort((a, b) => a.company.localeCompare(b.company));
+      vm.lastGroupedEmpBookmarksRef = vm.selectedEmpBookmarksFiltered;
+    }
+    return vm.groupedEmpBookmarksCache;
+  }
+
+  ensureSelectedEmpFollowupCompany(vm: any): void {
+    const groups = vm.groupedEmpBookmarks;
+    const selectedStillVisible = groups.some((group: { company: string; count: number }) => group.company === vm.selectedEmpFollowupCompany);
+    if (!selectedStillVisible) vm.selectedEmpFollowupCompany = groups[0]?.company || '';
+  }
+
+  private employeeFollowupCacheKey(vm: any, page: number): string {
+    return [
+      vm.empFollowupCachePrefix,
+      vm.dashboardCode,
+      vm.selectedEmployee?.mobile || 'all',
+      vm.followupFilter || 'all',
+      vm.selectedFollowupDate || 'all',
+      vm.followupSearch.trim().toLowerCase() || 'all',
+      `page:${page}`,
+    ].join('|');
+  }
+
+  private restoreCachedEmployeeFollowupPage(vm: any, page: number, append = false): boolean {
+    const payload = this.dashboardCache.get<EmployeeFollowupCachePayload>(this.employeeFollowupCacheKey(vm, page));
+    if (!payload) return false;
+    this.applyEmployeeFollowupPayload(vm, payload, append);
+    return true;
+  }
+
+  private applyEmployeeFollowupPayload(vm: any, payload: EmployeeFollowupCachePayload, append: boolean): void {
+    vm.empFollowupBookmarks = append
+      ? this.mergeEmployeeBookmarks(vm.empFollowupBookmarks, payload.bookmarks || [])
+      : (payload.bookmarks || []);
+    vm.empFollowupPage = payload.page;
+    vm.empFollowupHasMore = payload.hasMore;
+    vm.empFollowupTotal = payload.total || vm.empFollowupBookmarks.length;
+    vm.empFollowupsLoading = false;
+    vm.empFollowupLoadingMore = false;
+    this.ensureSelectedEmpFollowupCompany(vm);
+  }
+
+  private loadEmployeeFollowupPage(
+    vm: any,
+    page: number,
+    options: { append?: boolean; reset?: boolean; forceRefresh?: boolean } = {},
+  ): void {
+    if (!vm.selectedEmployee || !vm.dashboardCode) return;
+    if (options.append && (vm.empFollowupLoadingMore || !vm.empFollowupHasMore)) return;
+
+    if (!options.forceRefresh && this.restoreCachedEmployeeFollowupPage(vm, page, !!options.append)) {
+      if (!this.isCacheRefreshDue(vm, this.employeeFollowupCacheKey(vm, page))) return;
+    }
+
+    if (options.append) vm.empFollowupLoadingMore = true;
+    else vm.empFollowupsLoading = !vm.empFollowupBookmarks.length || !!options.reset;
+
+    this.bookmarkService.getEmployeeBookmarkPage(vm.dashboardCode, vm.selectedEmployee.mobile, {
+      page,
+      pageSize: OPERATIONAL_PAGE_SIZE,
+      paginated: true,
+      search: vm.followupSearch || undefined,
+      filter: vm.followupFilter !== 'all' ? vm.followupFilter : undefined,
+      reminderDate: vm.selectedFollowupDate || undefined,
+    }).subscribe({
+      next: (res: any) => {
+        const payload: EmployeeFollowupCachePayload = {
+          bookmarks: res?.bookmarks || res?.items || [],
+          page: res?.page || page,
+          hasMore: !!res?.hasMore,
+          total: Number(res?.total || 0),
+        };
+        this.applyEmployeeFollowupPayload(vm, payload, !!options.append);
+        this.dashboardCache.set(this.employeeFollowupCacheKey(vm, page), payload, { ttlMs: vm.adminDashboardCacheTtlMs });
+      },
+      error: () => {
+        vm.empFollowupsLoading = false;
+        vm.empFollowupLoadingMore = false;
+      },
+    });
+  }
+
+  private flattenEmployeeContactsByCompany(vm: any, raw: unknown): Lead[] {
+    if (!raw || typeof raw !== 'object') return [];
+    return Object.values(raw as Record<string, unknown>).flatMap((items) => (
+      Array.isArray(items) ? items.map((lead) => vm.normalizeLead(lead)) : []
+    ));
+  }
+
+  private mergeEmployeeHydratedLeads(existing: Lead[], incoming: Lead[]): Lead[] {
+    const byKey = new Map<string, Lead>();
+    const pickKey = (lead: Lead) => lead._id || `${lead.assignedEmployeePhone || ''}:${lead.leadCompanyName || ''}:${lead.contactNumber || ''}`;
+    [...existing, ...incoming].forEach((lead) => {
+      if (!lead) return;
+      byKey.set(pickKey(lead), lead);
+    });
+    return Array.from(byKey.values());
+  }
+
+  private mergeEmployeeLeadCompanies(
+    existing: Array<{ name: string; count: number }>,
+    incoming: Array<{ name: string; count: number }>,
+  ): Array<{ name: string; count: number }> {
+    const byName = new Map<string, { name: string; count: number }>();
+    [...existing, ...incoming].forEach((company) => {
+      if (!company?.name) return;
+      byName.set(company.name, company);
+    });
+    return Array.from(byName.values());
+  }
+
+  private mergeEmployeeBookmarks(existing: Bookmark[], incoming: Bookmark[]): Bookmark[] {
+    const byKey = new Map<string, Bookmark>();
+    [...existing, ...incoming].forEach((bookmark) => {
+      if (!bookmark) return;
+      const key = bookmark._id || `${bookmark.companyName || ''}:${bookmark.contactNumber || ''}:${bookmark.employeePhone || ''}`;
+      byKey.set(key, bookmark);
+    });
+    return Array.from(byKey.values());
+  }
+
+  private isCacheRefreshDue(vm: any, key: string): boolean {
+    const metadata = this.dashboardCache.getMetadata(key);
+    return !metadata || Date.now() - metadata.cachedAt >= vm.adminDashboardRefreshAfterMs;
   }
 
   trackByCallId(vm: any, index: number, call: any): any {

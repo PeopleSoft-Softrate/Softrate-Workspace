@@ -346,5 +346,11 @@ export class AdminLeadsWorkflow {
     this.dashboardCache.removeByPrefix(vm.adminLeadContactCachePrefix);
     this.dashboardCache.removeByPrefix(vm.adminLeadSetsCachePrefix);
     this.dashboardCache.removeByPrefix(vm.adminFollowupCompanyCachePrefix);
+    if (vm.empLeadSetCachePrefix) this.dashboardCache.removeByPrefix(vm.empLeadSetCachePrefix);
+    if (vm.empLeadCompanyCachePrefix) this.dashboardCache.removeByPrefix(vm.empLeadCompanyCachePrefix);
+    if (vm.empLeadContactCachePrefix) this.dashboardCache.removeByPrefix(vm.empLeadContactCachePrefix);
+    if (vm.empFollowupCachePrefix) this.dashboardCache.removeByPrefix(vm.empFollowupCachePrefix);
+    if (vm.remarkLeadCompanyCachePrefix) this.dashboardCache.removeByPrefix(vm.remarkLeadCompanyCachePrefix);
+    if (vm.remarkLeadContactCachePrefix) this.dashboardCache.removeByPrefix(vm.remarkLeadContactCachePrefix);
   }
 }

@@ -203,7 +203,7 @@
         </label>
         <label class="field-block field-wide">
           <span>Attachment</span>
-          <input class="field-input file-input" type="file" (change)="vm.setAttachment(fileList($event))">
+          <input class="field-input file-input" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.txt" (change)="vm.setAttachment(fileList($event))">
         </label>
       </div>
 

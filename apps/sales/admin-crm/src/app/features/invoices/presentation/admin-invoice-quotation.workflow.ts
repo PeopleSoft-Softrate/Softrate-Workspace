@@ -1,12 +1,34 @@
 import { Injectable } from '@angular/core';
 import QRCode from 'qrcode';
+import { firstValueFrom } from 'rxjs';
+import { DashboardCacheService } from '../../../core/cache/dashboard-cache.service';
+import { HISTORY_PAGE_SIZE, OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../../core/config/pagination.config';
 import { ApiService } from '../../../services/api.service';
-import { Lead } from '../../../services/lead.service';
+import { Lead, LeadService } from '../../../services/lead.service';
 import { formatInvoiceMoney as formatInvoiceMoneyValue, numberToWords } from '../domain/invoice-formatters';
+
+interface PagedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminInvoiceQuotationWorkflow {
-  constructor(private api: ApiService) {}
+  private readonly emptyBankDetails = Object.freeze({
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    branchName: '',
+  });
+
+  constructor(
+    private api: ApiService,
+    private leadService: LeadService,
+    private dashboardCache: DashboardCacheService,
+  ) {}
 
   private async setInvoiceQrFromUrl(vm: any, publicUrl: string): Promise<void> {
     vm.currentInvoicePublicUrl = publicUrl || '';
@@ -78,15 +100,11 @@ export class AdminInvoiceQuotationWorkflow {
         print-color-adjust: exact !important;
       }
 
-      .admin-print-root,
-      .admin-print-root * {
-        visibility: visible !important;
-      }
-
       .admin-print-root {
-        width: 194mm !important;
-        margin: 8mm auto !important;
-        padding: 0 !important;
+        width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 auto !important;
+        padding: 8mm !important;
         background: #ffffff !important;
         box-sizing: border-box !important;
       }
@@ -94,8 +112,8 @@ export class AdminInvoiceQuotationWorkflow {
       .admin-print-root .admin-quote-modal,
       .admin-print-root .invoice-builder {
         display: block !important;
-        width: 194mm !important;
-        max-width: 194mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
         margin: 0 auto !important;
         padding: 0 !important;
         overflow: visible !important;
@@ -105,8 +123,8 @@ export class AdminInvoiceQuotationWorkflow {
 
       .admin-print-root .invoice-preview {
         display: block !important;
-        width: 194mm !important;
-        max-width: 194mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
         min-height: 281mm !important;
         height: auto !important;
         margin: 0 auto !important;
@@ -120,11 +138,6 @@ export class AdminInvoiceQuotationWorkflow {
       .admin-print-root .invoice-preview:not(.quotation-preview) {
         display: flex !important;
         flex-direction: column !important;
-      }
-
-      .admin-print-root .quotation-hero {
-        display: grid !important;
-        visibility: visible !important;
       }
 
       .admin-print-root .quotation-page {
@@ -224,6 +237,121 @@ export class AdminInvoiceQuotationWorkflow {
     return this.activeInvoiceCompanySnapshot(vm)?.bankDetails || vm.settingsBankDetails || {};
   }
 
+  private resolveInvoiceNumber(vm: any): string {
+    if (vm.quoteMode && vm.currentQuotationNumber) return vm.currentQuotationNumber;
+    if (!vm.quoteMode && vm.currentInvoiceNumber) return vm.currentInvoiceNumber;
+    const issued = vm.invoiceIssuedAt || new Date();
+    const yyyy = String(issued.getFullYear());
+    const mm = String(issued.getMonth() + 1).padStart(2, '0');
+    const sequence = String(vm.quoteNumber % 1000 || 1).padStart(3, '0');
+    return `${vm.quoteMode ? 'Quote' : 'Invoice'}_${yyyy}${mm}${sequence}_v1.pdf`;
+  }
+
+  private resolveInvoicePreviewGstPercentage(vm: any): number {
+    if (vm.viewingSavedDocument) {
+      return Number(vm.currentInvoiceRecord?.gstPercentage || 0);
+    }
+    if (vm.documentGstPercentageOverride !== null && vm.documentGstPercentageOverride !== undefined) {
+      return Number(vm.documentGstPercentageOverride || 0);
+    }
+    return Number(vm.settingsGstPercentage || 0);
+  }
+
+  private refreshInvoicePreviewCaches(vm: any): void {
+    const snapshotName = String(this.activeInvoiceCompanySnapshot(vm)?.name || '').trim();
+    const companyName = (snapshotName || (vm.settingsShowCompanyNameOnInvoice ? (vm.settingsCompanyName || vm.dashboardCompany) : '') || 'DealVoice').trim();
+    const companyAddress = String(
+      this.activeInvoiceCompanySnapshot(vm)?.registeredAddress ||
+      this.activeInvoiceCompanySnapshot(vm)?.address ||
+      vm.settingsInvoiceRegisteredAddress ||
+      vm.companyProfile?.companyAddress ||
+      '',
+    ).trim();
+    const snapshot = this.activeInvoiceCompanySnapshot(vm);
+    const contactParts = [
+      snapshot?.phone || vm.settingsContactDetails?.phone || '',
+      snapshot?.email || vm.settingsContactDetails?.email || '',
+      snapshot?.website || vm.settingsContactDetails?.website || '',
+    ]
+      .map((value: any) => String(value || '').trim())
+      .filter(Boolean);
+    const bankDetails = this.activeCompanyBankDetails(vm) || this.emptyBankDetails;
+    const quotationBankRows = [
+      { label: 'Bank', value: bankDetails.bankName },
+      { label: 'Acc', value: bankDetails.accountNumber },
+      { label: 'IFSC', value: bankDetails.ifscCode },
+      { label: 'Branch', value: bankDetails.branchName },
+    ]
+      .map((row) => ({ ...row, value: String(row.value || '').trim() }))
+      .filter((row) => row.value);
+    const gstPercentage = this.resolveInvoicePreviewGstPercentage(vm);
+    const normalizedItems = (vm.invoiceItems || []).map((item: any) => {
+      const price = Number(item?.price || 0);
+      const quantity = Number(item?.quantity || 1);
+      const taxableAmount = price * quantity;
+      const gstAmount = taxableAmount * (gstPercentage / 100);
+      return {
+        ...item,
+        price,
+        quantity,
+        taxableAmount,
+        gstAmount,
+        totalAmount: taxableAmount + gstAmount,
+      };
+    });
+    const invoiceSubtotal = normalizedItems.reduce((sum: number, item: any) => sum + item.taxableAmount, 0);
+    const invoiceGstAmount = normalizedItems.reduce((sum: number, item: any) => sum + item.gstAmount, 0);
+    const invoiceTotal = invoiceSubtotal + invoiceGstAmount;
+    const gstBreakdownMap = new Map<string, any>();
+    normalizedItems.forEach((item: any) => {
+      const hsn = item.product?.sacHsn || item.product?.hsn || '—';
+      const cgstAmount = item.gstAmount / 2;
+      const sgstAmount = item.gstAmount / 2;
+      const existing = gstBreakdownMap.get(hsn);
+      if (existing) {
+        existing.taxableValue += item.taxableAmount;
+        existing.cgstAmount += cgstAmount;
+        existing.sgstAmount += sgstAmount;
+        existing.totalTax += item.gstAmount;
+        return;
+      }
+      gstBreakdownMap.set(hsn, {
+        hsnSac: hsn,
+        taxableValue: item.taxableAmount,
+        cgstRate: gstPercentage / 2,
+        cgstAmount,
+        sgstRate: gstPercentage / 2,
+        sgstAmount,
+        totalTax: item.gstAmount,
+      });
+    });
+
+    vm.invoiceItems = normalizedItems;
+    vm.invoiceNumberCache = this.resolveInvoiceNumber(vm);
+    vm.invoiceCompanyDisplayNameCache = companyName;
+    vm.invoiceCompanyAddressCache = companyAddress;
+    vm.invoiceContactLineCache = contactParts.join(' · ');
+    vm.invoiceBankDetailsCache = bankDetails;
+    vm.quotationBankRowsCache = quotationBankRows;
+    vm.invoiceSealSrcCache = String(this.activeInvoiceCompanySnapshot(vm)?.seal || vm.settingsInvoiceSeal || '').trim();
+    vm.invoiceTermsTextCache = String(this.activeInvoiceCompanySnapshot(vm)?.terms || vm.settingsInvoiceTerms || '').trim();
+    vm.quotationKindNoteTextCache = String(
+      vm.currentInvoiceRecord?.kindNote ||
+      vm.quotationKindNoteDraft ||
+      this.activeInvoiceCompanySnapshot(vm)?.footer ||
+      this.defaultQuotationKindNote(vm),
+    ).trim();
+    vm.invoicePreviewGstPercentageCache = gstPercentage;
+    vm.invoiceSubtotalCache = invoiceSubtotal;
+    vm.invoiceGstAmountCache = invoiceGstAmount;
+    vm.invoiceCgstAmountCache = invoiceGstAmount / 2;
+    vm.invoiceSgstAmountCache = invoiceGstAmount / 2;
+    vm.invoiceTotalCache = invoiceTotal;
+    vm.invoiceTotalItemsQtyCache = normalizedItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    vm.invoiceAmountWordsCache = numberToWords(invoiceTotal);
+    vm.invoiceGstBreakdownCache = Array.from(gstBreakdownMap.values());
+  }
+
   private normalizeInvoicePaymentStatus(status?: string): 'paid' | 'unpaid' {
     return String(status || '').trim().toLowerCase() === 'paid' ? 'paid' : 'unpaid';
   }
@@ -268,88 +396,658 @@ export class AdminInvoiceQuotationWorkflow {
     };
   }
 
-  fetchInvoiceRecords(vm: any): void {
-    if (!vm.dashboardCode) return;
-    vm.invoiceRecordsLoading = true;
-    const params = new URLSearchParams({ companyCode: vm.dashboardCode });
-    this.api.get<any>(`/api/invoices?${params.toString()}`).subscribe({
-      next: (res) => {
-        vm.invoiceRecordsLoading = false;
-        vm.invoiceRecords = res?.success ? (res.invoices || []) : [];
-      },
-      error: () => {
-        vm.invoiceRecordsLoading = false;
-      },
-    });
+  private isRefreshDue(vm: any, key: string): boolean {
+    const metadata = this.dashboardCache.getMetadata(key);
+    return !metadata || Date.now() - metadata.cachedAt >= vm.adminDashboardRefreshAfterMs;
   }
 
-  fetchAdminInvoiceClients(vm: any): void {
+  private resolvePagedResponse<T>(response: any, rawItems: T[], requestedPage: number, pageSize = OPERATIONAL_PAGE_SIZE): PagedResponse<T> {
+    const hasServerPageMeta = typeof response?.page === 'number'
+      || typeof response?.pageSize === 'number'
+      || typeof response?.total === 'number'
+      || typeof response?.hasMore === 'boolean';
+
+    if (hasServerPageMeta) {
+      const page = Number(response?.page || requestedPage || 1);
+      const resolvedPageSize = Number(response?.pageSize || pageSize || OPERATIONAL_PAGE_SIZE);
+      const total = Number(response?.total || rawItems.length || 0);
+      return {
+        items: rawItems,
+        page,
+        pageSize: resolvedPageSize,
+        total,
+        hasMore: typeof response?.hasMore === 'boolean'
+          ? response.hasMore
+          : (page * resolvedPageSize < total),
+      };
+    }
+
+    const total = rawItems.length;
+    const start = Math.max(0, (requestedPage - 1) * pageSize);
+    const items = rawItems.slice(start, start + pageSize);
+    return {
+      items,
+      page: requestedPage,
+      pageSize,
+      total,
+      hasMore: start + pageSize < total,
+    };
+  }
+
+  private mergePagedItems<T>(existing: T[], incoming: T[], pickId: (item: T) => string): T[] {
+    const byId = new Map(existing.map((item) => [pickId(item), item]));
+    for (const item of incoming) {
+      byId.set(pickId(item), item);
+    }
+    return Array.from(byId.values());
+  }
+
+  private adminInvoiceHistoryCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminInvoiceHistoryCachePrefix,
+      vm.dashboardCode || '',
+      vm.invoiceHistorySearch.trim(),
+      vm.invoiceDateFrom || '',
+      vm.invoiceDateTo || '',
+      page,
+    ].join('|');
+  }
+
+  private adminInvoiceClientCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminInvoiceClientCachePrefix,
+      vm.dashboardCode || '',
+      vm.invoiceSearch.trim(),
+      page,
+    ].join('|');
+  }
+
+  private adminQuotationHistoryCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminQuotationHistoryCachePrefix,
+      vm.dashboardCode || '',
+      vm.quotationHistorySearch.trim(),
+      vm.quotationDateFrom || '',
+      vm.quotationDateTo || '',
+      page,
+    ].join('|');
+  }
+
+  private adminQuotationLeadCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminQuotationLeadCachePrefix,
+      vm.dashboardCode || '',
+      vm.quotationSearch.trim().toLowerCase() || 'all',
+      page,
+    ].join('|');
+  }
+
+  private adminQuotationClientCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminQuotationClientCachePrefix,
+      vm.dashboardCode || '',
+      vm.quotationSearch.trim(),
+      page,
+    ].join('|');
+  }
+
+  private adminClientOnboardingCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminClientOnboardingCachePrefix,
+      vm.dashboardCode || '',
+      vm.clientOnboardingSearch.trim(),
+      page,
+    ].join('|');
+  }
+
+  private restoreCachedInvoiceHistoryPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminInvoiceHistoryCacheKey(vm, page));
+    if (!cached) return false;
+    vm.invoiceRecords = append
+      ? this.mergePagedItems(vm.invoiceRecords, cached.items, (item) => String(item?._id || item?.id || item?.invoiceNumber || ''))
+      : cached.items;
+    vm.invoiceRecordsPage = cached.page;
+    vm.invoiceRecordsHasMore = cached.hasMore;
+    vm.invoiceRecordsTotal = cached.total;
+    vm.invoiceRecordsLoaded = true;
+    vm.invoiceRecordsLoading = false;
+    vm.invoiceRecordsLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedInvoiceClientPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminInvoiceClientCacheKey(vm, page));
+    if (!cached) return false;
+    vm.adminInvoiceClients = append
+      ? this.mergePagedItems(vm.adminInvoiceClients, cached.items, (item) => String(item?.clientId || item?._id || item?.id || item?.companyName || ''))
+      : cached.items;
+    vm.adminInvoiceClientPage = cached.page;
+    vm.adminInvoiceClientHasMore = cached.hasMore;
+    vm.adminInvoiceClientTotal = cached.total;
+    vm.adminInvoiceClientsLoaded = true;
+    vm.adminInvoiceClientsLoading = false;
+    vm.adminInvoiceClientsLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedQuotationClientPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminQuotationClientCacheKey(vm, page));
+    if (!cached) return false;
+    vm.adminInvoiceClients = append
+      ? this.mergePagedItems(vm.adminInvoiceClients, cached.items, (item) => String(item?.clientId || item?._id || item?.id || item?.companyName || ''))
+      : cached.items;
+    vm.quotationClientPage = cached.page;
+    vm.quotationClientHasMore = cached.hasMore;
+    vm.quotationClientTotal = cached.total;
+    vm.quotationClientsLoaded = true;
+    vm.adminInvoiceClientsLoading = false;
+    vm.quotationClientsLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedClientOnboardingPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminClientOnboardingCacheKey(vm, page));
+    if (!cached) return false;
+    vm.clientOnboardingRecords = append
+      ? this.mergePagedItems(vm.clientOnboardingRecords, cached.items, (item) => String(item?.clientId || item?._id || item?.id || item?.companyName || ''))
+      : cached.items;
+    vm.clientOnboardingPage = cached.page;
+    vm.clientOnboardingHasMore = cached.hasMore;
+    vm.clientOnboardingTotal = cached.total;
+    vm.clientOnboardingLoaded = true;
+    vm.clientOnboardingLoading = false;
+    vm.clientOnboardingLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedQuotationHistoryPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminQuotationHistoryCacheKey(vm, page));
+    if (!cached) return false;
+    vm.quotationRecords = append
+      ? this.mergePagedItems(vm.quotationRecords, cached.items, (item) => String(item?._id || item?.id || item?.quotationNumber || ''))
+      : cached.items;
+    vm.quotationRecordsPage = cached.page;
+    vm.quotationRecordsHasMore = cached.hasMore;
+    vm.quotationRecordsTotal = cached.total;
+    vm.quotationRecordsLoaded = true;
+    vm.quotationRecordsLoading = false;
+    vm.quotationRecordsLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedQuotationLeadPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<Lead>>(this.adminQuotationLeadCacheKey(vm, page));
+    if (!cached) return false;
+    vm.quotationLeads = append
+      ? this.mergePagedItems(vm.quotationLeads, cached.items, (item) => String(item?._id || `${item?.leadCompanyName || ''}|${item?.contactNumber || ''}`))
+      : cached.items;
+    vm.quotationLeadsPage = cached.page;
+    vm.quotationLeadsHasMore = cached.hasMore;
+    vm.quotationLeadsTotal = cached.total;
+    vm.quotationLeadsLoaded = true;
+    vm.quotationLeadsLoading = false;
+    vm.quotationLeadsLoadingMore = false;
+    return true;
+  }
+
+  fetchInvoiceRecords(vm: any, force = false): void {
+    void this.loadInvoiceHistoryPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  fetchAdminInvoiceClients(vm: any, force = false): void {
+    void this.loadAdminInvoiceClientPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  fetchAdminQuotationClients(vm: any, force = false): void {
+    void this.loadAdminQuotationClientPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  fetchAdminQuotationLeads(vm: any, force = false): void {
+    void this.loadAdminQuotationLeadPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  fetchClientOnboardingRecords(vm: any, force = false): void {
+    void this.loadClientOnboardingPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  onAdminInvoiceSearchChange(vm: any): void {
+    if (vm.invoiceSearchTimeoutRef) clearTimeout(vm.invoiceSearchTimeoutRef);
+    vm.invoiceSearchTimeoutRef = setTimeout(() => {
+      vm.adminInvoiceClientsLoaded = false;
+      void this.loadAdminInvoiceClientPage(vm, 1, { reset: true });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  onAdminInvoiceHistoryQueryChange(vm: any): void {
+    vm.invoiceRecordsLoaded = false;
+    this.fetchInvoiceRecords(vm, true);
+  }
+
+  onAdminQuotationSearchChange(vm: any): void {
+    if (vm.quotationSearchTimeoutRef) clearTimeout(vm.quotationSearchTimeoutRef);
+    vm.quotationSearchTimeoutRef = setTimeout(() => {
+      vm.quotationLeadsLoaded = false;
+      void this.loadAdminQuotationLeadPage(vm, 1, { reset: true });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  onAdminQuotationHistoryQueryChange(vm: any): void {
+    vm.quotationRecordsLoaded = false;
+    this.fetchQuotationRecords(vm, true);
+  }
+
+  onAdminClientOnboardingSearchChange(vm: any): void {
+    if (vm.clientOnboardingSearchTimeoutRef) clearTimeout(vm.clientOnboardingSearchTimeoutRef);
+    vm.clientOnboardingSearchTimeoutRef = setTimeout(() => {
+      vm.clientOnboardingLoaded = false;
+      vm.selectedOnboardingClientId = '';
+      void this.loadClientOnboardingPage(vm, 1, { reset: true });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  onAdminInvoiceClientScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.adminInvoiceClientsLoading || vm.adminInvoiceClientsLoadingMore || !vm.adminInvoiceClientHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadAdminInvoiceClientPage(vm, vm.adminInvoiceClientPage + 1, { append: true });
+    }
+  }
+
+  onAdminInvoiceHistoryScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.invoiceRecordsLoadingMore || !vm.invoiceRecordsHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadInvoiceHistoryPage(vm, vm.invoiceRecordsPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  onAdminClientOnboardingScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.clientOnboardingLoading || vm.clientOnboardingLoadingMore || !vm.clientOnboardingHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadClientOnboardingPage(vm, vm.clientOnboardingPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  onAdminQuotationClientScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.adminInvoiceClientsLoading || vm.quotationClientsLoadingMore || !vm.quotationClientHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadAdminQuotationClientPage(vm, vm.quotationClientPage + 1, { append: true });
+    }
+  }
+
+  onAdminQuotationLeadScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.quotationLeadsLoading || vm.quotationLeadsLoadingMore || !vm.quotationLeadsHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadAdminQuotationLeadPage(vm, vm.quotationLeadsPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  onAdminQuotationHistoryScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.quotationRecordsLoadingMore || !vm.quotationRecordsHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadQuotationHistoryPage(vm, vm.quotationRecordsPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  private async loadInvoiceHistoryPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
     if (!vm.dashboardCode) return;
-    vm.adminInvoiceClientsLoading = true;
+    const cacheKey = this.adminInvoiceHistoryCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedInvoiceHistoryPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.reset && !silent) {
+      vm.invoiceRecords = [];
+      vm.invoiceRecordsPage = 1;
+      vm.invoiceRecordsHasMore = false;
+      vm.invoiceRecordsTotal = 0;
+    }
+    if (options.append) {
+      vm.invoiceRecordsLoadingMore = true;
+    } else if (!silent) {
+      vm.invoiceRecordsLoading = true;
+    }
+
+    const params = new URLSearchParams({
+      companyCode: vm.dashboardCode,
+      search: vm.invoiceHistorySearch.trim(),
+      dateFrom: vm.invoiceDateFrom || '',
+      dateTo: vm.invoiceDateTo || '',
+      page: String(page),
+      pageSize: String(HISTORY_PAGE_SIZE),
+      paginated: 'true',
+    });
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/invoices?${params.toString()}`));
+      const rawItems = Array.isArray(response?.items) ? response.items : (response?.invoices || []);
+      const pageResult = this.resolvePagedResponse<any>(response, rawItems, page, HISTORY_PAGE_SIZE);
+      vm.invoiceRecords = options.append
+        ? this.mergePagedItems(vm.invoiceRecords, pageResult.items, (item) => String(item?._id || item?.id || item?.invoiceNumber || ''))
+        : pageResult.items;
+      vm.invoiceRecordsPage = pageResult.page;
+      vm.invoiceRecordsHasMore = pageResult.hasMore;
+      vm.invoiceRecordsTotal = pageResult.total;
+      vm.invoiceRecordsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        vm.invoiceRecords = [];
+        vm.invoiceRecordsPage = 1;
+        vm.invoiceRecordsHasMore = false;
+        vm.invoiceRecordsTotal = 0;
+      }
+    } finally {
+      vm.invoiceRecordsLoading = false;
+      vm.invoiceRecordsLoadingMore = false;
+    }
+  }
+
+  private async loadAdminInvoiceClientPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!vm.dashboardCode) return;
+    const cacheKey = this.adminInvoiceClientCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedInvoiceClientPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.append) {
+      vm.adminInvoiceClientsLoadingMore = true;
+    } else {
+      vm.adminInvoiceClientsLoading = !silent;
+      if (options.reset && !silent) {
+        vm.adminInvoiceClients = [];
+        vm.adminInvoiceClientPage = 1;
+        vm.adminInvoiceClientHasMore = false;
+        vm.adminInvoiceClientTotal = 0;
+      }
+    }
+
     const params = new URLSearchParams({
       companyCode: vm.dashboardCode,
       search: vm.invoiceSearch.trim(),
-      page: '1',
-      pageSize: '200',
+      page: String(page),
+      pageSize: String(OPERATIONAL_PAGE_SIZE),
     });
-    this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
-      next: (res) => {
-        vm.adminInvoiceClientsLoading = false;
-        const rawClients = Array.isArray(res?.clients) ? res.clients : (res?.items || []);
-        vm.adminInvoiceClients = rawClients.map((client: any) => this.normalizeClient(client));
-      },
-      error: () => {
-        vm.adminInvoiceClientsLoading = false;
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/clients?${params.toString()}`));
+      const rawClients = Array.isArray(response?.clients) ? response.clients : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<any>(
+        response,
+        rawClients.map((client: any) => this.normalizeClient(client)),
+        page,
+        OPERATIONAL_PAGE_SIZE,
+      );
+      vm.adminInvoiceClients = options.append
+        ? this.mergePagedItems(vm.adminInvoiceClients, pageResult.items, (item) => String(item?.clientId || item?._id || item?.id || item?.companyName || ''))
+        : pageResult.items;
+      vm.adminInvoiceClientPage = pageResult.page;
+      vm.adminInvoiceClientHasMore = pageResult.hasMore;
+      vm.adminInvoiceClientTotal = pageResult.total;
+      vm.adminInvoiceClientsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
         vm.adminInvoiceClients = [];
-      },
-    });
+        vm.adminInvoiceClientPage = 1;
+        vm.adminInvoiceClientHasMore = false;
+        vm.adminInvoiceClientTotal = 0;
+      }
+    } finally {
+      vm.adminInvoiceClientsLoading = false;
+      vm.adminInvoiceClientsLoadingMore = false;
+    }
   }
 
-  fetchAdminQuotationClients(vm: any): void {
+  private async loadAdminQuotationClientPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
     if (!vm.dashboardCode) return;
-    vm.adminInvoiceClientsLoading = true;
+    const cacheKey = this.adminQuotationClientCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedQuotationClientPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.append) {
+      vm.quotationClientsLoadingMore = true;
+    } else {
+      vm.adminInvoiceClientsLoading = !silent;
+      if (options.reset && !silent) {
+        vm.adminInvoiceClients = [];
+        vm.quotationClientPage = 1;
+        vm.quotationClientHasMore = false;
+        vm.quotationClientTotal = 0;
+      }
+    }
+
     const params = new URLSearchParams({
       companyCode: vm.dashboardCode,
       search: vm.quotationSearch.trim(),
-      page: '1',
-      pageSize: '200',
+      page: String(page),
+      pageSize: String(OPERATIONAL_PAGE_SIZE),
     });
-    this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
-      next: (res) => {
-        vm.adminInvoiceClientsLoading = false;
-        const rawClients = Array.isArray(res?.clients) ? res.clients : (res?.items || []);
-        vm.adminInvoiceClients = rawClients.map((client: any) => this.normalizeClient(client));
-      },
-      error: () => {
-        vm.adminInvoiceClientsLoading = false;
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/clients?${params.toString()}`));
+      const rawClients = Array.isArray(response?.clients) ? response.clients : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<any>(
+        response,
+        rawClients.map((client: any) => this.normalizeClient(client)),
+        page,
+        OPERATIONAL_PAGE_SIZE,
+      );
+      vm.adminInvoiceClients = options.append
+        ? this.mergePagedItems(vm.adminInvoiceClients, pageResult.items, (item) => String(item?.clientId || item?._id || item?.id || item?.companyName || ''))
+        : pageResult.items;
+      vm.quotationClientPage = pageResult.page;
+      vm.quotationClientHasMore = pageResult.hasMore;
+      vm.quotationClientTotal = pageResult.total;
+      vm.quotationClientsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
         vm.adminInvoiceClients = [];
-      },
-    });
+        vm.quotationClientPage = 1;
+        vm.quotationClientHasMore = false;
+        vm.quotationClientTotal = 0;
+      }
+    } finally {
+      vm.adminInvoiceClientsLoading = false;
+      vm.quotationClientsLoadingMore = false;
+    }
   }
 
-  fetchClientOnboardingRecords(vm: any): void {
+  private async loadClientOnboardingPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
     if (!vm.dashboardCode) return;
-    vm.clientOnboardingLoading = true;
+    const cacheKey = this.adminClientOnboardingCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedClientOnboardingPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.reset && !silent) {
+      vm.clientOnboardingRecords = [];
+      vm.clientOnboardingPage = 1;
+      vm.clientOnboardingHasMore = false;
+      vm.clientOnboardingTotal = 0;
+    }
+    if (options.append) {
+      vm.clientOnboardingLoadingMore = true;
+    } else if (!silent) {
+      vm.clientOnboardingLoading = true;
+    }
+
     const params = new URLSearchParams({
       companyCode: vm.dashboardCode,
       search: vm.clientOnboardingSearch.trim(),
-      page: '1',
-      pageSize: '200',
+      page: String(page),
+      pageSize: String(OPERATIONAL_PAGE_SIZE),
     });
-    this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
-      next: (res) => {
-        vm.clientOnboardingLoading = false;
-        const rawClients = Array.isArray(res?.clients) ? res.clients : (res?.items || []);
-        vm.clientOnboardingRecords = rawClients.map((client: any) => this.normalizeClient(client));
-        if (!vm.selectedOnboardingClientId && vm.clientOnboardingRecords.length) {
-          vm.selectedOnboardingClientId = vm.clientOnboardingRecords[0].clientId;
-        }
-      },
-      error: () => {
-        vm.clientOnboardingLoading = false;
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/clients?${params.toString()}`));
+      const rawClients = Array.isArray(response?.clients) ? response.clients : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<any>(
+        response,
+        rawClients.map((client: any) => this.normalizeClient(client)),
+        page,
+        OPERATIONAL_PAGE_SIZE,
+      );
+      vm.clientOnboardingRecords = options.append
+        ? this.mergePagedItems(vm.clientOnboardingRecords, pageResult.items, (item) => String(item?.clientId || item?._id || item?.id || item?.companyName || ''))
+        : pageResult.items;
+      vm.clientOnboardingPage = pageResult.page;
+      vm.clientOnboardingHasMore = pageResult.hasMore;
+      vm.clientOnboardingTotal = pageResult.total;
+      vm.clientOnboardingLoaded = true;
+      if (!vm.selectedOnboardingClientId && vm.clientOnboardingRecords.length) {
+        vm.selectedOnboardingClientId = vm.clientOnboardingRecords[0].clientId;
+      }
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
         vm.clientOnboardingRecords = [];
-      },
+        vm.clientOnboardingPage = 1;
+        vm.clientOnboardingHasMore = false;
+        vm.clientOnboardingTotal = 0;
+      }
+    } finally {
+      vm.clientOnboardingLoading = false;
+      vm.clientOnboardingLoadingMore = false;
+    }
+  }
+
+  private async loadQuotationHistoryPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!vm.dashboardCode) return;
+    const cacheKey = this.adminQuotationHistoryCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedQuotationHistoryPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.reset && !silent) {
+      vm.quotationRecords = [];
+      vm.quotationRecordsPage = 1;
+      vm.quotationRecordsHasMore = false;
+      vm.quotationRecordsTotal = 0;
+    }
+    if (options.append) {
+      vm.quotationRecordsLoadingMore = true;
+    } else if (!silent) {
+      vm.quotationRecordsLoading = true;
+    }
+
+    const params = new URLSearchParams({
+      companyCode: vm.dashboardCode,
+      search: vm.quotationHistorySearch.trim(),
+      dateFrom: vm.quotationDateFrom || '',
+      dateTo: vm.quotationDateTo || '',
+      page: String(page),
+      pageSize: String(HISTORY_PAGE_SIZE),
+      paginated: 'true',
     });
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/quotations?${params.toString()}`));
+      const rawItems = Array.isArray(response?.items) ? response.items : (response?.quotations || []);
+      const pageResult = this.resolvePagedResponse<any>(response, rawItems, page, HISTORY_PAGE_SIZE);
+      vm.quotationRecords = options.append
+        ? this.mergePagedItems(vm.quotationRecords, pageResult.items, (item) => String(item?._id || item?.id || item?.quotationNumber || ''))
+        : pageResult.items;
+      vm.quotationRecordsPage = pageResult.page;
+      vm.quotationRecordsHasMore = pageResult.hasMore;
+      vm.quotationRecordsTotal = pageResult.total;
+      vm.quotationRecordsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        vm.quotationRecords = [];
+        vm.quotationRecordsPage = 1;
+        vm.quotationRecordsHasMore = false;
+        vm.quotationRecordsTotal = 0;
+      }
+    } finally {
+      vm.quotationRecordsLoading = false;
+      vm.quotationRecordsLoadingMore = false;
+    }
+  }
+
+  private async loadAdminQuotationLeadPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!vm.dashboardCode) return;
+    const cacheKey = this.adminQuotationLeadCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedQuotationLeadPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.append) {
+      vm.quotationLeadsLoadingMore = true;
+    } else if (!silent) {
+      vm.quotationLeadsLoading = true;
+      if (options.reset) {
+        vm.quotationLeads = [];
+        vm.quotationLeadsPage = 1;
+        vm.quotationLeadsHasMore = false;
+        vm.quotationLeadsTotal = 0;
+      }
+    }
+
+    try {
+      const response = await firstValueFrom(this.leadService.getAdminLeadPage(vm.dashboardCode, {
+        search: vm.quotationSearch.trim() || undefined,
+        page,
+        pageSize: OPERATIONAL_PAGE_SIZE,
+        paginated: true,
+      }));
+      const rawItems = Array.isArray(response?.leads) ? response.leads : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<Lead>(
+        response,
+        rawItems.map((lead: any) => vm.normalizeLead(lead)),
+        page,
+        OPERATIONAL_PAGE_SIZE,
+      );
+      vm.quotationLeads = options.append
+        ? this.mergePagedItems(vm.quotationLeads, pageResult.items, (item) => String(item?._id || `${item?.leadCompanyName || ''}|${item?.contactNumber || ''}`))
+        : pageResult.items;
+      vm.quotationLeadsPage = pageResult.page;
+      vm.quotationLeadsHasMore = pageResult.hasMore;
+      vm.quotationLeadsTotal = pageResult.total;
+      vm.quotationLeadsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        vm.quotationLeads = [];
+        vm.quotationLeadsPage = 1;
+        vm.quotationLeadsHasMore = false;
+        vm.quotationLeadsTotal = 0;
+      }
+    } finally {
+      vm.quotationLeadsLoading = false;
+      vm.quotationLeadsLoadingMore = false;
+    }
   }
 
   submitClientOnboarding(vm: any): void {
@@ -392,8 +1090,9 @@ export class AdminInvoiceQuotationWorkflow {
         if (typeof vm.closeClientOnboardingCreateModal === 'function') {
           vm.closeClientOnboardingCreateModal();
         }
-        this.fetchClientOnboardingRecords(vm);
-        this.fetchAdminInvoiceClients(vm);
+        this.fetchClientOnboardingRecords(vm, true);
+        this.fetchAdminInvoiceClients(vm, true);
+        this.fetchAdminQuotationClients(vm, true);
       },
       error: (err) => {
         vm.clientOnboardingSaving = false;
@@ -444,19 +1143,7 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   adminQuotationLeads(vm: any): Lead[] {
-    const query = vm.quotationSearch.trim().toLowerCase();
-    return vm.allLeads
-      .filter((lead: Lead) => {
-        if (!query) return true;
-        return [
-          lead.leadCompanyName,
-          lead.contactName,
-          lead.contactNumber,
-          lead.directorEmailAddress,
-          lead.assignedEmployeePhone,
-        ].some((value) => String(value || '').toLowerCase().includes(query));
-      })
-      .slice(0, 200);
+    return vm.quotationLeads || [];
   }
 
   filteredInvoiceRecords(vm: any): any[] {
@@ -535,19 +1222,8 @@ export class AdminInvoiceQuotationWorkflow {
     return true;
   }
 
-  fetchQuotationRecords(vm: any): void {
-    if (!vm.dashboardCode) return;
-    vm.quotationRecordsLoading = true;
-    const params = new URLSearchParams({ companyCode: vm.dashboardCode });
-    this.api.get<any>(`/api/quotations?${params.toString()}`).subscribe({
-      next: (res) => {
-        vm.quotationRecordsLoading = false;
-        vm.quotationRecords = res?.success ? (res.quotations || []) : [];
-      },
-      error: () => {
-        vm.quotationRecordsLoading = false;
-      },
-    });
+  fetchQuotationRecords(vm: any, force = false): void {
+    void this.loadQuotationHistoryPage(vm, 1, { reset: true, forceRefresh: force });
   }
 
   openSavedInvoice(vm: any, record: any): void {
@@ -577,6 +1253,7 @@ export class AdminInvoiceQuotationWorkflow {
       price: Number(item.rate ?? item.price ?? 0),
       quantity: Number(item.quantity || 1),
     }));
+    this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -608,6 +1285,7 @@ export class AdminInvoiceQuotationWorkflow {
       price: Number(item.rate ?? item.price ?? 0),
       quantity: Number(item.quantity || 1),
     }));
+    this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -638,6 +1316,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentQuotationNumber = '';
     this.resetInvoicePublicLink(vm);
+    this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -658,6 +1337,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
     this.resetInvoicePublicLink(vm);
+    this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -679,6 +1359,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
     this.resetInvoicePublicLink(vm);
+    this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -700,6 +1381,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentQuotationNumber = '';
     this.resetInvoicePublicLink(vm);
+    this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
   }
 
@@ -713,6 +1395,7 @@ export class AdminInvoiceQuotationWorkflow {
     this.resetDocumentGstSelection(vm);
     vm.invoicePaymentStatus = 'unpaid';
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
+    this.refreshInvoicePreviewCaches(vm);
   }
 
   onProductSelect(vm: any): void {
@@ -739,100 +1422,67 @@ export class AdminInvoiceQuotationWorkflow {
     vm.selectedInvoiceProduct = null;
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
+    this.refreshInvoicePreviewCaches(vm);
   }
 
   removeInvoiceItem(vm: any, index: number): void {
     vm.invoiceItems.splice(index, 1);
+    this.refreshInvoicePreviewCaches(vm);
   }
 
   invoiceSubtotal(vm: any): number {
-    return vm.invoiceItems.reduce((sum: number, item: any) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
+    return Number(vm.invoiceSubtotalCache || 0);
   }
 
   invoiceGstAmount(vm: any): number {
-    return vm.invoiceSubtotal * (this.invoicePreviewGstPercentage(vm) / 100);
+    return Number(vm.invoiceGstAmountCache || 0);
   }
 
   invoiceCgstAmount(vm: any): number {
-    return vm.invoiceGstAmount / 2;
+    return Number(vm.invoiceCgstAmountCache || 0);
   }
 
   invoiceSgstAmount(vm: any): number {
-    return vm.invoiceGstAmount / 2;
+    return Number(vm.invoiceSgstAmountCache || 0);
   }
 
   invoiceTotal(vm: any): number {
-    return vm.invoiceSubtotal + vm.invoiceGstAmount;
+    return Number(vm.invoiceTotalCache || 0);
   }
 
   invoiceItemTaxable(vm: any, item: { price: number; quantity: number }): number {
-    return Number(item.price || 0) * Number(item.quantity || 1);
+    return Number((item as any)?.taxableAmount ?? (Number(item.price || 0) * Number(item.quantity || 1)));
   }
 
   invoiceItemGst(vm: any, item: { price: number; quantity: number }): number {
-    return this.invoiceItemTaxable(vm, item) * (this.invoicePreviewGstPercentage(vm) / 100);
+    return Number((item as any)?.gstAmount ?? (this.invoiceItemTaxable(vm, item) * (this.invoicePreviewGstPercentage(vm) / 100)));
   }
 
   invoiceItemTotal(vm: any, item: { price: number; quantity: number }): number {
-    return this.invoiceItemTaxable(vm, item) + this.invoiceItemGst(vm, item);
+    return Number((item as any)?.totalAmount ?? (this.invoiceItemTaxable(vm, item) + this.invoiceItemGst(vm, item)));
   }
   invoiceNumber(vm: any): string {
-    if (vm.quoteMode && vm.currentQuotationNumber) return vm.currentQuotationNumber;
-    if (!vm.quoteMode && vm.currentInvoiceNumber) return vm.currentInvoiceNumber;
-    const issued = vm.invoiceIssuedAt || new Date();
-    const yyyy = String(issued.getFullYear());
-    const mm = String(issued.getMonth() + 1).padStart(2, '0');
-    const sequence = String(vm.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `${vm.quoteMode ? 'Quote' : 'Invoice'}_${yyyy}${mm}${sequence}_v1.pdf`;
+    return String(vm.invoiceNumberCache || this.resolveInvoiceNumber(vm));
   }
 
   invoiceCompanyDisplayName(vm: any): string {
-    const snapshotName = String(this.activeInvoiceCompanySnapshot(vm)?.name || '').trim();
-    if (snapshotName) return snapshotName;
-    return (vm.settingsShowCompanyNameOnInvoice ? (vm.settingsCompanyName || vm.dashboardCompany) : '') || 'DealVoice';
+    return String(vm.invoiceCompanyDisplayNameCache || 'DealVoice');
   }
 
   invoiceCompanyAddress(vm: any): string {
-    return String(
-      this.activeInvoiceCompanySnapshot(vm)?.registeredAddress ||
-      this.activeInvoiceCompanySnapshot(vm)?.address ||
-      vm.settingsInvoiceRegisteredAddress ||
-      vm.companyProfile?.companyAddress ||
-      '',
-    ).trim();
+    return String(vm.invoiceCompanyAddressCache || '');
   }
 
   invoiceContactLine(vm: any): string {
-    const snapshot = this.activeInvoiceCompanySnapshot(vm);
-    const parts = [
-      snapshot?.phone || vm.settingsContactDetails?.phone || '',
-      snapshot?.email || vm.settingsContactDetails?.email || '',
-      snapshot?.website || vm.settingsContactDetails?.website || '',
-    ]
-      .map((value: any) => String(value || '').trim())
-      .filter(Boolean);
-    return parts.join(' · ');
+    return String(vm.invoiceContactLineCache || '');
   }
 
   quotationBankRows(vm: any): Array<{ label: string; value: string }> {
-    const bankDetails = this.activeCompanyBankDetails(vm);
-    return [
-      { label: 'Bank', value: bankDetails.bankName },
-      { label: 'Acc', value: bankDetails.accountNumber },
-      { label: 'IFSC', value: bankDetails.ifscCode },
-      { label: 'Branch', value: bankDetails.branchName },
-    ]
-      .map((row) => ({ ...row, value: String(row.value || '').trim() }))
-      .filter((row) => row.value);
+    return vm.quotationBankRowsCache || [];
   }
 
   quotationKindNoteText(vm: any): string {
-    return String(
-      vm.currentInvoiceRecord?.kindNote ||
-      vm.quotationKindNoteDraft ||
-      this.activeInvoiceCompanySnapshot(vm)?.footer ||
-      this.defaultQuotationKindNote(vm),
-    ).trim();
+    return String(vm.quotationKindNoteTextCache || this.defaultQuotationKindNote(vm));
   }
 
   formatInvoicePaymentStatus(vm: any, status?: string): string {
@@ -840,31 +1490,26 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   invoiceBankDetails(vm: any): any {
-    return this.activeCompanyBankDetails(vm);
+    return vm.invoiceBankDetailsCache || this.emptyBankDetails;
   }
 
   invoiceSealSrc(vm: any): string {
-    return String(this.activeInvoiceCompanySnapshot(vm)?.seal || vm.settingsInvoiceSeal || '').trim();
+    return String(vm.invoiceSealSrcCache || '');
   }
 
   invoiceTermsText(vm: any): string {
-    return String(this.activeInvoiceCompanySnapshot(vm)?.terms || vm.settingsInvoiceTerms || '').trim();
+    return String(vm.invoiceTermsTextCache || '');
   }
 
   invoicePreviewGstPercentage(vm: any): number {
-    if (vm.viewingSavedDocument) {
-      return Number(vm.currentInvoiceRecord?.gstPercentage || 0);
-    }
-    if (vm.documentGstPercentageOverride !== null && vm.documentGstPercentageOverride !== undefined) {
-      return Number(vm.documentGstPercentageOverride || 0);
-    }
-    return Number(vm.settingsGstPercentage || 0);
+    return Number(vm.invoicePreviewGstPercentageCache ?? this.resolveInvoicePreviewGstPercentage(vm));
   }
 
   confirmDocumentGstSelection(vm: any, useZeroGst: boolean): void {
     vm.documentGstPercentageOverride = useZeroGst ? 0 : null;
     vm.gstSelectionConfirmed = true;
     vm.showGstSelectionModal = false;
+    this.refreshInvoicePreviewCaches(vm);
     this.printInvoice(vm);
   }
 
@@ -921,7 +1566,7 @@ export class AdminInvoiceQuotationWorkflow {
           return;
         }
         vm.currentInvoiceNumber = res.invoice.invoiceNumber;
-        vm.fetchInvoiceRecords();
+        vm.fetchInvoiceRecords(true);
         void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
       },
       error: (err) => {
@@ -960,7 +1605,7 @@ export class AdminInvoiceQuotationWorkflow {
         }
         vm.currentQuotationNumber = res.quotation.quotationNumber;
         vm.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText(vm));
-        vm.fetchQuotationRecords();
+        vm.fetchQuotationRecords(true);
         this.printCurrentDocument();
       },
       error: (err) => {
@@ -1000,7 +1645,7 @@ export class AdminInvoiceQuotationWorkflow {
           alert(res?.message || 'Failed to save invoice.');
           return;
         }
-        vm.fetchInvoiceRecords();
+        vm.fetchInvoiceRecords(true);
       },
       error: (err) => {
         vm.invoiceSavingLeadId = '';
@@ -1010,42 +1655,14 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   numberToWords(vm: any, value: number): string {
-    return numberToWords(value);
+    return String(vm.invoiceAmountWordsCache || numberToWords(value));
   }
 
   getGstBreakdown(vm: any): any[] {
-    const breakdownMap = new Map<string, any>();
-    const gstPct = this.invoicePreviewGstPercentage(vm);
-
-    (vm.invoiceItems || []).forEach((item: any) => {
-      const hsn = item.product?.sacHsn || item.product?.hsn || '—';
-      const taxable = this.invoiceItemTaxable(vm, item);
-      const cgst = this.invoiceItemGst(vm, item) / 2;
-      const sgst = this.invoiceItemGst(vm, item) / 2;
-
-      if (breakdownMap.has(hsn)) {
-        const existing = breakdownMap.get(hsn)!;
-        existing.taxableValue += taxable;
-        existing.cgstAmount += cgst;
-        existing.sgstAmount += sgst;
-        existing.totalTax += (cgst + sgst);
-      } else {
-        breakdownMap.set(hsn, {
-          hsnSac: hsn,
-          taxableValue: taxable,
-          cgstRate: gstPct / 2,
-          cgstAmount: cgst,
-          sgstRate: gstPct / 2,
-          sgstAmount: sgst,
-          totalTax: cgst + sgst
-        });
-      }
-    });
-
-    return Array.from(breakdownMap.values());
+    return vm.invoiceGstBreakdownCache || [];
   }
 
   getTotalItemsQty(vm: any): number {
-    return (vm.invoiceItems || []).reduce((sum: number, item: any) => sum + Number(item.quantity || 1), 0);
+    return Number(vm.invoiceTotalItemsQtyCache || 0);
   }
 }

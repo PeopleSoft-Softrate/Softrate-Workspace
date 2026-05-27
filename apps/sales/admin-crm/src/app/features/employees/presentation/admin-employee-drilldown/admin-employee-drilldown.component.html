@@ -10,7 +10,7 @@
           <div class="drilldown-name">{{ selectedEmployee.name }}</div>
           <div class="drilldown-phone">{{ selectedEmployee.mobile }} &middot; #{{ selectedEmployee.employeeCode }}</div>
           <div style="font-size:.78rem;color:var(--text-3);margin-top:3px">{{ selectedEmployee.deviceModel || 'Device
-            unknown' }} &bull; v{{ selectedEmployee.appVersion || '?' }}</div>
+            unknown' }}</div>
         </div>
         <button class="btn-login" style="padding:.35rem .8rem;font-size:.8rem;display:flex;align-items:center;gap:5px;"
           (click)="syncEmployee()" [disabled]="syncEmpLoading">

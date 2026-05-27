@@ -46,7 +46,6 @@
               <tr>
                 <th>Employee</th>
                 <th>Tag</th>
-                <th>App Ver.</th>
                 <th>Last Call</th>
                 <th>Last Sync</th>
                 <th style="text-align: center;">Interactions</th>
@@ -118,7 +117,6 @@
                     </div>
                   </ng-container>
                 </td>
-                <td style="font-size:.78rem;color:var(--text-3);">{{ emp.appVersion || '—' }}</td>
                 <td style="font-size:.78rem;white-space:nowrap;"
                   [style.color]="emp.lastCallTime ? 'var(--text-1)' : 'var(--text-3)'">{{ fmtDate(emp.lastCallTime) }}
                 </td>

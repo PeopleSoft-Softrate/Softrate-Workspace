@@ -112,6 +112,10 @@ export class LeadService {
     return this.api.get(url);
   }
 
+  getEmployeeLeadSets(companyCode: string, phone: string): Observable<any> {
+    return this.api.get(`/api/leads/employee/sets${this.buildQueryString({ companyCode, phone })}`);
+  }
+
   getAdminLeadCompanies(companyCode: string, query: LeadListQuery = {}): Observable<any> {
     const url = `/api/leads/admin/companies${this.buildQueryString({
       companyCode,

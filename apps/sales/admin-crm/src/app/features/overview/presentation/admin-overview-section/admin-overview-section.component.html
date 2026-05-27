@@ -355,38 +355,14 @@
                     </div>
                   </div>
                 </div>
-                <div class="admin-stat-toolbar" role="tablist" aria-label="Statistics views">
-                  <button type="button" class="admin-stat-icon-btn"
-                    [class.active]="adminStatsView === 'overview'"
-                    (click)="setAdminStatsView('overview')" title="Overview">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 12a9 9 0 1 1-9-9"></path>
-                      <path d="M12 3v9h9"></path>
-                    </svg>
-                  </button>
-                  <button type="button" class="admin-stat-icon-btn"
-                    [class.active]="adminStatsView === 'bars'"
-                    (click)="setAdminStatsView('bars')" title="Distribution">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 20V4"></path>
-                      <path d="M8 20v-6"></path>
-                      <path d="M12 20v-10"></path>
-                      <path d="M16 20V8"></path>
-                      <path d="M20 20v-3"></path>
-                    </svg>
-                  </button>
-                  <button type="button" class="admin-stat-icon-btn"
-                    [class.active]="adminStatsView === 'grid'"
-                    (click)="setAdminStatsView('grid')" title="Summary grid">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 6h16"></path>
-                      <path d="M4 12h16"></path>
-                      <path d="M4 18h16"></path>
-                    </svg>
-                  </button>
+                <div class="section-actions admin-statistics-actions">
+                  <label class="overview-view-control admin-overview-view-control">
+                    <span>View:</span>
+                    <select class="field-select filter-select-field" [(ngModel)]="chartType" (change)="setChartType(chartType)" aria-label="Statistics chart view">
+                      <option value="line">Timeline</option>
+                      <option value="bar">Breakdown</option>
+                    </select>
+                  </label>
                 </div>
               </div>
 
@@ -404,10 +380,6 @@
                   <strong>{{ adminOutboundShare }}%</strong>
                 </div>
                 <div class="admin-insight-cell">
-                  <span>Peak Window</span>
-                  <strong>{{ adminPeakActivity.label }} · {{ adminPeakActivity.count }}</strong>
-                </div>
-                <div class="admin-insight-cell">
                   <span>Active Reps</span>
                   <strong>{{ adminActiveEmployeeCount }}</strong>
                 </div>
@@ -421,78 +393,57 @@
                 </div>
               </div>
 
-              <!-- Chart body: centered donut + legend grid -->
-              <div class="stats-chart-body" *ngIf="adminStatsView === 'overview'">
-                <div class="donut-chart-wrap">
-                  <div class="admin-css-donut" [style.background]="adminDonutGradient"></div>
-                  <div class="donut-center-label">
-                    <div class="donut-center-val">{{ summaryStats.total }}</div>
-                    <div class="donut-center-sub">Total</div>
-                  </div>
-                </div>
-                <div class="donut-legend-grid">
-                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.incoming"></span><span
-                      class="lg-label">In</span><span class="lg-val">{{ summaryStats.incoming }}</span></div>
-                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.outgoing"></span><span
-                      class="lg-label">Out</span><span class="lg-val">{{ summaryStats.outgoing }}</span></div>
-                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.missed"></span><span
-                      class="lg-label">Missed</span><span class="lg-val">{{ summaryStats.missed }}</span></div>
-                  <div class="legend-item"><span class="lg-dot" [style.background]="dashboardPalette.rejected"></span><span
-                      class="lg-label">Rej</span><span class="lg-val">{{ summaryStats.rejected }}</span></div>
-                </div>
-              </div>
+              <ng-container *ngIf="(summaryStats.total || 0) > 0 || timelineData.length > 0; else adminOverviewStatisticsEmpty">
+                <div class="admin-statistics-visuals">
+                  <section class="workspace-section admin-statistics-panel admin-statistics-trend">
+                    <div class="section-header">
+                      <div>
+                        <div class="section-kicker">Performance</div>
+                        <h3>Call trend</h3>
+                      </div>
+                    </div>
+                    <div class="chart-frame">
+                      <canvas id="timelineChart"></canvas>
+                    </div>
+                  </section>
 
-              <div class="admin-stats-bars" *ngIf="adminStatsView === 'bars'">
-                <div class="admin-stats-bars-row">
-                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.incoming"></span>Incoming</div>
-                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.incoming" [style.width.%]="adminIncomingShare"></i></div>
-                  <div class="admin-stats-bars-value">{{ summaryStats.incoming }}</div>
+                  <section class="workspace-section admin-statistics-panel admin-statistics-mix">
+                    <div class="section-header">
+                      <div>
+                        <div class="section-kicker">Distribution</div>
+                        <h3>Call mix</h3>
+                      </div>
+                    </div>
+                    <div class="overview-side">
+                      <div class="donut-frame">
+                        <canvas id="donutChart"></canvas>
+                      </div>
+                      <div class="summary-list call-mix-legend">
+                        <div class="summary-row">
+                          <span class="summary-label"><span class="summary-dot summary-dot-incoming"></span>Incoming</span>
+                          <strong>{{ summaryStats.incoming || 0 }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span class="summary-label"><span class="summary-dot summary-dot-outgoing"></span>Outgoing</span>
+                          <strong>{{ summaryStats.outgoing || 0 }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span class="summary-label"><span class="summary-dot summary-dot-missed"></span>Missed</span>
+                          <strong>{{ summaryStats.missed || 0 }}</strong>
+                        </div>
+                        <div class="summary-row">
+                          <span class="summary-label"><span class="summary-dot summary-dot-rejected"></span>Rejected</span>
+                          <strong>{{ summaryStats.rejected || 0 }}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
                 </div>
-                <div class="admin-stats-bars-row">
-                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.outgoing"></span>Outgoing</div>
-                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.outgoing" [style.width.%]="adminOutboundShare"></i></div>
-                  <div class="admin-stats-bars-value">{{ summaryStats.outgoing }}</div>
-                </div>
-                <div class="admin-stats-bars-row">
-                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.missed"></span>Missed</div>
-                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.missed" [style.width.%]="adminMissedRate"></i></div>
-                  <div class="admin-stats-bars-value">{{ summaryStats.missed }}</div>
-                </div>
-                <div class="admin-stats-bars-row">
-                  <div class="admin-stats-bars-label"><span class="lg-dot" [style.background]="dashboardPalette.rejected"></span>Rejected</div>
-                  <div class="admin-stats-bars-track"><i [style.background]="dashboardPalette.rejected" [style.width.%]="adminRejectedRate"></i></div>
-                  <div class="admin-stats-bars-value">{{ summaryStats.rejected }}</div>
-                </div>
-              </div>
+              </ng-container>
 
-              <div class="admin-stats-grid-view" *ngIf="adminStatsView === 'grid'">
-                <div class="admin-stat-grid-card">
-                  <span>Connect Rate</span>
-                  <strong>{{ adminConnectRate }}%</strong>
-                </div>
-                <div class="admin-stat-grid-card">
-                  <span>Outbound Share</span>
-                  <strong>{{ adminOutboundShare }}%</strong>
-                </div>
-                <div class="admin-stat-grid-card">
-                  <span>Peak Window</span>
-                  <strong>{{ adminPeakActivity.label }}</strong>
-                  <small>{{ adminPeakActivity.count }} calls</small>
-                </div>
-                <div class="admin-stat-grid-card">
-                  <span>Active Reps</span>
-                  <strong>{{ adminActiveEmployeeCount }}</strong>
-                  <small>{{ adminAvgCallsPerActiveEmployee }} calls / rep</small>
-                </div>
-                <div class="admin-stat-grid-card">
-                  <span>Top Performer</span>
-                  <strong>{{ adminTopPerformerName }}</strong>
-                </div>
-                <div class="admin-stat-grid-card">
-                  <span>Exceptions</span>
-                  <strong>{{ (summaryStats.missed || 0) + (summaryStats.rejected || 0) }}</strong>
-                </div>
-              </div>
+              <ng-template #adminOverviewStatisticsEmpty>
+                <div class="empty-state-inline admin-statistics-empty">No call activity available for the selected period.</div>
+              </ng-template>
             </div>
 
             <!-- Top Employees card -->

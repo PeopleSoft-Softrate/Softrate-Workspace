@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Subject, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, map, Subject, switchMap } from 'rxjs';
 import { AuthViewModel } from '../../auth/presentation/auth.viewmodel';
 import { Ticket, TicketDraft, TicketStatus } from '../domain/ticket.model';
 import { TicketsRepository } from '../data/tickets.repository';
@@ -25,6 +25,20 @@ const emptyDraft: TicketDraft = {
   relatedProjectService: '',
   attachment: null,
 };
+
+const ALLOWED_ATTACHMENT_TYPES = new Set([
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+]);
+
+const ALLOWED_ATTACHMENT_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
+const ATTACHMENT_ERROR_MESSAGE = 'Unsupported attachment type. Use PDF, PNG, JPG, DOC, DOCX, XLS, XLSX, or TXT.';
 
 @Injectable({ providedIn: 'root' })
 export class TicketsViewModel {
@@ -62,7 +76,6 @@ export class TicketsViewModel {
   constructor() {
     this.filterChange.pipe(
       debounceTime(200),
-      distinctUntilChanged(),
       switchMap(() => {
         this.patch({ loading: true, error: '' });
         return this.repository.list(this.token(), this.filters());
@@ -120,7 +133,7 @@ export class TicketsViewModel {
   }
 
   closeCreate(): void {
-    this.patch({ createOpen: false, draft: { ...emptyDraft } });
+    this.patch({ createOpen: false, draft: { ...emptyDraft }, error: '', saving: false });
   }
 
   updateDraft<K extends keyof TicketDraft>(key: K, value: TicketDraft[K]): void {
@@ -128,7 +141,16 @@ export class TicketsViewModel {
   }
 
   setAttachment(files: FileList | null): void {
-    this.updateDraft('attachment', files?.item(0) || null);
+    const attachment = files?.item(0) || null;
+    if (!attachment) {
+      this.patch({ draft: { ...this.state.draft, attachment: null }, error: '' });
+      return;
+    }
+    if (!this.isAllowedAttachment(attachment)) {
+      this.patch({ draft: { ...this.state.draft, attachment: null }, error: ATTACHMENT_ERROR_MESSAGE });
+      return;
+    }
+    this.patch({ draft: { ...this.state.draft, attachment }, error: '' });
   }
 
   createTicket(): void {
@@ -181,5 +203,11 @@ export class TicketsViewModel {
       search: this.state.search,
       status: this.state.status === 'all' ? '' : this.state.status,
     };
+  }
+
+  private isAllowedAttachment(file: File): boolean {
+    if (ALLOWED_ATTACHMENT_TYPES.has(file.type)) return true;
+    const lowerName = String(file.name || '').toLowerCase();
+    return ALLOWED_ATTACHMENT_EXTENSIONS.some((extension) => lowerName.endsWith(extension));
   }
 }

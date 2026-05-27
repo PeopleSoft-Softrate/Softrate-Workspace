@@ -6,7 +6,7 @@
               <span class="topbar-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
               </span>
-              <input id="adminQuotationSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="quotationSearch" (ngModelChange)="fetchAdminQuotationClients()">
+              <input id="adminQuotationSearch" class="topbar-input" type="text" placeholder="Search leads, phone, or company..." [(ngModel)]="quotationSearch" (ngModelChange)="onAdminQuotationSearchChange()">
             </label>
           </div>
         </div>
@@ -15,19 +15,21 @@
           <section class="invoice-feature-pane invoice-converted-pane">
             <div class="invoice-pane-header">
               <div>
-                <h2>Onboarded Clients</h2>
-                <p>{{ adminInvoiceClientsLoading ? 'Loading clients' : (adminInvoiceClients.length + ' listed') }}</p>
+                <h2>Quotation Leads</h2>
+                <p>{{ quotationLeadsLoading ? 'Loading leads' : ((quotationLeadsTotal || adminQuotationLeads.length) + ' listed') }}</p>
               </div>
             </div>
-            <div class="invoice-lead-list">
-              <article class="invoice-lead-row" *ngFor="let client of adminInvoiceClients" (click)="openAdminQuotationModalForClient(client)" tabindex="0" role="button">
+            <div class="invoice-lead-list" (scroll)="onAdminQuotationLeadScroll($event)">
+              <article class="invoice-lead-row" *ngFor="let lead of adminQuotationLeads" (click)="openQuotationModal(lead)" tabindex="0" role="button">
                 <div class="invoice-lead-main">
-                  <span class="invoice-lead-company">{{ client.companyName }}</span>
-                  <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || client.primaryPhone || 'Primary Contact' }}</span>
+                  <span class="invoice-lead-company">{{ lead.leadCompanyName || 'Unnamed Company' }}</span>
+                  <span>{{ lead.contactName || 'Primary Contact' }} · {{ lead.contactNumber || 'No phone' }}</span>
                 </div>
               </article>
-              <div *ngIf="adminInvoiceClientsLoading" class="empty-state-inline">Loading onboarded clients...</div>
-              <div *ngIf="!adminInvoiceClientsLoading && adminInvoiceClients.length===0" class="empty-state-inline">No onboarded clients match the current search.</div>
+              <div *ngIf="quotationLeadsLoading" class="empty-state-inline">Loading leads...</div>
+              <div *ngIf="!quotationLeadsLoading && adminQuotationLeads.length===0" class="empty-state-inline">No leads match the current search.</div>
+              <div *ngIf="quotationLeadsLoadingMore" class="scroll-page-state">Loading more leads...</div>
+              <div *ngIf="!quotationLeadsLoading && !quotationLeadsLoadingMore && adminQuotationLeads.length > 0 && !quotationLeadsHasMore" class="scroll-page-state">End of leads</div>
             </div>
           </section>
 
@@ -35,24 +37,24 @@
             <div class="invoice-pane-header invoice-pane-header-stacked">
               <div>
                 <h2>Quotation History</h2>
-                <p>{{ filteredQuotationRecords.length }} saved quotations</p>
+                <p>{{ quotationRecordsTotal || filteredQuotationRecords.length }} saved quotations</p>
               </div>
               <div class="invoice-history-tools">
                 <label class="topbar-search invoice-history-search" for="adminQuotationHistorySearch">
                   <span class="topbar-search-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
                   </span>
-                  <input id="adminQuotationHistorySearch" class="topbar-input" type="text" placeholder="Search quotations..." [(ngModel)]="quotationHistorySearch">
+                  <input id="adminQuotationHistorySearch" class="topbar-input" type="text" placeholder="Search quotations..." [(ngModel)]="quotationHistorySearch" (ngModelChange)="onAdminQuotationHistoryQueryChange()">
                 </label>
                 <button class="toolbar-button invoice-date-filter-button" type="button" (click)="quotationDateFilterOpen=!quotationDateFilterOpen">Date Filter</button>
               </div>
             </div>
             <div class="invoice-date-filter-row" *ngIf="quotationDateFilterOpen">
-              <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="quotationDateFrom"></label>
-              <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="quotationDateTo"></label>
-              <button class="toolbar-button invoice-date-clear" type="button" (click)="quotationDateFrom=''; quotationDateTo=''">Clear</button>
+              <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="quotationDateFrom" (change)="onAdminQuotationHistoryQueryChange()"></label>
+              <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="quotationDateTo" (change)="onAdminQuotationHistoryQueryChange()"></label>
+              <button class="toolbar-button invoice-date-clear" type="button" (click)="quotationDateFrom=''; quotationDateTo=''; onAdminQuotationHistoryQueryChange()">Clear</button>
             </div>
-            <div class="table-scroll invoice-history-table">
+            <div class="table-scroll invoice-history-table" (scroll)="onAdminQuotationHistoryScroll($event)">
               <table class="data-table compact-table">
                 <thead>
                   <tr>
@@ -76,6 +78,9 @@
                   </tr>
                   <tr *ngIf="quotationRecordsLoading">
                     <td colspan="5" class="empty-cell">Loading quotations...</td>
+                  </tr>
+                  <tr *ngIf="quotationRecordsLoadingMore">
+                    <td colspan="5" class="empty-cell">Loading more quotations...</td>
                   </tr>
                 </tbody>
               </table>

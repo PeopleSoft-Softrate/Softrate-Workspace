@@ -34,8 +34,42 @@ export class BookmarkService {
     this.baseUrl = this.apiService.baseUrl + '/api/bookmarks';
   }
 
+  private buildQueryString(params: Record<string, string | number | boolean | undefined>): string {
+    const search = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      search.set(key, String(value));
+    });
+    const query = search.toString();
+    return query ? `?${query}` : '';
+  }
+
   getBookmarks(companyCode: string, phone: string): Observable<any> {
     return this.http.get(`${this.baseUrl}?companyCode=${companyCode}&phone=${phone}`);
+  }
+
+  getEmployeeBookmarkPage(
+    companyCode: string,
+    phone: string,
+    query: {
+      page?: number;
+      pageSize?: number;
+      paginated?: boolean;
+      search?: string;
+      filter?: string;
+      reminderDate?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      hasReminder?: boolean;
+      companyName?: string;
+      sort?: string;
+    } = {}
+  ): Observable<any> {
+    return this.http.get(`${this.baseUrl}${this.buildQueryString({
+      companyCode,
+      phone,
+      ...query,
+    })}`);
   }
 
   // Admin view: fetch all bookmarks for the whole company

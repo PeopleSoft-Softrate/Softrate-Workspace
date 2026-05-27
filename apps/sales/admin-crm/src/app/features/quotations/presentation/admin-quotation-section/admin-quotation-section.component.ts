@@ -10,10 +10,10 @@ import { AdminWorkspaceSectionProxy } from '../../../admin-workspace/sections/ad
 })
 export class AdminQuotationSectionComponent extends AdminWorkspaceSectionProxy {
   override fetchAdminQuotationClients(): void {
-    this.vm.fetchAdminQuotationClients();
+    this.vm.fetchAdminQuotationLeads();
   }
 
   override openAdminQuotationModalForClient(client: any): void {
-    this.vm.openAdminQuotationModalForClient(client);
+    this.vm.openQuotationModal(client);
   }
 }

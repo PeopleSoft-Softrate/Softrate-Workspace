@@ -52,13 +52,13 @@
         <table class="data-table compact-table">
           <thead><tr><th>Invoice</th><th>Client</th><th>Status</th><th>Paid</th></tr></thead>
           <tbody>
-            <tr *ngFor="let payment of vm.crmPaymentRows">
+            <tr *ngFor="let payment of vm.filteredCrmPaymentRows">
               <td>{{ payment.invoiceNumber }}</td>
               <td>{{ payment.clientCompanyName }}</td>
               <td><span class="crm-status-pill">{{ payment.status }}</span></td>
               <td>{{ vm.formatInvoiceMoney(payment.paidAmount || 0) }}</td>
             </tr>
-            <tr *ngIf="!vm.crmPaymentsLoading && vm.crmPaymentRows.length===0"><td colspan="4" class="empty-cell">No payments recorded yet.</td></tr>
+            <tr *ngIf="!vm.crmPaymentsLoading && vm.filteredCrmPaymentRows.length===0"><td colspan="4" class="empty-cell">No payments recorded yet.</td></tr>
             <tr *ngIf="vm.crmPaymentsLoading"><td colspan="4" class="empty-cell">Loading payments...</td></tr>
           </tbody>
         </table>

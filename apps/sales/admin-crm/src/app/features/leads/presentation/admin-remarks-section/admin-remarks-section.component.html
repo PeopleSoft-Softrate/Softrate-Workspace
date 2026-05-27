@@ -15,9 +15,9 @@
               <span class="sidebar-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
               </span>
-              <input type="text" placeholder="Search companies" [(ngModel)]="remarkFilterSearch">
+              <input type="text" placeholder="Search companies" [(ngModel)]="remarkFilterSearch" (ngModelChange)="onRemarkFilterSearchChange()">
             </label>
-            <button class="admin-icon-refresh" type="button" (click)="fetchAdminLeads(true)" aria-label="Refresh remarks">
+            <button class="admin-icon-refresh" type="button" (click)="fetchLeadsByRemark(selectedRemarkFilter, true)" aria-label="Refresh remarks">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
             </button>
           </div>
@@ -41,21 +41,23 @@
           <div class="leads-sidebar admin-remarks-company-rail">
             <div class="leads-sidebar-header admin-remarks-rail-header">
               <div>Companies</div>
-              <div>{{ remarksFilterUniqueCompanies.length }} listed</div>
+              <div>{{ remarkLeadCompanyTotal || remarksFilterUniqueCompanies.length }} listed</div>
             </div>
-            <div class="leads-list">
+            <div class="leads-list" (scroll)="onRemarkFilterSidebarScroll($event)">
               <div *ngFor="let company of remarksFilterUniqueCompanies" class="lead-item"
                 [class.active]="selectedRemarksFilterCompany === company"
-                (click)="selectedRemarksFilterCompany = company">
+                (click)="selectRemarksFilterCompany(company)">
                 <div class="lead-item-name">{{ company || 'Unnamed Company' }}</div>
                 <div class="lead-item-meta">
                   <span style="font-size: 0.75rem;">{{ getRemarksFilterCompanyCount(company) }} contacts</span>
                 </div>
               </div>
-              <div *ngIf="remarksFilterUniqueCompanies.length === 0 && !remarkLeadsLoading && !allLeadsLoading" class="leads-empty-state" style="padding: 2rem;">
+              <div *ngIf="remarkLeadCompanyHasMore && !remarkLeadCompaniesLoading" class="scroll-page-state">Scroll to load more companies</div>
+              <div *ngIf="remarkLeadCompaniesLoading" class="scroll-page-state">Loading companies...</div>
+              <div *ngIf="remarksFilterUniqueCompanies.length === 0 && !remarkLeadsLoading && !remarkLeadCompaniesLoading" class="leads-empty-state" style="padding: 2rem;">
                 No companies found with remark "{{ selectedRemarkFilter }}".
               </div>
-              <div *ngIf="remarkLeadsLoading || allLeadsLoading" class="leads-empty-state" style="padding: 2rem;">
+              <div *ngIf="remarkLeadsLoading && !remarksFilterUniqueCompanies.length" class="leads-empty-state" style="padding: 2rem;">
                 <div class="spinner-small" style="margin: 0 auto 10px;"></div>
                 Searching database...
               </div>
@@ -68,7 +70,7 @@
               <div class="table-pane-header lead-company-pane-header admin-leads-company-header admin-remarks-company-header">
                 <div>
                   <h3>{{ selectedRemarksFilterCompany }}</h3>
-                  <div class="lead-company-pane-subtitle" *ngIf="companyFullViewContext()">{{ companyFullViewContext() }}</div>
+                  <div class="lead-company-pane-subtitle" *ngIf="remarkFilterCompanyPreviewLine(selectedRemarksFilterCompany)">{{ remarkFilterCompanyPreviewLine(selectedRemarksFilterCompany) }}</div>
                 </div>
                 <div class="admin-leads-pane-actions">
                   <button class="ai-summary-button ai-summary-anchor admin-ai-summary-button" type="button" (click)="openAdminAiSummary($event)">
@@ -83,7 +85,8 @@
                 </div>
               </div>
 
-              <div class="lead-card-grid admin-leads-card-grid admin-remarks-card-grid admin-employee-style-grid">
+              <div class="lead-company-pane-scroll admin-leads-card-scroll" (scroll)="onRemarkFilterContactsScroll($event)">
+              <div class="lead-card-grid admin-leads-card-grid admin-remarks-card-grid admin-employee-style-grid" *ngIf="remarksFilterLeadsInCompany.length > 0; else noRemarkFilterContacts">
                 <article *ngFor="let lead of remarksFilterLeadsInCompany" class="lead-record-card admin-lead-record-card admin-remarks-contact-card admin-employee-style-card">
                   <div class="lead-record-card-head admin-lead-card-head">
                     <div class="lead-record-title-row">
@@ -195,6 +198,14 @@
                     </button>
                   </div>
                 </article>
+              </div>
+              <ng-template #noRemarkFilterContacts>
+                <div class="empty-state-inline empty-state-inline-pane">
+                  {{ remarkLeadsLoading ? 'Loading contacts...' : 'No contacts match the current filters.' }}
+                </div>
+              </ng-template>
+              <div class="scroll-page-state" *ngIf="remarkLeadContactsLoadingMore">Loading contacts...</div>
+              <div class="scroll-page-state" *ngIf="!remarkLeadContactsLoadingMore && remarksFilterLeadsInCompany.length > 0 && !remarkLeadContactsHasMore">End of contacts</div>
               </div>
             </div>
 

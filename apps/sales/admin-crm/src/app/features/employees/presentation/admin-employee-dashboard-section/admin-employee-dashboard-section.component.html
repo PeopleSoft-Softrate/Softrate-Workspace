@@ -62,10 +62,9 @@
                   <div class="section-actions">
                     <label class="mini-field">
                       <span>View</span>
-                      <select class="field-select filter-select-field" [(ngModel)]="chartType" (change)="setChartType(chartType)" aria-label="Employee chart view">
+                      <select class="field-select filter-select-field" [(ngModel)]="employeeChartType" (change)="setEmployeeChartType(employeeChartType)" aria-label="Employee chart view">
                         <option value="line">Timeline</option>
                         <option value="bar">Breakdown</option>
-                        <option value="pie">Call Mix</option>
                       </select>
                     </label>
                   </div>
@@ -148,18 +147,18 @@
               <div class="admin-employee-section-heading">
                 <div>
                   <h3>Assigned Leads</h3>
-                  <p>{{ filteredEmpLeads.length }} leads assigned to {{ selectedEmployee.name }}</p>
+                  <p>{{ empLeadCompanyTotal || filteredEmpLeads.length }} leads assigned to {{ selectedEmployee.name }}</p>
                 </div>
               </div>
               <div class="workspace-header lead-workspace-header workspace-header-filters-only admin-employee-filter-row">
                 <div class="workspace-controls workspace-controls-stack">
                   <label class="mini-field">
                     <span>Lead Search</span>
-                    <input class="field-input filter-select-field" type="text" placeholder="Search name or company" [(ngModel)]="empLeadSearchQuery">
+                    <input class="field-input filter-select-field" type="text" placeholder="Search name or company" [(ngModel)]="empLeadSearchQuery" (ngModelChange)="onEmployeeLeadSearchChange()">
                   </label>
                   <label class="mini-field">
                     <span>Lead Set</span>
-                    <select class="field-select filter-select-field" [(ngModel)]="selectedLeadSet" (change)="fetchEmpLeads()">
+                    <select class="field-select filter-select-field" [(ngModel)]="selectedLeadSet" (change)="selectLeadSet(selectedLeadSet)">
                       <option value="">All Sets</option>
                       <option *ngFor="let set of leadSets" [value]="set">{{ set }}</option>
                     </select>
@@ -172,15 +171,17 @@
                 <aside class="company-rail lead-company-rail">
                   <div class="rail-header">
                     <div class="rail-heading">Companies</div>
-                    <div class="rail-total">{{ empUniqueCompaniesFiltered.length }} listed</div>
+                    <div class="rail-total">{{ empLeadCompanyTotal || empUniqueCompaniesFiltered.length }} listed</div>
                   </div>
-                  <div class="rail-list">
+                  <div class="rail-list" (scroll)="onEmployeeLeadCompanyScroll($event)">
                     <button class="rail-item" type="button" *ngFor="let company of empUniqueCompaniesFiltered" [class.active]="selectedEmpLeadCompany === company" (click)="selectEmpLeadCompany(company)">
                       <span class="rail-item-copy">
                         <span class="rail-item-name">{{ company }}</span>
-                        <span class="rail-item-meta">{{ getEmpLeadsByCompany(company).length }} contacts</span>
+                        <span class="rail-item-meta">{{ getEmpLeadCompanyCount(company) }} contacts</span>
                       </span>
                     </button>
+                    <div *ngIf="empLeadCompanyHasMore && !empLeadCompaniesLoading" class="scroll-page-state">Scroll to load more companies</div>
+                    <div *ngIf="empLeadCompaniesLoading" class="scroll-page-state">Loading companies...</div>
                     <div *ngIf="empUniqueCompaniesFiltered.length === 0" class="empty-state-inline empty-state-inline-minimal">No assigned leads found.</div>
                   </div>
                 </aside>
@@ -189,12 +190,13 @@
                   <div class="table-pane-header lead-company-pane-header">
                     <div>
                       <h3>{{ selectedEmpLeadCompany || 'Assigned leads' }}</h3>
-                      <div class="lead-company-pane-subtitle" *ngIf="selectedEmpLeadCompany">{{ leadsInSelectedEmpCompanyFiltered.length }} contacts in this company</div>
+                      <div class="lead-company-pane-subtitle" *ngIf="selectedEmpLeadCompany">{{ getEmpLeadCompanyCount(selectedEmpLeadCompany) }} contacts in this company</div>
                     </div>
-                    <div class="table-pane-meta">{{ filteredEmpLeads.length }} leads</div>
+                    <div class="table-pane-meta">{{ empLeadCompanyTotal || filteredEmpLeads.length }} leads</div>
                   </div>
 
-                  <div class="lead-card-grid admin-leads-card-grid admin-employee-card-grid admin-employee-style-grid" *ngIf="selectedEmpLeadCompany; else noEmployeeLeadCompany">
+                  <div class="lead-company-pane-scroll admin-leads-card-scroll" *ngIf="selectedEmpLeadCompany; else noEmployeeLeadCompany" (scroll)="onEmployeeLeadContactsScroll($event)">
+                    <div class="lead-card-grid admin-leads-card-grid admin-employee-card-grid admin-employee-style-grid" *ngIf="leadsInSelectedEmpCompanyFiltered.length > 0; else noEmployeeLeadContacts">
                     <article class="lead-record-card admin-lead-record-card admin-employee-style-card" *ngFor="let lead of leadsInSelectedEmpCompanyFiltered">
                       <div class="lead-record-card-head admin-lead-card-head">
                         <div class="lead-record-title-row">
@@ -264,6 +266,14 @@
                         </button>
                       </div>
                     </article>
+                    </div>
+                    <ng-template #noEmployeeLeadContacts>
+                      <div class="empty-state-inline empty-state-inline-pane">
+                        {{ empLeadsLoading ? 'Loading contacts...' : 'No contacts match the current filters.' }}
+                      </div>
+                    </ng-template>
+                    <div class="scroll-page-state" *ngIf="empLeadContactsLoadingMore">Loading contacts...</div>
+                    <div class="scroll-page-state" *ngIf="!empLeadContactsLoadingMore && leadsInSelectedEmpCompanyFiltered.length > 0 && !empLeadContactsHasMore">End of contacts</div>
                   </div>
                   <ng-template #noEmployeeLeadCompany>
                     <div class="empty-state-inline empty-state-inline-minimal">Select a company to view assigned leads.</div>
@@ -276,27 +286,27 @@
               <div class="admin-employee-section-heading">
                 <div>
                   <h3>Follow-ups</h3>
-                  <p>{{ selectedEmpBookmarks.length }} active follow-ups for {{ selectedEmployee.name }}</p>
+                  <p>{{ empFollowupTotal || selectedEmpBookmarks.length }} active follow-ups for {{ selectedEmployee.name }}</p>
                 </div>
               </div>
               <div class="workspace-header lead-workspace-header workspace-header-filters-only admin-employee-filter-row">
                 <div class="workspace-controls workspace-controls-stack">
                   <label class="mini-field admin-employee-followup-filter-field">
                     <span>Follow-up Filter</span>
-                    <select class="field-select filter-select-field admin-employee-followup-filter-select" [(ngModel)]="followupFilter">
+                    <select class="field-select filter-select-field admin-employee-followup-filter-select" [(ngModel)]="followupFilter" (ngModelChange)="onEmployeeFollowupFiltersChange()">
                       <option value="all">All Follow-ups</option>
                       <option value="today">Today's Tasks</option>
                     </select>
                   </label>
                   <label class="mini-field">
                     <span>Date</span>
-                    <input class="field-input filter-select-field" type="date" [(ngModel)]="selectedFollowupDate">
+                    <input class="field-input filter-select-field" type="date" [(ngModel)]="selectedFollowupDate" (ngModelChange)="onEmployeeFollowupFiltersChange()">
                   </label>
                   <label class="topbar-search admin-employee-followup-search">
                     <span class="topbar-search-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
                     </span>
-                    <input class="topbar-input" type="text" placeholder="Search follow-ups" [(ngModel)]="followupSearch">
+                    <input class="topbar-input" type="text" placeholder="Search follow-ups" [(ngModel)]="followupSearch" (ngModelChange)="onEmployeeFollowupFiltersChange()">
                   </label>
                 </div>
               </div>
@@ -305,9 +315,9 @@
                 <aside class="company-rail lead-company-rail">
                   <div class="rail-header">
                     <div class="rail-heading">Companies</div>
-                    <div class="rail-total">{{ groupedEmpBookmarks.length }} listed</div>
+                    <div class="rail-total">{{ empFollowupTotal || selectedEmpBookmarks.length }} active</div>
                   </div>
-                  <div class="rail-list">
+                  <div class="rail-list" (scroll)="onEmployeeFollowupScroll($event)">
                     <button class="rail-item" type="button" *ngFor="let group of groupedEmpBookmarks" [class.active]="selectedEmpFollowupCompany === group.company" (click)="selectedEmpFollowupCompany = group.company">
                       <span class="rail-item-copy">
                         <span class="rail-item-name">{{ group.company }}</span>
@@ -315,6 +325,8 @@
                       </span>
                     </button>
                     <div *ngIf="groupedEmpBookmarks.length === 0" class="empty-state-inline empty-state-inline-minimal">No follow-ups found.</div>
+                    <div *ngIf="empFollowupHasMore && !empFollowupLoadingMore && !empFollowupsLoading" class="scroll-page-state">Scroll to load more follow-ups</div>
+                    <div *ngIf="empFollowupsLoading" class="scroll-page-state">Loading follow-ups...</div>
                   </div>
                 </aside>
 
@@ -324,10 +336,11 @@
                       <h3>{{ selectedEmpFollowupCompany || 'Follow-up queue' }}</h3>
                       <div class="lead-company-pane-subtitle" *ngIf="selectedEmpFollowupCompany">{{ selectedEmpBookmarksByCompany.length }} follow-ups in this company</div>
                     </div>
-                    <div class="table-pane-meta">{{ selectedEmpBookmarks.length }} active</div>
+                    <div class="table-pane-meta">{{ empFollowupTotal || selectedEmpBookmarks.length }} active</div>
                   </div>
 
-                  <div class="lead-card-grid admin-leads-card-grid admin-employee-card-grid employee-followup-card-grid admin-employee-style-grid" *ngIf="selectedEmpFollowupCompany; else noEmployeeFollowupCompany">
+                  <div class="lead-company-pane-scroll admin-leads-card-scroll" *ngIf="selectedEmpFollowupCompany; else noEmployeeFollowupCompany" (scroll)="onEmployeeFollowupScroll($event)">
+                    <div class="lead-card-grid admin-leads-card-grid admin-employee-card-grid employee-followup-card-grid admin-employee-style-grid" *ngIf="selectedEmpBookmarksByCompany.length > 0; else noEmployeeFollowupCards">
                     <article class="lead-record-card admin-lead-record-card employee-followup-record-card admin-employee-style-card" *ngFor="let b of selectedEmpBookmarksByCompany">
                       <div class="lead-record-card-head admin-lead-card-head">
                         <div class="lead-record-title-row">
@@ -424,6 +437,14 @@
                         </div>
                       </ng-template>
                     </article>
+                    </div>
+                    <ng-template #noEmployeeFollowupCards>
+                      <div class="empty-state-inline empty-state-inline-pane">
+                        {{ empFollowupsLoading ? 'Loading follow-ups...' : 'No follow-ups match the current filters.' }}
+                      </div>
+                    </ng-template>
+                    <div class="scroll-page-state" *ngIf="empFollowupLoadingMore">Loading follow-ups...</div>
+                    <div class="scroll-page-state" *ngIf="!empFollowupLoadingMore && selectedEmpBookmarksByCompany.length > 0 && !empFollowupHasMore">End of follow-ups</div>
                   </div>
                   <ng-template #noEmployeeFollowupCompany>
                     <div class="empty-state-inline empty-state-inline-minimal">Select a company to view follow-ups.</div>

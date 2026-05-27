@@ -1,7 +1,4 @@
 /* Employee detail refinements: fixed record panels, follow-up dropdown, centered modal controls. */
-.dashboard-wrapper .dash-main:has(.admin-employee-fullview) {
-  overflow: hidden !important;
-}
 
 .dashboard-wrapper .admin-employee-list-section {
   grid-template-rows: auto auto minmax(0, 1fr) !important;
@@ -1119,20 +1116,6 @@
   }
 }
 
-/* Employee detail owns its own scroll; prevent the document from scrolling into blank space. */
-html:has(.dashboard-wrapper .admin-employee-fullview),
-body:has(.dashboard-wrapper .admin-employee-fullview) {
-  height: 100% !important;
-  max-height: 100% !important;
-  overflow: hidden !important;
-}
-
-.dashboard-wrapper .dash-main:has(.admin-employee-fullview) {
-  height: 100vh !important;
-  max-height: 100vh !important;
-  overflow: hidden !important;
-}
-
 /* Keep employee-detail follow-ups independent from the outer admin follow-ups rail sizing. */
 .dashboard-wrapper {
   --dashboard-color-incoming: #4f8fe7;
@@ -1746,6 +1729,68 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
   max-width: 100% !important;
 }
 
+.dashboard-wrapper .admin-overview-view .admin-statistics-actions {
+  align-self: center !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-overview-view-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #667085 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-visuals {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.95fr) !important;
+  gap: 22px !important;
+  align-items: stretch !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-trend,
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  align-content: start !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .section-header {
+  margin: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame,
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame {
+  min-height: 280px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame canvas,
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame canvas {
+  height: 280px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .overview-side {
+  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1fr) !important;
+  min-height: 280px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 280px !important;
+}
+
 .dashboard-wrapper .admin-overview-view .admin-employees-card {
   display: grid !important;
   grid-template-rows: auto minmax(0, 1fr) !important;
@@ -1862,6 +1907,11 @@ body:has(.dashboard-wrapper .admin-employee-fullview) {
   .dashboard-wrapper .admin-overview-view .admin-statistics-metrics,
   .dashboard-wrapper .admin-overview-view .admin-stat-insights,
   .dashboard-wrapper .admin-overview-view .top-employee-side {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-wrapper .admin-overview-view .admin-statistics-visuals,
+  .dashboard-wrapper .admin-overview-view .admin-statistics-mix .overview-side {
     grid-template-columns: 1fr !important;
   }
 }

@@ -6,93 +6,101 @@
         [class.admin-invoice-settings-mode]="dashTab==='invoice_settings'"
         style="animation: fadeIn 0.4s ease-out; min-height: calc(100vh - 64px);"
       >
-        <div class="workspace-header invoice-feature-header">
+        <div class="workspace-header invoice-feature-header" *ngIf="dashTab==='invoice'">
           <div class="workspace-controls invoice-feature-controls">
             <label class="topbar-search invoice-feature-search" for="adminInvoiceSearch">
               <span class="topbar-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
               </span>
-              <input id="adminInvoiceSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="invoiceSearch" (ngModelChange)="fetchAdminInvoiceClients()">
+              <input id="adminInvoiceSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="invoiceSearch" (ngModelChange)="onAdminInvoiceSearchChange()">
             </label>
           </div>
         </div>
 
-        <div class="invoice-feature-grid">
-          <section class="invoice-feature-pane invoice-converted-pane">
-            <div class="invoice-pane-header">
-              <div>
-                <h2>Onboarded Clients</h2>
-                <p>{{ adminInvoiceClientsLoading ? 'Loading clients' : (adminInvoiceClients.length + ' listed') }}</p>
-              </div>
-            </div>
-            <div class="invoice-lead-list">
-              <article class="invoice-lead-row" *ngFor="let client of adminInvoiceClients" (click)="openAdminInvoiceModalForClient(client)" tabindex="0" role="button">
-                <div class="invoice-lead-main">
-                  <span class="invoice-lead-company">{{ client.companyName }}</span>
-                  <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || client.primaryPhone || 'Primary Contact' }}</span>
+        <ng-container *ngIf="dashTab==='invoice'; else adminInvoiceSettingsContent">
+          <div class="invoice-feature-grid">
+            <section class="invoice-feature-pane invoice-converted-pane">
+              <div class="invoice-pane-header">
+                <div>
+                  <h2>Onboarded Clients</h2>
+                  <p>{{ adminInvoiceClientsLoading ? 'Loading clients' : ((adminInvoiceClientTotal || adminInvoiceClients.length) + ' listed') }}</p>
                 </div>
-              </article>
-              <div *ngIf="adminInvoiceClientsLoading" class="empty-state-inline">Loading onboarded clients...</div>
-              <div *ngIf="!adminInvoiceClientsLoading && adminInvoiceClients.length===0" class="empty-state-inline">No onboarded clients found.</div>
-            </div>
-          </section>
-
-          <section class="invoice-feature-pane invoice-history-pane">
-            <div class="invoice-pane-header invoice-pane-header-stacked">
-              <div>
-                <h2>Invoice History</h2>
-                <p>{{ filteredInvoiceRecords.length }} saved invoices</p>
               </div>
-              <div class="invoice-history-tools">
-                <label class="topbar-search invoice-history-search" for="adminInvoiceHistorySearch">
-                  <span class="topbar-search-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
-                  </span>
-                  <input id="adminInvoiceHistorySearch" class="topbar-input" type="text" placeholder="Search invoices..." [(ngModel)]="invoiceHistorySearch">
-                </label>
-                <button class="toolbar-button invoice-date-filter-button" type="button" (click)="invoiceDateFilterOpen=!invoiceDateFilterOpen">Date Filter</button>
+              <div class="invoice-lead-list" (scroll)="onAdminInvoiceClientScroll($event)">
+                <article class="invoice-lead-row" *ngFor="let client of adminInvoiceClients" (click)="openAdminInvoiceModalForClient(client)" tabindex="0" role="button">
+                  <div class="invoice-lead-main">
+                    <span class="invoice-lead-company">{{ client.companyName }}</span>
+                    <span>{{ client.clientId }} · {{ client.primaryContactName || client.primaryContact || client.primaryPhone || 'Primary Contact' }}</span>
+                  </div>
+                </article>
+                <div *ngIf="adminInvoiceClientsLoading" class="empty-state-inline">Loading onboarded clients...</div>
+                <div *ngIf="!adminInvoiceClientsLoading && adminInvoiceClients.length===0" class="empty-state-inline">No onboarded clients found.</div>
+                <div *ngIf="adminInvoiceClientsLoadingMore" class="scroll-page-state">Loading more clients...</div>
+                <div *ngIf="!adminInvoiceClientsLoading && !adminInvoiceClientsLoadingMore && adminInvoiceClients.length > 0 && !adminInvoiceClientHasMore" class="scroll-page-state">End of clients</div>
               </div>
-            </div>
-            <div class="invoice-date-filter-row" *ngIf="invoiceDateFilterOpen">
-              <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="invoiceDateFrom"></label>
-              <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="invoiceDateTo"></label>
-              <button class="toolbar-button invoice-date-clear" type="button" (click)="invoiceDateFrom=''; invoiceDateTo=''">Clear</button>
-            </div>
-            <div class="table-scroll invoice-history-table">
-              <table class="data-table compact-table">
-                <thead>
-                  <tr>
-                    <th>Invoice</th>
-                    <th>Client ID</th>
-                    <th>Company</th>
-                    <th>Contact</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let invoice of filteredInvoiceRecords" class="history-click-row" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
-                    <td>{{ invoice.invoiceNumber }}</td>
-                    <td>{{ invoice.clientId || invoice.clientSnapshot?.clientId || '—' }}</td>
-                    <td>{{ invoice.clientSnapshot?.companyName || invoice.leadCompanyName }}</td>
-                    <td>{{ invoice.clientSnapshot?.contactName || invoice.contactName || invoice.contactNumber || '—' }}</td>
-                    <td><span class="invoice-status-chip" [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
-                    <td>{{ formatInvoiceMoney(invoice.total) }}</td>
-                    <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
-                  </tr>
-                  <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
-                    <td colspan="7" class="empty-cell">No invoices saved yet.</td>
-                  </tr>
-                  <tr *ngIf="invoiceRecordsLoading">
-                    <td colspan="7" class="empty-cell">Loading invoices...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
+            </section>
 
+            <section class="invoice-feature-pane invoice-history-pane">
+              <div class="invoice-pane-header invoice-pane-header-stacked">
+                <div>
+                  <h2>Invoice History</h2>
+                  <p>{{ invoiceRecordsTotal || filteredInvoiceRecords.length }} saved invoices</p>
+                </div>
+                <div class="invoice-history-tools">
+                  <label class="topbar-search invoice-history-search" for="adminInvoiceHistorySearch">
+                    <span class="topbar-search-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+                    </span>
+                    <input id="adminInvoiceHistorySearch" class="topbar-input" type="text" placeholder="Search invoices..." [(ngModel)]="invoiceHistorySearch" (ngModelChange)="onAdminInvoiceHistoryQueryChange()">
+                  </label>
+                  <button class="toolbar-button invoice-date-filter-button" type="button" (click)="invoiceDateFilterOpen=!invoiceDateFilterOpen">Date Filter</button>
+                </div>
+              </div>
+              <div class="invoice-date-filter-row" *ngIf="invoiceDateFilterOpen">
+                <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="invoiceDateFrom" (change)="onAdminInvoiceHistoryQueryChange()"></label>
+                <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="invoiceDateTo" (change)="onAdminInvoiceHistoryQueryChange()"></label>
+                <button class="toolbar-button invoice-date-clear" type="button" (click)="invoiceDateFrom=''; invoiceDateTo=''; onAdminInvoiceHistoryQueryChange()">Clear</button>
+              </div>
+              <div class="table-scroll invoice-history-table" (scroll)="onAdminInvoiceHistoryScroll($event)">
+                <table class="data-table compact-table">
+                  <thead>
+                    <tr>
+                      <th>Invoice</th>
+                      <th>Client ID</th>
+                      <th>Company</th>
+                      <th>Contact</th>
+                      <th>Status</th>
+                      <th>Total</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let invoice of filteredInvoiceRecords" class="history-click-row" (click)="openSavedInvoice(invoice)" tabindex="0" role="button">
+                      <td>{{ invoice.invoiceNumber }}</td>
+                      <td>{{ invoice.clientId || invoice.clientSnapshot?.clientId || '—' }}</td>
+                      <td>{{ invoice.clientSnapshot?.companyName || invoice.leadCompanyName }}</td>
+                      <td>{{ invoice.clientSnapshot?.contactName || invoice.contactName || invoice.contactNumber || '—' }}</td>
+                      <td><span class="invoice-status-chip" [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
+                      <td>{{ formatInvoiceMoney(invoice.total) }}</td>
+                      <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
+                    </tr>
+                    <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
+                      <td colspan="7" class="empty-cell">No invoices saved yet.</td>
+                    </tr>
+                    <tr *ngIf="invoiceRecordsLoading">
+                      <td colspan="7" class="empty-cell">Loading invoices...</td>
+                    </tr>
+                    <tr *ngIf="invoiceRecordsLoadingMore">
+                      <td colspan="7" class="empty-cell">Loading more invoices...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </ng-container>
+
+        <ng-template #adminInvoiceSettingsContent>
         <div class="dash-header-row admin-actions-only-header admin-invoice-settings-actions" style="margin-bottom: 1rem;">
           <div class="admin-header-actions">
             <button class="btn-login admin-save-settings-button" (click)="saveSettings()" [disabled]="settingsLoading"
@@ -343,9 +351,9 @@
             </div>
           </div>
         </div>
-
         <div *ngIf="settingsSaveError" class="form-error" style="margin-top: 1rem; padding: 1rem; border-radius: 10px;">{{ settingsSaveError }}</div>
         <div *ngIf="settingsSaveSuccess" style="margin-top: 1rem; padding: 1rem; background: #ecfdf5; color: #059669; border-radius: 10px; font-weight: 700; text-align: center; border: 1px solid #10b981;">✓ {{ settingsSaveSuccess }}</div>
+        </ng-template>
       </div>
 
       <div
@@ -359,7 +367,7 @@
               <span class="topbar-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
               </span>
-              <input id="adminClientOnboardingSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="clientOnboardingSearch" (ngModelChange)="fetchClientOnboardingRecords()">
+              <input id="adminClientOnboardingSearch" class="topbar-input" type="text" placeholder="Search onboarded clients..." [(ngModel)]="clientOnboardingSearch" (ngModelChange)="onAdminClientOnboardingSearchChange()">
             </label>
             <div class="crm-filter-actions">
               <button class="toolbar-button invoice-date-filter-button crm-map-client-button" type="button" (click)="openClientOnboardingCreateModal()">
@@ -372,11 +380,11 @@
         <div class="metrics-strip crm-metrics-strip crm-amc-metrics-strip client-onboarding-metrics-strip">
           <div class="metric-cell">
             <div class="metric-label">Onboarded Clients</div>
-            <div class="metric-value">{{ clientOnboardingLoading ? '...' : clientOnboardingRecords.length }}</div>
+            <div class="metric-value">{{ clientOnboardingLoading ? '...' : (clientOnboardingTotal || clientOnboardingRecords.length) }}</div>
           </div>
         </div>
 
-        <div class="table-scroll crm-amc-table-scroll crm-project-table-scroll client-onboarding-table-scroll">
+        <div class="table-scroll crm-amc-table-scroll crm-project-table-scroll client-onboarding-table-scroll" (scroll)="onAdminClientOnboardingScroll($event)">
           <table class="data-table compact-table crm-amc-table crm-project-table client-onboarding-table">
             <thead>
               <tr>
@@ -410,6 +418,7 @@
               </tr>
               <tr *ngIf="clientOnboardingLoading"><td colspan="8" class="empty-cell">Loading onboarded clients...</td></tr>
               <tr *ngIf="!clientOnboardingLoading && clientOnboardingRecords.length===0"><td colspan="8" class="empty-cell">No onboarded clients found.</td></tr>
+              <tr *ngIf="clientOnboardingLoadingMore"><td colspan="8" class="empty-cell">Loading more onboarded clients...</td></tr>
             </tbody>
           </table>
         </div>

@@ -893,7 +893,7 @@ class _InternProcessState extends State<InternProcess> {
                 icon: Icons.groups_2_outlined,
               ),
               // Safety: Ensure _selectedTeam exists in the items to prevent crash
-              value: (() {
+              initialValue: (() {
                 if (_selectedTeam == null) return null;
                 final teamLower = _selectedTeam!.toLowerCase();
 

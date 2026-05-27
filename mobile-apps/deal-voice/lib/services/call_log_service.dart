@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'package:call_log/call_log.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
@@ -329,7 +326,9 @@ class CallLogService {
     if (selectedCarrier.isEmpty &&
         selectedSubId.isEmpty &&
         selectedDisplayName.isEmpty &&
-        !isManualEntry) return true;
+        !isManualEntry) {
+      return true;
+    }
 
     // ── Guard: manual SIM entry → no reliable metadata, allow all ───────────
     if (isManualEntry) return true;

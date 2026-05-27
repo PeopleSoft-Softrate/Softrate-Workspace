@@ -441,7 +441,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: const Color.fromARGB(255, 100, 116, 139),
+                              color: Color.fromARGB(255, 100, 116, 139),
                             ),
                           ),
                         ],

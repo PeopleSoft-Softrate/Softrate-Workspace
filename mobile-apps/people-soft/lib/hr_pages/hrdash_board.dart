@@ -7,13 +7,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:hrmappfrontend/hr_pages/OrganizationalHierarchy.dart';
 import 'package:hrmappfrontend/hr_pages/emplyee/EmployeeLeaveApproval.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/hr_pages/emplyee/employee_management.dart';
 import 'package:hrmappfrontend/hr_pages/hr_holiday_screen.dart';
-import 'package:hrmappfrontend/hr_pages/hr_policy.dart';
 import 'package:hrmappfrontend/hr_pages/support/TodayAttendancePage.dart';
 import 'package:hrmappfrontend/hr_pages/support/TodayEmployeeAttendancePage.dart';
 import 'package:hrmappfrontend/hr_pages/support/TodayEmployeeAttendanceService.dart';
@@ -558,8 +556,9 @@ class _HrdashBoardState extends State<HrdashBoard>
 
   Future<void> _savePunchData() async {
     final prefs = await SharedPreferences.getInstance();
-    if (_punchInTime != null)
+    if (_punchInTime != null) {
       await prefs.setString('hr_punch_in', _punchInTime!);
+    }
     if (_punchOutTime != null) {
       await prefs.setString('hr_punch_out', _punchOutTime!);
     }
@@ -1651,7 +1650,7 @@ class _HrdashBoardState extends State<HrdashBoard>
       endColor = const Color(0xFF9E9E9E);
     }
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Stack(
         alignment: Alignment.bottomCenter,
@@ -1712,7 +1711,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                               const SizedBox(height: 4),
                               Text(
                                 hasPunchedIn
-                                    ? "Last Punch: ${hasPunchedOut ? 'Out at ' + formatTimeDisplay(_punchOutTime) : 'In at ' + formatTimeDisplay(_punchInTime)}"
+                                    ? "Last Punch: ${hasPunchedOut ? 'Out at ${formatTimeDisplay(_punchOutTime)}' : 'In at ${formatTimeDisplay(_punchInTime)}'}"
                                     : "Ready to start your day?",
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.8),

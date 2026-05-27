@@ -14,7 +14,7 @@ void main() async {
 }
 
 class TraceCallApp extends StatelessWidget {
-  const TraceCallApp({Key? key}) : super(key: key);
+  const TraceCallApp({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -258,7 +258,7 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
     deadlineController.text = DateFormat('MMM d, yyyy').format(selectedDeadline);
     List<String> checklistTasks = [];
     List<Map<String, dynamic>> selectedTeam = [];
-    bool _isCreating = false;
+    bool isCreating = false;
 
     showModalBottomSheet(
       context: context,
@@ -377,7 +377,7 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                                 dense: true,
                                 title: Text(entry.value, style: const TextStyle(fontSize: 13)),
                                 trailing: IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20), onPressed: () => setDialogState(() => checklistTasks.removeAt(entry.key))),
-                              )).toList(),
+                              )),
                             ]
                           ],
                         ),
@@ -397,7 +397,7 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _isCreating ? null : () async {
+                    onPressed: isCreating ? null : () async {
                       if (titleController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a project title")));
                         return;
@@ -407,7 +407,7 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                         return;
                       }
                       
-                      setDialogState(() => _isCreating = true);
+                      setDialogState(() => isCreating = true);
                       try {
                         final body = {
                           "title": titleController.text,
@@ -436,11 +436,11 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Connection error: $e")));
                       } finally {
-                        if (mounted) setDialogState(() => _isCreating = false);
+                        if (mounted) setDialogState(() => isCreating = false);
                       }
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                    child: _isCreating 
+                    child: isCreating 
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text("Launch Project", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
@@ -462,7 +462,7 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
     String selectedStatus = project['status'] ?? 'In Progress';
     List<Map<String, dynamic>> selectedTeam = List<Map<String, dynamic>>.from(project['teamMembers'] ?? []);
     List<Map<String, dynamic>> checklist = List<Map<String, dynamic>>.from(project['checklist'] ?? []);
-    bool _isUpdating = false;
+    bool isUpdating = false;
 
     showModalBottomSheet(
       context: context,
@@ -622,7 +622,7 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                                 dense: true,
                                 title: Text(entry.value['task'], style: const TextStyle(fontSize: 13)),
                                 trailing: IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20), onPressed: () => setDialogState(() => checklist.removeAt(entry.key))),
-                              )).toList(),
+                              )),
                             ]
                           ],
                         ),
@@ -642,8 +642,8 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _isUpdating ? null : () async {
-                      setDialogState(() => _isUpdating = true);
+                    onPressed: isUpdating ? null : () async {
+                      setDialogState(() => isUpdating = true);
                       try {
                         final body = {
                           "title": titleController.text,
@@ -666,11 +666,11 @@ class _ManagerProjectsPageState extends State<ManagerProjectsPage> {
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update error: $e")));
                       } finally {
-                        if (mounted) setDialogState(() => _isUpdating = false);
+                        if (mounted) setDialogState(() => isUpdating = false);
                       }
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                    child: _isUpdating 
+                    child: isUpdating 
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text("Save Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                   ),

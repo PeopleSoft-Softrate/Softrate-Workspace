@@ -485,7 +485,7 @@ class _BookmarkTabState extends State<BookmarkTab> {
                               Expanded(child: Text(r, style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.4))),
                             ],
                           ),
-                        )).toList(),
+                        )),
                       ],
                     ),
                   ),

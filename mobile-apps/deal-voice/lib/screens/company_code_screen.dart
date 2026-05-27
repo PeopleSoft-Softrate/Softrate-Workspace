@@ -4,7 +4,7 @@ import '../utils/ui_utils.dart';
 import '../services/api_service.dart';
 
 class CompanyCodeScreen extends StatefulWidget {
-  const CompanyCodeScreen({Key? key}) : super(key: key);
+  const CompanyCodeScreen({super.key});
 
   @override
   State<CompanyCodeScreen> createState() => _CompanyCodeScreenState();

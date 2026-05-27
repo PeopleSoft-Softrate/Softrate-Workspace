@@ -543,7 +543,7 @@ export class AdminAuthPaymentWorkflow {
       <body>
         <div class="a4-container">
           <div class="header">
-            <img class="logo" src="/assets/icon/logo.png" alt="DealVoice">
+            <img class="logo" src="assets/icon/logo.png" alt="DealVoice">
             <div class="seller-info">
               Softrate Technologies Private Limited<br>
               dealvoice.co | support@softrate.com | GSTN: 33ABKCS4479F1Z2

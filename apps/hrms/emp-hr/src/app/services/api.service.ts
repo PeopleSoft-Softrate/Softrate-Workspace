@@ -6,12 +6,22 @@ import { Observable, forkJoin, map } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private useLocalBackend = true;
-  private baseUrl = this.useLocalBackend 
-    ? 'http://localhost:5001' 
-    : 'https://peoplesoft-develop.onrender.com';
+  private readonly baseUrl = this.resolveBaseUrl();
 
   constructor(private http: HttpClient) {}
+
+  private resolveBaseUrl(): string {
+    if (typeof window === 'undefined') {
+      return 'http://localhost:5001';
+    }
+
+    const { hostname } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5001';
+    }
+
+    return '/hrms-api';
+  }
 
   private getHeaders() {
     return {

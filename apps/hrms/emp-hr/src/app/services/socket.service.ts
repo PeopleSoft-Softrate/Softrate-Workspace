@@ -7,12 +7,10 @@ import { Observable } from 'rxjs';
 })
 export class SocketService {
   private socket: Socket;
-  private readonly baseUrl = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5001' 
-    : 'https://peoplesoft-develop.onrender.com';
 
   constructor() {
-    this.socket = io(this.baseUrl);
+    const { url, path } = this.resolveSocketConfig();
+    this.socket = io(url, { path });
   }
 
   on(eventName: string): Observable<any> {
@@ -29,5 +27,18 @@ export class SocketService {
 
   joinRoom(roomId: string) {
     this.socket.emit('join-room', roomId);
+  }
+
+  private resolveSocketConfig(): { url: string; path: string } {
+    if (typeof window === 'undefined') {
+      return { url: 'http://localhost:5001', path: '/socket.io' };
+    }
+
+    const { hostname, origin } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return { url: 'http://localhost:5001', path: '/socket.io' };
+    }
+
+    return { url: origin, path: '/hrms-api/socket.io' };
   }
 }

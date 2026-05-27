@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  financeApiBaseUrl: 'https://softrate-finance.onrender.com',
+  financeApiBaseUrl: '/finance-api',
 };

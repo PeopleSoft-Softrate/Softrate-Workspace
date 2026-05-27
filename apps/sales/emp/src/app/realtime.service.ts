@@ -23,7 +23,7 @@ export class RealtimeService {
   connect(companyCode: string, phone: string) {
     this.disconnect();
 
-    const url = new URL('/api/events', environment.apiBaseUrl);
+    const url = this.buildEventsUrl();
     url.searchParams.set('companyCode', companyCode);
     url.searchParams.set('phone', phone);
 
@@ -53,5 +53,15 @@ export class RealtimeService {
       this.eventSource.close();
       this.eventSource = null;
     }
+  }
+
+  private buildEventsUrl(): URL {
+    const configuredBaseUrl = environment.apiBaseUrl || '';
+
+    if (/^https?:\/\//i.test(configuredBaseUrl)) {
+      return new URL('/api/events', configuredBaseUrl);
+    }
+
+    return new URL(`${configuredBaseUrl}/api/events`, window.location.origin);
   }
 }

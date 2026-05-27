@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://softrate-call.onrender.com',
-  crmApiBaseUrl: 'https://softrate-crm.onrender.com',
-  ticketApiBaseUrl: 'https://softrate-tickets.onrender.com',
+  apiBaseUrl: '/sales-api',
+  crmApiBaseUrl: '/crm-api',
+  ticketApiBaseUrl: '/tickets-api',
 };

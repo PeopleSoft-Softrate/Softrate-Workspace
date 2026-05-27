@@ -641,7 +641,7 @@ class _ProfileTabState extends State<ProfileTab> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        activeColor: iconColor,
+        activeThumbColor: iconColor,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),

@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/api_service.dart';
-import '../services/call_log_service.dart';
 import '../utils/ui_utils.dart';
 
 class SimSelectionScreen extends StatefulWidget {
-  const SimSelectionScreen({Key? key}) : super(key: key);
+  const SimSelectionScreen({super.key});
 
   @override
   State<SimSelectionScreen> createState() => _SimSelectionScreenState();
@@ -430,7 +429,7 @@ class _SimSelectionScreenState extends State<SimSelectionScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
           ],
         ),
       ),

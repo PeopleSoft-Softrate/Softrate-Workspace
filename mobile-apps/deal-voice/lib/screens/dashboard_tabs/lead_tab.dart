@@ -601,7 +601,7 @@ class _LeadTabState extends State<LeadTab> {
             ...itemsToShow.map((set) => Padding(
               padding: const EdgeInsets.only(right: 8),
               child: _buildFilterChip(set, set, _selectedSetLabel == set, () => _selectSet(set)),
-            )).toList(),
+            )),
             if (showMore)
               GestureDetector(
                 onTap: _showAllSetsSheet,

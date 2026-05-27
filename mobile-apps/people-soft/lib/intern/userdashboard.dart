@@ -1161,8 +1161,7 @@ class _AttendancePageState extends State<AttendancePage>
         statusLabel = 'Accepted';
         break;
       case 'rejected':
-        statusColor = Color(0xFFB00020);
-        ;
+        statusColor = Color(0xFFB00020); {}
         statusLabel = 'Rejected';
         break;
       default:

@@ -672,10 +672,12 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       LengthLimitingTextInputFormatter(10),
                     ],
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty)
+                      if (val == null || val.trim().isEmpty) {
                         return 'This field is required';
-                      if (val.trim().length != 10)
+                      }
+                      if (val.trim().length != 10) {
                         return 'Enter a valid 10-digit number';
+                      }
                       return null;
                     },
                   ),
@@ -693,10 +695,12 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       LengthLimitingTextInputFormatter(10),
                     ],
                     validator: (val) {
-                      if (val == null || val.trim().isEmpty)
+                      if (val == null || val.trim().isEmpty) {
                         return 'This field is required';
-                      if (val.trim().length != 10)
+                      }
+                      if (val.trim().length != 10) {
                         return 'Enter a valid 10-digit number';
+                      }
                       return null;
                     },
                   ),
@@ -751,8 +755,9 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                     "LinkedIn Profile URL *",
                     linkedinController,
                     validator: (val) {
-                      if (val == null || val.isEmpty)
+                      if (val == null || val.isEmpty) {
                         return "Enter valid LinkedIn URL";
+                      }
                       final trimmed = val.trim();
                       if (!trimmed.startsWith("https://www.linkedin.com/in/") &&
                           !trimmed.startsWith("https://linkedin.com/in/")) {

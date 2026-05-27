@@ -3,7 +3,6 @@ import 'package:hrmappfrontend/manager/managerrecrument.dart';
 import 'package:hrmappfrontend/manager/managerattendance.dart';
 import 'package:hrmappfrontend/manager/managerleave.dart';
 import 'package:hrmappfrontend/manager/managershift.dart';
-import 'package:hrmappfrontend/manager/managerpayroll.dart';
 import 'package:hrmappfrontend/manager/managerappraisal.dart';
 import 'package:hrmappfrontend/manager/managerdocuments.dart';
 import 'package:hrmappfrontend/manager/managerteam.dart';

@@ -15,7 +15,6 @@ final ThemeData appTheme = ThemeData(
   colorScheme: const ColorScheme.light(
     primary: primaryColor,
     secondary: secondaryColor,
-    background: backgroundColor,
     surface: cardColor,
   ),
   appBarTheme: const AppBarTheme(

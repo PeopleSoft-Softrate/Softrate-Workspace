@@ -866,7 +866,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = (value == null || value.isEmpty || value == "null")
+    final displayValue = (value.isEmpty || value == "null")
         ? 'Not provided'
         : value.toString().trim();
     return Padding(
@@ -1130,8 +1130,9 @@ class _ContactItem extends StatelessWidget {
 }
 
 String formatDateTime(dynamic raw) {
-  if (raw == null || raw.toString().isEmpty || raw == "null")
+  if (raw == null || raw.toString().isEmpty || raw == "null") {
     return "Not provided";
+  }
   try {
     DateTime dt;
     if (raw is Map) {

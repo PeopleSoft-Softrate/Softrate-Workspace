@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:file_picker/file_picker.dart';
@@ -171,9 +170,9 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
       } else if (v.startsWith('Permission')) {
         // Calculate end time
         int addMins = 0;
-        if (v.contains("30 min"))
+        if (v.contains("30 min")) {
           addMins = 30;
-        else if (v.contains("1 hrs"))
+        } else if (v.contains("1 hrs"))
           addMins = 60;
         else if (v.contains("1:30 hrs"))
           addMins = 90;
@@ -501,13 +500,13 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
 
   double _calculateTotalDays() {
     double total = 0;
-    _perDayDurations.values.forEach((duration) {
+    for (var duration in _perDayDurations.values) {
       if (duration == 'Full Day') {
         total += 1.0;
       } else if (duration == 'Half Day') {
         total += 0.5;
       }
-    });
+    }
     return total;
   }
 

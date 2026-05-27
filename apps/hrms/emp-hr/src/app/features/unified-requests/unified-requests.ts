@@ -266,10 +266,10 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         requesterName: c.internName,
         requesterId: c.internId,
         type: 'correction',
-        subType: 'Attendance Correction',
+        subType: 'Ratification',
         dateText: new Date(c.date).toLocaleDateString('en-IN'),
         days: null,
-        reason: `Miss Punch Correction Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
+        reason: `Miss Punch Ratification Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
         status: c.hrApprovalStatus || 'pending',
         managerStatus: c.managerApprovalStatus || 'pending',
         hrStatus: c.hrApprovalStatus || 'pending',
@@ -397,10 +397,10 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         requesterName: c.internName,
         requesterId: c.internId,
         type: 'correction',
-        subType: 'Attendance Correction',
+        subType: 'Ratification',
         dateText: new Date(c.date).toLocaleDateString('en-IN'),
         days: null,
-        reason: `Miss Punch Correction Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
+        reason: `Miss Punch Ratification Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
         status: c.managerApprovalStatus || 'pending',
         managerStatus: c.managerApprovalStatus || 'pending',
         hrStatus: c.hrApprovalStatus || 'pending',
@@ -554,7 +554,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Attendance correction ${action}d successfully`);
+          alert(`Ratification ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
@@ -567,7 +567,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Attendance correction ${action}d successfully`);
+          alert(`Ratification ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);

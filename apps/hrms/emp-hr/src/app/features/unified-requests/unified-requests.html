@@ -73,7 +73,7 @@
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingCorrectionsCount() }}</span>
-            <span class="stat-label">Pending Corrections</span>
+            <span class="stat-label">Ratification</span>
           </div>
         </div>
 
@@ -132,7 +132,7 @@
             (click)="activeCategory.set('correction')" 
             [class.active]="activeCategory() === 'correction'"
             class="tab-btn"
-          >Attendance Corrections</button>
+          >Ratification</button>
           <button
             (click)="activeCategory.set('fund')"
             [class.active]="activeCategory() === 'fund'"
@@ -277,7 +277,7 @@
           </div>
         </div>
         <span class="badge" [ngClass]="req.type">
-          {{ req.type === 'leave' ? 'Leave' : (req.type === 'offboarding' ? 'Offboarding' : (req.type === 'fund' ? 'Fund Request' : 'Correction')) }}
+          {{ req.type === 'leave' ? 'Leave' : (req.type === 'offboarding' ? 'Offboarding' : (req.type === 'fund' ? 'Fund Request' : 'Ratification')) }}
         </span>
       </div>
 
@@ -349,7 +349,7 @@
     <div class="modal-container card slide-in">
       <div class="modal-header">
         <h3>
-          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Attendance Correction' : (selectedRequest()?.type === 'fund' ? 'Fund Request' : 'Onboarding'))) }} Decision
+          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Ratification' : (selectedRequest()?.type === 'fund' ? 'Fund Request' : 'Onboarding'))) }} Decision
         </h3>
         <button (click)="closeModal()" class="close-btn">&times;</button>
       </div>

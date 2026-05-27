@@ -10,7 +10,7 @@ import { App } from '../../../app';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './register.html',
-  styleUrl: '../login/login.css'
+  styleUrl: './register.css'
 })
 export class Register {
   private apiService = inject(ApiService);

@@ -495,19 +495,24 @@ const Counter = require("../models/counter.model");
 const Company = require("../models/CompanyModel");
 
 async function generateEmployeeId(companyId) {
-  // Fetch company code
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
 
-  // Find counter for this company and 'employee' type
-  const counter = await Counter.findOneAndUpdate(
-    { companyId: companyId, type: 'employee' },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
+  const year = new Date().getFullYear().toString().slice(-2);
+  let counter;
+  let employeeId;
 
-  // Pad seq to 3 digits (e.g., 001, 002)
-  return `${companyCode}-EMP-${String(counter.seq).padStart(3, "0")}`;
+  do {
+    counter = await Counter.findOneAndUpdate(
+      { companyId: companyId, type: 'employee', year: year },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+
+    employeeId = `${year}2${String(counter.seq).padStart(3, "0")}`;
+  } while (await Employee.exists({ EmployeeId: employeeId, companyId: companyId }));
+
+  return employeeId;
 }
 
 

@@ -380,17 +380,18 @@ async function generateInternId(companyId) {
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
 
+  const year = new Date().getFullYear().toString().slice(-2);
   let counter;
   let internId;
 
   do {
     counter = await Counter.findOneAndUpdate(
-      { companyId: companyId, type: 'intern' },
+      { companyId: companyId, type: 'intern', year: year },
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
 
-    internId = `${companyCode}-${String(counter.seq).padStart(3, "0")}`;
+    internId = `${year}1${String(counter.seq).padStart(3, "0")}`;
   } while (await Intern.exists({ internid: internId, companyId: companyId }));
 
   return internId;

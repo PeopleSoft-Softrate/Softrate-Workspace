@@ -171,7 +171,13 @@ class _FormOneState extends State<FormOne> {
                 data['company']['settings']['internRoles'] != null) {
               final List<dynamic> fetchedRoles = data['company']['settings']['internRoles'];
               if (fetchedRoles.isNotEmpty) {
-                roles = fetchedRoles.map((e) => e.toString()).toList();
+                roles = fetchedRoles.map((e) {
+                  return e.toString().split(' ').map((word) {
+                    if (word.isEmpty) return word;
+                    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+                  }).join(' ');
+                }).toList();
+                if (!roles.contains('Other')) roles.add('Other');
                 selectedRole = null; // Clear previous selection to avoid errors
               }
             }

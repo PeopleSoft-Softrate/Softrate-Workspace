@@ -324,7 +324,6 @@ router.put("/accept/:id", verifyTenant,
             <p>Also read out the annexure completely that had been attached in this mail and make sure you are agreeing with our policies by signing and filling up the date in the attached annexure.</p>
             <p>Your internship details are as follows:</p>
             <ul>
-              <li>Intern ID: ${newId}</li>
               <li>Onboarding Date: ${new Date(onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</li>
               <li>End Date: ${new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</li>
             </ul>

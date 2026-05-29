@@ -217,7 +217,13 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                 data['company']['settings']['employeeRoles'] != null) {
               final List<dynamic> fetchedRoles = data['company']['settings']['employeeRoles'];
               if (fetchedRoles.isNotEmpty) {
-                roles = fetchedRoles.map((e) => e.toString()).toList();
+                roles = fetchedRoles.map((e) {
+                  return e.toString().split(' ').map((word) {
+                    if (word.isEmpty) return word;
+                    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+                  }).join(' ');
+                }).toList();
+                if (!roles.contains('Other')) roles.add('Other');
                 selectedRole = null; // Clear previous selection
               }
             }

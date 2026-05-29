@@ -25,7 +25,7 @@
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingCount() }}</span>
-            <span class="stat-label">Total Pending</span>
+            <span class="stat-label">Pending</span>
           </div>
         </div>
 
@@ -37,7 +37,7 @@
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingLeavesCount() }}</span>
-            <span class="stat-label">Pending Leaves</span>
+            <span class="stat-label">Leaves</span>
           </div>
         </div>
 
@@ -61,7 +61,7 @@
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingOnboardingsCount() }}</span>
-            <span class="stat-label">Pending Onboarding</span>
+            <span class="stat-label">Onboarding</span>
           </div>
         </div>
 
@@ -85,7 +85,7 @@
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingFundsCount() }}</span>
-            <span class="stat-label">Fund Requests</span>
+            <span class="stat-label">Reimbursement</span>
           </div>
         </div>
       </div>
@@ -137,7 +137,7 @@
             (click)="activeCategory.set('fund')"
             [class.active]="activeCategory() === 'fund'"
             class="tab-btn"
-          >Fund Requests</button>
+          >Re Investment</button>
         </div>
       </div>
     </div>

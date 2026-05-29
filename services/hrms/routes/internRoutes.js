@@ -161,7 +161,7 @@ router.get("/all/pending", verifyTenant, async (req, res) => {
     }
     const interns = await Intern.find(query)
           .populate("assignedManager", "fullName department")
-          .sort({ createdAt: -1 });
+          .sort({ internid: 1 });
     res.json(interns);
   } catch (err) {
     console.error("Fetch Pending Interns Error:", err);
@@ -201,7 +201,7 @@ router.get("/all/active", verifyTenant, async (req, res) => {
 
     const interns = await Intern.find(query)
       .populate("assignedManager", "fullName department")
-      .sort({ createdAt: -1 });
+      .sort({ internid: 1 });
     res.json(interns);
   } catch (err) {
     console.error("Fetch Active Interns Error:", err);

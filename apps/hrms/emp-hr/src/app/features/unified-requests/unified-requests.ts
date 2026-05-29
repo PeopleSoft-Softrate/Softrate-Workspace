@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
-import { forkJoin, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { forkJoin, Subscription, of } from 'rxjs';
+import { finalize, catchError } from 'rxjs/operators';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { 
   UserGroupIcon, 
@@ -117,12 +117,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     if (this.isHr()) {
       // HR: Fetch everything company-wide
       forkJoin({
-        leaves: this.apiService.getHRPendingLeaves(),
-        resignations: this.apiService.getHRPendingResignations(),
-        interns: this.apiService.getPendingInterns(),
-        employees: this.apiService.getPendingEmployees(),
-        corrections: this.apiService.getHrPendingAttendanceRequests(),
-        funds: this.apiService.getHrAllFundRequests()
+        leaves: this.apiService.getHRPendingLeaves().pipe(catchError(e => { console.error('Leaves err', e); return of([]); })),
+        resignations: this.apiService.getHRPendingResignations().pipe(catchError(e => { console.error('Resignations err', e); return of([]); })),
+        interns: this.apiService.getPendingInterns().pipe(catchError(e => { console.error('Interns err', e); return of([]); })),
+        employees: this.apiService.getPendingEmployees().pipe(catchError(e => { console.error('Employees err', e); return of([]); })),
+        corrections: this.apiService.getHrPendingAttendanceRequests().pipe(catchError(e => { console.error('Corrections err', e); return of([]); })),
+        funds: this.apiService.getHrAllFundRequests().pipe(catchError(e => { console.error('Funds err', e); return of([]); }))
       }).pipe(
         finalize(() => this.loading.set(false))
       ).subscribe({
@@ -149,12 +149,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     } else if (this.isManager() && managerId) {
       // Manager: Fetch team-only pending data
       forkJoin({
-        leaves: this.apiService.getManagerAllLeaves(managerId),
-        resignations: this.apiService.getAllResignations(), // Manager resignations filtered by team
-        interns: this.apiService.getAssignedInterns(managerId),
-        employees: this.apiService.getAssignedEmployees(managerId),
-        corrections: this.apiService.getManagerPendingAttendanceRequests(managerId),
-        funds: this.apiService.getManagerAllFundRequests(managerId)
+        leaves: this.apiService.getManagerAllLeaves(managerId).pipe(catchError(e => { console.error('Leaves err', e); return of([]); })),
+        resignations: this.apiService.getAllResignations().pipe(catchError(e => { console.error('Resignations err', e); return of([]); })), // Manager resignations filtered by team
+        interns: this.apiService.getAssignedInterns(managerId).pipe(catchError(e => { console.error('Interns err', e); return of([]); })),
+        employees: this.apiService.getAssignedEmployees(managerId).pipe(catchError(e => { console.error('Employees err', e); return of([]); })),
+        corrections: this.apiService.getManagerPendingAttendanceRequests(managerId).pipe(catchError(e => { console.error('Corrections err', e); return of([]); })),
+        funds: this.apiService.getManagerAllFundRequests(managerId).pipe(catchError(e => { console.error('Funds err', e); return of([]); }))
       }).pipe(
         finalize(() => this.loading.set(false))
       ).subscribe({
@@ -197,6 +197,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
 
     // 2. Offboarding / Resignations
     resignations.forEach((r: any) => {
+      const mgrStatus = (!r.managerId || r.managerId === null) ? 'approved' : (r.managerStatus || 'pending');
       list.push({
         _id: r._id,
         requesterName: r.fullName,
@@ -207,7 +208,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         days: null,
         reason: r.exitReason || r.remarks || 'No reason provided',
         status: r.status === 'pending_hr' ? 'pending' : (r.status === 'accepted' ? 'accepted' : (r.status === 'rejected' ? 'rejected' : 'pending')),
-        managerStatus: r.managerStatus || 'pending',
+        managerStatus: mgrStatus,
         hrStatus: r.status === 'accepted' ? 'accepted' : (r.status === 'rejected' ? 'rejected' : 'pending'),
         rejectionReason: r.remarks,
         createdAt: r.createdAt,

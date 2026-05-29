@@ -480,7 +480,7 @@ export class ApiService {
 
   // Offboarding / Resignations
   getPendingOffboarding(): Observable<any[]> {
-    return this.http.get<any>(`${this.baseUrl}/api/resignation/pending`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/api/resignation/all`).pipe(
       map(res => res.data)
     );
   }
@@ -496,9 +496,7 @@ export class ApiService {
   }
 
   getHRPendingResignations(): Observable<any> {
-    return this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/resignation/pending`), {
-      headers: this.getHeaders()
-    });
+    return this.getAllResignations();
   }
 
   managerReviewOffboarding(id: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {

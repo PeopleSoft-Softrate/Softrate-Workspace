@@ -34,6 +34,7 @@
             <div class="status-filter">
               <select [value]="statusFilter()" (change)="setStatus($any($event.target).value)">
                 <option value="all">All Status</option>
+                <option value="currently-active">Currently Active</option>
                 <option value="approved">Approved</option>
                 <option value="ongoing">Ongoing</option>
                 <option value="remote">Remote</option>

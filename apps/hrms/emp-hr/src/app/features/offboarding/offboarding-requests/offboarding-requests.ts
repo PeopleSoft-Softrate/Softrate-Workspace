@@ -44,25 +44,13 @@ export class OffboardingRequests implements OnInit {
 
   fetchRequests() {
     this.isLoading.set(true);
-    // For simplicity, we fetch all and filter in frontend for now, 
-    // but we can use specific endpoints if needed.
-    this.apiService.getPendingOffboarding().subscribe({
-      next: (data) => {
-        // Since getPendingOffboarding only gets pending_hr, let's get all for the admin view
-        const baseUrl = this.apiService.getBaseUrl();
-        this.http.get<any>(`${baseUrl}/api/resignation/all`).subscribe({
-          next: (res) => {
-            this.allRequests.set(res.data || []);
-            this.isLoading.set(false);
-          },
-          error: (err) => {
-            console.error('Failed to fetch all resignations', err);
-            this.isLoading.set(false);
-          }
-        });
+    this.apiService.getAllResignations().subscribe({
+      next: (res) => {
+        this.allRequests.set(res.data || []);
+        this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to fetch offboarding requests', err);
+        console.error('Failed to fetch all resignations', err);
         this.isLoading.set(false);
       }
     });
@@ -70,14 +58,19 @@ export class OffboardingRequests implements OnInit {
 
   get filteredRequests() {
     const role = this.userRole();
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    const myManagerId = userData._id;
+    
     return this.allRequests().filter(r => {
       if (role === 'manager') {
-        // Managers only see what's pending their approval
-        return r.status === 'pending_manager';
+        // Managers only see what's pending their approval AND assigned to them
+        return r.status === 'pending_manager' && r.managerId === myManagerId;
       }
       if (this.isHrType(role)) {
-        // HR sees everything except what's still with managers
-        return r.status === 'pending_hr' || r.status === 'accepted' || r.status === 'rejected';
+        // HR sees everything except what's still with managers,
+        // PLUS any unassigned (managerId is null) requests that go directly to HR.
+        const isUnassigned = r.managerId === null || !r.managerId;
+        return r.status === 'pending_hr' || r.status === 'accepted' || r.status === 'rejected' || (r.status === 'pending_manager' && isUnassigned);
       }
       return false;
     });

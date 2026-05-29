@@ -52,7 +52,7 @@ export class InternList implements OnInit {
   interns = signal<any[]>([]);
   allInterns = signal<any[]>([]);
   isLoading = signal(true);
-  statusFilter = signal<string>('all');
+  statusFilter = signal<string>('currently-active');
   rangeFilter = signal<string>('all');
   searchQuery = signal<string>('');
 
@@ -69,7 +69,9 @@ export class InternList implements OnInit {
 
   fetchInterns() {
     this.isLoading.set(true);
-    this.apiService.getAllActiveInterns(this.rangeFilter(), this.statusFilter()).subscribe({
+    const backendStatus = this.statusFilter() === 'currently-active' ? 'all' : this.statusFilter();
+    
+    this.apiService.getAllActiveInterns(this.rangeFilter(), backendStatus).subscribe({
       next: (data) => {
         this.allInterns.set(data);
         this.applyFilter();
@@ -84,18 +86,31 @@ export class InternList implements OnInit {
 
   applyFilter() {
     const query = this.searchQuery().toLowerCase();
-    const all = this.allInterns();
+    let filtered = this.allInterns();
     
-    if (!query) {
-      this.interns.set(all);
-      return;
+    if (this.statusFilter() === 'currently-active') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      filtered = filtered.filter(i => {
+        const isStatusValid = i.status === 'approved' || i.status === 'ongoing';
+        if (!isStatusValid) return false;
+        
+        if (!i.onboardingDate) return false;
+        const onboardingDate = new Date(i.onboardingDate);
+        onboardingDate.setHours(0, 0, 0, 0);
+        return onboardingDate <= today;
+      });
     }
 
-    const filtered = all.filter(i => 
-      i.fullName?.toLowerCase().includes(query) || 
-      i.internid?.toLowerCase().includes(query) ||
-      i.email?.toLowerCase().includes(query)
-    );
+    if (query) {
+      filtered = filtered.filter(i => 
+        i.fullName?.toLowerCase().includes(query) || 
+        i.internid?.toLowerCase().includes(query) ||
+        i.email?.toLowerCase().includes(query)
+      );
+    }
+    
     this.interns.set(filtered);
   }
 
@@ -141,7 +156,8 @@ export class InternList implements OnInit {
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
     const managerId = userRole === 'manager' ? userData._id : '';
 
-    let url = `${baseUrl}/api/intern/export/excel?status=${this.statusFilter()}&range=${this.rangeFilter()}`;
+    const backendStatus = this.statusFilter() === 'currently-active' ? 'all' : this.statusFilter();
+    let url = `${baseUrl}/api/intern/export/excel?status=${backendStatus}&range=${this.rangeFilter()}`;
     if (managerId) {
       url += `&managerId=${managerId}`;
     }

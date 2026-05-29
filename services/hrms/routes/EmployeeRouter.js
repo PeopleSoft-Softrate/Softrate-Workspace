@@ -193,7 +193,7 @@ router.get("/all/pending", verifyTenant, async (req, res) => {
       query.assignedManager = req.user.id;
     }
     const employees = await Employee.find(query)
-      .sort({ submittedAt: -1 })
+      .sort({ EmployeeId: 1 })
       .lean();
     res.json(employees);
   } catch (err) {
@@ -235,7 +235,7 @@ router.get("/all/active", verifyTenant, async (req, res) => {
     }
 
     const employees = await Employee.find(query)
-      .sort({ submittedAt: -1 })
+      .sort({ EmployeeId: 1 })
       .lean();
 
     console.log(`Found ${employees.length} employees`);

@@ -11,6 +11,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart' as p;
+import 'package:hrmappfrontend/auth_client.dart' as http;
+import 'package:hrmappfrontend/port.dart';
 
 class InternProfilepage extends StatefulWidget {
   final Map<String, dynamic>? internData;
@@ -101,6 +103,58 @@ class _InternProfilepageState extends State<InternProfilepage> {
     setState(() {
       _profileImagePath = permanentPath;
     });
+
+    await _uploadProfilePhotoToBackend(permanentPath);
+  }
+
+  Future<void> _uploadProfilePhotoToBackend(String imagePath) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final url = Uri.parse("${getBaseUrl()}/api/auth/me/profile-photo");
+      final request = http.MultipartRequest('PATCH', url);
+      request.files.add(await http.MultipartFile.fromPath('profilePhoto', imagePath));
+
+      final streamedResponse = await http.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (mounted) Navigator.pop(context); // close dialog
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile photo synced to server successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to sync profile photo to server.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // close dialog
+      debugPrint("Error uploading photo: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading photo: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _cropImage(String path) async {

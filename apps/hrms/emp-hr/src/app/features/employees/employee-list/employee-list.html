@@ -32,7 +32,8 @@
         <div class="employee-row-card" *ngFor="let emp of employees()">
           <!-- IDENTITY -->
           <div class="user-identity">
-            <div class="avatar-initial">{{ emp.fullName[0] }}</div>
+            <img *ngIf="!emp.imgError" [src]="getPhotoUrl(emp._id)" (error)="$any(emp).imgError = true" class="avatar-initial" style="object-fit: cover;" />
+            <div *ngIf="emp.imgError || !emp._id" class="avatar-initial">{{ emp.fullName ? emp.fullName[0] : 'U' }}</div>
             <div class="identity-text">
               <span class="full-name">
                 {{ emp.fullName }}

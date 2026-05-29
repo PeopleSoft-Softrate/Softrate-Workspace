@@ -283,6 +283,33 @@ router.get("/get/:id", verifyTenant, async (req, res) => {
 });
 
 /* ============================
+   GET EMPLOYEE PROFILE PHOTO
+============================ */
+router.get("/profile-photo/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let employee;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      employee = await Employee.findById(id);
+    } else {
+      employee = await Employee.findOne({ EmployeeId: { $regex: new RegExp(`^${id}$`, 'i') } });
+    }
+    if (!employee) return res.status(404).send("Employee not found");
+
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${employee.email.trim()}$`, 'i') } }).select('+profilePhoto.data');
+    if (!user || !user.profilePhoto || !user.profilePhoto.data) {
+      return res.status(404).send("No photo");
+    }
+
+    res.set("Content-Type", user.profilePhoto.contentType || "image/png");
+    res.send(user.profilePhoto.data);
+  } catch (err) {
+    console.error("Fetch Employee Photo Error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+/* ============================
    ACCEPT EMPLOYEE (PDF + MAIL)
 ============================ */
 router.put("/accept/:id", verifyTenant, async (req, res) => {

@@ -69,7 +69,8 @@
               <tr *ngFor="let intern of interns()">
                 <td>
                   <div class="user-cell">
-                    <div class="avatar">{{ intern.fullName[0] }}</div>
+                    <img *ngIf="!intern.imgError" [src]="getPhotoUrl(intern._id)" (error)="$any(intern).imgError = true" class="avatar" style="object-fit: cover;" />
+                    <div *ngIf="intern.imgError || !intern._id" class="avatar">{{ intern.fullName ? intern.fullName[0] : 'U' }}</div>
                     <span>{{ intern.fullName }}</span>
                   </div>
                 </td>

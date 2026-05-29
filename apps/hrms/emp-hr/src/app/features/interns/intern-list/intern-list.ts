@@ -29,6 +29,17 @@ export class InternList implements OnInit {
   readonly LicenseDraftIcon = LicenseDraftIcon;
   readonly UserCircleIcon = UserCircleIcon;
 
+  getPhotoUrl(id: string): string {
+    return `${this.apiService.getBaseUrl()}/api/interns/profile-photo/${id}`;
+  }
+
+  onImageError(event: any) {
+    event.target.style.display = 'none';
+    if (event.target.nextElementSibling) {
+      event.target.nextElementSibling.style.display = 'flex';
+    }
+  }
+
   navigateTo(path: string[]) {
     this.router.navigate(path).then(() => {
       const mainContent = document.querySelector('.main-content');

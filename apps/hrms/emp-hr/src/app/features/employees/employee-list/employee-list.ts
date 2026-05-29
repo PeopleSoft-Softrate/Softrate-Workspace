@@ -30,6 +30,17 @@ export class EmployeeList implements OnInit {
   readonly Shield01Icon = Shield01Icon;
   readonly Shield02Icon = Shield02Icon;
 
+  getPhotoUrl(id: string): string {
+    return `${this.apiService.getBaseUrl()}/api/employees/profile-photo/${id}`;
+  }
+
+  onImageError(event: any) {
+    event.target.style.display = 'none';
+    if (event.target.nextElementSibling) {
+      event.target.nextElementSibling.style.display = 'flex';
+    }
+  }
+
   navigateTo(path: string[]) {
     this.router.navigate(path).then(() => {
       const mainContent = document.querySelector('.main-content');

@@ -1,0 +1,89 @@
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/interns" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Interns
+      </a>
+    </div>
+    <h1>Rejected Applications</h1>
+    <p>View all applications rejected by HR or Managers, and optionally onboard them.</p>
+  </div>
+</div>
+
+<div class="request-tabs">
+  <div class="tab-search" style="margin-left: 0;">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" placeholder="Search rejected applications..." (input)="onSearch($event)">
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  <div *ngIf="!isLoading() && filteredRejected().length > 0" class="requests-table-wrapper">
+    <table class="requests-table">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Role</th>
+          <th>Info</th>
+          <th>Rejection Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let req of filteredRejected()">
+          <!-- Applicant -->
+          <td>
+            <div class="tbl-user">
+              <div class="tbl-avatar">
+                {{ req.fullName?.charAt(0) | uppercase }}
+              </div>
+              <div class="tbl-user-info">
+                <span class="tbl-name">{{ req.fullName }}</span>
+                <span class="tbl-email">{{ req.email }}</span>
+              </div>
+            </div>
+          </td>
+          <!-- Role -->
+          <td>
+            <div class="tbl-role-info">
+              <span class="tbl-type">{{ req.applicationType || 'Internship' }}</span>
+              <span class="tbl-role">{{ req.role }}</span>
+            </div>
+          </td>
+          <!-- Info -->
+          <td>
+            <div class="tbl-meta">
+              <span *ngIf="req.college"><i class="fa-solid fa-graduation-cap"></i> {{ req.college }}</span>
+              <span *ngIf="req.department"><i class="fa-solid fa-book"></i> {{ req.department }}</span>
+            </div>
+          </td>
+          <!-- Rejection Type -->
+          <td>
+            <span class="tbl-status-chip rejected">
+              {{ req.status === 'rejected' ? 'HR Rejected' : 'Manager Rejected' }}
+            </span>
+          </td>
+          <!-- Actions -->
+          <td>
+            <div class="tbl-actions">
+              <button class="tbl-btn tbl-btn-approve" [routerLink]="['/interns/approve', req._id]" title="Onboard">
+                <i class="fa-solid fa-user-plus"></i> Onboard
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading() && filteredRejected().length === 0">
+    <i class="fa-solid fa-inbox empty-icon"></i>
+    <h3>No rejected applications</h3>
+    <p>There are no rejected applications found.</p>
+  </div>
+
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Fetching rejected requests...</p>
+  </div>
+</div>

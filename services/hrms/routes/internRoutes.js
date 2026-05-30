@@ -181,7 +181,7 @@ router.get("/all/active", verifyTenant, async (req, res) => {
       query.status = "drop";
     } else {
       // current and all time use the same base statuses, but current has date filtering on frontend
-      const statusFilter = status === "all" ? ["approved", "ongoing"] : [status];
+      const statusFilter = status === "all" ? ["approved", "ongoing"] : status.split(',');
       query.status = { $in: statusFilter };
     }
 
@@ -342,16 +342,20 @@ router.put("/accept/:id", verifyTenant,
 );
 
 
-router.delete("/reject/:id", verifyTenant, async (req, res) => {
+router.put("/reject/:id", verifyTenant, async (req, res) => {
   try {
-    const intern = await Intern.findByIdAndDelete(req.params.id);
+    const intern = await Intern.findByIdAndUpdate(
+      req.params.id,
+      { managerApprovalStatus: 'rejected', status: 'rejected' },
+      { new: true }
+    );
 
     if (!intern) {
       return res.status(404).json({ message: "Intern not found" });
     }
 
     res.json({
-      message: "Intern rejected and removed successfully",
+      message: "Intern rejected successfully",
       intern,
     });
   } catch (err) {

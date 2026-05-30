@@ -16,7 +16,7 @@
                 class="filter-chip" 
                 [class.active]="rangeFilter() === 'current'"
                 (click)="setFilter('current')">
-                Current
+                Currently Active
               </button>
               <button 
                 class="filter-chip" 
@@ -28,14 +28,13 @@
                 class="filter-chip" 
                 [class.active]="rangeFilter() === 'alumni'"
                 (click)="setFilter('alumni')">
-                Alumni (Drop)
+                Alumni
               </button>
             </div>
             
             <div class="status-filter">
               <select [value]="statusFilter()" (change)="setStatus($any($event.target).value)">
                 <option value="all">All Status</option>
-                <option value="currently-active">Currently Active</option>
                 <option value="approved">Approved</option>
                 <option value="ongoing">Ongoing</option>
               </select>
@@ -129,6 +128,9 @@
 
     <!-- VIEW 5: OFFBOARDING -->
     <app-offboarding-requests *ngIf="currentTab() === 'offboarding'"></app-offboarding-requests>
+
+    <!-- VIEW 6: REJECTED -->
+    <app-intern-rejected *ngIf="currentTab() === 'rejected'"></app-intern-rejected>
   </div>
 
   <!-- RIGHT: VERTICAL ACTION SIDEBAR -->

@@ -10,11 +10,12 @@ import { InternRequests } from '../intern-requests/intern-requests';
 import { LeaveManagement } from '../../leaves/leave-management/leave-management';
 import { AttendanceCorrections } from '../attendance-corrections/attendance-corrections';
 import { OffboardingRequests } from '../../offboarding/offboarding-requests/offboarding-requests';
+import { InternRejected } from '../intern-rejected/intern-rejected';
 
 @Component({
   selector: 'app-intern-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, InternRequests, LeaveManagement, AttendanceCorrections, OffboardingRequests, HugeiconsIconComponent, InternSidebar],
+  imports: [CommonModule, RouterModule, InternRequests, LeaveManagement, AttendanceCorrections, OffboardingRequests, InternRejected, HugeiconsIconComponent, InternSidebar],
   templateUrl: './intern-list.html',
   styleUrl: './intern-list.css'
 })
@@ -48,11 +49,11 @@ export class InternList implements OnInit {
     });
   }
 
-  currentTab = signal<'list' | 'leaves' | 'requests' | 'corrections' | 'offboarding'>('list');
+  currentTab = signal<'list' | 'leaves' | 'requests' | 'corrections' | 'offboarding' | 'rejected'>('list');
   interns = signal<any[]>([]);
   allInterns = signal<any[]>([]);
   isLoading = signal(true);
-  statusFilter = signal<string>('currently-active');
+  statusFilter = signal<string>('all');
   rangeFilter = signal<string>('current');
   searchQuery = signal<string>('');
 
@@ -69,7 +70,7 @@ export class InternList implements OnInit {
 
   fetchInterns() {
     this.isLoading.set(true);
-    const backendStatus = this.statusFilter() === 'currently-active' ? 'all' : this.statusFilter();
+    const backendStatus = this.statusFilter();
     
     this.apiService.getAllActiveInterns(this.rangeFilter(), backendStatus).subscribe({
       next: (data) => {
@@ -88,7 +89,8 @@ export class InternList implements OnInit {
     const query = this.searchQuery().toLowerCase();
     let filtered = this.allInterns();
     
-    if (this.statusFilter() === 'currently-active' || this.rangeFilter() === 'current') {
+    const isCurrentActive = this.rangeFilter() === 'current';
+    if (isCurrentActive) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -122,6 +124,7 @@ export class InternList implements OnInit {
 
   setFilter(range: string) {
     this.rangeFilter.set(range);
+    this.statusFilter.set('all');
     this.fetchInterns();
   }
 

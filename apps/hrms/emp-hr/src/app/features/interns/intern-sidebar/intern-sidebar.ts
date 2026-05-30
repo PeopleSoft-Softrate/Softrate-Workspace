@@ -2,7 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { Home01Icon, FileDownloadIcon, NoteEditIcon, Calendar01Icon, Chat01Icon, LogoutIcon } from '@hugeicons/core-free-icons';
+import { Home01Icon, FileDownloadIcon, NoteEditIcon, Calendar01Icon, Chat01Icon, LogoutIcon, CancelCircleIcon } from '@hugeicons/core-free-icons';
 import { ApiService } from '../../../services/api.service';
 
 @Component({
@@ -61,6 +61,16 @@ import { ApiService } from '../../../services/api.service';
 
     <div class="sidebar-divider"></div>
 
+    <!-- REJECTED APPLICATIONS -->
+    <button routerLink="/interns" [queryParams]="{tab: 'rejected'}" class="sidebar-action-item" [class.active]="activeTab === 'rejected'" title="Rejected Applications">
+      <div class="action-icon-circle">
+        <hugeicons-icon [icon]="CancelCircleIcon" size="20" [strokeWidth]="1.5" color="#eab308"></hugeicons-icon>
+      </div>
+      <span class="action-label">Rejected Applications</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+
     <!-- EXPORT DATA -->
     <button (click)="exportInternData()" class="sidebar-action-item" title="Export Data">
       <div class="action-icon-circle">
@@ -82,6 +92,7 @@ export class InternSidebar {
   readonly Calendar01Icon = Calendar01Icon;
   readonly Chat01Icon = Chat01Icon;
   readonly LogoutIcon = LogoutIcon;
+  readonly CancelCircleIcon = CancelCircleIcon;
 
   exportInternData() {
     const baseUrl = this.apiService.getBaseUrl();

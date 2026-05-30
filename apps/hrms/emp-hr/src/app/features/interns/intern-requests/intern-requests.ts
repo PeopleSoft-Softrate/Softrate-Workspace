@@ -155,7 +155,8 @@ export class InternRequests implements OnInit {
   async rejectRequest(id: string) {
     if (!await this.alertService.confirm('Are you sure you want to reject this application?')) return;
     
-    this.apiService.deleteIntern(id).subscribe({
+    // Perform a soft rejection by updating status and managerApprovalStatus
+    this.apiService.updateIntern(id, { status: 'rejected', managerApprovalStatus: 'rejected' }).subscribe({
       next: () => {
         this.allRequests.update((all: any[]) => all.filter((r: any) => r._id !== id));
       },

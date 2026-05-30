@@ -413,7 +413,7 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/api/intern/accept/${id}`, data);
   }
   deleteIntern(id: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/api/intern/reject/${id}`);
+    return this.http.put(`${this.baseUrl}/api/intern/reject/${id}`, {});
   }
   deleteEmployee(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/api/employee/reject/${id}`);

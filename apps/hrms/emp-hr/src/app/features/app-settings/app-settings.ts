@@ -18,7 +18,7 @@ import {
   PaymentSuccess02Icon,
   Search01Icon
 } from '@hugeicons/core-free-icons';
-import { finalize, forkJoin } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-app-settings',
@@ -358,7 +358,11 @@ export class AppSettings implements OnInit {
       };
       localStorage.setItem(`payroll_struct_${id}`, JSON.stringify(payroll));
       if (emp._id) {
-        updates.push(this.apiService.updateEmployee(emp._id, { payroll }));
+        updates.push(
+          this.apiService.updateEmployee(emp._id, { payroll }).pipe(
+            catchError(() => of(null)) // Ignore if employee not found
+          )
+        );
       }
     }
 
@@ -373,7 +377,11 @@ export class AppSettings implements OnInit {
       };
       localStorage.setItem(`payroll_struct_${id}`, JSON.stringify(payroll));
       if (intern._id) {
-        updates.push(this.apiService.updateIntern(intern._id, { payroll }));
+        updates.push(
+          this.apiService.updateIntern(intern._id, { payroll }).pipe(
+            catchError(() => of(null)) // Ignore if intern not found
+          )
+        );
       }
     }
 

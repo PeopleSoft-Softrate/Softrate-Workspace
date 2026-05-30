@@ -7,12 +7,12 @@ import { Observable, forkJoin, map } from 'rxjs';
 })
 export class ApiService {
   private useLocalBackend = false;
-  private baseUrl = this.useLocalBackend 
-    ? 'http://localhost:5001' 
+  private baseUrl = this.useLocalBackend
+    ? 'http://localhost:5001'
     : 'https://peoplesoft-develop.onrender.com';
 
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getHeaders() {
     return {
@@ -30,9 +30,9 @@ export class ApiService {
   // Authentication
   login(identifier: string, password: string): Observable<any> {
     // Unified login handles email, employeeId, and internId
-    return this.http.post(`${this.baseUrl}/api/auth/unified-login`, { 
-      identifier: identifier, 
-      password 
+    return this.http.post(`${this.baseUrl}/api/auth/unified-login`, {
+      identifier: identifier,
+      password
     });
   }
 
@@ -96,7 +96,7 @@ export class ApiService {
       map(data => {
         // Map recent activities
         const activities: any[] = [];
-        
+
         const getRelativeTime = (dateStr: string) => {
           if (!dateStr) return 'Recently';
           const diff = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 60000);
@@ -140,20 +140,20 @@ export class ApiService {
         const fillMissingDays = (trendArray: any[]) => {
           if (!trendArray) return [];
           if (trendArray.length >= 7) return trendArray.slice(-7);
-          
+
           const daysFallback = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           const result = [];
           const missingCount = 7 - trendArray.length;
-          
+
           for (let i = 0; i < 7; i++) {
-             if (i < missingCount) {
-               // Pad older missing days with 0 counts
-               result.push({ day: daysFallback[i], count: 0 }); 
-             } else {
-               // Use actual data
-               const actualData = trendArray[i - missingCount];
-               result.push({ day: actualData.day || daysFallback[i], count: actualData.count || 0 });
-             }
+            if (i < missingCount) {
+              // Pad older missing days with 0 counts
+              result.push({ day: daysFallback[i], count: 0 });
+            } else {
+              // Use actual data
+              const actualData = trendArray[i - missingCount];
+              result.push({ day: actualData.day || daysFallback[i], count: actualData.count || 0 });
+            }
           }
           return result;
         };
@@ -181,19 +181,19 @@ export class ApiService {
         const getSummary = (trendArray: any[], totalPeople: number, maxCount: number) => {
           const total = Math.max(totalPeople, 1);
           const validDays = trendArray.filter(t => t.count > 0);
-          
+
           if (validDays.length === 0) {
-             return { avgPresent: '0%', avgAbsent: '0%', bestDay: 'N/A', avgLineHeight: 0 };
+            return { avgPresent: '0%', avgAbsent: '0%', bestDay: 'N/A', avgLineHeight: 0 };
           }
-          
+
           const sum = validDays.reduce((acc, curr) => acc + curr.count, 0);
           const avgCount = sum / validDays.length;
-          
+
           const avgPresentPct = Math.min((avgCount / total) * 100, 100);
           const avgAbsentPct = Math.max(100 - avgPresentPct, 0);
-          
+
           let best = validDays[0];
-          for(const d of validDays) {
+          for (const d of validDays) {
             if (d.count > best.count) best = d;
           }
 

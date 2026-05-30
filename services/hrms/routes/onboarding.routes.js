@@ -174,8 +174,13 @@ router.get('/verify/:code', async (req, res) => {
 
     const companyObj = company.toObject();
     const settings = companyObj.settings || {};
-    const internRoles = Array.from(new Set([...(settings.internRoles || []), 'Other']));
-    const employeeRoles = Array.from(new Set([...(settings.employeeRoles || []), 'Other']));
+    const sortRoles = (roles) => {
+      const filtered = roles.filter(r => r !== 'Other').sort((a, b) => a.localeCompare(b));
+      return [...filtered, 'Other'];
+    };
+
+    const internRoles = sortRoles(Array.from(new Set([...(settings.internRoles || []), 'Other'])));
+    const employeeRoles = sortRoles(Array.from(new Set([...(settings.employeeRoles || []), 'Other'])));
 
     const responseBody = {
       success: true,

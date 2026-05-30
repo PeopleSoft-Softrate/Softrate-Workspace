@@ -1,5 +1,3 @@
-<div class="main-content-layout">
-<div class="data-section">
 <div class="page-header">
   <div class="header-content">
     <div class="breadcrumb">
@@ -13,111 +11,57 @@
 </div>
 
 <div class="data-container" [class.loading]="isLoading()">
-  <div class="request-grid" *ngIf="!isLoading() && requests().length > 0">
-    <div class="request-card" *ngFor="let req of requests()">
-      <div class="card-header">
-        <div class="user-info">
-          <div class="avatar">{{ req.fullName ? req.fullName[0] : '?' }}</div>
-          <div>
-            <h3>{{ req.fullName }}</h3>
-            <p class="role-badge">{{ req.role || 'New Hire' }}</p>
-          </div>
-        </div>
-        <div class="time-stamp">
-          <i class="fa-solid fa-clock"></i>
-          {{ (req.submittedAt || req.createdAt) | date:'shortDate' }}
-        </div>
-      </div>
-
-      <div class="card-body">
-        <!-- Core Info -->
-        <div class="info-row">
-          <div class="info-item">
-            <label>Role & Dept</label>
-            <p>{{ req.designation || req.role || 'N/A' }} ({{ req.department || 'N/A' }})</p>
-          </div>
-          <div class="info-item">
-            <label>Contact</label>
-            <p>{{ req.phone }}</p>
-          </div>
-        </div>
-
-        <div class="info-divider"></div>
-
-        <!-- Education Section -->
-        <div class="details-section">
-          <h4 class="section-title"><i class="fa-solid fa-graduation-cap"></i> Education</h4>
-          <div class="info-row">
-            <div class="info-item">
-              <label>Qualification</label>
-              <p>{{ req.qualification }} - {{ req.specialization }}</p>
+  <div *ngIf="!isLoading() && requests().length > 0" class="requests-table-wrapper">
+    <table class="requests-table">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Role</th>
+          <th>Info</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let req of requests()">
+          <!-- Applicant -->
+          <td>
+            <div class="tbl-person">
+              <div class="tbl-avatar onboarding">{{ req.fullName ? req.fullName.substring(0,2).toUpperCase() : 'NA' }}</div>
+              <div>
+                <div class="tbl-name" style="display: flex; align-items: center; gap: 6px;">
+                  {{ req.fullName }}
+                </div>
+                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">{{ req.email || req.phone || 'New Hire' }}</div>
+              </div>
             </div>
-            <div class="info-item">
-              <label>College & Year</label>
-              <p>{{ req.college }} ({{ req.passingYear }})</p>
+          </td>
+          <!-- Role -->
+          <td>
+            <div class="tbl-text" style="white-space: normal; line-height: 1.4;">
+              <span style="display: block; font-weight: 600; color: #0f172a; margin-bottom: 2px;">{{ req.designation || req.role || 'Employee' }}</span>
+              <span style="color: #64748b;">{{ req.department || 'N/A' }}</span>
             </div>
-          </div>
-          <div class="info-row">
-            <div class="info-item">
-              <label>UG CGPA</label>
-              <p>{{ req.ugCgpa || 'N/A' }}</p>
+          </td>
+          <!-- Info -->
+          <td>
+            <div class="tbl-info-icon" [attr.data-tooltip]="'Education: ' + (req.qualification || 'N/A') + '&#xa;College: ' + (req.college || 'N/A') + '&#xa;UG CGPA: ' + (req.ugCgpa || 'N/A') + ' | PG CGPA: ' + (req.pgCgpa || 'N/A') + '&#xa;Experience: ' + (req.isExperienced ? req.experienceYears + ' Yrs' : 'Fresher') + '&#xa;DOB: ' + ((req.dob | date:'shortDate') || 'N/A') + '&#xa;Applied: ' + (req.createdAt | date:'d MMM y')">
+              <i class="fa-solid fa-circle-info"></i>
             </div>
-            <div class="info-item">
-              <label>PG CGPA</label>
-              <p>{{ req.pgCgpa || 'N/A' }}</p>
+          </td>
+          <!-- Actions -->
+          <td>
+            <div class="tbl-actions">
+              <button class="tbl-btn tbl-btn-reject" (click)="rejectRequest(req._id)" title="Reject">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <button class="tbl-btn tbl-btn-approve" (click)="navigateTo(['/employees/approve', req._id])" title="Review & Accept">
+                <i class="fa-solid fa-user-plus"></i>
+              </button>
             </div>
-          </div>
-        </div>
-
-        <div class="info-divider"></div>
-
-        <!-- Experience Section -->
-        <div class="details-section">
-          <h4 class="section-title"><i class="fa-solid fa-briefcase"></i> Experience</h4>
-          <div class="info-row" *ngIf="req.isExperienced">
-            <div class="info-item">
-              <label>Previous Org</label>
-              <p>{{ req.previousOrg }}</p>
-            </div>
-            <div class="info-item">
-              <label>Years</label>
-              <p>{{ req.experienceYears }} Years</p>
-            </div>
-          </div>
-          <p class="no-data" *ngIf="!req.isExperienced">Fresher / No previous experience</p>
-        </div>
-
-        <div class="info-divider"></div>
-
-        <!-- Personal Section -->
-        <div class="details-section">
-          <h4 class="section-title"><i class="fa-solid fa-user-tag"></i> Personal</h4>
-          <div class="info-row">
-            <div class="info-item">
-              <label>DOB & Gender</label>
-              <p>{{ req.dob | date:'mediumDate' }} ({{ req.gender }})</p>
-            </div>
-            <div class="info-item">
-              <label>Nationality</label>
-              <p>{{ req.nationality }}</p>
-            </div>
-          </div>
-          <div class="info-item full-width">
-            <label>Address</label>
-            <p>{{ req.address }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card-actions">
-        <button class="btn-reject" (click)="rejectRequest(req._id)">
-          <i class="fa-solid fa-xmark"></i> Reject
-        </button>
-        <button class="btn-approve" (click)="navigateTo(['/employees/approve', req._id])">
-          <i class="fa-solid fa-user-plus"></i> Review & Accept
-        </button>
-      </div>
-    </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <div class="empty-state" *ngIf="!isLoading() && requests().length === 0">
@@ -132,7 +76,4 @@
     <div class="spinner"></div>
     <p>Fetching requests...</p>
   </div>
-</div>
-</div>
-<app-employee-sidebar></app-employee-sidebar>
 </div>

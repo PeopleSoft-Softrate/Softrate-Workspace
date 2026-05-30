@@ -23,7 +23,50 @@ const CompanySchema = new mongoose.Schema({
     }],
     communication: {
       whatsappNotifications: { type: Boolean, default: false },
-      emailNotifications: { type: Boolean, default: true }
+      emailNotifications: { type: Boolean, default: true },
+      emailSignatureUrl: { type: String, default: null },
+      offboardingRejectionTemplate: { 
+        type: String, 
+        default: `<div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+  <p style="margin: 0 0 10px 0;">Dear {formattedName},</p>
+  <p style="margin: 0 0 10px 0;">Thank you for submitting your offboarding form. After careful review, we regret to inform you that your form has been rejected. This could be due to pending formalities such as:</p>
+  <ol style="padding-left: 20px; margin: 0 0 15px 0;">
+    <li style="margin-bottom: 4px;">Return of all company-issued assets is not completed.</li>
+    <li style="margin-bottom: 4px;">Knowledge transfer and handover of pending tasks is not completed.</li>
+    <li style="margin-bottom: 4px;">Project documentation is not up to date.</li>
+    <li style="margin-bottom: 4px;">Outstanding approvals or submissions have not been cleared.</li>
+  </ol>
+  <p style="margin: 0 0 10px 0;">Kindly complete the above formalities and resubmit your offboarding form at the earliest.</p>
+  <p style="margin: 0 0 15px 0;">For further details or assistance, please contact your HR at <a href="mailto:hr@softrateglobal.com" style="color: #007bb6;">hr@softrateglobal.com</a>.</p>
+  {signature}
+</div>`
+      },
+      onboardingTemplateEmployee: {
+        type: String,
+        default: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+  <h2>Hi {formattedName},</h2>
+  <p>Your profile has been <b>approved</b> 🎉</p>
+  <p><b>Employee ID:</b> {employeeId}</p>
+  <p><b>Onboarding Date:</b> {onboardingDate}</p>
+  {signature}
+</div>`
+      },
+      onboardingTemplateIntern: {
+        type: String,
+        default: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+  <p>Dear {formattedName},</p>
+  <p>Softrate Global welcomes you Onboard, We herein have attached your Official Offer Letter and Company Culture Book for joining us.</p>
+  <p>You can share your offer letter on Linkedin by mentioning @softrate with hashtags #careeratsoftrate #softratetechpark #softratetechnologies</p>
+  <p>Also read out the annexure completely that had been attached in this mail and make sure you are agreeing with our policies by signing and filling up the date in the attached annexure.</p>
+  <p>Your internship details are as follows:</p>
+  <ul>
+    <li>Onboarding Date: {onboardingDate}</li>
+    <li>End Date: {endDate}</li>
+  </ul>
+  <p style="margin: 0 0 0 0;">To proceed further, please log in to the PeopleSoft portal using the credentials shared separately.</p>
+  {signature}
+</div>`
+      }
     },
     employeeRoles: [{ type: String }],
     internRoles: [{ type: String }],

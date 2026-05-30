@@ -1,19 +1,12 @@
 <div class="page-header">
   <div class="header-content">
     <div class="breadcrumb">
-      <a routerLink="/interns" class="back-link">
-        <i class="fa-solid fa-arrow-left"></i> Back to Interns
+      <a routerLink="/employees" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Employees
       </a>
     </div>
-    <h1>Rejected Applications</h1>
-    <p>View all applications rejected by HR or Managers, and optionally onboard them.</p>
-  </div>
-</div>
-
-<div class="request-tabs">
-  <div class="tab-search" style="margin-left: 0;">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" placeholder="Search rejected applications..." (input)="onSearch($event)">
+    <h1>Rejected Employees</h1>
+    <p>View applications that have been rejected.</p>
   </div>
 </div>
 
@@ -39,20 +32,20 @@
                 <div class="tbl-name" style="display: flex; align-items: center; gap: 6px;">
                   {{ req.fullName }}
                 </div>
-                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">{{ req.email }}</div>
+                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">{{ req.email || req.phone || 'New Hire' }}</div>
               </div>
             </div>
           </td>
           <!-- Role -->
           <td>
             <div class="tbl-text" style="white-space: normal; line-height: 1.4;">
-              <span style="display: block; font-weight: 600; color: #0f172a; margin-bottom: 2px;">{{ req.applicationType || 'Internship' }}</span>
-              <span style="color: #64748b;">{{ req.role || 'Applicant' }}</span>
+              <span style="display: block; font-weight: 600; color: #0f172a; margin-bottom: 2px;">{{ req.designation || req.role || 'Employee' }}</span>
+              <span style="color: #64748b;">{{ req.department || 'N/A' }}</span>
             </div>
           </td>
           <!-- Info -->
           <td>
-            <div class="tbl-info-icon" [attr.data-tooltip]="'Department: ' + (req.department || 'N/A') + '&#xa;College: ' + (req.college || 'N/A') + '&#xa;Year: ' + (req.year || 'N/A') + '&#xa;Contact: ' + (req.contact || 'N/A') + '&#xa;Applied: ' + (req.createdAt | date:'d MMM y')">
+            <div class="tbl-info-icon" [attr.data-tooltip]="'Education: ' + (req.qualification || 'N/A') + '&#xa;College: ' + (req.college || 'N/A') + '&#xa;UG CGPA: ' + (req.ugCgpa || 'N/A') + ' | PG CGPA: ' + (req.pgCgpa || 'N/A') + '&#xa;Experience: ' + (req.isExperienced ? req.experienceYears + ' Yrs' : 'Fresher') + '&#xa;DOB: ' + ((req.dob | date:'shortDate') || 'N/A') + '&#xa;Applied: ' + (req.createdAt | date:'d MMM y')">
               <i class="fa-solid fa-circle-info"></i>
             </div>
           </td>
@@ -65,8 +58,8 @@
           <!-- Actions -->
           <td>
             <div class="tbl-actions">
-              <button class="tbl-btn tbl-btn-approve" [routerLink]="['/interns/approve', req._id]" title="Onboard">
-                <i class="fa-solid fa-user-plus"></i> Onboard
+              <button class="tbl-btn tbl-btn-approve" [routerLink]="['/employees/approve', req._id]" title="Restore & Onboard">
+                <i class="fa-solid fa-user-plus"></i> Restore
               </button>
             </div>
           </td>
@@ -76,9 +69,11 @@
   </div>
 
   <div class="empty-state" *ngIf="!isLoading() && filteredRejected().length === 0">
-    <i class="fa-solid fa-inbox empty-icon"></i>
-    <h3>No rejected applications</h3>
-    <p>There are no rejected applications found.</p>
+    <div class="empty-content">
+      <i class="fa-solid fa-inbox" style="font-size: 48px; color: #94a3b8; margin-bottom: 1rem;"></i>
+      <h3>No rejected employees</h3>
+      <p>There are no rejected applications found.</p>
+    </div>
   </div>
 
   <div class="loading-overlay" *ngIf="isLoading()">

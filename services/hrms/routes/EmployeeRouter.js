@@ -367,18 +367,38 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
 
     await LeaveCounter.insertMany(records, { ordered: false }).catch(() => {});
 
-    // 4. Send approval email (Wrapped in try-catch to avoid failing the whole request if email fails)
+    // 4. Send approval email
     try {
-      await sendEmail({
-        to: employee.email,
-        subject: "Your Employee ID is Ready",
-        html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+      const Company = require("../models/CompanyModel");
+      const company = await Company.findById(req.tenant.companyId);
+      const template = company?.settings?.communication?.onboardingTemplateEmployee;
+      const customSignature = company?.settings?.communication?.emailSignatureUrl;
+      
+      const signatureHtml = customSignature 
+        ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
+        : getSignature(LOGO_URL);
+
+      let htmlContent = "";
+      if (template) {
+        htmlContent = template
+          .replace(/{formattedName}/g, employee.fullName)
+          .replace(/{employeeId}/g, newEmployeeId)
+          .replace(/{onboardingDate}/g, onboardingDate)
+          .replace(/{signature}/g, signatureHtml);
+      } else {
+        htmlContent = `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
                  <h2>Hi ${employee.fullName},</h2>
                  <p>Your profile has been <b>approved</b> 🎉</p>
                  <p><b>Employee ID:</b> ${newEmployeeId}</p>
                  <p><b>Onboarding Date:</b> ${onboardingDate}</p>
-                 ${getSignature(LOGO_URL)}
-               </div>`,
+                 ${signatureHtml}
+               </div>`;
+      }
+
+      await sendEmail({
+        to: employee.email,
+        subject: "Your Employee ID is Ready",
+        html: htmlContent,
       });
       console.log(`[DEBUG] Approval email sent to: ${employee.email}`);
     } catch (emailErr) {

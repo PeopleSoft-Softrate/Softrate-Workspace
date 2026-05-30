@@ -304,25 +304,44 @@ router.put("/accept/:id", verifyTenant,
       console.log("Intern saved successfully. Preparing to send email with generated documents...");
       
       try {
-        await sendEmail({
-          to: intern.email,
-          subject: "Internship Application – Approval Notification",
-          html: `
-            <p>Dear ${intern.fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')},</p>
+        const Company = require("../models/CompanyModel");
+        const companyTemplate = await Company.findById(req.tenant.companyId);
+        const template = companyTemplate?.settings?.communication?.onboardingTemplateIntern;
+
+        const internName = intern.fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        const formattedOnboardingDate = new Date(onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+        const formattedEndDate = new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+        let htmlContent = "";
+        if (template) {
+          htmlContent = template
+            .replace(/{formattedName}/g, internName)
+            .replace(/{onboardingDate}/g, formattedOnboardingDate)
+            .replace(/{endDate}/g, formattedEndDate)
+            .replace(/{signature}/g, getSignature(getLogoUrl()));
+        } else {
+          htmlContent = `
+            <p>Dear ${internName},</p>
             <p>Softrate Global welcomes you Onboard, We herein have attached your Official Offer Letter and Company Culture Book for joining us.</p>
             <p>You can share your offer letter on Linkedin by mentioning @softrate with hashtags #careeratsoftrate #softratetechpark #softratetechnologies</p>
             <p>Also read out the annexure completely that had been attached in this mail and make sure you are agreeing with our policies by signing and filling up the date in the attached annexure.</p>
             <p>Your internship details are as follows:</p>
             <ul>
-              <li>Onboarding Date: ${new Date(onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</li>
-              <li>End Date: ${new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</li>
+              <li>Onboarding Date: ${formattedOnboardingDate}</li>
+              <li>End Date: ${formattedEndDate}</li>
             </ul>
             <p style="margin: 0 0 0 0;">To proceed further, please log in to the PeopleSoft portal using the credentials shared separately.</p>
             <p style="margin: 0 0 0 0;">For first-time login, you will be required to set your own password and complete your profile by providing the necessary details.</p>
             <p style="margin: 0 0 0 0;">Kindly ensure that all required information is submitted before your onboarding date to avoid any delays.</p>
             <p style="margin: 0 0 15px 0;">For any queries, feel free to contact us.</p>
             ${getSignature(getLogoUrl())}
-          `,
+          `;
+        }
+
+        await sendEmail({
+          to: intern.email,
+          subject: "Internship Application – Approval Notification",
+          html: htmlContent,
           attachments: attachments,
           replyTo: req.tenant.receivingEmail,
         });

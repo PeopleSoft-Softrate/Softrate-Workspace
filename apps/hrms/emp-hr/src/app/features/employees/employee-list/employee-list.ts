@@ -9,11 +9,12 @@ import { EmployeeRequests } from '../employee-requests/employee-requests';
 import { LeaveManagement } from '../../leaves/leave-management/leave-management';
 import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
 import { OffboardingRequests } from '../../offboarding/offboarding-requests/offboarding-requests';
+import { EmployeeRejected } from '../employee-rejected/employee-rejected';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, EmployeeRequests, LeaveManagement, OffboardingRequests, HugeiconsIconComponent, EmployeeSidebar],
+  imports: [CommonModule, RouterModule, EmployeeRequests, LeaveManagement, OffboardingRequests, EmployeeRejected, HugeiconsIconComponent, EmployeeSidebar],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.css'
 })
@@ -49,7 +50,7 @@ export class EmployeeList implements OnInit {
     });
   }
 
-  currentTab = signal<'list' | 'leaves' | 'requests' | 'offboarding'>('list');
+  currentTab = signal<'list' | 'leaves' | 'requests' | 'offboarding' | 'rejected'>('list');
   employees = signal<any[]>([]);
   allEmployees = signal<any[]>([]);
   isLoading = signal(true);

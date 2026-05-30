@@ -51,7 +51,11 @@ export class AppSettings implements OnInit {
   receivingEmail = signal<string>('');
   locations = signal<any[]>([]);
   communication = signal<any>({
-    emailNotifications: true
+    emailNotifications: true,
+    emailSignatureUrl: null,
+    offboardingRejectionTemplate: '',
+    onboardingTemplateEmployee: '',
+    onboardingTemplateIntern: ''
   });
   employeeRoles = signal<string[]>([]);
   internRoles = signal<string[]>([]);
@@ -162,7 +166,11 @@ export class AppSettings implements OnInit {
           this.locations.set(s.locations || []);
           this.communication.set(s.communication || {
             whatsappNotifications: false,
-            emailNotifications: true
+            emailNotifications: true,
+            emailSignatureUrl: null,
+            offboardingRejectionTemplate: '',
+            onboardingTemplateEmployee: '',
+            onboardingTemplateIntern: ''
           });
           this.employeeRoles.set(s.employeeRoles || []);
           this.internRoles.set(s.internRoles || [
@@ -427,6 +435,47 @@ export class AppSettings implements OnInit {
     roles[index] = value;
     if (type === 'employee') this.employeeRoles.set([...roles]);
     else this.internRoles.set([...roles]);
+  }
+
+  onSignatureUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Str = e.target?.result as string;
+        this.communication.set({
+          ...this.communication(),
+          emailSignatureUrl: base64Str
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  insertVariable(selectElem: HTMLSelectElement, textareaElem: HTMLTextAreaElement, field: string) {
+    const variable = selectElem.value;
+    if (!variable) return;
+
+    const currentVal = this.communication()[field] || '';
+    const startPos = textareaElem.selectionStart || currentVal.length;
+    const endPos = textareaElem.selectionEnd || currentVal.length;
+
+    const newVal = currentVal.substring(0, startPos) + variable + currentVal.substring(endPos);
+    
+    this.communication.set({
+      ...this.communication(),
+      [field]: newVal
+    });
+
+    // Reset dropdown
+    selectElem.value = "";
+
+    // Set cursor position back inside textarea after angular updates
+    setTimeout(() => {
+      textareaElem.focus();
+      textareaElem.setSelectionRange(startPos + variable.length, startPos + variable.length);
+    }, 0);
   }
 
   trackByIndex(index: number, item: any): any {

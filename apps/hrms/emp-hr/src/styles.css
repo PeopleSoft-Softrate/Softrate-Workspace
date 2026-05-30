@@ -433,7 +433,6 @@ input[type=number] {
   letter-spacing: 0.06em;
   color: #64748b;
   text-align: left;
-  white-space: nowrap;
 }
 
 .requests-table td {
@@ -552,7 +551,8 @@ input[type=number] {
   content: attr(data-tooltip);
   position: absolute;
   top: 50%;
-  left: calc(100% + 10px);
+  right: calc(100% + 10px);
+  left: auto;
   transform: translateY(-50%);
   background: #0f172a;
   color: #fff;
@@ -564,7 +564,7 @@ input[type=number] {
   white-space: pre-line;
   width: max-content;
   min-width: 200px;
-  max-width: 300px;
+  max-width: 280px;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   opacity: 0;

@@ -4,13 +4,12 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UserCircleIcon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, Money03Icon } from '@hugeicons/core-free-icons';
-import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
 import { ApiService } from '../../../services/api.service';
 
 @Component({
   selector: 'app-employee-requests',
   standalone: true,
-  imports: [CommonModule, RouterModule, HugeiconsIconComponent, EmployeeSidebar],
+  imports: [CommonModule, RouterModule, HugeiconsIconComponent],
   templateUrl: './employee-requests.html',
   styleUrl: './employee-requests.css'
 })
@@ -59,7 +58,8 @@ export class EmployeeRequests implements OnInit {
   async rejectRequest(id: string) {
     if (!await this.alertService.confirm('Are you sure you want to reject this application?')) return;
     
-    this.apiService.deleteEmployee(id).subscribe({
+    // Perform a soft rejection by updating status
+    this.apiService.updateEmployee(id, { status: 'rejected' }).subscribe({
       next: () => {
         this.requests.update((all: any[]) => all.filter((r: any) => r._id !== id));
       },

@@ -19,6 +19,26 @@ function resolveParagraphText(text, data) {
 }
 
 /**
+ * Checks if a paragraph block is purely a single image placeholder ({{logo}} or {{signature}})
+ * and returns the image Buffer / base64 URL if so. Returns null otherwise.
+ */
+function resolveImagePlaceholder(text, data) {
+    if (!text) return null;
+    const trimmed = text.trim();
+    const match = trimmed.match(/^\{\{(logo|signature)\}\}$/i);
+    if (!match) return null;
+    const key = match[1];
+    const val = data[key];
+    if (!val) return null;
+    // Convert base64 data URL to Buffer for PDFKit
+    if (val.startsWith('data:image')) {
+        const base64Data = val.split(',')[1];
+        return Buffer.from(base64Data, 'base64');
+    }
+    return null;
+}
+
+/**
  * Maps frontend font family choices to standard PDFKit fonts,
  * or loads custom fonts if they exist in the assets directory.
  */
@@ -184,6 +204,21 @@ async function generateDynamicPDF(data, template = {}) {
                 // 3. Draw Rich Paragraph Blocks
                 const paragraphs = page.paragraphs || [];
                 for (const para of paragraphs) {
+                    // --- Check if this paragraph is purely an image placeholder ---
+                    const imgBuffer = resolveImagePlaceholder(para.text, data);
+                    if (imgBuffer) {
+                        const finalX = (para.x || 0) + 10;
+                        const finalY = (para.y || 0) + 24;
+                        const maxW = para.width || 200;
+                        try {
+                            doc.image(imgBuffer, finalX, finalY, { fit: [maxW, 120], align: 'left' });
+                        } catch (imgErr) {
+                            console.warn('PDF image insert failed:', imgErr.message);
+                        }
+                        continue;
+                    }
+
+                    // --- Normal text paragraph ---
                     let text = resolveParagraphText(para.text, data);
                     if (!text) continue;
 
@@ -245,3 +280,4 @@ async function generateDynamicPDF(data, template = {}) {
 }
 
 module.exports = { generateDynamicPDF };
+

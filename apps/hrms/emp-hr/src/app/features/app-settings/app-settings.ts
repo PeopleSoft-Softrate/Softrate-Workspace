@@ -53,6 +53,7 @@ export class AppSettings implements OnInit {
   communication = signal<any>({
     emailNotifications: true,
     emailSignatureUrl: null,
+    emailLogoUrl: null,
     offboardingRejectionTemplate: '',
     onboardingTemplateEmployee: '',
     onboardingTemplateIntern: ''
@@ -168,6 +169,7 @@ export class AppSettings implements OnInit {
             whatsappNotifications: false,
             emailNotifications: true,
             emailSignatureUrl: null,
+            emailLogoUrl: null,
             offboardingRejectionTemplate: '',
             onboardingTemplateEmployee: '',
             onboardingTemplateIntern: ''
@@ -447,6 +449,22 @@ export class AppSettings implements OnInit {
         this.communication.set({
           ...this.communication(),
           emailSignatureUrl: base64Str
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onLogoUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Str = e.target?.result as string;
+        this.communication.set({
+          ...this.communication(),
+          emailLogoUrl: base64Str
         });
       };
       reader.readAsDataURL(file);

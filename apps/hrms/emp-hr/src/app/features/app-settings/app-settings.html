@@ -98,21 +98,38 @@
           </div>
 
           <div class="section-title" style="margin-top: 2rem;">
-            <h3>Company Signature</h3>
+            <h3>Company Branding & Signatures</h3>
           </div>
 
-          <div class="field-group">
-            <label>Email Signature Image</label>
-            <p class="field-hint" style="margin-top: 4px; margin-bottom: 8px;">This image will replace the <code>{{ '{' }}signature{{ '}' }}</code> variable in all emails.</p>
-            
-            <div class="signature-upload-preview" style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1rem; background: #f8fafc;">
-              <img *ngIf="communication().emailSignatureUrl" [src]="communication().emailSignatureUrl" alt="Company Signature" style="max-height: 80px; max-width: 100%; object-fit: contain; margin-bottom: 1rem; border-radius: 4px;" />
-              <div *ngIf="!communication().emailSignatureUrl" style="color: #64748b; margin-bottom: 1rem; font-size: 13px;">No signature uploaded yet.</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="field-group">
+              <label>Company Logo</label>
+              <p class="field-hint" style="margin-top: 4px; margin-bottom: 8px;">Replaces the <code>{{ '{' }}logo{{ '}' }}</code> variable in emails.</p>
               
-              <input type="file" #sigUpload (change)="onSignatureUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
-              <button class="btn-secondary" (click)="sigUpload.click()" [disabled]="!canEditCommunication()" style="padding: 6px 12px; font-size: 13px;">
-                <i class="fa-solid fa-upload" style="margin-right: 6px;"></i> Upload Signature
-              </button>
+              <div class="signature-upload-preview" style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1rem; background: #f8fafc;">
+                <img *ngIf="communication().emailLogoUrl" [src]="communication().emailLogoUrl" alt="Company Logo" style="max-height: 80px; max-width: 100%; object-fit: contain; margin-bottom: 1rem; border-radius: 4px;" />
+                <div *ngIf="!communication().emailLogoUrl" style="color: #64748b; margin-bottom: 1rem; font-size: 13px;">No logo uploaded yet.</div>
+                
+                <input type="file" #logoUpload (change)="onLogoUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
+                <button class="btn-secondary" (click)="logoUpload.click()" [disabled]="!canEditCommunication()" style="padding: 6px 12px; font-size: 13px;">
+                  <i class="fa-solid fa-upload" style="margin-right: 6px;"></i> Upload Logo
+                </button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label>Email Signature Image</label>
+              <p class="field-hint" style="margin-top: 4px; margin-bottom: 8px;">Replaces the <code>{{ '{' }}signature{{ '}' }}</code> variable in emails.</p>
+              
+              <div class="signature-upload-preview" style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1rem; background: #f8fafc;">
+                <img *ngIf="communication().emailSignatureUrl" [src]="communication().emailSignatureUrl" alt="Company Signature" style="max-height: 80px; max-width: 100%; object-fit: contain; margin-bottom: 1rem; border-radius: 4px;" />
+                <div *ngIf="!communication().emailSignatureUrl" style="color: #64748b; margin-bottom: 1rem; font-size: 13px;">No signature uploaded yet.</div>
+                
+                <input type="file" #sigUpload (change)="onSignatureUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
+                <button class="btn-secondary" (click)="sigUpload.click()" [disabled]="!canEditCommunication()" style="padding: 6px 12px; font-size: 13px;">
+                  <i class="fa-solid fa-upload" style="margin-right: 6px;"></i> Upload Signature
+                </button>
+              </div>
             </div>
           </div>
 
@@ -136,48 +153,58 @@
           <div class="section-title" style="margin-top: 2rem;">
             <h3>Email Templates</h3>
           </div>
-
-          <div class="field-group">
-            <label>Offboarding Rejection Email Template</label>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
-              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
-              <select #varOffboard (change)="insertVariable(varOffboard, txtOffboard, 'offboardingRejectionTemplate')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
-                <option value="" disabled selected>Insert Variable...</option>
-                <option value="{formattedName}">Applicant Name</option>
-                <option value="{signature}">Company Signature</option>
-              </select>
-            </div>
-            <textarea #txtOffboard class="location-input" style="min-height: 150px; padding: 12px; font-family: monospace; font-size: 13px;" [ngModel]="communication().offboardingRejectionTemplate" (ngModelChange)="communication.set({...communication(), offboardingRejectionTemplate: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+          
+          <div style="background-color: #f0f9ff; border-left: 4px solid #0089d1; padding: 12px 16px; margin-bottom: 24px; border-radius: 4px;">
+            <p style="margin: 0; color: #0369a1; font-size: 13px; display: flex; align-items: flex-start; gap: 8px;">
+              <i class="fa-solid fa-circle-info" style="margin-top: 2px;"></i>
+              <span><strong>Tip:</strong> These templates support raw HTML. Use <code>&lt;br&gt;</code> for new lines, <code>&lt;b&gt;text&lt;/b&gt;</code> for bold, and <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for links. Use the dropdown on the right to insert dynamic variables.</span>
+            </p>
           </div>
 
           <div class="field-group">
-            <label>Employee Onboarding Email Template</label>
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Offboarding Rejection Email Template</label>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
-              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}employeeId{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <select #varOffboard (change)="insertVariable(varOffboard, txtOffboard, 'offboardingRejectionTemplate')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
+                <option value="" disabled selected>Insert Variable...</option>
+                <option value="{formattedName}">Applicant Name</option>
+                <option value="{logo}">Company Logo</option>
+                <option value="{signature}">Company Signature</option>
+              </select>
+            </div>
+            <textarea #txtOffboard class="location-input" style="min-height: 150px; padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; font-weight: 400; line-height: 1.6;" [ngModel]="communication().offboardingRejectionTemplate" (ngModelChange)="communication.set({...communication(), offboardingRejectionTemplate: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+          </div>
+
+          <div class="field-group">
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Employee Onboarding Email Template</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}employeeId{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
               <select #varEmpOnboard (change)="insertVariable(varEmpOnboard, txtEmpOnboard, 'onboardingTemplateEmployee')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
                 <option value="" disabled selected>Insert Variable...</option>
                 <option value="{formattedName}">Employee Name</option>
                 <option value="{employeeId}">Employee ID</option>
                 <option value="{onboardingDate}">Onboarding Date</option>
+                <option value="{logo}">Company Logo</option>
                 <option value="{signature}">Company Signature</option>
               </select>
             </div>
-            <textarea #txtEmpOnboard class="location-input" style="min-height: 150px; padding: 12px; font-family: monospace; font-size: 13px;" [ngModel]="communication().onboardingTemplateEmployee" (ngModelChange)="communication.set({...communication(), onboardingTemplateEmployee: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+            <textarea #txtEmpOnboard class="location-input" style="min-height: 150px; padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; font-weight: 400; line-height: 1.6;" [ngModel]="communication().onboardingTemplateEmployee" (ngModelChange)="communication.set({...communication(), onboardingTemplateEmployee: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
           </div>
 
           <div class="field-group">
-            <label>Intern Onboarding Email Template</label>
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Intern Onboarding Email Template</label>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
-              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}endDate{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}endDate{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
               <select #varIntOnboard (change)="insertVariable(varIntOnboard, txtIntOnboard, 'onboardingTemplateIntern')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
                 <option value="" disabled selected>Insert Variable...</option>
                 <option value="{formattedName}">Intern Name</option>
                 <option value="{onboardingDate}">Onboarding Date</option>
                 <option value="{endDate}">End Date</option>
+                <option value="{logo}">Company Logo</option>
                 <option value="{signature}">Company Signature</option>
               </select>
             </div>
-            <textarea #txtIntOnboard class="location-input" style="min-height: 150px; padding: 12px; font-family: monospace; font-size: 13px;" [ngModel]="communication().onboardingTemplateIntern" (ngModelChange)="communication.set({...communication(), onboardingTemplateIntern: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+            <textarea #txtIntOnboard class="location-input" style="min-height: 150px; padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; font-weight: 400; line-height: 1.6;" [ngModel]="communication().onboardingTemplateIntern" (ngModelChange)="communication.set({...communication(), onboardingTemplateIntern: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
           </div>
         </div>
       </section>

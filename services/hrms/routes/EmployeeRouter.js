@@ -373,10 +373,15 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
       const company = await Company.findById(req.tenant.companyId);
       const template = company?.settings?.communication?.onboardingTemplateEmployee;
       const customSignature = company?.settings?.communication?.emailSignatureUrl;
+      const customLogo = company?.settings?.communication?.emailLogoUrl;
       
       const signatureHtml = customSignature 
         ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
         : getSignature(LOGO_URL);
+
+      const logoHtml = customLogo
+        ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+        : `<div style="margin-bottom: 20px;"><img src="${LOGO_URL}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
 
       let htmlContent = "";
       if (template) {
@@ -384,7 +389,8 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
           .replace(/{formattedName}/g, employee.fullName)
           .replace(/{employeeId}/g, newEmployeeId)
           .replace(/{onboardingDate}/g, onboardingDate)
-          .replace(/{signature}/g, signatureHtml);
+          .replace(/{signature}/g, signatureHtml)
+          .replace(/{logo}/g, logoHtml);
       } else {
         htmlContent = `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
                  <h2>Hi ${employee.fullName},</h2>

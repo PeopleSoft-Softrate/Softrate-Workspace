@@ -192,6 +192,8 @@ exports.hrReview = async (req, res) => {
         role: user.role,
         companyName: olSettings.companyName || 'Softrate Global',
         workLocation: olSettings.workLocation || 'Chennai',
+        logo: company?.settings?.communication?.emailLogoUrl || null,
+        signature: company?.settings?.communication?.emailSignatureUrl || null
       };
 
       if (internship && (olSettings.documentTemplates?.internshipCompletion?.pages?.length > 0 || olSettings.documentTemplates?.internshipCompletion?.backgroundUrl)) {
@@ -281,16 +283,22 @@ exports.hrReview = async (req, res) => {
       const company = await Company.findById(resignation.companyId);
       const rejectionTemplate = company?.settings?.communication?.offboardingRejectionTemplate;
       const customSignature = company?.settings?.communication?.emailSignatureUrl;
+      const customLogo = company?.settings?.communication?.emailLogoUrl;
       
       const signatureHtml = customSignature 
         ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
         : getSignature(LOGO_URL);
 
+      const logoHtml = customLogo
+        ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+        : `<div style="margin-bottom: 20px;"><img src="${LOGO_URL}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
+
       let htmlContent = "";
       if (rejectionTemplate) {
         htmlContent = rejectionTemplate
           .replace(/{formattedName}/g, formattedName)
-          .replace(/{signature}/g, signatureHtml);
+          .replace(/{signature}/g, signatureHtml)
+          .replace(/{logo}/g, logoHtml);
       } else {
         htmlContent = `
           <div style="font-family: sans-serif; line-height: 1.5; color: #333;">

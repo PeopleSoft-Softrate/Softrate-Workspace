@@ -24,6 +24,7 @@ const CompanySchema = new mongoose.Schema({
     communication: {
       whatsappNotifications: { type: Boolean, default: false },
       emailNotifications: { type: Boolean, default: true },
+      emailLogoUrl: { type: String, default: null },
       emailSignatureUrl: { type: String, default: null },
       offboardingRejectionTemplate: { 
         type: String, 

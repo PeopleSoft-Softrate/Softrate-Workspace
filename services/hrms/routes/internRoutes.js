@@ -232,7 +232,9 @@ router.put("/accept/:id", verifyTenant,
         endDate: endDate,
         role: role || intern.role,
         companyName: olSettings.companyName,
-        workLocation: olSettings.workLocation
+        workLocation: olSettings.workLocation,
+        logo: company?.settings?.communication?.emailLogoUrl || null,
+        signature: company?.settings?.communication?.emailSignatureUrl || null
       };
 
       const attachments = [];
@@ -307,10 +309,20 @@ router.put("/accept/:id", verifyTenant,
         const Company = require("../models/CompanyModel");
         const companyTemplate = await Company.findById(req.tenant.companyId);
         const template = companyTemplate?.settings?.communication?.onboardingTemplateIntern;
+        const customSignature = companyTemplate?.settings?.communication?.emailSignatureUrl;
+        const customLogo = companyTemplate?.settings?.communication?.emailLogoUrl;
 
         const internName = intern.fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
         const formattedOnboardingDate = new Date(onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
         const formattedEndDate = new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+        const signatureHtml = customSignature
+          ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
+          : getSignature(getLogoUrl());
+
+        const logoHtml = customLogo
+          ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+          : `<div style="margin-bottom: 20px;"><img src="${getLogoUrl()}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
 
         let htmlContent = "";
         if (template) {
@@ -318,9 +330,11 @@ router.put("/accept/:id", verifyTenant,
             .replace(/{formattedName}/g, internName)
             .replace(/{onboardingDate}/g, formattedOnboardingDate)
             .replace(/{endDate}/g, formattedEndDate)
-            .replace(/{signature}/g, getSignature(getLogoUrl()));
+            .replace(/{signature}/g, signatureHtml)
+            .replace(/{logo}/g, logoHtml);
         } else {
           htmlContent = `
+            ${logoHtml}
             <p>Dear ${internName},</p>
             <p>Softrate Global welcomes you Onboard, We herein have attached your Official Offer Letter and Company Culture Book for joining us.</p>
             <p>You can share your offer letter on Linkedin by mentioning @softrate with hashtags #careeratsoftrate #softratetechpark #softratetechnologies</p>
@@ -334,7 +348,7 @@ router.put("/accept/:id", verifyTenant,
             <p style="margin: 0 0 0 0;">For first-time login, you will be required to set your own password and complete your profile by providing the necessary details.</p>
             <p style="margin: 0 0 0 0;">Kindly ensure that all required information is submitted before your onboarding date to avoid any delays.</p>
             <p style="margin: 0 0 15px 0;">For any queries, feel free to contact us.</p>
-            ${getSignature(getLogoUrl())}
+            ${signatureHtml}
           `;
         }
 

@@ -97,7 +97,9 @@ export class CertificateSettings implements OnInit {
     { key: 'endDate',        label: 'End Date' },
     { key: 'todayDate',      label: 'Current Date' },
     { key: 'college',        label: 'College/University' },
-    { key: 'department',     label: 'Department' }
+    { key: 'department',     label: 'Department' },
+    { key: 'logo',           label: 'Company Logo' },
+    { key: 'signature',      label: 'Company Signature' }
   ];
 
   ngOnInit() {

@@ -19,7 +19,8 @@ import {
   Money03Icon,
   LicenseDraftIcon,
   AnalyticsUpIcon,
-  AnalyticsDownIcon
+  AnalyticsDownIcon,
+  UserGroupIcon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -57,6 +58,7 @@ export class Dashboard implements OnInit {
   readonly LicenseDraftIcon = LicenseDraftIcon;
   readonly AnalyticsUpIcon = AnalyticsUpIcon;
   readonly AnalyticsDownIcon = AnalyticsDownIcon;
+  readonly UserGroupIcon = UserGroupIcon;
 
   currentTime = signal<Date>(new Date());
 

@@ -158,192 +158,85 @@
       <p>No pending or filtered approvals match your selection.</p>
     </div>
 
-    <!-- REQUESTS FEED / GRID -->
-    <div *ngIf="!loading() && filteredRequests().length > 0" class="requests-grid">
-    <div *ngFor="let req of filteredRequests()" class="request-item card" [ngClass]="[req.type, req.type === 'onboarding' ? 'padding-remove' : '']">
-
-    <!-- ============================================================ -->
-    <!-- ONBOARDING CARD — styled like intern-requests                -->
-    <!-- ============================================================ -->
-
-    <ng-container *ngIf="req.type === 'onboarding'; else genericCard">
-
-      <!-- ONBOARDING CARD HEADER -->
-      <div class="ob-card-header">
-        <div class="user-info">
-          <div class="ob-avatar">{{ req.requesterName.substring(0, 2).toUpperCase() }}</div>
-          <div>
-            <h3>{{ req.requesterName }}</h3>
-            <p class="role-badge">{{ req.raw?.role || req.subType || 'Applicant' }}</p>
-          </div>
-        </div>
-        <div class="ob-timestamp">
-          <hugeicons-icon [icon]="Clock01Icon" size="12" [strokeWidth]="1.5" color="#94A3B8"></hugeicons-icon>
-          {{ req.createdAt | date:'mediumDate' }}
-        </div>
-      </div>
-
-      <!-- ONBOARDING CARD BODY -->
-      <div class="ob-card-body">
-        <div class="ob-details-grid">
-          <div class="ob-detail-item">
-            <label>College</label>
-            <p>{{ req.raw?.college || 'N/A' }}</p>
-          </div>
-          <div class="ob-detail-item">
-            <label>Department</label>
-            <p>{{ req.raw?.department || 'N/A' }}</p>
-          </div>
-          <div class="ob-detail-item">
-            <label>Year</label>
-            <p>{{ req.raw?.year || 'N/A' }}</p>
-          </div>
-          <div class="ob-detail-item">
-            <label>Contact</label>
-            <p>{{ req.raw?.contact || req.raw?.phone || 'N/A' }}</p>
-          </div>
-          <div class="ob-detail-item" *ngIf="req.raw?.linkedin">
-            <label>Profile</label>
-            <a [href]="req.raw.linkedin" target="_blank" class="ob-social-link">
-              LinkedIn <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i>
-            </a>
-          </div>
-        </div>
-
-        <!-- ASSIGNMENT STATUS ROW -->
-        <div class="ob-status-info">
-          <div class="ob-info-item">
-            <label>Assignment Status</label>
-            <p [class.ob-assigned]="req.raw?.assignedManager" [class.ob-unassigned]="!req.raw?.assignedManager">
-              {{ req.raw?.assignedManager ? 'Assigned to ' + (req.raw.assignedManager?.fullName || 'Manager') : 'No Manager Assigned' }}
-              <span *ngIf="req.raw?.managerApprovalStatus" class="ob-approval-badge"
-                [class.ob-badge-approved]="req.raw.managerApprovalStatus === 'approved'"
-                [class.ob-badge-pending]="req.raw.managerApprovalStatus === 'pending'"
-                [class.ob-badge-rejected]="req.raw.managerApprovalStatus === 'rejected'">
-                {{ req.raw.managerApprovalStatus }}
+    <!-- REQUESTS TABLE -->
+    <div *ngIf="!loading() && filteredRequests().length > 0" class="requests-table-wrapper">
+      <table class="requests-table">
+        <thead>
+          <tr>
+            <th>Applicant</th>
+            <th>Type</th>
+            <th>Details</th>
+            <th>Manager</th>
+            <th>HR</th>
+            <th>Applied</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let req of filteredRequests()" [ngClass]="'row-' + req.type">
+            <!-- Applicant -->
+            <td>
+              <div class="tbl-person">
+                <div class="tbl-avatar" [ngClass]="req.type">{{ req.requesterName.substring(0,2).toUpperCase() }}</div>
+                <div>
+                  <div class="tbl-name">{{ req.requesterName }}</div>
+                  <div class="tbl-id">{{ req.requesterId }}</div>
+                </div>
+              </div>
+            </td>
+            <!-- Type badge -->
+            <td>
+              <span class="tbl-type-badge" [ngClass]="req.type">
+                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Re Investment' : 'Ratification' }}
               </span>
-            </p>
-          </div>
-          <div class="ob-info-item" *ngIf="req.raw?.assignedManager">
-            <label>Manager Dept</label>
-            <p class="ob-dept-badge">{{ req.raw.assignedManager?.department || 'N/A' }}</p>
-          </div>
-        </div>
-
-        <!-- MANAGER REMARKS -->
-        <div class="ob-manager-remarks" *ngIf="req.raw?.managerRemarks">
-          <label>Manager Remarks</label>
-          <div class="ob-remarks-bubble">
-            <p>{{ req.raw.managerRemarks }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ONBOARDING CARD ACTIONS -->
-      <div class="ob-card-actions">
-        <button class="ob-action-btn ob-reject" (click)="openReview(req, 'reject')">
-          <i class="fa-solid fa-trash-can"></i> Reject
-        </button>
-        <!-- For HR: Redirect to Review & Onboard form -->
-        <a *ngIf="isHr() && req.subType === 'Intern'" class="ob-action-btn ob-approve" [routerLink]="['/interns/approve', req._id]" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-sizing: border-box;">
-          <i class="fa-solid fa-user-plus"></i> Onboard
-        </a>
-        <a *ngIf="isHr() && req.subType !== 'Intern'" class="ob-action-btn ob-approve" [routerLink]="['/employees/approve', req._id]" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-sizing: border-box;">
-          <i class="fa-solid fa-user-plus"></i> Onboard
-        </a>
-        <!-- For Managers: Open Approval/Recommendation Modal -->
-        <button *ngIf="!isHr()" class="ob-action-btn ob-approve" (click)="openReview(req, 'approve')">
-          <i class="fa-solid fa-user-plus"></i> Approve
-        </button>
-      </div>
-
-    </ng-container>
-    <!-- ============================================================ -->
-    <!-- END ONBOARDING CARD                                          -->
-    <!-- ============================================================ -->
-
-    <!-- GENERIC CARD (Leave / Offboarding) -->
-    <ng-template #genericCard>
-
-      <!-- CARD HEADER -->
-      <div class="card-header">
-        <div class="user-meta">
-          <div class="avatar-placeholder">
-            {{ req.requesterName.substring(0, 2).toUpperCase() }}
-          </div>
-          <div>
-            <h4 class="user-name">{{ req.requesterName }}</h4>
-            <span class="user-id">ID: {{ req.requesterId }}</span>
-          </div>
-        </div>
-        <span class="badge" [ngClass]="req.type">
-          {{ req.type === 'leave' ? 'Leave' : (req.type === 'offboarding' ? 'Offboarding' : (req.type === 'fund' ? 'Fund Request' : 'Ratification')) }}
-        </span>
-      </div>
-
-      <!-- CARD DETAILS BODY -->
-      <div class="card-body">
-        <div class="detail-row">
-          <span class="detail-label">Type / Reason:</span>
-          <span class="detail-value highlight">{{ req.subType }}</span>
-        </div>
-        <div class="detail-row" *ngIf="req.days">
-          <span class="detail-label">Duration:</span>
-          <span class="detail-value">{{ req.days }} Days</span>
-        </div>
-        <div class="detail-row" *ngIf="req.type === 'fund'">
-          <span class="detail-label">Requested Amount:</span>
-          <span class="detail-value highlight">₹{{ req.amount || 0 | number:'1.0-0' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Timeline:</span>
-          <span class="detail-value timeline-value">{{ req.dateText }}</span>
-        </div>
-        
-        <div class="reason-box" *ngIf="req.reason">
-          <p class="reason-title">Details / Motivation:</p>
-          <p class="reason-content">"{{ req.reason }}"</p>
-        </div>
-
-        <!-- Approval progress checklist -->
-        <div class="approval-progress">
-          <p class="progress-title">Approval Progress:</p>
-          <div class="checks-row">
-            <div class="check-item" [ngClass]="req.managerStatus">
-              <div class="dot"></div>
-              <span>Manager: <b>{{ req.managerStatus || 'pending' }}</b></span>
-            </div>
-            <div class="check-item" [ngClass]="req.hrStatus">
-              <div class="dot"></div>
-              <span>HR Action: <b>{{ req.hrStatus || 'pending' }}</b></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CARD FOOTER / ACTIONS -->
-      <div class="card-footer">
-        <div class="time-stamp">
-          <hugeicons-icon [icon]="Clock01Icon" size="12" [strokeWidth]="1.5" color="#94A3B8"></hugeicons-icon>
-          <span>Applied: {{ req.createdAt | date:'mediumDate' }}</span>
-        </div>
-
-        <div class="action-buttons" *ngIf="req.status === 'pending'">
-          <button (click)="openReview(req, 'reject')" class="action-btn btn-reject">Reject</button>
-          <button (click)="openReview(req, 'approve')" class="action-btn btn-approve">Accept</button>
-        </div>
-
-        <div class="status-stamp" *ngIf="req.status !== 'pending'" [ngClass]="req.status">
-          <span>{{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Decision: Approved' : 'Decision: Rejected' }}</span>
-          <p class="rejection-hint" *ngIf="req.rejectionReason">"{{ req.rejectionReason }}"</p>
-        </div>
-      </div>
-
-    </ng-template>
-
-  </div>
-
-
+            </td>
+            <!-- Details -->
+            <td>
+              <div class="tbl-detail-primary">{{ req.subType }}</div>
+              <div class="tbl-detail-secondary" *ngIf="req.days">{{ req.days }} day(s)</div>
+              <div class="tbl-detail-secondary" *ngIf="req.type === 'fund'">₹{{ req.amount || 0 | number:'1.0-0' }}</div>
+              <div class="tbl-detail-secondary" *ngIf="req.reason" title="{{ req.reason }}">{{ req.reason | slice:0:40 }}{{ req.reason?.length > 40 ? '…' : '' }}</div>
+            </td>
+            <!-- Manager status -->
+            <td>
+              <span class="tbl-status-chip" [ngClass]="req.managerStatus || 'pending'">{{ req.managerStatus || 'pending' }}</span>
+            </td>
+            <!-- HR status -->
+            <td>
+              <span class="tbl-status-chip" [ngClass]="req.hrStatus || 'pending'">{{ req.hrStatus || 'pending' }}</span>
+            </td>
+            <!-- Date applied -->
+            <td class="tbl-date">{{ req.createdAt | date:'d MMM y' }}</td>
+            <!-- Actions -->
+            <td>
+              <div class="tbl-actions" *ngIf="req.status === 'pending'">
+                <button class="tbl-btn tbl-btn-reject" (click)="openReview(req, 'reject')" title="Reject">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+                <ng-container *ngIf="req.type !== 'onboarding'">
+                  <button class="tbl-btn tbl-btn-approve" (click)="openReview(req, 'approve')" title="Accept">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="req.type === 'onboarding' && isHr()">
+                  <a class="tbl-btn tbl-btn-approve" [routerLink]="req.subType === 'Intern' ? ['/interns/approve', req._id] : ['/employees/approve', req._id]" title="Onboard">
+                    <i class="fa-solid fa-user-plus"></i>
+                  </a>
+                </ng-container>
+                <ng-container *ngIf="req.type === 'onboarding' && !isHr()">
+                  <button class="tbl-btn tbl-btn-approve" (click)="openReview(req, 'approve')" title="Approve">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                </ng-container>
+              </div>
+              <div class="tbl-status-done" *ngIf="req.status !== 'pending'" [ngClass]="req.status">
+                {{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Approved' : 'Rejected' }}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   <!-- ACTION REVIEW MODAL OVERLAY -->
   <div class="modal-backdrop" *ngIf="showReviewModal()">
     <div class="modal-container card slide-in">
@@ -431,14 +324,19 @@
       </div>
 
       <div class="modal-footer">
-        <button (click)="closeModal()" class="btn-secondary">Cancel</button>
+        <button (click)="closeModal()" class="btn-secondary" [disabled]="loading()">Cancel</button>
         <button 
           (click)="submitReview()" 
-          [disabled]="reviewAction() === 'reject' && !reviewRemarks().trim()"
+          [disabled]="(reviewAction() === 'reject' && !reviewRemarks().trim()) || loading()"
           class="btn-primary" 
           [ngClass]="reviewAction() === 'approve' ? 'approve' : 'reject'"
         >
-          Confirm Decision
+          <ng-container *ngIf="!loading()">
+            Confirm Decision
+          </ng-container>
+          <ng-container *ngIf="loading()">
+            <i class="fa-solid fa-spinner fa-spin"></i> Processing...
+          </ng-container>
         </button>
       </div>
     </div>

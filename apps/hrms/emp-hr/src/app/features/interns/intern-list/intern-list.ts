@@ -53,7 +53,7 @@ export class InternList implements OnInit {
   allInterns = signal<any[]>([]);
   isLoading = signal(true);
   statusFilter = signal<string>('currently-active');
-  rangeFilter = signal<string>('all');
+  rangeFilter = signal<string>('current');
   searchQuery = signal<string>('');
 
   ngOnInit() {
@@ -88,7 +88,7 @@ export class InternList implements OnInit {
     const query = this.searchQuery().toLowerCase();
     let filtered = this.allInterns();
     
-    if (this.statusFilter() === 'currently-active') {
+    if (this.statusFilter() === 'currently-active' || this.rangeFilter() === 'current') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       

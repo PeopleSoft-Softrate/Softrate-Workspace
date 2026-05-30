@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -13,6 +14,8 @@ import { InternSidebar } from '../intern-sidebar/intern-sidebar';
   styleUrls: ['./intern-review.css', '../intern-list/intern-list.css']
 })
 export class InternReview implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -100,7 +103,7 @@ export class InternReview implements OnInit {
     // Check if any goal is not graded yet
     const hasUngraded = goals.some((g: any) => !this.grades()[g._id]);
     if (hasUngraded) {
-      alert('Please select a grade for all goals before submitting.');
+      this.alertService.show('Please select a grade for all goals before submitting.');
       return;
     }
 
@@ -112,12 +115,12 @@ export class InternReview implements OnInit {
     this.isLoading.set(true);
     this.apiService.gradeInternReview(this.internId(), this.selectedMonth(), payload).subscribe({
       next: (res: any) => {
-        alert('Review ratings submitted successfully!');
+        this.alertService.show('Review ratings submitted successfully!');
         this.fetchReviews();
       },
       error: (err) => {
         console.error('Failed to submit review grades:', err);
-        alert(err.error?.message || 'Failed to submit review grades. Please try again.');
+        this.alertService.show(err.error?.message || 'Failed to submit review grades. Please try again.');
         this.isLoading.set(false);
       }
     });

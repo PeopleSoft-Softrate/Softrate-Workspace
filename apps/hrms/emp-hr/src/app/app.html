@@ -1,3 +1,4 @@
+<app-alert></app-alert>
 <div class="app-container" [class.login-mode]="isLoginPage()">
   <!-- Sidebar -->
   <aside class="sidebar" *ngIf="!isLoginPage()">
@@ -242,10 +243,7 @@
   <!-- Main Content -->
   <main class="main-content" [class.full-width]="isLoginPage()">
     <header class="top-bar" *ngIf="!isLoginPage()">
-      <div class="search-container">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" placeholder="Search for employees, interns, or documents...">
-      </div>
+      <app-global-search></app-global-search>
       <div class="top-actions">
         <div class="notification-wrapper">
           <button class="icon-btn" title="Notifications" (click)="toggleNotifications()">

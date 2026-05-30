@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -14,6 +15,8 @@ import { ApiService } from '../../../services/api.service';
   styleUrl: './employee-requests.css'
 })
 export class EmployeeRequests implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private router = inject(Router);
 
@@ -53,8 +56,8 @@ export class EmployeeRequests implements OnInit {
     });
   }
 
-  rejectRequest(id: string) {
-    if (!confirm('Are you sure you want to reject this application?')) return;
+  async rejectRequest(id: string) {
+    if (!await this.alertService.confirm('Are you sure you want to reject this application?')) return;
     
     this.apiService.deleteEmployee(id).subscribe({
       next: () => {
@@ -62,7 +65,7 @@ export class EmployeeRequests implements OnInit {
       },
       error: (err) => {
         console.error('Failed to reject request', err);
-        alert('Failed to reject application');
+        this.alertService.show('Failed to reject application');
       }
     });
   }

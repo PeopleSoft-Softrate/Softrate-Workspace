@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -13,6 +14,8 @@ import { ChangeDetectorRef } from '@angular/core';
   styleUrl: './employee-add.css'
 })
 export class EmployeeAdd implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -95,14 +98,14 @@ export class EmployeeAdd implements OnInit {
       },
       error: (err) => {
         console.error('Failed to fetch request data', err);
-        alert('Failed to load application data');
+        this.alertService.show('Failed to load application data');
       }
     });
   }
 
   saveEmployee() {
     if (!this.employee.fullName || !this.employee.email || !this.employee.onboardingDate) {
-      alert('Full Name, Email, and Onboarding Date are required');
+      this.alertService.show('Full Name, Email, and Onboarding Date are required');
       return;
     }
 
@@ -111,36 +114,36 @@ export class EmployeeAdd implements OnInit {
     if (this.isEditMode()) {
       this.apiService.updateEmployee(this.requestId, this.employee).subscribe({
         next: () => {
-          alert('Employee profile updated successfully!');
+          this.alertService.show('Employee profile updated successfully!');
           this.router.navigate(['/employees', this.requestId]);
         },
         error: (err: any) => {
           console.error('Failed to update employee', err);
-          alert('Failed to update: ' + (err.error?.message || err.message));
+          this.alertService.show('Failed to update: ' + (err.error?.message || err.message));
           this.isSaving.set(false);
         }
       });
     } else if (this.isApprovalMode()) {
       this.apiService.acceptEmployee(this.requestId, this.employee).subscribe({
         next: () => {
-          alert('Employee onboarding started!');
+          this.alertService.show('Employee onboarding started!');
           this.router.navigate(['/employees/requests']);
         },
         error: (err: any) => {
           console.error('Failed to approve employee', err);
-          alert('Failed to approve: ' + (err.error?.message || err.message));
+          this.alertService.show('Failed to approve: ' + (err.error?.message || err.message));
           this.isSaving.set(false);
         }
       });
     } else {
       this.apiService.addEmployee(this.employee).subscribe({
         next: () => {
-          alert('Employee added successfully');
+          this.alertService.show('Employee added successfully');
           this.router.navigate(['/employees']);
         },
         error: (err: any) => {
           console.error('Failed to add employee', err);
-          alert('Failed to add: ' + (err.error?.message || err.message));
+          this.alertService.show('Failed to add: ' + (err.error?.message || err.message));
           this.isSaving.set(false);
         }
       });

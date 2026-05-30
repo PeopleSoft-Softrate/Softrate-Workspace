@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, OnInit, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -47,6 +48,8 @@ interface Project {
   styleUrl: './project-management.css'
 })
 export class ProjectManagement implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private socketService = inject(SocketService);
   private router = inject(Router);
@@ -265,7 +268,7 @@ export class ProjectManagement implements OnInit {
   saveProject() {
     const projectData = this.newProject();
     if (!projectData.title) {
-      alert('Project title is required');
+      this.alertService.show('Project title is required');
       return;
     }
 
@@ -280,7 +283,7 @@ export class ProjectManagement implements OnInit {
         this.closeModal();
       },
       error: (err) => {
-        alert('Failed to save project: ' + (err.error?.error || err.message));
+        this.alertService.show('Failed to save project: ' + (err.error?.error || err.message));
         this.isLoading.set(false);
       }
     });
@@ -320,8 +323,8 @@ export class ProjectManagement implements OnInit {
     });
   }
 
-  deleteProject(projectId: string) {
-    if (!confirm('Are you sure you want to delete this project?')) return;
+  async deleteProject(projectId: string) {
+    if (!await this.alertService.confirm('Are you sure you want to delete this project?')) return;
     
     // Optimistic Update
     const originalProjects = this.projects();
@@ -330,7 +333,7 @@ export class ProjectManagement implements OnInit {
     this.apiService.deleteProject(projectId).subscribe({
       error: (err) => {
         // Rollback on error
-        alert('Failed to delete project');
+        this.alertService.show('Failed to delete project');
         this.projects.set(originalProjects);
       }
     });

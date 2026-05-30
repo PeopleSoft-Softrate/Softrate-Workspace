@@ -173,30 +173,20 @@ router.get("/all/pending", verifyTenant, async (req, res) => {
 // Get all approved or ongoing interns with filters
 router.get("/all/active", verifyTenant, async (req, res) => {
   try {
-    const { range = "thisMonth", status = "all" } = req.query;
+    const { range = "current", status = "all" } = req.query;
 
-    const statusFilter =
-      status === "all" ? ["approved", "ongoing", "remote"] : [status];
+    const query = { companyId: req.tenant.companyId };
 
-    const query = { status: { $in: statusFilter }, companyId: req.tenant.companyId };
+    if (range === "alumni") {
+      query.status = "drop";
+    } else {
+      // current and all time use the same base statuses, but current has date filtering on frontend
+      const statusFilter = status === "all" ? ["approved", "ongoing"] : [status];
+      query.status = { $in: statusFilter };
+    }
 
     if (req.user && req.user.role === 'manager') {
       query.assignedManager = req.user.id;
-    }
-
-    const now = new Date();
-    let start, end;
-
-    if (range === "thisMonth") {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    } else if (range === "sixMonths") {
-      start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    }
-
-    if (start && end) {
-      query.createdAt = { $gte: start, $lte: end }; // <‑ use createdAt
     }
 
     const interns = await Intern.find(query)

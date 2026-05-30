@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,6 +30,8 @@ import {
   styleUrl: './unified-requests.css'
 })
 export class UnifiedRequests implements OnInit, OnDestroy {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private socketService = inject(SocketService);
 
@@ -143,7 +146,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Failed to fetch HR approvals data:', err);
-          alert('Failed to load approvals data. Please refresh.');
+          this.alertService.show('Failed to load approvals data. Please refresh.');
         }
       });
     } else if (this.isManager() && managerId) {
@@ -163,7 +166,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Failed to fetch Manager approvals data:', err);
-          alert('Failed to load approvals data. Please refresh.');
+          this.alertService.show('Failed to load approvals data. Please refresh.');
         }
       });
     } else {
@@ -538,12 +541,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       next: () => {
         this.fetchRequests();
         this.closeModal();
-        alert(`Fund request ${action}d successfully`);
+        this.alertService.show(`Fund request ${action}d successfully`);
       },
       error: (err) => {
         console.error(err);
         this.loading.set(false);
-        alert('Action failed. Error: ' + (err.error?.message || err.message));
+        this.alertService.show('Action failed. Error: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -555,12 +558,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Ratification ${action}d successfully`);
+          this.alertService.show(`Ratification ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     } else if (this.isManager()) {
@@ -568,12 +571,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Ratification ${action}d successfully`);
+          this.alertService.show(`Ratification ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     }
@@ -586,12 +589,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Leave request ${action}d successfully`);
+          this.alertService.show(`Leave request ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     } else if (this.isManager()) {
@@ -600,12 +603,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Leave request ${action}d successfully`);
+          this.alertService.show(`Leave request ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     }
@@ -623,12 +626,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Offboarding request ${action}d successfully`);
+          this.alertService.show(`Offboarding request ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     } else if (this.isManager()) {
@@ -637,12 +640,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Offboarding request ${action}d successfully`);
+          this.alertService.show(`Offboarding request ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     }
@@ -664,12 +667,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
             next: () => {
               this.fetchRequests();
               this.closeModal();
-              alert(`Intern approved and onboarded successfully`);
+              this.alertService.show(`Intern approved and onboarded successfully`);
             },
             error: (err) => {
               console.error(err);
               this.loading.set(false);
-              alert('Action failed. Error: ' + err.message);
+              this.alertService.show('Action failed. Error: ' + err.message);
             }
           });
         } else {
@@ -680,12 +683,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
             next: () => {
               this.fetchRequests();
               this.closeModal();
-              alert(`Employee approved and onboarded successfully`);
+              this.alertService.show(`Employee approved and onboarded successfully`);
             },
             error: (err) => {
               console.error(err);
               this.loading.set(false);
-              alert('Action failed. Error: ' + err.message);
+              this.alertService.show('Action failed. Error: ' + err.message);
             }
           });
         }
@@ -699,12 +702,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
           next: () => {
             this.fetchRequests();
             this.closeModal();
-            alert(`Application rejected successfully`);
+            this.alertService.show(`Application rejected successfully`);
           },
           error: (err) => {
             console.error(err);
             this.loading.set(false);
-            alert('Action failed. Error: ' + err.message);
+            this.alertService.show('Action failed. Error: ' + err.message);
           }
         });
       }
@@ -719,12 +722,12 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          alert(`Application review submitted successfully`);
+          this.alertService.show(`Application review submitted successfully`);
         },
         error: (err) => {
           console.error(err);
           this.loading.set(false);
-          alert('Action failed. Error: ' + err.message);
+          this.alertService.show('Action failed. Error: ' + err.message);
         }
       });
     }

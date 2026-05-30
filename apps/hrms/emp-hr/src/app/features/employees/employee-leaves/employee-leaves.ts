@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -14,6 +15,8 @@ import { ApiService } from '../../../services/api.service';
   styleUrl: './employee-leaves.css'
 })
 export class EmployeeLeaves implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private router = inject(Router);
 
@@ -104,7 +107,7 @@ export class EmployeeLeaves implements OnInit {
 
   onSubmitLeave() {
     if (!this.leaveForm.fromDate || !this.leaveForm.toDate || !this.leaveForm.leaveType || !this.leaveForm.reason) {
-      alert('Please fill all required fields');
+      this.alertService.show('Please fill all required fields');
       return;
     }
 
@@ -114,7 +117,7 @@ export class EmployeeLeaves implements OnInit {
     const days = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
     if (days <= 0) {
-      alert('End date must be after or equal to Start date');
+      this.alertService.show('End date must be after or equal to Start date');
       return;
     }
 
@@ -135,14 +138,14 @@ export class EmployeeLeaves implements OnInit {
 
     this.apiService.applyLeave(formData).subscribe({
       next: (res) => {
-        alert('Leave application submitted successfully!');
+        this.alertService.show('Leave application submitted successfully!');
         this.fetchLeaves();
         this.fetchBalance();
         this.resetForm();
         this.submitLoading.set(false);
       },
       error: (err) => {
-        alert(err.error?.message || 'Failed to submit leave application');
+        this.alertService.show(err.error?.message || 'Failed to submit leave application');
         this.submitLoading.set(false);
       }
     });

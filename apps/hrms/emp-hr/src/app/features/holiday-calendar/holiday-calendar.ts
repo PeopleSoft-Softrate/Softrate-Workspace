@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, signal, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
@@ -25,6 +26,8 @@ import * as XLSX from 'xlsx';
   styleUrl: './holiday-calendar.css'
 })
 export class HolidayCalendar implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
 
   // Icons
@@ -150,12 +153,12 @@ export class HolidayCalendar implements OnInit {
     this.isSaving.set(true);
     this.apiService.saveHoliday({ type: 'weekly', day, weeks: this.selectedWeeks() }).subscribe({
       next: () => {
-        alert('Weekly holiday updated');
+        this.alertService.show('Weekly holiday updated');
         this.fetchHolidays();
         this.isSaving.set(false);
       },
       error: (err: any) => {
-        alert('Failed to update: ' + (err.error?.message || err.message));
+        this.alertService.show('Failed to update: ' + (err.error?.message || err.message));
         this.isSaving.set(false);
       }
     });
@@ -163,7 +166,7 @@ export class HolidayCalendar implements OnInit {
 
   addHoliday() {
     if (!this.newHoliday.fromDate || !this.newHoliday.toDate || !this.newHoliday.reason) {
-      alert('Please fill all fields');
+      this.alertService.show('Please fill all fields');
       return;
     }
     this.isSaving.set(true);
@@ -174,17 +177,17 @@ export class HolidayCalendar implements OnInit {
         this.isSaving.set(false);
       },
       error: (err: any) => {
-        alert('Failed to save: ' + (err.error?.message || err.message));
+        this.alertService.show('Failed to save: ' + (err.error?.message || err.message));
         this.isSaving.set(false);
       }
     });
   }
 
-  deleteHoliday(id: string) {
-    if (!confirm('Delete this holiday?')) return;
+  async deleteHoliday(id: string) {
+    if (!await this.alertService.confirm('Delete this holiday?')) return;
     this.apiService.deleteHoliday(id).subscribe({
       next: () => this.fetchHolidays(),
-      error: (err: any) => alert('Failed to delete: ' + (err.error?.message || err.message))
+      error: (err: any) => this.alertService.show('Failed to delete: ' + (err.error?.message || err.message))
     });
   }
 
@@ -220,18 +223,18 @@ export class HolidayCalendar implements OnInit {
         this.isSaving.set(true);
         this.apiService.saveBulkHolidays(parsedHolidays).subscribe({
           next: () => {
-            alert(`${parsedHolidays.length} holidays imported successfully!`);
+            this.alertService.show(`${parsedHolidays.length} holidays imported successfully!`);
             this.fetchHolidays();
             this.isSaving.set(false);
             event.target.value = ''; // Reset input
           },
           error: (err) => {
-            alert('Failed to import: ' + (err.error?.message || err.message));
+            this.alertService.show('Failed to import: ' + (err.error?.message || err.message));
             this.isSaving.set(false);
           }
         });
       } else {
-        alert('No valid holidays found in the file. Please ensure columns are named "Date" and "Reason".');
+        this.alertService.show('No valid holidays found in the file. Please ensure columns are named "Date" and "Reason".');
       }
     };
     reader.readAsArrayBuffer(file);

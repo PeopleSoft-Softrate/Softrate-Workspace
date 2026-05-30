@@ -1,0 +1,62 @@
+<div *ngIf="alertService.state().visible" class="alert-overlay">
+  <div class="alert-modal">
+    
+    <!-- Body -->
+    <div class="alert-body">
+      <div class="alert-icon-container"
+           [ngClass]="{
+             'icon-success': alertService.state().type === 'success',
+             'icon-error': alertService.state().type === 'error',
+             'icon-info': alertService.state().type === 'info',
+             'icon-confirm': alertService.state().type === 'confirm'
+           }">
+        <!-- Success Icon -->
+        <svg *ngIf="alertService.state().type === 'success'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <!-- Error Icon -->
+        <svg *ngIf="alertService.state().type === 'error'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <!-- Info Icon -->
+        <svg *ngIf="alertService.state().type === 'info'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <!-- Confirm Icon -->
+        <svg *ngIf="alertService.state().type === 'confirm'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <h3 class="alert-title">
+        {{ alertService.state().type === 'success' ? 'Success' : alertService.state().type === 'error' ? 'Error' : alertService.state().type === 'confirm' ? 'Confirm' : 'Notification' }}
+      </h3>
+      <p class="alert-message">
+        {{ alertService.state().message }}
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div class="alert-footer">
+      <ng-container *ngIf="alertService.state().type === 'confirm'">
+        <button (click)="alertService.submitConfirm(false)" class="btn-cancel">
+          Cancel
+        </button>
+        <button (click)="alertService.submitConfirm(true)" class="btn-ok btn-error">
+          OK
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="alertService.state().type !== 'confirm'">
+        <button (click)="alertService.hide()" class="btn-ok"
+                [ngClass]="{
+                  'btn-success': alertService.state().type === 'success',
+                  'btn-error': alertService.state().type === 'error',
+                  'btn-info': alertService.state().type === 'info'
+                }">
+          OK
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</div>

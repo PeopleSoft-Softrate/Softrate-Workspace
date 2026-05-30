@@ -367,11 +367,14 @@
   background: #dcfce7;
 }
 
-.location-item {
+.location-item, .location-header-grid {
   display: grid;
-  grid-template-columns: 1fr 100px 100px 80px 40px;
+  grid-template-columns: 1fr 120px 120px 90px 40px;
   gap: 0.75rem;
   align-items: center;
+}
+
+.location-item {
   padding: 0.75rem;
   background: #f8fafc;
   border-radius: 12px;

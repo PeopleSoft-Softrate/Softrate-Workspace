@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -16,6 +17,8 @@ import { finalize } from 'rxjs';
   styleUrl: './org-hierarchy.css'
 })
 export class OrgHierarchy implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
@@ -86,7 +89,7 @@ export class OrgHierarchy implements OnInit {
 
   saveHierarchy() {
     if (!this.hierarchyUrl) {
-      alert('Please enter a URL');
+      this.alertService.show('Please enter a URL');
       return;
     }
 
@@ -98,7 +101,7 @@ export class OrgHierarchy implements OnInit {
         this.publishedUrl.set(this.hierarchyUrl);
       },
       error: (err: any) => {
-        alert('Failed to save: ' + (err.error?.msg || err.message));
+        this.alertService.show('Failed to save: ' + (err.error?.msg || err.message));
       }
     });
   }

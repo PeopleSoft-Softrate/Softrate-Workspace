@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -11,6 +12,8 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './attendance-corrections.css'
 })
 export class AttendanceCorrections implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   
   requests = signal<any[]>([]);
@@ -36,41 +39,41 @@ export class AttendanceCorrections implements OnInit {
     });
   }
 
-  approveRequest(requestId: string) {
-    if (!confirm('Are you sure you want to approve this correction? The attendance record will be updated.')) return;
+  async approveRequest(requestId: string) {
+    if (!await this.alertService.confirm('Are you sure you want to approve this correction? The attendance record will be updated.')) return;
     
     this.apiService.hrReviewAttendanceRequest(requestId, 'approved', this.remarks).subscribe({
       next: () => {
         this.requests.update(prev => prev.filter(r => r._id !== requestId));
         this.remarks = '';
         this.reviewingId.set(null);
-        alert('Attendance corrected successfully');
+        this.alertService.show('Attendance corrected successfully');
       },
       error: (err) => {
         console.error('Approval failed', err);
-        alert('Failed to approve request');
+        this.alertService.show('Failed to approve request');
       }
     });
   }
 
-  rejectRequest(requestId: string) {
+  async rejectRequest(requestId: string) {
     if (!this.remarks.trim()) {
-      alert('Please provide remarks for rejection');
+      this.alertService.show('Please provide remarks for rejection');
       return;
     }
 
-    if (!confirm('Are you sure you want to reject this correction?')) return;
+    if (!await this.alertService.confirm('Are you sure you want to reject this correction?')) return;
 
     this.apiService.hrReviewAttendanceRequest(requestId, 'rejected', this.remarks).subscribe({
       next: () => {
         this.requests.update(prev => prev.filter(r => r._id !== requestId));
         this.remarks = '';
         this.reviewingId.set(null);
-        alert('Request rejected');
+        this.alertService.show('Request rejected');
       },
       error: (err) => {
         console.error('Rejection failed', err);
-        alert('Failed to reject request');
+        this.alertService.show('Failed to reject request');
       }
     });
   }

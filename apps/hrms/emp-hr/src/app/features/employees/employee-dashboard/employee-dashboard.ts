@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -36,6 +37,8 @@ import {
   styleUrl: './employee-dashboard.css'
 })
 export class EmployeeDashboard implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   
   // Icons
@@ -232,10 +235,10 @@ export class EmployeeDashboard implements OnInit {
     const remarks = prompt(`Enter remarks for ${status}:`) || '';
     this.apiService.managerReviewIntern(internId, status, remarks).subscribe({
       next: () => {
-        alert(`Request ${status} successfully`);
+        this.alertService.show(`Request ${status} successfully`);
         this.fetchTeamRequests();
       },
-      error: (err) => alert('Action failed')
+      error: (err) => this.alertService.show('Action failed')
     });
   }
 

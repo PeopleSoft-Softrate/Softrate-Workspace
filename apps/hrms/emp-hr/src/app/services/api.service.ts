@@ -445,7 +445,7 @@ export class ApiService {
 
   // Attendance Correction Requests (HR & Manager)
   getHrPendingAttendanceRequests(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/attendance-requests/hr-pending`);
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance-requests/hr-pending`));
   }
 
   hrReviewAttendanceRequest(requestId: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {
@@ -453,7 +453,7 @@ export class ApiService {
   }
 
   getManagerPendingAttendanceRequests(managerId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/attendance-requests/manager/${managerId}`);
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance-requests/manager/${managerId}`));
   }
 
   managerReviewAttendanceRequest(requestId: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {

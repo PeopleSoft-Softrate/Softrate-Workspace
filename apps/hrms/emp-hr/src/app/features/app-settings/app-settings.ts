@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -27,6 +28,8 @@ import { finalize, forkJoin } from 'rxjs';
   styleUrl: './app-settings.css'
 })
 export class AppSettings implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
 
   readonly PlusSignIcon = PlusSignIcon;
@@ -278,7 +281,7 @@ export class AppSettings implements OnInit {
   removeLocation(index: number) {
     const loc = this.locations()[index];
     if (!this.canEditLocation(loc)) {
-      alert('You do not have permission to remove this location');
+      this.alertService.show('You do not have permission to remove this location');
       return;
     }
     const current = this.locations();
@@ -370,11 +373,11 @@ export class AppSettings implements OnInit {
       finalize(() => this.isSaving.set(false))
     ).subscribe({
       next: (res: any) => {
-        alert('All settings and payroll structures updated successfully');
+        this.alertService.show('All settings updated successfully');
         this.fetchSettings(); // Refresh to reflect changes immediately
       },
       error: (err) => {
-        alert('Failed to update settings: ' + (err.error?.message || err.message));
+        this.alertService.show('Failed to update settings: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -410,7 +413,7 @@ export class AppSettings implements OnInit {
     
     // Don't allow deleting 'Other'
     if (roles[index].toLowerCase() === 'other') {
-      alert('The "Other" role cannot be deleted as it is required by the system.');
+      this.alertService.show('The "Other" role cannot be deleted as it is required by the system.');
       return;
     }
 

@@ -46,94 +46,78 @@
 </div>
 
 <div class="data-container" [class.loading]="isLoading()">
-  <div class="request-grid" *ngIf="!isLoading() && filteredRequests().length > 0">
-    <div class="request-card" *ngFor="let req of filteredRequests()">
-      <div class="card-header">
-        <div class="user-info">
-          <div>
-            <h3>{{ req.fullName }}</h3>
-            <p class="role-badge">{{ req.role || 'Applicant' }}</p>
-          </div>
-        </div>
-        <div class="time-stamp">
-          <i class="fa-solid fa-clock"></i>
-          {{ req.createdAt | date:'mediumDate' }}
-        </div>
-      </div>
-
-      <div class="card-body">
-        <div class="details-grid">
-          <div class="detail-item">
-            <label><i class="fa-solid fa-university"></i> College</label>
-            <p>{{ req.college || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label><i class="fa-solid fa-building-columns"></i> Department</label>
-            <p>{{ req.department || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label><i class="fa-solid fa-calendar-day"></i> Year</label>
-            <p>{{ req.year || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label><i class="fa-solid fa-phone"></i> Contact</label>
-            <p>{{ req.contact || 'N/A' }}</p>
-          </div>
-          <div class="detail-item" *ngIf="req.linkedin">
-            <label><i class="fa-brands fa-linkedin"></i> Profile</label>
-            <a [href]="req.linkedin" target="_blank" class="social-link">LinkedIn <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
-          </div>
-        </div>
-
-        <div class="info-row status-info">
-          <div class="info-item">
-            <label>Assignment Status</label>
-            <p [class.assigned]="req.assignedManager" [class.unassigned]="!req.assignedManager">
-              <i class="fa-solid" [ngClass]="req.assignedManager ? 'fa-user-check' : 'fa-user-slash'"></i>
-              {{ req.assignedManager ? 'Assigned to ' + req.assignedManager.fullName : 'Unassigned' }}
-              <span *ngIf="req.managerApprovalStatus" class="approval-badge" [class]="req.managerApprovalStatus">
-                {{ req.managerApprovalStatus }}
-              </span>
-            </p>
-          </div>
-          <div class="info-item" *ngIf="req.assignedManager">
-             <label>Manager Dept</label>
-             <p class="dept-badge">{{ req.assignedManager.department || 'N/A' }}</p>
-          </div>
-        </div>
-
-        <!-- Manager Remarks Section -->
-        <div class="manager-remarks" *ngIf="req.managerRemarks">
-          <label><i class="fa-solid fa-comment-dots"></i> Manager Remarks</label>
-          <div class="remarks-bubble">
-            <p>{{ req.managerRemarks }}</p>
-          </div>
-        </div>
-
-        <!-- Manager Assignment Tool -->
-        <div class="assignment-tool" *ngIf="!req.assignedManager || req.managerApprovalStatus === 'rejected'">
-          <label><i class="fa-solid fa-hand-pointer"></i> Assign to Manager</label>
-          <div class="assign-row">
-            <select #managerSelect>
-              <option value="">Select Manager...</option>
-              <option *ngFor="let m of managers()" [value]="m._id">{{ m.fullName }} {{ m.department ? '(' + m.department + ')' : '' }}</option>
-            </select>
-            <button class="btn-assign" (click)="assignToManager(req._id, managerSelect.value)" [disabled]="isAssigning() === req._id">
-              {{ isAssigning() === req._id ? 'Assigning...' : 'Assign' }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card-actions-row">
-        <button class="action-btn reject" (click)="rejectRequest(req._id)" title="Reject Application">
-          <i class="fa-solid fa-trash-can"></i> Reject
-        </button>
-        <button class="action-btn approve" [routerLink]="['/interns/approve', req._id]" title="Final Approval">
-          <i class="fa-solid fa-user-plus"></i> Onboard
-        </button>
-      </div>
-    </div>
+  <div *ngIf="!isLoading() && filteredRequests().length > 0" class="requests-table-wrapper">
+    <table class="requests-table">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Role</th>
+          <th>Info</th>
+          <th>Manager</th>
+          <th *ngIf="currentCategory() !== 'Internship' && currentCategory() !== 'Job'">Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let req of filteredRequests()">
+          <!-- Applicant -->
+          <td>
+            <div class="tbl-person">
+              <div class="tbl-avatar onboarding">{{ req.fullName.substring(0,2).toUpperCase() }}</div>
+              <div>
+                <div class="tbl-name" style="display: flex; align-items: center; gap: 6px;">
+                  {{ req.fullName }}
+                  <a *ngIf="req.linkedin" [href]="req.linkedin" target="_blank" title="View LinkedIn" style="color: #0A66C2; font-size: 14px;">
+                    <i class="fa-brands fa-linkedin"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="tbl-text" style="white-space: normal; line-height: 1.2;">{{ req.role || 'Applicant' }}</div>
+          </td>
+          <td>
+            <div class="tbl-info-icon" [attr.data-tooltip]="'Department: ' + (req.department || 'N/A') + '&#xa;College: ' + (req.college || 'N/A') + '&#xa;Year: ' + (req.year || 'N/A') + '&#xa;Contact: ' + (req.contact || 'N/A') + '&#xa;Applied: ' + (req.createdAt | date:'d MMM y')">
+              <i class="fa-solid fa-circle-info"></i>
+            </div>
+          </td>
+          <!-- Manager status -->
+          <td class="tbl-manager-cell">
+            <div class="tbl-manager-info" *ngIf="req.assignedManager; else noManager">
+              <div class="tbl-name">{{ req.assignedManager.fullName }}</div>
+            </div>
+            <ng-template #noManager>
+              <!-- Assignment tool inline -->
+              <div class="tbl-assign-row" *ngIf="!req.assignedManager || req.managerApprovalStatus === 'rejected'">
+                <select #managerSelect class="tbl-select">
+                  <option value="">Assign Manager...</option>
+                  <option *ngFor="let m of managers()" [value]="m._id">{{ m.fullName }}{{ m.department ? ' (' + m.department + ')' : '' }}</option>
+                </select>
+                <button class="tbl-btn-assign" (click)="assignToManager(req._id, managerSelect.value)" [disabled]="isAssigning() === req._id">
+                  {{ isAssigning() === req._id ? '...' : 'Assign' }}
+                </button>
+              </div>
+            </ng-template>
+          </td>
+          <!-- Status -->
+          <td *ngIf="currentCategory() !== 'Internship' && currentCategory() !== 'Job'">
+            <span class="tbl-status-chip" [ngClass]="req.managerApprovalStatus || 'pending'">{{ req.managerApprovalStatus || 'pending' }}</span>
+          </td>
+          <!-- Actions -->
+          <td>
+            <div class="tbl-actions">
+              <button class="tbl-btn tbl-btn-reject" (click)="rejectRequest(req._id)" title="Reject">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <button class="tbl-btn tbl-btn-approve" [routerLink]="['/interns/approve', req._id]" title="Onboard">
+                <i class="fa-solid fa-user-plus"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <div class="empty-state" *ngIf="!isLoading() && filteredRequests().length === 0">

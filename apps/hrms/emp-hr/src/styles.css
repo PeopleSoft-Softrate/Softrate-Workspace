@@ -391,3 +391,317 @@ p        { font-size: var(--text-base); line-height: 1.6; } /* 13px */
     opacity: 1;
   }
 }
+
+/* Hide number input arrows */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* ============================================================
+   SHARED REQUESTS TABLE STYLES
+   Used by: Approvals Hub & Intern Requests
+   ============================================================ */
+.requests-table-wrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+}
+
+.requests-table thead tr {
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.requests-table th {
+  padding: 0.875rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.requests-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+
+.requests-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.requests-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+/* Person cell */
+.tbl-person {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.tbl-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  flex-shrink: 0;
+}
+
+.tbl-avatar.leave        { background: #fef3c7; color: #b45309; }
+.tbl-avatar.offboarding  { background: #fee2e2; color: #b91c1c; }
+.tbl-avatar.onboarding   { background: #dbeafe; color: #1d4ed8; }
+.tbl-avatar.correction   { background: #f3e8ff; color: #7c3aed; }
+.tbl-avatar.fund         { background: #d1fae5; color: #065f46; }
+
+.tbl-name {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+
+.tbl-id, .tbl-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* Type badge */
+.tbl-type-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tbl-type-badge.leave        { background: #fef9c3; color: #854d0e; }
+.tbl-type-badge.offboarding  { background: #fee2e2; color: #991b1b; }
+.tbl-type-badge.onboarding   { background: #dbeafe; color: #1e40af; }
+.tbl-type-badge.correction   { background: #ede9fe; color: #6d28d9; }
+.tbl-type-badge.fund         { background: #d1fae5; color: #065f46; }
+
+/* Detail cell */
+.tbl-detail-primary {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.tbl-detail-secondary {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Timeline */
+.tbl-timeline, .tbl-date, .tbl-text {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* Truncated cell with instant custom tooltip on hover */
+.tbl-truncate {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+  position: relative;
+}
+
+.tbl-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: help;
+  position: relative;
+  font-size: 1rem;
+}
+.tbl-info-icon:hover {
+  color: #0f172a;
+}
+
+.tbl-truncate[data-tooltip]::after,
+.tbl-info-icon[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%);
+  background: #0f172a;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: pre-line;
+  width: max-content;
+  min-width: 200px;
+  max-width: 300px;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+  z-index: 9999;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.tbl-truncate[data-tooltip]:hover::after,
+.tbl-info-icon[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Status chips */
+.tbl-status-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.tbl-status-chip.pending   { background: #fef9c3; color: #92400e; }
+.tbl-status-chip.approved  { background: #dcfce7; color: #166534; }
+.tbl-status-chip.accepted  { background: #dcfce7; color: #166534; }
+.tbl-status-chip.rejected  { background: #fee2e2; color: #991b1b; }
+.tbl-status-chip.initial   { background: #f1f5f9; color: #475569; }
+
+/* Actions */
+.tbl-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.tbl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.tbl-btn-reject {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.tbl-btn-reject:hover {
+  background: #fecaca;
+}
+
+.tbl-btn-approve {
+  background: #0f172a;
+  color: #fff;
+}
+.tbl-btn-approve:hover {
+  background: #1e293b;
+}
+
+.tbl-status-done {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.tbl-status-done.accepted,
+.tbl-status-done.approved,
+.tbl-status-done.accept {
+  background: #dcfce7;
+  color: #15803d;
+}
+.tbl-status-done.rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Contact cell */
+.tbl-contact { font-size: 0.8125rem; color: var(--text-secondary); }
+.tbl-linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  color: #2563eb;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.tbl-linkedin:hover { text-decoration: underline; }
+
+/* Manager cell */
+.tbl-manager-cell {
+  /* No max-width since we freed up horizontal space */
+}
+.tbl-manager-info { display: flex; flex-direction: column; gap: 4px; }
+.tbl-manager-info .tbl-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inline assign row */
+.tbl-assign-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.tbl-select {
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 4px 8px;
+  outline: none;
+  max-width: 160px;
+  text-overflow: ellipsis;
+}
+.tbl-btn-assign {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #0f172a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.tbl-btn-assign:hover { background: #1e293b; }
+.tbl-btn-assign:disabled { background: #cbd5e1; cursor: not-allowed; }
+

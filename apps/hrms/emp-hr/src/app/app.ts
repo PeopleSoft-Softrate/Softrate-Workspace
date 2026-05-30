@@ -5,6 +5,8 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon } from '@hugeicons/core-free-icons';
 import { ApiService } from './services/api.service';
 import { forkJoin } from 'rxjs';
+import { Alert } from './shared/components/alert/alert';
+import { GlobalSearch } from './shared/components/global-search/global-search';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +16,9 @@ import { forkJoin } from 'rxjs';
     RouterLink,
     RouterLinkActive,
     CommonModule,
-    HugeiconsIconComponent
+    HugeiconsIconComponent,
+    Alert,
+    GlobalSearch
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

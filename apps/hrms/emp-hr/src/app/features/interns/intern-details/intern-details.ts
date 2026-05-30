@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,8 @@ import { InternSidebar } from '../intern-sidebar/intern-sidebar';
   styleUrls: ['./intern-details.css', '../intern-list/intern-list.css'],
 })
 export class InternDetails implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -86,32 +89,32 @@ export class InternDetails implements OnInit {
     return role === 'hr_admin';
   }
 
-  convertToEmployee() {
-    if (!confirm('Are you sure you want to promote this intern to a full-time employee?')) return;
+  async convertToEmployee() {
+    if (!await this.alertService.confirm('Are you sure you want to promote this intern to a full-time employee?')) return;
 
     this.isConverting.set(true);
     this.apiService.convertInternToEmployee(this.internId()).subscribe({
       next: () => {
-        alert('Intern promoted to employee successfully!');
+        this.alertService.show('Intern promoted to employee successfully!');
         this.router.navigate(['/employees']);
       },
       error: (err: any) => {
-        alert('Failed to convert: ' + (err.error?.message || err.message));
+        this.alertService.show('Failed to convert: ' + (err.error?.message || err.message));
         this.isConverting.set(false);
       }
     });
   }
 
-  convertToHr() {
-    if (!confirm('Convert this intern to HR? They will gain admin dashboard access.')) return;
+  async convertToHr() {
+    if (!await this.alertService.confirm('Convert this intern to HR? They will gain admin dashboard access.')) return;
     this.isConverting.set(true);
     this.apiService.convertToHr(this.internId()).subscribe({
       next: () => {
-        alert('Intern converted to HR successfully!');
+        this.alertService.show('Intern converted to HR successfully!');
         this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        alert('Conversion failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Conversion failed: ' + (err.error?.message || err.message));
         this.isConverting.set(false);
       }
     });
@@ -137,24 +140,24 @@ export class InternDetails implements OnInit {
     }
   }
 
-  terminateIntern() {
+  async terminateIntern() {
     if (!this.terminationReason().trim()) {
-      alert("Please provide a reason for termination.");
+      this.alertService.show("Please provide a reason for termination.");
       return;
     }
     
-    if (!confirm('Are you sure you want to terminate this intern? This action will disable their login access.')) return;
+    if (!await this.alertService.confirm('Are you sure you want to terminate this intern? This action will disable their login access.')) return;
 
     this.isTerminating.set(true);
     this.apiService.terminateStaff(this.internId(), 'intern', this.terminationReason()).subscribe({
       next: () => {
-        alert('Intern terminated successfully!');
+        this.alertService.show('Intern terminated successfully!');
         this.fetchDetails();
         this.isTerminating.set(false);
         this.showTerminateForm.set(false);
       },
       error: (err: any) => {
-        alert('Termination failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Termination failed: ' + (err.error?.message || err.message));
         this.isTerminating.set(false);
       }
     });

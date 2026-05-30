@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, computed, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -15,6 +16,8 @@ import { ApiService } from '../../../services/api.service';
   styleUrl: './employee-attendance.css'
 })
 export class EmployeeAttendance implements OnInit, OnDestroy {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -123,7 +126,7 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
     if (locationStr) {
       window.open(`https://www.google.com/maps?q=${locationStr}`, '_blank');
     } else {
-      alert('Location not available for this record');
+      this.alertService.show('Location not available for this record');
     }
   }
 
@@ -197,13 +200,13 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
     const executePunch = (loc: string) => {
       this.apiService.employeePunchIn(this.employeeId(), loc).subscribe({
         next: (res) => {
-          alert('Punched in successfully!');
+          this.alertService.show('Punched in successfully!');
           this.fetchTodayAttendance();
           this.fetchAttendance();
           this.punchLoading.set(false);
         },
         error: (err) => {
-          alert(err.error?.message || 'Failed to punch in');
+          this.alertService.show(err.error?.message || 'Failed to punch in');
           this.punchLoading.set(false);
         }
       });
@@ -224,13 +227,13 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
     const executePunch = (loc: string) => {
       this.apiService.employeePunchOut(this.employeeId(), loc).subscribe({
         next: (res) => {
-          alert('Punched out successfully!');
+          this.alertService.show('Punched out successfully!');
           this.fetchTodayAttendance();
           this.fetchAttendance();
           this.punchLoading.set(false);
         },
         error: (err) => {
-          alert(err.error?.message || 'Failed to punch out');
+          this.alertService.show(err.error?.message || 'Failed to punch out');
           this.punchLoading.set(false);
         }
       });

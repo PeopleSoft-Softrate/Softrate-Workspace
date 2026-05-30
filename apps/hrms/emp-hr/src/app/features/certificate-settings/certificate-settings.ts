@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,8 @@ import { finalize } from 'rxjs';
   styleUrl: './certificate-settings.css'
 })
 export class CertificateSettings implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -187,7 +190,7 @@ export class CertificateSettings implements OnInit {
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('File size exceeds 5MB limit.'); return; }
+    if (file.size > 5 * 1024 * 1024) { this.alertService.show('File size exceeds 5MB limit.'); return; }
     const reader = new FileReader();
     reader.onload = (e: any) => {
       this.currentPage.backgroundUrl = e.target.result;
@@ -321,8 +324,8 @@ export class CertificateSettings implements OnInit {
     this.apiService.updateCompanySettings(payload).pipe(
       finalize(() => this.isSaving = false)
     ).subscribe({
-      next: () => alert('All document templates saved successfully'),
-      error: (err) => alert('Failed to update settings: ' + (err.error?.message || err.message))
+      next: () => this.alertService.show('All document templates saved successfully'),
+      error: (err) => this.alertService.show('Failed to update settings: ' + (err.error?.message || err.message))
     });
   }
 }

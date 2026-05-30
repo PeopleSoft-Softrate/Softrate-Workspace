@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -11,6 +12,8 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './leave-management.css',
 })
 export class LeaveManagement implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   
   pendingLeaves = signal<any[]>([]);
@@ -36,17 +39,17 @@ export class LeaveManagement implements OnInit {
     });
   }
 
-  approveLeave(id: string) {
-    if (!confirm('Are you sure you want to approve this leave request?')) return;
+  async approveLeave(id: string) {
+    if (!await this.alertService.confirm('Are you sure you want to approve this leave request?')) return;
     
     this.apiService.hrReviewLeave(id, 'approved', '').subscribe({
       next: () => {
-        alert('Leave approved successfully');
+        this.alertService.show('Leave approved successfully');
         this.fetchPendingLeaves();
       },
       error: (err) => {
         console.error('Failed to approve leave', err);
-        alert(err.error?.message || 'Failed to approve leave');
+        this.alertService.show(err.error?.message || 'Failed to approve leave');
       }
     });
   }
@@ -65,19 +68,19 @@ export class LeaveManagement implements OnInit {
     const reason = this.rejectionReason();
     
     if (!id || !reason.trim()) {
-      alert('Please provide a reason for rejection');
+      this.alertService.show('Please provide a reason for rejection');
       return;
     }
 
     this.apiService.hrReviewLeave(id, 'rejected', reason).subscribe({
       next: () => {
-        alert('Leave rejected');
+        this.alertService.show('Leave rejected');
         this.closeRejectModal();
         this.fetchPendingLeaves();
       },
       error: (err) => {
         console.error('Failed to reject leave', err);
-        alert('Failed to reject leave');
+        this.alertService.show('Failed to reject leave');
       }
     });
   }

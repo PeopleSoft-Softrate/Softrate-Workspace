@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,8 @@ import { ApiService } from '../../../services/api.service';
   styleUrl: './employee-details.css',
 })
 export class EmployeeDetails implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -104,65 +107,65 @@ export class EmployeeDetails implements OnInit {
     return (role === 'hr' || role === 'hr_admin') && isManager === true && !isHr;
   }
 
-  promoteToManager() {
-    if (!confirm('Promote this employee to Manager?')) return;
+  async promoteToManager() {
+    if (!await this.alertService.confirm('Promote this employee to Manager?')) return;
     this.isPromoting.set(true);
     this.apiService.promoteToManager(this.employeeId()).subscribe({
       next: () => {
-        alert('Employee promoted to Manager successfully!');
+        this.alertService.show('Employee promoted to Manager successfully!');
         this.fetchDetails();
         this.isPromoting.set(false);
       },
       error: (err: any) => {
-        alert('Promotion failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Promotion failed: ' + (err.error?.message || err.message));
         this.isPromoting.set(false);
       }
     });
   }
 
-  convertToHr() {
-    if (!confirm('Convert this staff member to HR? They will gain admin dashboard access.')) return;
+  async convertToHr() {
+    if (!await this.alertService.confirm('Convert this staff member to HR? They will gain admin dashboard access.')) return;
     this.isPromoting.set(true);
     this.apiService.convertToHr(this.employeeId()).subscribe({
       next: () => {
-        alert('Staff converted to HR successfully!');
+        this.alertService.show('Staff converted to HR successfully!');
         this.fetchDetails();
         this.isPromoting.set(false);
       },
       error: (err: any) => {
-        alert('Conversion failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Conversion failed: ' + (err.error?.message || err.message));
         this.isPromoting.set(false);
       }
     });
   }
 
-  demoteToManager() {
-    if (!confirm('Demote this HR staff member back to Manager? Their admin privileges will be revoked.')) return;
+  async demoteToManager() {
+    if (!await this.alertService.confirm('Demote this HR staff member back to Manager? Their admin privileges will be revoked.')) return;
     this.isPromoting.set(true);
     this.apiService.demoteToManager(this.employeeId()).subscribe({
       next: () => {
-        alert('HR staff demoted to Manager successfully!');
+        this.alertService.show('HR staff demoted to Manager successfully!');
         this.fetchDetails();
         this.isPromoting.set(false);
       },
       error: (err: any) => {
-        alert('Demotion failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Demotion failed: ' + (err.error?.message || err.message));
         this.isPromoting.set(false);
       }
     });
   }
 
-  demoteToEmployee() {
-    if (!confirm('Demote this Manager back to Employee status?')) return;
+  async demoteToEmployee() {
+    if (!await this.alertService.confirm('Demote this Manager back to Employee status?')) return;
     this.isPromoting.set(true);
     this.apiService.demoteManagerToEmployee(this.employeeId()).subscribe({
       next: () => {
-        alert('Manager demoted to Employee successfully!');
+        this.alertService.show('Manager demoted to Employee successfully!');
         this.fetchDetails();
         this.isPromoting.set(false);
       },
       error: (err: any) => {
-        alert('Demotion failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Demotion failed: ' + (err.error?.message || err.message));
         this.isPromoting.set(false);
       }
     });
@@ -188,24 +191,24 @@ export class EmployeeDetails implements OnInit {
     }
   }
 
-  terminateEmployee() {
+  async terminateEmployee() {
     if (!this.terminationReason().trim()) {
-      alert("Please provide a reason for termination.");
+      this.alertService.show("Please provide a reason for termination.");
       return;
     }
     
-    if (!confirm('Are you sure you want to terminate this staff member? This action will disable their login access.')) return;
+    if (!await this.alertService.confirm('Are you sure you want to terminate this staff member? This action will disable their login access.')) return;
 
     this.isTerminating.set(true);
     this.apiService.terminateStaff(this.employeeId(), 'employee', this.terminationReason()).subscribe({
       next: () => {
-        alert('Staff member terminated successfully!');
+        this.alertService.show('Staff member terminated successfully!');
         this.fetchDetails();
         this.isTerminating.set(false);
         this.showTerminateForm.set(false);
       },
       error: (err: any) => {
-        alert('Termination failed: ' + (err.error?.message || err.message));
+        this.alertService.show('Termination failed: ' + (err.error?.message || err.message));
         this.isTerminating.set(false);
       }
     });

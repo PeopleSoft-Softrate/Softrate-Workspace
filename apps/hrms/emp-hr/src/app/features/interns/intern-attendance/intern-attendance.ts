@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -15,6 +16,8 @@ import { InternSidebar } from '../intern-sidebar/intern-sidebar';
   styleUrls: ['./intern-attendance.css', '../intern-list/intern-list.css']
 })
 export class InternAttendance implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -45,7 +48,7 @@ export class InternAttendance implements OnInit {
     if (locationStr) {
       window.open(`https://www.google.com/maps?q=${locationStr}`, '_blank');
     } else {
-      alert('Location not available for this record');
+      this.alertService.show('Location not available for this record');
     }
   }
 

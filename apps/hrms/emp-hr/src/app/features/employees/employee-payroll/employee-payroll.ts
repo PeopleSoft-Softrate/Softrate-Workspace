@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -14,6 +15,8 @@ import { ApiService } from '../../../services/api.service';
   styleUrl: './employee-payroll.css'
 })
 export class EmployeePayroll implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -83,6 +86,6 @@ export class EmployeePayroll implements OnInit {
   }
 
   downloadPayslip(month: string) {
-    alert(`Downloading payslip for ${month}...`);
+    this.alertService.show(`Downloading payslip for ${month}...`);
   }
 }

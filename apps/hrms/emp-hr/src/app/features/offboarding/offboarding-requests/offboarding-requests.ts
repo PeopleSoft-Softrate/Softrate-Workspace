@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -13,6 +14,8 @@ import { finalize } from 'rxjs';
   styleUrl: './offboarding-requests.css'
 })
 export class OffboardingRequests implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private http = inject(HttpClient);
 
@@ -102,9 +105,9 @@ export class OffboardingRequests implements OnInit {
           next: () => {
             this.closeModal();
             this.fetchRequests();
-            alert(`Resignation ${action} successfully`);
+            this.alertService.show(`Resignation ${action} successfully`);
           },
-          error: (err) => alert('Failed to process review: ' + err.message)
+          error: (err) => this.alertService.show('Failed to process review: ' + err.message)
         });
     } else if (this.isHrType(this.userRole())) {
       const flags = {
@@ -119,9 +122,9 @@ export class OffboardingRequests implements OnInit {
           next: () => {
             this.closeModal();
             this.fetchRequests();
-            alert(`Resignation ${action}ed successfully`);
+            this.alertService.show(`Resignation ${action}ed successfully`);
           },
-          error: (err) => alert('Failed to process review: ' + err.message)
+          error: (err) => this.alertService.show('Failed to process review: ' + err.message)
         });
     }
   }

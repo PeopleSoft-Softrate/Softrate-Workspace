@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -11,6 +12,8 @@ import { RouterModule } from '@angular/router';
   styleUrl: './intern-requests.css'
 })
 export class InternRequests implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   
   allRequests = signal<any[]>([]);
@@ -49,13 +52,13 @@ export class InternRequests implements OnInit {
     this.isAssigning.set(internId);
     this.apiService.assignInternToManager(internId, managerId).subscribe({
       next: () => {
-        alert('Intern assigned to manager successfully');
+        this.alertService.show('Intern assigned to manager successfully');
         this.fetchRequests(); // Refresh to show assignment status
         this.isAssigning.set(null);
       },
       error: (err) => {
         console.error('Assignment failed', err);
-        alert('Failed to assign manager');
+        this.alertService.show('Failed to assign manager');
         this.isAssigning.set(null);
       }
     });
@@ -149,8 +152,8 @@ export class InternRequests implements OnInit {
     return this.getFilteredCountForCategory(category) > 0;
   }
 
-  rejectRequest(id: string) {
-    if (!confirm('Are you sure you want to reject this application?')) return;
+  async rejectRequest(id: string) {
+    if (!await this.alertService.confirm('Are you sure you want to reject this application?')) return;
     
     this.apiService.deleteIntern(id).subscribe({
       next: () => {
@@ -158,7 +161,7 @@ export class InternRequests implements OnInit {
       },
       error: (err) => {
         console.error('Failed to reject request', err);
-        alert('Failed to reject application');
+        this.alertService.show('Failed to reject application');
       }
     });
   }

@@ -1,3 +1,4 @@
+import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
@@ -13,6 +14,8 @@ import { ChangeDetectorRef } from '@angular/core';
   styleUrl: './intern-add.css'
 })
 export class InternAdd implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -86,7 +89,7 @@ export class InternAdd implements OnInit {
       },
       error: (err) => {
         console.error('Failed to fetch request data', err);
-        alert('Failed to load application data');
+        this.alertService.show('Failed to load application data');
       }
     });
   }
@@ -118,12 +121,12 @@ export class InternAdd implements OnInit {
     if (this.isEditMode()) {
       this.apiService.updateIntern(this.requestId, this.intern).subscribe({
         next: () => {
-          alert('Intern profile updated successfully!');
+          this.alertService.show('Intern profile updated successfully!');
           this.router.navigate(['/interns', this.requestId]);
         },
         error: (err: any) => {
           console.error('Failed to update intern', err);
-          alert('Failed to update: ' + (err.error?.message || err.message));
+          this.alertService.show('Failed to update: ' + (err.error?.message || err.message));
           this.isSaving.set(false);
         }
       });
@@ -131,12 +134,12 @@ export class InternAdd implements OnInit {
       // Approval logic
       this.apiService.acceptIntern(this.requestId, this.intern).subscribe({
         next: () => {
-          alert('Intern approved and onboarding started!');
+          this.alertService.show('Intern approved and onboarding started!');
           this.router.navigate(['/interns/requests']);
         },
         error: (err) => {
           console.error('Failed to approve intern', err);
-          alert('Failed to approve intern: ' + (err.error?.message || err.message));
+          this.alertService.show('Failed to approve intern: ' + (err.error?.message || err.message));
           this.isSaving.set(false);
         }
       });
@@ -144,12 +147,12 @@ export class InternAdd implements OnInit {
       // Manual registration (legacy support)
       this.apiService.addIntern(this.intern).subscribe({
         next: () => {
-          alert('Intern added successfully');
+          this.alertService.show('Intern added successfully');
           this.router.navigate(['/interns']);
         },
         error: (err: any) => {
           console.error('Failed to add intern', err);
-          alert('Failed to add intern: ' + (err.error?.message || err.message));
+          this.alertService.show('Failed to add intern: ' + (err.error?.message || err.message));
           this.isSaving.set(false);
         }
       });

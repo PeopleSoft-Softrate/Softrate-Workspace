@@ -230,9 +230,9 @@
           </div>
         </div>
 
-        <button class="view-all-btn">
-          View All Activities
-          <hugeicons-icon [icon]="Home01Icon" size="14" [strokeWidth]="2"></hugeicons-icon>
+        <button class="view-all-btn" [routerLink]="selectedModel() === 'interns' ? '/interns' : '/employees'">
+          View All Active {{ selectedModel() === 'interns' ? 'Interns' : 'Employees' }}
+          <hugeicons-icon [icon]="UserGroupIcon" size="14" [strokeWidth]="2"></hugeicons-icon>
         </button>
       </div>
 

@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -15,6 +16,8 @@ import { AddInvoiceIcon, PolicyIcon, CheckmarkCircle01Icon, ViewIcon, Delete02Ic
   styleUrl: './hr-policies.css'
 })
 export class HrPolicies implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
@@ -70,7 +73,7 @@ export class HrPolicies implements OnInit {
 
   addPolicy() {
     if (!this.newPolicy.policy_name || !this.newPolicy.policy_url) {
-      alert('Please fill name and URL');
+      this.alertService.show('Please fill name and URL');
       return;
     }
 
@@ -82,7 +85,7 @@ export class HrPolicies implements OnInit {
         this.isSaving.set(false);
       },
       error: (err: any) => {
-        alert('Failed to save: ' + err.message);
+        this.alertService.show('Failed to save: ' + err.message);
         this.isSaving.set(false);
       }
     });
@@ -101,13 +104,13 @@ export class HrPolicies implements OnInit {
     return this.newPolicy.policy_view_by.includes(role);
   }
 
-  deletePolicy(id: string) {
-    if (confirm('Delete this policy?')) {
+  async deletePolicy(id: string) {
+    if (await this.alertService.confirm('Delete this policy?')) {
       this.apiService.deletePolicy(id).subscribe({
         next: () => {
           this.fetchPolicies(true); // Silent refresh
         },
-        error: (err: any) => alert('Failed to delete: ' + err.message)
+        error: (err: any) => this.alertService.show('Failed to delete: ' + err.message)
       });
     }
   }

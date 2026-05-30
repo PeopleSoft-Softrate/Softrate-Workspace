@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +27,8 @@ interface Template {
   styleUrl: './performance-goals.css'
 })
 export class PerformanceGoals implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
 
   templates = signal<Template[]>([]);
@@ -102,13 +105,13 @@ export class PerformanceGoals implements OnInit {
           this.editingTemplate.set(null);
           this.loadTemplates();
         },
-        error: (err) => alert(err.error?.message || 'Save failed')
+        error: (err) => this.alertService.show(err.error?.message || 'Save failed')
       });
     }
   }
 
-  deleteTemplate(id: string) {
-    if (confirm('Are you sure you want to delete this template?')) {
+  async deleteTemplate(id: string) {
+    if (await this.alertService.confirm('Are you sure you want to delete this template?')) {
       this.apiService.deletePerformanceTemplate(id).subscribe({
         next: () => this.loadTemplates()
       });

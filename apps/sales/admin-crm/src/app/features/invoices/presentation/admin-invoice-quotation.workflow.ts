@@ -82,6 +82,8 @@ export class AdminInvoiceQuotationWorkflow {
   private buildPrintDocument(previewHtml: string): string {
     const headMarkup = this.collectPrintHeadMarkup();
     const baseHref = String(document.baseURI || window.location.href).replace(/"/g, '&quot;');
+    const isQuotation = previewHtml.includes('quotation-preview');
+    const rootClass = isQuotation ? 'admin-print-root quotation-print-root' : 'admin-print-root';
     return `<!doctype html>
 <html lang="en">
   <head>
@@ -107,6 +109,10 @@ export class AdminInvoiceQuotationWorkflow {
         padding: 8mm !important;
         background: #ffffff !important;
         box-sizing: border-box !important;
+      }
+
+      .quotation-print-root {
+        padding: 8mm !important;
       }
 
       .admin-print-root .admin-quote-modal,
@@ -135,6 +141,19 @@ export class AdminInvoiceQuotationWorkflow {
         box-shadow: none !important;
       }
 
+      .quotation-print-root .admin-quote-modal,
+      .quotation-print-root .invoice-builder,
+      .quotation-print-root .invoice-preview {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+      }
+
       .admin-print-root .invoice-preview:not(.quotation-preview) {
         display: flex !important;
         flex-direction: column !important;
@@ -156,12 +175,12 @@ export class AdminInvoiceQuotationWorkflow {
 
       @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 8mm;
       }
     </style>
   </head>
   <body>
-    <div class="admin-print-root">
+    <div class="${rootClass}">
       <div class="admin-quote-modal">
         <div class="invoice-builder">
           ${previewHtml}

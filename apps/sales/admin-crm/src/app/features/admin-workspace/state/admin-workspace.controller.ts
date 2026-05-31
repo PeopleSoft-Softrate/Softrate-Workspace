@@ -1,5 +1,6 @@
 import { Directive, OnInit } from '@angular/core';
 import { Chart, ChartType, registerables } from 'chart.js';
+import { firstValueFrom } from 'rxjs';
 import { RegisterPayload, LoginPayload } from '../../../services/auth.service';
 import { ApiService } from '../../../services/api.service';
 import { Employee } from '../../../services/employee.service';
@@ -46,6 +47,23 @@ interface QuotationBankRow {
   label: string;
   value: string;
 }
+
+interface CompanyFullViewNote {
+  _id: string;
+  text: string;
+  createdAt: string;
+}
+
+interface CompanyFullViewProfile {
+  leadCompanyName: string;
+  alternatePhone: string;
+  alternateEmail: string;
+  notes: CompanyFullViewNote[];
+  updatedAt?: string;
+  createdAt?: string;
+}
+
+type CompanyFullSection = 'overview' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'alternate' | 'notes';
 
 const DEFAULT_QUOTATION_KIND_NOTE = 'We aim to provide the best software to automate your business with high quality at affordable cost.';
 const DEFAULT_QUOTATION_TERMS = [
@@ -262,7 +280,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   historyLogs: any[] = [];
   historyLoading = false;
   historyLead: Lead | null = null;
-  adminCompanyFullSection: 'overview' | 'contacts' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'notes' = 'overview';
+  adminCompanyFullSection: CompanyFullSection = 'overview';
 
   openHistory(lead: Lead): void {
     if (!this.dashboardCode || !lead.contactNumber) return;
@@ -407,7 +425,10 @@ export abstract class AdminWorkspaceController implements OnInit {
   private findLeadRecordForAdminBookmark(bookmark: Bookmark | null | undefined): Lead | undefined {
     if (!bookmark) return undefined;
     const bookmarkPhone = String(bookmark.contactNumber || '').trim();
-    const bookmarkCompany = String(bookmark.companyName || '').trim();
+    const rawBookmarkCompany = String(bookmark.companyName || '').trim();
+    const bookmarkCompany = /^(unnamed\s+company|unknown|n\/a|na|-|--|—)$/i.test(rawBookmarkCompany)
+      ? ''
+      : rawBookmarkCompany;
     const sameCompanyLead = bookmarkPhone ? this.allLeads.find((lead) => (
       String(lead.contactNumber || '').trim() === bookmarkPhone &&
       String(lead.leadCompanyName || '').trim() === bookmarkCompany
@@ -524,6 +545,62 @@ export abstract class AdminWorkspaceController implements OnInit {
   readonly currentYear = new Date().getFullYear();
   readonly quotationTerms = DEFAULT_QUOTATION_TERMS;
   companyFullViewOpen = false;
+  companyFullActiveSection: CompanyFullSection = 'overview';
+  private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'followups', label: 'Followups' },
+    { id: 'remarks', label: 'Remarks History' },
+    { id: 'invoices', label: 'Invoice History' },
+    { id: 'quotations', label: 'Quotation History' },
+    { id: 'alternate', label: 'Alternate Info' },
+    { id: 'notes', label: 'Notes' },
+  ];
+  companyFullLoading = false;
+  companyFullProfileLoading = false;
+  companyFullHistoryLoading = false;
+  companyFullInvoiceLoading = false;
+  companyFullQuotationLoading = false;
+  companyFullFollowupLoading = false;
+  companyFullSavingAlternateInfo = false;
+  companyFullNoteSaving = false;
+  companyFullRemarkSaving = false;
+  companyFullFollowupSaving = false;
+  companyFullProfileError = '';
+  companyFullHistoryError = '';
+  companyFullInvoiceError = '';
+  companyFullQuotationError = '';
+  companyFullRemarkError = '';
+  companyFullFollowupError = '';
+  companyFullProfile: CompanyFullViewProfile = {
+    leadCompanyName: '',
+    alternatePhone: '',
+    alternateEmail: '',
+    notes: [],
+  };
+  companyFullHistoryLogs: any[] = [];
+  companyFullRemarksHistory: any[] = [];
+  companyFullInvoiceItems: any[] = [];
+  companyFullQuotationItems: any[] = [];
+  companyFullFollowups: Bookmark[] = [];
+  companyFullRows: Lead[] = [];
+  companyFullAlternatePhone = '';
+  companyFullAlternateEmail = '';
+  companyFullRemarkDraft = '';
+  companyFullNoteDraft = '';
+  companyFullContextLead: Lead | null = null;
+  companyFullRemarkMenuOpen = false;
+  private companyFullRemarkMenuCloseRef: ReturnType<typeof setTimeout> | null = null;
+  companyFullFollowupForm = {
+    brochuresSent: false,
+    techMeet: false,
+    meetingRemarks: false,
+    quotationSent: false,
+    proposalSent: false,
+    whatsappGrp: false,
+    description: '',
+    newRemark: '',
+    reminderDate: '',
+  };
   companyRemarkLead: Lead | null = null;
   adminAiSummaryOpen = false;
   aiBrief: AiBrief | null = null;
@@ -1643,6 +1720,17 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   fmtDate(d: string | undefined | null): string {
     return formatIndianDateTime(d);
+  }
+
+  fmtDateTime(d: string | undefined | null): string {
+    if (!d) return '—';
+    return new Date(d).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   }
 
   fmtTime(ts: string | number | undefined): string {
@@ -3890,6 +3978,24 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   trackByEmpId(index: number, emp: Employee): any { return this.adminEmployeesWorkflow.trackByEmpId(this, index, emp); }
 
+  trackByLeadIdentity = (index: number, lead: Lead): string | number => {
+    return lead?._id || this.normalizePhoneForMatch(lead?.contactNumber) || `${lead?.leadCompanyName || 'lead'}-${index}`;
+  };
+
+  trackByAdminRecordIdentity = (index: number, record: any): string | number => {
+    return record?._id
+      || record?.invoiceNumber
+      || record?.quotationNumber
+      || record?.documentNumber
+      || record?.number
+      || index;
+  };
+
+  trackByHistoryIdentity = (index: number, record: any): string | number => {
+    return record?._id
+      || `${record?.action || 'history'}-${record?.createdAt || record?.timestamp || index}`;
+  };
+
   setOverviewChartType(type: 'pie' | 'bar'): void {
     this.overviewChartType = type;
     this.renderOverviewChart();
@@ -4790,19 +4896,76 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   openCompanyFullView(event?: Event): void {
     event?.stopPropagation();
+    const sourceLead = this.resolveCompanyFullSourceLead();
+    if (!sourceLead) return;
+    const initialSection: CompanyFullSection = this.dashTab === 'followups'
+      ? 'followups'
+      : this.dashTab === 'remarks_filter'
+        ? 'remarks'
+        : 'overview';
+    void this.openCompanyFullViewForLeadContext(sourceLead, initialSection);
+  }
+
+  private resolveCompanyFullSourceLead(): Lead | null {
+    if (this.dashTab === 'followups') {
+      const bookmark = this.filteredBookmarksByGlobalCompany[0]
+        || this.filteredBookmarksFiltered.find((item: Bookmark) => {
+          const matchedLead = this.getMatchedLeadForAdminBookmark(item);
+          return this.normalizeCompanyName(matchedLead?.leadCompanyName || item.companyName) === this.normalizeCompanyName(this.selectedGlobalFollowupCompany);
+        })
+        || null;
+      return this.getMatchedLeadForAdminBookmark(bookmark);
+    }
+
+    if (this.dashTab === 'remarks_filter') {
+      return this.remarksFilterLeadsInCompany[0] || this.remarkLeads.find((lead) => (
+        this.normalizeCompanyName(lead?.leadCompanyName) === this.normalizeCompanyName(this.selectedRemarksFilterCompany)
+      )) || null;
+    }
+
+    if (this.dashTab === 'crm_clients' && this.selectedCrmClient) {
+      return this.crmClientContacts(this.selectedCrmClient)[0] || null;
+    }
+
+    return this.companyFullViewLead();
+  }
+
+  private async openCompanyFullViewForLeadContext(sourceLead: Lead, initialSection: CompanyFullSection = 'overview'): Promise<void> {
+    this.closeAdminAiSummary();
     this.companyRemarkLead = null;
-    this.adminAiSummaryOpen = false;
-    this.adminCompanyFullSection = 'overview';
+    this.clearCompanyFullRemarkMenuClose();
+    this.companyFullContextLead = { ...sourceLead };
+
+    const companyName = String(sourceLead.leadCompanyName || '').trim();
+    if (companyName) {
+      if (this.dashTab === 'followups') {
+        this.selectedGlobalFollowupCompany = companyName;
+      } else if (this.dashTab === 'remarks_filter') {
+        this.selectedRemarksFilterCompany = companyName;
+      } else {
+        this.selectedLeadCompany = companyName;
+      }
+    }
+
+    this.resetCompanyFullViewState();
+    this.companyFullRows = this.resolveCompanyFullViewRows(sourceLead);
     this.companyFullViewOpen = true;
-    if (!this.allBookmarks.length) this.fetchCompanyBookmarks();
-    if (!this.invoiceRecords.length) this.fetchInvoiceRecords();
-    if (!this.quotationRecords.length) this.fetchQuotationRecords();
+    this.companyFullActiveSection = initialSection;
+    this.adminCompanyFullSection = initialSection;
+    await this.loadCompanyFullViewData();
+    setTimeout(() => this.scrollCompanyFullSection(initialSection, 'auto'));
   }
 
   closeCompanyFullView(): void {
     this.companyFullViewOpen = false;
     this.companyRemarkLead = null;
+    this.companyFullContextLead = null;
+    this.companyFullActiveSection = 'overview';
     this.adminCompanyFullSection = 'overview';
+    this.clearCompanyFullRemarkMenuClose();
+    this.companyFullRemarkMenuOpen = false;
+    this.companyFullRemarkDraft = '';
+    this.companyFullNoteDraft = '';
   }
 
   openCompanyRemarkHistory(lead: Lead): void {
@@ -4817,7 +4980,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     event?.stopPropagation();
     this.companyFullViewOpen = false;
     this.adminAiSummaryOpen = true;
-    this.loadAiBriefForLead(this.companyFullViewLead(), this.selectedLeadCompany || this.selectedRemarksFilterCompany);
+    this.loadAiBriefForLead(this.companyFullViewLead(), this.companyFullCompanyName());
   }
 
   closeAdminAiSummary(): void {
@@ -5057,104 +5220,122 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.selectGlobalFollowupCompany(bookmark.companyName || '');
   }
 
+  get companyFullSections(): Array<{ id: CompanyFullSection; label: string }> {
+    return this.companyFullBaseSections.filter((section) => (
+      section.id !== 'followups' || this.companyFullHasFollowupSection()
+    ));
+  }
+
   companyFullViewRows(): Lead[] {
-    if (this.dashTab === 'remarks_filter') return this.remarksFilterLeadsInCompany;
+    if (this.companyFullRows.length) return this.companyFullRows;
+    if (this.companyFullContextLead) return [this.companyFullContextLead];
+    return this.resolveCompanyFullViewRows(null);
+  }
+
+  private resolveCompanyFullViewRows(fallbackLead: Lead | null = this.companyFullContextLead): Lead[] {
+    const contextCompany = this.normalizeCompanyName(
+      this.companyFullContextLead?.leadCompanyName
+      || fallbackLead?.leadCompanyName
+      || this.companyFullProfile.leadCompanyName
+      || this.selectedLeadCompany
+      || this.selectedGlobalFollowupCompany
+      || this.selectedRemarksFilterCompany
+      || this.selectedCrmClient?.companyName
+    );
+    if (!contextCompany) {
+      return fallbackLead ? [fallbackLead] : [];
+    }
+
+    let rows: Lead[] = [];
+
     if (this.dashTab === 'followups') {
-      return this.filteredBookmarksByGlobalCompany
+      const scopedBookmarks = this.filteredBookmarksByGlobalCompany.length
+        ? this.filteredBookmarksByGlobalCompany
+        : this.filteredBookmarksFiltered.filter((bookmark: Bookmark) => (
+            this.normalizeCompanyName(this.getMatchedLeadForAdminBookmark(bookmark)?.leadCompanyName || bookmark.companyName) === contextCompany
+          ));
+      rows = scopedBookmarks
         .map((bookmark) => this.getMatchedLeadForAdminBookmark(bookmark))
         .filter((lead): lead is Lead => !!lead);
+    } else if (this.dashTab === 'remarks_filter') {
+      rows = (this.remarksFilterLeadsInCompany.length
+        ? this.remarksFilterLeadsInCompany
+        : this.remarkLeads.filter((lead: Lead) => (
+            this.normalizeCompanyName(lead?.leadCompanyName) === contextCompany
+          ))) as Lead[];
+    } else if (this.dashTab === 'crm_clients' && this.selectedCrmClient) {
+      rows = this.crmClientContacts(this.selectedCrmClient).filter((lead: Lead) => (
+        this.normalizeCompanyName(lead?.leadCompanyName) === contextCompany
+      ));
+    } else {
+      rows = (this.leadsInSelectedCompany.length && this.normalizeCompanyName(this.selectedLeadCompany) === contextCompany
+        ? this.leadsInSelectedCompany
+        : this.allLeads.filter((lead: Lead) => this.normalizeCompanyName(lead?.leadCompanyName) === contextCompany)) as Lead[];
     }
-    return this.leadsInSelectedCompany;
+
+    const deduped = this.dedupeCompanyFullRows(rows);
+    if (deduped.length) return deduped;
+    return fallbackLead ? [fallbackLead] : [];
   }
 
   companyFullViewLead(): Lead | null {
-    return this.companyFullViewRows()[0] || null;
-  }
-
-  get adminCompanyFullSections(): Array<{ id: 'overview' | 'contacts' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'notes'; label: string }> {
-    return [
-      { id: 'overview', label: 'Overview' },
-      { id: 'contacts', label: 'Contacts' },
-      { id: 'followups', label: 'Followups' },
-      { id: 'remarks', label: 'Remarks' },
-      { id: 'invoices', label: 'Invoices' },
-      { id: 'quotations', label: 'Quotations' },
-      { id: 'notes', label: 'Notes' },
-    ];
-  }
-
-  adminCompanyFullSectionId(section: string): string {
-    return `admin-company-full-${section}`;
-  }
-
-  scrollAdminCompanyFullSection(section: 'overview' | 'contacts' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'notes'): void {
-    this.adminCompanyFullSection = section;
-    setTimeout(() => {
-      document.getElementById(this.adminCompanyFullSectionId(section))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 0);
-  }
-
-  onAdminCompanyFullScroll(event: Event): void {
-    const container = event.target as HTMLElement | null;
-    if (!container) return;
-
-    const containerTop = container.getBoundingClientRect().top;
-    let active = this.adminCompanyFullSections[0]?.id || 'overview';
-    let closest = active;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    for (const section of this.adminCompanyFullSections) {
-      const element = document.getElementById(this.adminCompanyFullSectionId(section.id));
-      if (!element) continue;
-      const distance = element.getBoundingClientRect().top - containerTop;
-      const absoluteDistance = Math.abs(distance);
-      if (absoluteDistance < closestDistance) {
-        closestDistance = absoluteDistance;
-        closest = section.id;
-      }
-      if (distance <= 120) {
-        active = section.id;
-      }
-    }
-
-    this.adminCompanyFullSection = active || closest;
+    return this.companyFullViewRows()[0] || this.companyFullContextLead || null;
   }
 
   companyFullCompanyName(): string {
-    return this.selectedLeadCompany
-      || this.selectedRemarksFilterCompany
-      || this.selectedGlobalFollowupCompany
+    return String(
+      this.companyFullContextLead?.leadCompanyName
+      || this.companyFullProfile.leadCompanyName
+      || (this.dashTab === 'followups' ? this.selectedGlobalFollowupCompany : '')
+      || (this.dashTab === 'remarks_filter' ? this.selectedRemarksFilterCompany : '')
+      || (this.dashTab === 'crm_clients' ? this.selectedCrmClient?.companyName : '')
+      || this.selectedLeadCompany
       || this.companyFullViewLead()?.leadCompanyName
-      || 'Company details';
+      || 'Company details'
+    ).trim();
   }
 
   companyFullPrimaryContact(): string {
-    return this.companyFullViewLead()?.contactName || 'Primary Contact';
+    return String(this.companyFullViewLead()?.contactName || 'Primary Contact').trim();
   }
 
   companyFullPrimaryPhone(): string {
-    return this.companyFullViewLead()?.contactNumber || '-';
+    return this.companyFullResolvedPhone(this.companyFullViewLead()) || '—';
   }
 
   companyFullPrimaryEmail(): string {
-    return this.companyFullViewLead()?.directorEmailAddress || '-';
+    return this.companyFullResolvedEmail(this.companyFullViewLead()) || '—';
   }
 
   companyFullPrimaryStatus(): string {
-    return this.normalizedLeadStatus(this.companyFullViewLead()?.status);
+    return this.normalizedLeadStatus(this.companyFullViewLead()?.status || 'New');
   }
 
   companyFullLatestUpdate(): string {
-    return this.companyLeadLatestDate(this.companyFullViewLead());
+    return this.companyLeadLatestDate(this.companyFullViewLead()) || '—';
   }
 
   companyFullSetSummary(): string {
-    const sets = Array.from(new Set(this.companyFullViewRows().map((lead) => String(lead.setLabel || '').trim()).filter(Boolean)));
-    return sets.length ? sets.join(', ') : '-';
+    const sets = Array.from(
+      new Set(
+        this.companyFullViewRows()
+          .map((lead) => String(lead.setLabel || '').trim())
+          .filter(Boolean)
+      )
+    );
+    return sets.length ? sets.join(', ') : '—';
   }
 
   companyFullCompanyCode(): string {
-    return this.companyFullViewLead()?.companyCode || this.dashboardCode || '-';
+    return String(this.companyFullViewLead()?.companyCode || this.dashboardCode || '').trim() || '—';
+  }
+
+  companyFullAlternatePhoneValue(): string {
+    return this.companyFullAlternatePhone.trim() || '—';
+  }
+
+  companyFullAlternateEmailValue(): string {
+    return this.companyFullAlternateEmail.trim() || '—';
   }
 
   companyFullOverviewContacts(): Lead[] {
@@ -5162,117 +5343,11 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   companyFullContactEmail(lead: Lead): string {
-    return lead.directorEmailAddress || '-';
+    return this.companyFullResolvedEmail(lead) || '—';
   }
 
   companyFullContactPhone(lead: Lead): string {
-    return lead.contactNumber || '-';
-  }
-
-  adminCompanyFullRemarkEntries(): Array<{ lead: Lead; remark: string; index: number }> {
-    return this.companyFullViewRows().flatMap((lead) =>
-      [...(lead.remarks || [])]
-        .map((remark, index) => ({ lead, remark: String(remark || '').trim(), index }))
-        .filter((entry) => !!entry.remark)
-        .reverse()
-    );
-  }
-
-  adminCompanyFullFollowups(): Bookmark[] {
-    const company = this.companyFullCompanyName().trim().toLowerCase();
-    const phones = new Set(this.companyFullViewRows().map((lead) => String(lead.contactNumber || '').trim()).filter(Boolean));
-    const source = this.dashTab === 'followups' && this.filteredBookmarksByGlobalCompany.length
-      ? this.filteredBookmarksByGlobalCompany
-      : this.allBookmarks;
-
-    return source.filter((bookmark: Bookmark) => {
-      const bookmarkCompany = String(bookmark.companyName || '').trim().toLowerCase();
-      const bookmarkPhone = String(bookmark.contactNumber || '').trim();
-      return (!!company && bookmarkCompany === company) || (!!bookmarkPhone && phones.has(bookmarkPhone));
-    });
-  }
-
-  adminCompanyFullFollowupFlagCount(flag: keyof Bookmark): number {
-    return this.adminCompanyFullFollowups().filter((bookmark: Bookmark) => !!bookmark[flag]).length;
-  }
-
-  adminCompanyFullFollowupRemarkCount(): number {
-    return this.adminCompanyFullFollowups().reduce((sum, bookmark: Bookmark) => (
-      sum + (bookmark.description ? 1 : 0) + (bookmark.remarks || []).filter(Boolean).length
-    ), 0);
-  }
-
-  adminCompanyFullFollowupReminderCount(): number {
-    return this.adminCompanyFullFollowups().filter((bookmark: Bookmark) => !!bookmark.reminderDate).length;
-  }
-
-  adminCompanyFullFollowupEntries(): Array<{ bookmark: Bookmark; employeeName: string; date: string; title: string; body: string }> {
-    return this.adminCompanyFullFollowups()
-      .map((bookmark: Bookmark) => {
-        const notes = [
-          String(bookmark.description || '').trim(),
-          ...(bookmark.remarks || []).map((remark) => String(remark || '').trim()).filter(Boolean),
-        ].filter(Boolean);
-        return {
-          bookmark,
-          employeeName: this.getEmployeeName(bookmark.employeePhone || ''),
-          date: this.fmtDate(bookmark.reminderDate || bookmark.updatedAt || bookmark.createdAt),
-          title: bookmark.contactName || 'Follow-up Contact',
-          body: notes.join(' · ') || 'Follow-up saved without notes.',
-        };
-      })
-      .sort((a, b) => new Date(b.bookmark.updatedAt || b.bookmark.createdAt || b.bookmark.reminderDate || 0).getTime() - new Date(a.bookmark.updatedAt || a.bookmark.createdAt || a.bookmark.reminderDate || 0).getTime());
-  }
-
-  adminCompanyFullNoteEntries(): Array<{ title: string; body: string; employeeName: string; date: string }> {
-    const followupNotes = this.adminCompanyFullFollowups().flatMap((bookmark: Bookmark) => {
-      const employeeName = this.getEmployeeName(bookmark.employeePhone || '');
-      const date = this.fmtDate(bookmark.updatedAt || bookmark.createdAt || bookmark.reminderDate);
-      const rows = [
-        String(bookmark.description || '').trim(),
-        ...(bookmark.remarks || []).map((remark) => String(remark || '').trim()),
-      ].filter(Boolean);
-      return rows.map((body) => ({
-        title: bookmark.contactName || 'Follow-up note',
-        body,
-        employeeName,
-        date,
-      }));
-    });
-
-    const leadNotes = this.companyFullViewRows().flatMap((lead: Lead) => {
-      const employeeName = this.getEmployeeName(lead.assignedEmployeePhone || '');
-      const date = this.fmtDate(lead.updatedAt || lead.createdAt);
-      return (lead.remarks || [])
-        .map((remark) => String(remark || '').trim())
-        .filter(Boolean)
-        .map((body) => ({
-          title: lead.contactName || 'Lead note',
-          body,
-          employeeName: employeeName || 'Lead record',
-          date,
-        }));
-    });
-
-    return [...followupNotes, ...leadNotes];
-  }
-
-  adminCompanyFullInvoiceItems(): any[] {
-    const company = this.companyFullCompanyName().toLowerCase();
-    const phones = new Set(this.companyFullViewRows().map((lead) => String(lead.contactNumber || '').trim()).filter(Boolean));
-    return this.invoiceRecords.filter((record) =>
-      String(record.leadCompanyName || '').toLowerCase() === company
-      || phones.has(String(record.contactNumber || '').trim())
-    );
-  }
-
-  adminCompanyFullQuotationItems(): any[] {
-    const company = this.companyFullCompanyName().toLowerCase();
-    const phones = new Set(this.companyFullViewRows().map((lead) => String(lead.contactNumber || '').trim()).filter(Boolean));
-    return this.quotationRecords.filter((record) =>
-      String(record.leadCompanyName || '').toLowerCase() === company
-      || phones.has(String(record.contactNumber || '').trim())
-    );
+    return this.companyFullResolvedPhone(lead) || '—';
   }
 
   companyFullViewContext(): string {
@@ -5280,9 +5355,689 @@ export abstract class AdminWorkspaceController implements OnInit {
     return String(lead?.mainDivisionDescription || lead?.companyDescription || '').trim();
   }
 
+  companyFullHasFollowupSection(): boolean {
+    if (this.companyFullFollowups.length > 0) return true;
+    if (this.companyFullContextLead && this.isFollowupStatus(this.companyFullContextLead.status)) return true;
+    return this.companyFullViewRows().some((lead) => this.isFollowupStatus(lead.status));
+  }
+
+  companyFullFollowupLead(): Lead | null {
+    const rows = this.companyFullViewRows();
+    const statusLead = rows.find((lead) => this.isFollowupStatus(lead.status));
+    return statusLead || this.companyFullViewLead();
+  }
+
+  companyFullPrimaryFollowup(): Bookmark | null {
+    if (!this.companyFullFollowups.length) return null;
+    const sourceLead = this.companyFullFollowupLead();
+    const matched = sourceLead
+      ? this.companyFullFollowups.find((bookmark) => (
+          this.normalizePhoneForMatch(bookmark.contactNumber) === this.normalizePhoneForMatch(sourceLead.contactNumber)
+        ))
+      : null;
+    return matched || this.companyFullFollowups[0] || null;
+  }
+
+  companyFullFollowupDescription(): string {
+    return String(this.companyFullPrimaryFollowup()?.description || this.companyFullFollowupForm.description || '').trim() || 'No description recorded.';
+  }
+
+  companyFullFollowupReminderLabel(): string {
+    const reminderValue = String(
+      this.companyFullPrimaryFollowup()?.reminderDate
+      || this.companyFullFollowupForm.reminderDate
+      || ''
+    ).trim();
+    return reminderValue ? this.fmtDate(reminderValue) : 'Not set';
+  }
+
+  companyFullFollowupHistoryEntries(): any[] {
+    const activeBookmark = this.companyFullPrimaryFollowup();
+    const activeNumber = this.normalizePhoneForMatch(activeBookmark?.contactNumber || this.companyFullFollowupLead()?.contactNumber || '');
+    return this.companyFullHistoryLogs.filter((log: any) => {
+      if (!this.isCompanyFollowupHistoryLog(log)) return false;
+      if (!activeNumber) return true;
+      return this.normalizePhoneForMatch((log as any)?.contactNumber || '') === activeNumber;
+    });
+  }
+
+  companyFullFollowupFallbackRemarks(): string[] {
+    return [...(this.companyFullPrimaryFollowup()?.remarks || [])].filter(Boolean).reverse();
+  }
+
+  companyFullFollowupHistoryText(log: any): string {
+    return String(log?.details || log?.metadata?.remark || log?.newValue || log?.oldValue || log?.action || '').trim();
+  }
+
+  companyFullRemarkEntries(): any[] {
+    return this.companyFullRemarksHistory;
+  }
+
+  companyFullAdminRemarkOptions(): string[] {
+    const seen = new Set<string>();
+    const options: string[] = [];
+    for (const remark of this.settingsProductRemarks || []) {
+      const normalized = String(remark || '').trim();
+      if (!normalized || seen.has(normalized)) continue;
+      seen.add(normalized);
+      options.push(normalized);
+    }
+    return options;
+  }
+
+  filteredCompanyFullAdminRemarkOptions(): string[] {
+    const options = this.companyFullAdminRemarkOptions();
+    const query = String(this.companyFullRemarkDraft || '').trim().toLowerCase();
+    if (!query) return options;
+    return options.filter((remark) => remark.toLowerCase().includes(query));
+  }
+
+  handleCompanyFullRemarkInput(value: string): void {
+    this.companyFullRemarkDraft = value;
+    this.openCompanyFullRemarkMenu();
+  }
+
+  openCompanyFullRemarkMenu(): void {
+    this.clearCompanyFullRemarkMenuClose();
+    this.companyFullRemarkMenuOpen = true;
+  }
+
+  queueCloseCompanyFullRemarkMenu(): void {
+    this.clearCompanyFullRemarkMenuClose();
+    this.companyFullRemarkMenuCloseRef = setTimeout(() => {
+      this.companyFullRemarkMenuOpen = false;
+      this.companyFullRemarkMenuCloseRef = null;
+    }, 140);
+  }
+
+  toggleCompanyFullRemarkMenu(): void {
+    this.clearCompanyFullRemarkMenuClose();
+    this.companyFullRemarkMenuOpen = !this.companyFullRemarkMenuOpen;
+  }
+
+  selectCompanyFullAdminRemark(remark: string): void {
+    this.companyFullRemarkDraft = remark;
+    this.companyFullRemarkMenuOpen = false;
+  }
+
+  companyFullRemarkText(log: any): string {
+    return String(
+      log?.metadata?.remark
+      || log?.details
+      || log?.newValue
+      || log?.oldValue
+      || ''
+    ).trim();
+  }
+
+  companyFullSectionId(section: CompanyFullSection): string {
+    return `company-full-section-${section}`;
+  }
+
+  scrollCompanyFullSection(section: CompanyFullSection, behavior: ScrollBehavior = 'smooth'): void {
+    this.companyFullActiveSection = section;
+    const container = this.companyFullScrollContainer();
+    const target = document.getElementById(this.companyFullSectionId(section));
+    if (container && target) {
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      container.scrollTo({
+        top: Math.max(0, container.scrollTop + (targetRect.top - containerRect.top) - 24),
+        behavior,
+      });
+      return;
+    }
+    target?.scrollIntoView({ behavior, block: 'start' });
+  }
+
+  onCompanyFullContentScroll(event: Event): void {
+    const container = event.target as HTMLElement | null;
+    if (!container) return;
+    this.syncCompanyFullActiveSection(container);
+  }
+
+  async saveCompanyFullAlternateInfo(): Promise<void> {
+    const lead = this.companyFullViewLead();
+    if (!lead?.companyCode || !this.companyFullCompanyName() || this.companyFullSavingAlternateInfo) return;
+
+    this.companyFullSavingAlternateInfo = true;
+    this.companyFullProfileError = '';
+
+    try {
+      const response = await firstValueFrom(this.api.patch<any>('/api/leads/company-profile', {
+        companyCode: lead.companyCode,
+        companyName: this.companyFullCompanyName(),
+        alternatePhone: this.companyFullAlternatePhone.trim(),
+        alternateEmail: this.companyFullAlternateEmail.trim(),
+      }));
+      this.applyCompanyFullProfile(response?.profile);
+    } catch (error: any) {
+      this.companyFullProfileError = error?.error?.message || 'Failed to save alternate info.';
+    } finally {
+      this.companyFullSavingAlternateInfo = false;
+    }
+  }
+
+  async addCompanyFullNote(): Promise<void> {
+    const lead = this.companyFullViewLead();
+    const note = this.companyFullNoteDraft.trim();
+    if (!lead?.companyCode || !this.companyFullCompanyName() || !note || this.companyFullNoteSaving) return;
+
+    this.companyFullNoteSaving = true;
+    this.companyFullProfileError = '';
+
+    try {
+      const response = await firstValueFrom(this.api.post<any>('/api/leads/company-profile/notes', {
+        companyCode: lead.companyCode,
+        companyName: this.companyFullCompanyName(),
+        note,
+      }));
+      this.applyCompanyFullProfile(response?.profile);
+      this.companyFullNoteDraft = '';
+      this.scrollCompanyFullSection('notes', 'auto');
+    } catch (error: any) {
+      this.companyFullProfileError = error?.error?.message || 'Failed to save note.';
+    } finally {
+      this.companyFullNoteSaving = false;
+    }
+  }
+
+  async addCompanyFullRemark(): Promise<void> {
+    const lead = this.companyFullViewLead();
+    const remark = this.companyFullRemarkDraft.trim();
+    if (!lead?._id || !remark || this.companyFullRemarkSaving) return;
+
+    this.companyFullRemarkSaving = true;
+    this.companyFullRemarkError = '';
+
+    try {
+      const response = await firstValueFrom(this.api.post<any>(`/api/leads/${lead._id}/remarks`, { remark }));
+      const updatedLead = this.normalizeLead(response?.lead);
+      if (updatedLead?._id) this.applyLeadUpdate(updatedLead);
+      this.companyFullRemarkDraft = '';
+      this.companyFullRemarkMenuOpen = false;
+      await this.reloadCompanyFullRemarkHistory();
+      this.scrollCompanyFullSection('remarks', 'auto');
+    } catch (error: any) {
+      this.companyFullRemarkError = error?.error?.message || 'Failed to add remark.';
+    } finally {
+      this.companyFullRemarkSaving = false;
+    }
+  }
+
+  async saveCompanyFullFollowup(): Promise<void> {
+    const sourceLead = this.companyFullFollowupLead() || this.companyFullViewLead();
+    const currentBookmark = this.companyFullPrimaryFollowup();
+    const companyCode = String(sourceLead?.companyCode || this.dashboardCode || '').trim();
+    const employeePhone = String(currentBookmark?.employeePhone || sourceLead?.assignedEmployeePhone || '').trim();
+    const companyName = this.companyFullCompanyName();
+
+    if (!sourceLead || !companyCode || !companyName || this.companyFullFollowupSaving) return;
+
+    this.companyFullFollowupSaving = true;
+    this.companyFullFollowupError = '';
+
+    const finalRemarks = [...(currentBookmark?.remarks || [])];
+    const newRemark = this.companyFullFollowupForm.newRemark.trim();
+    if (newRemark) finalRemarks.push(newRemark);
+
+    const payload = {
+      description: this.companyFullFollowupForm.description.trim(),
+      brochuresSent: this.companyFullFollowupForm.brochuresSent,
+      techMeet: this.companyFullFollowupForm.techMeet,
+      meetingRemarks: this.companyFullFollowupForm.meetingRemarks,
+      quotationSent: this.companyFullFollowupForm.quotationSent,
+      proposalSent: this.companyFullFollowupForm.proposalSent,
+      whatsappGrp: this.companyFullFollowupForm.whatsappGrp,
+      reminderDate: this.companyFullFollowupForm.reminderDate || null,
+      remarks: finalRemarks,
+    };
+
+    try {
+      if (currentBookmark?._id) {
+        await firstValueFrom(this.api.patch<any>(`/api/bookmarks/${currentBookmark._id}`, payload));
+      } else {
+        await firstValueFrom(this.api.post<any>('/api/bookmarks/bulk', {
+          bookmarks: [{
+            ...payload,
+            companyCode,
+            employeePhone,
+            contactNumber: sourceLead.contactNumber || '',
+            contactName: sourceLead.contactName || 'Primary Contact',
+            companyName,
+          }],
+        }));
+      }
+
+      this.companyFullFollowupForm.newRemark = '';
+      await Promise.all([
+        this.reloadCompanyFullFollowupData(),
+        this.reloadCompanyFullRemarkHistory(),
+      ]);
+      this.invalidateAdminDashboardCaches();
+      this.fetchCompanyBookmarks(true);
+      this.scrollCompanyFullSection('followups', 'auto');
+    } catch (error: any) {
+      this.companyFullFollowupError = error?.error?.message || 'Failed to save follow-up.';
+    } finally {
+      this.companyFullFollowupSaving = false;
+    }
+  }
+
+  private resetCompanyFullViewState(): void {
+    this.companyFullLoading = false;
+    this.companyFullProfileLoading = false;
+    this.companyFullHistoryLoading = false;
+    this.companyFullInvoiceLoading = false;
+    this.companyFullQuotationLoading = false;
+    this.companyFullFollowupLoading = false;
+    this.companyFullProfileError = '';
+    this.companyFullHistoryError = '';
+    this.companyFullInvoiceError = '';
+    this.companyFullQuotationError = '';
+    this.companyFullRemarkError = '';
+    this.companyFullFollowupError = '';
+    this.companyFullProfile = {
+      leadCompanyName: '',
+      alternatePhone: '',
+      alternateEmail: '',
+      notes: [],
+    };
+    this.companyFullHistoryLogs = [];
+    this.companyFullRemarksHistory = [];
+    this.companyFullInvoiceItems = [];
+    this.companyFullQuotationItems = [];
+    this.companyFullFollowups = [];
+    this.companyFullRows = [];
+    this.companyFullAlternatePhone = '';
+    this.companyFullAlternateEmail = '';
+    this.companyFullRemarkDraft = '';
+    this.companyFullNoteDraft = '';
+    this.companyFullRemarkMenuOpen = false;
+    this.companyFullFollowupForm = {
+      brochuresSent: false,
+      techMeet: false,
+      meetingRemarks: false,
+      quotationSent: false,
+      proposalSent: false,
+      whatsappGrp: false,
+      description: '',
+      newRemark: '',
+      reminderDate: '',
+    };
+  }
+
+  private async loadCompanyFullViewData(): Promise<void> {
+    const lead = this.companyFullViewLead() || this.companyFullContextLead;
+    const companyCode = String(lead?.companyCode || this.dashboardCode || '').trim();
+    const companyName = this.companyFullCompanyName();
+    if (!companyCode || !companyName) return;
+
+    this.companyFullLoading = true;
+    this.companyFullProfileLoading = true;
+    this.companyFullHistoryLoading = true;
+    this.companyFullInvoiceLoading = true;
+    this.companyFullQuotationLoading = true;
+    this.companyFullFollowupLoading = true;
+
+    const companyQuery = this.buildApiQueryString({
+      companyCode,
+      companyName,
+    });
+    const historyQuery = this.buildApiQueryString({
+      companyCode,
+      companyName,
+    });
+    const invoiceQuery = this.buildApiQueryString({
+      companyCode,
+      search: companyName,
+      page: 1,
+      pageSize: 100,
+      paginated: true,
+    });
+    const quotationQuery = this.buildApiQueryString({
+      companyCode,
+      search: companyName,
+      page: 1,
+      pageSize: 100,
+      paginated: true,
+    });
+    const followupQuery = this.buildApiQueryString({
+      companyCode,
+      search: companyName,
+      page: 1,
+      pageSize: 200,
+      paginated: true,
+    });
+
+    const [profileResult, historyResult, invoiceResult, quotationResult, followupResult] = await Promise.allSettled([
+      firstValueFrom(this.api.get<any>(`/api/leads/company-profile?${companyQuery}`)),
+      firstValueFrom(this.api.get<any>(`/api/history?${historyQuery}`)),
+      firstValueFrom(this.api.get<any>(`/api/invoices?${invoiceQuery}`)),
+      firstValueFrom(this.api.get<any>(`/api/quotations?${quotationQuery}`)),
+      firstValueFrom(this.api.get<any>(`/api/bookmarks/admin?${followupQuery}`)),
+    ]);
+
+    if (profileResult.status === 'fulfilled') {
+      this.applyCompanyFullProfile(profileResult.value?.profile);
+    } else {
+      this.companyFullProfileError = 'Failed to load alternate info.';
+    }
+    this.companyFullProfileLoading = false;
+
+    if (historyResult.status === 'fulfilled') {
+      const logs = Array.isArray(historyResult.value?.logs) ? historyResult.value.logs : [];
+      this.applyCompanyFullHistoryLogs(logs);
+    } else {
+      this.companyFullHistoryError = 'Failed to load remark history.';
+    }
+    this.companyFullHistoryLoading = false;
+
+    const companyPhoneSet = new Set(
+      this.companyFullViewRows()
+        .map((row) => this.normalizePhoneForMatch(row.contactNumber))
+        .filter(Boolean)
+    );
+    const normalizedCompany = this.normalizeCompanyName(companyName);
+
+    if (invoiceResult.status === 'fulfilled') {
+      const invoiceItems = Array.isArray(invoiceResult.value?.items)
+        ? invoiceResult.value.items
+        : (invoiceResult.value?.invoices || []);
+      this.companyFullInvoiceItems = invoiceItems.filter((item: any) => (
+        this.normalizeCompanyName(item?.leadCompanyName || item?.clientSnapshot?.companyName) === normalizedCompany
+        || companyPhoneSet.has(this.normalizePhoneForMatch(item?.contactNumber || item?.clientSnapshot?.phone))
+      ));
+    } else {
+      this.companyFullInvoiceError = 'Failed to load invoice history.';
+    }
+    this.companyFullInvoiceLoading = false;
+
+    if (quotationResult.status === 'fulfilled') {
+      const quotationItems = Array.isArray(quotationResult.value?.items)
+        ? quotationResult.value.items
+        : (quotationResult.value?.quotations || []);
+      this.companyFullQuotationItems = quotationItems.filter((item: any) => (
+        this.normalizeCompanyName(item?.leadCompanyName || item?.clientSnapshot?.companyName) === normalizedCompany
+        || companyPhoneSet.has(this.normalizePhoneForMatch(item?.contactNumber || item?.clientSnapshot?.phone))
+      ));
+    } else {
+      this.companyFullQuotationError = 'Failed to load quotation history.';
+    }
+    this.companyFullQuotationLoading = false;
+
+    if (followupResult.status === 'fulfilled') {
+      const bookmarks = Array.isArray(followupResult.value?.bookmarks)
+        ? followupResult.value.bookmarks
+        : (followupResult.value?.items || []);
+      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName);
+      this.syncCompanyFullFollowupForm();
+    } else {
+      this.companyFullFollowupError = 'Failed to load follow-up details.';
+    }
+    this.companyFullFollowupLoading = false;
+
+    this.companyFullLoading = false;
+  }
+
+  private applyCompanyFullProfile(profile: any): void {
+    this.companyFullProfile = {
+      leadCompanyName: String(profile?.leadCompanyName || this.companyFullCompanyName() || '').trim(),
+      alternatePhone: String(profile?.alternatePhone || '').trim(),
+      alternateEmail: String(profile?.alternateEmail || '').trim(),
+      notes: Array.isArray(profile?.notes)
+        ? profile.notes
+            .map((note: any) => ({
+              _id: String(note?._id || ''),
+              text: String(note?.text || '').trim(),
+              createdAt: note?.createdAt ? String(note.createdAt) : '',
+            }))
+            .filter((note: CompanyFullViewNote) => note.text)
+        : [],
+      updatedAt: profile?.updatedAt ? String(profile.updatedAt) : '',
+      createdAt: profile?.createdAt ? String(profile.createdAt) : '',
+    };
+    this.companyFullAlternatePhone = this.companyFullProfile.alternatePhone;
+    this.companyFullAlternateEmail = this.companyFullProfile.alternateEmail;
+  }
+
+  private isCompanyRemarkHistoryLog(log: any): boolean {
+    return String(log?.action || '').toLowerCase().includes('remark');
+  }
+
+  private isCompanyFollowupHistoryLog(log: any): boolean {
+    const action = String(log?.action || '').toLowerCase();
+    return action.includes('follow-up') || action.includes('bookmark');
+  }
+
+  private applyCompanyFullHistoryLogs(logs: any[]): void {
+    this.companyFullHistoryLogs = [...logs];
+    this.companyFullRemarksHistory = logs.filter((log) => this.isCompanyRemarkHistoryLog(log));
+  }
+
+  private async reloadCompanyFullRemarkHistory(): Promise<void> {
+    const lead = this.companyFullViewLead() || this.companyFullContextLead;
+    const companyCode = String(lead?.companyCode || this.dashboardCode || '').trim();
+    const companyName = this.companyFullCompanyName();
+    if (!companyCode || !companyName) return;
+
+    this.companyFullHistoryLoading = true;
+    this.companyFullHistoryError = '';
+    try {
+      const query = this.buildApiQueryString({ companyCode, companyName });
+      const response = await firstValueFrom(this.api.get<any>(`/api/history?${query}`));
+      const logs = Array.isArray(response?.logs) ? response.logs : [];
+      this.applyCompanyFullHistoryLogs(logs);
+    } catch (error: any) {
+      this.companyFullHistoryError = error?.error?.message || 'Failed to load remark history.';
+    } finally {
+      this.companyFullHistoryLoading = false;
+    }
+  }
+
+  private async reloadCompanyFullFollowupData(): Promise<void> {
+    const lead = this.companyFullFollowupLead() || this.companyFullViewLead() || this.companyFullContextLead;
+    const companyCode = String(lead?.companyCode || this.dashboardCode || '').trim();
+    const companyName = this.companyFullCompanyName();
+    if (!companyCode || !companyName) return;
+
+    this.companyFullFollowupLoading = true;
+    this.companyFullFollowupError = '';
+    try {
+      const query = this.buildApiQueryString({
+        companyCode,
+        search: companyName,
+        page: 1,
+        pageSize: 200,
+        paginated: true,
+      });
+      const response = await firstValueFrom(this.api.get<any>(`/api/bookmarks/admin?${query}`));
+      const bookmarks = Array.isArray(response?.bookmarks) ? response.bookmarks : (response?.items || []);
+      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName);
+      this.syncCompanyFullFollowupForm();
+    } catch (error: any) {
+      this.companyFullFollowupError = error?.error?.message || 'Failed to load follow-up details.';
+    } finally {
+      this.companyFullFollowupLoading = false;
+    }
+  }
+
+  private applyLeadUpdate(updatedLead: Lead): void {
+    const mergeList = (items: Lead[]): Lead[] => items.map((item) => (
+      item._id === updatedLead._id
+        ? { ...item, ...updatedLead, remarks: Array.isArray(updatedLead.remarks) ? updatedLead.remarks : [] }
+        : item
+    ));
+
+    this.allLeads = mergeList(this.allLeads);
+    this.remarkLeads = mergeList(this.remarkLeads);
+    this.quotationLeads = mergeList(this.quotationLeads);
+
+    if (this.historyLead?._id === updatedLead._id) {
+      this.historyLead = { ...this.historyLead, ...updatedLead };
+    }
+
+    if (this.companyFullContextLead?._id === updatedLead._id) {
+      this.companyFullContextLead = { ...this.companyFullContextLead, ...updatedLead };
+    }
+
+    if (this.companyFullRows.length) {
+      this.companyFullRows = mergeList(this.companyFullRows);
+    }
+
+    this.lastAllLeadsRef = null;
+    this.resetAdminLeadDerivedCaches();
+  }
+
+  private buildApiQueryString(params: Record<string, string | number | boolean | undefined>): string {
+    const search = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      search.set(key, String(value));
+    });
+    return search.toString();
+  }
+
+  private normalizeCompanyName(value: string | undefined | null): string {
+    const company = String(value || '').trim();
+    if (/^(unnamed\s+company|unknown|n\/a|na|-|--|—)$/i.test(company)) return '';
+    return company.toLowerCase();
+  }
+
+  private normalizeCompanyFollowups(items: any[], companyName: string): Bookmark[] {
+    const normalizedCompany = this.normalizeCompanyName(companyName);
+    return items
+      .filter((item) => this.normalizeCompanyName(item?.companyName) === normalizedCompany)
+      .map((item) => ({
+        _id: String(item?._id || ''),
+        companyCode: String(item?.companyCode || this.dashboardCode || '').trim(),
+        employeePhone: String(item?.employeePhone || '').trim(),
+        contactNumber: this.cleanPhoneDisplay(String(item?.contactNumber || '').trim()),
+        contactName: String(item?.contactName || '').trim(),
+        companyName: String(item?.companyName || companyName || '').trim(),
+        description: String(item?.description || '').trim(),
+        remarks: Array.isArray(item?.remarks)
+          ? item.remarks.map((remark: unknown) => String(remark || '').trim()).filter(Boolean)
+          : [],
+        brochuresSent: !!item?.brochuresSent,
+        techMeet: !!item?.techMeet,
+        meetingRemarks: !!item?.meetingRemarks,
+        quotationSent: !!item?.quotationSent,
+        proposalSent: !!item?.proposalSent,
+        whatsappGrp: !!item?.whatsappGrp,
+        reminderDate: item?.reminderDate ? String(item.reminderDate) : '',
+        createdAt: item?.createdAt ? String(item.createdAt) : '',
+        updatedAt: item?.updatedAt ? String(item.updatedAt) : '',
+      }))
+      .sort((left, right) => new Date(right.updatedAt || right.createdAt || 0).getTime() - new Date(left.updatedAt || left.createdAt || 0).getTime());
+  }
+
+  private syncCompanyFullFollowupForm(): void {
+    const bookmark = this.companyFullPrimaryFollowup();
+    this.companyFullFollowupForm = {
+      brochuresSent: !!bookmark?.brochuresSent,
+      techMeet: !!bookmark?.techMeet,
+      meetingRemarks: !!bookmark?.meetingRemarks,
+      quotationSent: !!bookmark?.quotationSent,
+      proposalSent: !!bookmark?.proposalSent,
+      whatsappGrp: !!bookmark?.whatsappGrp,
+      description: String(bookmark?.description || '').trim(),
+      newRemark: '',
+      reminderDate: bookmark?.reminderDate ? new Date(bookmark.reminderDate).toISOString().split('T')[0] : '',
+    };
+  }
+
+  private companyFullScrollContainer(): HTMLElement | null {
+    return document.querySelector('.company-full-content');
+  }
+
+  private syncCompanyFullActiveSection(container: HTMLElement): void {
+    const containerRect = container.getBoundingClientRect();
+    const probeTop = containerRect.top + 140;
+    let activeSection: CompanyFullSection = this.companyFullSections[0]?.id || 'overview';
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const section of this.companyFullSections) {
+      const target = document.getElementById(this.companyFullSectionId(section.id));
+      if (!target) continue;
+
+      const rect = target.getBoundingClientRect();
+      const distanceFromProbe = Math.abs(rect.top - probeTop);
+
+      if (rect.top <= probeTop && distanceFromProbe <= nearestDistance) {
+        activeSection = section.id;
+        nearestDistance = distanceFromProbe;
+      }
+    }
+
+    if (container.scrollTop <= 8) {
+      activeSection = 'overview';
+    }
+
+    this.companyFullActiveSection = activeSection;
+  }
+
+  private clearCompanyFullRemarkMenuClose(): void {
+    if (!this.companyFullRemarkMenuCloseRef) return;
+    clearTimeout(this.companyFullRemarkMenuCloseRef);
+    this.companyFullRemarkMenuCloseRef = null;
+  }
+
+  private companyFullResolvedPhone(lead: Lead | null | undefined): string {
+    const values = [
+      String(lead?.contactNumber || '').trim(),
+      String(lead?.directorEmailAddress || '').trim(),
+    ].filter(Boolean);
+    return values.find((value) => this.isLikelyPhoneValue(value)) || values.find((value) => !this.isLikelyEmailValue(value)) || '';
+  }
+
+  private companyFullResolvedEmail(lead: Lead | null | undefined): string {
+    const values = [
+      String(lead?.directorEmailAddress || '').trim(),
+      String(lead?.contactNumber || '').trim(),
+    ].filter(Boolean);
+    return values.find((value) => this.isLikelyEmailValue(value)) || '';
+  }
+
+  private normalizePhoneForMatch(value: string | undefined | null): string {
+    return this.cleanPhoneDisplay(String(value || '')).replace(/\D+/g, '');
+  }
+
+  private isFollowupStatus(value: string | undefined | null): boolean {
+    return String(value || '').trim().toLowerCase() === 'follow up';
+  }
+
+  private isLikelyEmailValue(value: string): boolean {
+    return /\S+@\S+\.\S+/.test(String(value || '').trim());
+  }
+
+  private isLikelyPhoneValue(value: string): boolean {
+    const normalized = String(value || '').replace(/[^\d+]/g, '');
+    const digitCount = normalized.replace(/\D/g, '').length;
+    return digitCount >= 7 && !this.isLikelyEmailValue(value);
+  }
+
+  private cleanPhoneDisplay(value: string): string {
+    return String(value || '').trim().replace(/^'+|'+$/g, '');
+  }
+
+  private dedupeCompanyFullRows(rows: Lead[]): Lead[] {
+    const seen = new Set<string>();
+    return [...rows]
+      .map((lead) => this.normalizeLead(lead))
+      .filter((lead): lead is Lead => !!lead)
+      .sort((left, right) => new Date(right.updatedAt || right.createdAt || 0).getTime() - new Date(left.updatedAt || left.createdAt || 0).getTime())
+      .filter((lead) => {
+        const key = String(lead._id || `${lead.leadCompanyName || ''}|${lead.contactNumber || ''}|${lead.contactName || ''}`);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
   companyLeadLatestDate(lead: Lead | null): string {
     const raw = (lead as any)?.updatedAt || (lead as any)?.createdAt || '';
-    return raw ? this.fmtDate(raw) : '-';
+    return raw ? this.fmtDate(raw) : '—';
   }
 
   companyRemarkCount(lead: Lead): number {
@@ -5393,8 +6148,30 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   normalizeLead(lead: any): Lead {
     if (!lead) return lead;
+    const rawPhone = String(lead.contactNumber || '').trim();
+    const rawEmail = String(lead.directorEmailAddress || '').trim();
+    let contactNumber = rawPhone;
+    let directorEmailAddress = rawEmail;
+
+    const phoneFieldHasEmail = this.isLikelyEmailValue(rawPhone);
+    const emailFieldHasPhone = this.isLikelyPhoneValue(rawEmail);
+    if (phoneFieldHasEmail && emailFieldHasPhone) {
+      contactNumber = this.cleanPhoneDisplay(rawEmail);
+      directorEmailAddress = rawPhone;
+    } else if (phoneFieldHasEmail && !this.isLikelyEmailValue(rawEmail)) {
+      contactNumber = '';
+      directorEmailAddress = rawPhone;
+    } else if (!rawPhone && emailFieldHasPhone) {
+      contactNumber = this.cleanPhoneDisplay(rawEmail);
+      directorEmailAddress = '';
+    } else if (this.isLikelyPhoneValue(rawPhone)) {
+      contactNumber = this.cleanPhoneDisplay(rawPhone);
+    }
+
     return {
       ...lead,
+      contactNumber,
+      directorEmailAddress,
       remarks: Array.isArray(lead.remarks) ? lead.remarks : (lead.remarks ? [lead.remarks] : [])
     };
   }

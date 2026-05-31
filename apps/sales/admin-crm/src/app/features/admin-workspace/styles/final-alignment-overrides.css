@@ -1180,7 +1180,7 @@
 
 @media (min-width: 1181px) {
   .dashboard-wrapper .admin-overview-view .charts-row {
-    grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.9fr) !important;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.65fr) !important;
   }
 
   .dashboard-wrapper .admin-overview-view .admin-employees-card {
@@ -1640,14 +1640,14 @@
   min-width: 0 !important;
   height: 100% !important;
   min-height: 0 !important;
-  padding: 28px 30px !important;
+  padding: 24px 28px !important;
   overflow: hidden !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-card {
   display: grid !important;
-  grid-template-rows: auto auto minmax(240px, 1fr) !important;
-  row-gap: 22px !important;
+  grid-template-rows: auto auto minmax(220px, auto) !important;
+  row-gap: 16px !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-header {
@@ -1660,7 +1660,7 @@
 .dashboard-wrapper .admin-overview-view .admin-statistics-kpis h3,
 .dashboard-wrapper .admin-overview-view .top-employee-board-header h3 {
   margin: 0 !important;
-  font-size: 24px !important;
+  font-size: 22px !important;
   line-height: 1.1 !important;
   letter-spacing: 0 !important;
 }
@@ -1688,12 +1688,12 @@
 
 .dashboard-wrapper .admin-overview-view .admin-insight-cell {
   min-width: 0 !important;
-  min-height: 96px !important;
+  min-height: 82px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   gap: 7px !important;
-  padding: 18px 20px 22px !important;
+  padding: 14px 18px 18px !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-insight-cell strong {
@@ -1744,8 +1744,8 @@
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-visuals {
   display: grid !important;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.95fr) !important;
-  gap: 22px !important;
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr) !important;
+  gap: 18px !important;
   align-items: stretch !important;
   min-width: 0 !important;
   min-height: 0 !important;
@@ -1769,19 +1769,63 @@
   margin: 0 !important;
 }
 
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .section-kicker {
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0.07em !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .section-header h3 {
+  margin-top: 4px !important;
+  font-size: clamp(20px, 1.8vw, 26px) !important;
+  line-height: 1 !important;
+}
+
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame,
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame {
-  min-height: 280px !important;
+  min-height: 220px !important;
+  height: 220px !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame canvas,
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame canvas {
-  height: 280px !important;
+  height: 220px !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-mix .overview-side {
-  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1fr) !important;
-  min-height: 280px !important;
+  grid-template-columns: minmax(128px, 0.72fr) minmax(144px, 1fr) !important;
+  gap: 14px !important;
+  align-items: center !important;
+  min-height: 220px !important;
+  height: 220px !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .donut-frame,
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .call-mix-legend,
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-row,
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-label {
+  min-width: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-row {
+  gap: 8px !important;
+  padding: 8px 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-row strong {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  font-size: 14px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-label {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+  gap: 6px !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-empty {

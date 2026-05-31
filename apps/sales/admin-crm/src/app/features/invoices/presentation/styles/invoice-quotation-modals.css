@@ -1442,29 +1442,26 @@
 .admin-quote-modal .quotation-hero {
   position: relative !important;
   display: grid !important;
-  grid-template-columns: 170px 260px !important;
-  align-items: start !important;
+  grid-template-columns: minmax(160px, 0.72fr) minmax(230px, 0.72fr) !important;
   justify-content: space-between !important;
-  gap: 0 !important;
-  min-height: 282px !important;
-  padding: 44px 56px !important;
+  align-items: start !important;
+  min-height: 252px !important;
+  padding: 32px 52px !important;
   overflow: hidden !important;
-  border-bottom: 0 !important;
   background:
-    linear-gradient(90deg, rgba(231, 240, 235, 0.88), rgba(24, 31, 38, 0.34)),
-    linear-gradient(128deg, #e7efeb 0%, #c8d7d4 32%, #879795 58%, #111827 100%) !important;
+    linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
+    url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
 }
 
 .admin-quote-modal .quotation-hero::before {
   content: "" !important;
   position: absolute !important;
   inset: 0 !important;
-  opacity: 0.28 !important;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 38px, rgba(255, 255, 255, 0.72) 39px 43px),
-    repeating-linear-gradient(0deg, transparent 0 42px, rgba(17, 24, 39, 0.16) 43px 45px) !important;
-  transform: skewX(-12deg) scale(1.15) !important;
-  transform-origin: center !important;
+  opacity: 1 !important;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.42)) !important;
+  transform: none !important;
 }
 
 .admin-quote-modal .quotation-hero-logo,
@@ -1475,56 +1472,68 @@
 }
 
 .admin-quote-modal .quotation-hero-company {
-  align-self: center !important;
-  justify-self: center !important;
+  align-self: start !important;
+  display: grid !important;
+  gap: 2px !important;
+  max-width: 320px !important;
   color: #ffffff !important;
-  text-align: center !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.32) !important;
 }
 
 .admin-quote-modal .quotation-hero-company h2 {
-  margin: 0 0 6px !important;
+  margin: 0 0 7px !important;
   color: #ffffff !important;
   font-size: 22px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.02em !important;
-  text-transform: uppercase !important;
-}
-
-.admin-quote-modal .quotation-hero-company div {
-  margin-bottom: 8px !important;
-  color: #ffffff !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.22em !important;
-  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.08 !important;
 }
 
 .admin-quote-modal .quotation-hero-company p {
-  margin: 1px 0 !important;
-  color: #ffffff !important;
-  font-size: 11px !important;
-  line-height: 1.25 !important;
+  margin: 0 !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.36 !important;
+}
+
+.admin-quote-modal .quotation-hero-logo {
+  align-self: start !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 .admin-quote-modal .quotation-logo {
-  width: 150px !important;
-  max-height: 62px !important;
+  width: 228px !important;
+  max-width: 100% !important;
+  max-height: 72px !important;
   object-fit: contain !important;
 }
 
 .admin-quote-modal .quotation-hero-title {
-  align-self: center !important;
+  align-self: end !important;
   justify-self: end !important;
+  display: grid !important;
+  gap: 0 !important;
+  width: min(100%, 236px) !important;
+  margin-bottom: 4px !important;
+  justify-items: end !important;
   color: #ffffff !important;
-  text-align: left !important;
+  text-align: right !important;
 }
 
 .admin-quote-modal .quotation-hero-title h2 {
-  margin: 0 0 14px !important;
+  margin: 0 !important;
   color: #ffffff !important;
-  font-size: 42px !important;
+  font-size: 48px !important;
   font-weight: 700 !important;
   letter-spacing: -0.04em !important;
+  line-height: 1 !important;
 }
 
 .admin-quote-modal .quotation-hero-title span,
@@ -1533,54 +1542,61 @@
   color: #ffffff !important;
   font-size: 16px !important;
   font-weight: 500 !important;
-  line-height: 1.45 !important;
+  line-height: 1.08 !important;
+}
+
+.admin-quote-modal .quotation-hero-title span:not(:first-of-type) {
+  margin-top: 0 !important;
 }
 
 .admin-quote-modal .quotation-letter {
   display: grid !important;
-  gap: 20px !important;
-  margin: 0 !important;
-  padding: 34px 56px 24px !important;
+  gap: 14px !important;
+  padding: 28px 52px 18px !important;
 }
 
 .admin-quote-modal .quotation-letter h3 {
   margin: 0 !important;
   color: #1d2a8a !important;
-  font-size: 20px !important;
+  font-size: 18px !important;
   font-weight: 700 !important;
 }
 
 .admin-quote-modal .quotation-letter strong {
-  margin-top: -18px !important;
+  margin-top: -14px !important;
   color: #000000 !important;
-  font-size: 20px !important;
+  font-size: 18px !important;
   font-weight: 700 !important;
 }
 
 .admin-quote-modal .quotation-letter p {
   margin: 0 !important;
   color: #111827 !important;
-  font-size: 16px !important;
-  line-height: 1.55 !important;
+  font-size: 15px !important;
+  line-height: 1.42 !important;
 }
 
 .admin-quote-modal .quotation-service-card {
-  margin: 0 56px !important;
+  --quotation-table-columns: minmax(0, 1fr) 78px 104px 112px;
+  width: calc(100% - 96px) !important;
+  max-width: calc(100% - 96px) !important;
+  margin: 0 auto !important;
 }
 
 .admin-quote-modal .quotation-service-header {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 100px 128px 128px !important;
-  gap: 16px !important;
-  padding: 20px 28px !important;
-  border: 0 !important;
-  border-radius: 9px !important;
-  background: #429471 !important;
+  grid-template-columns: var(--quotation-table-columns) !important;
+  gap: 12px !important;
+  padding: 18px 30px !important;
+  border-radius: 24px !important;
+  background-color: #5f9b76 !important;
   color: #ffffff !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.02em !important;
   text-transform: uppercase !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
 }
 
 .admin-quote-modal .quotation-service-header span:not(:first-child),
@@ -1590,42 +1606,41 @@
 
 .admin-quote-modal .quotation-service-body {
   display: grid !important;
-  gap: 22px !important;
-  margin-top: 30px !important;
-  padding: 24px 28px !important;
-  border-radius: 9px !important;
-  background: #f1fff4 !important;
+  gap: 14px !important;
+  margin-top: 18px !important;
+  padding: 28px 30px 24px !important;
+  border-radius: 24px !important;
+  background-color: #eefaf1 !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
 }
 
 .admin-quote-modal .quotation-service-row {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 100px 128px 128px !important;
-  gap: 16px !important;
-  align-items: start !important;
-  padding: 0 !important;
-  border: 0 !important;
+  grid-template-columns: var(--quotation-table-columns) !important;
+  gap: 12px !important;
+  align-items: center !important;
   color: #263238 !important;
-  font-size: 16px !important;
-  line-height: 1.45 !important;
+  font-size: 15px !important;
+  line-height: 1.28 !important;
 }
 
 .admin-quote-modal .quotation-total-panel {
   display: grid !important;
-  gap: 6px !important;
+  gap: 4px !important;
   justify-self: end !important;
-  width: auto !important;
-  min-width: 260px !important;
-  margin: 22px 0 0 !important;
-  padding: 22px 0 0 !important;
+  width: min(100%, 340px) !important;
+  min-width: 0 !important;
+  margin-top: 12px !important;
+  padding-top: 14px !important;
   border-top: 1px solid #6aa283 !important;
 }
 
 .admin-quote-modal .quotation-total-panel div {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 110px !important;
+  grid-template-columns: minmax(0, 1fr) 92px !important;
   gap: 16px !important;
   align-items: baseline !important;
-  padding: 0 !important;
 }
 
 .admin-quote-modal .quotation-total-panel span {
@@ -1638,28 +1653,34 @@
 
 .admin-quote-modal .quotation-total-panel strong {
   color: #263238 !important;
-  font-size: 20px !important;
+  font-size: 18px !important;
   font-weight: 500 !important;
   text-align: right !important;
 }
 
 .admin-quote-modal .quotation-total-panel div:last-child strong {
-  font-size: 28px !important;
+  font-size: 26px !important;
   font-weight: 700 !important;
 }
 
 .admin-quote-modal .quotation-kind-note {
   display: grid !important;
-  grid-template-columns: 74px minmax(0, 1fr) !important;
-  gap: 24px !important;
-  margin: 56px 56px 0 !important;
-  padding: 14px 30px !important;
-  border-radius: 8px !important;
-  background: #f1fff4 !important;
+  grid-template-columns: 108px minmax(0, 1fr) !important;
+  gap: 18px !important;
+  margin: 24px 48px 0 !important;
+  padding: 22px 28px !important;
+  border-radius: 20px !important;
+  background-color: #eefaf1 !important;
   color: #5b6472 !important;
   font-size: 15px !important;
   line-height: 1.35 !important;
   letter-spacing: 0.08em !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+.admin-quote-modal .quotation-main-page .quotation-kind-note {
+  margin: auto 48px 32px !important;
 }
 
 .admin-quote-modal .quotation-kind-note strong {
@@ -1758,6 +1779,7 @@
   border: 0 !important;
   color: #151b23 !important;
   background: #ffffff !important;
+  box-sizing: border-box !important;
 }
 
 .admin-quote-modal .quotation-page {
@@ -1765,12 +1787,14 @@
   border: 1px solid #8fa1bb !important;
   background: #ffffff !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 .admin-quote-modal .quotation-main-page {
   display: flex !important;
   flex-direction: column !important;
   height: 1123px !important;
+  max-height: 1123px !important;
 }
 
 .admin-quote-modal .quotation-page + .quotation-page {
@@ -2011,17 +2035,19 @@
   flex-direction: column !important;
   min-height: 1123px !important;
   height: 1123px !important;
-  padding: 54px 54px 40px !important;
-  gap: 28px !important;
+  max-height: 1123px !important;
+  padding: 72px 54px 48px !important;
+  gap: 36px !important;
   background: #ffffff !important;
   color: #111827 !important;
+  box-sizing: border-box !important;
 }
 
 .admin-quote-modal .quotation-partner-panel {
   display: flex !important;
   align-items: center !important;
-  min-height: 360px !important;
-  padding: 44px 58px !important;
+  min-height: 486px !important;
+  padding: 52px 58px !important;
   border-radius: 24px !important;
   background: #cfb466 !important;
   color: #ffffff !important;
@@ -2033,7 +2059,7 @@
   max-width: 430px !important;
   margin: 0 !important;
   color: #ffffff !important;
-  font-size: 72px !important;
+  font-size: 78px !important;
   font-weight: 800 !important;
   line-height: 1.06 !important;
 }
@@ -2046,7 +2072,7 @@
 }
 
 .admin-quote-modal .quotation-terms-box {
-  min-height: 238px !important;
+  min-height: 260px !important;
   padding: 30px 32px !important;
   border-radius: 16px !important;
   background: #f0fff5 !important;
@@ -2118,28 +2144,28 @@
 
 .admin-quote-modal .quotation-conditions-box ul {
   display: grid !important;
-  gap: 10px !important;
+  gap: 11px !important;
   margin: 0 !important;
   padding-left: 24px !important;
   color: #5f6d7c !important;
-  font-size: 18px !important;
-  line-height: 1.42 !important;
+  font-size: 19px !important;
+  line-height: 1.45 !important;
 }
 
 .admin-quote-modal .quotation-terms-footer {
   display: grid !important;
   justify-items: center !important;
-  gap: 3px !important;
+  gap: 4px !important;
   margin-top: auto !important;
   color: #111827 !important;
   text-align: center !important;
-  font-size: 20px !important;
-  line-height: 1.24 !important;
+  font-size: 22px !important;
+  line-height: 1.28 !important;
 }
 
 .admin-quote-modal .quotation-terms-footer strong {
   color: #111827 !important;
-  font-size: 22px !important;
+  font-size: 23px !important;
   font-weight: 600 !important;
 }
 
@@ -2302,15 +2328,75 @@
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .admin-quote-modal,
+  .admin-quote-modal .invoice-builder,
+  .admin-quote-modal .quotation-preview {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
   .admin-quote-modal .invoice-preview,
   .admin-quote-modal .invoice-preview * {
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  .admin-quote-modal .quotation-preview {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    width: 194mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    page-break-after: auto;
+    page-break-inside: auto;
   }
 
   .admin-quote-modal .quotation-preview .quotation-page {
+    position: relative !important;
+    width: 194mm !important;
+    height: 281mm !important;
+    min-height: 281mm !important;
+    margin: 0 !important;
+    border: 1.5px solid #8fa1bb !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    break-after: page;
     page-break-after: always !important;
-    break-after: page !important;
+    overflow: hidden !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-main-page {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-page {
+    break-before: auto;
+    page-break-before: auto;
   }
 
   .admin-quote-modal .quotation-preview .quotation-page:last-child {
@@ -2322,8 +2408,185 @@
     margin-top: 0 !important;
   }
 
-  @page {
-    size: A4 portrait;
-    margin: 0;
+  .admin-quote-modal .quotation-hero {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    min-height: 64mm !important;
+    padding: 8mm 12mm !important;
+    grid-template-columns: minmax(72mm, 1fr) 56mm !important;
+    background:
+      linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
+      url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-hero-logo {
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-logo {
+    width: 52mm !important;
+    max-height: 18mm !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-hero-title {
+    align-self: end !important;
+    width: 52mm !important;
+    margin-bottom: 2mm !important;
+    gap: 0 !important;
+    justify-items: end !important;
+    text-align: right !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-hero-title h2 {
+    margin: 0 !important;
+    font-size: 12mm !important;
+    line-height: 1 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-hero-title span,
+  .admin-quote-modal .quotation-preview .quotation-hero-title strong {
+    line-height: 1.06 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-hero-title span:not(:first-of-type) {
+    margin-top: 0 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-service-header,
+  .admin-quote-modal .quotation-preview .quotation-service-body,
+  .admin-quote-modal .quotation-preview .quotation-kind-note,
+  .admin-quote-modal .quotation-preview .quotation-terms-page,
+  .admin-quote-modal .quotation-preview .quotation-partner-panel,
+  .admin-quote-modal .quotation-preview .quotation-terms-box {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-letter {
+    padding: 7mm 12mm 4mm !important;
+    gap: 3.5mm !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-letter h3,
+  .admin-quote-modal .quotation-preview .quotation-letter strong {
+    font-size: 12pt !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-letter p {
+    font-size: 10pt !important;
+    line-height: 1.34 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-service-card {
+    --quotation-table-columns: minmax(0, 1fr) 22mm 25mm 27mm !important;
+    width: calc(100% - 24mm) !important;
+    max-width: calc(100% - 24mm) !important;
+    margin: 0 auto !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-service-header {
+    grid-template-columns: var(--quotation-table-columns) !important;
+    padding: 5mm 8mm !important;
+    gap: 3mm !important;
+    border-radius: 7mm !important;
+    background-color: #5f9b76 !important;
+    color: #ffffff !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-service-body {
+    display: grid !important;
+    gap: 3mm !important;
+    margin-top: 5mm !important;
+    padding: 8mm 8mm 6mm !important;
+    border-radius: 6mm !important;
+    background-color: #eefaf1 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-service-row {
+    grid-template-columns: var(--quotation-table-columns) !important;
+    gap: 3mm !important;
+    font-size: 9.5pt !important;
+    line-height: 1.22 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-kind-note {
+    margin: auto 12mm 7mm !important;
+    padding: 5mm 8mm !important;
+    border-radius: 5mm !important;
+    background-color: #eefaf1 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-page {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 18mm 12mm 10mm !important;
+    gap: 8mm !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-partner-panel {
+    min-height: 118mm !important;
+    padding: 12mm 14mm !important;
+    border-radius: 7mm !important;
+    background: #cfb466 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-partner-panel h2 {
+    max-width: 92mm !important;
+    font-size: 19mm !important;
+    line-height: 1.06 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 7mm !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-box {
+    min-height: 66mm !important;
+    padding: 8mm !important;
+    border-radius: 5mm !important;
+    background: #f0fff5 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-box h3 {
+    margin-bottom: 3.5mm !important;
+    font-size: 14pt !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-payable-box strong,
+  .admin-quote-modal .quotation-preview .quotation-bank-row,
+  .admin-quote-modal .quotation-preview .quotation-muted-line {
+    font-size: 10pt !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-bank-heading {
+    margin-top: 7mm !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-bank-row {
+    grid-template-columns: 18mm minmax(0, 1fr) !important;
+    gap: 3mm !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-conditions-box ul {
+    gap: 2.5mm !important;
+    padding-left: 6mm !important;
+    font-size: 12pt !important;
+    line-height: 1.42 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-footer {
+    gap: 1mm !important;
+    font-size: 12pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .admin-quote-modal .quotation-preview .quotation-terms-footer strong {
+    font-size: 13pt !important;
   }
 }

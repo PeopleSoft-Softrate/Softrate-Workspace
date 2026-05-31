@@ -1912,10 +1912,11 @@
 }
 
 .admin-company-full-modal .company-full-main {
-  display: block !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
   min-width: 0 !important;
   min-height: 0 !important;
-  overflow: auto !important;
+  overflow: hidden !important;
   background: #f3f5fb !important;
 }
 
@@ -1947,7 +1948,8 @@
   min-width: 0 !important;
   min-height: 0 !important;
   padding: 24px 24px 28px !important;
-  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   background: #f3f5fb !important;
   scroll-behavior: smooth !important;
 }
@@ -2079,7 +2081,7 @@
 .admin-company-full-modal .company-full-invoice-history,
 .admin-company-full-modal .company-full-quotation-history,
 .admin-company-full-modal .company-full-note-list {
-  max-height: 240px !important;
+  max-height: 280px !important;
 }
 
 .admin-company-full-modal .company-full-contact-row {
@@ -2234,6 +2236,192 @@
   min-height: 46px !important;
   justify-content: center !important;
   border-radius: 16px !important;
+}
+
+/* Form controls inside the company full modal (modal renders outside
+   .dashboard-wrapper, so it cannot inherit the dashboard-scoped field/button
+   styles — replicate the employee-portal look here). */
+.admin-company-full-modal .field-input,
+.admin-company-full-modal .field-select,
+.admin-company-full-modal .field-textarea {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 0 14px !important;
+  border: 1px solid #d8dee8 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease !important;
+}
+
+.admin-company-full-modal .field-textarea {
+  min-height: 110px !important;
+  padding: 12px 14px !important;
+  resize: vertical !important;
+}
+
+.admin-company-full-modal .field-input:focus,
+.admin-company-full-modal .field-select:focus,
+.admin-company-full-modal .field-textarea:focus {
+  border-color: #3d7dfe !important;
+  box-shadow: inset 0 0 0 1px #3d7dfe !important;
+}
+
+.admin-company-full-modal .primary-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 0 20px !important;
+  border: 1px solid #245fe0 !important;
+  border-radius: 12px !important;
+  background: #3d7dfe !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: background 160ms ease, border-color 160ms ease !important;
+}
+
+.admin-company-full-modal .primary-action:hover:not(:disabled) {
+  border-color: #245fe0 !important;
+  background: #245fe0 !important;
+  color: #ffffff !important;
+}
+
+.admin-company-full-modal .primary-action:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.admin-company-full-modal .text-action {
+  margin-left: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #245fe0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.admin-company-full-modal .checkbox-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px 12px !important;
+}
+
+.admin-company-full-modal .checkbox-field {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.admin-company-full-modal .checkbox-field input {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  accent-color: #3d7dfe !important;
+}
+
+.admin-company-full-modal .company-full-form-grid {
+  gap: 16px 24px !important;
+}
+
+.admin-company-full-modal .company-full-action-row {
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+.admin-company-full-modal .company-full-note-composer {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.admin-company-full-modal .company-full-note-input {
+  min-height: 110px !important;
+  border-radius: 16px !important;
+}
+
+.admin-company-full-modal .company-full-note-button {
+  min-width: 130px !important;
+  min-height: 44px !important;
+}
+
+.admin-company-full-modal .company-full-followup-overview,
+.admin-company-full-modal .company-full-followup-edit-grid {
+  gap: 16px 24px !important;
+}
+
+.admin-company-full-modal .company-full-followup-description {
+  grid-column: 1 / -1 !important;
+}
+
+.admin-company-full-modal .company-full-followup-meta-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr) !important;
+  gap: 16px 24px !important;
+  margin-top: 18px !important;
+}
+
+.admin-company-full-modal .company-full-followup-meta-row .lead-detail-field strong {
+  white-space: normal !important;
+}
+
+.admin-company-full-modal .company-full-section-divider {
+  height: 1px !important;
+  margin: 4px 0 !important;
+  background: #e5e7eb !important;
+}
+
+.admin-company-full-modal .company-full-inline-error {
+  margin-top: -4px !important;
+  color: #b34a3a !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.admin-company-full-modal .button-spinner {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid rgba(255, 255, 255, 0.45) !important;
+  border-top-color: currentColor !important;
+  border-radius: 50% !important;
+  animation: admin-company-full-spin 720ms linear infinite !important;
+}
+
+@keyframes admin-company-full-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-company-full-modal .empty-state-inline {
+  display: flex !important;
+  align-items: center !important;
+  color: #6b7280 !important;
+  font-size: 14px !important;
+}
+
+.admin-company-full-modal .empty-state-inline-minimal {
+  padding: 14px 4px !important;
 }
 
 @media (max-width: 1180px) {

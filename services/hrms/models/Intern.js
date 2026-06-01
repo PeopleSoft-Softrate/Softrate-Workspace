@@ -51,5 +51,23 @@ const InternSchema = new mongoose.Schema({
     updatedAt: { type: Date }
   }
 });
+// Helper function to capitalize the first letter of each word
+function capitalizeWords(str) {
+  if (!str) return str;
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+InternSchema.pre('save', function (next) {
+  if (this.isModified('fullName') && this.fullName) {
+    this.fullName = capitalizeWords(this.fullName);
+  }
+  if (this.isModified('college') && this.college) {
+    this.college = capitalizeWords(this.college);
+  }
+  if (this.isModified('role') && this.role) {
+    this.role = capitalizeWords(this.role);
+  }
+  next();
+});
 
 module.exports = mongoose.model("Intern", InternSchema);

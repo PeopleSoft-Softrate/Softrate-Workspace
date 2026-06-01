@@ -65,6 +65,9 @@ export class CertificateSettings implements OnInit {
   isLoading = true;
   isSaving = false;
 
+  emailLogoUrl: string = '';
+  emailSignatureUrl: string = '';
+
   // Unified drag state for both placeholder chips and paragraph blocks
   draggingType: 'placeholder' | 'paragraph' | null = null;
   draggingIndex: number | null = null;
@@ -111,8 +114,14 @@ export class CertificateSettings implements OnInit {
     this.isLoading = true;
     this.apiService.getCompanySettings().subscribe({
       next: (res: any) => {
-        if (res.success && res.offerLetterSettings) {
-          const saved = res.offerLetterSettings.documentTemplates || {};
+        if (res.success) {
+          if (res.settings && res.settings.communication) {
+            this.emailLogoUrl = res.settings.communication.emailLogoUrl || '';
+            this.emailSignatureUrl = res.settings.communication.emailSignatureUrl || '';
+          }
+
+          if (res.offerLetterSettings) {
+            const saved = res.offerLetterSettings.documentTemplates || {};
           const types = Object.keys(this.documentTemplates);
 
           types.forEach(type => {
@@ -146,9 +155,10 @@ export class CertificateSettings implements OnInit {
           const { documentTemplates: _ignored, ...rest } = res.offerLetterSettings;
           this.otherSettings = rest;
         }
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
+      }
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    },
       error: (err) => {
         console.error('Failed to fetch settings', err);
         this.isLoading = false;
@@ -174,7 +184,27 @@ export class CertificateSettings implements OnInit {
     this.draggingType = null;
   }
 
-  // ── Page management ────────────────────────────────────────────────────────
+  // ── Rendering for Canvas ───────────────────────────────────────────────────
+  renderCanvasText(text: string): string {
+    if (!text) return '(empty paragraph)';
+    
+    // Replace {{logo}} with actual image
+    if (text.includes('{{logo}}')) {
+      const img = this.emailLogoUrl ? `<img src="${this.emailLogoUrl}" class="preview-img-placeholder">` : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Company Logo Placeholder]</span>';
+      text = text.replace(/\{\{logo\}\}/g, img);
+    }
+    
+    // Replace {{signature}} with actual image
+    if (text.includes('{{signature}}')) {
+      const img = this.emailSignatureUrl ? `<img src="${this.emailSignatureUrl}" class="preview-img-placeholder">` : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Company Signature Placeholder]</span>';
+      text = text.replace(/\{\{signature\}\}/g, img);
+    }
+    
+    // Convert newlines to <br> for HTML rendering in the preview
+    return text.replace(/\n/g, '<br>');
+  }
+
+  // ── Tab Management ─────────────────────────────────────────────────────────
   addPage() {
     this.currentTemplate.pages.push(this.defaultPage());
     this.selectedPageIndex = this.currentTemplate.pages.length - 1;

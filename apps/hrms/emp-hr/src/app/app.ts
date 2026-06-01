@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon } from '@hugeicons/core-free-icons';
+import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon } from '@hugeicons/core-free-icons';
 import { ApiService } from './services/api.service';
 import { forkJoin } from 'rxjs';
 import { Alert } from './shared/components/alert/alert';
@@ -41,6 +41,7 @@ export class App {
   readonly CalendarCheckIn01Icon = CalendarCheckIn01Icon;
   readonly SentIcon = SentIcon;
   readonly Invoice01Icon = Invoice01Icon;
+  readonly Notification01Icon = Notification01Icon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   userName = signal<string | null>(null);

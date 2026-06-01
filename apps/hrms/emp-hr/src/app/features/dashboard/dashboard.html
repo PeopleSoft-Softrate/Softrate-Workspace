@@ -24,22 +24,7 @@
           style="padding: 0.625rem 1rem 0.625rem 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); font-size: var(--text-sm); outline: none; width: 240px; transition: border-color 0.2s;">
       </div>
 
-      <!-- Date Display -->
-      <div class="date-display">
-        <span class="time">{{ currentTime() | date:'hh:mm:ss a' }}</span>
-        <span class="date">{{ currentTime() | date:'EEEE, d MMMM y' }}</span>
-      </div>
 
-      <!-- Notifications & Profile -->
-      <div class="top-meta" style="display: flex; align-items: center; gap: 1rem;">
-        <button class="icon-btn"
-          style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative;">
-          <hugeicons-icon [icon]="Chat01Icon" size="20" [strokeWidth]="1.5"
-            color="var(--text-secondary)"></hugeicons-icon>
-          <span
-            style="position: absolute; top: 10px; right: 10px; width: 6px; height: 6px; background: #EF4444; border-radius: 50%; border: 1.5px solid white;"></span>
-        </button>
-      </div>
     </div>
   </header>
 

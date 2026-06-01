@@ -37,46 +37,6 @@
         </div>
 
         <div class="nav-section">
-          <p class="nav-label">Organization</p>
-          <a routerLink="/org-hierarchy" routerLinkActive="active" class="nav-item">
-            <div class="icon-box purple">
-              <hugeicons-icon [icon]="WorkflowSquare03Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>Org Hierarchy</span>
-          </a>
-          <a routerLink="/app-settings" routerLinkActive="active" class="nav-item">
-            <div class="icon-box dark-blue">
-              <hugeicons-icon [icon]="Settings01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>App Settings</span>
-          </a>
-          <a routerLink="/certificate-settings" routerLinkActive="active" class="nav-item">
-            <div class="icon-box indigo">
-              <hugeicons-icon [icon]="DiplomaIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>Documents & Certs</span>
-          </a>
-          <a routerLink="/hr-policies" routerLinkActive="active" class="nav-item">
-            <div class="icon-box orange">
-              <hugeicons-icon [icon]="PolicyIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>HR Policies</span>
-          </a>
-          <a routerLink="/performance-goals" routerLinkActive="active" class="nav-item">
-            <div class="icon-box cyan">
-              <hugeicons-icon [icon]="DashboardSpeed01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>Performance Goals</span>
-          </a>
-          <a routerLink="/holiday-calendar" routerLinkActive="active" class="nav-item">
-            <div class="icon-box red">
-              <hugeicons-icon [icon]="Calendar03Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>Holiday Calendar</span>
-          </a>
-        </div>
-        
-        <div class="nav-section">
           <p class="nav-label">Management</p>
           <a routerLink="/employees" routerLinkActive="active" class="nav-item">
             <div class="icon-box teal">
@@ -99,6 +59,46 @@
               <hugeicons-icon [icon]="UserGroupIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             </div>
             <span>Team Assignments</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-label">Organization</p>
+          <a routerLink="/org-hierarchy" routerLinkActive="active" class="nav-item">
+            <div class="icon-box purple">
+              <hugeicons-icon [icon]="WorkflowSquare03Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Org Hierarchy</span>
+          </a>
+          <a routerLink="/hr-policies" routerLinkActive="active" class="nav-item">
+            <div class="icon-box orange">
+              <hugeicons-icon [icon]="PolicyIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>HR Policies</span>
+          </a>
+          <a routerLink="/performance-goals" routerLinkActive="active" class="nav-item">
+            <div class="icon-box cyan">
+              <hugeicons-icon [icon]="DashboardSpeed01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Performance Goals</span>
+          </a>
+          <a routerLink="/holiday-calendar" routerLinkActive="active" class="nav-item">
+            <div class="icon-box red">
+              <hugeicons-icon [icon]="Calendar03Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Holiday Calendar</span>
+          </a>
+          <a routerLink="/certificate-settings" routerLinkActive="active" class="nav-item">
+            <div class="icon-box indigo">
+              <hugeicons-icon [icon]="DiplomaIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Documents & Certs</span>
+          </a>
+          <a routerLink="/app-settings" routerLinkActive="active" class="nav-item">
+            <div class="icon-box dark-blue">
+              <hugeicons-icon [icon]="Settings01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>App Settings</span>
           </a>
         </div>
       </ng-container>
@@ -247,7 +247,7 @@
       <div class="top-actions">
         <div class="notification-wrapper">
           <button class="icon-btn" title="Notifications" (click)="toggleNotifications()">
-            <i class="fa-solid fa-bell"></i>
+            <hugeicons-icon [icon]="Notification01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             <span class="dot" *ngIf="hasNotifications()"></span>
           </button>
         </div>
@@ -290,7 +290,6 @@
             <span class="profile-trigger-avatar" title="Change profile photo" (click)="openProfilePhotoPicker(profilePhotoInput, $event)">
               <img *ngIf="profilePhotoUrl() as photoUrl" [src]="photoUrl" [alt]="displayName() + ' profile photo'" class="profile-avatar-image">
               <span *ngIf="!profilePhotoUrl()">{{ userInitials() }}</span>
-              <span class="profile-status-dot"></span>
             </span>
             <span class="profile-trigger-name">{{ displayName() }}</span>
             <i class="fa-solid fa-chevron-down profile-trigger-icon"></i>

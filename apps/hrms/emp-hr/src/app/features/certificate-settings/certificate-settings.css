@@ -454,6 +454,8 @@
   border-radius: 8px; overflow: auto;
   display: flex; justify-content: center;
   min-height: 400px;
+  position: relative;
+  z-index: 1;
 }
 
 .cert-canvas-container {
@@ -536,6 +538,13 @@
 
 .para-canvas-text {
   font-family: inherit;
+}
+
+.preview-img-placeholder {
+  max-height: 120px;
+  width: 100%;
+  object-fit: contain;
+  object-position: left;
 }
 
 /* ── Footer Actions ─────────────────────────────────────────────────── */

@@ -98,7 +98,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode != 200) {
-        if (data['message'] == 'DEVICE_MISMATCH') {
+        if (data['code'] == 'DEVICE_MISMATCH' || data['message'] == 'DEVICE_MISMATCH') {
           setState(() { _loading = false; });
           if (!mounted) return;
           Navigator.push(

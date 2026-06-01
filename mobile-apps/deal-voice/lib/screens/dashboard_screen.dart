@@ -398,7 +398,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          height: 65,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.6),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -409,16 +408,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           child: SafeArea(
             top: false,
-            bottom: false,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(icon: Icons.home_rounded, index: 0),
-                _buildNavItem(icon: Icons.bar_chart_rounded, index: 1),
-                _buildNavItem(icon: Icons.assignment_ind_rounded, index: 2),
-                _buildNavItem(icon: Icons.bookmark_rounded, index: 3),
-                _buildNavItem(icon: Icons.person_rounded, index: 4),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(icon: Icons.home_rounded, index: 0),
+                  _buildNavItem(icon: Icons.bar_chart_rounded, index: 1),
+                  _buildNavItem(icon: Icons.assignment_ind_rounded, index: 2),
+                  _buildNavItem(icon: Icons.bookmark_rounded, index: 3),
+                  _buildNavItem(icon: Icons.person_rounded, index: 4),
+                ],
+              ),
             ),
           ),
         ),

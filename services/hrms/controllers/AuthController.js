@@ -575,14 +575,17 @@ exports.requestDeviceChange = async (req, res) => {
       return res.status(400).json({ success: false, message: "A request is already pending for this account." });
     }
 
+    const hasManager = !!user.assignedManager;
+
     // Create the request
     const request = new DeviceChangeRequest({
-      companyId: user.companyId || "6a16a279b6cbac52ba3f726d",
+      companyId: user.companyId,
       userId: user._id,
       userModel: userModel,
       oldDeviceId: user.deviceId || "unknown",
       newDeviceId: newDeviceId,
-      reason: reason
+      reason: reason,
+      managerApprovalStatus: hasManager ? "pending" : "approved"
     });
 
     await request.save();

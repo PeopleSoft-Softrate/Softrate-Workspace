@@ -1,3 +1,4 @@
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -311,6 +312,35 @@ class _HrdashBoardState extends State<HrdashBoard>
           debugPrint("fetchHrProfile: User is no longer HR. Demoting...");
           _handleHrDemotion();
           return;
+        }
+
+        // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
+        final dbDeviceId = user['deviceId'];
+        if (dbDeviceId != null) {
+          final currentDeviceId = await DeviceInfoHelper.getDeviceId();
+          if (dbDeviceId != currentDeviceId) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('hr_logged_in');
+            await prefs.remove('auth_token');
+            await prefs.remove('hr_id');
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session expired: Account bound to another device.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const homescreen()),
+                  (route) => false,
+                );
+              });
+            }
+            throw Exception('DEVICE_MISMATCH');
+          }
         }
 
         if (mounted) {

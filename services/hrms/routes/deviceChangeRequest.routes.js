@@ -27,12 +27,22 @@ router.get("/hr-pending", verifyTenant, async (req, res) => {
 // GET device change requests for a Manager
 router.get("/manager-pending/:managerId", verifyTenant, async (req, res) => {
   try {
-    // Note: We'd typically filter by employees assigned to this manager, 
-    // but for simplicity we'll just show pending manager approvals
+    const managerId = req.params.managerId;
+    
+    // Find all employees and interns assigned to this manager
+    const assignedEmployees = await Employee.find({ assignedManager: managerId }).select('_id');
+    const assignedInterns = await Intern.find({ assignedManager: managerId }).select('_id');
+    
+    const assignedUserIds = [
+      ...assignedEmployees.map(e => e._id), 
+      ...assignedInterns.map(i => i._id)
+    ];
+
     const requests = await DeviceChangeRequest.find({
       companyId: req.user.companyId,
       status: "pending",
-      managerApprovalStatus: "pending"
+      managerApprovalStatus: "pending",
+      userId: { $in: assignedUserIds }
     }).sort({ createdAt: -1 });
 
     const populated = await populateUsers(requests);

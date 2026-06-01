@@ -1,3 +1,4 @@
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'dart:async' as java_timer;
 import 'dart:convert';
 import 'dart:io';
@@ -113,13 +114,15 @@ class _AttendancePageState extends State<AttendancePage>
           await handleDropStatus(internData?['status'] ?? '');
           await checkDropAndLogout();
           await resetAttendanceIfNewDay();
-          // 🔥 BACKEND IS SOURCE OF TRUTH
-          await loadTodayAttendance();
-          await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
-          await checkTodayHoliday();
-
-          await fetchMyResignation();
-          await _checkHolidayBadge();
+          
+          // Run independent network requests concurrently to reduce load time
+          await Future.wait([
+            loadTodayAttendance(),
+            fetchOfficeLocations(),
+            checkTodayHoliday(),
+            fetchMyResignation(),
+            _checkHolidayBadge(),
+          ]);
         }
       }
     } catch (e) {
@@ -396,7 +399,37 @@ class _AttendancePageState extends State<AttendancePage>
             fullData['employee'] ??
             fullData['user'] ??
             fullData;
+        
         internStatus = internData?['status']?.toString().toLowerCase();
+
+        // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
+        final dbDeviceId = internData?['deviceId'];
+        if (dbDeviceId != null) {
+          final currentDeviceId = await DeviceInfoHelper.getDeviceId();
+          if (dbDeviceId != currentDeviceId) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('internLoggedIn');
+            await prefs.remove('auth_token');
+            await prefs.remove('internId');
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session expired: Account bound to another device.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => homescreen()),
+                  (route) => false,
+                );
+              });
+            }
+            throw Exception('DEVICE_MISMATCH');
+          }
+        }
 
         // 🔥 HR ROLE CHECK (PROMOTION)
         final role = internData?['role']?.toString().toLowerCase();

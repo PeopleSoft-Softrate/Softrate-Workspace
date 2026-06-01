@@ -1,3 +1,4 @@
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'dart:async' as java_timer;
 import 'dart:convert';
 import 'dart:io';
@@ -101,16 +102,14 @@ class _EmployeedashboardState extends State<Employeedashboard>
       if (employeeId != null) {
         await fetchEmployeeData(employeeId!);
         if (employeeId != 'test_employee_id') {
-          await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
-          await checkTodayHoliday();
-
-          // 🔥 Only continue if NOT terminated
-          if (employeeData?['status'] != 'terminated') {
-            await resetAttendanceIfNewDay();
-            await loadTodayAttendance();
-            await fetchMyResignation();
-            await _checkHolidayBadge();
-          }
+          // Run independent network requests concurrently to reduce load time
+          await Future.wait([
+            fetchOfficeLocations(),
+            checkTodayHoliday(),
+            resetAttendanceIfNewDay().then((_) => loadTodayAttendance()),
+            fetchMyResignation(),
+            _checkHolidayBadge(),
+          ]);
         }
       }
     } catch (e) {
@@ -261,6 +260,35 @@ class _EmployeedashboardState extends State<Employeedashboard>
           setState(() {
             employeeData = data; // ✅ Single setState
           });
+        }
+
+        // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
+        final dbDeviceId = data['deviceId'];
+        if (dbDeviceId != null) {
+          final currentDeviceId = await DeviceInfoHelper.getDeviceId();
+          if (dbDeviceId != currentDeviceId) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('employeeLoggedIn');
+            await prefs.remove('auth_token');
+            await prefs.remove('employeeId');
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session expired: Account bound to another device.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => homescreen()),
+                  (route) => false,
+                );
+              });
+            }
+            throw Exception('DEVICE_MISMATCH');
+          }
         }
 
         // 🔥 HR ROLE CHECK (PROMOTION)

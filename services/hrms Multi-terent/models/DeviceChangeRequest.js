@@ -28,4 +28,4 @@ DeviceChangeRequestSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model("DeviceChangeRequest", DeviceChangeRequestSchema);
+module.exports = { name: "DeviceChangeRequest", schema: DeviceChangeRequestSchema };

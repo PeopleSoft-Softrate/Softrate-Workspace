@@ -24,4 +24,4 @@ PerformanceTemplateSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model('PerformanceTemplate', PerformanceTemplateSchema);
+module.exports = { name: "PerformanceTemplate", schema: PerformanceTemplateSchema };

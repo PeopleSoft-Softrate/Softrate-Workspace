@@ -41,7 +41,4 @@ const EmployeeAttendanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model(
-  "EmployeeAttendance",
-  EmployeeAttendanceSchema
-);
+module.exports = { name: "EmployeeAttendance", schema: EmployeeAttendanceSchema };

@@ -70,4 +70,4 @@ InternSchema.pre('save', function () {
   }
 });
 
-module.exports = mongoose.model("Intern", InternSchema);
+module.exports = { name: "Intern", schema: InternSchema };

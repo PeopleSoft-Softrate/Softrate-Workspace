@@ -1,0 +1,79 @@
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/employees" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Employees
+      </a>
+    </div>
+    <h1>Pending Employee Requests</h1>
+    <p>Review and onboard new employee applications.</p>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  <div *ngIf="!isLoading() && requests().length > 0" class="requests-table-wrapper">
+    <table class="requests-table">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Role</th>
+          <th>Info</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let req of requests()">
+          <!-- Applicant -->
+          <td>
+            <div class="tbl-person">
+              <div class="tbl-avatar onboarding">{{ req.fullName ? req.fullName.substring(0,2).toUpperCase() : 'NA' }}</div>
+              <div>
+                <div class="tbl-name" style="display: flex; align-items: center; gap: 6px;">
+                  {{ req.fullName }}
+                </div>
+                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">{{ req.email || req.phone || 'New Hire' }}</div>
+              </div>
+            </div>
+          </td>
+          <!-- Role -->
+          <td>
+            <div class="tbl-text" style="white-space: normal; line-height: 1.4;">
+              <span style="display: block; font-weight: 600; color: #0f172a; margin-bottom: 2px;">{{ req.designation || req.role || 'Employee' }}</span>
+              <span style="color: #64748b;">{{ req.department || 'N/A' }}</span>
+            </div>
+          </td>
+          <!-- Info -->
+          <td>
+            <div class="tbl-info-icon" [attr.data-tooltip]="'Education: ' + (req.qualification || 'N/A') + '&#xa;College: ' + (req.college || 'N/A') + '&#xa;UG CGPA: ' + (req.ugCgpa || 'N/A') + ' | PG CGPA: ' + (req.pgCgpa || 'N/A') + '&#xa;Experience: ' + (req.isExperienced ? req.experienceYears + ' Yrs' : 'Fresher') + '&#xa;DOB: ' + ((req.dob | date:'shortDate') || 'N/A') + '&#xa;Applied: ' + (req.createdAt | date:'d MMM y')">
+              <i class="fa-solid fa-circle-info"></i>
+            </div>
+          </td>
+          <!-- Actions -->
+          <td>
+            <div class="tbl-actions">
+              <button class="tbl-btn tbl-btn-reject" (click)="rejectRequest(req._id)" title="Reject">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <button class="tbl-btn tbl-btn-approve" (click)="navigateTo(['/employees/approve', req._id])" title="Review & Accept">
+                <i class="fa-solid fa-user-plus"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading() && requests().length === 0">
+    <div class="empty-content">
+      <hugeicons-icon [icon]="UserCircleIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+      <h3>No pending employees</h3>
+      <p>All clear! No new employee submissions found.</p>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Fetching requests...</p>
+  </div>
+</div>

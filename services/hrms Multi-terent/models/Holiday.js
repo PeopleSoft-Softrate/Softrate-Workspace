@@ -32,4 +32,4 @@ const holidaySchema = new mongoose.Schema({
 
 // ✅ NO UNIQUE INDEXES - Multiple same dates allowed!
 
-module.exports = mongoose.model('Holiday', holidaySchema);
+module.exports = { name: "Holiday", schema: holidaySchema };

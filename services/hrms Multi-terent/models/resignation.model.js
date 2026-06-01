@@ -29,4 +29,4 @@ const resignationSchema = new mongoose.Schema(
   { collection: "resignation_records" }
 );
 
-module.exports = mongoose.model("Resignation", resignationSchema);
+module.exports = { name: "Resignation", schema: resignationSchema };

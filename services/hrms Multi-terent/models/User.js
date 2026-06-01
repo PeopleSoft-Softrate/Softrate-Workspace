@@ -105,4 +105,4 @@ UserSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = { name: "User", schema: UserSchema };

@@ -37,4 +37,4 @@ const EmployeeLeaveSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("EmployeeLeaves", EmployeeLeaveSchema);
+module.exports = { name: "EmployeeLeaves", schema: EmployeeLeaveSchema };

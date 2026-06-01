@@ -1,0 +1,98 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Performance Goal Templates</h1>
+      <p>Define KPIs and goal definitions for different intern roles.</p>
+    </div>
+    <button class="add-btn" (click)="createNew()">
+      <i class="fa-solid fa-plus"></i> Add New Template
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Template Grid -->
+  <div class="template-grid" *ngIf="!editingTemplate()">
+    <div class="template-card" *ngFor="let t of templates()">
+      <div class="card-header">
+        <div>
+          <h3>{{ t.roleName }}</h3>
+          <span class="category-badge" [class.business]="t.category === 'business'">{{ t.category | titlecase }}</span>
+        </div>
+        <div class="actions">
+          <button (click)="editTemplate(t)"><i class="fa-solid fa-pen"></i></button>
+          <button class="delete" (click)="deleteTemplate(t._id!)"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>{{ t.goals.length }} Goals Defined</p>
+        <p>Total Weight: {{ 100 }}%</p> <!-- Simplified, should calculate -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit / Create Form -->
+  <div class="form-card" *ngIf="editingTemplate()">
+    <div class="form-header">
+      <h2>{{ editingTemplate()?._id ? 'Edit' : 'Create' }} Template</h2>
+      <div class="header-actions">
+        <button class="secondary" (click)="cancel()">Cancel</button>
+        <button class="primary" (click)="save()">Save Template</button>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Intern Role</label>
+        <input type="text" [(ngModel)]="editingTemplate()!.roleName" placeholder="e.g. Software Development">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" [(ngModel)]="editingTemplate()!.category" placeholder="e.g. Development Goals">
+      </div>
+    </div>
+
+    <div class="goals-section">
+      <div class="section-header">
+        <h3>Goals & KPIs</h3>
+        <button class="add-goal-btn" (click)="addGoal()">+ Add Goal</button>
+      </div>
+
+      <div class="goal-item" *ngFor="let goal of editingTemplate()!.goals; let i = index">
+        <div class="goal-header">
+          <h4>Goal #{{ i + 1 }}</h4>
+          <button class="remove-btn" (click)="removeGoal(i)"><i class="fa-solid fa-times"></i></button>
+        </div>
+        
+        <div class="goal-form-grid">
+          <div class="form-group">
+            <label>Perspective</label>
+            <input type="text" [(ngModel)]="goal.perspective" list="perspectiveList" placeholder="e.g. Quality Perspective">
+            <datalist id="perspectiveList">
+              <option *ngFor="let p of existingPerspectives()" [value]="p"></option>
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label>KPI Name</label>
+            <input type="text" [(ngModel)]="goal.kpiName" placeholder="e.g. Code Quality">
+          </div>
+          <div class="form-group full-width">
+            <label>Goal Title</label>
+            <input type="text" [(ngModel)]="goal.title" placeholder="e.g. Deliver High-Quality Output">
+          </div>
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea [(ngModel)]="goal.description" rows="3" placeholder="Detailed description of the goal..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Weight (%)</label>
+            <input type="number" [(ngModel)]="goal.weight" placeholder="e.g. 25">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

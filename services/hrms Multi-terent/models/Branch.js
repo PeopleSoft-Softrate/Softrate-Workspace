@@ -15,4 +15,4 @@ BranchSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model('Branch', BranchSchema);
+module.exports = { name: "Branch", schema: BranchSchema };

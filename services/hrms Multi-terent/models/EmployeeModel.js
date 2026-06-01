@@ -82,4 +82,4 @@ EmployeeSchema.pre('save', function () {
   }
 });
 
-module.exports = mongoose.model("Employee", EmployeeSchema);
+module.exports = { name: "Employee", schema: EmployeeSchema };

@@ -61,7 +61,4 @@ const employeeResignationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model(
-  "EmployeeResignation",
-  employeeResignationSchema
-);
+module.exports = { name: "EmployeeResignation", schema: employeeResignationSchema };

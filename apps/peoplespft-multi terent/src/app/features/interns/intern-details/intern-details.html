@@ -1,0 +1,195 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/interns" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to List
+      </a>
+    </div>
+    <h1>Intern Profile</h1>
+    <p>Detailed overview and management for {{ intern()?.fullName || 'Intern' }}</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-secondary" (click)="editProfile()">
+      <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+    </button>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  <div class="profile-layout" *ngIf="!isLoading() && intern()">
+    <!-- Profile Sidebar -->
+    <div class="profile-sidebar">
+      <div class="card profile-card">
+        <div class="profile-image">
+          <div class="avatar-placeholder">{{ intern().fullName?.charAt(0) }}</div>
+        </div>
+        <h3>
+          {{ intern().fullName }}
+          <i *ngIf="intern().isHr" class="fa-solid fa-user-gear hr-badge" title="HR Staff" style="margin-left: 0.5rem; color: #3b82f6; font-size: 1rem;"></i>
+        </h3>
+        <p class="intern-id">ID: {{ intern().internid || intern().internId }}</p>
+        <span class="status-badge" [ngClass]="getStatusColor(intern().status)">
+          {{ intern().status }}
+        </span>
+        
+        <div class="quick-stats">
+          <div class="q-stat">
+            <span class="q-label">Team</span>
+            <span class="q-value">{{ intern().team || 'Not Assigned' }}</span>
+          </div>
+          <div class="q-stat">
+            <span class="q-label">Domain</span>
+            <span class="q-value">{{ intern().domain || 'General' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card nav-card">
+        <h4>Navigation</h4>
+        <div class="nav-links">
+          <button (click)="navigateTo(['/interns', internId()])" class="nav-item">
+            <hugeicons-icon [icon]="UserCircleIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Profile
+          </button>
+          <button (click)="navigateTo(['/interns', internId(), 'attendance'])" class="nav-item">
+            <hugeicons-icon [icon]="FingerAccessIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Attendance
+          </button>
+          <button (click)="navigateTo(['/interns', internId(), 'leaves'])" class="nav-item">
+            <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Leave
+          </button>
+          <button (click)="navigateTo(['/interns', internId(), 'review'])" class="nav-item">
+            <hugeicons-icon [icon]="LicenseDraftIcon" size="16" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            Performance
+          </button>
+        </div>
+      </div>
+
+      <!-- Conversion Actions -->
+      <div class="card promotion-card" *ngIf="canConvert() || canConvertToHr()">
+        <h4>Role Actions</h4>
+        <p class="stat-desc">Manage role transitions for this staff member.</p>
+        
+        <button class="btn-primary-outline w-100 mt-2 mb-2" *ngIf="canConvert()" (click)="convertToEmployee()" [disabled]="isConverting()">
+          <i class="fa-solid fa-user-plus" *ngIf="!isConverting()"></i>
+          <span *ngIf="!isConverting()">Promote to Employee</span>
+          <span *ngIf="isConverting()">Converting...</span>
+        </button>
+
+        <button class="btn-secondary-outline w-100" *ngIf="canConvertToHr()" (click)="convertToHr()" [disabled]="isConverting()">
+          <i class="fa-solid fa-user-gear" *ngIf="!isConverting()"></i>
+          <span *ngIf="!isConverting()">Convert to HR Staff</span>
+          <span *ngIf="isConverting()">Converting...</span>
+        </button>
+      </div>
+
+      <!-- Termination Actions -->
+      <div class="card promotion-card" *ngIf="canTerminate() && intern().status?.toLowerCase() !== 'drop' && intern().status?.toLowerCase() !== 'completed'">
+        <h4 style="color: #dc2626;">Danger Zone</h4>
+        <p class="stat-desc">Terminate intern and revoke login access.</p>
+        
+        <button class="btn-danger-outline w-100 mt-2" *ngIf="!showTerminateForm()" (click)="toggleTerminateForm()">
+          <i class="fa-solid fa-user-xmark"></i> Terminate Intern
+        </button>
+
+        <div class="terminate-form mt-3" *ngIf="showTerminateForm()" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px;">
+          <label style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #991b1b; font-weight: 500;">Reason for Termination</label>
+          <textarea 
+            [(ngModel)]="terminationReason" 
+            placeholder="Enter reason here..." 
+            rows="2" 
+            style="width: 100%; border: 1px solid #fca5a5; border-radius: 6px; padding: 8px; font-size: 0.9rem; margin-bottom: 10px;"></textarea>
+          
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-danger-outline" style="flex: 1; padding: 6px;" (click)="terminateIntern()" [disabled]="isTerminating()">
+              <span *ngIf="!isTerminating()">Confirm</span>
+              <span *ngIf="isTerminating()">Wait...</span>
+            </button>
+            <button class="btn-secondary" style="flex: 1; padding: 6px;" (click)="toggleTerminateForm()" [disabled]="isTerminating()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="profile-main">
+      <div class="card">
+        <div class="card-header">
+          <h3>Personal Information</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Full Name</label>
+            <p>{{ intern().fullName }}</p>
+          </div>
+          <div class="info-item">
+            <label>Email Address</label>
+            <p>{{ intern().email }}</p>
+          </div>
+          <div class="info-item">
+            <label>Phone Number</label>
+            <p>{{ intern().contact || intern().phoneNumber || 'Not provided' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Joining Date</label>
+            <p>{{ (intern().onboardingDate || intern().joiningDate) | date:'longDate' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Internship Duration</label>
+            <p>{{ intern().duration || 'Not set' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Current Status</label>
+            <p>{{ intern().status }}</p>
+          </div>
+          <div class="info-item" *ngIf="intern().linkedin">
+            <label>LinkedIn Profile</label>
+            <p>
+              <a [href]="intern().linkedin" target="_blank" class="linkedin-link" title="View LinkedIn Profile">
+                <hugeicons-icon [icon]="Share05Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Academic & Professional</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>University / College</label>
+            <p>{{ intern().college || intern().collegeName || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Department</label>
+            <p>{{ intern().department || 'N/A' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Assigned Project</label>
+            <p>{{ intern().assignedProject || 'No project assigned yet' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Fetching intern profile...</p>
+  </div>
+  
+  <div class="empty-state" *ngIf="!isLoading() && !intern()">
+    <i class="fa-solid fa-user-xmark empty-icon"></i>
+    <h3>Intern not found</h3>
+    <p>The intern details could not be retrieved. Please check the ID.</p>
+  </div>
+</div>
+</div>
+<app-intern-sidebar></app-intern-sidebar>
+</div>

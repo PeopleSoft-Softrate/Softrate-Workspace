@@ -1,0 +1,150 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/interns">Interns</a> / <span>Performance Review</span>
+    </div>
+    <h1>Performance Reviews</h1>
+    <p>Viewing performance goals for Intern ID: {{ internId() }}</p>
+  </div>
+  <div class="header-actions">
+    <div class="month-selector-wrapper">
+      <i class="fa-solid fa-calendar-days"></i>
+      <select [value]="selectedMonth()" (change)="onMonthChange($event)" class="month-select">
+        <option *ngFor="let month of months()" [value]="month">{{ month }}</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+  
+  <div class="review-overview" *ngIf="!isLoading() && reviewData()">
+    <div class="overview-header-premium">
+      <div class="overview-left-side">
+        <div class="team-info-badge">
+          <i class="fa-solid fa-users-gear"></i>
+          <span>Team: {{ reviewData().team || 'Team not set' }}</span>
+        </div>
+        <div class="period-info-badge">
+          <i class="fa-solid fa-calendar-check"></i>
+          <span>Evaluation Month: {{ selectedMonth() }}</span>
+        </div>
+      </div>
+      <div class="score-badge-premium-wrapper" *ngIf="reviewData().isGraded">
+        <span class="score-title">Overall Performance Rating</span>
+        <div class="score-badge-premium">
+          {{ reviewData().summary?.percentage || 0 | number:'1.1-1' }}%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reviews-grid-premium" *ngIf="!isLoading() && reviewData() && reviewData().goals">
+    <div class="review-card-premium" *ngFor="let goal of reviewData().goals">
+      <div class="card-header-premium">
+        <span class="perspective-badge-premium">
+          <i class="fa-solid fa-compass"></i> {{ goal.perspective }}
+        </span>
+        <span class="weight-badge-premium">
+          <i class="fa-solid fa-weight-hanging"></i> Weight: {{ goal.weight }}%
+        </span>
+      </div>
+      
+      <div class="card-body-premium">
+        <h3 class="goal-title-premium">{{ goal.title }}</h3>
+        <p class="goal-desc-premium">{{ goal.description }}</p>
+        
+        <div class="kpi-container-premium">
+          <span class="kpi-label-premium">
+            <i class="fa-solid fa-bullseye"></i> Key Performance Indicator (KPI)
+          </span>
+          <p class="kpi-text-premium">{{ goal.kpi }}</p>
+        </div>
+        
+        <div class="comment-container-premium" *ngIf="goal.comment">
+          <span class="comment-label-premium">
+            <i class="fa-solid fa-comment-dots"></i> Intern's Remarks / Status Update
+          </span>
+          <p class="comment-text-premium">"{{ goal.comment }}"</p>
+        </div>
+      </div>
+      
+      <div class="card-footer-premium">
+        <div class="grade-action-section">
+          <span class="grade-action-title">
+            <i class="fa-solid fa-award"></i> Evaluation Grade
+          </span>
+          
+          <div class="grade-display-premium" *ngIf="reviewData().isGraded">
+            <span class="final-grade-badge-premium" [ngClass]="getGradeColor(goal.grade)">
+              Grade {{ goal.grade }}
+            </span>
+          </div>
+          
+          <div class="grade-selector-premium" *ngIf="!reviewData().isGraded">
+            <div class="grade-chips-premium">
+              <button 
+                type="button"
+                class="grade-chip-premium chip-a" 
+                [class.active]="grades()[goal._id] === 'A'" 
+                (click)="setGrade(goal._id, 'A')">
+                <span class="chip-letter">A</span>
+                <span class="chip-name">Exceptional</span>
+              </button>
+              <button 
+                type="button"
+                class="grade-chip-premium chip-b" 
+                [class.active]="grades()[goal._id] === 'B'" 
+                (click)="setGrade(goal._id, 'B')">
+                <span class="chip-letter">B</span>
+                <span class="chip-name">Good</span>
+              </button>
+              <button 
+                type="button"
+                class="grade-chip-premium chip-c" 
+                [class.active]="grades()[goal._id] === 'C'" 
+                (click)="setGrade(goal._id, 'C')">
+                <span class="chip-letter">C</span>
+                <span class="chip-name">Average</span>
+              </button>
+              <button 
+                type="button"
+                class="grade-chip-premium chip-d" 
+                [class.active]="grades()[goal._id] === 'D'" 
+                (click)="setGrade(goal._id, 'D')">
+                <span class="chip-letter">D</span>
+                <span class="chip-name">Needs Work</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-action-premium-container" *ngIf="!isLoading() && reviewData() && !reviewData().isGraded">
+    <button class="btn-submit-premium" (click)="submitGrades()">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Submit Evaluation Ratings
+    </button>
+  </div>
+
+  <div class="empty-state-premium" *ngIf="!isLoading() && !reviewData()">
+    <div class="empty-state-card">
+      <i class="fa-solid fa-folder-open empty-icon-premium"></i>
+      <h3>No Goals Submitted Yet</h3>
+      <p>The intern has not submitted any performance goals for the month of {{ selectedMonth() }}.</p>
+    </div>
+  </div>
+
+  <div class="loading-overlay-premium" *ngIf="isLoading()">
+    <div class="loading-card">
+      <div class="spinner-premium"></div>
+      <p>Retrieving performance evaluations...</p>
+    </div>
+  </div>
+</div>
+</div>
+<app-intern-sidebar></app-intern-sidebar>
+</div>

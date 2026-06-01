@@ -1,0 +1,60 @@
+<div class="reviews-dashboard">
+  <div class="dashboard-header">
+    <div class="title-group">
+      <h2>Pending Performance Reviews</h2>
+      <p class="subtitle">Evaluate and grade your assigned team members' goals.</p>
+    </div>
+    <div class="header-stats" *ngIf="!isLoading()">
+      <div class="stat-badge">
+        <i class="fa-solid fa-user-graduate"></i>
+        <span>{{ interns().length }} Pending Reviews</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading your assigned team members...</p>
+  </div>
+
+  <div class="error-alert" *ngIf="errorMessage()">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>{{ errorMessage() }}</span>
+  </div>
+
+  <div class="interns-grid" *ngIf="!isLoading() && !errorMessage()">
+    <div class="empty-state" *ngIf="interns().length === 0">
+      <i class="fa-solid fa-clipboard-check empty-icon"></i>
+      <h3>{{ hasAssignedInterns() ? 'All reviews completed' : 'No pending reviews' }}</h3>
+      <p>{{ hasAssignedInterns() ? 'Great job! You have evaluated all of your assigned team members for this month.' : 'You currently do not have any interns assigned to your team.' }}</p>
+    </div>
+
+    <div class="intern-review-card" *ngFor="let intern of interns()">
+      <div class="card-header">
+        <div class="avatar-circle">{{ intern.fullName ? intern.fullName.charAt(0) : 'U' }}</div>
+        <div class="intern-identity">
+          <h3>{{ intern.fullName }}</h3>
+          <span class="id-badge">{{ intern.internid || 'N/A' }}</span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Department:</span>
+          <span class="value">{{ intern.department || 'N/A' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Status:</span>
+          <span class="status-badge active">Active</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button class="btn-evaluate" (click)="evaluateIntern(intern.internid)">
+          <i class="fa-solid fa-star-half-stroke"></i>
+          Evaluate Performance
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

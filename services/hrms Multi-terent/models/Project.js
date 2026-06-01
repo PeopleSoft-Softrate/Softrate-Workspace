@@ -33,4 +33,4 @@ projectSchema.pre('save', function() {
   }
 });
 
-module.exports = mongoose.model('Project', projectSchema);
+module.exports = { name: "Project", schema: projectSchema };

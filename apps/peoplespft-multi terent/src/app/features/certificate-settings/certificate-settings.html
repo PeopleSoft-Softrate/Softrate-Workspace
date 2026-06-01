@@ -1,0 +1,364 @@
+<div class="settings-container">
+  <div class="page-header">
+    <h1>Certificate &amp; Documents</h1>
+    <p>Manage branding, signatures, and document templates for your organization.</p>
+  </div>
+
+  <div class="settings-grid">
+
+    <!-- Sidebar -->
+    <div class="doc-sidebar">
+      <div class="doc-category" *ngFor="let cat of docCategories">
+        <h3>{{cat.name}}</h3>
+        <div class="doc-list">
+          <button class="doc-btn" *ngFor="let doc of cat.docs" [class.active]="selectedDocType === doc.id"
+            (click)="selectDoc(doc.id)">
+            <hugeicons-icon [icon]="DiplomaIcon" size="18"></hugeicons-icon>
+            <span>{{doc.label}}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Builder -->
+    <div class="main-content">
+      <div class="config-card" style="position: relative;">
+
+        <!-- Loading overlay -->
+        <div class="card-loading-overlay" *ngIf="isLoading">
+          <div class="card-spinner"></div>
+          <p>Loading templates…</p>
+        </div>
+
+        <!-- Header -->
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper">
+              <hugeicons-icon [icon]="DiplomaIcon" size="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>{{ selectedDocType | titlecase }} Template Builder</h2>
+              <p>Add pages, upload backgrounds, drag placeholder chips and write custom paragraphs.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display:none">
+
+          <!-- Page Tabs -->
+          <div class="page-tabs-row">
+            <div class="page-tabs">
+              <button class="page-tab" *ngFor="let page of currentTemplate.pages; let i = index"
+                [class.active]="selectedPageIndex === i" (click)="selectedPageIndex = i">
+                Page {{ i + 1 }}
+                <span class="tab-remove" *ngIf="currentTemplate.pages.length > 1"
+                  (click)="$event.stopPropagation(); removePage(i)">×</span>
+              </button>
+            </div>
+            <button class="btn-add-page" (click)="addPage()">
+              <i class="fa-solid fa-plus"></i> Add Page
+            </button>
+          </div>
+
+          <!-- Orientation + Background Upload -->
+          <div class="settings-sub-grid" style="margin-top: 1rem;">
+            <div class="input-group">
+              <label>Document Orientation</label>
+              <div class="orientation-toggle">
+                <button [class.active]="currentTemplate.orientation === 'portrait'"
+                  (click)="currentTemplate.orientation = 'portrait'">
+                  <hugeicons-icon [icon]="OrientationLandscapeToPotraitIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon> Portrait
+                </button>
+                <button [class.active]="currentTemplate.orientation === 'landscape'"
+                  (click)="currentTemplate.orientation = 'landscape'">
+                  <hugeicons-icon [icon]="OrientationPotraitToLandscapeIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon> Landscape
+                </button>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Page {{ selectedPageIndex + 1 }} Background</label>
+              <div class="upload-zone-compact" (click)="fileInput.click()">
+                <span>{{ currentPage.backgroundUrl ? 'Change Background' : 'Upload Background' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- ─── PLACEHOLDER CHIPS ─────────────────────────────────────── -->
+          <div class="section-title">
+            <div class="section-title-left">
+              <h3>Placeholder Chips – Page {{ selectedPageIndex + 1 }}</h3>
+              <p class="section-desc">Drag dynamic data fields (e.g. <code>{{ '{' + '{' + 'fullName' + '}' + '}' }}</code>) anywhere on the canvas.</p>
+            </div>
+            <button class="btn-add" (click)="addPlaceholder()">
+              <i class="fa-solid fa-plus"></i> Add Chip
+            </button>
+          </div>
+
+          <div class="placeholders-list">
+            <div class="placeholder-row header-row">
+              <span>Data Field</span>
+              <span>X</span>
+              <span>Y</span>
+              <span>Font</span>
+              <span>Bold</span>
+              <span>Color</span>
+              <span></span>
+            </div>
+
+            <div class="placeholder-row" *ngFor="let p of currentPage.placeholders; let i = index">
+              <select class="location-input" [(ngModel)]="p.key">
+                <option *ngFor="let key of availablePlaceholderKeys" [value]="key.key">{{key.label}}</option>
+              </select>
+              <input type="number" class="location-input" [(ngModel)]="p.x" placeholder="X">
+              <input type="number" class="location-input" [(ngModel)]="p.y" placeholder="Y">
+              <input type="number" class="location-input" [(ngModel)]="p.fontSize" placeholder="Size">
+              <div class="checkbox-container">
+                <input type="checkbox" [(ngModel)]="p.isBold">
+              </div>
+              <input type="color" [(ngModel)]="p.color" class="chip-color-picker">
+              <button class="btn-remove" (click)="removePlaceholder(i)">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+            <div *ngIf="currentPage.placeholders.length === 0" class="empty-state">
+              No placeholder chips yet. Click <strong>Add Chip</strong> to start.
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- ─── CONTENT PARAGRAPHS ────────────────────────────────────── -->
+          <div class="section-title">
+            <div class="section-title-left">
+              <h3>Content Paragraphs – Page {{ selectedPageIndex + 1 }}</h3>
+              <p class="section-desc">Write freeform text blocks with rich formatting. Drag them on the canvas below. Use placeholders inside text.</p>
+            </div>
+            <button class="btn-add" (click)="addParagraph()">
+              <i class="fa-solid fa-plus"></i> Add Paragraph
+            </button>
+          </div>
+
+          <div class="paragraphs-list">
+            <div *ngIf="!currentPage.paragraphs || currentPage.paragraphs.length === 0" class="empty-state">
+              No paragraphs yet. Click <strong>Add Paragraph</strong> to write custom content.
+            </div>
+
+            <!-- Paragraph Editor Block -->
+            <div class="para-editor-block" *ngFor="let para of currentPage.paragraphs; let i = index">
+
+              <!-- Block Header -->
+              <div class="para-editor-header" (click)="para.isCollapsed = !para.isCollapsed" style="cursor: pointer; user-select: none;">
+                <div class="para-header-left">
+                  <i class="fa-solid fa-grip-vertical para-grip" (click)="$event.stopPropagation()"></i>
+                  <span class="para-label">Paragraph {{ i + 1 }}</span>
+                  <span class="para-pos-badge">{{ para.x }}, {{ para.y }}</span>
+                </div>
+                <div class="para-header-actions" (click)="$event.stopPropagation()" style="display: flex; align-items: center; gap: 0.5rem;">
+                  <button class="btn-collapse" (click)="para.isCollapsed = !para.isCollapsed" [title]="para.isCollapsed ? 'Expand' : 'Collapse'" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.5rem; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    <i class="fa-solid" [class.fa-chevron-down]="para.isCollapsed" [class.fa-chevron-up]="!para.isCollapsed"></i>
+                  </button>
+                  <button class="btn-remove" (click)="removeParagraph(i)">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="para-editor-body" *ngIf="!para.isCollapsed">
+                <!-- Toolbar Row 1: Font size, Alignment, Style, Color -->
+                <div class="para-toolbar">
+
+                  <!-- Font Size -->
+                  <div class="toolbar-group">
+                    <span class="toolbar-label">Size</span>
+                    <div class="font-size-ctrl">
+                      <button class="tbar-btn" (click)="adjustFontSize(para, -1)">−</button>
+                      <input type="number" class="font-sz-input" [(ngModel)]="para.fontSize" min="6" max="120">
+                      <button class="tbar-btn" (click)="adjustFontSize(para, 1)">+</button>
+                    </div>
+                  </div>
+
+                  <!-- Alignment -->
+                  <div class="toolbar-group">
+                    <span class="toolbar-label">Align</span>
+                    <div class="align-btns">
+                      <button class="tbar-btn icon-btn" [class.active]="para.alignment === 'left'"
+                        (click)="para.alignment = 'left'" title="Left">
+                        <i class="fa-solid fa-align-left"></i>
+                      </button>
+                      <button class="tbar-btn icon-btn" [class.active]="para.alignment === 'center'"
+                        (click)="para.alignment = 'center'" title="Center">
+                        <i class="fa-solid fa-align-center"></i>
+                      </button>
+                      <button class="tbar-btn icon-btn" [class.active]="para.alignment === 'right'"
+                        (click)="para.alignment = 'right'" title="Right">
+                        <i class="fa-solid fa-align-right"></i>
+                      </button>
+                      <button class="tbar-btn icon-btn" [class.active]="para.alignment === 'justify'"
+                        (click)="para.alignment = 'justify'" title="Justify">
+                        <i class="fa-solid fa-align-justify"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Bold / Italic -->
+                  <div class="toolbar-group">
+                    <span class="toolbar-label">Style</span>
+                    <div class="align-btns">
+                      <button class="tbar-btn icon-btn" [class.active]="para.isBold"
+                        (click)="para.isBold = !para.isBold" title="Bold">
+                        <strong>B</strong>
+                      </button>
+                      <button class="tbar-btn icon-btn" [class.active]="para.isItalic"
+                        (click)="para.isItalic = !para.isItalic" title="Italic">
+                        <em>I</em>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Color -->
+                  <div class="toolbar-group">
+                    <span class="toolbar-label">Color</span>
+                    <input type="color" [(ngModel)]="para.color" class="para-color-picker" title="Text color">
+                  </div>
+
+                  <!-- Font Family -->
+                  <div class="toolbar-group">
+                    <span class="toolbar-label">Font Family</span>
+                    <select [(ngModel)]="para.fontFamily" class="insert-select" style="min-width: 140px; height: 30px; padding: 2px 6px; font-size: 13px;">
+                      <option *ngFor="let font of availableFonts" [value]="font.value">{{ font.name }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Block Width -->
+                  <div class="toolbar-group">
+                    <span class="toolbar-label">Width (px)</span>
+                    <input type="number" class="font-sz-input width-input" [(ngModel)]="para.width" min="80" max="820" placeholder="px">
+                  </div>
+
+                </div><!-- /para-toolbar -->
+
+                <!-- Toolbar Row 2: Sliders -->
+                <div class="para-sliders">
+                  <div class="slider-group">
+                    <div class="slider-label-row">
+                      <span>Letter Spacing</span>
+                      <strong>{{ para.letterSpacing | number:'1.2-2' }}em</strong>
+                    </div>
+                    <input type="range" class="para-slider" [(ngModel)]="para.letterSpacing"
+                      min="0" max="0.5" step="0.01">
+                  </div>
+                  <div class="slider-group">
+                    <div class="slider-label-row">
+                      <span>Line Height</span>
+                      <strong>{{ para.lineHeight | number:'1.1-1' }}</strong>
+                    </div>
+                    <input type="range" class="para-slider" [(ngModel)]="para.lineHeight"
+                      min="1" max="3" step="0.1">
+                  </div>
+                </div>
+
+                <!-- Insert Placeholder Row -->
+                <div class="para-insert-row">
+                  <i class="fa-solid fa-code insert-icon"></i>
+                  <span class="insert-label">Insert Placeholder:</span>
+                  <select class="insert-select" (change)="onInsertPlaceholder(i, $event)">
+                    <option value="">— choose a field —</option>
+                    <option *ngFor="let key of availablePlaceholderKeys" [value]="key.key">{{ key.label }}</option>
+                  </select>
+                  <span class="insert-hint">Inserts at cursor position in the text area below</span>
+                </div>
+
+                <!-- Text Area -->
+                <textarea
+                  class="para-textarea"
+                  [id]="'para-ta-' + i"
+                  [(ngModel)]="para.text"
+                  [style.fontSize.px]="para.fontSize"
+                  [style.fontFamily]="para.fontFamily || 'inherit'"
+                  [style.fontWeight]="para.isBold ? 'bold' : 'normal'"
+                  [style.fontStyle]="para.isItalic ? 'italic' : 'normal'"
+                  [style.textAlign]="para.alignment"
+                  [style.letterSpacing]="para.letterSpacing + 'em'"
+                  [style.lineHeight]="para.lineHeight"
+                  [style.color]="para.color"
+                  [attr.placeholder]="paraPlaceholderHint"
+                  rows="5">
+                </textarea>
+              </div>
+
+            </div><!-- /para-editor-block -->
+          </div><!-- /paragraphs-list -->
+
+          <div class="section-divider"></div>
+
+          <!-- ─── VISUAL CANVAS ──────────────────────────────────────────── -->
+          <div class="section-title">
+            <h3>Visual Mapping – Page {{ selectedPageIndex + 1 }}</h3>
+          </div>
+
+          <div class="cert-visual-builder">
+            <div class="cert-canvas-container"
+              (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()"
+              [style.width.px]="currentTemplate.orientation === 'portrait' ? 595 : 842"
+              [style.height.px]="currentTemplate.orientation === 'portrait' ? 842 : 595"
+              [style.backgroundImage]="'url(' + (currentPage.backgroundUrl || 'assets/images/cert_fallback.png') + ')'">
+
+              <!-- Placeholder chip overlays -->
+              <div class="placeholder-overlay"
+                *ngFor="let p of currentPage.placeholders; let i = index"
+                (mousedown)="onMouseDown($event, i)"
+                [class.dragging]="draggingType === 'placeholder' && draggingIndex === i"
+                [style.left.px]="p.x" [style.top.px]="p.y"
+                [style.fontSize.px]="p.fontSize"
+                [style.fontWeight]="p.isBold ? 'bold' : 'normal'"
+                [style.color]="p.color || '#000'">
+                <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                {{ '{' + '{' + p.key + '}' + '}' }}
+              </div>
+
+              <!-- Paragraph block overlays -->
+              <div class="para-canvas-block"
+                *ngFor="let para of currentPage.paragraphs; let i = index"
+                (mousedown)="onMouseDownParagraph($event, i)"
+                [class.dragging]="draggingType === 'paragraph' && draggingIndex === i"
+                [style.left.px]="para.x"
+                [style.top.px]="para.y"
+                [style.width.px]="para.width"
+                [style.fontSize.px]="para.fontSize"
+                [style.fontFamily]="para.fontFamily || 'inherit'"
+                [style.fontWeight]="para.isBold ? 'bold' : 'normal'"
+                [style.fontStyle]="para.isItalic ? 'italic' : 'normal'"
+                [style.color]="para.color"
+                [style.textAlign]="para.alignment"
+                [style.letterSpacing]="para.letterSpacing + 'em'"
+                [style.lineHeight]="para.lineHeight">
+                <div class="para-canvas-handle">
+                  <i class="fa-solid fa-up-down-left-right"></i>
+                  <span>P{{ i + 1 }}</span>
+                </div>
+                <div class="para-canvas-text" [innerHTML]="renderCanvasText(para.text)"></div>
+              </div>
+
+            </div>
+          </div>
+          <p class="help-text center" style="margin-top:12px;text-align:center">
+            💡 Each page becomes one PDF page. Drag chips and paragraph blocks to position them. Paragraph blocks wrap text within their set width.
+          </p>
+        </div>
+
+        <!-- Save -->
+        <div class="actions-footer">
+          <button class="btn-save-all" (click)="saveSettings()" [disabled]="isSaving">
+            <hugeicons-icon [icon]="CheckmarkCircle01Icon" size="20" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+            <span>{{ isSaving ? 'Saving Changes...' : 'Save All Templates' }}</span>
+          </button>
+        </div>
+
+      </div><!-- /config-card -->
+    </div><!-- /main-content -->
+  </div>
+</div>

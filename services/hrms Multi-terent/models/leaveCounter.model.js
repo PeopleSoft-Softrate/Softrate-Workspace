@@ -55,4 +55,4 @@ leaveCounterSchema.index(
   { unique: true }
 );
 
-module.exports = mongoose.model("LeaveCounter", leaveCounterSchema);
+module.exports = { name: "LeaveCounter", schema: leaveCounterSchema };

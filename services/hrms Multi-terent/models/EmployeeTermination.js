@@ -91,4 +91,4 @@ employeeTerminationSchema.index({ employeeId: 1, status: 1 });
 employeeTerminationSchema.index({ terminationDate: -1 });
 employeeTerminationSchema.index({ status: 1, terminatedAt: -1 });
 
-module.exports = mongoose.model('EmployeeTermination', employeeTerminationSchema);
+module.exports = { name: "EmployeeTermination", schema: employeeTerminationSchema };

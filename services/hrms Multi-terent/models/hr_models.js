@@ -15,4 +15,4 @@ const hrSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model("HrUsers", hrSchema);
+module.exports = { name: "HrUsers", schema: hrSchema };

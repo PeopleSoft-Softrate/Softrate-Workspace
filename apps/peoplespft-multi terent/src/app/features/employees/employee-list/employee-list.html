@@ -1,0 +1,116 @@
+<div class="main-content-layout">
+  <!-- LEFT: DYNAMIC CONTENT SECTION -->
+  <div class="data-section">
+    <ng-container *ngIf="currentTab() === 'list'">
+      <div class="page-header-embedded">
+        <div class="header-content">
+          <h1>Manage Employees</h1>
+          <p>Complete overview of your organization's human capital.</p>
+        </div>
+        <div class="header-tools">
+          <div class="status-filters">
+            <button class="filter-chip" [class.active]="roleFilter() === 'all'" (click)="setRoleFilter('all')">All Staff</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'manager'" (click)="setRoleFilter('manager')">Manager</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'hr'" (click)="setRoleFilter('hr')">Hr</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'employee'" (click)="setRoleFilter('employee')">Employee</button>
+          </div>
+
+          <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input 
+              type="text" 
+              placeholder="Search by name, ID or email..." 
+              (input)="onSearch($event)"
+              [value]="searchQuery()"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="employee-list-container" [class.loading]="isLoading()">
+        <!-- Row Cards -->
+        <div class="employee-row-card" *ngFor="let emp of employees()">
+          <!-- IDENTITY -->
+          <div class="user-identity">
+            <img *ngIf="!emp.imgError" [src]="getPhotoUrl(emp._id)" (error)="$any(emp).imgError = true" class="avatar-initial" style="object-fit: cover;" />
+            <div *ngIf="emp.imgError || !emp._id" class="avatar-initial">{{ emp.fullName ? emp.fullName[0] : 'U' }}</div>
+            <div class="identity-text">
+              <span class="full-name">
+                {{ emp.fullName }}
+                <i *ngIf="emp.isManager" class="fa-solid fa-crown" style="color: #f59e0b; font-size: 0.75rem; margin-left: 4px;" title="Manager"></i>
+                <i *ngIf="emp.isHr" class="fa-solid fa-shield-halved" style="color: #0ea5e9; font-size: 0.75rem; margin-left: 4px;" title="HR Admin"></i>
+              </span>
+              <span class="emp-id">{{ emp.EmployeeId || emp._id.substring(0, 8) }}</span>
+            </div>
+          </div>
+
+          <!-- ROLE -->
+          <div class="info-block">
+            <span class="info-label">Designation</span>
+            <span class="info-value">{{ emp.role || 'Staff Member' }}</span>
+          </div>
+
+          <!-- DEPARTMENT -->
+          <div class="info-block">
+            <span class="info-label">Department</span>
+            <span class="info-value">{{ emp.department || 'Operations' }}</span>
+          </div>
+
+          <!-- STATUS -->
+          <div class="status-block">
+            <span class="premium-badge" [ngClass]="{
+              'badge-active': emp.status?.toLowerCase() === 'active' || emp.status?.toLowerCase() === 'approved',
+              'badge-leave': emp.status?.toLowerCase() === 'on leave',
+              'badge-pending': !emp.status || emp.status?.toLowerCase() === 'pending'
+            }">
+              {{ emp.status || 'Active' }}
+            </span>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="row-actions">
+            <button class="icon-btn-sm purple" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id])" title="View Profile">
+              <hugeicons-icon [icon]="UserCircleIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </button>
+            <button class="icon-btn-sm green" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id, 'attendance'])" title="Attendance">
+              <hugeicons-icon [icon]="FingerAccessIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </button>
+            <button class="icon-btn-sm brown" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id, 'payroll'])" title="Payroll">
+              <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </button>
+            <button class="icon-btn-sm blue" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id, 'review'])" title="Performance">
+              <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="!isLoading() && employees().length === 0">
+          <hugeicons-icon [icon]="UserCircleIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+          <h3>No records found</h3>
+          <p>Refine your search or filter criteria to find staff members.</p>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-overlay" *ngIf="isLoading()">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- VIEW 2: LEAVE REQUESTS -->
+    <app-leave-management *ngIf="currentTab() === 'leaves'"></app-leave-management>
+
+    <!-- VIEW 3: EMPLOYEE REQUESTS -->
+    <app-employee-requests *ngIf="currentTab() === 'requests'"></app-employee-requests>
+
+    <!-- VIEW 4: OFFBOARDING -->
+    <app-offboarding-requests *ngIf="currentTab() === 'offboarding'"></app-offboarding-requests>
+
+    <!-- VIEW 5: REJECTED -->
+    <app-employee-rejected *ngIf="currentTab() === 'rejected'"></app-employee-rejected>
+  </div>
+
+  <!-- RIGHT: VERTICAL ACTION SIDEBAR -->
+  <app-employee-sidebar [activeTab]="currentTab()"></app-employee-sidebar>
+</div>

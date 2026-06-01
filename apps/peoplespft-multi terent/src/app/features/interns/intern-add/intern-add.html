@@ -1,0 +1,122 @@
+<div class="page-header">
+  <div class="header-content">
+    <div class="breadcrumb">
+      <a routerLink="/interns/requests" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Requests
+      </a>
+    </div>
+    <h1>
+      {{ isEditMode() ? 'Edit Intern Profile' : (isApprovalMode() ? 'Review & Onboard' : 'Add New Intern') }}
+    </h1>
+    <p>
+      {{ isEditMode() ? 'Update information for ' + intern.fullName : (isApprovalMode() ? 'Finalize details to onboard ' + intern.fullName : 'Register a new intern into the system') }}
+    </p>
+  </div>
+</div>
+
+<div class="data-container">
+  <div class="card form-card">
+    <form (ngSubmit)="saveIntern()" #internForm="ngForm">
+      <div class="form-grid">
+
+
+        <!-- Personal Details -->
+        <div class="form-section">
+          <h3>Personal Details</h3>
+          <div class="form-group" [class.has-error]="submitted() && !intern.fullName">
+            <label>Full Name *</label>
+            <input type="text" [(ngModel)]="intern.fullName" name="fullName" required placeholder="Sam Raj">
+            <span class="error-text" *ngIf="submitted() && !intern.fullName">Name is required</span>
+          </div>
+          <div class="form-group" [class.has-error]="submitted() && !intern.email">
+            <label>Email Address *</label>
+            <input type="email" [(ngModel)]="intern.email" name="email" required placeholder="samraj@example.com">
+            <span class="error-text" *ngIf="submitted() && !intern.email">Valid email is required</span>
+          </div>
+          <div class="form-group">
+            <label>Contact Number</label>
+            <input type="text" [(ngModel)]="intern.contact" name="contact" placeholder="+91 ...">
+          </div>
+        </div>
+
+        <!-- Academic Details -->
+        <div class="form-section">
+          <h3>Academic & Role</h3>
+          <div class="form-group">
+            <label>College / University</label>
+            <input type="text" [(ngModel)]="intern.college" name="college" placeholder="University name">
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <input type="text" [(ngModel)]="intern.department" name="department" placeholder="CS, IT, etc.">
+          </div>
+          <div class="form-group">
+            <label>Assigned Role</label>
+            <select [(ngModel)]="intern.role" name="role" *ngIf="internRoles().length > 0" class="form-select">
+              <option value="">Select Role</option>
+              <option *ngFor="let role of internRoles()" [value]="role">{{role}}</option>
+            </select>
+            <input type="text" [(ngModel)]="intern.role" name="role" placeholder="Web Developer, etc." *ngIf="internRoles().length === 0">
+          </div>
+        </div>
+
+        <!-- Internship Details -->
+        <div class="form-section">
+          <h3>Internship Configuration</h3>
+          <div class="form-group" [class.has-error]="submitted() && !intern.onboardingDate">
+            <label>Onboarding Date *</label>
+            <input type="date" [(ngModel)]="intern.onboardingDate" name="onboardingDate" (change)="calculateEndDate()" required>
+            <span class="error-text" *ngIf="submitted() && !intern.onboardingDate">Onboarding date is required</span>
+          </div>
+          
+          <div class="duration-row">
+            <div class="form-group">
+              <label>Duration</label>
+              <input type="number" [(ngModel)]="intern.durationValue" name="durationValue" (input)="calculateEndDate()" min="1">
+            </div>
+            <div class="form-group">
+              <label>Unit</label>
+              <select [(ngModel)]="intern.durationType" name="durationType" (change)="calculateEndDate()">
+                <option value="day">Days</option>
+                <option value="month">Months</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Estimated End Date</label>
+            <input type="date" [(ngModel)]="intern.endDate" name="endDate" readonly class="readonly-input">
+          </div>
+
+        </div>
+
+        <!-- Stipend Type -->
+        <div class="form-section full-width flex-row">
+          <label class="section-label">Stipend Type</label>
+          <div class="simple-radio-group">
+            <label class="simple-radio">
+              <input type="radio" [(ngModel)]="intern.internshipType" name="internshipType" value="Stipend">
+              <span>Stipend</span>
+            </label>
+            <label class="simple-radio">
+              <input type="radio" [(ngModel)]="intern.internshipType" name="internshipType" value="Paid">
+              <span>Paid</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" routerLink="/interns/requests">
+          <i class="fa-solid fa-xmark"></i>
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving()">
+          <i class="fa-solid fa-floppy-disk" *ngIf="!isSaving()"></i>
+          <span *ngIf="!isSaving()">{{ isEditMode() ? 'Save Changes' : (isApprovalMode() ? 'Approve & Onboard' : 'Register Intern') }}</span>
+          <span *ngIf="isSaving()">{{ isEditMode() ? 'Updating...' : 'Saving...' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

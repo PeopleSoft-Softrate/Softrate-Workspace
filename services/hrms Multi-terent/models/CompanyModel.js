@@ -131,4 +131,4 @@ CompanySchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model("Company", CompanySchema);
+module.exports = { name: "Company", schema: CompanySchema };

@@ -15,4 +15,4 @@ DepartmentSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model('Department', DepartmentSchema);
+module.exports = { name: "Department", schema: DepartmentSchema };

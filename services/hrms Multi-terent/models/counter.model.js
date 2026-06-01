@@ -10,4 +10,4 @@ const CounterSchema = new mongoose.Schema({
 // Ensure uniqueness per company, type and year
 CounterSchema.index({ companyId: 1, type: 1, year: 1 }, { unique: true });
 
-module.exports = mongoose.model("Counter", CounterSchema);
+module.exports = { name: "Counter", schema: CounterSchema };

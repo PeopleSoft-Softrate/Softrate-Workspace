@@ -19,4 +19,4 @@ const LeaveSchema = new mongoose.Schema({
 
 });
 
-module.exports = mongoose.model("InternLeaves", LeaveSchema);
+module.exports = { name: "InternLeaves", schema: LeaveSchema };

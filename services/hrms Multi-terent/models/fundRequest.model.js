@@ -42,4 +42,4 @@ const FundRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("FundRequest", FundRequestSchema);
+module.exports = { name: "FundRequest", schema: FundRequestSchema };

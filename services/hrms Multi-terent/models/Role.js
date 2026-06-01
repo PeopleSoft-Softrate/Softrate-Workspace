@@ -18,4 +18,4 @@ RoleSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = mongoose.model('Role', RoleSchema);
+module.exports = { name: "Role", schema: RoleSchema };

@@ -1,9 +1,6 @@
-const User = require("../models/User");
-const Employee = require("../models/EmployeeModel");
-const Intern = require("../models/Intern");
-const Role = require("../models/Role");
-const PasswordReset = require("../models/PasswordReset");
-const DeviceChangeRequest = require("../models/DeviceChangeRequest");
+const { getMasterConnection, getTenantConnection } = require('../db');
+const { getModelsForConnection } = require('../utilities/modelLoader');
+const CompanyModelExport = require('../models/CompanyModel');
 const { sendEmail, LOGO_URL } = require("../utilities/sendEmail");
 const { getSignature } = require("../utilities/emailSignature");
 const crypto = require("crypto");
@@ -55,6 +52,7 @@ function serializeUser(userDoc) {
 async function findCurrentUser(req, includePhoto = false) {
   const photoSelect = includePhoto ? PROFILE_PHOTO_SELECT : "";
   let role = "employee";
+  const { User, Employee, Intern } = req.models; // Use dynamic models
 
   let query = User.findById(req.user.id).populate("roleId companyId departmentId branchId");
   if (photoSelect) query = query.select(photoSelect);

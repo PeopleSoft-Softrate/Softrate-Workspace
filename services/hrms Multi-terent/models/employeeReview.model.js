@@ -53,4 +53,4 @@ const EmployeeReviewSchema = new mongoose.Schema({
 
 /* ---------------------- EXPORT ---------------------- */
 
-module.exports = mongoose.model("EmployeeReview", EmployeeReviewSchema);
+module.exports = { name: "EmployeeReview", schema: EmployeeReviewSchema };

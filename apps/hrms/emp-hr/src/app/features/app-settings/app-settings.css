@@ -1,5 +1,5 @@
 .settings-container {
-  padding-right: 5rem; /* Space for the fixed action-sidebar */
+  padding-right: 7.5rem; /* Space for the fixed action-sidebar */
   max-width: 1300px;
   margin: 0 auto;
   font-family: var(--font-body);
@@ -167,7 +167,7 @@
 
 /* NAVIGATION SIDEBAR - EXACT ACTION STYLE */
 .settings-sidebar {
-  width: 90px;
+  width: 100px;
   position: fixed;
   right: 0;
   top: 65px; /* Adjust based on top-bar height */

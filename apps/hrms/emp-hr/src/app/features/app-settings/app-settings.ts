@@ -72,7 +72,6 @@ export class AppSettings implements OnInit {
 
   // PF and Tax settings
   pfCalculateEmployee = signal<boolean>(false);
-  pfCalculateIntern = signal<boolean>(false);
   pfPercentage = signal<number>(12);
   taxPercentage = signal<number>(10);
   taxLimitThreshold = signal<number>(50000);
@@ -142,7 +141,6 @@ export class AppSettings implements OnInit {
         if (defaults.intAllowances !== undefined) this.defaultInternAllowances.set(defaults.intAllowances);
         if (defaults.intDeductions !== undefined) this.defaultInternDeductions.set(defaults.intDeductions);
         if (defaults.pfCalculateEmployee !== undefined) this.pfCalculateEmployee.set(defaults.pfCalculateEmployee);
-        if (defaults.pfCalculateIntern !== undefined) this.pfCalculateIntern.set(defaults.pfCalculateIntern);
         if (defaults.pfPercentage !== undefined) this.pfPercentage.set(defaults.pfPercentage);
         if (defaults.taxPercentage !== undefined) this.taxPercentage.set(defaults.taxPercentage);
         if (defaults.taxLimitThreshold !== undefined) this.taxLimitThreshold.set(defaults.taxLimitThreshold);
@@ -193,7 +191,6 @@ export class AppSettings implements OnInit {
           if (s.payrollSettings) {
             const ps = s.payrollSettings;
             this.pfCalculateEmployee.set(ps.pfCalculateEmployee ?? false);
-            this.pfCalculateIntern.set(ps.pfCalculateIntern ?? false);
             this.pfPercentage.set(ps.pfPercentage ?? 12);
             this.taxPercentage.set(ps.taxPercentage ?? 10);
             this.taxLimitThreshold.set(ps.taxLimitThreshold ?? 50000);
@@ -309,7 +306,7 @@ export class AppSettings implements OnInit {
       internRoles: this.internRoles(),
       payrollSettings: {
         pfCalculateEmployee: this.pfCalculateEmployee(),
-        pfCalculateIntern: this.pfCalculateIntern(),
+        pfCalculateIntern: false,
         pfPercentage: Number(this.pfPercentage()) || 0,
         taxPercentage: Number(this.taxPercentage()) || 0,
         taxLimitThreshold: Number(this.taxLimitThreshold()) || 0,
@@ -338,7 +335,6 @@ export class AppSettings implements OnInit {
       intAllowances: Number(this.defaultInternAllowances()) || 0,
       intDeductions: Number(this.defaultInternDeductions()) || 0,
       pfCalculateEmployee: this.pfCalculateEmployee(),
-      pfCalculateIntern: this.pfCalculateIntern(),
       pfPercentage: Number(this.pfPercentage()) || 0,
       taxPercentage: Number(this.taxPercentage()) || 0,
       taxLimitThreshold: Number(this.taxLimitThreshold()) || 0
@@ -401,8 +397,7 @@ export class AppSettings implements OnInit {
   }
 
   calculatePF(basic: number, type: 'employee' | 'intern'): number {
-    const calculate = type === 'employee' ? this.pfCalculateEmployee() : this.pfCalculateIntern();
-    if (!calculate) return 0;
+    if (type === 'intern' || !this.pfCalculateEmployee()) return 0;
     return (basic * this.pfPercentage()) / 100;
   }
 

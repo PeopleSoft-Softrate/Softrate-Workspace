@@ -101,33 +101,37 @@
             <h3>Company Branding & Signatures</h3>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="branding-grid">
             <div class="field-group">
               <label>Company Logo</label>
-              <p class="field-hint" style="margin-top: 4px; margin-bottom: 8px;">Replaces the <code>{{ '{' }}logo{{ '}' }}</code> variable in emails.</p>
+              <p class="field-hint branding-hint">Replaces the <code>{{ '{' }}logo{{ '}' }}</code> variable in emails.</p>
               
-              <div class="signature-upload-preview" style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1rem; background: #f8fafc;">
-                <img *ngIf="communication().emailLogoUrl" [src]="communication().emailLogoUrl" alt="Company Logo" style="max-height: 80px; max-width: 100%; object-fit: contain; margin-bottom: 1rem; border-radius: 4px;" />
-                <div *ngIf="!communication().emailLogoUrl" style="color: #64748b; margin-bottom: 1rem; font-size: 13px;">No logo uploaded yet.</div>
+              <div class="signature-upload-preview">
+                <div class="upload-preview-frame">
+                  <img *ngIf="communication().emailLogoUrl" [src]="communication().emailLogoUrl" alt="Company Logo" class="branding-preview-image" />
+                  <div *ngIf="!communication().emailLogoUrl" class="upload-empty-state">No logo uploaded yet.</div>
+                </div>
                 
                 <input type="file" #logoUpload (change)="onLogoUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
-                <button class="btn-secondary" (click)="logoUpload.click()" [disabled]="!canEditCommunication()" style="padding: 6px 12px; font-size: 13px;">
-                  <i class="fa-solid fa-upload" style="margin-right: 6px;"></i> Upload Logo
+                <button class="btn-secondary upload-action" (click)="logoUpload.click()" [disabled]="!canEditCommunication()">
+                  <i class="fa-solid fa-upload"></i> Upload Logo
                 </button>
               </div>
             </div>
 
             <div class="field-group">
               <label>Email Signature Image</label>
-              <p class="field-hint" style="margin-top: 4px; margin-bottom: 8px;">Replaces the <code>{{ '{' }}signature{{ '}' }}</code> variable in emails.</p>
+              <p class="field-hint branding-hint">Replaces the <code>{{ '{' }}signature{{ '}' }}</code> variable in emails.</p>
               
-              <div class="signature-upload-preview" style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1rem; background: #f8fafc;">
-                <img *ngIf="communication().emailSignatureUrl" [src]="communication().emailSignatureUrl" alt="Company Signature" style="max-height: 80px; max-width: 100%; object-fit: contain; margin-bottom: 1rem; border-radius: 4px;" />
-                <div *ngIf="!communication().emailSignatureUrl" style="color: #64748b; margin-bottom: 1rem; font-size: 13px;">No signature uploaded yet.</div>
+              <div class="signature-upload-preview">
+                <div class="upload-preview-frame">
+                  <img *ngIf="communication().emailSignatureUrl" [src]="communication().emailSignatureUrl" alt="Company Signature" class="branding-preview-image signature-image" />
+                  <div *ngIf="!communication().emailSignatureUrl" class="upload-empty-state">No signature uploaded yet.</div>
+                </div>
                 
                 <input type="file" #sigUpload (change)="onSignatureUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
-                <button class="btn-secondary" (click)="sigUpload.click()" [disabled]="!canEditCommunication()" style="padding: 6px 12px; font-size: 13px;">
-                  <i class="fa-solid fa-upload" style="margin-right: 6px;"></i> Upload Signature
+                <button class="btn-secondary upload-action" (click)="sigUpload.click()" [disabled]="!canEditCommunication()">
+                  <i class="fa-solid fa-upload"></i> Upload Signature
                 </button>
               </div>
             </div>
@@ -172,7 +176,7 @@
                 <option value="{signature}">Company Signature</option>
               </select>
             </div>
-            <textarea #txtOffboard class="location-input" style="min-height: 150px; padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; font-weight: 400; line-height: 1.6;" [ngModel]="communication().offboardingRejectionTemplate" (ngModelChange)="communication.set({...communication(), offboardingRejectionTemplate: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+            <textarea #txtOffboard class="location-input email-template-textarea" [ngModel]="communication().offboardingRejectionTemplate" (ngModelChange)="communication.set({...communication(), offboardingRejectionTemplate: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
           </div>
 
           <div class="field-group">
@@ -188,7 +192,7 @@
                 <option value="{signature}">Company Signature</option>
               </select>
             </div>
-            <textarea #txtEmpOnboard class="location-input" style="min-height: 150px; padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; font-weight: 400; line-height: 1.6;" [ngModel]="communication().onboardingTemplateEmployee" (ngModelChange)="communication.set({...communication(), onboardingTemplateEmployee: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+            <textarea #txtEmpOnboard class="location-input email-template-textarea" [ngModel]="communication().onboardingTemplateEmployee" (ngModelChange)="communication.set({...communication(), onboardingTemplateEmployee: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
           </div>
 
           <div class="field-group">
@@ -204,7 +208,7 @@
                 <option value="{signature}">Company Signature</option>
               </select>
             </div>
-            <textarea #txtIntOnboard class="location-input" style="min-height: 150px; padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; font-weight: 400; line-height: 1.6;" [ngModel]="communication().onboardingTemplateIntern" (ngModelChange)="communication.set({...communication(), onboardingTemplateIntern: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+            <textarea #txtIntOnboard class="location-input email-template-textarea" [ngModel]="communication().onboardingTemplateIntern" (ngModelChange)="communication.set({...communication(), onboardingTemplateIntern: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
           </div>
         </div>
       </section>
@@ -372,6 +376,12 @@
                   <h3>Provident Fund (PF) Rules</h3>
                 </div>
                 
+                <div class="field-group">
+                  <label>PF Percentage (%)</label>
+                  <input type="number" class="location-input" [ngModel]="pfPercentage()" (ngModelChange)="pfPercentage.set($event)" placeholder="12" min="0" max="100">
+                  <p class="field-hint">Deducted from the employee basic salary.</p>
+                </div>
+
                 <div class="toggle-group-payroll">
                   <div class="toggle-item-payroll">
                     <div class="toggle-info-payroll">
@@ -383,23 +393,6 @@
                       <span class="slider"></span>
                     </label>
                   </div>
-                  
-                  <div class="toggle-item-payroll">
-                    <div class="toggle-info-payroll">
-                      <h4>Calculate PF for Interns</h4>
-                      <p>Apply standard PF deduction for intern stipends.</p>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" [ngModel]="pfCalculateIntern()" (ngModelChange)="pfCalculateIntern.set($event)">
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="field-group">
-                  <label>PF Percentage (%)</label>
-                  <input type="number" class="location-input" [ngModel]="pfPercentage()" (ngModelChange)="pfPercentage.set($event)" placeholder="12" min="0" max="100">
-                  <p class="field-hint">Deducted from the basic salary/stipend.</p>
                 </div>
               </div>
 
@@ -734,7 +727,6 @@
     <!-- RIGHT SIDEBAR NAVIGATION -->
     <div class="settings-sidebar">
       <div class="nav-menu">
-        <h3 class="menu-title">Settings Menu</h3>
         
         <button class="nav-link" [class.active]="activeTab() === 'locations'" (click)="activeTab.set('locations')">
           <div class="action-icon-circle blue-tint">

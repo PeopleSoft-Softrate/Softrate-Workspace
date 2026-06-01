@@ -9,17 +9,19 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   
-  // Check saved HR / Intern login
+  // Check saved HR / Intern login — require BOTH the ID and the logged-in flag
   final hrLoggedIn = prefs.getBool("hr_logged_in") ?? false;
+  final internLoggedIn = prefs.getBool("internLoggedIn") ?? false;
   final internId = prefs.getString('internId');
   final employeeLoggedIn = prefs.getBool("employeeLoggedIn") ?? false;
   final employeeId = prefs.getString("employeeId");
 
   runApp(MainApp(
     hrLoggedIn: hrLoggedIn,
-    initialInternId: internId,
+    // Only pass IDs if actually logged in (prevents device-mismatch redirect loop)
+    initialInternId: internLoggedIn ? internId : null,
     employeeLoggedIn: employeeLoggedIn,
-    employeeId: employeeId,
+    employeeId: employeeLoggedIn ? employeeId : null,
   ));
 }
 

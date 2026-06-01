@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { App } from '../../../app';
+import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, HugeiconsIconComponent],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -19,6 +21,10 @@ export class Login {
 
   isLoading = signal(false);
   errorMessage = signal('');
+  showPassword = signal(false);
+
+  ViewIcon = ViewIcon;
+  ViewOffIcon = ViewOffIcon;
 
   credentials = {
     identifier: '',

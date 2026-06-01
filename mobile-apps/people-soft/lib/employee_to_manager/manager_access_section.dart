@@ -6,7 +6,6 @@ import 'package:hrmappfrontend/manager/managershift.dart';
 import 'package:hrmappfrontend/manager/managerappraisal.dart';
 import 'package:hrmappfrontend/manager/managerdocuments.dart';
 import 'package:hrmappfrontend/manager/managerteam.dart';
-import 'package:hrmappfrontend/manager/managerprojects.dart';
 import 'package:hrmappfrontend/manager/managerholiday.dart';
 import 'package:hrmappfrontend/manager/manageroffboarding.dart';
 
@@ -54,14 +53,6 @@ class ManagerAccessSection extends StatelessWidget {
               Icons.how_to_reg_rounded,
               const Color(0xFFFBBF24),
               const ManagerAttendancePage(),
-            ),
-            _buildOptionCard(
-              context,
-              "Projects",
-              "Assignments",
-              Icons.dashboard_rounded,
-              const Color(0xFF34D399),
-              const ManagerProjectsPage(),
             ),
             _buildOptionCard(
               context,

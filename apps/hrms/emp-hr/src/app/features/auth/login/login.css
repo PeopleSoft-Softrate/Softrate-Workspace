@@ -162,8 +162,9 @@
 }
 
 .input-wrapper input {
+  box-sizing: border-box;
   width: 100%;
-  padding: 0.85rem 1rem 0.85rem 3rem;
+  padding: 0.85rem 3rem 0.85rem 3rem;
   font-size: 1.1rem;
   border: 1.5px solid #e5e7eb;
   border-radius: 12px;
@@ -179,7 +180,7 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
-.input-wrapper i {
+.input-wrapper > i {
   position: absolute;
   left: 1.1rem;
   top: 50%;
@@ -191,6 +192,33 @@
 
 .input-wrapper input:focus + i {
   color: #3b82f6;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+
+.password-toggle i {
+  position: static;
+  transform: none;
+  font-size: 1.2rem;
+}
+
+.password-toggle:hover {
+  color: #4b5563;
 }
 
 .submit-btn {

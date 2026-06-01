@@ -367,70 +367,68 @@ class _DeviceMismatchPageState extends State<DeviceMismatchPage>
     bool isActive = false,
     required bool isLast,
   }) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? Colors.green
+                    : (isActive ? Colors.orange : Colors.grey.shade300),
+                border: isActive
+                    ? Border.all(color: Colors.orange.shade200, width: 4)
+                    : null,
+              ),
+              child: isCompleted
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : (isActive
+                      ? const Icon(Icons.access_time, size: 14, color: Colors.white)
+                      : null),
+            ),
+            if (!isLast)
               Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted
-                      ? Colors.green
-                      : (isActive ? Colors.orange : Colors.grey.shade300),
-                  border: isActive
-                      ? Border.all(color: Colors.orange.shade200, width: 4)
-                      : null,
-                ),
-                child: isCompleted
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : (isActive
-                        ? const Icon(Icons.access_time, size: 14, color: Colors.white)
-                        : null),
+                width: 2,
+                height: 48,
+                color: isCompleted ? Colors.green : Colors.grey.shade200,
               ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: isCompleted ? Colors.green : Colors.grey.shade200,
+          ],
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: isActive || isCompleted ? FontWeight.w700 : FontWeight.w600,
+                    color: isActive || isCompleted ? const Color(0xFF003D4D) : Colors.grey,
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    title,
+                    subtitle,
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isActive || isCompleted ? FontWeight.w700 : FontWeight.w600,
-                      color: isActive || isCompleted ? const Color(0xFF003D4D) : Colors.grey,
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
                     ),
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ]
-                ],
-              ),
+                ]
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -24,7 +24,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/network_aware_mixin.dart';
-import 'package:hrmappfrontend/intern/ProjectViewPage.dart';
 import 'package:hrmappfrontend/employee_to_manager/manager_access_section.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
 
@@ -1173,33 +1172,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       },
                     ),
                     const SizedBox(width: 12),
-                    _buildManagerStyleBox(
-                      "Projects",
-                      "Assignments",
-                      Icons.assignment_rounded,
-                      const Color(0xFF00657F),
-                      onTap: () {
-                        final isManager =
-                            (employeeData?['isManager'] == true ||
-                                employeeData?['isManager']?.toString() ==
-                                    'true' ||
-                                employeeData?['role']
-                                        ?.toString()
-                                        .toLowerCase() ==
-                                    'manager');
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => UserProjectPage(
-                                  userId: employeeData?['_id'] ?? '',
-                                  userName: name,
-                                  isManager: isManager,
-                                ),
-                          ),
-                        );
-                      },
-                    ),
+                    const Expanded(child: SizedBox()),
                   ],
                 ),
                 const SizedBox(height: 12),

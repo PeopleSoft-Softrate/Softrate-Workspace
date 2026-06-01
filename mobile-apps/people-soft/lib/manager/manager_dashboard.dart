@@ -15,7 +15,6 @@ import 'package:hrmappfrontend/manager/managerpayroll.dart';
 import 'package:hrmappfrontend/manager/managerappraisal.dart';
 import 'package:hrmappfrontend/manager/managerdocuments.dart';
 import 'package:hrmappfrontend/manager/managerteam.dart';
-import 'package:hrmappfrontend/manager/managerprojects.dart';
 import 'package:hrmappfrontend/manager/managerholiday.dart';
 import 'package:hrmappfrontend/manager/manageroffboarding.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
@@ -489,19 +488,6 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                     Row(
                       children: [
                         _buildSimpleStat(
-                          "Projects",
-                          projects.toString().padLeft(2, '0'),
-                          Icons.dashboard_rounded,
-                          const Color(0xFF34D399), // Soft Emerald
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerProjectsPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        _buildSimpleStat(
                           "Recruitment",
                           recruitment.toString().padLeft(2, '0'),
                           Icons.person_search_rounded,
@@ -513,6 +499,8 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                             );
                           },
                         ),
+                        const SizedBox(width: 12),
+                        const Expanded(child: SizedBox()),
                       ],
                     ),
                     const SizedBox(height: 12),

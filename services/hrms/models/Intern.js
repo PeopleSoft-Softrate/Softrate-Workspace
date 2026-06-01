@@ -57,7 +57,7 @@ function capitalizeWords(str) {
   return str.replace(/\b\w/g, c => c.toUpperCase());
 }
 
-InternSchema.pre('save', function (next) {
+InternSchema.pre('save', function () {
   if (this.isModified('fullName') && this.fullName) {
     this.fullName = capitalizeWords(this.fullName);
   }
@@ -67,7 +67,6 @@ InternSchema.pre('save', function (next) {
   if (this.isModified('role') && this.role) {
     this.role = capitalizeWords(this.role);
   }
-  next();
 });
 
 module.exports = mongoose.model("Intern", InternSchema);

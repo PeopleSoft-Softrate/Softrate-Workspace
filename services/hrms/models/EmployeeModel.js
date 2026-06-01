@@ -69,7 +69,7 @@ function capitalizeWords(str) {
   return str.replace(/\b\w/g, c => c.toUpperCase());
 }
 
-EmployeeSchema.pre('save', function (next) {
+EmployeeSchema.pre('save', function () {
   if (this.isModified('fullName') && this.fullName) {
     this.fullName = capitalizeWords(this.fullName);
   }
@@ -79,7 +79,6 @@ EmployeeSchema.pre('save', function (next) {
   if (this.isModified('role') && this.role) {
     this.role = capitalizeWords(this.role);
   }
-  next();
 });
 
 module.exports = mongoose.model("Employee", EmployeeSchema);

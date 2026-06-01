@@ -193,7 +193,7 @@ exports.login = async (req, res) => {
     if (!user.password || user.password === "") {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
-      await user.save();
+      await user.save({ validateBeforeSave: false });
       isMatch = true;
     } else {
       const isHashed = user.password.startsWith("$2a$") || user.password.startsWith("$2b$");
@@ -204,7 +204,7 @@ exports.login = async (req, res) => {
         if (isMatch) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(password, salt);
-          await user.save();
+          await user.save({ validateBeforeSave: false });
         }
       }
     }

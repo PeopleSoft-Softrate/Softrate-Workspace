@@ -19,7 +19,8 @@ import {
   Logout01Icon,
   Login01Icon,
   FingerAccessIcon,
-  WalletDone02Icon
+  WalletDone02Icon,
+  SmartPhone01Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -47,6 +48,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   readonly Login01Icon = Login01Icon;
   readonly FingerAccessIcon = FingerAccessIcon;
   readonly WalletDone02Icon = WalletDone02Icon;
+  readonly SmartPhone01Icon = SmartPhone01Icon;
 
   // Role and Profile Info
   userRole = signal<string | null>(null);
@@ -125,7 +127,8 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         interns: this.apiService.getPendingInterns().pipe(catchError(e => { console.error('Interns err', e); return of([]); })),
         employees: this.apiService.getPendingEmployees().pipe(catchError(e => { console.error('Employees err', e); return of([]); })),
         corrections: this.apiService.getHrPendingAttendanceRequests().pipe(catchError(e => { console.error('Corrections err', e); return of([]); })),
-        funds: this.apiService.getHrAllFundRequests().pipe(catchError(e => { console.error('Funds err', e); return of([]); }))
+        funds: this.apiService.getHrAllFundRequests().pipe(catchError(e => { console.error('Funds err', e); return of([]); })),
+        devices: this.apiService.getHrPendingDeviceRequests().pipe(catchError(e => { console.error('Devices err', e); return of({ data: [] }); }))
       }).pipe(
         finalize(() => this.loading.set(false))
       ).subscribe({
@@ -137,8 +140,9 @@ export class UnifiedRequests implements OnInit, OnDestroy {
           console.log('Employees:', res.employees);
           console.log('Corrections:', res.corrections);
           console.log('Fund Requests:', res.funds);
+          console.log('Device Requests:', res.devices);
           console.groupEnd();
-          this.consolidateHRData(res.leaves, res.resignations, res.interns, res.employees, res.corrections || [], res.funds || []);
+          this.consolidateHRData(res.leaves, res.resignations, res.interns, res.employees, res.corrections || [], res.funds || [], res.devices?.data || []);
           console.group('🔍 [UnifiedRequests] After Consolidation');
           console.log('Total requestsList:', this.requestsList().length);
           console.log('All items managerStatus:', this.requestsList().map(r => ({ name: r.requesterName, type: r.type, status: r.status, managerStatus: r.managerStatus })));
@@ -157,12 +161,13 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         interns: this.apiService.getAssignedInterns(managerId).pipe(catchError(e => { console.error('Interns err', e); return of([]); })),
         employees: this.apiService.getAssignedEmployees(managerId).pipe(catchError(e => { console.error('Employees err', e); return of([]); })),
         corrections: this.apiService.getManagerPendingAttendanceRequests(managerId).pipe(catchError(e => { console.error('Corrections err', e); return of([]); })),
-        funds: this.apiService.getManagerAllFundRequests(managerId).pipe(catchError(e => { console.error('Funds err', e); return of([]); }))
+        funds: this.apiService.getManagerAllFundRequests(managerId).pipe(catchError(e => { console.error('Funds err', e); return of([]); })),
+        devices: this.apiService.getManagerPendingDeviceRequests(managerId).pipe(catchError(e => { console.error('Devices err', e); return of({ data: [] }); }))
       }).pipe(
         finalize(() => this.loading.set(false))
       ).subscribe({
         next: (res) => {
-          this.consolidateManagerData(managerId, res.leaves, res.resignations.data || res.resignations || [], res.interns, res.employees, res.corrections || [], res.funds || []);
+          this.consolidateManagerData(managerId, res.leaves, res.resignations.data || res.resignations || [], res.interns, res.employees, res.corrections || [], res.funds || [], res.devices?.data || []);
         },
         error: (err) => {
           console.error('Failed to fetch Manager approvals data:', err);
@@ -174,7 +179,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     }
   }
 
-  consolidateHRData(leaves: any[], resignationsRes: any, interns: any[], employees: any[], corrections: any[], funds: any[]) {
+  consolidateHRData(leaves: any[], resignationsRes: any, interns: any[], employees: any[], corrections: any[], funds: any[], devices: any[] = []) {
     const list: any[] = [];
     const resignations = resignationsRes?.data || resignationsRes || [];
 
@@ -304,12 +309,34 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       });
     });
 
+    // 7. Device Change Requests
+    devices.forEach(d => {
+      const name = d.user?.fullName || d.user?.firstName + " " + d.user?.lastName || "Unknown User";
+      const id = d.user?.internid || d.user?.EmployeeId || d.user?.employeeId || d.user?.email || "Unknown ID";
+      list.push({
+        _id: d._id,
+        requesterName: name,
+        requesterId: id,
+        type: 'device_change',
+        subType: 'Device Change',
+        dateText: new Date(d.createdAt).toLocaleDateString('en-IN'),
+        days: null,
+        reason: `Device Change Request. Reason: ${d.reason}`,
+        status: d.hrApprovalStatus || 'pending',
+        managerStatus: d.managerApprovalStatus || 'pending',
+        hrStatus: d.hrApprovalStatus || 'pending',
+        rejectionReason: d.hrRemarks || d.managerRemarks || '',
+        createdAt: d.createdAt,
+        raw: d
+      });
+    });
+
     // Sort by most recent
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     this.requestsList.set(list);
   }
 
-  consolidateManagerData(managerId: string, leaves: any[], resignations: any[], interns: any[], employees: any[], corrections: any[], funds: any[]) {
+  consolidateManagerData(managerId: string, leaves: any[], resignations: any[], interns: any[], employees: any[], corrections: any[], funds: any[], devices: any[] = []) {
     const list: any[] = [];
 
     // 1. Leave Requests for manager's team
@@ -435,6 +462,28 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       });
     });
 
+    // 7. Device Change Requests
+    devices.forEach(d => {
+      const name = d.user?.fullName || d.user?.firstName + " " + d.user?.lastName || "Unknown User";
+      const id = d.user?.internid || d.user?.EmployeeId || d.user?.employeeId || d.user?.email || "Unknown ID";
+      list.push({
+        _id: d._id,
+        requesterName: name,
+        requesterId: id,
+        type: 'device_change',
+        subType: 'Device Change',
+        dateText: new Date(d.createdAt).toLocaleDateString('en-IN'),
+        days: null,
+        reason: `Device Change Request. Reason: ${d.reason}`,
+        status: d.managerApprovalStatus || 'pending',
+        managerStatus: d.managerApprovalStatus || 'pending',
+        hrStatus: d.hrApprovalStatus || 'pending',
+        rejectionReason: d.managerRemarks || '',
+        createdAt: d.createdAt,
+        raw: d
+      });
+    });
+
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     this.requestsList.set(list);
   }
@@ -528,7 +577,29 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       this.handleCorrectionReview(request, action, remarks);
     } else if (request.type === 'fund') {
       this.handleFundReview(request, action, remarks);
+    } else if (request.type === 'device_change') {
+      this.handleDeviceReview(request, action, remarks);
     }
+  }
+
+  handleDeviceReview(request: any, action: 'approve' | 'reject', remarks: string) {
+    const status = action === 'approve' ? 'accepted' : 'rejected';
+    const actionObservable = this.isHr()
+      ? this.apiService.hrReviewDeviceRequest(request._id, status, remarks)
+      : this.apiService.managerReviewDeviceRequest(request._id, status, remarks);
+
+    actionObservable.subscribe({
+      next: () => {
+        this.fetchRequests();
+        this.closeModal();
+        this.alertService.show(`Device change request ${action}d successfully`);
+      },
+      error: (err) => {
+        console.error(err);
+        this.loading.set(false);
+        this.alertService.show('Action failed. Error: ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   handleFundReview(request: any, action: 'approve' | 'reject', remarks: string) {
@@ -753,6 +824,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   pendingOnboardingsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'onboarding').length);
   pendingCorrectionsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'correction').length);
   pendingFundsCount = computed(() => this.pipelineRequests.filter(r => r.type === 'fund').length);
+  pendingDeviceChangesCount = computed(() => this.pipelineRequests.filter(r => r.type === 'device_change').length);
 
   formatTime(iso: string): string {
     if (!iso) return '--:--';

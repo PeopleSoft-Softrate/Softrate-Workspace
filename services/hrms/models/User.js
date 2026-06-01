@@ -9,7 +9,8 @@ const UserSchema = new mongoose.Schema({
   
   // System Identifiers
   employeeId: { type: String }, // Optional, company-specific ID (e.g., STP001)
-  
+  deviceId: { type: String, default: null },
+
   // Role & Permissions
   roleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
   

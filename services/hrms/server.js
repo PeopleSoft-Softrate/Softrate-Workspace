@@ -62,6 +62,7 @@ app.use('/api/settings', require('./routes/settings.routes'));
 app.use('/api/performance-templates', require('./routes/performance.routes'));
 app.use('/api/convert', require('./routes/conversion.routes'));
 app.use('/api/fund-requests', require('./routes/fundRequest.routes'));
+app.use('/api/device-change-requests', require('./routes/deviceChangeRequest.routes'));
 
 // ============================
 // Test Route

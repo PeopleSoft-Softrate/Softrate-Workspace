@@ -20,6 +20,7 @@ const EmployeeSchema = new mongoose.Schema({
   gender: String,
   nationality: String,
   maritalStatus: String,
+  deviceId: { type: String, default: null },
 
   // Section 2 – Education
   qualification: String,

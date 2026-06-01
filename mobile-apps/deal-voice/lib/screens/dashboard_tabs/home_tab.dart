@@ -719,7 +719,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildActionBtn({
-    required IconData icon,
+    required dynamic icon,
     // required String label,
     required Color color,
     required VoidCallback onTap,
@@ -730,7 +730,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
+          (icon is IconData ? Icon(icon as IconData, color: color, size: 20) : FaIcon(icon, color: color, size: 20)),
           // const SizedBox(height: 6),
           // Text(
           //   label,
@@ -1039,6 +1039,6 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
 
 class _TabItem {
   final String label;
-  final IconData icon;
+  final dynamic icon;
   const _TabItem({required this.label, required this.icon});
 }

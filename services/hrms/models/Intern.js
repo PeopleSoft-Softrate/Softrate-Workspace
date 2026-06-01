@@ -22,6 +22,7 @@ const InternSchema = new mongoose.Schema({
   linkedin: { type: String, required: true },
   internshipType: { type: String, default: ""},
   applicationType: { type: String, enum: ["Internship", "Job"], default: "Internship" },
+  deviceId: { type: String, default: null },
 
 
 

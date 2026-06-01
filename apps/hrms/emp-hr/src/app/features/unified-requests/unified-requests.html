@@ -88,6 +88,18 @@
             <span class="stat-label">Reimbursement</span>
           </div>
         </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item device-change">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="SmartPhone01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingDeviceChangesCount() }}</span>
+            <span class="stat-label">Device Changes</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -138,6 +150,11 @@
             [class.active]="activeCategory() === 'fund'"
             class="tab-btn"
           >Re Investment</button>
+          <button
+            (click)="activeCategory.set('device_change')"
+            [class.active]="activeCategory() === 'device_change'"
+            class="tab-btn"
+          >Device Changes</button>
         </div>
       </div>
     </div>
@@ -187,7 +204,7 @@
             <!-- Type badge -->
             <td>
               <span class="tbl-type-badge" [ngClass]="req.type">
-                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Re Investment' : 'Ratification' }}
+                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Re Investment' : req.type === 'device_change' ? 'Device Change' : 'Ratification' }}
               </span>
             </td>
             <!-- Details -->
@@ -242,7 +259,7 @@
     <div class="modal-container card slide-in">
       <div class="modal-header">
         <h3>
-          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Ratification' : (selectedRequest()?.type === 'fund' ? 'Fund Request' : 'Onboarding'))) }} Decision
+          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Ratification' : (selectedRequest()?.type === 'fund' ? 'Fund Request' : (selectedRequest()?.type === 'device_change' ? 'Device Change' : 'Onboarding')))) }} Decision
         </h3>
         <button (click)="closeModal()" class="close-btn">&times;</button>
       </div>

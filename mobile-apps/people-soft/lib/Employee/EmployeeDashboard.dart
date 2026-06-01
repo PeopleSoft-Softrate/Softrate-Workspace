@@ -94,28 +94,32 @@ class _EmployeedashboardState extends State<Employeedashboard>
   Future<void> _initializeAppData() async {
     if (mounted) setState(() => loading = true);
 
-    await _loadEmployeeId();
-    await _loadProfileImage();
+    try {
+      await _loadEmployeeId();
+      await _loadProfileImage();
 
-    if (employeeId != null) {
-      await fetchEmployeeData(employeeId!);
-      if (employeeId != 'test_employee_id') {
-        await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
-        await checkTodayHoliday();
+      if (employeeId != null) {
+        await fetchEmployeeData(employeeId!);
+        if (employeeId != 'test_employee_id') {
+          await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
+          await checkTodayHoliday();
 
-        // 🔥 Only continue if NOT terminated
-        if (employeeData?['status'] != 'terminated') {
-          await resetAttendanceIfNewDay();
-          await loadTodayAttendance();
-          await fetchMyResignation();
-          await _checkHolidayBadge();
+          // 🔥 Only continue if NOT terminated
+          if (employeeData?['status'] != 'terminated') {
+            await resetAttendanceIfNewDay();
+            await loadTodayAttendance();
+            await fetchMyResignation();
+            await _checkHolidayBadge();
+          }
         }
       }
-    }
-
-    // Only hide loading if NOT terminated
-    if (mounted && employeeData?['status'] != 'terminated') {
-      setState(() => loading = false);
+    } catch (e) {
+      debugPrint("Error in _initializeAppData: $e");
+    } finally {
+      // Only hide loading if NOT terminated
+      if (mounted && employeeData?['status'] != 'terminated') {
+        setState(() => loading = false);
+      }
     }
   }
 

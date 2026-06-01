@@ -779,18 +779,18 @@ class _BookmarkTabState extends State<BookmarkTab> {
     );
   }
 
-  Widget _actionBtn({required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _actionBtn({required dynamic icon, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: Icon(icon, size: 22, color: color),
+      child: (icon is IconData ? Icon(icon as IconData, size: 22, color: color) : FaIcon(icon, size: 22, color: color)),
     );
   }
 }
 
-  Widget _actionBtn({required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _actionBtn({required dynamic icon, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: Icon(icon, size: 22, color: color),
+      child: (icon is IconData ? Icon(icon as IconData, size: 22, color: color) : FaIcon(icon, size: 22, color: color)),
     );
   }
 

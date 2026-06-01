@@ -103,27 +103,32 @@ class _AttendancePageState extends State<AttendancePage>
   Future<void> _initializeAppData() async {
     if (mounted) setState(() => loading = true);
 
-    await _loadInternId();
-    await _loadProfileImage();
+    try {
+      await _loadInternId();
+      await _loadProfileImage();
 
-    if (internId != null) {
-      await fetchInternData(internId!);
-      if (internId != 'test_intern_id') {
-        await handleDropStatus(internData?['status'] ?? '');
-        await checkDropAndLogout();
-        await resetAttendanceIfNewDay();
-        // 🔥 BACKEND IS SOURCE OF TRUTH
-        await loadTodayAttendance();
-        await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
-        await checkTodayHoliday();
+      if (internId != null) {
+        await fetchInternData(internId!);
+        if (internId != 'test_intern_id') {
+          await handleDropStatus(internData?['status'] ?? '');
+          await checkDropAndLogout();
+          await resetAttendanceIfNewDay();
+          // 🔥 BACKEND IS SOURCE OF TRUTH
+          await loadTodayAttendance();
+          await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
+          await checkTodayHoliday();
 
-        await fetchMyResignation();
-        await _checkHolidayBadge();
+          await fetchMyResignation();
+          await _checkHolidayBadge();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error in _initializeAppData: $e");
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
       }
     }
-
-    if (!mounted) return;
-    setState(() => loading = false);
   }
 
   Future<void> handleDropStatus(String status) async {

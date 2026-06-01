@@ -3,6 +3,7 @@ const Employee = require("../models/EmployeeModel");
 const Intern = require("../models/Intern");
 const Role = require("../models/Role");
 const PasswordReset = require("../models/PasswordReset");
+const DeviceChangeRequest = require("../models/DeviceChangeRequest");
 const { sendEmail, LOGO_URL } = require("../utilities/sendEmail");
 const { getSignature } = require("../utilities/emailSignature");
 const crypto = require("crypto");
@@ -211,6 +212,28 @@ exports.login = async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "Incorrect password" });
+    }
+
+    // ── 3.5 Device Binding Check ──
+    const incomingDeviceId = req.body.deviceId;
+    if (incomingDeviceId) {
+      if (!user.deviceId) {
+        user.deviceId = incomingDeviceId;
+        await user.save();
+      } else if (user.deviceId !== incomingDeviceId) {
+        // Mismatch! Check if there's a pending request
+        const existingRequest = await DeviceChangeRequest.findOne({ 
+          userId: user._id, 
+          status: "pending" 
+        });
+
+        return res.status(403).json({
+          success: false,
+          code: "DEVICE_MISMATCH",
+          message: "This account is bound to another device.",
+          requestStatus: existingRequest ? (existingRequest.managerApprovalStatus === 'approved' ? 'Pending HR Approval' : 'Pending Manager Approval') : null
+        });
+      }
     }
 
     // ── 4. Token Generation ──
@@ -490,5 +513,83 @@ exports.verifyCompany = async (req, res) => {
   } catch (err) {
     console.error("Verify Company Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * Request Device Change
+ */
+exports.requestDeviceChange = async (req, res) => {
+  try {
+    const { id, password, newDeviceId, reason } = req.body; // id is the email/employeeId
+
+    if (!id || !password || !newDeviceId || !reason) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    // Lookup user to get their companyId and oldDeviceId
+    let user = null;
+    let userModel = "User";
+
+    user = await Intern.findOne({
+      $or: [{ internid: { $regex: new RegExp(`^${id}$`, "i") } }, { email: { $regex: new RegExp(`^${id}$`, "i") } }]
+    });
+    if (user) { userModel = "Intern"; }
+
+    if (!user) {
+      user = await Employee.findOne({
+        $or: [{ EmployeeId: { $regex: new RegExp(`^${id}$`, "i") } }, { email: { $regex: new RegExp(`^${id}$`, "i") } }]
+      });
+      if (user) { userModel = "Employee"; }
+    }
+
+    if (!user) {
+      user = await User.findOne({
+        $or: [{ employeeId: { $regex: new RegExp(`^${id}$`, "i") } }, { email: { $regex: new RegExp(`^${id}$`, "i") } }]
+      });
+      if (user) { userModel = "User"; }
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Verify Password
+    const bcrypt = require("bcryptjs");
+    const isHashed = user.password && (user.password.startsWith("$2a$") || user.password.startsWith("$2b$"));
+    let isMatch = false;
+    
+    if (isHashed) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      isMatch = user.password === password;
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Incorrect password" });
+    }
+
+    // Check for existing pending request
+    const existing = await DeviceChangeRequest.findOne({ userId: user._id, status: "pending" });
+    if (existing) {
+      return res.status(400).json({ success: false, message: "A request is already pending for this account." });
+    }
+
+    // Create the request
+    const request = new DeviceChangeRequest({
+      companyId: user.companyId || "6a16a279b6cbac52ba3f726d",
+      userId: user._id,
+      userModel: userModel,
+      oldDeviceId: user.deviceId || "unknown",
+      newDeviceId: newDeviceId,
+      reason: reason
+    });
+
+    await request.save();
+
+    res.json({ success: true, message: "Device change request submitted successfully." });
+  } catch (err) {
+    console.error("Device Change Request Error:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };

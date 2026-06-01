@@ -37,5 +37,6 @@ router.delete("/me/profile-photo", verifyTenant, authController.removeProfilePho
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.get("/verify-company/:code", authController.verifyCompany);
+router.post("/device-change-request", authController.requestDeviceChange);
 
 module.exports = router;

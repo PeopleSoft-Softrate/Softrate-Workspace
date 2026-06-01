@@ -822,7 +822,7 @@ class _LeadTabState extends State<LeadTab> {
     );
   }
 
-  Widget _actionIcon(IconData icon, Color color, VoidCallback onTap) {
+  Widget _actionIcon(dynamic icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -831,7 +831,7 @@ class _LeadTabState extends State<LeadTab> {
           color: color.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 20),
+        child: (icon is IconData ? Icon(icon as IconData, color: color, size: 20) : FaIcon(icon, color: color, size: 20)),
       ),
     );
   }

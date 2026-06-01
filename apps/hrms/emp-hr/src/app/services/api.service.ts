@@ -655,4 +655,23 @@ export class ApiService {
   managerReviewFundRequest(requestId: string, status: 'accepted' | 'rejected', remarks: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/fund-requests/manager-action/${requestId}`, { status, remarks });
   }
+
+  // --- Device Change Requests ---
+  getHrPendingDeviceRequests(): Observable<any> {
+    return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/device-change-requests/hr-pending`), { headers: this.getHeaders() });
+  }
+
+  getManagerPendingDeviceRequests(managerId: string): Observable<any> {
+    return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/device-change-requests/manager-pending/${managerId}`), { headers: this.getHeaders() });
+  }
+
+  managerReviewDeviceRequest(id: string, status: string, remarks: string): Observable<any> {
+    const action = (status === 'approved' || status === 'accepted') ? 'approve' : 'reject';
+    return this.http.post(`${this.baseUrl}/api/device-change-requests/${id}/${action}`, { remarks });
+  }
+
+  hrReviewDeviceRequest(id: string, status: string, remarks: string): Observable<any> {
+    const action = (status === 'approved' || status === 'accepted') ? 'approve' : 'reject';
+    return this.http.post(`${this.baseUrl}/api/device-change-requests/${id}/${action}`, { remarks });
+  }
 }

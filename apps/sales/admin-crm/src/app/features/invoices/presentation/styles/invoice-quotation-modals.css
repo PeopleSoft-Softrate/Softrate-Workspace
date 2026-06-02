@@ -1450,7 +1450,7 @@
   overflow: hidden !important;
   background:
     linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
-    url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+    url('/admin/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
   print-color-adjust: exact !important;
   -webkit-print-color-adjust: exact !important;
 }
@@ -1812,7 +1812,7 @@
   overflow: hidden !important;
   background:
     linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
-    url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+    url('/admin/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
   print-color-adjust: exact !important;
   -webkit-print-color-adjust: exact !important;
 }
@@ -2416,7 +2416,7 @@
     grid-template-columns: minmax(72mm, 1fr) 56mm !important;
     background:
       linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
-      url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+      url('/admin/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
   }
 
   .admin-quote-modal .quotation-preview .quotation-hero-logo {

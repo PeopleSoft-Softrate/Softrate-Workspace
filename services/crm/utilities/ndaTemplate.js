@@ -569,14 +569,31 @@ function createDefaultNdaTemplate() {
 }
 
 function mergePageShell(generatedPages, existingPages = []) {
+  const signatureKeys = new Set([
+    'signatoryName',
+    'clientName',
+    'signatoryTitle',
+    'clientSignatoryTitle',
+    'todayDate',
+    'companySignature',
+    'clientSignature',
+  ]);
+
   return generatedPages.map((page, index) => {
     const existing = existingPages[index] || {};
+    const existingHighlights = Array.isArray(existing.highlightedAreas)
+      ? existing.highlightedAreas.filter((area) => !signatureKeys.has(String(area?.key || '')))
+      : [];
+    const generatedSignatureHighlights = (page.highlightedAreas || [])
+      .filter((area) => signatureKeys.has(String(area?.key || '')));
+
     return {
       ...page,
       showHeader: typeof existing.showHeader === 'boolean' ? existing.showHeader : page.showHeader,
       backgroundUrl: existing.backgroundUrl || page.backgroundUrl || '',
       placeholders: Array.isArray(existing.placeholders) ? existing.placeholders : page.placeholders,
-      highlightedAreas: Array.isArray(existing.highlightedAreas) ? existing.highlightedAreas : page.highlightedAreas,
+      // Signature fields are generated from pagination and must not remain on an old page.
+      highlightedAreas: [...existingHighlights, ...generatedSignatureHighlights],
     };
   });
 }

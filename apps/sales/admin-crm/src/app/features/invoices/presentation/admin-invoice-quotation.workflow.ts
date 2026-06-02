@@ -256,6 +256,11 @@ export class AdminInvoiceQuotationWorkflow {
     return this.activeInvoiceCompanySnapshot(vm)?.bankDetails || vm.settingsBankDetails || {};
   }
 
+  private normalizeAppAssetUrl(value: any): string {
+    const url = String(value || '').trim();
+    return url.startsWith('/assets/') ? url.slice(1) : url;
+  }
+
   private resolveInvoiceNumber(vm: any): string {
     if (vm.quoteMode && vm.currentQuotationNumber) return vm.currentQuotationNumber;
     if (!vm.quoteMode && vm.currentInvoiceNumber) return vm.currentInvoiceNumber;
@@ -352,7 +357,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceContactLineCache = contactParts.join(' · ');
     vm.invoiceBankDetailsCache = bankDetails;
     vm.quotationBankRowsCache = quotationBankRows;
-    vm.invoiceSealSrcCache = String(this.activeInvoiceCompanySnapshot(vm)?.seal || vm.settingsInvoiceSeal || '').trim();
+    vm.invoiceLogoSrcCache = this.normalizeAppAssetUrl(this.activeInvoiceCompanySnapshot(vm)?.logo || vm.settingsInvoiceLogo || '');
+    vm.invoiceSealSrcCache = this.normalizeAppAssetUrl(this.activeInvoiceCompanySnapshot(vm)?.seal || vm.settingsInvoiceSeal || '');
     vm.invoiceTermsTextCache = String(this.activeInvoiceCompanySnapshot(vm)?.terms || vm.settingsInvoiceTerms || '').trim();
     vm.quotationKindNoteTextCache = String(
       vm.currentInvoiceRecord?.kindNote ||
@@ -1490,6 +1496,13 @@ export class AdminInvoiceQuotationWorkflow {
 
   invoiceCompanyAddress(vm: any): string {
     return String(vm.invoiceCompanyAddressCache || '');
+  }
+
+  invoiceLogoSrc(vm: any): string {
+    return String(
+      vm.invoiceLogoSrcCache ||
+      this.normalizeAppAssetUrl(this.activeInvoiceCompanySnapshot(vm)?.logo || vm.settingsInvoiceLogo || ''),
+    );
   }
 
   invoiceContactLine(vm: any): string {

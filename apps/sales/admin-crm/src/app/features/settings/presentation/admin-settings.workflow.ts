@@ -2,11 +2,16 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { formatSeconds } from '../../reports/domain/call-formatters';
 
-const DEFAULT_INVOICE_LOGO = '/assets/icon/softrate-transparent-logo.png';
+const DEFAULT_INVOICE_LOGO = 'assets/icon/softrate-transparent-logo.png';
 
 @Injectable({ providedIn: 'root' })
 export class AdminSettingsWorkflow {
   constructor(private authService: AuthService) {}
+
+  private normalizeAppAssetUrl(value: any): string {
+    const url = String(value || '').trim();
+    return url.startsWith('/assets/') ? url.slice(1) : url;
+  }
 
   canRequestRm(vm: any): boolean {
     if (!vm.companyProfile) return false;
@@ -168,8 +173,8 @@ export class AdminSettingsWorkflow {
           vm.settingsDnpPageStatuses = res.settings.dnpPageStatuses || [];
           vm.settingsConvertedPageStatuses = res.settings.convertedPageStatuses || [];
           vm.settingsCompanyName = res.settings.companyName || '';
-          vm.settingsInvoiceLogo = res.settings.invoiceLogo || DEFAULT_INVOICE_LOGO;
-          vm.settingsInvoiceSeal = res.settings.invoiceSeal || '';
+          vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(res.settings.invoiceLogo || DEFAULT_INVOICE_LOGO);
+          vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(res.settings.invoiceSeal || '');
           vm.settingsInvoiceTerms = res.settings.invoiceTerms || '';
           vm.settingsShowCompanyNameOnInvoice = res.settings.showCompanyNameOnInvoice ?? true;
           vm.settingsGstNumber = res.settings.gstNumber || '';

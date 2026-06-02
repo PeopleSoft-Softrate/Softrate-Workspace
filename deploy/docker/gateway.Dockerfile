@@ -35,6 +35,7 @@ RUN npm run build -- --base-href /finance/
 
 FROM nginx:1.27-alpine
 COPY deploy/docker/nginx/gateway.conf /etc/nginx/conf.d/default.conf
+COPY deploy/docker/nginx/workspace-routes.conf /etc/nginx/snippets/workspace-routes.conf
 RUN mkdir -p /usr/share/nginx/html/admin \
     /usr/share/nginx/html/sales \
     /usr/share/nginx/html/hrms \

@@ -2268,6 +2268,18 @@ export abstract class AdminWorkspaceController implements OnInit {
     };
   }
 
+  private isNdaGeneratedSignatureHighlight(area: any): boolean {
+    return [
+      'signatoryName',
+      'clientName',
+      'signatoryTitle',
+      'clientSignatoryTitle',
+      'todayDate',
+      'companySignature',
+      'clientSignature',
+    ].includes(String(area?.key || ''));
+  }
+
   private ndaPaginateBlocks(blocks: any[]): any[] {
     const firstPage = { ...this.ndaNewGeneratedPage(), showHeader: true };
     const pages = [firstPage];
@@ -2349,14 +2361,19 @@ export abstract class AdminWorkspaceController implements OnInit {
     const generated = this.ndaPaginateBlocks(this.ndaBlocksFromCurrentClauses());
     template.pages = generated.map((page, index) => {
       const existing = existingPages[index] || {};
+      const existingHighlights = Array.isArray(existing.highlightedAreas)
+        ? existing.highlightedAreas.filter((area: any) => !this.isNdaGeneratedSignatureHighlight(area))
+        : [];
+      const generatedSignatureHighlights = (page.highlightedAreas || [])
+        .filter((area: any) => this.isNdaGeneratedSignatureHighlight(area));
+
       return {
         ...page,
         showHeader: typeof existing.showHeader === 'boolean' ? existing.showHeader : page.showHeader,
         backgroundUrl: existing.backgroundUrl || page.backgroundUrl || '',
         placeholders: Array.isArray(existing.placeholders) ? existing.placeholders : page.placeholders,
-        highlightedAreas: Array.isArray(existing.highlightedAreas) && existing.highlightedAreas.length
-          ? existing.highlightedAreas
-          : page.highlightedAreas,
+        // Signature fields are generated from pagination and must not remain on an old page.
+        highlightedAreas: [...existingHighlights, ...generatedSignatureHighlights],
       };
     });
     if (this.ndaSelectedPageIndex >= template.pages.length) {
@@ -4863,6 +4880,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceCompanyDisplayName(): string { return this.invoiceQuotationWorkflow.invoiceCompanyDisplayName(this); }
 
   invoiceCompanyAddress(): string { return this.invoiceQuotationWorkflow.invoiceCompanyAddress(this); }
+
+  invoiceLogoSrc(): string { return this.invoiceQuotationWorkflow.invoiceLogoSrc(this); }
 
   invoiceContactLine(): string { return this.invoiceQuotationWorkflow.invoiceContactLine(this); }
 

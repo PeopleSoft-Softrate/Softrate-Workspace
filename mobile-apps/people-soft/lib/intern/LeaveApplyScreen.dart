@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:file_picker/file_picker.dart';
@@ -71,11 +70,9 @@ class LeaveRecord {
 }
 
 class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
-  final List<String> _leaveTypes = const [
+  List<String> _leaveTypes = [
     'Casual Leave',
     'Sick Leave',
-    'Half Day',
-    'Permission',
   ];
 
   final List<String> _durationOptions = const [
@@ -108,8 +105,36 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchLeaveCount();
+    _fetchLeavePolicies();
     _leavesFuture = fetchLeavesForIntern();
+    _fetchLeaveCount();
+  }
+
+  Future<void> _fetchLeavePolicies() async {
+    try {
+      final response = await http.get(Uri.parse("${getBaseUrl()}/api/settings/public"));
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true && body['leavePolicies'] != null) {
+          final List policies = body['leavePolicies'];
+          final List<String> fetchedTypes = policies
+              .where((p) => p['appliesTo'] == 'both' || p['appliesTo'] == 'intern')
+              .map<String>((p) => p['name'] as String)
+              .toList();
+          
+          if (fetchedTypes.isNotEmpty) {
+            // Also keep standard permission types if they exist in legacy data
+            fetchedTypes.add('Permission');
+            
+            setState(() {
+              _leaveTypes = fetchedTypes;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to fetch leave policies: $e");
+    }
   }
 
   Future<void> _fetchLeaveCount() async {
@@ -456,9 +481,9 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
       } else if (v.startsWith('Permission')) {
         // Calculate end time
         int addMins = 0;
-        if (v.contains("30 min"))
+        if (v.contains("30 min")) {
           addMins = 30;
-        else if (v.contains("1 hrs"))
+        } else if (v.contains("1 hrs"))
           addMins = 60;
         else if (v.contains("1:30 hrs"))
           addMins = 90;
@@ -525,7 +550,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
 
   double _calculateTotalDays() {
     double total = 0;
-    _perDayDurations.values.forEach((duration) {
+    for (var duration in _perDayDurations.values) {
       if (duration == 'Full Day') {
         total += 1.0;
       } else if (duration == 'Half Day') {
@@ -533,7 +558,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
       }
       // Permissions usually don't count towards the "2 days per month" limit as full days,
       // keeping them at 0 for now as per standard HR policy unless told otherwise.
-    });
+    }
     return total;
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UIUtils {
   /// Shows a premium dialog with a smooth scale and fade transition.
@@ -47,7 +48,7 @@ class UIUtils {
 }
 
 class PremiumDialog extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final Color iconColor;
   final String title;
   final String? subtitle;
@@ -109,7 +110,7 @@ class PremiumDialog extends StatelessWidget {
                     color: iconCircleColor,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: effectiveIconColor, size: 36),
+                  child: (icon is IconData ? Icon(icon as IconData, color: effectiveIconColor, size: 36) : FaIcon(icon, color: effectiveIconColor, size: 36)),
                 ),
               ),
             ),

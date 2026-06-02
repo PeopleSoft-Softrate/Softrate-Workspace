@@ -192,6 +192,8 @@ exports.hrReview = async (req, res) => {
         role: user.role,
         companyName: olSettings.companyName || 'Softrate Global',
         workLocation: olSettings.workLocation || 'Chennai',
+        logo: company?.settings?.communication?.emailLogoUrl || null,
+        signature: company?.settings?.communication?.emailSignatureUrl || null
       };
 
       if (internship && (olSettings.documentTemplates?.internshipCompletion?.pages?.length > 0 || olSettings.documentTemplates?.internshipCompletion?.backgroundUrl)) {
@@ -277,10 +279,28 @@ exports.hrReview = async (req, res) => {
       resignation.hrRemarks = remarks;
       await resignation.save();
 
-      await sendEmail({
-        to: user.email,
-        subject: `${resignation.userType === 'employee' ? 'Employee' : 'Internship'} Offboarding Form Rejected - PeopleSoft`,
-        html: `
+      const Company = require("../models/CompanyModel");
+      const company = await Company.findById(resignation.companyId);
+      const rejectionTemplate = company?.settings?.communication?.offboardingRejectionTemplate;
+      const customSignature = company?.settings?.communication?.emailSignatureUrl;
+      const customLogo = company?.settings?.communication?.emailLogoUrl;
+      
+      const signatureHtml = customSignature 
+        ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
+        : getSignature(LOGO_URL);
+
+      const logoHtml = customLogo
+        ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+        : `<div style="margin-bottom: 20px;"><img src="${LOGO_URL}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
+
+      let htmlContent = "";
+      if (rejectionTemplate) {
+        htmlContent = rejectionTemplate
+          .replace(/{formattedName}/g, formattedName)
+          .replace(/{signature}/g, signatureHtml)
+          .replace(/{logo}/g, logoHtml);
+      } else {
+        htmlContent = `
           <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
             <p style="margin: 0 0 10px 0;">Dear ${formattedName},</p>
             <p style="margin: 0 0 10px 0;">Thank you for submitting your offboarding form. After careful review, we regret to inform you that your form has been rejected. This could be due to pending formalities such as:</p>
@@ -292,9 +312,15 @@ exports.hrReview = async (req, res) => {
             </ol>
             <p style="margin: 0 0 10px 0;">Kindly complete the above formalities and resubmit your offboarding form at the earliest.</p>
             <p style="margin: 0 0 15px 0;">For further details or assistance, please contact your HR at <a href="mailto:hr@softrateglobal.com" style="color: #007bb6;">hr@softrateglobal.com</a>.</p>
-            ${getSignature(LOGO_URL)}
+            ${signatureHtml}
           </div>
-        `
+        `;
+      }
+
+      await sendEmail({
+        to: user.email,
+        subject: `${resignation.userType === 'employee' ? 'Employee' : 'Internship'} Offboarding Form Rejected - PeopleSoft`,
+        html: htmlContent
       });
 
       return res.json({ message: "Offboarding rejected and email sent" });

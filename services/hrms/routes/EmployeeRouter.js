@@ -169,7 +169,11 @@ module.exports = router;
    GET INITIAL EMPLOYEES
 ============================ */
 router.get("/all/initial", verifyTenant, async (req, res) => {
-  const employees = await Employee.find({ status: "initial", companyId: req.tenant.companyId });
+  const query = { status: "initial", companyId: req.tenant.companyId };
+  if (req.user && req.user.role === 'manager') {
+    query.assignedManager = req.user.id;
+  }
+  const employees = await Employee.find(query);
   res.json(employees);
 });
 
@@ -181,11 +185,15 @@ router.get("/all/initial", verifyTenant, async (req, res) => {
 =================================================== */
 router.get("/all/pending", verifyTenant, async (req, res) => {
   try {
-    const employees = await Employee.find({
+    const query = {
       status: "initial",
       companyId: req.tenant.companyId
-    })
-      .sort({ submittedAt: -1 })
+    };
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
+    const employees = await Employee.find(query)
+      .sort({ EmployeeId: 1 })
       .lean();
     res.json(employees);
   } catch (err) {
@@ -201,6 +209,10 @@ router.get("/all/active", verifyTenant, async (req, res) => {
     const statusFilter = status === "all" ? ["approved", "ongoing"] : [status];
 
     const query = { status: { $in: statusFilter }, companyId: req.tenant.companyId };
+
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
 
     const now = new Date();
     let start, end;
@@ -223,7 +235,7 @@ router.get("/all/active", verifyTenant, async (req, res) => {
     }
 
     const employees = await Employee.find(query)
-      .sort({ submittedAt: -1 })
+      .sort({ EmployeeId: 1 })
       .lean();
 
     console.log(`Found ${employees.length} employees`);
@@ -267,6 +279,33 @@ router.get("/get/:id", verifyTenant, async (req, res) => {
   } catch (err) {
     console.error("Fetch Single Employee Error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   GET EMPLOYEE PROFILE PHOTO
+============================ */
+router.get("/profile-photo/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let employee;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      employee = await Employee.findById(id);
+    } else {
+      employee = await Employee.findOne({ EmployeeId: { $regex: new RegExp(`^${id}$`, 'i') } });
+    }
+    if (!employee) return res.status(404).send("Employee not found");
+
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${employee.email.trim()}$`, 'i') } }).select('+profilePhoto.data');
+    if (!user || !user.profilePhoto || !user.profilePhoto.data) {
+      return res.status(404).send("No photo");
+    }
+
+    res.set("Content-Type", user.profilePhoto.contentType || "image/png");
+    res.send(user.profilePhoto.data);
+  } catch (err) {
+    console.error("Fetch Employee Photo Error:", err);
+    res.status(500).send("Server error");
   }
 });
 
@@ -328,18 +367,44 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
 
     await LeaveCounter.insertMany(records, { ordered: false }).catch(() => {});
 
-    // 4. Send approval email (Wrapped in try-catch to avoid failing the whole request if email fails)
+    // 4. Send approval email
     try {
-      await sendEmail({
-        to: employee.email,
-        subject: "Your Employee ID is Ready",
-        html: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+      const Company = require("../models/CompanyModel");
+      const company = await Company.findById(req.tenant.companyId);
+      const template = company?.settings?.communication?.onboardingTemplateEmployee;
+      const customSignature = company?.settings?.communication?.emailSignatureUrl;
+      const customLogo = company?.settings?.communication?.emailLogoUrl;
+      
+      const signatureHtml = customSignature 
+        ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
+        : getSignature(LOGO_URL);
+
+      const logoHtml = customLogo
+        ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+        : `<div style="margin-bottom: 20px;"><img src="${LOGO_URL}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
+
+      let htmlContent = "";
+      if (template) {
+        htmlContent = template
+          .replace(/{formattedName}/g, employee.fullName)
+          .replace(/{employeeId}/g, newEmployeeId)
+          .replace(/{onboardingDate}/g, onboardingDate)
+          .replace(/{signature}/g, signatureHtml)
+          .replace(/{logo}/g, logoHtml);
+      } else {
+        htmlContent = `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">
                  <h2>Hi ${employee.fullName},</h2>
                  <p>Your profile has been <b>approved</b> 🎉</p>
                  <p><b>Employee ID:</b> ${newEmployeeId}</p>
                  <p><b>Onboarding Date:</b> ${onboardingDate}</p>
-                 ${getSignature(LOGO_URL)}
-               </div>`,
+                 ${signatureHtml}
+               </div>`;
+      }
+
+      await sendEmail({
+        to: employee.email,
+        subject: "Your Employee ID is Ready",
+        html: htmlContent,
       });
       console.log(`[DEBUG] Approval email sent to: ${employee.email}`);
     } catch (emailErr) {
@@ -456,19 +521,24 @@ const Counter = require("../models/counter.model");
 const Company = require("../models/CompanyModel");
 
 async function generateEmployeeId(companyId) {
-  // Fetch company code
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
 
-  // Find counter for this company and 'employee' type
-  const counter = await Counter.findOneAndUpdate(
-    { companyId: companyId, type: 'employee' },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
+  const year = new Date().getFullYear().toString().slice(-2);
+  let counter;
+  let employeeId;
 
-  // Pad seq to 3 digits (e.g., 001, 002)
-  return `${companyCode}-EMP-${String(counter.seq).padStart(3, "0")}`;
+  do {
+    counter = await Counter.findOneAndUpdate(
+      { companyId: companyId, type: 'employee', year: year },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+
+    employeeId = `${year}2${String(counter.seq).padStart(3, "0")}`;
+  } while (await Employee.exists({ EmployeeId: employeeId, companyId: companyId }));
+
+  return employeeId;
 }
 
 
@@ -482,7 +552,9 @@ router.get("/export/excel/all-employees", verifyTenant, async (req, res) => {
         ? { companyId: req.tenant.companyId }
         : { status, companyId: req.tenant.companyId };
 
-    if (managerId) {
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    } else if (managerId) {
       query.assignedManager = managerId;
     }
 

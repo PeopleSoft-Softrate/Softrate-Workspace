@@ -1,3 +1,4 @@
+import { AlertService } from '../../shared/services/alert';
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,9 +16,10 @@ import {
   UserCircleIcon,
   UserGroupIcon,
   PaymentSuccess02Icon,
-  Search01Icon
+  Search01Icon,
+  Calendar01Icon
 } from '@hugeicons/core-free-icons';
-import { finalize, forkJoin } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-app-settings',
@@ -27,6 +29,8 @@ import { finalize, forkJoin } from 'rxjs';
   styleUrl: './app-settings.css'
 })
 export class AppSettings implements OnInit {
+  private alertService = inject(AlertService);
+
   private apiService = inject(ApiService);
 
   readonly PlusSignIcon = PlusSignIcon;
@@ -41,6 +45,7 @@ export class AppSettings implements OnInit {
   readonly UserGroupIcon = UserGroupIcon;
   readonly PaymentSuccess02Icon = PaymentSuccess02Icon;
   readonly Search01Icon = Search01Icon;
+  readonly Calendar01Icon = Calendar01Icon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   currentUser = signal<any>(null);
@@ -48,10 +53,19 @@ export class AppSettings implements OnInit {
   receivingEmail = signal<string>('');
   locations = signal<any[]>([]);
   communication = signal<any>({
-    emailNotifications: true
+    emailNotifications: true,
+    emailSignatureUrl: null,
+    emailLogoUrl: null,
+    offboardingRejectionTemplate: '',
+    onboardingTemplateEmployee: '',
+    onboardingTemplateIntern: ''
   });
   employeeRoles = signal<string[]>([]);
   internRoles = signal<string[]>([]);
+  leavePolicies = signal<any[]>([
+    { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
+    { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+  ]);
 
   // Default Payroll settings
   defaultEmployeeBasic = signal<number>(35000);
@@ -64,7 +78,6 @@ export class AppSettings implements OnInit {
 
   // PF and Tax settings
   pfCalculateEmployee = signal<boolean>(false);
-  pfCalculateIntern = signal<boolean>(false);
   pfPercentage = signal<number>(12);
   taxPercentage = signal<number>(10);
   taxLimitThreshold = signal<number>(50000);
@@ -111,7 +124,7 @@ export class AppSettings implements OnInit {
     );
   });
   
-  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings'>('locations');
+  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings' | 'leave_policies'>('locations');
 
   isSaving = signal(false);
   isLoading = signal(true);
@@ -134,7 +147,6 @@ export class AppSettings implements OnInit {
         if (defaults.intAllowances !== undefined) this.defaultInternAllowances.set(defaults.intAllowances);
         if (defaults.intDeductions !== undefined) this.defaultInternDeductions.set(defaults.intDeductions);
         if (defaults.pfCalculateEmployee !== undefined) this.pfCalculateEmployee.set(defaults.pfCalculateEmployee);
-        if (defaults.pfCalculateIntern !== undefined) this.pfCalculateIntern.set(defaults.pfCalculateIntern);
         if (defaults.pfPercentage !== undefined) this.pfPercentage.set(defaults.pfPercentage);
         if (defaults.taxPercentage !== undefined) this.taxPercentage.set(defaults.taxPercentage);
         if (defaults.taxLimitThreshold !== undefined) this.taxLimitThreshold.set(defaults.taxLimitThreshold);
@@ -159,7 +171,12 @@ export class AppSettings implements OnInit {
           this.locations.set(s.locations || []);
           this.communication.set(s.communication || {
             whatsappNotifications: false,
-            emailNotifications: true
+            emailNotifications: true,
+            emailSignatureUrl: null,
+            emailLogoUrl: null,
+            offboardingRejectionTemplate: '',
+            onboardingTemplateEmployee: '',
+            onboardingTemplateIntern: ''
           });
           this.employeeRoles.set(s.employeeRoles || []);
           this.internRoles.set(s.internRoles || [
@@ -176,11 +193,14 @@ export class AppSettings implements OnInit {
             'HR Analyst',
             'Other'
           ]);
+          this.leavePolicies.set(s.leavePolicies || [
+            { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
+            { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+          ]);
 
           if (s.payrollSettings) {
             const ps = s.payrollSettings;
             this.pfCalculateEmployee.set(ps.pfCalculateEmployee ?? false);
-            this.pfCalculateIntern.set(ps.pfCalculateIntern ?? false);
             this.pfPercentage.set(ps.pfPercentage ?? 12);
             this.taxPercentage.set(ps.taxPercentage ?? 10);
             this.taxLimitThreshold.set(ps.taxLimitThreshold ?? 50000);
@@ -278,7 +298,7 @@ export class AppSettings implements OnInit {
   removeLocation(index: number) {
     const loc = this.locations()[index];
     if (!this.canEditLocation(loc)) {
-      alert('You do not have permission to remove this location');
+      this.alertService.show('You do not have permission to remove this location');
       return;
     }
     const current = this.locations();
@@ -294,9 +314,10 @@ export class AppSettings implements OnInit {
       communication: this.communication(),
       employeeRoles: this.employeeRoles(),
       internRoles: this.internRoles(),
+      leavePolicies: this.leavePolicies(),
       payrollSettings: {
         pfCalculateEmployee: this.pfCalculateEmployee(),
-        pfCalculateIntern: this.pfCalculateIntern(),
+        pfCalculateIntern: false,
         pfPercentage: Number(this.pfPercentage()) || 0,
         taxPercentage: Number(this.taxPercentage()) || 0,
         taxLimitThreshold: Number(this.taxLimitThreshold()) || 0,
@@ -325,7 +346,6 @@ export class AppSettings implements OnInit {
       intAllowances: Number(this.defaultInternAllowances()) || 0,
       intDeductions: Number(this.defaultInternDeductions()) || 0,
       pfCalculateEmployee: this.pfCalculateEmployee(),
-      pfCalculateIntern: this.pfCalculateIntern(),
       pfPercentage: Number(this.pfPercentage()) || 0,
       taxPercentage: Number(this.taxPercentage()) || 0,
       taxLimitThreshold: Number(this.taxLimitThreshold()) || 0
@@ -345,7 +365,11 @@ export class AppSettings implements OnInit {
       };
       localStorage.setItem(`payroll_struct_${id}`, JSON.stringify(payroll));
       if (emp._id) {
-        updates.push(this.apiService.updateEmployee(emp._id, { payroll }));
+        updates.push(
+          this.apiService.updateEmployee(emp._id, { payroll }).pipe(
+            catchError(() => of(null)) // Ignore if employee not found
+          )
+        );
       }
     }
 
@@ -360,7 +384,11 @@ export class AppSettings implements OnInit {
       };
       localStorage.setItem(`payroll_struct_${id}`, JSON.stringify(payroll));
       if (intern._id) {
-        updates.push(this.apiService.updateIntern(intern._id, { payroll }));
+        updates.push(
+          this.apiService.updateIntern(intern._id, { payroll }).pipe(
+            catchError(() => of(null)) // Ignore if intern not found
+          )
+        );
       }
     }
 
@@ -370,18 +398,17 @@ export class AppSettings implements OnInit {
       finalize(() => this.isSaving.set(false))
     ).subscribe({
       next: (res: any) => {
-        alert('All settings and payroll structures updated successfully');
+        this.alertService.show('All settings updated successfully');
         this.fetchSettings(); // Refresh to reflect changes immediately
       },
       error: (err) => {
-        alert('Failed to update settings: ' + (err.error?.message || err.message));
+        this.alertService.show('Failed to update settings: ' + (err.error?.message || err.message));
       }
     });
   }
 
   calculatePF(basic: number, type: 'employee' | 'intern'): number {
-    const calculate = type === 'employee' ? this.pfCalculateEmployee() : this.pfCalculateIntern();
-    if (!calculate) return 0;
+    if (type === 'intern' || !this.pfCalculateEmployee()) return 0;
     return (basic * this.pfPercentage()) / 100;
   }
 
@@ -410,7 +437,7 @@ export class AppSettings implements OnInit {
     
     // Don't allow deleting 'Other'
     if (roles[index].toLowerCase() === 'other') {
-      alert('The "Other" role cannot be deleted as it is required by the system.');
+      this.alertService.show('The "Other" role cannot be deleted as it is required by the system.');
       return;
     }
 
@@ -424,6 +451,75 @@ export class AppSettings implements OnInit {
     roles[index] = value;
     if (type === 'employee') this.employeeRoles.set([...roles]);
     else this.internRoles.set([...roles]);
+  }
+
+  onSignatureUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Str = e.target?.result as string;
+        this.communication.set({
+          ...this.communication(),
+          emailSignatureUrl: base64Str
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onLogoUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Str = e.target?.result as string;
+        this.communication.set({
+          ...this.communication(),
+          emailLogoUrl: base64Str
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  insertVariable(selectElem: HTMLSelectElement, textareaElem: HTMLTextAreaElement, field: string) {
+    const variable = selectElem.value;
+    if (!variable) return;
+
+    const currentVal = this.communication()[field] || '';
+    const startPos = textareaElem.selectionStart || currentVal.length;
+    const endPos = textareaElem.selectionEnd || currentVal.length;
+
+    const newVal = currentVal.substring(0, startPos) + variable + currentVal.substring(endPos);
+    
+    this.communication.set({
+      ...this.communication(),
+      [field]: newVal
+    });
+
+    // Reset dropdown
+    selectElem.value = "";
+
+    // Set cursor position back inside textarea after angular updates
+    setTimeout(() => {
+      textareaElem.focus();
+      textareaElem.setSelectionRange(startPos + variable.length, startPos + variable.length);
+    }, 0);
+  }
+
+  addLeavePolicy() {
+    const current = this.leavePolicies();
+    current.push({ name: '', allowance: 12, appliesTo: 'both' });
+    this.leavePolicies.set([...current]);
+  }
+
+  removeLeavePolicy(index: number) {
+    const current = this.leavePolicies();
+    current.splice(index, 1);
+    this.leavePolicies.set([...current]);
   }
 
   trackByIndex(index: number, item: any): any {

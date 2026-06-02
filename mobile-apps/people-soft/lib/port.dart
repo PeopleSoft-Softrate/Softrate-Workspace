@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-const bool useLocalBackend = true;
+const bool useLocalBackend = false;
 const bool isEmulator = false;
 
 String getBaseUrl() {
@@ -11,9 +11,9 @@ String getBaseUrl() {
     }
     if (Platform.isAndroid) {
       if (isEmulator) {
-        return 'http://192.168.0.2:5001';
+        return 'http://192.168.29.94:5001';
       } else {
-        return 'http://192.168.0.2:5001';
+        return 'http://192.168.29.94:5001';
       }
     }
     return 'http://localhost:5001';

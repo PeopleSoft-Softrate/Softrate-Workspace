@@ -1,3 +1,4 @@
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'dart:async' as java_timer;
 import 'dart:convert';
 import 'dart:io';
@@ -22,7 +23,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/network_aware_mixin.dart';
-import 'package:hrmappfrontend/intern/ProjectViewPage.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
@@ -52,6 +52,7 @@ class _AttendancePageState extends State<AttendancePage>
   Map<String, dynamic>? myResignation;
   bool resignationLoading = false;
   String? internId;
+  bool _isStipendIntern = false; // true when internshipType == "Stipend"
   DateTime _currentTime = DateTime.now();
   java_timer.Timer? _timer;
   bool _showHolidayBadge = false;
@@ -103,27 +104,34 @@ class _AttendancePageState extends State<AttendancePage>
   Future<void> _initializeAppData() async {
     if (mounted) setState(() => loading = true);
 
-    await _loadInternId();
-    await _loadProfileImage();
+    try {
+      await _loadInternId();
+      await _loadProfileImage();
 
-    if (internId != null) {
-      await fetchInternData(internId!);
-      if (internId != 'test_intern_id') {
-        await handleDropStatus(internData?['status'] ?? '');
-        await checkDropAndLogout();
-        await resetAttendanceIfNewDay();
-        // 🔥 BACKEND IS SOURCE OF TRUTH
-        await loadTodayAttendance();
-        await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
-        await checkTodayHoliday();
-
-        await fetchMyResignation();
-        await _checkHolidayBadge();
+      if (internId != null) {
+        await fetchInternData(internId!);
+        if (internId != 'test_intern_id') {
+          await handleDropStatus(internData?['status'] ?? '');
+          await checkDropAndLogout();
+          await resetAttendanceIfNewDay();
+          
+          // Run independent network requests concurrently to reduce load time
+          await Future.wait([
+            loadTodayAttendance(),
+            fetchOfficeLocations(),
+            checkTodayHoliday(),
+            fetchMyResignation(),
+            _checkHolidayBadge(),
+          ]);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error in _initializeAppData: $e");
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
       }
     }
-
-    if (!mounted) return;
-    setState(() => loading = false);
   }
 
   Future<void> handleDropStatus(String status) async {
@@ -391,7 +399,41 @@ class _AttendancePageState extends State<AttendancePage>
             fullData['employee'] ??
             fullData['user'] ??
             fullData;
+        
         internStatus = internData?['status']?.toString().toLowerCase();
+
+        // Track internship type for Stipend button visibility
+        final internshipType = internData?['internshipType']?.toString() ?? '';
+        if (mounted) setState(() => _isStipendIntern = internshipType.toLowerCase() == 'stipend');
+
+        // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
+        final dbDeviceId = internData?['deviceId'];
+        if (dbDeviceId != null) {
+          final currentDeviceId = await DeviceInfoHelper.getDeviceId();
+          if (dbDeviceId != currentDeviceId) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('internLoggedIn');
+            await prefs.remove('auth_token');
+            await prefs.remove('internId');
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session expired: Account bound to another device.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => homescreen()),
+                  (route) => false,
+                );
+              });
+            }
+            throw Exception('DEVICE_MISMATCH');
+          }
+        }
 
         // 🔥 HR ROLE CHECK (PROMOTION)
         final role = internData?['role']?.toString().toLowerCase();
@@ -499,6 +541,19 @@ class _AttendancePageState extends State<AttendancePage>
 
     if (mounted) setState(() => punchLoading = true);
 
+    final inside = await checkDistanceFromOffice();
+    if (!inside) {
+      if (mounted) setState(() => punchLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You must be within the authorized office area."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     try {
       final location = await getLocation();
 
@@ -592,6 +647,19 @@ class _AttendancePageState extends State<AttendancePage>
     }
 
     if (mounted) setState(() => punchLoading = true);
+
+    final inside = await checkDistanceFromOffice();
+    if (!inside) {
+      if (mounted) setState(() => punchLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You must be within the authorized office area."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     try {
       final location = await getLocation();
@@ -1039,73 +1107,49 @@ class _AttendancePageState extends State<AttendancePage>
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildManagerStyleBox(
-                      "Payroll",
-                      "Self Service",
-                      Icons.account_balance_wallet_rounded,
-                      const Color(0xFF0D9488),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PayrollPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    _buildManagerStyleBox(
-                      "Projects",
-                      "Assignments",
-                      Icons.assignment_rounded,
-                      const Color(0xFF00657F),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => UserProjectPage(
-                                  userId: internData?['_id'] ?? '',
-                                  userName: name,
-                                ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildManagerStyleBox(
-                      "Fund Request",
-                      "Company Claims",
-                      Icons.receipt_long_rounded,
-                      const Color(0xFF7C3AED),
-                      onTap:
-                          internId == null
-                              ? null
-                              : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => FundRequestPage(
-                                          requesterId: internId!,
-                                          requesterName: name,
-                                          requesterType: 'intern',
-                                        ),
-                                  ),
-                                );
-                              },
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(child: SizedBox()),
-                  ],
-                ),
+                if (_isStipendIntern) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildManagerStyleBox(
+                        "Stipend",
+                        "Self Service",
+                        Icons.account_balance_wallet_rounded,
+                        const Color(0xFF0D9488),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PayrollPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildManagerStyleBox(
+                        "Reimbursement",
+                        "Company Claims",
+                        Icons.receipt_long_rounded,
+                        const Color(0xFF7C3AED),
+                        onTap: internId == null
+                                ? null
+                                : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => FundRequestPage(
+                                            requesterId: internId!,
+                                            requesterName: name,
+                                            requesterType: 'intern',
+                                          ),
+                                    ),
+                                  );
+                                },
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -1135,8 +1179,7 @@ class _AttendancePageState extends State<AttendancePage>
         statusLabel = 'Accepted';
         break;
       case 'rejected':
-        statusColor = Color(0xFFB00020);
-        ;
+        statusColor = Color(0xFFB00020); {}
         statusLabel = 'Rejected';
         break;
       default:
@@ -1538,25 +1581,15 @@ class _AttendancePageState extends State<AttendancePage>
                       ],
                     ),
                     alignment: Alignment.center,
-                    child:
-                        punchLoading
-                            ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.4,
-                              ),
-                            )
-                            : Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1739,9 +1772,9 @@ class _AttendancePageState extends State<AttendancePage>
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    // 🔥 If no locations defined, allow from anywhere (or could default to 50m if intended)
+    // 🔥 If no locations defined, block punch in
     if (_officeLocations.isEmpty) {
-      return true;
+      return false;
     }
 
     // 🔥 Check against all authorized locations
@@ -1936,12 +1969,16 @@ class _AttendancePageState extends State<AttendancePage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B),
+                            ),
                           ),
                         ),
                         Text(

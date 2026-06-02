@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:file_picker/file_picker.dart';
@@ -74,18 +73,41 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
   @override
   void initState() {
     super.initState();
+    _fetchLeavePolicies();
     _leaveBalanceFuture = fetchLeaveBalance();
     _leaveHistoryFuture = fetchLeavesForEmployee();
   }
 
-  final List<String> _leaveTypes = const [
+  Future<void> _fetchLeavePolicies() async {
+    try {
+      final response = await http.get(Uri.parse("${getBaseUrl()}/api/settings/public"));
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true && body['leavePolicies'] != null) {
+          final List policies = body['leavePolicies'];
+          final List<String> fetchedTypes = policies
+              .where((p) => p['appliesTo'] == 'both' || p['appliesTo'] == 'employee')
+              .map<String>((p) => p['name'] as String)
+              .toList();
+          
+          if (fetchedTypes.isNotEmpty) {
+            // Also keep standard permission types if they exist in legacy data
+            fetchedTypes.add('Permission');
+            
+            setState(() {
+              _leaveTypes = fetchedTypes;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to fetch leave policies: $e");
+    }
+  }
+
+  List<String> _leaveTypes = [
     'Casual Leave',
     'Sick Leave',
-    'Bereavement Leave',
-    'Maternity Leave',
-    'Paternity Leave',
-    'Half Day',
-    'Permission',
   ];
 
   final List<String> _durationOptions = const [
@@ -171,9 +193,9 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
       } else if (v.startsWith('Permission')) {
         // Calculate end time
         int addMins = 0;
-        if (v.contains("30 min"))
+        if (v.contains("30 min")) {
           addMins = 30;
-        else if (v.contains("1 hrs"))
+        } else if (v.contains("1 hrs"))
           addMins = 60;
         else if (v.contains("1:30 hrs"))
           addMins = 90;
@@ -501,13 +523,13 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
 
   double _calculateTotalDays() {
     double total = 0;
-    _perDayDurations.values.forEach((duration) {
+    for (var duration in _perDayDurations.values) {
       if (duration == 'Full Day') {
         total += 1.0;
       } else if (duration == 'Half Day') {
         total += 0.5;
       }
-    });
+    }
     return total;
   }
 

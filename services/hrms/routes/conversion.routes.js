@@ -49,11 +49,11 @@ router.post('/intern-to-employee/:id', verifyTenant, async (req, res) => {
     const employeeData = {
       companyId: req.tenant.companyId,
       EmployeeId: newEmployeeId,
-      fullName: intern.fullName,
-      email: intern.email,
-      phone: intern.contact,
-      department: intern.department,
-      role: intern.role,
+      fullName: intern.fullName || "Unknown",
+      email: intern.email || "no-email@provided.com",
+      phone: intern.contact || intern.phone || "0000000000",
+      department: intern.department || "General",
+      role: intern.role || "Employee",
       status: 'approved',
       onboardingDate: new Date(),
       gender: intern.gender,
@@ -71,7 +71,7 @@ router.post('/intern-to-employee/:id', verifyTenant, async (req, res) => {
 
     // 2. Update User Role to EMPLOYEE
     const employeeRole = await Role.findOne({ companyId: req.tenant.companyId, name: 'EMPLOYEE' });
-    if (employeeRole) {
+    if (employeeRole && intern.email) {
       await User.findOneAndUpdate(
         { email: intern.email, companyId: req.tenant.companyId },
         { 
@@ -89,7 +89,7 @@ router.post('/intern-to-employee/:id', verifyTenant, async (req, res) => {
     res.json({ success: true, message: "Intern converted to employee successfully", employeeId: newEmployeeId });
   } catch (err) {
     console.error("Conversion Error:", err);
-    res.status(500).json({ message: "Server error during conversion" });
+    res.status(500).json({ message: "Server error during conversion", error: err.message });
   }
 });
 
@@ -331,6 +331,79 @@ router.post('/manager-to-employee/:id', verifyTenant, async (req, res) => {
   } catch (err) {
     console.error("Demotion Error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * @route POST /api/convert/terminate/:id
+ * @desc Terminate an Intern, Employee, Manager, or HR
+ * @access HR, HR_ADMIN
+ */
+router.post('/terminate/:id', verifyTenant, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, reason } = req.body; // type is 'intern' or 'employee'
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ message: "Termination reason is required." });
+    }
+
+    // Identify user making the request
+    const callerUser = await User.findById(req.user.id).populate('roleId');
+    const callerRoleName = callerUser?.roleId?.name;
+
+    let targetRecord;
+    let targetEmail;
+    
+    if (type === 'intern') {
+      if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        targetRecord = await Intern.findOne({ _id: id, companyId: req.tenant.companyId });
+      }
+      if (!targetRecord) {
+        targetRecord = await Intern.findOne({ internid: { $regex: new RegExp(`^${id}$`, 'i') }, companyId: req.tenant.companyId });
+      }
+      if (!targetRecord) return res.status(404).json({ message: "Intern not found" });
+      
+      targetEmail = targetRecord.email;
+    } else {
+      if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        targetRecord = await Employee.findOne({ _id: id, companyId: req.tenant.companyId });
+      }
+      if (!targetRecord) {
+        targetRecord = await Employee.findOne({ EmployeeId: { $regex: new RegExp(`^${id}$`, 'i') }, companyId: req.tenant.companyId });
+      }
+      if (!targetRecord) return res.status(404).json({ message: "Employee not found" });
+      
+      targetEmail = targetRecord.email;
+    }
+
+    // Check permissions: Only HR_ADMIN can terminate HR
+    if (targetRecord.isHr && callerRoleName !== 'HR_ADMIN') {
+      return res.status(403).json({ message: "Only HR_ADMIN can terminate HR staff." });
+    }
+    
+    // Update target record
+    const newStatus = type === 'intern' ? 'drop' : 'resigned';
+    targetRecord.status = newStatus;
+    targetRecord.terminationReason = reason;
+    targetRecord.terminationDate = new Date();
+    await targetRecord.save();
+
+    // Update User account
+    if (targetEmail) {
+      await User.findOneAndUpdate(
+        { email: { $regex: new RegExp(`^${targetEmail.trim()}$`, 'i') }, companyId: req.tenant.companyId },
+        { 
+          'employment.status': newStatus,
+          'employment.endDate': new Date()
+        }
+      );
+    }
+
+    res.json({ success: true, message: `Staff member marked as ${newStatus} successfully` });
+  } catch (err) {
+    console.error("Termination Error:", err);
+    res.status(500).json({ message: "Server error during termination", error: err.message });
   }
 });
 

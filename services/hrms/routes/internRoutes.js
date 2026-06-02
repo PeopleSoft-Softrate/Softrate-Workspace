@@ -120,42 +120,7 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
       io.emit('activity-updated', { type: 'new_intern', intern: newIntern });
     }
 
-    // Send Notification Email to HR with the Resume
-    try {
-      const attachments = [];
-      if (resume) {
-        // Remove data:application/pdf;base64, prefix if present
-        const base64Data = resume.replace(/^data:application\/pdf;base64,/, "");
-        attachments.push({
-          filename: `Resume-${fullName.replace(/\s+/g, "_")}.pdf`,
-          content: Buffer.from(base64Data, 'base64'),
-        });
-      }
 
-      await sendEmail({
-        to: req.tenant.receivingEmail,
-        subject: `New Internship Application: ${fullName}`,
-        html: `
-          <h3>New Application Received</h3>
-          <p><strong>Full Name:</strong> ${fullName}</p>
-          <p><strong>Role Applied For:</strong> ${role}</p>
-          <p><strong>College:</strong> ${college}</p>
-          <p><strong>Department:</strong> ${department}</p>
-          <p><strong>Year:</strong> ${year}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Contact:</strong> ${contact}</p>
-          <p><strong>LinkedIn:</strong> <a href="${linkedin}">${linkedin}</a></p>
-          <br/>
-          <p>The applicant's resume is attached to this email.</p>
-          ${getSignature(getLogoUrl())}
-        `,
-        attachments: attachments,
-        replyTo: req.tenant.receivingEmail,
-      });
-    } catch (emailErr) {
-      console.error("Failed to send application notification email:", emailErr);
-      // We don't fail the request if the email fails, since the data is saved
-    }
 
     res.status(200).json({
       message: "Intern stored successfully",
@@ -171,7 +136,11 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
 // GET intern by internid
 router.get("/all/initial", verifyTenant, async (req, res) => {
   try {
-    const interns = await Intern.find({ status: "initial" });
+    const query = { status: "initial", companyId: req.tenant.companyId };
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
+    const interns = await Intern.find(query);
     res.json(interns);
   } catch (error) {
     console.error("Fetch Error:", error);
@@ -186,14 +155,13 @@ router.get("/all/initial", verifyTenant, async (req, res) => {
 =================================================== */
 router.get("/all/pending", verifyTenant, async (req, res) => {
   try {
-    const interns = await Intern.findOne
-      ? await Intern.find({
-          status: "initial",
-          companyId: req.tenant.companyId
-        })
+    const query = { status: "initial", companyId: req.tenant.companyId };
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    }
+    const interns = await Intern.find(query)
           .populate("assignedManager", "fullName department")
-          .sort({ createdAt: -1 })
-      : [];
+          .sort({ internid: 1 });
     res.json(interns);
   } catch (err) {
     console.error("Fetch Pending Interns Error:", err);
@@ -205,31 +173,25 @@ router.get("/all/pending", verifyTenant, async (req, res) => {
 // Get all approved or ongoing interns with filters
 router.get("/all/active", verifyTenant, async (req, res) => {
   try {
-    const { range = "thisMonth", status = "all" } = req.query;
+    const { range = "current", status = "all" } = req.query;
 
-    const statusFilter =
-      status === "all" ? ["approved", "ongoing", "remote"] : [status];
+    const query = { companyId: req.tenant.companyId };
 
-    const query = { status: { $in: statusFilter } };
-
-    const now = new Date();
-    let start, end;
-
-    if (range === "thisMonth") {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    } else if (range === "sixMonths") {
-      start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    if (range === "alumni") {
+      query.status = "drop";
+    } else {
+      // current and all time use the same base statuses, but current has date filtering on frontend
+      const statusFilter = status === "all" ? ["approved", "ongoing"] : status.split(',');
+      query.status = { $in: statusFilter };
     }
 
-    if (start && end) {
-      query.createdAt = { $gte: start, $lte: end }; // <‑ use createdAt
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
     }
 
     const interns = await Intern.find(query)
       .populate("assignedManager", "fullName department")
-      .sort({ createdAt: -1 });
+      .sort({ internid: 1 });
     res.json(interns);
   } catch (err) {
     console.error("Fetch Active Interns Error:", err);
@@ -270,7 +232,9 @@ router.put("/accept/:id", verifyTenant,
         endDate: endDate,
         role: role || intern.role,
         companyName: olSettings.companyName,
-        workLocation: olSettings.workLocation
+        workLocation: olSettings.workLocation,
+        logo: company?.settings?.communication?.emailLogoUrl || null,
+        signature: company?.settings?.communication?.emailSignatureUrl || null
       };
 
       const attachments = [];
@@ -342,24 +306,56 @@ router.put("/accept/:id", verifyTenant,
       console.log("Intern saved successfully. Preparing to send email with generated documents...");
       
       try {
-        await sendEmail({
-          to: intern.email,
-          subject: "Internship Application – Approval Notification",
-          html: `
-            <p>Dear ${intern.fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')},</p>
-            <p>This is to inform you that your application has been reviewed and your profile has been approved for the internship program.</p>
+        const Company = require("../models/CompanyModel");
+        const companyTemplate = await Company.findById(req.tenant.companyId);
+        const template = companyTemplate?.settings?.communication?.onboardingTemplateIntern;
+        const customSignature = companyTemplate?.settings?.communication?.emailSignatureUrl;
+        const customLogo = companyTemplate?.settings?.communication?.emailLogoUrl;
+
+        const internName = intern.fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        const formattedOnboardingDate = new Date(onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+        const formattedEndDate = new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+        const signatureHtml = customSignature
+          ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
+          : getSignature(getLogoUrl());
+
+        const logoHtml = customLogo
+          ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+          : `<div style="margin-bottom: 20px;"><img src="${getLogoUrl()}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
+
+        let htmlContent = "";
+        if (template) {
+          htmlContent = template
+            .replace(/{formattedName}/g, internName)
+            .replace(/{onboardingDate}/g, formattedOnboardingDate)
+            .replace(/{endDate}/g, formattedEndDate)
+            .replace(/{signature}/g, signatureHtml)
+            .replace(/{logo}/g, logoHtml);
+        } else {
+          htmlContent = `
+            ${logoHtml}
+            <p>Dear ${internName},</p>
+            <p>Softrate Global welcomes you Onboard, We herein have attached your Official Offer Letter and Company Culture Book for joining us.</p>
+            <p>You can share your offer letter on Linkedin by mentioning @softrate with hashtags #careeratsoftrate #softratetechpark #softratetechnologies</p>
+            <p>Also read out the annexure completely that had been attached in this mail and make sure you are agreeing with our policies by signing and filling up the date in the attached annexure.</p>
             <p>Your internship details are as follows:</p>
             <ul>
-              <li>Intern ID: ${newId}</li>
-              <li>Onboarding Date: ${new Date(onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</li>
-              <li>End Date: ${new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</li>
+              <li>Onboarding Date: ${formattedOnboardingDate}</li>
+              <li>End Date: ${formattedEndDate}</li>
             </ul>
-            <p style="margin: 0 0 0 0;">To proceed further, please log in to the HRMS portal using the credentials shared separately.</p>
+            <p style="margin: 0 0 0 0;">To proceed further, please log in to the PeopleSoft portal using the credentials shared separately.</p>
             <p style="margin: 0 0 0 0;">For first-time login, you will be required to set your own password and complete your profile by providing the necessary details.</p>
             <p style="margin: 0 0 0 0;">Kindly ensure that all required information is submitted before your onboarding date to avoid any delays.</p>
             <p style="margin: 0 0 15px 0;">For any queries, feel free to contact us.</p>
-            ${getSignature(getLogoUrl())}
-          `,
+            ${signatureHtml}
+          `;
+        }
+
+        await sendEmail({
+          to: intern.email,
+          subject: "Internship Application – Approval Notification",
+          html: htmlContent,
           attachments: attachments,
           replyTo: req.tenant.receivingEmail,
         });
@@ -379,16 +375,20 @@ router.put("/accept/:id", verifyTenant,
 );
 
 
-router.delete("/reject/:id", verifyTenant, async (req, res) => {
+router.put("/reject/:id", verifyTenant, async (req, res) => {
   try {
-    const intern = await Intern.findByIdAndDelete(req.params.id);
+    const intern = await Intern.findByIdAndUpdate(
+      req.params.id,
+      { managerApprovalStatus: 'rejected', status: 'rejected' },
+      { new: true }
+    );
 
     if (!intern) {
       return res.status(404).json({ message: "Intern not found" });
     }
 
     res.json({
-      message: "Intern rejected and removed successfully",
+      message: "Intern rejected successfully",
       intern,
     });
   } catch (err) {
@@ -407,17 +407,18 @@ async function generateInternId(companyId) {
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
 
+  const year = new Date().getFullYear().toString().slice(-2);
   let counter;
   let internId;
 
   do {
     counter = await Counter.findOneAndUpdate(
-      { companyId: companyId, type: 'intern' },
+      { companyId: companyId, type: 'intern', year: year },
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
 
-    internId = `${companyCode}-${String(counter.seq).padStart(3, "0")}`;
+    internId = `${year}1${String(counter.seq).padStart(3, "0")}`;
   } while (await Intern.exists({ internid: internId, companyId: companyId }));
 
   return internId;
@@ -533,7 +534,9 @@ router.get("/export/excel", verifyTenant, async (req, res) => {
         ? { companyId: req.tenant.companyId }
         : { status, companyId: req.tenant.companyId };
         
-    if (managerId) {
+    if (req.user && req.user.role === 'manager') {
+      query.assignedManager = req.user.id;
+    } else if (managerId) {
       query.assignedManager = managerId;
     }
 
@@ -609,6 +612,33 @@ router.get("/export/excel", verifyTenant, async (req, res) => {
   } catch (err) {
     console.error("Intern Excel Export Error:", err);
     res.status(500).json({ message: "Excel export failed" });
+  }
+});
+
+/* ============================
+   GET INTERN PROFILE PHOTO
+============================ */
+router.get("/profile-photo/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let intern;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      intern = await Intern.findById(id);
+    } else {
+      intern = await Intern.findOne({ internid: { $regex: new RegExp(`^${id}$`, 'i') } });
+    }
+    if (!intern) return res.status(404).send("Intern not found");
+
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${intern.email.trim()}$`, 'i') } }).select('+profilePhoto.data');
+    if (!user || !user.profilePhoto || !user.profilePhoto.data) {
+      return res.status(404).send("No photo");
+    }
+
+    res.set("Content-Type", user.profilePhoto.contentType || "image/png");
+    res.send(user.profilePhoto.data);
+  } catch (err) {
+    console.error("Fetch Intern Photo Error:", err);
+    res.status(500).send("Server error");
   }
 });
 

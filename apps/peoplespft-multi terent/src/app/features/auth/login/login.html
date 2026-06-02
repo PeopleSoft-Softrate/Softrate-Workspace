@@ -1,0 +1,93 @@
+<div class="login-container">
+  <!-- Left Branding Panel -->
+  <div class="branding-panel">
+    <div class="branding-content">
+      <div class="logo-container">
+        <div class="logo-text">Softrate <span>HRM</span></div>
+      </div>
+      <span class="crm-tag">Workforce Management</span>
+      <h1>Empowering your team with smart automation.</h1>
+      <p class="branding-desc">Manage attendance, leave, and performance in one unified workspace.</p>
+    </div>
+    <div class="branding-bg-circles">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+    </div>
+  </div>
+
+  <!-- Right Form Panel -->
+  <div class="form-panel">
+    <div class="login-card">
+      <div class="form-header">
+        <h2>System Login</h2>
+        <p>Welcome back! Enter your ID or Email to continue.</p>
+      </div>
+
+      <div class="error-banner" *ngIf="errorMessage()">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ errorMessage() }}
+      </div>
+
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <!-- Company Code Field -->
+        <div class="form-group">
+          <label for="companyCode">Company Code</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-building"></i>
+            <input 
+              id="companyCode"
+              type="text" 
+              [(ngModel)]="credentials.companyCode" 
+              name="companyCode" 
+              required
+              placeholder="e.g. softrateglobal.com">
+          </div>
+        </div>
+
+        <!-- Unified Login Field -->
+        <div class="form-group">
+          <label for="identifier">Email Address / ID</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope"></i>
+            <input 
+              id="identifier"
+              type="text" 
+              [(ngModel)]="credentials.identifier" 
+              name="identifier" 
+              required 
+              placeholder="your@email.com or ID">
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input 
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'" 
+              [(ngModel)]="credentials.password" 
+              name="password" 
+              required 
+              placeholder="••••••••">
+            <button type="button" class="password-toggle" (click)="showPassword.set(!showPassword())">
+              <hugeicons-icon [icon]="showPassword() ? ViewIcon : ViewOffIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="isLoading() || !loginForm.valid">
+          <span *ngIf="!isLoading()">Sign In</span>
+          <div class="spinner" *ngIf="isLoading()"></div>
+        </button>
+
+        <div class="form-footer">
+          <a routerLink="/register">Register Company</a>
+          <a href="#">Forgot Password?</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

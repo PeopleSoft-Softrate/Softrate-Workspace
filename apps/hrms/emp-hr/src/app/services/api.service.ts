@@ -6,9 +6,13 @@ import { Observable, forkJoin, map } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly baseUrl = this.resolveBaseUrl();
+  private useLocalBackend = false;
+  private baseUrl = this.useLocalBackend
+    ? 'http://localhost:5001'
+    : 'https://peoplesoft-develop.onrender.com';
 
-  constructor(private http: HttpClient) {}
+
+  constructor(private http: HttpClient) { }
 
   private resolveBaseUrl(): string {
     if (typeof window === 'undefined') {
@@ -39,9 +43,9 @@ export class ApiService {
   // Authentication
   login(identifier: string, password: string): Observable<any> {
     // Unified login handles email, employeeId, and internId
-    return this.http.post(`${this.baseUrl}/api/auth/unified-login`, { 
-      identifier: identifier, 
-      password 
+    return this.http.post(`${this.baseUrl}/api/auth/unified-login`, {
+      identifier: identifier,
+      password
     });
   }
 
@@ -85,8 +89,18 @@ export class ApiService {
       activeInterns: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/intern/all/active`), { headers: this.getHeaders() }),
       initialInterns: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/intern/all/initial`), { headers: this.getHeaders() }),
       activeEmployees: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/employee/all/active`), { headers: this.getHeaders() }),
-      internAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/attendance/today/all`), { headers: this.getHeaders() }),
-      employeeAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/employeeAttanance/employee/today/all`), { headers: this.getHeaders() }),
+      internAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/attendance/today/all`), { headers: this.getHeaders() }).pipe(
+        map(res => {
+          if (res && res.attendance) res.attendance = res.attendance.filter((a: any) => a.status?.toLowerCase() !== 'initial');
+          return res;
+        })
+      ),
+      employeeAttendance: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/employeeAttanance/employee/today/all`), { headers: this.getHeaders() }).pipe(
+        map(res => {
+          if (res && res.attendance) res.attendance = res.attendance.filter((a: any) => a.status?.toLowerCase() !== 'initial');
+          return res;
+        })
+      ),
       pendingLeaves: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/employee-leave/hr-pending`), { headers: this.getHeaders() }),
       activeProjects: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/projects/all`), { headers: this.getHeaders() }),
       internTrend: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance/trend`), { headers: this.getHeaders() }),
@@ -95,7 +109,7 @@ export class ApiService {
       map(data => {
         // Map recent activities
         const activities: any[] = [];
-        
+
         const getRelativeTime = (dateStr: string) => {
           if (!dateStr) return 'Recently';
           const diff = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 60000);
@@ -139,20 +153,20 @@ export class ApiService {
         const fillMissingDays = (trendArray: any[]) => {
           if (!trendArray) return [];
           if (trendArray.length >= 7) return trendArray.slice(-7);
-          
+
           const daysFallback = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           const result = [];
           const missingCount = 7 - trendArray.length;
-          
+
           for (let i = 0; i < 7; i++) {
-             if (i < missingCount) {
-               // Pad older missing days with 0 counts
-               result.push({ day: daysFallback[i], count: 0 }); 
-             } else {
-               // Use actual data
-               const actualData = trendArray[i - missingCount];
-               result.push({ day: actualData.day || daysFallback[i], count: actualData.count || 0 });
-             }
+            if (i < missingCount) {
+              // Pad older missing days with 0 counts
+              result.push({ day: daysFallback[i], count: 0 });
+            } else {
+              // Use actual data
+              const actualData = trendArray[i - missingCount];
+              result.push({ day: actualData.day || daysFallback[i], count: actualData.count || 0 });
+            }
           }
           return result;
         };
@@ -180,19 +194,19 @@ export class ApiService {
         const getSummary = (trendArray: any[], totalPeople: number, maxCount: number) => {
           const total = Math.max(totalPeople, 1);
           const validDays = trendArray.filter(t => t.count > 0);
-          
+
           if (validDays.length === 0) {
-             return { avgPresent: '0%', avgAbsent: '0%', bestDay: 'N/A', avgLineHeight: 0 };
+            return { avgPresent: '0%', avgAbsent: '0%', bestDay: 'N/A', avgLineHeight: 0 };
           }
-          
+
           const sum = validDays.reduce((acc, curr) => acc + curr.count, 0);
           const avgCount = sum / validDays.length;
-          
+
           const avgPresentPct = Math.min((avgCount / total) * 100, 100);
           const avgAbsentPct = Math.max(100 - avgPresentPct, 0);
-          
+
           let best = validDays[0];
-          for(const d of validDays) {
+          for (const d of validDays) {
             if (d.count > best.count) best = d;
           }
 
@@ -412,7 +426,7 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/api/intern/accept/${id}`, data);
   }
   deleteIntern(id: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/api/intern/reject/${id}`);
+    return this.http.put(`${this.baseUrl}/api/intern/reject/${id}`, {});
   }
   deleteEmployee(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/api/employee/reject/${id}`);
@@ -444,7 +458,7 @@ export class ApiService {
 
   // Attendance Correction Requests (HR & Manager)
   getHrPendingAttendanceRequests(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/attendance-requests/hr-pending`);
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance-requests/hr-pending`));
   }
 
   hrReviewAttendanceRequest(requestId: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {
@@ -452,7 +466,7 @@ export class ApiService {
   }
 
   getManagerPendingAttendanceRequests(managerId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/attendance-requests/manager/${managerId}`);
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance-requests/manager/${managerId}`));
   }
 
   managerReviewAttendanceRequest(requestId: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {
@@ -479,7 +493,7 @@ export class ApiService {
 
   // Offboarding / Resignations
   getPendingOffboarding(): Observable<any[]> {
-    return this.http.get<any>(`${this.baseUrl}/api/resignation/pending`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/api/resignation/all`).pipe(
       map(res => res.data)
     );
   }
@@ -495,9 +509,7 @@ export class ApiService {
   }
 
   getHRPendingResignations(): Observable<any> {
-    return this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/resignation/pending`), {
-      headers: this.getHeaders()
-    });
+    return this.getAllResignations();
   }
 
   managerReviewOffboarding(id: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {
@@ -579,7 +591,6 @@ export class ApiService {
   convertToHr(staffId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/convert/to-hr/${staffId}`, {});
   }
-
   demoteToManager(staffId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/convert/hr-to-manager/${staffId}`, {});
   }
@@ -587,11 +598,23 @@ export class ApiService {
   demoteManagerToEmployee(staffId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/convert/manager-to-employee/${staffId}`, {});
   }
+
+  terminateStaff(staffId: string, type: 'intern' | 'employee', reason: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/convert/terminate/${staffId}`, { type, reason });
+  }
+
   getTodayUnifiedAttendance(managerId?: string): Observable<any> {
     let url = `${this.baseUrl}/api/attendance/today/unified`;
     const params: any = {};
     if (managerId) params.managerId = managerId;
-    return this.http.get<any>(this.addCacheBuster(url), { params, headers: this.getHeaders() });
+    return this.http.get<any>(this.addCacheBuster(url), { params, headers: this.getHeaders() }).pipe(
+      map(data => {
+        if (data && data.attendance) {
+          data.attendance = data.attendance.filter((a: any) => a.status?.toLowerCase() !== 'initial');
+        }
+        return data;
+      })
+    );
   }
 
   // Manager leaves and onboarding requests reviews
@@ -644,5 +667,24 @@ export class ApiService {
 
   managerReviewFundRequest(requestId: string, status: 'accepted' | 'rejected', remarks: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/fund-requests/manager-action/${requestId}`, { status, remarks });
+  }
+
+  // --- Device Change Requests ---
+  getHrPendingDeviceRequests(): Observable<any> {
+    return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/device-change-requests/hr-pending`), { headers: this.getHeaders() });
+  }
+
+  getManagerPendingDeviceRequests(managerId: string): Observable<any> {
+    return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/device-change-requests/manager-pending/${managerId}`), { headers: this.getHeaders() });
+  }
+
+  managerReviewDeviceRequest(id: string, status: string, remarks: string): Observable<any> {
+    const action = (status === 'approved' || status === 'accepted') ? 'approve' : 'reject';
+    return this.http.post(`${this.baseUrl}/api/device-change-requests/${id}/${action}`, { remarks });
+  }
+
+  hrReviewDeviceRequest(id: string, status: string, remarks: string): Observable<any> {
+    const action = (status === 'approved' || status === 'accepted') ? 'approve' : 'reject';
+    return this.http.post(`${this.baseUrl}/api/device-change-requests/${id}/${action}`, { remarks });
   }
 }

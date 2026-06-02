@@ -169,7 +169,11 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
 
     // 1. Fetch Interns with Attendance
     const interns = await Intern.aggregate([
-      { $match: { ...matchQuery, status: { $nin: ["initial", "drop"] } } },
+      { $match: { 
+          ...matchQuery, 
+          status: { $in: ["approved", "ongoing"] },
+          onboardingDate: { $ne: "", $lte: today }
+      } },
       {
         $lookup: {
           from: "attendances",
@@ -204,7 +208,11 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
 
     // 2. Fetch Employees with Attendance
     const employees = await Employee.aggregate([
-      { $match: matchQuery },
+      { $match: { 
+          ...matchQuery, 
+          status: { $in: ["approved", "ongoing"] },
+          onboardingDate: { $ne: null, $lte: new Date() }
+      } },
       {
         $lookup: {
           from: "employeeattendances",

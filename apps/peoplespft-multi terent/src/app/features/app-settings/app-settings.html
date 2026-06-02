@@ -1,0 +1,863 @@
+<div class="settings-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>App Settings</h1>
+      <p>Configure office locations, communication preferences, and system behavior.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-save-premium" (click)="saveAllSettings()" [disabled]="isSaving()">
+        <div class="btn-spinner" *ngIf="isSaving()"></div>
+        <hugeicons-icon [icon]="CheckmarkCircle01Icon" [size]="20" [strokeWidth]="2" color="currentColor" *ngIf="!isSaving()"></hugeicons-icon>
+        <span>{{ isSaving() ? 'Saving Changes...' : 'Save All Settings' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading()" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading Settings...</p>
+  </div>
+
+  <div class="settings-grid" *ngIf="!isLoading()">
+    <div class="main-content">
+      <!-- Location Settings Section -->
+      <section *ngIf="activeTab() === 'locations'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper">
+              <hugeicons-icon [icon]="MapsLocation02Icon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Office Locations</h2>
+              <p>Define authorized locations for employee attendance punch-in.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="section-title">
+            <h3>Authorized Geo-fences</h3>
+            <button class="btn-add" (click)="addLocation()">
+              <i class="fa-solid fa-plus"></i> Add New
+            </button>
+          </div>
+
+          <div class="locations-list">
+            <div class="location-header location-header-grid" style="padding: 0 12px 8px; font-size: 12px; font-weight: 700; color: #64748b;">
+              <span>Location Name</span>
+              <span>Latitude</span>
+              <span>Longitude</span>
+              <span>Radius (m)</span>
+              <span></span>
+            </div>
+
+            <div class="location-item" *ngFor="let loc of locations(); let i = index" [class.read-only]="!canEditLocation(loc)">
+              <input type="text" class="location-input" [(ngModel)]="loc.name" placeholder="Main Office" [disabled]="!canEditLocation(loc)">
+              <input type="number" class="location-input" [(ngModel)]="loc.latitude" placeholder="Lat" [disabled]="!canEditLocation(loc)">
+              <input type="number" class="location-input" [(ngModel)]="loc.longitude" placeholder="Lng" [disabled]="!canEditLocation(loc)">
+              <input type="number" class="location-input" [(ngModel)]="loc.radius" placeholder="200" [disabled]="!canEditLocation(loc)">
+              <button class="btn-remove" (click)="removeLocation(i)" [disabled]="!canEditLocation(loc)">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+            <div *ngIf="locations().length === 0" class="empty-state-card">
+              <i class="fa-solid fa-map-location-dot"></i>
+              <p>No locations defined. Employees can punch in from anywhere.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Communication Settings Section -->
+      <section *ngIf="activeTab() === 'communication'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper">
+              <hugeicons-icon [icon]="MailReceive01Icon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Communication & Notifications</h2>
+              <p>Manage system alerts and notification preferences.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="section-title">
+            <h3>Email Configuration</h3>
+          </div>
+          
+          <div class="field-group">
+            <label>Admin Notification Email</label>
+            <div class="input-with-icon" [class.read-only]="!canEditCommunication()">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" class="location-input" [ngModel]="receivingEmail()" (ngModelChange)="receivingEmail.set($event)" placeholder="hr@company.com" [disabled]="!canEditCommunication()">
+            </div>
+            <p class="field-hint">System alerts and new applications will be sent here.</p>
+          </div>
+
+          <div class="section-title" style="margin-top: 2rem;">
+            <h3>Company Branding & Signatures</h3>
+          </div>
+
+          <div class="branding-grid">
+            <div class="field-group">
+              <label>Company Logo</label>
+              <p class="field-hint branding-hint">Replaces the <code>{{ '{' }}logo{{ '}' }}</code> variable in emails.</p>
+              
+              <div class="signature-upload-preview">
+                <div class="upload-preview-frame">
+                  <img *ngIf="communication().emailLogoUrl" [src]="communication().emailLogoUrl" alt="Company Logo" class="branding-preview-image" />
+                  <div *ngIf="!communication().emailLogoUrl" class="upload-empty-state">No logo uploaded yet.</div>
+                </div>
+                
+                <input type="file" #logoUpload (change)="onLogoUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
+                <button class="btn-secondary upload-action" (click)="logoUpload.click()" [disabled]="!canEditCommunication()">
+                  <i class="fa-solid fa-upload"></i> Upload Logo
+                </button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label>Email Signature Image</label>
+              <p class="field-hint branding-hint">Replaces the <code>{{ '{' }}signature{{ '}' }}</code> variable in emails.</p>
+              
+              <div class="signature-upload-preview">
+                <div class="upload-preview-frame">
+                  <img *ngIf="communication().emailSignatureUrl" [src]="communication().emailSignatureUrl" alt="Company Signature" class="branding-preview-image signature-image" />
+                  <div *ngIf="!communication().emailSignatureUrl" class="upload-empty-state">No signature uploaded yet.</div>
+                </div>
+                
+                <input type="file" #sigUpload (change)="onSignatureUpload($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" [disabled]="!canEditCommunication()">
+                <button class="btn-secondary upload-action" (click)="sigUpload.click()" [disabled]="!canEditCommunication()">
+                  <i class="fa-solid fa-upload"></i> Upload Signature
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-top: 2rem;">
+            <h3>Notification Channels</h3>
+          </div>
+
+          <div class="toggle-group">
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <h4>Email Alerts</h4>
+                <p>Send leave updates and system notifications via Email.</p>
+              </div>
+              <label class="switch" [class.disabled]="!canEditCommunication()">
+                <input type="checkbox" [ngModel]="communication().emailNotifications" (ngModelChange)="communication.set({...communication(), emailNotifications: $event})" [disabled]="!canEditCommunication()">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-top: 2rem;">
+            <h3>Email Templates</h3>
+          </div>
+          
+          <div style="background-color: #f0f9ff; border-left: 4px solid #0089d1; padding: 12px 16px; margin-bottom: 24px; border-radius: 4px;">
+            <p style="margin: 0; color: #0369a1; font-size: 13px; display: flex; align-items: flex-start; gap: 8px;">
+              <i class="fa-solid fa-circle-info" style="margin-top: 2px;"></i>
+              <span><strong>Tip:</strong> These templates support raw HTML. Use <code>&lt;br&gt;</code> for new lines, <code>&lt;b&gt;text&lt;/b&gt;</code> for bold, and <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for links. Use the dropdown on the right to insert dynamic variables.</span>
+            </p>
+          </div>
+
+          <div class="field-group">
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Offboarding Rejection Email Template</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <select #varOffboard (change)="insertVariable(varOffboard, txtOffboard, 'offboardingRejectionTemplate')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
+                <option value="" disabled selected>Insert Variable...</option>
+                <option value="{formattedName}">Applicant Name</option>
+                <option value="{logo}">Company Logo</option>
+                <option value="{signature}">Company Signature</option>
+              </select>
+            </div>
+            <textarea #txtOffboard class="location-input email-template-textarea" [ngModel]="communication().offboardingRejectionTemplate" (ngModelChange)="communication.set({...communication(), offboardingRejectionTemplate: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+          </div>
+
+          <div class="field-group">
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Employee Onboarding Email Template</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}employeeId{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <select #varEmpOnboard (change)="insertVariable(varEmpOnboard, txtEmpOnboard, 'onboardingTemplateEmployee')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
+                <option value="" disabled selected>Insert Variable...</option>
+                <option value="{formattedName}">Employee Name</option>
+                <option value="{employeeId}">Employee ID</option>
+                <option value="{onboardingDate}">Onboarding Date</option>
+                <option value="{logo}">Company Logo</option>
+                <option value="{signature}">Company Signature</option>
+              </select>
+            </div>
+            <textarea #txtEmpOnboard class="location-input email-template-textarea" [ngModel]="communication().onboardingTemplateEmployee" (ngModelChange)="communication.set({...communication(), onboardingTemplateEmployee: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+          </div>
+
+          <div class="field-group">
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Intern Onboarding Email Template</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}endDate{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <select #varIntOnboard (change)="insertVariable(varIntOnboard, txtIntOnboard, 'onboardingTemplateIntern')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
+                <option value="" disabled selected>Insert Variable...</option>
+                <option value="{formattedName}">Intern Name</option>
+                <option value="{onboardingDate}">Onboarding Date</option>
+                <option value="{endDate}">End Date</option>
+                <option value="{logo}">Company Logo</option>
+                <option value="{signature}">Company Signature</option>
+              </select>
+            </div>
+            <textarea #txtIntOnboard class="location-input email-template-textarea" [ngModel]="communication().onboardingTemplateIntern" (ngModelChange)="communication.set({...communication(), onboardingTemplateIntern: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Employee Roles Section -->
+      <section *ngIf="activeTab() === 'employee_roles'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper">
+              <hugeicons-icon [icon]="UserCircleIcon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Employee Roles</h2>
+              <p>Manage designations available for full-time staff members.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="section-title">
+            <h3>Designation List</h3>
+            <button class="btn-add" (click)="addRole('employee')">
+              <i class="fa-solid fa-plus"></i> Add Role
+            </button>
+          </div>
+
+          <div class="roles-grid">
+            <div class="role-chip-input" *ngFor="let role of employeeRoles(); let i = index; trackBy: trackByIndex" [class.read-only]="role.toLowerCase() === 'other'">
+              <input type="text" [ngModel]="role" (ngModelChange)="updateRole('employee', i, $event)" placeholder="Role Name" [disabled]="role.toLowerCase() === 'other'">
+              <button *ngIf="role.toLowerCase() !== 'other'" class="icon-btn-sm orange" (click)="removeRole('employee', i)" title="Remove Role">
+                <hugeicons-icon [icon]="Delete02Icon" [size]="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="employeeRoles().length === 0" class="empty-state-card">
+            <i class="fa-solid fa-user-tag"></i>
+            <p>No employee roles defined. Add some to categorize your staff.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Intern Roles Section -->
+      <section *ngIf="activeTab() === 'intern_roles'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper">
+              <hugeicons-icon [icon]="UserGroupIcon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Intern Roles</h2>
+              <p>Define roles available for intern applications and tracking.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="section-title">
+            <h3>Application Roles</h3>
+            <button class="btn-add" (click)="addRole('intern')">
+              <i class="fa-solid fa-plus"></i> Add Role
+            </button>
+          </div>
+
+          <div class="roles-grid">
+            <div class="role-chip-input" *ngFor="let role of internRoles(); let i = index; trackBy: trackByIndex" [class.read-only]="role.toLowerCase() === 'other'">
+              <input type="text" [ngModel]="role" (ngModelChange)="updateRole('intern', i, $event)" placeholder="Intern Role Name" [disabled]="role.toLowerCase() === 'other'">
+              <button *ngIf="role.toLowerCase() !== 'other'" class="icon-btn-sm orange" (click)="removeRole('intern', i)" title="Remove Role">
+                <hugeicons-icon [icon]="Delete02Icon" [size]="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="internRoles().length === 0" class="empty-state-card">
+            <i class="fa-solid fa-users-rectangle"></i>
+            <p>No intern roles defined. These will appear in the application form.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Payroll Settings Section -->
+      <section *ngIf="activeTab() === 'payroll_settings'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper" style="color: #10b981;">
+              <hugeicons-icon [icon]="PaymentSuccess02Icon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Payroll Rules & Defaults</h2>
+              <p>Configure default salary structures for employees and interns when not overridden individually.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="payroll-config-grid">
+            
+            <!-- Employee Defaults -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3>Default Employee Salary Structure</h3>
+              </div>
+              
+              <div class="fields-grid">
+                <div class="field-group">
+                  <label>Basic Salary (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultEmployeeBasic()" (ngModelChange)="defaultEmployeeBasic.set($event)" placeholder="35000">
+                </div>
+
+                <div class="field-group">
+                  <label>HRA (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultEmployeeHra()" (ngModelChange)="defaultEmployeeHra.set($event)" placeholder="12000">
+                </div>
+
+                <div class="field-group">
+                  <label>Allowances (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultEmployeeAllowances()" (ngModelChange)="defaultEmployeeAllowances.set($event)" placeholder="6000">
+                </div>
+
+                <div class="field-group">
+                  <label>Deductions (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultEmployeeDeductions()" (ngModelChange)="defaultEmployeeDeductions.set($event)" placeholder="3000">
+                </div>
+              </div>
+
+              <div class="net-summary-box">
+                <span class="summary-label">Estimated Net Salary:</span>
+                <span class="summary-value">₹{{ calculateNetSalary(defaultEmployeeBasic() || 0, defaultEmployeeHra() || 0, defaultEmployeeAllowances() || 0, defaultEmployeeDeductions() || 0, 'employee') | number:'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <!-- Intern Defaults -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3>Default Intern Stipend Structure</h3>
+              </div>
+              
+              <div class="fields-grid">
+                <div class="field-group">
+                  <label>Basic Stipend (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultInternBasic()" (ngModelChange)="defaultInternBasic.set($event)" placeholder="12000">
+                </div>
+
+                <div class="field-group">
+                  <label>Allowances (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultInternAllowances()" (ngModelChange)="defaultInternAllowances.set($event)" placeholder="2000">
+                </div>
+
+                <div class="field-group">
+                  <label>Deductions (₹)</label>
+                  <input type="number" class="location-input" [ngModel]="defaultInternDeductions()" (ngModelChange)="defaultInternDeductions.set($event)" placeholder="1000">
+                </div>
+              </div>
+
+              <div class="net-summary-box">
+                <span class="summary-label">Estimated Net Stipend:</span>
+                <span class="summary-value">₹{{ calculateNetSalary(defaultInternBasic() || 0, 0, defaultInternAllowances() || 0, defaultInternDeductions() || 0, 'intern') | number:'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <!-- PF & Tax Settings Card -->
+            <div class="payroll-category pf-tax-rules-card">
+              <div class="pf-section">
+                <div class="section-title">
+                  <h3>Provident Fund (PF) Rules</h3>
+                </div>
+                
+                <div class="field-group">
+                  <label>PF Percentage (%)</label>
+                  <input type="number" class="location-input" [ngModel]="pfPercentage()" (ngModelChange)="pfPercentage.set($event)" placeholder="12" min="0" max="100">
+                  <p class="field-hint">Deducted from the employee basic salary.</p>
+                </div>
+
+                <div class="toggle-group-payroll">
+                  <div class="toggle-item-payroll">
+                    <div class="toggle-info-payroll">
+                      <h4>Calculate PF for Employees</h4>
+                      <p>Apply standard PF deduction for employee payroll.</p>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" [ngModel]="pfCalculateEmployee()" (ngModelChange)="pfCalculateEmployee.set($event)">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tax-section">
+                <div class="section-title">
+                  <h3>Income Tax Rules</h3>
+                </div>
+
+                <div class="fields-grid-single">
+                  <div class="field-group">
+                    <label>Tax Percentage (%)</label>
+                    <input type="number" class="location-input" [ngModel]="taxPercentage()" (ngModelChange)="taxPercentage.set($event)" placeholder="10" min="0" max="100">
+                  </div>
+
+                  <div class="field-group" style="margin-top: 1rem;">
+                    <label>Tax Limit Threshold (₹)</label>
+                    <input type="number" class="location-input" [ngModel]="taxLimitThreshold()" (ngModelChange)="taxLimitThreshold.set($event)" placeholder="50000" min="0">
+                    <p class="field-hint">Tax is only collected if taxable income exceeds this limit.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- LOP (Loss of Pay) Rules Card -->
+            <div class="payroll-category lop-rules-card">
+              <div class="lop-card-header">
+                <div class="lop-header-icon">
+                  <i class="fa-solid fa-calendar-xmark"></i>
+                </div>
+                <div>
+                  <h3>Loss of Pay (LOP) Rules</h3>
+                  <p class="lop-subtitle">Deducted for unauthorized leaves — <strong>pending approvals</strong> and <strong>absences without any leave submission</strong>.</p>
+                </div>
+              </div>
+
+              <!-- Holiday exclusion info banner -->
+              <div class="lop-info-banner">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Company public holidays and weekly off days (from Holiday Calendar) are <strong>automatically excluded</strong> from LOP calculation.</span>
+              </div>
+
+              <!-- Employee LOP -->
+              <div class="lop-section">
+                <div class="lop-section-header">
+                  <div class="lop-toggle-row">
+                    <div class="toggle-info-payroll">
+                      <h4><i class="fa-solid fa-user-tie" style="margin-right: 6px; color: #6366f1;"></i>Employee LOP</h4>
+                      <p>Apply LOP deduction for employees with unauthorized leave.</p>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" [ngModel]="enableLopEmployee()" (ngModelChange)="enableLopEmployee.set($event)">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="lop-config-body" *ngIf="enableLopEmployee()">
+                  <!-- Calculation type selector -->
+                  <div class="lop-type-selector">
+                    <label class="lop-type-option" [class.selected]="lopTypeEmployee() === 'percentage'" (click)="lopTypeEmployee.set('percentage')">
+                      <div class="lop-type-radio">
+                        <div class="lop-radio-dot" *ngIf="lopTypeEmployee() === 'percentage'"></div>
+                      </div>
+                      <div class="lop-type-info">
+                        <strong>% of Daily Salary</strong>
+                        <span>Deduct a % of (Basic ÷ Working Days) per unauthorized day</span>
+                      </div>
+                    </label>
+                    <label class="lop-type-option" [class.selected]="lopTypeEmployee() === 'amount'" (click)="lopTypeEmployee.set('amount')">
+                      <div class="lop-type-radio">
+                        <div class="lop-radio-dot" *ngIf="lopTypeEmployee() === 'amount'"></div>
+                      </div>
+                      <div class="lop-type-info">
+                        <strong>Flat Amount (₹)</strong>
+                        <span>Deduct a fixed ₹ amount per unauthorized day</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="lop-inputs-row">
+                    <!-- Percentage input -->
+                    <div class="field-group" *ngIf="lopTypeEmployee() === 'percentage'">
+                      <label>LOP % of Daily Salary</label>
+                      <div class="input-with-suffix">
+                        <input type="number" class="location-input" [ngModel]="lopPercentageEmployee()" (ngModelChange)="lopPercentageEmployee.set($event)" placeholder="100" min="0" max="100">
+                        <span class="input-suffix">%</span>
+                      </div>
+                      <p class="field-hint">100% = deduct full day's salary per unauthorized day.</p>
+                    </div>
+
+                    <!-- Flat amount input -->
+                    <div class="field-group" *ngIf="lopTypeEmployee() === 'amount'">
+                      <label>LOP Amount per Day (₹)</label>
+                      <div class="input-with-suffix">
+                        <input type="number" class="location-input" [ngModel]="lopAmountEmployee()" (ngModelChange)="lopAmountEmployee.set($event)" placeholder="0" min="0">
+                        <span class="input-suffix">₹</span>
+                      </div>
+                      <p class="field-hint">Fixed amount deducted per unauthorized leave day.</p>
+                    </div>
+
+                    <!-- Working days -->
+                    <div class="field-group">
+                      <label>Working Days / Month</label>
+                      <input type="number" class="location-input" [ngModel]="workingDaysEmployee()" (ngModelChange)="workingDaysEmployee.set($event)" placeholder="26" min="1" max="31">
+                      <p class="field-hint">Used for formula purposes only to calculate per-day salary (Basic ÷ Working Days).</p>
+                    </div>
+                  </div>
+
+                  <!-- Live preview -->
+                  <div class="lop-preview-box" *ngIf="lopTypeEmployee() === 'percentage'">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Example: Basic ₹35,000 → Per day = ₹{{ (35000 / (workingDaysEmployee() || 26)) | number:'1.0-0' }} → LOP/day = ₹{{ (35000 / (workingDaysEmployee() || 26)) * ((lopPercentageEmployee() || 0) / 100) | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="lop-preview-box" *ngIf="lopTypeEmployee() === 'amount'">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Example: 3 unauthorized days → LOP = ₹{{ (lopAmountEmployee() || 0) * 3 | number:'1.0-0' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lop-divider"></div>
+
+              <!-- Intern LOP -->
+              <div class="lop-section">
+                <div class="lop-section-header">
+                  <div class="lop-toggle-row">
+                    <div class="toggle-info-payroll">
+                      <h4><i class="fa-solid fa-user-graduate" style="margin-right: 6px; color: #f59e0b;"></i>Intern LOP</h4>
+                      <p>Apply LOP deduction for interns with unauthorized leave.</p>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" [ngModel]="enableLopIntern()" (ngModelChange)="enableLopIntern.set($event)">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="lop-config-body" *ngIf="enableLopIntern()">
+                  <!-- Calculation type selector -->
+                  <div class="lop-type-selector">
+                    <label class="lop-type-option" [class.selected]="lopTypeIntern() === 'percentage'" (click)="lopTypeIntern.set('percentage')">
+                      <div class="lop-type-radio">
+                        <div class="lop-radio-dot" *ngIf="lopTypeIntern() === 'percentage'"></div>
+                      </div>
+                      <div class="lop-type-info">
+                        <strong>% of Daily Stipend</strong>
+                        <span>Deduct a % of (Basic ÷ Working Days) per unauthorized day</span>
+                      </div>
+                    </label>
+                    <label class="lop-type-option" [class.selected]="lopTypeIntern() === 'amount'" (click)="lopTypeIntern.set('amount')">
+                      <div class="lop-type-radio">
+                        <div class="lop-radio-dot" *ngIf="lopTypeIntern() === 'amount'"></div>
+                      </div>
+                      <div class="lop-type-info">
+                        <strong>Flat Amount (₹)</strong>
+                        <span>Deduct a fixed ₹ amount per unauthorized day</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="lop-inputs-row">
+                    <div class="field-group" *ngIf="lopTypeIntern() === 'percentage'">
+                      <label>LOP % of Daily Stipend</label>
+                      <div class="input-with-suffix">
+                        <input type="number" class="location-input" [ngModel]="lopPercentageIntern()" (ngModelChange)="lopPercentageIntern.set($event)" placeholder="100" min="0" max="100">
+                        <span class="input-suffix">%</span>
+                      </div>
+                      <p class="field-hint">100% = deduct full day's stipend per unauthorized day.</p>
+                    </div>
+
+                    <div class="field-group" *ngIf="lopTypeIntern() === 'amount'">
+                      <label>LOP Amount per Day (₹)</label>
+                      <div class="input-with-suffix">
+                        <input type="number" class="location-input" [ngModel]="lopAmountIntern()" (ngModelChange)="lopAmountIntern.set($event)" placeholder="0" min="0">
+                        <span class="input-suffix">₹</span>
+                      </div>
+                      <p class="field-hint">Fixed amount deducted per unauthorized leave day.</p>
+                    </div>
+
+                    <div class="field-group">
+                      <label>Working Days / Month</label>
+                      <input type="number" class="location-input" [ngModel]="workingDaysIntern()" (ngModelChange)="workingDaysIntern.set($event)" placeholder="26" min="1" max="31">
+                      <p class="field-hint">Used for formula purposes only to calculate per-day stipend (Basic ÷ Working Days).</p>
+                    </div>
+                  </div>
+
+                  <div class="lop-preview-box" *ngIf="lopTypeIntern() === 'percentage'">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Example: Basic ₹12,000 → Per day = ₹{{ (12000 / (workingDaysIntern() || 26)) | number:'1.0-0' }} → LOP/day = ₹{{ (12000 / (workingDaysIntern() || 26)) * ((lopPercentageIntern() || 0) / 100) | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="lop-preview-box" *ngIf="lopTypeIntern() === 'amount'">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Example: 3 unauthorized days → LOP = ₹{{ (lopAmountIntern() || 0) * 3 | number:'1.0-0' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- / LOP Rules Card -->
+
+          </div>
+
+          <!-- Individual Staff Payroll Section -->
+          <div class="individual-payroll-container">
+            <div class="payroll-section-header">
+              <div class="header-left">
+                <h3>Individual Staff Payroll Customization</h3>
+              </div>
+              
+              <div class="header-right">
+                <!-- Search bar -->
+                <div class="payroll-search-wrapper">
+                  <hugeicons-icon [icon]="Search01Icon" [size]="18" [strokeWidth]="1.5" color="#64748b"></hugeicons-icon>
+                  <input type="text" class="payroll-search-input" [ngModel]="payrollSearchQuery()" (ngModelChange)="payrollSearchQuery.set($event)" placeholder="Search by name, ID, role...">
+                </div>
+
+                <!-- Sub-tab switcher -->
+                <div class="payroll-subtabs">
+                  <button type="button" class="subtab-btn" [class.active]="payrollActiveSubTab() === 'employees'" (click)="payrollActiveSubTab.set('employees')">
+                    Employees
+                  </button>
+                  <button type="button" class="subtab-btn" [class.active]="payrollActiveSubTab() === 'interns'" (click)="payrollActiveSubTab.set('interns')">
+                    Interns
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Employee Payroll Table -->
+            <div class="table-container" *ngIf="payrollActiveSubTab() === 'employees'">
+              <table class="payroll-table">
+                <thead>
+                  <tr>
+                    <th>Employee Info</th>
+                    <th>Basic Salary (₹)</th>
+                    <th>HRA (₹)</th>
+                    <th>Allowances (₹)</th>
+                    <th>Deductions (₹)</th>
+                    <th>Estimated Net</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let emp of filteredPayrollEmployees()">
+                    <td>
+                      <div class="user-info-cell">
+                        <div class="avatar-circle">
+                          <hugeicons-icon [icon]="UserCircleIcon" [size]="20" [strokeWidth]="1.5" color="#64748b"></hugeicons-icon>
+                        </div>
+                        <div>
+                          <div class="user-name">{{ emp.fullName }}</div>
+                          <div class="user-id">ID: {{ emp.EmployeeId }}</div>
+                          <div class="user-meta" *ngIf="emp.department">{{ emp.department }} <span *ngIf="emp.role">• {{ emp.role }}</span></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="emp.payroll.basicSalary" placeholder="35000">
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="emp.payroll.hra" placeholder="12000">
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="emp.payroll.allowances" placeholder="6000">
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="emp.payroll.deductions" placeholder="3000">
+                    </td>
+                    <td class="net-salary-cell">
+                      ₹{{ calculateNetSalary(emp.payroll.basicSalary || 0, emp.payroll.hra || 0, emp.payroll.allowances || 0, emp.payroll.deductions || 0, 'employee') | number:'1.0-0' }}
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredPayrollEmployees().length === 0">
+                    <td colspan="6" class="no-results-cell">No employees found matching the search.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Intern Payroll Table -->
+            <div class="table-container" *ngIf="payrollActiveSubTab() === 'interns'">
+              <table class="payroll-table">
+                <thead>
+                  <tr>
+                    <th>Intern Info</th>
+                    <th>Basic Stipend (₹)</th>
+                    <th>HRA (₹)</th>
+                    <th>Allowances (₹)</th>
+                    <th>Deductions (₹)</th>
+                    <th>Estimated Net</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let intern of filteredPayrollInterns()">
+                    <td>
+                      <div class="user-info-cell">
+                        <div class="avatar-circle">
+                          <hugeicons-icon [icon]="UserGroupIcon" [size]="20" [strokeWidth]="1.5" color="#64748b"></hugeicons-icon>
+                        </div>
+                        <div>
+                          <div class="user-name">{{ intern.fullName }}</div>
+                          <div class="user-id">ID: {{ intern.internid || intern.internId }}</div>
+                          <div class="user-meta" *ngIf="intern.department">{{ intern.department }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="intern.payroll.basicSalary" placeholder="12000">
+                    </td>
+                    <td>
+                      <span class="muted-dash">-</span>
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="intern.payroll.allowances" placeholder="2000">
+                    </td>
+                    <td>
+                      <input type="number" class="payroll-cell-input" [(ngModel)]="intern.payroll.deductions" placeholder="1000">
+                    </td>
+                    <td class="net-salary-cell">
+                      ₹{{ calculateNetSalary(intern.payroll.basicSalary || 0, 0, intern.payroll.allowances || 0, intern.payroll.deductions || 0, 'intern') | number:'1.0-0' }}
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredPayrollInterns().length === 0">
+                    <td colspan="6" class="no-results-cell">No interns found matching the search.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Settings Section -->
+      <section *ngIf="activeTab() === 'system_settings'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper" style="color: #f59e0b;">
+              <hugeicons-icon [icon]="TimeQuarterIcon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Work Duration Settings</h2>
+              <p>Set the required daily work hours per role. Attendance shorter than this threshold will be flagged as <strong>Short (S)</strong>.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="payroll-config-grid">
+
+            <!-- HR -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user-tie" style="margin-right: 6px; color: #6366f1;"></i>HR</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationHr()" (ngModelChange)="workDurationHr.set($event)" min="1" max="24" placeholder="8">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+            <!-- Manager -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user-shield" style="margin-right: 6px; color: #0ea5e9;"></i>Manager</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationManager()" (ngModelChange)="workDurationManager.set($event)" min="1" max="24" placeholder="8">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+            <!-- Employee -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user" style="margin-right: 6px; color: #10b981;"></i>Employee</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationEmployee()" (ngModelChange)="workDurationEmployee.set($event)" min="1" max="24" placeholder="8">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+            <!-- Intern -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user-graduate" style="margin-right: 6px; color: #f59e0b;"></i>Intern</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationIntern()" (ngModelChange)="workDurationIntern.set($event)" min="1" max="24" placeholder="6">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="lop-info-banner" style="margin-top: 2rem;">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>These settings apply to the mobile app's attendance page. The <strong>"Short (S)"</strong> badge and <strong>short hours label</strong> are calculated using these thresholds per role.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <div class="settings-sidebar">
+      <div class="nav-menu">
+        
+        <button class="nav-link" [class.active]="activeTab() === 'locations'" (click)="activeTab.set('locations')">
+          <div class="action-icon-circle blue-tint">
+            <hugeicons-icon [icon]="MapsLocation02Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Office Locations</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'communication'" (click)="activeTab.set('communication')">
+          <div class="action-icon-circle orange-tint">
+            <hugeicons-icon [icon]="MailReceive01Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Email</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'employee_roles'" (click)="activeTab.set('employee_roles')">
+          <div class="action-icon-circle teal-tint">
+            <hugeicons-icon [icon]="UserCircleIcon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Employee Roles</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'intern_roles'" (click)="activeTab.set('intern_roles')">
+          <div class="action-icon-circle purple-tint">
+            <hugeicons-icon [icon]="UserGroupIcon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Intern Roles</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'payroll_settings'" (click)="activeTab.set('payroll_settings')">
+          <div class="action-icon-circle green-tint">
+            <hugeicons-icon [icon]="PaymentSuccess02Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Payroll Rules</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'system_settings'" (click)="activeTab.set('system_settings')">
+          <div class="action-icon-circle" style="background: #fff7ed; color: #f59e0b;">
+            <hugeicons-icon [icon]="TimeQuarterIcon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">System Settings</span>
+        </button>
+      </div>
+
+
+    </div>
+  </div>
+</div>

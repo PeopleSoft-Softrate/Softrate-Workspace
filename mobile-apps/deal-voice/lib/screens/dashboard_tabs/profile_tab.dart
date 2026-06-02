@@ -533,7 +533,7 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Widget _buildMenuTile({
-    required IconData icon,
+    required dynamic icon,
     required String title,
     required VoidCallback onTap,
     String? subtitle,
@@ -563,7 +563,7 @@ class _ProfileTabState extends State<ProfileTab> {
             color: iconColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: iconColor, size: 22),
+          child: (icon is IconData ? Icon(icon as IconData, color: iconColor, size: 22) : FaIcon(icon, color: iconColor, size: 22)),
         ),
         title: Text(
           title,
@@ -591,7 +591,7 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
   Widget _buildToggleTile({
-    required IconData icon,
+    required dynamic icon,
     required String title,
     required String subtitle,
     required bool value,
@@ -621,7 +621,7 @@ class _ProfileTabState extends State<ProfileTab> {
             color: iconColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: iconColor, size: 22),
+          child: (icon is IconData ? Icon(icon as IconData, color: iconColor, size: 22) : FaIcon(icon, color: iconColor, size: 22)),
         ),
         title: Text(
           title,
@@ -641,7 +641,7 @@ class _ProfileTabState extends State<ProfileTab> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        activeColor: iconColor,
+        activeThumbColor: iconColor,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),

@@ -1,0 +1,254 @@
+.gs-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+  z-index: 1001;
+}
+
+/* Search Bar */
+.gs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  padding: 0 0.875rem;
+  height: 42px;
+  transition: all 0.2s ease;
+}
+
+.gs-bar.focused {
+  background: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
+}
+
+.gs-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.gs-bar.focused .gs-icon {
+  color: #0f172a;
+}
+
+.gs-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0f172a;
+  font-family: var(--font-body);
+  min-width: 0;
+}
+
+.gs-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.gs-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.gs-clear:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.gs-kbd {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+  font-family: var(--font-body);
+}
+
+/* Dropdown */
+.gs-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.15), 0 4px 16px rgba(0,0,0,0.06);
+  overflow: hidden;
+  animation: gsSlideIn 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+@keyframes gsSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gs-group-label {
+  padding: 0.625rem 1rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+}
+
+.gs-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.gs-result-item:hover {
+  background: #f8fafc;
+}
+
+.gs-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+}
+
+.gs-avatar.employee {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.gs-avatar.intern {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.gs-result-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gs-result-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gs-result-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gs-result-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.gs-result-badge.emp {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.gs-result-badge.int {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+/* State (loading / empty) */
+.gs-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 2.5rem 1rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gs-state strong {
+  color: #475569;
+}
+
+.gs-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #e2e8f0;
+  border-top-color: #0f172a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
+.gs-footer {
+  padding: 0.625rem 1rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.gs-footer kbd {
+  background: #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Backdrop */
+.gs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: transparent;
+}

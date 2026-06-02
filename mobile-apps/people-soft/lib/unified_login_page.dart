@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
-import 'package:hrmappfrontend/manager/manager_dashboard.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
-import 'package:hrmappfrontend/manager/manager_auth_check.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
+import 'package:hrmappfrontend/device_mismatch_page.dart';
 
 class UnifiedLoginPage extends StatefulWidget {
   const UnifiedLoginPage({super.key});
@@ -80,12 +80,15 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       final url = Uri.parse('$_baseUrl/api/auth/unified-login');
       debugPrint("Attempting login to $url with identifier: ${_idCtrl.text.trim()}");
       
+      final String deviceId = await DeviceInfoHelper.getDeviceId();
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'identifier': _idCtrl.text.trim(),
           'password': _passCtrl.text.trim(),
+          'deviceId': deviceId,
         }),
       );
 
@@ -95,6 +98,23 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode != 200) {
+        if (data['code'] == 'DEVICE_MISMATCH' || data['message'] == 'DEVICE_MISMATCH') {
+          setState(() { _loading = false; });
+          if (!mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DeviceMismatchPage(
+                identifier: _idCtrl.text.trim(),
+                password: _passCtrl.text.trim(),
+                newDeviceId: deviceId,
+                requestStatus: data['requestStatus'] ?? 'none',
+              ),
+            ),
+          );
+          return;
+        }
+
         setState(() {
           _errorMsg = data['message'] ?? 'Login failed. Please try again.';
           _loading = false;

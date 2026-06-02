@@ -1,0 +1,144 @@
+<div class="main-content-layout" [class.self-portal]="isSelfPortal()">
+<div class="data-section">
+
+  <!-- Employee Self-Portal Page Header -->
+  <div class="page-header" *ngIf="isSelfPortal()">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <a routerLink="/employee/dashboard" class="back-link">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+      <h1>Organizational Hierarchy</h1>
+      <p>Visualize the company's reporting structure and departments.</p>
+    </div>
+    <div class="header-actions" *ngIf="publishedUrl()">
+      <button class="btn-primary" (click)="viewHierarchy()" style="display: flex; gap: 8px; align-items: center; padding: 10px 18px; border-radius: var(--border-radius, 8px); background: #00657f; color: white; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+        <i class="fa-solid fa-up-right-from-square"></i>
+        <span>Open in New Tab</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin View Page Header -->
+  <div class="page-header" *ngIf="!isSelfPortal()">
+    <div class="header-content">
+      <h1>Organizational Hierarchy</h1>
+      <p>Visualize and manage the company's structural reporting lines.</p>
+    </div>
+  </div>
+
+  <!-- Employee Self-Portal Embedded Iframe View -->
+  <div class="data-container" *ngIf="isSelfPortal() && !isLoading()">
+    <div class="iframe-card" *ngIf="publishedUrl()">
+      <iframe [src]="getSafeUrl(publishedUrl())" class="policy-iframe" frameborder="0"></iframe>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!publishedUrl()">
+      <div class="empty-content">
+        <hugeicons-icon [icon]="WorkflowSquare03Icon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+        <h3>No Hierarchy Chart Published</h3>
+        <p>Your organization has not uploaded the structure chart yet. Please check back later!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin View Hierarchy Settings -->
+  <div class="hierarchy-container" [class.loading]="isLoading()" *ngIf="!isSelfPortal()">
+    <!-- Skeletons for immediate feedback -->
+    @if (isLoading()) {
+      <div class="hierarchy-skeletons">
+        <div class="sk-main-card"></div>
+        <div class="sk-sidebar-card"></div>
+      </div>
+    }
+
+    <!-- Main Configuration -->
+    <div class="main-config-card">
+      <div class="card-header-minimal">
+        <div class="hero-visual">
+          <div class="icon-wrapper">
+            <hugeicons-icon [icon]="WorkflowSquare03Icon" size="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="hero-content">
+            <h2>Hierarchy Document</h2>
+            <p>Sync your company's organizational chart from Google Drive or Dropbox to keep everyone aligned.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-body">
+        <div class="url-input-group">
+          <label>Document Public URL</label>
+          <div class="input-container">
+            <i class="fa-solid fa-link"></i>
+            <input type="text" [(ngModel)]="hierarchyUrl" placeholder="https://drive.google.com/file/d/...">
+          </div>
+          <p class="input-hint" *ngIf="hierarchyUrl !== publishedUrl()">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            You have unsaved changes. Click "Save & Publish" to update the team's view.
+          </p>
+          <p class="input-hint" *ngIf="hierarchyUrl === publishedUrl() && hierarchyUrl">
+            <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i>
+            Current URL is published and active.
+          </p>
+          <p class="input-hint">Pro Tip: Use PDF format for the best cross-device experience.</p>
+        </div>
+
+        <div class="actions-container">
+          <button class="btn-save" (click)="saveHierarchy()" [disabled]="isSaving() || !hierarchyUrl || hierarchyUrl === publishedUrl()">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>{{ isSaving() ? 'Publishing Changes...' : 'Save & Publish Changes' }}</span>
+          </button>
+          <button class="btn-preview" (click)="viewHierarchy()" [disabled]="!publishedUrl()">
+            <i class="fa-solid fa-eye"></i> View Published
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="sidebar-info">
+      <div class="info-card">
+        <h4>How to Publish</h4>
+        <div class="guide-list">
+          <div class="guide-step">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <p>Upload your Hierarchy PDF to <strong>Google Drive</strong> or <strong>Dropbox</strong>.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <p>Set link sharing to <strong>"Anyone with the link can view"</strong>.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <p>Copy the link and paste it into the <strong>Document URL</strong> field.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-row">
+          <span class="status-label">Visibility Status</span>
+          <span class="status-value online" *ngIf="publishedUrl().length > 0">Publicly Visible</span>
+          <span class="status-value offline" *ngIf="publishedUrl().length === 0">Not Configured</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Global Overlay (Loading or Saving) -->
+    <div class="loading-overlay" *ngIf="isLoading() || isSaving()">
+      <div class="spinner"></div>
+      <p>{{ isSaving() ? 'Publishing...' : 'Syncing...' }}</p>
+    </div>
+  </div>
+
+</div>
+</div>

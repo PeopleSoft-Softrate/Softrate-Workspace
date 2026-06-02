@@ -7,6 +7,10 @@ import { Observable } from 'rxjs';
 })
 export class SocketService {
   private socket: Socket;
+  private useLocalBackend = false;
+  private readonly baseUrl = this.useLocalBackend 
+    ? 'http://localhost:5001' 
+    : 'https://peoplesoft-develop.onrender.com';
 
   constructor() {
     const { url, path } = this.resolveSocketConfig();

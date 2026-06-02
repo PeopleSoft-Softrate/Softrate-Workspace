@@ -22,6 +22,7 @@ const InternSchema = new mongoose.Schema({
   linkedin: { type: String, required: true },
   internshipType: { type: String, default: ""},
   applicationType: { type: String, enum: ["Internship", "Job"], default: "Internship" },
+  deviceId: { type: String, default: null },
 
 
 
@@ -36,6 +37,8 @@ const InternSchema = new mongoose.Schema({
   leaveCount: { type: Number, default: 0 },
 
   createdAt: { type: Date, default: Date.now },
+  terminationReason: { type: String, default: null },
+  terminationDate: { type: Date, default: null },
   payroll: {
     basicSalary: { type: Number, default: 0 },
     hra: { type: Number, default: 0 },
@@ -47,6 +50,23 @@ const InternSchema = new mongoose.Schema({
     contentType: { type: String },
     size: { type: Number },
     updatedAt: { type: Date }
+  }
+});
+// Helper function to capitalize the first letter of each word
+function capitalizeWords(str) {
+  if (!str) return str;
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+InternSchema.pre('save', function () {
+  if (this.isModified('fullName') && this.fullName) {
+    this.fullName = capitalizeWords(this.fullName);
+  }
+  if (this.isModified('college') && this.college) {
+    this.college = capitalizeWords(this.college);
+  }
+  if (this.isModified('role') && this.role) {
+    this.role = capitalizeWords(this.role);
   }
 });
 

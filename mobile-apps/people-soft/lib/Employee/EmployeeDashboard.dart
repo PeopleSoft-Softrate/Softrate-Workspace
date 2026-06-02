@@ -1,3 +1,4 @@
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'dart:async' as java_timer;
 import 'dart:convert';
 import 'dart:io';
@@ -23,7 +24,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/network_aware_mixin.dart';
-import 'package:hrmappfrontend/intern/ProjectViewPage.dart';
 import 'package:hrmappfrontend/employee_to_manager/manager_access_section.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
 
@@ -94,28 +94,30 @@ class _EmployeedashboardState extends State<Employeedashboard>
   Future<void> _initializeAppData() async {
     if (mounted) setState(() => loading = true);
 
-    await _loadEmployeeId();
-    await _loadProfileImage();
+    try {
+      await _loadEmployeeId();
+      await _loadProfileImage();
 
-    if (employeeId != null) {
-      await fetchEmployeeData(employeeId!);
-      if (employeeId != 'test_employee_id') {
-        await fetchOfficeLocations(); // 🔥 Fetch Dynamic Locations
-        await checkTodayHoliday();
-
-        // 🔥 Only continue if NOT terminated
-        if (employeeData?['status'] != 'terminated') {
-          await resetAttendanceIfNewDay();
-          await loadTodayAttendance();
-          await fetchMyResignation();
-          await _checkHolidayBadge();
+      if (employeeId != null) {
+        await fetchEmployeeData(employeeId!);
+        if (employeeId != 'test_employee_id') {
+          // Run independent network requests concurrently to reduce load time
+          await Future.wait([
+            fetchOfficeLocations(),
+            checkTodayHoliday(),
+            resetAttendanceIfNewDay().then((_) => loadTodayAttendance()),
+            fetchMyResignation(),
+            _checkHolidayBadge(),
+          ]);
         }
       }
-    }
-
-    // Only hide loading if NOT terminated
-    if (mounted && employeeData?['status'] != 'terminated') {
-      setState(() => loading = false);
+    } catch (e) {
+      debugPrint("Error in _initializeAppData: $e");
+    } finally {
+      // Only hide loading if NOT terminated
+      if (mounted && employeeData?['status'] != 'terminated') {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -257,6 +259,35 @@ class _EmployeedashboardState extends State<Employeedashboard>
           setState(() {
             employeeData = data; // ✅ Single setState
           });
+        }
+
+        // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
+        final dbDeviceId = data['deviceId'];
+        if (dbDeviceId != null) {
+          final currentDeviceId = await DeviceInfoHelper.getDeviceId();
+          if (dbDeviceId != currentDeviceId) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('employeeLoggedIn');
+            await prefs.remove('auth_token');
+            await prefs.remove('employeeId');
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session expired: Account bound to another device.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => homescreen()),
+                  (route) => false,
+                );
+              });
+            }
+            throw Exception('DEVICE_MISMATCH');
+          }
         }
 
         // 🔥 HR ROLE CHECK (PROMOTION)
@@ -480,9 +511,9 @@ class _EmployeedashboardState extends State<Employeedashboard>
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    // 🔥 If no locations defined, allow from anywhere
+    // 🔥 If no locations defined, block punch in
     if (_officeLocations.isEmpty) {
-      return true;
+      return false;
     }
 
     // 🔥 Check against all authorized locations
@@ -1141,33 +1172,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       },
                     ),
                     const SizedBox(width: 12),
-                    _buildManagerStyleBox(
-                      "Projects",
-                      "Assignments",
-                      Icons.assignment_rounded,
-                      const Color(0xFF00657F),
-                      onTap: () {
-                        final isManager =
-                            (employeeData?['isManager'] == true ||
-                                employeeData?['isManager']?.toString() ==
-                                    'true' ||
-                                employeeData?['role']
-                                        ?.toString()
-                                        .toLowerCase() ==
-                                    'manager');
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => UserProjectPage(
-                                  userId: employeeData?['_id'] ?? '',
-                                  userName: name,
-                                  isManager: isManager,
-                                ),
-                          ),
-                        );
-                      },
-                    ),
+                    const Expanded(child: SizedBox()),
                   ],
                 ),
                 const SizedBox(height: 12),

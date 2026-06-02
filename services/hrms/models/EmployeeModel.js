@@ -20,6 +20,7 @@ const EmployeeSchema = new mongoose.Schema({
   gender: String,
   nationality: String,
   maritalStatus: String,
+  deviceId: { type: String, default: null },
 
   // Section 2 – Education
   qualification: String,
@@ -48,6 +49,8 @@ const EmployeeSchema = new mongoose.Schema({
   managerApprovalStatus: { type: String, enum: ['pending', 'approved', 'rejected', null], default: null },
   managerRemarks: { type: String, default: "" },
   submittedAt: { type: Date, default: Date.now },
+  terminationReason: { type: String, default: null },
+  terminationDate: { type: Date, default: null },
   payroll: {
     basicSalary: { type: Number, default: 0 },
     hra: { type: Number, default: 0 },
@@ -59,6 +62,23 @@ const EmployeeSchema = new mongoose.Schema({
     contentType: { type: String },
     size: { type: Number },
     updatedAt: { type: Date }
+  }
+});
+// Helper function to capitalize the first letter of each word
+function capitalizeWords(str) {
+  if (!str) return str;
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+EmployeeSchema.pre('save', function () {
+  if (this.isModified('fullName') && this.fullName) {
+    this.fullName = capitalizeWords(this.fullName);
+  }
+  if (this.isModified('college') && this.college) {
+    this.college = capitalizeWords(this.college);
+  }
+  if (this.isModified('role') && this.role) {
+    this.role = capitalizeWords(this.role);
   }
 });
 

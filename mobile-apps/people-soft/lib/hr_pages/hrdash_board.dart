@@ -1,3 +1,4 @@
+import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -7,15 +8,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:hrmappfrontend/hr_pages/OrganizationalHierarchy.dart';
 import 'package:hrmappfrontend/hr_pages/emplyee/EmployeeLeaveApproval.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
-import 'package:hrmappfrontend/hr_pages/emplyee/HRResignationListPage.dart';
-import 'package:hrmappfrontend/hr_pages/emplyee/adding_employee.dart';
 import 'package:hrmappfrontend/hr_pages/emplyee/employee_management.dart';
 import 'package:hrmappfrontend/hr_pages/hr_holiday_screen.dart';
-import 'package:hrmappfrontend/hr_pages/hr_policy.dart';
 import 'package:hrmappfrontend/hr_pages/support/TodayAttendancePage.dart';
 import 'package:hrmappfrontend/hr_pages/support/TodayEmployeeAttendancePage.dart';
 import 'package:hrmappfrontend/hr_pages/support/TodayEmployeeAttendanceService.dart';
@@ -35,10 +32,8 @@ import 'package:hrmappfrontend/Employee/employeepayroll.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
 
-import 'package:hrmappfrontend/hr_pages/adding_intern.dart';
 import 'package:hrmappfrontend/hr_pages/intern_leave_approval.dart';
 import 'package:hrmappfrontend/hr_pages/intern_management.dart';
-import 'package:hrmappfrontend/hr_pages/intern_resignation.dart';
 import 'package:hrmappfrontend/hr_pages/hr_payroll_management.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:image_picker/image_picker.dart';
@@ -126,7 +121,7 @@ class _HrdashBoardState extends State<HrdashBoard>
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
-    if (_officeLocations.isEmpty) return true;
+    if (_officeLocations.isEmpty) return false;
     for (var loc in _officeLocations) {
       try {
         final double officeLat = double.parse(loc['latitude'].toString());
@@ -317,6 +312,35 @@ class _HrdashBoardState extends State<HrdashBoard>
           debugPrint("fetchHrProfile: User is no longer HR. Demoting...");
           _handleHrDemotion();
           return;
+        }
+
+        // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
+        final dbDeviceId = user['deviceId'];
+        if (dbDeviceId != null) {
+          final currentDeviceId = await DeviceInfoHelper.getDeviceId();
+          if (dbDeviceId != currentDeviceId) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('hr_logged_in');
+            await prefs.remove('auth_token');
+            await prefs.remove('hr_id');
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Session expired: Account bound to another device.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const homescreen()),
+                  (route) => false,
+                );
+              });
+            }
+            throw Exception('DEVICE_MISMATCH');
+          }
         }
 
         if (mounted) {
@@ -562,8 +586,9 @@ class _HrdashBoardState extends State<HrdashBoard>
 
   Future<void> _savePunchData() async {
     final prefs = await SharedPreferences.getInstance();
-    if (_punchInTime != null)
+    if (_punchInTime != null) {
       await prefs.setString('hr_punch_in', _punchInTime!);
+    }
     if (_punchOutTime != null) {
       await prefs.setString('hr_punch_out', _punchOutTime!);
     }
@@ -1496,18 +1521,6 @@ class _HrdashBoardState extends State<HrdashBoard>
         Row(
           children: [
             _buildManagerStyleBox(
-              "Add Intern",
-              "New Entry",
-              Icons.person_add_outlined,
-              const Color(0xFF0EA5E9),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddingIntern()),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
               "Manage Intern",
               "Directory",
               Icons.groups_outlined,
@@ -1518,11 +1531,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                     MaterialPageRoute(builder: (_) => const InternManagement()),
                   ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
+            const SizedBox(width: 12),
             _buildManagerStyleBox(
               "Leave Requests",
               "Approvals",
@@ -1533,20 +1542,6 @@ class _HrdashBoardState extends State<HrdashBoard>
                     context,
                     MaterialPageRoute(
                       builder: (_) => const InternLeaveApproval(),
-                    ),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
-              "Offboarding",
-              "Exit Process",
-              Icons.badge_outlined,
-              const Color(0xFFEF4444),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const InternResignation(),
                     ),
                   ),
             ),
@@ -1601,18 +1596,6 @@ class _HrdashBoardState extends State<HrdashBoard>
         Row(
           children: [
             _buildManagerStyleBox(
-              "Add Employee",
-              "New Hire",
-              Icons.person_add_outlined,
-              const Color(0xFF0EA5E9),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddingEmployee()),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
               "Manage Staff",
               "Team Info",
               Icons.groups_outlined,
@@ -1625,11 +1608,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                     ),
                   ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
+            const SizedBox(width: 12),
             _buildManagerStyleBox(
               "Leave Approval",
               "Requests",
@@ -1640,20 +1619,6 @@ class _HrdashBoardState extends State<HrdashBoard>
                     context,
                     MaterialPageRoute(
                       builder: (_) => const EmployeeLeaveApproval(),
-                    ),
-                  ),
-            ),
-            const SizedBox(width: 12),
-            _buildManagerStyleBox(
-              "Employee Exit",
-              "Offboarding",
-              Icons.exit_to_app_outlined,
-              const Color(0xFFEF4444),
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const HRResignationListPage(),
                     ),
                   ),
             ),
@@ -1715,7 +1680,7 @@ class _HrdashBoardState extends State<HrdashBoard>
       endColor = const Color(0xFF9E9E9E);
     }
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Stack(
         alignment: Alignment.bottomCenter,
@@ -1776,7 +1741,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                               const SizedBox(height: 4),
                               Text(
                                 hasPunchedIn
-                                    ? "Last Punch: ${hasPunchedOut ? 'Out at ' + formatTimeDisplay(_punchOutTime) : 'In at ' + formatTimeDisplay(_punchInTime)}"
+                                    ? "Last Punch: ${hasPunchedOut ? 'Out at ${formatTimeDisplay(_punchOutTime)}' : 'In at ${formatTimeDisplay(_punchInTime)}'}"
                                     : "Ready to start your day?",
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.8),
@@ -1852,25 +1817,15 @@ class _HrdashBoardState extends State<HrdashBoard>
                       ],
                     ),
                     alignment: Alignment.center,
-                    child:
-                        _isPunchLoading
-                            ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.4,
-                              ),
-                            )
-                            : Text(
-                              label,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),

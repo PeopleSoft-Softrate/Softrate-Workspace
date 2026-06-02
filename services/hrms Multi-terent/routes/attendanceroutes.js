@@ -10,6 +10,24 @@ const Employee = require("../models/EmployeeModel");
 const Holiday = require("../models/Holiday"); 
 const router = express.Router();
 
+/**
+ * Normalize a location payload into the GeoJSON Point format required by the schema.
+ * Accepts any of:
+ *   { latitude, longitude }
+ *   { lat, lng }
+ *   { type: 'Point', coordinates: [lng, lat] }  ← already correct
+ * Returns null if the location is missing or invalid.
+ */
+function toGeoPoint(location) {
+  if (!location) return null;
+  // Already a valid GeoJSON Point
+  if (location.type === 'Point' && Array.isArray(location.coordinates)) return location;
+  const lat = parseFloat(location.latitude ?? location.lat);
+  const lng = parseFloat(location.longitude ?? location.lng);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  return { type: 'Point', coordinates: [lng, lat] };
+}
+
 // 📌 Punch In
 
 router.post("/punch-in", verifyTenant, async (req, res) => {
@@ -70,7 +88,7 @@ router.post("/punch-in", verifyTenant, async (req, res) => {
     }
 
     record.punchInTime = new Date();
-    record.punchInLocation = location;
+    record.punchInLocation = toGeoPoint(location);
 
     await record.save();
 
@@ -106,7 +124,7 @@ router.post("/punch-out", verifyTenant, async (req, res) => {
     }
 
     record.punchOutTime = new Date();
-    record.punchOutLocation = location;
+    record.punchOutLocation = toGeoPoint(location);
 
     // Calculate duration (HH:mm)
     const diffMs = record.punchOutTime - record.punchInTime;

@@ -31,7 +31,7 @@
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
         <!-- Company Code Field -->
         <div class="form-group">
-          <label for="companyCode">Company Code (Optional)</label>
+          <label for="companyCode">Company Code</label>
           <div class="input-wrapper">
             <i class="fa-solid fa-building"></i>
             <input 
@@ -39,7 +39,8 @@
               type="text" 
               [(ngModel)]="credentials.companyCode" 
               name="companyCode" 
-              placeholder="e.g. acmecorp">
+              required
+              placeholder="e.g. softrateglobal.com">
           </div>
         </div>
 

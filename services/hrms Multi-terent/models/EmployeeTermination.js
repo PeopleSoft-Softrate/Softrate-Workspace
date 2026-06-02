@@ -91,4 +91,35 @@ employeeTerminationSchema.index({ employeeId: 1, status: 1 });
 employeeTerminationSchema.index({ terminationDate: -1 });
 employeeTerminationSchema.index({ status: 1, terminatedAt: -1 });
 
-module.exports = { name: "EmployeeTermination", schema: employeeTerminationSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _employeeTerminationProxyTarget() {}
+
+function _getemployeeTerminationModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["employeeTermination"];
+}
+
+module.exports = new Proxy(_employeeTerminationProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "employeeTermination";
+    if (prop === 'schema') return employeeTerminationSchema;
+    if (prop === '_name') return "employeeTermination";
+    if (prop === '_schema') return employeeTerminationSchema;
+    const actualModel = _getemployeeTerminationModel();
+    if (!actualModel) throw new Error("Model employeeTermination not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getemployeeTerminationModel();
+    if (!actualModel) throw new Error("Model employeeTermination not found for current tenant");
+    return new actualModel(...args);
+  }
+});

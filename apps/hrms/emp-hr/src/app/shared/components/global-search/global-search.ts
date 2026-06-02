@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed, HostListener, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, computed, HostListener, ElementRef, PLATFORM_ID, OnInit } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { GlobalSearchService, SearchResult } from '../../services/global-search';
 
@@ -10,13 +10,22 @@ import { GlobalSearchService, SearchResult } from '../../services/global-search'
   templateUrl: './global-search.html',
   styleUrl: './global-search.css'
 })
-export class GlobalSearch {
+export class GlobalSearch implements OnInit {
   searchService = inject(GlobalSearchService);
   private router = inject(Router);
   private el = inject(ElementRef);
 
   query = signal('');
   isOpen = signal(false);
+  shortcutText = signal('Ctrl K');
+  platformId = inject(PLATFORM_ID);
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 || navigator.userAgent.includes('Mac');
+      this.shortcutText.set(isMac ? '⌘K' : 'Ctrl K');
+    }
+  }
 
   employees = computed(() =>
     this.searchService.results().filter(r => r.type === 'employee')

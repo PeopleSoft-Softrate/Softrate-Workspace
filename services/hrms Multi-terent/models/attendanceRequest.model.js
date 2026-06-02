@@ -32,4 +32,35 @@ const AttendanceRequestSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = { name: "AttendanceRequest", schema: AttendanceRequestSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _AttendanceRequestProxyTarget() {}
+
+function _getAttendanceRequestModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["AttendanceRequest"];
+}
+
+module.exports = new Proxy(_AttendanceRequestProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "AttendanceRequest";
+    if (prop === 'schema') return AttendanceRequestSchema;
+    if (prop === '_name') return "AttendanceRequest";
+    if (prop === '_schema') return AttendanceRequestSchema;
+    const actualModel = _getAttendanceRequestModel();
+    if (!actualModel) throw new Error("Model AttendanceRequest not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getAttendanceRequestModel();
+    if (!actualModel) throw new Error("Model AttendanceRequest not found for current tenant");
+    return new actualModel(...args);
+  }
+});

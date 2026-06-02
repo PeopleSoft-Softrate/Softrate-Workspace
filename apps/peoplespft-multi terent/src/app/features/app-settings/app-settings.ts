@@ -16,7 +16,8 @@ import {
   UserCircleIcon,
   UserGroupIcon,
   PaymentSuccess02Icon,
-  Search01Icon
+  Search01Icon,
+  TimeQuarterIcon
 } from '@hugeicons/core-free-icons';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 
@@ -44,6 +45,7 @@ export class AppSettings implements OnInit {
   readonly UserGroupIcon = UserGroupIcon;
   readonly PaymentSuccess02Icon = PaymentSuccess02Icon;
   readonly Search01Icon = Search01Icon;
+  readonly TimeQuarterIcon = TimeQuarterIcon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   currentUser = signal<any>(null);
@@ -118,7 +120,13 @@ export class AppSettings implements OnInit {
     );
   });
   
-  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings'>('locations');
+  // Work Duration Settings — how many hours/day is considered a full day per role
+  workDurationHr       = signal<number>(8);
+  workDurationManager  = signal<number>(8);
+  workDurationEmployee = signal<number>(8);
+  workDurationIntern   = signal<number>(6);
+
+  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings' | 'system_settings'>('locations');
 
   isSaving = signal(false);
   isLoading = signal(true);
@@ -207,6 +215,15 @@ export class AppSettings implements OnInit {
             this.lopAmountIntern.set(lop.lopAmountIntern ?? 0);
             this.workingDaysEmployee.set(lop.workingDaysEmployee ?? 26);
             this.workingDaysIntern.set(lop.workingDaysIntern ?? 26);
+          }
+
+          // Load Work Duration Settings
+          if (res.settings.workDurationSettings) {
+            const wd = res.settings.workDurationSettings;
+            this.workDurationHr.set(wd.hr ?? 8);
+            this.workDurationManager.set(wd.manager ?? 8);
+            this.workDurationEmployee.set(wd.employee ?? 8);
+            this.workDurationIntern.set(wd.intern ?? 6);
           }
         }
 
@@ -322,6 +339,12 @@ export class AppSettings implements OnInit {
           workingDaysEmployee:   Number(this.workingDaysEmployee()) || 26,
           workingDaysIntern:     Number(this.workingDaysIntern()) || 26
         }
+      },
+      workDurationSettings: {
+        hr:       Number(this.workDurationHr())       || 8,
+        manager:  Number(this.workDurationManager())  || 8,
+        employee: Number(this.workDurationEmployee()) || 8,
+        intern:   Number(this.workDurationIntern())   || 6,
       }
     };
 

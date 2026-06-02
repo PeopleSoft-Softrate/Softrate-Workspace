@@ -16,7 +16,8 @@ import {
   UserCircleIcon,
   UserGroupIcon,
   PaymentSuccess02Icon,
-  Search01Icon
+  Search01Icon,
+  Calendar01Icon
 } from '@hugeicons/core-free-icons';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 
@@ -44,6 +45,7 @@ export class AppSettings implements OnInit {
   readonly UserGroupIcon = UserGroupIcon;
   readonly PaymentSuccess02Icon = PaymentSuccess02Icon;
   readonly Search01Icon = Search01Icon;
+  readonly Calendar01Icon = Calendar01Icon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   currentUser = signal<any>(null);
@@ -60,6 +62,10 @@ export class AppSettings implements OnInit {
   });
   employeeRoles = signal<string[]>([]);
   internRoles = signal<string[]>([]);
+  leavePolicies = signal<any[]>([
+    { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
+    { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+  ]);
 
   // Default Payroll settings
   defaultEmployeeBasic = signal<number>(35000);
@@ -118,7 +124,7 @@ export class AppSettings implements OnInit {
     );
   });
   
-  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings'>('locations');
+  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings' | 'leave_policies'>('locations');
 
   isSaving = signal(false);
   isLoading = signal(true);
@@ -186,6 +192,10 @@ export class AppSettings implements OnInit {
             'Research & Development (R&D)',
             'HR Analyst',
             'Other'
+          ]);
+          this.leavePolicies.set(s.leavePolicies || [
+            { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
+            { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
           ]);
 
           if (s.payrollSettings) {
@@ -304,6 +314,7 @@ export class AppSettings implements OnInit {
       communication: this.communication(),
       employeeRoles: this.employeeRoles(),
       internRoles: this.internRoles(),
+      leavePolicies: this.leavePolicies(),
       payrollSettings: {
         pfCalculateEmployee: this.pfCalculateEmployee(),
         pfCalculateIntern: false,
@@ -497,6 +508,18 @@ export class AppSettings implements OnInit {
       textareaElem.focus();
       textareaElem.setSelectionRange(startPos + variable.length, startPos + variable.length);
     }, 0);
+  }
+
+  addLeavePolicy() {
+    const current = this.leavePolicies();
+    current.push({ name: '', allowance: 12, appliesTo: 'both' });
+    this.leavePolicies.set([...current]);
+  }
+
+  removeLeavePolicy(index: number) {
+    const current = this.leavePolicies();
+    current.splice(index, 1);
+    this.leavePolicies.set([...current]);
   }
 
   trackByIndex(index: number, item: any): any {

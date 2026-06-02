@@ -82,4 +82,35 @@ EmployeeSchema.pre('save', function () {
   }
 });
 
-module.exports = { name: "Employee", schema: EmployeeSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _EmployeeProxyTarget() {}
+
+function _getEmployeeModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["Employee"];
+}
+
+module.exports = new Proxy(_EmployeeProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "Employee";
+    if (prop === 'schema') return EmployeeSchema;
+    if (prop === '_name') return "Employee";
+    if (prop === '_schema') return EmployeeSchema;
+    const actualModel = _getEmployeeModel();
+    if (!actualModel) throw new Error("Model Employee not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getEmployeeModel();
+    if (!actualModel) throw new Error("Model Employee not found for current tenant");
+    return new actualModel(...args);
+  }
+});

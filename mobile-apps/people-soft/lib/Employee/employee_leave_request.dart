@@ -73,18 +73,41 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
   @override
   void initState() {
     super.initState();
+    _fetchLeavePolicies();
     _leaveBalanceFuture = fetchLeaveBalance();
     _leaveHistoryFuture = fetchLeavesForEmployee();
   }
 
-  final List<String> _leaveTypes = const [
+  Future<void> _fetchLeavePolicies() async {
+    try {
+      final response = await http.get(Uri.parse("${getBaseUrl()}/api/settings/public"));
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true && body['leavePolicies'] != null) {
+          final List policies = body['leavePolicies'];
+          final List<String> fetchedTypes = policies
+              .where((p) => p['appliesTo'] == 'both' || p['appliesTo'] == 'employee')
+              .map<String>((p) => p['name'] as String)
+              .toList();
+          
+          if (fetchedTypes.isNotEmpty) {
+            // Also keep standard permission types if they exist in legacy data
+            fetchedTypes.add('Permission');
+            
+            setState(() {
+              _leaveTypes = fetchedTypes;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to fetch leave policies: $e");
+    }
+  }
+
+  List<String> _leaveTypes = [
     'Casual Leave',
     'Sick Leave',
-    'Bereavement Leave',
-    'Maternity Leave',
-    'Paternity Leave',
-    'Half Day',
-    'Permission',
   ];
 
   final List<String> _durationOptions = const [

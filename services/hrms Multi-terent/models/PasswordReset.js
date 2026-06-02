@@ -12,4 +12,35 @@ const PasswordResetSchema = new mongoose.Schema({
 // Automatically delete expired tokens after 5 minutes (using TTL index)
 PasswordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-module.exports = { name: "PasswordReset", schema: PasswordResetSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _PasswordResetProxyTarget() {}
+
+function _getPasswordResetModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["PasswordReset"];
+}
+
+module.exports = new Proxy(_PasswordResetProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "PasswordReset";
+    if (prop === 'schema') return PasswordResetSchema;
+    if (prop === '_name') return "PasswordReset";
+    if (prop === '_schema') return PasswordResetSchema;
+    const actualModel = _getPasswordResetModel();
+    if (!actualModel) throw new Error("Model PasswordReset not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getPasswordResetModel();
+    if (!actualModel) throw new Error("Model PasswordReset not found for current tenant");
+    return new actualModel(...args);
+  }
+});

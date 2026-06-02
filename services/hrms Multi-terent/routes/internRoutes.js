@@ -15,7 +15,13 @@ const { generateDynamicPDF } = require("../utilities/certificateGenerator.js");
 const fs = require('fs');
 const path = require('path');
 const { getAssetBuffer } = require("../utilities/assetHelper.js");
-const Company = require("../models/CompanyModel.js");
+const { getMasterConnection: _internGetMC, waitForConnection: _internWFC } = require("../db");
+const _internCompanyModelExport = require("../models/CompanyModel.js");
+async function _getMasterCompany() {
+  const db = _internGetMC();
+  await _internWFC(db);
+  return db.models.Company || db.model("Company", _internCompanyModelExport.schema);
+}
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -220,6 +226,7 @@ router.put("/accept/:id", verifyTenant,
       const newId = await generateInternId(req.tenant.companyId);
 
       // 2. Fetch company for settings
+      const Company = await _getMasterCompany();
       const company = await Company.findById(req.tenant.companyId);
       // Correct path: settings.offerLetterSettings
       const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
@@ -306,7 +313,7 @@ router.put("/accept/:id", verifyTenant,
       console.log("Intern saved successfully. Preparing to send email with generated documents...");
 
       try {
-        const Company = require("../models/CompanyModel.js");
+        const Company = await _getMasterCompany();
         const companyTemplate = await Company.findById(req.tenant.companyId);
         const template = companyTemplate?.settings?.communication?.onboardingTemplateIntern;
         const customSignature = companyTemplate?.settings?.communication?.emailSignatureUrl;
@@ -404,6 +411,7 @@ router.put("/reject/:id", verifyTenant, async (req, res) => {
 
 async function generateInternId(companyId) {
   // Fetch company code
+  const Company = await _getMasterCompany();
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
 

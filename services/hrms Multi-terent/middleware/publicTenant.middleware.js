@@ -1,4 +1,7 @@
-const Company = require('../models/CompanyModel');
+const { getMasterConnection, getTenantConnection, waitForConnection } = require('../db');
+const CompanyModelExport = require('../models/CompanyModel');
+const { getModelsForConnection } = require('../utilities/modelLoader');
+const { runWithTenant } = require('../utilities/tenantContext');
 
 /**
  * Middleware to identify a tenant based on a companyCode or companyId in the body/query
@@ -15,11 +18,18 @@ const verifyPublicTenant = async (req, res, next) => {
       });
     }
 
+    // Load Company from master DB
+    const masterDb = getMasterConnection();
+    await waitForConnection(masterDb);
+    const Company = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+
     let company;
     if (companyId) {
       company = await Company.findById(companyId);
     } else {
-      company = await Company.findOne({ companyCode: companyCode.toUpperCase() });
+      // Escape special regex chars (dots etc.) before building regex
+      const escapedCode = companyCode.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      company = await Company.findOne({ companyCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') } });
     }
 
     if (!company) {
@@ -29,15 +39,21 @@ const verifyPublicTenant = async (req, res, next) => {
       });
     }
 
-    // Set tenant context
+    // Use stored dbName (pre-computed at registration time, no dots)
+    const dbName = company.dbName || `hrdb_${company.companyCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
+    const tenantDb = getTenantConnection(dbName);
+    await waitForConnection(tenantDb);
+
+    // Attach models and tenant context to request
+    req.models = getModelsForConnection(tenantDb);
     req.tenant = {
       companyId: company._id,
       companyCode: company.companyCode,
+      dbName: dbName,
       receivingEmail: company.settings?.receivingEmail || process.env.RECIVER_EMAIL_USER
     };
 
-    const { runWithTenant } = require('../utilities/tenantContext');
-    runWithTenant(company._id, () => {
+    runWithTenant({ companyId: company._id, dbName }, () => {
       next();
     });
   } catch (err) {

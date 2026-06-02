@@ -462,7 +462,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
 
                                   // Company Code field
                                   const Text(
-                                    'Company Code (Optional)',
+                                    'Company Code *',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
@@ -476,6 +476,12 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                       hint: 'Enter your company code',
                                       icon: HugeIcons.strokeRoundedBuilding03,
                                     ),
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Company code is required';
+                                      }
+                                      return null;
+                                    },
                                   ),
 
                                   const SizedBox(height: 18),

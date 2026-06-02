@@ -1,4 +1,4 @@
-const { getMasterConnection, getTenantConnection } = require('../db');
+const { getMasterConnection, getTenantConnection, waitForConnection } = require('../db');
 const { getModelsForConnection } = require('../utilities/modelLoader');
 const CompanyModelExport = require('../models/CompanyModel');
 const { sendEmail, LOGO_URL } = require("../utilities/sendEmail");
@@ -83,16 +83,42 @@ async function findCurrentUser(req, includePhoto = false) {
 
 /**
  * Unified Login for all user types (HR, Employee, Intern, Manager)
- * Accepts: identifier (email/ID) + password
+ * Accepts: identifier (email/ID) + password + optional companyCode
  */
 exports.login = async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    const { identifier, password, companyCode } = req.body;
     if (!identifier || !password) {
       return res.status(400).json({ success: false, message: "Identifier and password are required" });
     }
 
     const id = identifier.trim();
+
+    // ── 1. Resolve Tenant DB ──
+    // If companyCode is provided, look up by the original code (can contain dots).
+    // The sanitized dbName is stored on the company record itself.
+    // If no companyCode, fall back to legacy 'hrdb' for backwards compatibility.
+    let dbName = 'hrdb';
+    let resolvedCompany = null;
+
+    if (companyCode && companyCode.trim()) {
+      const cleanCode = companyCode.trim();
+      const masterDb = getMasterConnection();
+      await waitForConnection(masterDb);
+      const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+      // Escape dots for regex, then match case-insensitively
+      const escapedCode = cleanCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      resolvedCompany = await MasterCompany.findOne({ companyCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') } });
+      if (!resolvedCompany) {
+        return res.status(404).json({ success: false, message: "Company not found. Please check your Company Code." });
+      }
+      // Use the pre-computed dbName stored on the record
+      dbName = resolvedCompany.dbName || `hrdb_${cleanCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
+    }
+
+    const tenantConn = getTenantConnection(dbName);
+    await waitForConnection(tenantConn);
+    const { Intern, Employee, User, DeviceChangeRequest } = getModelsForConnection(tenantConn);
 
     // ── Special Reviewer Bypass Handling ──
     if (id.toLowerCase() === "test@peoplesoft" && password === "123456") {
@@ -109,6 +135,7 @@ exports.login = async (req, res) => {
           user: {
             id: reviewerUser._id,
             companyId: reviewerUser.companyId,
+            dbName: dbName,
             role: reviewerRole === 'intern' ? 'employee' : reviewerRole,
             roleName: reviewerRole.toUpperCase()
           }
@@ -234,11 +261,12 @@ exports.login = async (req, res) => {
       }
     }
 
-    // ── 4. Token Generation ──
+    // ── 4. Token Generation ── (include dbName so middleware routes correctly)
     const tokenPayload = {
       user: {
         id: user._id,
         companyId: user.companyId,
+        dbName: dbName,
         role: role === 'intern' ? 'employee' : role,
         roleName: role.toUpperCase()
       }
@@ -483,7 +511,7 @@ exports.verifyCompany = async (req, res) => {
       return res.status(400).json({ success: false, message: "Company code is required" });
     }
 
-    const Company = require("../models/CompanyModel");
+    const Company = await _AuthControllerjs_getMasterCompany();
     const company = await Company.findOne({ companyCode: code.toUpperCase() });
 
     if (!company) {

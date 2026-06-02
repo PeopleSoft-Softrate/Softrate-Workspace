@@ -62,4 +62,35 @@ const ReviewSchema = new mongoose.Schema({
 
 /* ---------------------- EXPORT ---------------------- */
 
-module.exports = { name: "Review", schema: ReviewSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _GoalProxyTarget() {}
+
+function _getGoalModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["Goal"];
+}
+
+module.exports = new Proxy(_GoalProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "Goal";
+    if (prop === 'schema') return GoalSchema;
+    if (prop === '_name') return "Goal";
+    if (prop === '_schema') return GoalSchema;
+    const actualModel = _getGoalModel();
+    if (!actualModel) throw new Error("Model Goal not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getGoalModel();
+    if (!actualModel) throw new Error("Model Goal not found for current tenant");
+    return new actualModel(...args);
+  }
+});

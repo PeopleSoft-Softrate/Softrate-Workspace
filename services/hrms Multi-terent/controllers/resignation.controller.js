@@ -178,7 +178,7 @@ exports.hrReview = async (req, res) => {
     const { internship, project, lor, title } = req.body;
     if (resignation.userType === 'intern' && (internship || project || lor)) {
       const { generateDynamicPDF } = require("../utilities/certificateGenerator");
-      const Company = require("../models/CompanyModel");
+      const Company = await _resignationcontrollerjs_getMasterCompany();
       
       const company = await Company.findById(resignation.companyId);
       const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
@@ -279,7 +279,7 @@ exports.hrReview = async (req, res) => {
       resignation.hrRemarks = remarks;
       await resignation.save();
 
-      const Company = require("../models/CompanyModel");
+      const Company = await _resignationcontrollerjs_getMasterCompany();
       const company = await Company.findById(resignation.companyId);
       const rejectionTemplate = company?.settings?.communication?.offboardingRejectionTemplate;
       const customSignature = company?.settings?.communication?.emailSignatureUrl;

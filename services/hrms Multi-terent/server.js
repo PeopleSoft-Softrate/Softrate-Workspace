@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
-const mongoose = require('mongoose');
 
 [
   path.resolve(__dirname, '.env'),
@@ -25,14 +24,21 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
 // ============================
-// MongoDB Atlas Connection
+// MongoDB Multi-Tenant Connections
 // ============================
-const tenantPlugin = require('./plugins/tenant.plugin');
-mongoose.plugin(tenantPlugin);
+const { getMasterConnection, getTenantConnection, waitForConnection } = require('./db');
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Atlas connected'))
-  .catch(err => console.error('❌ MongoDB error:', err));
+// Pre-warm Master DB connection at startup
+const masterDb = getMasterConnection();
+waitForConnection(masterDb)
+  .then(() => console.log('✅ Master DB (hrdb_master) ready'))
+  .catch(err => console.error('❌ Master DB connection error:', err));
+
+// Pre-warm legacy hrdb for existing mobile app users (no companyCode)
+const legacyDb = getTenantConnection('hrdb');
+waitForConnection(legacyDb)
+  .then(() => console.log('✅ Legacy DB (hrdb) ready'))
+  .catch(err => console.error('❌ Legacy DB connection error:', err));
 
 
 // ============================

@@ -164,7 +164,6 @@ router.post(
   }
 );
 
-module.exports = router;
 /* ============================
    GET INITIAL EMPLOYEES
 ============================ */
@@ -369,7 +368,7 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
 
     // 4. Send approval email
     try {
-      const Company = require("../models/CompanyModel");
+      const Company = await _getMasterCompany();
       const company = await Company.findById(req.tenant.companyId);
       const template = company?.settings?.communication?.onboardingTemplateEmployee;
       const customSignature = company?.settings?.communication?.emailSignatureUrl;
@@ -518,9 +517,16 @@ router.post("/manager/login", async (req, res) => {
    EMPLOYEE ID GENERATOR
 ============================ */
 const Counter = require("../models/counter.model");
-const Company = require("../models/CompanyModel");
+const { getMasterConnection: _getMasterConn, waitForConnection: _waitConn } = require("../db");
+const CompanyModelExport = require("../models/CompanyModel");
+async function _getMasterCompany() {
+  const db = _getMasterConn();
+  await _waitConn(db);
+  return db.models.Company || db.model("Company", CompanyModelExport.schema);
+}
 
 async function generateEmployeeId(companyId) {
+  const Company = await _getMasterCompany();
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
 

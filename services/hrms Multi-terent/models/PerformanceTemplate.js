@@ -24,4 +24,35 @@ PerformanceTemplateSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = { name: "PerformanceTemplate", schema: PerformanceTemplateSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _GoalDefinitionProxyTarget() {}
+
+function _getGoalDefinitionModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["GoalDefinition"];
+}
+
+module.exports = new Proxy(_GoalDefinitionProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "GoalDefinition";
+    if (prop === 'schema') return GoalDefinitionSchema;
+    if (prop === '_name') return "GoalDefinition";
+    if (prop === '_schema') return GoalDefinitionSchema;
+    const actualModel = _getGoalDefinitionModel();
+    if (!actualModel) throw new Error("Model GoalDefinition not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getGoalDefinitionModel();
+    if (!actualModel) throw new Error("Model GoalDefinition not found for current tenant");
+    return new actualModel(...args);
+  }
+});

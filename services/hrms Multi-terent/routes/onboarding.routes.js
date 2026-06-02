@@ -3,9 +3,9 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const Company = require('../models/CompanyModel');
-const User = require('../models/User');
-const Role = require('../models/Role');
+const { getMasterConnection, getTenantConnection, waitForConnection } = require('../db');
+const { getModelsForConnection } = require('../utilities/modelLoader');
+const CompanyModelExport = require('../models/CompanyModel');
 
 /**
  * @route POST /api/onboarding/register
@@ -20,26 +20,36 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, msg: 'All fields are required.' });
     }
 
-    // 1. Check if Company Code is already taken
-    const existingCompany = await Company.findOne({ companyCode: { $regex: new RegExp(`^${companyCode}$`, 'i') } });
+    // companyCode is stored AS-IS (can contain dots for domains like softrateglobal.com)
+    // dbName is derived by stripping all non-alphanumeric chars (MongoDB DB names cannot contain '.')
+    const cleanCode = companyCode.trim();
+    const dbSuffix = cleanCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    if (!dbSuffix) {
+      return res.status(400).json({ success: false, msg: 'Invalid Company Code.' });
+    }
+    const dbName = `hrdb_${dbSuffix}`;
+
+    const masterDb = getMasterConnection();
+    await waitForConnection(masterDb);
+    const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+
+    // 1. Check if Company Code is already taken (by exact code OR by dbName collision)
+    const existingCompany = await MasterCompany.findOne({
+      $or: [
+        { companyCode: { $regex: new RegExp(`^${cleanCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+        { dbName: dbName }
+      ]
+    });
     if (existingCompany) {
       return res.status(400).json({ success: false, msg: 'Company Code is already taken. Please choose another.' });
     }
 
-    // 2. Check if HR email is already taken across ANY company (since email is usually the global login)
-    // Actually, in multi-tenant, email uniqueness is usually per company, but for HR admins logging in from a global portal, it should probably be globally unique.
-    // However, our UserSchema enforces uniqueness per company: { companyId: 1, email: 1 }
-    // Let's do a global check here just to be safe for initial admins to prevent confusion.
-    const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${hrEmail}$`, 'i') } });
-    if (existingUser) {
-      return res.status(400).json({ success: false, msg: 'Email is already registered. Please use another.' });
-    }
-
-    // 3. Create Company
-    const newCompany = new Company({
+    // 3. Create Company — store original code + sanitized dbName
+    const newCompany = new MasterCompany({
       name: companyName,
-      companyCode: companyCode.toUpperCase(),
-      subscriptionStatus: 'trial', // Default 
+      companyCode: cleanCode,         // e.g. "softrateglobal.com"
+      dbName: dbName,                 // e.g. "hrdb_softrateglobalcom"
+      subscriptionStatus: 'trial',
       settings: {
         internRoles: ['Other'],
         employeeRoles: ['Other']
@@ -47,6 +57,17 @@ router.post('/register', async (req, res) => {
     });
 
     const savedCompany = await newCompany.save();
+
+    // Now connect to the new tenant database
+    const tenantDb = getTenantConnection(dbName);
+    await waitForConnection(tenantDb);
+    const { User, Role } = getModelsForConnection(tenantDb);
+
+    // 2. Check if HR email is already taken inside this tenant
+    const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${hrEmail}$`, 'i') } });
+    if (existingUser) {
+      return res.status(400).json({ success: false, msg: 'Email is already registered. Please use another.' });
+    }
 
     // 4. Create the System Default HR_ADMIN Role
     const adminRole = new Role({
@@ -127,7 +148,7 @@ router.post('/register', async (req, res) => {
 
     // 7. Generate JWT Token for immediate login
     const token = jwt.sign(
-      { user: { id: savedUser._id, companyId: savedCompany._id, role: 'hr_admin' } },
+      { user: { id: savedUser._id, companyId: savedCompany._id, dbName: dbName, role: 'hr_admin' } },
       process.env.JWT_SECRET || 'fallback_secret_key',
       { expiresIn: '1d' }
     );
@@ -164,9 +185,15 @@ router.post('/register', async (req, res) => {
 router.get('/verify/:code', async (req, res) => {
   try {
     const code = req.params.code;
-    const company = await Company.findOne({ 
-      companyCode: { $regex: new RegExp(`^${code}$`, 'i') } 
-    }).select('name companyCode settings');
+    const masterDb = getMasterConnection();
+    await waitForConnection(masterDb);
+    const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+
+    // Escape dots and other special regex chars before building the pattern
+    const escapedCode = code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const company = await MasterCompany.findOne({ 
+      companyCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') } 
+    }).select('name companyCode dbName settings');
 
     if (!company) {
       return res.status(404).json({ success: false, msg: 'Invalid Company Code.' });
@@ -196,7 +223,6 @@ router.get('/verify/:code', async (req, res) => {
       }
     };
 
-    console.log(`[DEBUG] Final Response:`, JSON.stringify(responseBody, null, 2));
     res.json(responseBody);
   } catch (error) {
     console.error('Verify Error:', error);

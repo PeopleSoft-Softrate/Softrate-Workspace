@@ -6,12 +6,16 @@ const Role = require('../models/Role');
 const Intern = require('../models/Intern');
 const Employee = require('../models/EmployeeModel');
 const Counter = require('../models/counter.model');
-const Company = require('../models/CompanyModel');
+const { getMasterConnection, waitForConnection } = require('../db');
+const CompanyModelExport = require('../models/CompanyModel');
 
 /**
  * Helper: Generate Employee ID
  */
 async function generateEmployeeId(companyId) {
+  const masterDb = getMasterConnection();
+  await waitForConnection(masterDb);
+  const Company = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
   const counter = await Counter.findOneAndUpdate(

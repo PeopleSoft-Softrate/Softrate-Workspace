@@ -44,7 +44,6 @@ class AttendanceRecord {
       punchOutTime: parseDate(json['punchOutTime']),
     );
   }
-
 }
 
 class LeaveRecord {
@@ -87,8 +86,6 @@ Future<List<AttendanceRecord>> fetchAttendance(String employeeId) async {
     headers: {"Content-Type": "application/json"},
   );
 
-  
-
   if (response.statusCode == 200) {
     final body = jsonDecode(response.body);
     print(body['attendance'].runtimeType);
@@ -99,6 +96,29 @@ Future<List<AttendanceRecord>> fetchAttendance(String employeeId) async {
   } else {
     throw Exception("Failed to load attendance");
   }
+}
+
+/// Fetches work duration settings from company settings API.
+/// Returns a map like { 'employee': 480, 'intern': 360, 'hr': 480, 'manager': 480 } (in minutes)
+Future<Map<String, int>> fetchWorkDurationMinutes() async {
+  try {
+    final response = await http.get(
+      Uri.parse("${getBaseUrl()}/api/settings/company"),
+      headers: {"Content-Type": "application/json"},
+    );
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      final wd = body['workDurationSettings'] ?? {};
+      return {
+        'hr':       ((wd['hr']       as num?)?.toDouble() ?? 8.0) ~/ 1 * 60,
+        'manager':  ((wd['manager']  as num?)?.toDouble() ?? 8.0) ~/ 1 * 60,
+        'employee': ((wd['employee'] as num?)?.toDouble() ?? 8.0) ~/ 1 * 60,
+        'intern':   ((wd['intern']   as num?)?.toDouble() ?? 6.0) ~/ 1 * 60,
+      };
+    }
+  } catch (_) {}
+  // Defaults if API fails
+  return { 'hr': 480, 'manager': 480, 'employee': 480, 'intern': 360 };
 }
 
 // Future<List<LeaveRecord>> fetchLeavesForEmployee(String employeeId) async {
@@ -125,10 +145,6 @@ Future<List<AttendanceRecord>> fetchAttendance(String employeeId) async {
 //   }
 // }
 
-
-
-
-
 // ------------------- UTILS -------------------
 String formatDate(String isoOrDate) {
   try {
@@ -153,6 +169,39 @@ String formatTime(String? iso) {
   }
 }
 
+/// Returns true if the worked time is less than requiredMinutes.
+bool isShortTime(String? inTime, String? outTime, {int requiredMinutes = 360}) {
+  if (inTime == null || outTime == null) return false;
+  try {
+    final start = DateTime.parse(inTime);
+    final end = DateTime.parse(outTime);
+    final diff = end.difference(start);
+    return diff.inMinutes < requiredMinutes;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Returns how much time the employee was short of the required duration.
+String shortByText(String? inTime, String? outTime, {int requiredMinutes = 360}) {
+  if (inTime == null || outTime == null) return '';
+  try {
+    final start = DateTime.parse(inTime);
+    final end = DateTime.parse(outTime);
+    final worked = end.difference(start);
+    final required = Duration(minutes: requiredMinutes);
+    if (worked >= required) return '';
+    final diff = required - worked;
+    final h = diff.inHours;
+    final m = diff.inMinutes % 60;
+    if (h > 0 && m > 0) return '${h}h ${m}m short';
+    if (h > 0) return '${h}h short';
+    return '${m}m short';
+  } catch (_) {
+    return '';
+  }
+}
+
 String formatDuration(String? inTime, String? outTime) {
   if (inTime == null || outTime == null) return "--";
   try {
@@ -169,28 +218,16 @@ String formatDuration(String? inTime, String? outTime) {
   }
 }
 
-bool isShortTime(String? inTime, String? outTime) {
-  if (inTime == null || outTime == null) return false;
-  try {
-    final start = DateTime.parse(inTime);
-    final end = DateTime.parse(outTime);
-    final diff = end.difference(start);
-    return diff.inMinutes < 360; // < 6 hours
-  } catch (_) {
-    return false;
-  }
-}
-
 int calculatePresentDays(List<AttendanceRecord> records) => records
     .where((r) => r.punchInTime != null && r.punchOutTime != null)
     .length;
 
-int calculateShortDays(List<AttendanceRecord> records) => records
+int calculateShortDays(List<AttendanceRecord> records, {int requiredMinutes = 360}) => records
     .where(
       (r) =>
           r.punchInTime != null &&
           r.punchOutTime != null &&
-          isShortTime(r.punchInTime, r.punchOutTime),
+          isShortTime(r.punchInTime, r.punchOutTime, requiredMinutes: requiredMinutes),
     )
     .length;
 
@@ -270,10 +307,12 @@ Widget _buildSummaryBox({
 class Employeeattendancedetails extends StatefulWidget {
   final String employeeId;
   final String employeeName;
+  final String? userRole; // e.g. 'employee', 'intern', 'hr', 'manager'
 
   const Employeeattendancedetails({
     required this.employeeId,
     required this.employeeName,
+    this.userRole,
     super.key,
   });
 
@@ -284,21 +323,25 @@ class Employeeattendancedetails extends StatefulWidget {
 
 class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
   late Future<List<AttendanceRecord>> _futureAttendance;
+  late Future<Map<String, int>> _futureWorkDuration;
   // late Future<List<LeaveRecord>> _futureLeaves;
   DateTimeRange? _selectedRange;
   String _activeTab = "This Month";
+  /// Role of the currently logged-in user — set from localStorage-backed widget param or defaults to 'employee'
+  String get _userRole => widget.userRole?.toLowerCase() ?? 'employee';
 
   @override
   void initState() {
     super.initState();
     _futureAttendance = fetchAttendance(widget.employeeId);
+    _futureWorkDuration = fetchWorkDurationMinutes();
     // _futureLeaves = fetchLeavesForEmployee(widget.employeeId);
   }
 
   Future<void> _showRatificationDialog(AttendanceRecord record) async {
     final df = DateFormat("yyyy-MM-dd");
     final date = record.date;
-    
+
     TimeOfDay? newPunchIn;
     TimeOfDay? newPunchOut;
     final reasonController = TextEditingController();
@@ -307,27 +350,55 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Edit Attendance", style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            "Edit Attendance",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Date: ${formatDate(date)}", style: const TextStyle(fontWeight: FontWeight.w500)),
+                Text(
+                  "Date: ${formatDate(date)}",
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 20),
-                const Text("New Punch-In Time", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text(
+                  "New Punch-In Time",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
                 InkWell(
                   onTap: () async {
-                    final t = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                    final t = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
                     if (t != null) setDialogState(() => newPunchIn = t);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.access_time, size: 18, color: const Color(0xFF00657F)),
+                        Icon(
+                          Icons.access_time,
+                          size: 18,
+                          color: const Color(0xFF00657F),
+                        ),
                         const SizedBox(width: 8),
                         Text(newPunchIn?.format(context) ?? "Select Time"),
                       ],
@@ -335,18 +406,38 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text("New Punch-Out Time", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text(
+                  "New Punch-Out Time",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
                 InkWell(
                   onTap: () async {
-                    final t = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                    final t = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
                     if (t != null) setDialogState(() => newPunchOut = t);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Row(
                       children: [
-                        Icon(Icons.access_time, size: 18, color: const Color(0xFF00657F)),
+                        Icon(
+                          Icons.access_time,
+                          size: 18,
+                          color: const Color(0xFF00657F),
+                        ),
                         const SizedBox(width: 8),
                         Text(newPunchOut?.format(context) ?? "Select Time"),
                       ],
@@ -354,27 +445,41 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text("Reason for correction", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text(
+                  "Reason for correction",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
                 TextField(
                   controller: reasonController,
                   maxLines: 2,
                   decoration: InputDecoration(
                     hintText: "Why was it marked wrongly?",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
             ElevatedButton(
               onPressed: () async {
                 if (reasonController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please provide a reason")));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Please provide a reason")),
+                  );
                   return;
                 }
-                
+
                 final payload = {
                   "employeeId": widget.employeeId,
                   "employeeName": widget.employeeName,
@@ -382,11 +487,10 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                   "fromDate": date,
                   "toDate": date,
                   "numberOfDays": 0,
-                  "reason": "Correction Request: Punch-In [${newPunchIn?.format(context) ?? 'No Change'}], Punch-Out [${newPunchOut?.format(context) ?? 'No Change'}]. Reason: ${reasonController.text.trim()}",
+                  "reason":
+                      "Correction Request: Punch-In [${newPunchIn?.format(context) ?? 'No Change'}], Punch-Out [${newPunchOut?.format(context) ?? 'No Change'}]. Reason: ${reasonController.text.trim()}",
                   "status": "pending",
-                  "perDayDurations": {
-                    date: "Correction Request"
-                  }
+                  "perDayDurations": {date: "Correction Request"},
                 };
 
                 final response = await http.post(
@@ -397,12 +501,25 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
 
                 if (response.statusCode == 200 || response.statusCode == 201) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Correction request sent to HR"), backgroundColor: Colors.green));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Correction request sent to HR"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to send request"), backgroundColor: Colors.red));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Failed to send request"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00657F), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00657F),
+                foregroundColor: Colors.white,
+              ),
               child: const Text("Submit Request"),
             ),
           ],
@@ -519,8 +636,8 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
         foregroundColor: Colors.white,
         backgroundColor: Colors.transparent,
       ),
-      body: FutureBuilder<List<AttendanceRecord>>(
-        future: _futureAttendance,
+      body: FutureBuilder<List<dynamic>>(
+        future: Future.wait([_futureAttendance, _futureWorkDuration]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -534,8 +651,13 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
             );
           }
 
+          final attendanceRecords = (snapshot.data?[0] as List<AttendanceRecord>?) ?? [];
+          final workDurationMap = (snapshot.data?[1] as Map<String, int>?) ??
+              { 'hr': 480, 'manager': 480, 'employee': 480, 'intern': 360 };
+          final int requiredMinutes = workDurationMap[_userRole] ?? workDurationMap['employee'] ?? 480;
+
           // ✅ FIXED: Proper merge with filters (using class method)
-          final finalRecords = mergeAttendanceWithFilters(snapshot.data ?? []);
+          final finalRecords = mergeAttendanceWithFilters(attendanceRecords);
 
           return Column(
             children: [
@@ -578,7 +700,11 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                     },
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_month, size: 20, color: Color(0xFF00657F)),
+                        const Icon(
+                          Icons.calendar_month,
+                          size: 20,
+                          color: Color(0xFF00657F),
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           _selectedRange == null
@@ -686,11 +812,15 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                           final short = isShortTime(
                             r.punchInTime,
                             r.punchOutTime,
+                            requiredMinutes: requiredMinutes,
                           );
                           final durationText = formatDuration(
                             r.punchInTime,
                             r.punchOutTime,
                           );
+                          final shortLabel = short
+                              ? shortByText(r.punchInTime, r.punchOutTime, requiredMinutes: requiredMinutes)
+                              : '';
 
                           String statusLabel;
                           Color statusBg;
@@ -711,7 +841,8 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                           }
 
                           return _FadeInWrapper(
-                            delay: (index % 6) * 100,                            child: Container(
+                            delay: (index % 6) * 100,
+                            child: Container(
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -725,10 +856,18 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                                 ],
                               ),
                               child: Theme(
-                                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                data: Theme.of(
+                                  context,
+                                ).copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
-                                  tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                  childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  tilePadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  childrenPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
                                   title: Row(
                                     children: [
                                       Expanded(
@@ -741,22 +880,35 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                                             } catch (_) {
                                               return Text(
                                                 formatDate(r.date),
-                                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
                                               );
                                             }
-                                              return Text(
-                                                DateFormat("E, dd MMM yyyy").format(d),
-                                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                                              );
+                                            return Text(
+                                              DateFormat(
+                                                "E, dd MMM yyyy",
+                                              ).format(d),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
                                       Expanded(
                                         flex: 3,
                                         child: Text(
-                                          durationText == "--" ? "NA" : durationText,
+                                          durationText == "--"
+                                              ? "NA"
+                                              : durationText,
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                       Expanded(
@@ -764,14 +916,22 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                                         child: Align(
                                           alignment: Alignment.centerRight,
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: statusBg,
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               statusLabel,
-                                              style: TextStyle(color: statusText, fontWeight: FontWeight.w800, fontSize: 11),
+                                              style: TextStyle(
+                                                color: statusText,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 11,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -781,37 +941,84 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                                   iconColor: const Color(0xFF00657F),
                                   collapsedIconColor: Colors.grey,
                                   children: [
-                                    const Divider(height: 1, color: Color(0xFFF1F1F1)),
+                                    const Divider(
+                                      height: 1,
+                                      color: Color(0xFFF1F1F1),
+                                    ),
                                     const SizedBox(height: 12),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            const Text("Punch In", style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                            const Text(
+                                              "Punch In",
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                             const SizedBox(height: 4),
-                                            Text(formatTime(r.punchInTime), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                                            Text(
+                                              formatTime(r.punchInTime),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            const Text("Punch Out", style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                            const Text(
+                                              "Punch Out",
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                             const SizedBox(height: 4),
-                                            Text(formatTime(r.punchOutTime), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                                            Text(
+                                              formatTime(r.punchOutTime),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                         ElevatedButton.icon(
-                                          onPressed: () => _showRatificationDialog(r),
-                                          icon: const Icon(Icons.edit_note_rounded, size: 18),
-                                          label: const Text("Edit", style: TextStyle(fontSize: 12)),
+                                          onPressed: () =>
+                                              _showRatificationDialog(r),
+                                          icon: const Icon(
+                                            Icons.edit_note_rounded,
+                                            size: 18,
+                                          ),
+                                          label: const Text(
+                                            "Edit",
+                                            style: TextStyle(fontSize: 12),
+                                          ),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF00657F),
+                                            backgroundColor: const Color(
+                                              0xFF00657F,
+                                            ),
                                             foregroundColor: Colors.white,
                                             elevation: 0,
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 0,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -969,7 +1176,7 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                       ),
                       const SizedBox(width: 10),
                       _buildSummaryBox(
-                        count: calculateShortDays(finalRecords),
+                        count: calculateShortDays(finalRecords, requiredMinutes: requiredMinutes),
                         label: "Short Time",
                         bgColor: Colors.blue.shade100,
                         textColor: Colors.blue.shade800,

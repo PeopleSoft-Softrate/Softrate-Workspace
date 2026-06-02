@@ -722,6 +722,92 @@
           </div>
         </div>
       </section>
+
+      <!-- System Settings Section -->
+      <section *ngIf="activeTab() === 'system_settings'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper" style="color: #f59e0b;">
+              <hugeicons-icon [icon]="TimeQuarterIcon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Work Duration Settings</h2>
+              <p>Set the required daily work hours per role. Attendance shorter than this threshold will be flagged as <strong>Short (S)</strong>.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="payroll-config-grid">
+
+            <!-- HR -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user-tie" style="margin-right: 6px; color: #6366f1;"></i>HR</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationHr()" (ngModelChange)="workDurationHr.set($event)" min="1" max="24" placeholder="8">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+            <!-- Manager -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user-shield" style="margin-right: 6px; color: #0ea5e9;"></i>Manager</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationManager()" (ngModelChange)="workDurationManager.set($event)" min="1" max="24" placeholder="8">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+            <!-- Employee -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user" style="margin-right: 6px; color: #10b981;"></i>Employee</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationEmployee()" (ngModelChange)="workDurationEmployee.set($event)" min="1" max="24" placeholder="8">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+            <!-- Intern -->
+            <div class="payroll-category">
+              <div class="section-title">
+                <h3><i class="fa-solid fa-user-graduate" style="margin-right: 6px; color: #f59e0b;"></i>Intern</h3>
+              </div>
+              <div class="field-group">
+                <label>Required Hours / Day</label>
+                <div class="input-with-suffix">
+                  <input type="number" class="location-input" [ngModel]="workDurationIntern()" (ngModelChange)="workDurationIntern.set($event)" min="1" max="24" placeholder="6">
+                  <span class="input-suffix">hrs</span>
+                </div>
+                <p class="field-hint">Attendance below this is flagged as Short.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="lop-info-banner" style="margin-top: 2rem;">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>These settings apply to the mobile app's attendance page. The <strong>"Short (S)"</strong> badge and <strong>short hours label</strong> are calculated using these thresholds per role.</span>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- RIGHT SIDEBAR NAVIGATION -->
@@ -761,6 +847,13 @@
             <hugeicons-icon [icon]="PaymentSuccess02Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
           </div>
           <span class="action-label">Payroll Rules</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'system_settings'" (click)="activeTab.set('system_settings')">
+          <div class="action-icon-circle" style="background: #fff7ed; color: #f59e0b;">
+            <hugeicons-icon [icon]="TimeQuarterIcon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">System Settings</span>
         </button>
       </div>
 

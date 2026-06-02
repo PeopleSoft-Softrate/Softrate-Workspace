@@ -1686,101 +1686,104 @@ class _HrdashBoardState extends State<HrdashBoard>
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          // Banner card
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Stack(
-              clipBehavior: Clip.hardEdge,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    image: const DecorationImage(
-                      image: AssetImage("assets/images/banner.webp"),
-                      fit: BoxFit.cover,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 25,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// ---------------- OVERLAY ----------------
-                Positioned.fill(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
+          // Banner card (16:9 aspect ratio) with bottom padding
+          Padding(
+            padding: const EdgeInsets.only(bottom: 28),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: Colors.black.withOpacity(0.25),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Text(
-                                    "Your Attendance",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                hasPunchedIn
-                                    ? "Last Punch: ${hasPunchedOut ? 'Out at ${formatTimeDisplay(_punchOutTime)}' : 'In at ${formatTimeDisplay(_punchInTime)}'}"
-                                    : "Ready to start your day?",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
+                      borderRadius: BorderRadius.circular(28),
+                      image: const DecorationImage(
+                        image: AssetImage("assets/images/banner.webp"),
+                        fit: BoxFit.cover,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 25,
+                          offset: const Offset(0, 12),
                         ),
-                        if (hasPunchedIn)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              hasPunchedOut ? "DONE" : "ON DUTY",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),
-                ),
-              ],
+
+                  /// ---------------- OVERLAY ----------------
+                  Positioned.fill(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.black.withOpacity(0.25),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      "Your Attendance",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  hasPunchedIn
+                                      ? "Last Punch: ${hasPunchedOut ? 'Out at ${formatTimeDisplay(_punchOutTime)}' : 'In at ${formatTimeDisplay(_punchInTime)}'}"
+                                      : "Ready to start your day?",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (hasPunchedIn)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                hasPunchedOut ? "DONE" : "ON DUTY",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
           // Button with Positioned for overlap
           Positioned(
-            bottom: -28,
+            bottom: 0,
             child: Center(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,

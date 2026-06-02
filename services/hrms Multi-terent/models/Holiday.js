@@ -32,4 +32,35 @@ const holidaySchema = new mongoose.Schema({
 
 // ✅ NO UNIQUE INDEXES - Multiple same dates allowed!
 
-module.exports = { name: "Holiday", schema: holidaySchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _holidayProxyTarget() {}
+
+function _getholidayModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["holiday"];
+}
+
+module.exports = new Proxy(_holidayProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "holiday";
+    if (prop === 'schema') return holidaySchema;
+    if (prop === '_name') return "holiday";
+    if (prop === '_schema') return holidaySchema;
+    const actualModel = _getholidayModel();
+    if (!actualModel) throw new Error("Model holiday not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getholidayModel();
+    if (!actualModel) throw new Error("Model holiday not found for current tenant");
+    return new actualModel(...args);
+  }
+});

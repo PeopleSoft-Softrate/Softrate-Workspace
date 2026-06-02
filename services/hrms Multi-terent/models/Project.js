@@ -33,4 +33,35 @@ projectSchema.pre('save', function() {
   }
 });
 
-module.exports = { name: "Project", schema: projectSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _projectProxyTarget() {}
+
+function _getprojectModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["project"];
+}
+
+module.exports = new Proxy(_projectProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "project";
+    if (prop === 'schema') return projectSchema;
+    if (prop === '_name') return "project";
+    if (prop === '_schema') return projectSchema;
+    const actualModel = _getprojectModel();
+    if (!actualModel) throw new Error("Model project not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getprojectModel();
+    if (!actualModel) throw new Error("Model project not found for current tenant");
+    return new actualModel(...args);
+  }
+});

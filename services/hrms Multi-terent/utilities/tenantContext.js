@@ -7,11 +7,13 @@ const getTenantId = () => {
   return store ? store.companyId : null;
 };
 
-const runWithTenant = (companyId, callback) => {
-  return tenantLocalStorage.run({ companyId }, callback);
+const runWithTenant = (data, callback) => {
+  // We can pass an object with companyId and dbName
+  return tenantLocalStorage.run(data, callback);
 };
 
 module.exports = {
   getTenantId,
   runWithTenant,
+  tenantLocalStorage
 };

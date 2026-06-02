@@ -404,36 +404,12 @@ class CallLogService {
     // ── Step 4: No-metadata fallback (old Android 8/9 devices) ───────────────
     //
     // Old devices often expose accountId="" and simDisplayName="" for every
-    // call log entry. We cannot confirm SIM identity, so:
-    //   • If no preference is saved at all → pass (single-SIM / no filtering).
-    //   • If carrier is the ONLY saved preference (subId and displayName both
-    //     empty) → pass leniently. The user selected this SIM; we have no
-    //     metadata to contradict it.
-    //   • If subId or displayName is also saved → reject to avoid leaking
-    //     the other SIM's calls.
+    // call log entry. We cannot confirm SIM identity.
+    // To prevent showing an empty call log on these devices, we must allow 
+    // these calls to pass through even if a SIM preference is set.
     if (accountId.isEmpty && simName.isEmpty) {
-      final hasPreference = selectedCarrier.isNotEmpty ||
-          selectedDisplayName.isNotEmpty ||
-          selectedSubId.isNotEmpty;
-
-      if (!hasPreference) {
-        debugPrint(
-            'SIMFilter → PASS via no-metadata fallback (no preference set)');
-        return true;
-      }
-
-      // FIX: carrier-only preference on a metadata-less device — be lenient.
-      if (selectedCarrier.isNotEmpty &&
-          selectedDisplayName.isEmpty &&
-          selectedSubId.isEmpty) {
-        debugPrint(
-            'SIMFilter → PASS via carrier-only leniency on metadata-less device');
-        return true;
-      }
-
-      debugPrint(
-          'SIMFilter → FAIL via no-metadata entry but SIM preference exists');
-      return false;
+      debugPrint('SIMFilter → PASS via no-metadata fallback (old device)');
+      return true;
     }
 
     debugPrint('SIMFilter → FAIL (no match found)');

@@ -44,8 +44,12 @@ const verifyTenant = async (req, res, next) => {
       dbName: dbName
     };
     
-    req.user = decoded.user;
-    next();
+    // We only need to run the next middleware/controller inside the tenant context
+    const { runWithTenant } = require('../utilities/tenantContext');
+    runWithTenant({ companyId: req.tenant.companyId, dbName: dbName }, () => {
+      req.user = decoded.user;
+      next();
+    });
   } catch (err) {
     console.error("JWT Verification Error:", err.message);
     res.status(401).json({ message: 'Token is not valid: ' + err.message });

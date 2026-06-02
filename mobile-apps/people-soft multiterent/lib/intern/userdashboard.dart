@@ -321,8 +321,8 @@ class _AttendancePageState extends State<AttendancePage>
         setState(() {
           punchInTime = record['punchInTime'];
           punchOutTime = record['punchOutTime'];
-          punchInLocation = record['punchInLocation'];
-          punchOutLocation = record['punchOutLocation'];
+          punchInLocation = record['punchInLocation'] != null ? jsonEncode(record['punchInLocation']) : null;
+          punchOutLocation = record['punchOutLocation'] != null ? jsonEncode(record['punchOutLocation']) : null;
         });
       }
 
@@ -572,14 +572,14 @@ class _AttendancePageState extends State<AttendancePage>
 
         // ✅ Cache updated data
         await prefs.setString("punchInTime", record['punchInTime']);
-        await prefs.setString("punchInLocation", record['punchInLocation']);
+        await prefs.setString("punchInLocation", record['punchInLocation'] != null ? jsonEncode(record['punchInLocation']) : '');
         await prefs.setBool("isPunchedIn", true);
         await prefs.setString("attendanceDate", today);
 
         if (mounted) {
           setState(() {
             punchInTime = record['punchInTime'];
-            punchInLocation = record['punchInLocation'];
+            punchInLocation = record['punchInLocation'] != null ? jsonEncode(record['punchInLocation']) : null;
           });
         }
       } else {
@@ -678,14 +678,14 @@ class _AttendancePageState extends State<AttendancePage>
         final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         prefs.setString("punchOutTime", record['punchOutTime']);
-        prefs.setString("punchOutLocation", record['punchOutLocation']);
+        await prefs.setString("punchOutLocation", record['punchOutLocation'] != null ? jsonEncode(record['punchOutLocation']) : '');
         prefs.setBool("isPunchedIn", false);
         prefs.setString("attendanceDate", today);
 
         if (mounted) {
           setState(() {
             punchOutTime = record['punchOutTime'];
-            punchOutLocation = record['punchOutLocation'];
+            punchOutLocation = record['punchOutLocation'] != null ? jsonEncode(record['punchOutLocation']) : null;
           });
         }
       } else {
@@ -1479,47 +1479,49 @@ class _AttendancePageState extends State<AttendancePage>
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          // Banner card
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Stack(
-              clipBehavior: Clip.hardEdge,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    image: const DecorationImage(
-                      image: AssetImage("assets/images/banner.webp"),
-                      fit: BoxFit.cover,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 25,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// ---------------- OVERLAY ----------------
-                Positioned.fill(
-                  child: Container(
+          // Banner card (16:9 aspect ratio) with bottom padding
+          Padding(
+            padding: const EdgeInsets.only(bottom: 28),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  /// ---------------- BANNER ----------------
+                  Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: Colors.black.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(28),
+                      image: const DecorationImage(
+                        image: AssetImage("assets/images/banner.webp"),
+                        fit: BoxFit.cover,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 25,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+
+                  /// ---------------- OVERLAY ----------------
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.black.withOpacity(0.25),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // Button with Positioned for overlap (Full size)
-          Positioned(
-            bottom: -28, // Overlap effect
-            child: Center(
-              child: GestureDetector(
+          // Button at bottom of stack
+          Center(
+            child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap:
                     punchLoading
@@ -1594,7 +1596,6 @@ class _AttendancePageState extends State<AttendancePage>
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

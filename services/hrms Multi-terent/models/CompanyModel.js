@@ -2,8 +2,9 @@ const mongoose = require("mongoose");
 
 const CompanySchema = new mongoose.Schema({
   name: { type: String, required: true },
-  domain: { type: String, unique: true, sparse: true }, // e.g., 'acme' for acme.softrate.com
-  companyCode: { type: String, unique: true, required: true }, // Short code for login (e.g., ACME123)
+  domain: { type: String, unique: true, sparse: true },
+  companyCode: { type: String, unique: true, required: true },
+  dbName: { type: String, unique: true, required: true },
   logo: { type: String, default: null },
   subscriptionStatus: { 
     type: String, 
@@ -11,6 +12,13 @@ const CompanySchema = new mongoose.Schema({
     default: 'trial' 
   },
   subscriptionExpiresAt: { type: Date },
+  // Required work hours per day per role type (used for short-time calculation)
+  workDurationSettings: {
+    hr:       { type: Number, default: 8 },
+    manager:  { type: Number, default: 8 },
+    employee: { type: Number, default: 8 },
+    intern:   { type: Number, default: 6 },
+  },
   settings: {
     themeColor: { type: String, default: '#00657F' },
     receivingEmail: { type: String, default: null }, // Email to receive system notifications
@@ -122,6 +130,17 @@ const CompanySchema = new mongoose.Schema({
         internshipCompletion: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
         projectCompletion: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] }
       }
+    },
+    leavePolicies: {
+      type: [{
+        name: { type: String, required: true }, // e.g., 'Sick Leave'
+        allowance: { type: Number, required: true }, // e.g., 12
+        appliesTo: { type: String, enum: ['employee', 'intern', 'both'], default: 'both' }
+      }],
+      default: [
+        { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
+        { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+      ]
     }
   }
 }, { timestamps: true });

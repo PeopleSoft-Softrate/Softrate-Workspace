@@ -722,6 +722,56 @@
           </div>
         </div>
       </section>
+      <!-- Leave Policies Section -->
+      <section *ngIf="activeTab() === 'leave_policies'" class="config-card">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper">
+              <hugeicons-icon [icon]="Calendar01Icon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Leave Policies</h2>
+              <p>Configure dynamic leave types and their annual allowances for your organization.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <div class="section-title">
+            <h3>Leave Types</h3>
+            <button class="btn-add" (click)="addLeavePolicy()">
+              <i class="fa-solid fa-plus"></i> Add Leave Type
+            </button>
+          </div>
+
+          <div class="locations-list">
+            <div class="location-header location-header-grid" style="padding: 0 12px 8px; font-size: 12px; font-weight: 700; color: #64748b; display: grid; grid-template-columns: 2fr 1fr 1.5fr auto; gap: 16px;">
+              <span>Leave Name</span>
+              <span>Annual Quota (Days)</span>
+              <span>Applies To</span>
+              <span></span>
+            </div>
+
+            <div class="location-item" *ngFor="let policy of leavePolicies(); let i = index" style="display: grid; grid-template-columns: 2fr 1fr 1.5fr auto; gap: 16px;">
+              <input type="text" class="location-input" [(ngModel)]="policy.name" placeholder="e.g. Sick Leave">
+              <input type="number" class="location-input" [(ngModel)]="policy.allowance" placeholder="12" min="0">
+              <select class="location-input" [(ngModel)]="policy.appliesTo">
+                <option value="both">All Staff (Emp & Interns)</option>
+                <option value="employee">Employees Only</option>
+                <option value="intern">Interns Only</option>
+              </select>
+              <button class="btn-remove" (click)="removeLeavePolicy(i)">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+            <div *ngIf="leavePolicies().length === 0" class="empty-state-card">
+              <i class="fa-solid fa-calendar-minus"></i>
+              <p>No leave policies defined. Staff won't be able to request leaves.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- RIGHT SIDEBAR NAVIGATION -->
@@ -761,6 +811,13 @@
             <hugeicons-icon [icon]="PaymentSuccess02Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
           </div>
           <span class="action-label">Payroll Rules</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'leave_policies'" (click)="activeTab.set('leave_policies')">
+          <div class="action-icon-circle" style="color: #db2777; background: rgba(219, 39, 119, 0.1);">
+            <hugeicons-icon [icon]="Calendar01Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Leave Policies</span>
         </button>
       </div>
 

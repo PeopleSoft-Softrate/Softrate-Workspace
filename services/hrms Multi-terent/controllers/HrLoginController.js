@@ -1,5 +1,11 @@
 const hrModel = require("../models/hr_models");
-const Company = require("../models/CompanyModel");
+const { getMasterConnection: _HrLoginControllerjs_GetMC, waitForConnection: _HrLoginControllerjs_WFC } = require('../db');
+const _HrLoginControllerjs_CompanyExport = require('../models/CompanyModel');
+async function _HrLoginControllerjs_getMasterCompany() {
+  const db = _HrLoginControllerjs_GetMC();
+  await _HrLoginControllerjs_WFC(db);
+  return db.models.Company || db.model('Company', _HrLoginControllerjs_CompanyExport.schema);
+}
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -15,7 +21,7 @@ exports.hrSignup = async (req, res) => {
 
     let companyId = null;
     if (companyName && companyCode) {
-      let company = await Company.findOne({ companyCode });
+      let company = await (await _HrLoginControllerjs_getMasterCompany()).findOne({ companyCode });
       if (company) {
         return res.status(400).json({ msg: "Company code already exists" });
       }
@@ -82,7 +88,7 @@ exports.getPolicyUrl = async (req, res) => {
   try {
     const companyId = req.tenant.companyId;
 
-    const company = await Company.findById(companyId)
+    const company = await (await _HrLoginControllerjs_getMasterCompany()).findById(companyId)
       .select("settings.hrPolicyUrl settings.hrPolicyUpdatedAt");
 
     if (!company || !company.settings.hrPolicyUrl) {
@@ -113,7 +119,7 @@ exports.getPolicyForInterns = async (req, res) => {
   try {
     const companyId = req.tenant.companyId;
 
-    const company = await Company.findById(companyId)
+    const company = await (await _HrLoginControllerjs_getMasterCompany()).findById(companyId)
       .select("settings.hrPolicyUrl settings.hrPolicyUpdatedAt");
 
     if (!company || !company.settings.hrPolicyUrl) {

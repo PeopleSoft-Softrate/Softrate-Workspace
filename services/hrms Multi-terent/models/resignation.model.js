@@ -29,4 +29,35 @@ const resignationSchema = new mongoose.Schema(
   { collection: "resignation_records" }
 );
 
-module.exports = { name: "Resignation", schema: resignationSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _resignationProxyTarget() {}
+
+function _getresignationModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["resignation"];
+}
+
+module.exports = new Proxy(_resignationProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "resignation";
+    if (prop === 'schema') return resignationSchema;
+    if (prop === '_name') return "resignation";
+    if (prop === '_schema') return resignationSchema;
+    const actualModel = _getresignationModel();
+    if (!actualModel) throw new Error("Model resignation not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getresignationModel();
+    if (!actualModel) throw new Error("Model resignation not found for current tenant");
+    return new actualModel(...args);
+  }
+});

@@ -15,4 +15,35 @@ BranchSchema.pre('save', async function() {
   this.updatedAt = Date.now();
 });
 
-module.exports = { name: "Branch", schema: BranchSchema };
+// Multi-Tenant Proxy Wrapper
+// Target MUST be a function for the construct trap to work with new Model()
+function _BranchProxyTarget() {}
+
+function _getBranchModel() {
+  const { getTenantConnection } = require('../db');
+  const { getModelsForConnection } = require('../utilities/modelLoader');
+  const { tenantLocalStorage } = require('../utilities/tenantContext');
+  const store = tenantLocalStorage ? tenantLocalStorage.getStore() : null;
+  const dbName = store && store.dbName ? store.dbName : 'hrdb';
+  const connection = getTenantConnection(dbName);
+  const models = getModelsForConnection(connection);
+  return models["Branch"];
+}
+
+module.exports = new Proxy(_BranchProxyTarget, {
+  get(target, prop) {
+    if (prop === 'name') return "Branch";
+    if (prop === 'schema') return BranchSchema;
+    if (prop === '_name') return "Branch";
+    if (prop === '_schema') return BranchSchema;
+    const actualModel = _getBranchModel();
+    if (!actualModel) throw new Error("Model Branch not found for current tenant");
+    if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
+    return actualModel[prop];
+  },
+  construct(target, args) {
+    const actualModel = _getBranchModel();
+    if (!actualModel) throw new Error("Model Branch not found for current tenant");
+    return new actualModel(...args);
+  }
+});

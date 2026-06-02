@@ -811,7 +811,7 @@ class _LeadTabState extends State<LeadTab> {
           const SizedBox(width: 8),
           _actionIcon(FontAwesomeIcons.whatsapp, const Color(0xFF25D366), () {
             _markAsContacted(lead);
-            _openWhatsApp(number);
+            _openWhatsApp(number, displayName);
           }),
           const SizedBox(width: 8),
           _actionIcon(Icons.bookmark_add_rounded, const Color(0xFFF59E0B), () {
@@ -843,9 +843,20 @@ class _LeadTabState extends State<LeadTab> {
     }
   }
 
-  Future<void> _openWhatsApp(String number) async {
+  Future<void> _openWhatsApp(String number, String leadName) async {
     final cleanNumber = number.replaceAll(RegExp(r'\D'), '');
-    final Uri url = Uri.parse('https://wa.me/$cleanNumber');
+    
+    final prefs = await SharedPreferences.getInstance();
+    final template = prefs.getString('whatsappTemplate') ?? 'Hi {name}!';
+    
+    String urlStr = 'https://wa.me/$cleanNumber';
+    
+    if (template.isNotEmpty) {
+      final message = template.replaceAll('{name}', leadName);
+      urlStr += '?text=${Uri.encodeComponent(message)}';
+    }
+    
+    final Uri url = Uri.parse(urlStr);
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }

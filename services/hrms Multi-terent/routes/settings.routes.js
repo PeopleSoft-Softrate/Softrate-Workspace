@@ -1,7 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const Company = require('../models/CompanyModel');
+const { getMasterConnection, waitForConnection } = require('../db');
+const CompanyModelExport = require('../models/CompanyModel');
 const verifyTenant = require('../middleware/tenant.middleware');
+
+/**
+ * Helper: get the Company model from the master connection
+ */
+const getMasterCompany = async () => {
+  const masterDb = getMasterConnection();
+  await waitForConnection(masterDb);
+  return masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+};
 
 /**
  * @route GET /api/settings/company
@@ -10,6 +20,7 @@ const verifyTenant = require('../middleware/tenant.middleware');
  */
 router.get('/company', verifyTenant, async (req, res) => {
   try {
+    const Company = await getMasterCompany();
     const company = await Company.findById(req.tenant.companyId);
     if (!company) {
       return res.status(404).json({ success: false, msg: 'Company not found' });
@@ -32,6 +43,7 @@ router.get('/company', verifyTenant, async (req, res) => {
         internRoles: internRoles,
         employeeRoles: employeeRoles
       },
+      workDurationSettings: companyObj.workDurationSettings || { hr: 8, manager: 8, employee: 8, intern: 6 },
       offerLetterSettings: company.settings?.offerLetterSettings || {},
       company: {
         name: company.name,
@@ -51,8 +63,9 @@ router.get('/company', verifyTenant, async (req, res) => {
  */
 router.put('/company', verifyTenant, async (req, res) => {
   try {
-    const { receivingEmail, themeColor, locations, communication, employeeRoles, internRoles, offerLetterSettings, payrollSettings } = req.body;
+    const { receivingEmail, themeColor, locations, communication, employeeRoles, internRoles, offerLetterSettings, payrollSettings, workDurationSettings, leavePolicies } = req.body;
     
+    const Company = await getMasterCompany();
     const company = await Company.findById(req.tenant.companyId);
     if (!company) {
       return res.status(404).json({ success: false, message: 'Company not found' });
@@ -68,13 +81,13 @@ router.put('/company', verifyTenant, async (req, res) => {
     if (communication !== undefined) company.settings.communication = communication;
     if (employeeRoles !== undefined) company.settings.employeeRoles = employeeRoles;
     if (internRoles !== undefined) company.settings.internRoles = internRoles;
+    if (leavePolicies !== undefined) company.settings.leavePolicies = leavePolicies;
     
     if (offerLetterSettings !== undefined) {
       company.settings.offerLetterSettings = {
         ...company.settings.offerLetterSettings,
         ...offerLetterSettings
       };
-      // Explicitly mark as modified for nested objects
       company.markModified('settings.offerLetterSettings');
     }
 
@@ -86,6 +99,15 @@ router.put('/company', verifyTenant, async (req, res) => {
       company.markModified('settings.payrollSettings');
     }
 
+    // Work Duration Settings (stored at top-level, not inside settings)
+    if (workDurationSettings !== undefined) {
+      company.workDurationSettings = {
+        ...company.workDurationSettings?.toObject?.() || company.workDurationSettings || {},
+        ...workDurationSettings
+      };
+      company.markModified('workDurationSettings');
+    }
+
     company.markModified('settings');
     await company.save();
 
@@ -93,6 +115,7 @@ router.put('/company', verifyTenant, async (req, res) => {
       success: true,
       message: 'Settings updated successfully',
       settings: company.settings,
+      workDurationSettings: company.workDurationSettings,
       offerLetterSettings: company.settings.offerLetterSettings
     });
   } catch (error) {
@@ -108,6 +131,7 @@ router.put('/company', verifyTenant, async (req, res) => {
  */
 router.get('/public', verifyTenant, async (req, res) => {
   try {
+    const Company = await getMasterCompany();
     const company = await Company.findById(req.tenant.companyId);
     if (!company) {
       return res.status(404).json({ success: false, message: 'Company not found' });
@@ -116,7 +140,8 @@ router.get('/public', verifyTenant, async (req, res) => {
     res.json({
       success: true,
       locations: company.settings?.locations || [],
-      themeColor: company.settings?.themeColor || '#00657F'
+      themeColor: company.settings?.themeColor || '#00657F',
+      leavePolicies: company.settings?.leavePolicies || []
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

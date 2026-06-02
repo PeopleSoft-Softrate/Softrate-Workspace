@@ -12,6 +12,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../services/api_service.dart';
 import '../../services/call_log_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});

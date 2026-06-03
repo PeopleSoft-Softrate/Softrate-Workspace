@@ -14,9 +14,9 @@ RUN chmod +x ./scripts/run-angular.sh && npm run build -- --base-href /sales/
 
 FROM node:20-bookworm-slim AS hrms-build
 WORKDIR "/workspace/apps/peoplespft-multi terent"
-COPY "apps/peoplespft-multi terent/package*.json" ./
+COPY ["apps/peoplespft-multi terent/package*.json", "./"]
 RUN npm ci --legacy-peer-deps --no-audit --no-fund || npm install --legacy-peer-deps --no-audit --no-fund
-COPY "apps/peoplespft-multi terent/" ./
+COPY ["apps/peoplespft-multi terent/", "./"]
 RUN npm run build -- --base-href /hrms/
 
 FROM node:20-bookworm-slim AS tickets-build
@@ -43,6 +43,6 @@ RUN mkdir -p /usr/share/nginx/html/admin \
     /usr/share/nginx/html/finance
 COPY --from=sales-admin-build /workspace/apps/sales/admin-crm/dist/web-page/browser/ /usr/share/nginx/html/admin/
 COPY --from=sales-employee-build /workspace/apps/sales/emp/dist/employee-ui/browser/ /usr/share/nginx/html/sales/
-COPY --from=hrms-build "/workspace/apps/peoplespft-multi terent/dist/admin-page/browser/" /usr/share/nginx/html/hrms/
+COPY --from=hrms-build ["/workspace/apps/peoplespft-multi terent/dist/admin-page/browser/", "/usr/share/nginx/html/hrms/"]
 COPY --from=tickets-build /workspace/apps/tickets/dist/client-ticket-portal/browser/ /usr/share/nginx/html/tickets/
 COPY --from=finance-build /workspace/apps/finance/dist/web-page/browser/ /usr/share/nginx/html/finance/

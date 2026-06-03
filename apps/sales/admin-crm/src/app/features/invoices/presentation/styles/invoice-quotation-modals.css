@@ -1484,18 +1484,9 @@
   margin: 0 0 7px !important;
   color: #ffffff !important;
   font-size: 22px !important;
-  font-weight: var(--font-weight-bold) !important;
-  letter-spacing: 0.02em !important;
-  text-transform: uppercase !important;
-}
-
-.admin-quote-modal .quotation-hero-company div {
-  margin-bottom: 8px !important;
-  color: #ffffff !important;
-  font-size: 14px !important;
-  font-weight: var(--font-weight-bold) !important;
-  letter-spacing: 0.22em !important;
-  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.08 !important;
 }
 
 .admin-quote-modal .quotation-hero-company p {
@@ -1550,8 +1541,12 @@
   display: block !important;
   color: #ffffff !important;
   font-size: 16px !important;
-  font-weight: var(--font-weight-medium) !important;
-  line-height: 1.45 !important;
+  font-weight: 500 !important;
+  line-height: 1.08 !important;
+}
+
+.admin-quote-modal .quotation-hero-title span:not(:first-of-type) {
+  margin-top: 0 !important;
 }
 
 .admin-quote-modal .quotation-letter {
@@ -1563,15 +1558,15 @@
 .admin-quote-modal .quotation-letter h3 {
   margin: 0 !important;
   color: #1d2a8a !important;
-  font-size: 20px !important;
-  font-weight: var(--font-weight-bold) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
 }
 
 .admin-quote-modal .quotation-letter strong {
   margin-top: -14px !important;
   color: #000000 !important;
-  font-size: 20px !important;
-  font-weight: var(--font-weight-bold) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
 }
 
 .admin-quote-modal .quotation-letter p {
@@ -1596,9 +1591,9 @@
   border-radius: 24px !important;
   background-color: #5f9b76 !important;
   color: #ffffff !important;
-  font-size: 18px !important;
-  font-weight: var(--font-weight-extrabold) !important;
-  letter-spacing: 0.04em !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
   text-transform: uppercase !important;
   print-color-adjust: exact !important;
   -webkit-print-color-adjust: exact !important;
@@ -1658,14 +1653,14 @@
 
 .admin-quote-modal .quotation-total-panel strong {
   color: #263238 !important;
-  font-size: 20px !important;
-  font-weight: var(--font-weight-medium) !important;
+  font-size: 18px !important;
+  font-weight: 500 !important;
   text-align: right !important;
 }
 
 .admin-quote-modal .quotation-total-panel div:last-child strong {
-  font-size: 28px !important;
-  font-weight: var(--font-weight-bold) !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
 }
 
 .admin-quote-modal .quotation-kind-note {

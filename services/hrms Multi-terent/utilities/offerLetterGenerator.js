@@ -107,6 +107,11 @@ async function generateOfferLetter(internData, companySettings = {}) {
             doc.fontSize(12).fillColor('#000000');
             doc.text(moment().format("Do MMM, YYYY"), padding, y);
 
+            if (internData.internId) {
+                const idText = `Intern ID: ${internData.internId}`;
+                doc.text(idText, doc.page.width - padding - doc.widthOfString(idText), y);
+            }
+
             y += 40;
 
             // SALUTATION
@@ -124,7 +129,8 @@ async function generateOfferLetter(internData, companySettings = {}) {
                     .replace(/{{companyName}}/g, settings.companyName)
                     .replace(/{{startDate}}/g, moment(internData.onboardingDate).format('DD.MM.YYYY'))
                     .replace(/{{endDate}}/g, moment(internData.endDate).format('DD.MM.YYYY'))
-                    .replace(/{{workLocation}}/g, settings.workLocation);
+                    .replace(/{{workLocation}}/g, settings.workLocation)
+                    .replace(/{{internId}}/g, internData.internId || '');
 
                 doc.text(content, padding, y, { align: 'justify', width: doc.page.width - 2 * padding });
             } else {

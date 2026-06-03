@@ -1,0 +1,70 @@
+<div class="profile-container">
+  <div class="page-header">
+    <h1>My Profile</h1>
+    <p>Manage your personal details and view your Virtual ID Card</p>
+  </div>
+
+  <div class="profile-layout" *ngIf="!isLoading()">
+    <!-- Left Column: Details -->
+    <div class="details-column">
+      <div class="info-card">
+        <h3>Personal Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Full Name</span>
+            <span class="info-value">{{ displayName() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email Address</span>
+            <span class="info-value">{{ displayEmail() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Phone Number</span>
+            <span class="info-value">{{ displayPhone() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Role / Designation</span>
+            <span class="info-value">{{ displayRole() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Company ID</span>
+            <span class="info-value">{{ displayId() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Virtual ID Card -->
+    <div class="id-card-column">
+      <div class="virtual-id-card">
+        <div class="id-card-header">
+          <img *ngIf="companyLogo()" [src]="companyLogo()" alt="Company Logo" class="id-company-logo">
+          <span *ngIf="!companyLogo()" class="id-company-name">Softrate Global</span>
+        </div>
+        
+        <div class="id-card-body">
+          <div class="id-avatar-wrapper">
+            <img *ngIf="profilePhoto()" [src]="profilePhoto()" alt="Profile" class="id-avatar">
+            <div *ngIf="!profilePhoto()" class="id-avatar-placeholder">{{ userInitials() }}</div>
+          </div>
+          <h2 class="id-name">{{ displayName() }}</h2>
+          <p class="id-role">{{ displayRole() }}</p>
+          <div class="id-divider"></div>
+          <p class="id-number">ID: <strong>{{ displayId() }}</strong></p>
+        </div>
+        
+        <div class="id-card-footer">
+          <div class="qr-code-placeholder">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <p class="qr-label">Scan to Verify</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading profile...</p>
+  </div>
+</div>

@@ -543,7 +543,14 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       this.internshipType.set('Stipend');
       this.assignedRole.set(request.raw.role || '');
     } else if (request.type === 'offboarding') {
-      const parsedLastDate = request.raw.lastWorkingDay ? new Date(request.raw.lastWorkingDay).toISOString().split('T')[0] : '';
+      let parsedLastDate = '';
+      if (request.raw.lastWorkingDay) {
+        const d = new Date(request.raw.lastWorkingDay);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        parsedLastDate = `${year}-${month}-${day}`;
+      }
       this.onboardingDate.set('');
       this.endDate.set(parsedLastDate);
     }
@@ -845,12 +852,18 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   // Helper date parsers
   private getTodayDateString(): string {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private getThreeMonthsDateString(): string {
     const d = new Date();
     d.setMonth(d.getMonth() + 3);
-    return d.toISOString().split('T')[0];
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

@@ -1,6 +1,7 @@
 const Resignation = require("../models/resignation.model");
 const Intern = require("../models/Intern");
 const Employee = require("../models/EmployeeModel");
+const QRCode = require("qrcode");
 const { sendEmail, LOGO_URL } = require("../utilities/sendEmail");
 const { getSignature } = require("../utilities/emailSignature");
 
@@ -183,17 +184,22 @@ exports.hrReview = async (req, res) => {
       const company = await Company.findById(resignation.companyId);
       const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
       
+      const virtualIdUrl = `https://workspace.softrateglobal.com/id-card/${resignation.companyId}/${user.internid || user.EmployeeId}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(virtualIdUrl);
+
       const docData = {
         fullName: user.fullName,
         title: title || 'Mr.',
         internId: user.internid,
         onboardingDate: onboardingDate ? new Date(onboardingDate).toLocaleDateString('en-IN') : (user.onboardingDate ? new Date(user.onboardingDate).toLocaleDateString('en-IN') : ''),
         endDate: endDate ? new Date(endDate).toLocaleDateString('en-IN') : (resignation.lastWorkingDay ? new Date(resignation.lastWorkingDay).toLocaleDateString('en-IN') : ''),
+        todayDate: new Date(),
         role: user.role,
         companyName: olSettings.companyName || 'Softrate Global',
         workLocation: olSettings.workLocation || 'Chennai',
         logo: company?.settings?.communication?.emailLogoUrl || null,
-        signature: company?.settings?.communication?.emailSignatureUrl || null
+        signature: company?.settings?.communication?.emailSignatureUrl || null,
+        qrCode: qrCodeDataUrl
       };
 
       if (internship && (olSettings.documentTemplates?.internshipCompletion?.pages?.length > 0 || olSettings.documentTemplates?.internshipCompletion?.backgroundUrl)) {

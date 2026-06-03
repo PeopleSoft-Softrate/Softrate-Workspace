@@ -1,6 +1,7 @@
 const express = require("express");
 const verifyTenant = require("../middleware/tenant.middleware.js");
 const mongoose = require("mongoose");
+const QRCode = require("qrcode");
 const Intern = require("../models/Intern.js");
 const Resignation = require("../models/resignation.model.js");
 const LeaveCounter = require("../models/leaveCounter.model.js");
@@ -232,17 +233,23 @@ router.put("/accept/:id", verifyTenant,
       // Correct path: settings.offerLetterSettings
       const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
 
+      // Generate Virtual ID URL
+      const virtualIdUrl = `https://workspace.softrateglobal.com/id-card/${req.tenant.companyId}/${newId}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(virtualIdUrl);
+
       // 3. Prepare data for dynamic PDF generation
       const docData = {
         fullName: intern.fullName,
         internId: newId,
         onboardingDate: onboardingDate,
         endDate: endDate,
+        todayDate: new Date(),
         role: role || intern.role,
         companyName: olSettings.companyName,
         workLocation: olSettings.workLocation,
         logo: company?.settings?.communication?.emailLogoUrl || null,
-        signature: company?.settings?.communication?.emailSignatureUrl || null
+        signature: company?.settings?.communication?.emailSignatureUrl || null,
+        qrCode: qrCodeDataUrl
       };
 
       const attachments = [];

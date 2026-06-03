@@ -105,8 +105,10 @@ export class InternAdd implements OnInit {
     } else {
       end.setMonth(start.getMonth() + this.intern.durationValue);
     }
-
-    this.intern.endDate = end.toISOString().split('T')[0];
+    const year = end.getFullYear();
+    const month = String(end.getMonth() + 1).padStart(2, '0');
+    const day = String(end.getDate()).padStart(2, '0');
+    this.intern.endDate = `${year}-${month}-${day}`;
   }
 
   saveIntern() {

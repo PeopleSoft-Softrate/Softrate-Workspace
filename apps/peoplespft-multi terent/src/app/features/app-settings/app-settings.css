@@ -779,7 +779,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   justify-content: space-between;
   align-items: center;
   font-weight: var(--font-weight-bold);
-  border-left: 4px solid #10b981;
 }
 
 .summary-label {

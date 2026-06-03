@@ -25,9 +25,11 @@ function resolveParagraphText(text, data) {
 function resolveImagePlaceholder(text, data) {
     if (!text) return null;
     const trimmed = text.trim();
-    const match = trimmed.match(/^\{\{(logo|signature)\}\}$/i);
+    const match = trimmed.match(/^\{\{(logo|signature|qrCode)\}\}$/i);
     if (!match) return null;
-    const key = match[1];
+    let key = match[1];
+    // Normalize key name (case sensitivity)
+    if (key.toLowerCase() === 'qrcode') key = 'qrCode';
     const val = data[key];
     if (!val) return null;
     // Convert base64 data URL to Buffer for PDFKit
@@ -191,6 +193,19 @@ async function generateDynamicPDF(data, template = {}) {
                 // 2. Draw Legacy Placeholder Chips
                 const placeholders = page.placeholders || [];
                 for (const p of placeholders) {
+                    // Check if it's an image chip
+                    if (['logo', 'signature', 'qrCode'].includes(p.key)) {
+                        const imgBuffer = resolveImagePlaceholder(`{{${p.key}}}`, data);
+                        if (imgBuffer) {
+                            try {
+                                doc.image(imgBuffer, p.x, p.y, { fit: [120, 120] });
+                            } catch (e) {
+                                console.warn('PDF image insert failed for chip:', e.message);
+                            }
+                        }
+                        continue;
+                    }
+
                     let text = data[p.key] || '';
                     if (p.key.toLowerCase().includes('date') && text) {
                         text = moment(text).format('DD MMM YYYY');

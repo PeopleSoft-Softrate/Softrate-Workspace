@@ -93,8 +93,14 @@ export class OffboardingRequests implements OnInit {
     this.certProject.set(false);
     this.certLor.set(false);
 
-    // Set dates
-    const parsedLastDate = request.lastWorkingDay ? new Date(request.lastWorkingDay).toISOString().split('T')[0] : '';
+    let parsedLastDate = '';
+    if (request.lastWorkingDay) {
+      const d = new Date(request.lastWorkingDay);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      parsedLastDate = `${year}-${month}-${day}`;
+    }
     this.onboardingDate.set('');
     this.endDate.set(parsedLastDate);
   }

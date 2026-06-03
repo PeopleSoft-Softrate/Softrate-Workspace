@@ -169,7 +169,6 @@
   background: var(--bg-primary);
   padding: 1.5rem;
   border-radius: 12px;
-  border-left: 4px solid var(--accent-primary);
 }
 
 .empty-state {

@@ -308,6 +308,11 @@
               </div>
             </div>
 
+            <button type="button" class="profile-menu-action" routerLink="/profile" (click)="showUserMenu.set(false)">
+              <span>My Profile</span>
+              <i class="fa-solid fa-id-card"></i>
+            </button>
+
             <button type="button" class="profile-menu-action sign-out" (click)="logout()">
               <span>Sign Out</span>
               <i class="fa-solid fa-arrow-right-from-bracket"></i>

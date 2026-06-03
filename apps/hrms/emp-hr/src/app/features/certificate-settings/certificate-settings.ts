@@ -105,7 +105,8 @@ export class CertificateSettings implements OnInit {
     { key: 'college',        label: 'College/University' },
     { key: 'department',     label: 'Department' },
     { key: 'logo',           label: 'Company Logo' },
-    { key: 'signature',      label: 'Company Signature' }
+    { key: 'signature',      label: 'Company Signature' },
+    { key: 'qrCode',         label: 'QR Code (Virtual ID)' }
   ];
 
   ngOnInit() {
@@ -201,6 +202,12 @@ export class CertificateSettings implements OnInit {
     if (text.includes('{{signature}}')) {
       const img = this.emailSignatureUrl ? `<img src="${this.emailSignatureUrl}" class="preview-img-placeholder">` : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Company Signature Placeholder]</span>';
       text = text.replace(/\{\{signature\}\}/g, img);
+    }
+    
+    // Replace {{qrCode}} with dummy QR code
+    if (text.includes('{{qrCode}}')) {
+      const img = '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[QR Code Placeholder]</span>';
+      text = text.replace(/\{\{qrCode\}\}/gi, img);
     }
     
     // Convert newlines to <br> for HTML rendering in the preview

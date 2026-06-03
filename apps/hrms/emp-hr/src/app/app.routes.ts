@@ -31,6 +31,7 @@ import { PayrollManagement } from './features/payroll/payroll-management/payroll
 
 import { PerformanceGoals } from './features/performance-goals/performance-goals';
 import { TodayAttendance } from './features/attendance/today-attendance/today-attendance';
+import { ProfileComponent } from './features/profile/profile';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -76,5 +77,6 @@ export const routes: Routes = [
   { path: 'manager/reviews', loadComponent: () => import('./features/manager/team-reviews/team-reviews').then(m => m.TeamReviews) },
   { path: 'offboarding', component: OffboardingRequests },
   { path: 'approvals', component: UnifiedRequests },
+  { path: 'profile', component: ProfileComponent },
   { path: 'interns/attendance/corrections', loadComponent: () => import('./features/interns/attendance-corrections/attendance-corrections').then(m => m.AttendanceCorrections) },
 ];

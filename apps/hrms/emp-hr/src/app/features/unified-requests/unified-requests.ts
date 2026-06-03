@@ -542,6 +542,17 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       this.endDate.set(this.getThreeMonthsDateString());
       this.internshipType.set('Stipend');
       this.assignedRole.set(request.raw.role || '');
+    } else if (request.type === 'offboarding') {
+      let parsedLastDate = '';
+      if (request.raw.lastWorkingDay) {
+        const d = new Date(request.raw.lastWorkingDay);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        parsedLastDate = `${year}-${month}-${day}`;
+      }
+      this.onboardingDate.set('');
+      this.endDate.set(parsedLastDate);
     }
 
     // Default offboarding certificate flags
@@ -691,7 +702,9 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       const flags = {
         internship: this.certInternship(),
         project: this.certProject(),
-        lor: this.certLor()
+        lor: this.certLor(),
+        onboardingDate: this.onboardingDate(),
+        endDate: this.endDate()
       };
       this.apiService.hrReviewOffboarding(request._id, apiAction, remarks, flags).subscribe({
         next: () => {
@@ -839,12 +852,18 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   // Helper date parsers
   private getTodayDateString(): string {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private getThreeMonthsDateString(): string {
     const d = new Date();
     d.setMonth(d.getMonth() + 3);
-    return d.toISOString().split('T')[0];
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

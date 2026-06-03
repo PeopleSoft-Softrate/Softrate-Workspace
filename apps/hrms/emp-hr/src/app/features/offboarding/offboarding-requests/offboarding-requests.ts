@@ -40,6 +40,9 @@ export class OffboardingRequests implements OnInit {
   certInternship = signal(false);
   certProject = signal(false);
   certLor = signal(false);
+  
+  onboardingDate = signal('');
+  endDate = signal('');
 
   ngOnInit() {
     this.fetchRequests();
@@ -89,6 +92,17 @@ export class OffboardingRequests implements OnInit {
     this.certInternship.set(false);
     this.certProject.set(false);
     this.certLor.set(false);
+
+    let parsedLastDate = '';
+    if (request.lastWorkingDay) {
+      const d = new Date(request.lastWorkingDay);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      parsedLastDate = `${year}-${month}-${day}`;
+    }
+    this.onboardingDate.set('');
+    this.endDate.set(parsedLastDate);
   }
 
   submitReview() {
@@ -113,7 +127,9 @@ export class OffboardingRequests implements OnInit {
       const flags = {
         internship: this.certInternship(),
         project: this.certProject(),
-        lor: this.certLor()
+        lor: this.certLor(),
+        onboardingDate: this.onboardingDate(),
+        endDate: this.endDate()
       };
 
       this.apiService.hrReviewOffboarding(request._id, action as 'accept' | 'reject', this.reviewRemarks(), flags)

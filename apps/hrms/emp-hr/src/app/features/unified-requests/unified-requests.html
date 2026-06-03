@@ -149,7 +149,7 @@
             (click)="activeCategory.set('fund')"
             [class.active]="activeCategory() === 'fund'"
             class="tab-btn"
-          >Re Investment</button>
+          >Reimbursement</button>
           <button
             (click)="activeCategory.set('device_change')"
             [class.active]="activeCategory() === 'device_change'"
@@ -204,7 +204,7 @@
             <!-- Type badge -->
             <td>
               <span class="tbl-type-badge" [ngClass]="req.type">
-                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Re Investment' : req.type === 'device_change' ? 'Device Change' : 'Ratification' }}
+                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Reimbursement' : req.type === 'device_change' ? 'Device Change' : 'Ratification' }}
               </span>
             </td>
             <!-- Details -->

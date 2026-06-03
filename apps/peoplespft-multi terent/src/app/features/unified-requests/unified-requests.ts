@@ -542,6 +542,10 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       this.endDate.set(this.getThreeMonthsDateString());
       this.internshipType.set('Stipend');
       this.assignedRole.set(request.raw.role || '');
+    } else if (request.type === 'offboarding') {
+      const parsedLastDate = request.raw.lastWorkingDay ? new Date(request.raw.lastWorkingDay).toISOString().split('T')[0] : '';
+      this.onboardingDate.set('');
+      this.endDate.set(parsedLastDate);
     }
 
     // Default offboarding certificate flags
@@ -691,7 +695,9 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       const flags = {
         internship: this.certInternship(),
         project: this.certProject(),
-        lor: this.certLor()
+        lor: this.certLor(),
+        onboardingDate: this.onboardingDate(),
+        endDate: this.endDate()
       };
       this.apiService.hrReviewOffboarding(request._id, apiAction, remarks, flags).subscribe({
         next: () => {

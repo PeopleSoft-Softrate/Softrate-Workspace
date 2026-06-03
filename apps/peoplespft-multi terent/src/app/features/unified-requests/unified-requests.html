@@ -149,7 +149,7 @@
             (click)="activeCategory.set('fund')"
             [class.active]="activeCategory() === 'fund'"
             class="tab-btn"
-          >Re Investment</button>
+          >Reimbursement</button>
           <button
             (click)="activeCategory.set('device_change')"
             [class.active]="activeCategory() === 'device_change'"
@@ -204,7 +204,7 @@
             <!-- Type badge -->
             <td>
               <span class="tbl-type-badge" [ngClass]="req.type">
-                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Re Investment' : req.type === 'device_change' ? 'Device Change' : 'Ratification' }}
+                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Reimbursement' : req.type === 'device_change' ? 'Device Change' : 'Ratification' }}
               </span>
             </td>
             <!-- Details -->
@@ -311,7 +311,19 @@
 
         <!-- OFFBOARDING DOCUMENTS GENERATION (HR APPROVAL SPECIFIC) -->
         <div class="form-container flags-box" *ngIf="selectedRequest()?.type === 'offboarding' && reviewAction() === 'approve' && isHr()">
-          <p class="form-section-title">Select Documents to Generate automatically (PDF):</p>
+          <p class="form-section-title">Configure Offboarding Dates:</p>
+          
+          <div class="form-group">
+            <label>Onboarding Date:</label>
+            <input type="date" [(ngModel)]="onboardingDate" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>End Date (Last Working Day):</label>
+            <input type="date" [(ngModel)]="endDate" class="form-control" />
+          </div>
+
+          <p class="form-section-title" style="margin-top: 15px;">Select Documents to Generate automatically (PDF):</p>
           
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="certInternship" />

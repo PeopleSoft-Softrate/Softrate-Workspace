@@ -510,12 +510,14 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/api/resignation/manager-review/${id}`, { status, remarks });
   }
 
-  hrReviewOffboarding(id: string, action: 'accept' | 'reject', remarks: string, flags: { internship: boolean, project: boolean, lor: boolean } = { internship: false, project: false, lor: false }): Observable<any> {
+  hrReviewOffboarding(id: string, action: 'accept' | 'reject', remarks: string, flags: { internship: boolean, project: boolean, lor: boolean, onboardingDate?: string, endDate?: string } = { internship: false, project: false, lor: false }): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/resignation/hr-review/${action}/${id}`, {
       remarks,
       internship: flags.internship,
       project: flags.project,
-      lor: flags.lor
+      lor: flags.lor,
+      onboardingDate: flags.onboardingDate,
+      endDate: flags.endDate
     });
   }
 

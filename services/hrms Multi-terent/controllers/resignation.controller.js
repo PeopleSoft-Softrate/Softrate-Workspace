@@ -175,7 +175,7 @@ exports.hrReview = async (req, res) => {
     }
 
     // Dynamic Certificate Generation from Flutter flags
-    const { internship, project, lor, title } = req.body;
+    const { internship, project, lor, title, onboardingDate, endDate } = req.body;
     if (resignation.userType === 'intern' && (internship || project || lor)) {
       const { generateDynamicPDF } = require("../utilities/certificateGenerator");
       const Company = await _resignationcontrollerjs_getMasterCompany();
@@ -187,8 +187,8 @@ exports.hrReview = async (req, res) => {
         fullName: user.fullName,
         title: title || 'Mr.',
         internId: user.internid,
-        onboardingDate: user.onboardingDate ? new Date(user.onboardingDate).toLocaleDateString('en-IN') : '',
-        endDate: resignation.lastWorkingDay ? new Date(resignation.lastWorkingDay).toLocaleDateString('en-IN') : '',
+        onboardingDate: onboardingDate ? new Date(onboardingDate).toLocaleDateString('en-IN') : (user.onboardingDate ? new Date(user.onboardingDate).toLocaleDateString('en-IN') : ''),
+        endDate: endDate ? new Date(endDate).toLocaleDateString('en-IN') : (resignation.lastWorkingDay ? new Date(resignation.lastWorkingDay).toLocaleDateString('en-IN') : ''),
         role: user.role,
         companyName: olSettings.companyName || 'Softrate Global',
         workLocation: olSettings.workLocation || 'Chennai',
@@ -220,10 +220,16 @@ exports.hrReview = async (req, res) => {
       resignation.status = "accepted";
       resignation.hrStatus = "approved";
       resignation.hrRemarks = remarks;
+      if (endDate) {
+        resignation.lastWorkingDay = new Date(endDate);
+      }
       await resignation.save();
 
       // Update user status
       user.status = "drop";
+      if (onboardingDate) {
+        user.onboardingDate = new Date(onboardingDate);
+      }
       await user.save();
 
       const lastDate = resignation.lastWorkingDay 

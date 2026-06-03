@@ -3,7 +3,7 @@
   gap: 1rem;
   padding-right: 106px; /* 90px sidebar + 16px gap */
   align-items: flex-start;
-  background: #f4f6f8;
+  background: var(--hc-bg);
   min-height: 100vh;
 }
 
@@ -29,7 +29,7 @@
   gap: 0.5rem;
   color: var(--text-muted);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 0.875rem;
   transition: var(--transition-fast);
   margin-bottom: 0.5rem;
@@ -87,19 +87,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: 1.25rem;
 }
 
 .user-info h3 {
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin-bottom: 0.25rem;
 }
 
 .role-badge {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #344f6b;
   background: #eaeff5;
   padding: 0.25rem 0.75rem;
@@ -132,13 +132,13 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin-bottom: 0.25rem;
 }
 
 .info-item p {
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
@@ -156,7 +156,7 @@
 
 .section-title {
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--accent-primary);
   display: flex;
   align-items: center;
@@ -189,7 +189,7 @@
   border: 1px solid #f4eeee;
   background: #f4eeee;
   color: #6b3a3a;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -208,7 +208,7 @@
   border: none;
   background: var(--accent-primary);
   color: white;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: flex;
   align-items: center;

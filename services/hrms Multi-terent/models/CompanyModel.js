@@ -135,11 +135,12 @@ const CompanySchema = new mongoose.Schema({
       type: [{
         name: { type: String, required: true }, // e.g., 'Sick Leave'
         allowance: { type: Number, required: true }, // e.g., 12
+        frequency: { type: String, enum: ['annual', 'monthly'], default: 'annual' },
         appliesTo: { type: String, enum: ['employee', 'intern', 'both'], default: 'both' }
       }],
       default: [
-        { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
-        { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+        { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+        { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
       ]
     }
   }

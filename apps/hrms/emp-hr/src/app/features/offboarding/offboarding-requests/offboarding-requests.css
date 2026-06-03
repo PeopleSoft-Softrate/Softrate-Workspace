@@ -15,10 +15,10 @@
 }
 
 .page-header h1 {
-  font-size: 28px;
+  
   color: #1e293b;
-  font-weight: 700;
-  margin-bottom: 8px;
+  
+  
 }
 
 .page-header p {
@@ -38,7 +38,7 @@
   border: none;
   padding: 12px 4px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: #64748b;
   cursor: pointer;
   position: relative;
@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #475569;
   font-size: 18px;
 }
@@ -125,7 +125,7 @@
   margin: 0;
   font-size: 16px;
   color: #1e293b;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .intern-info p {
@@ -156,21 +156,21 @@
 .value {
   color: #1e293b;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .status-badge {
   padding: 4px 10px;
   border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .user-type-badge {
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
 }
 
@@ -184,7 +184,7 @@
 
 .card-footer {
   padding: 16px 20px;
-  background: #f8fafc;
+  background: var(--hc-bg);
   display: flex;
   gap: 12px;
 }
@@ -194,7 +194,7 @@
   padding: 10px;
   border-radius: 10px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -226,7 +226,7 @@
 .empty-state {
   text-align: center;
   padding: 64px 24px;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border-radius: 20px;
   border: 2px dashed #e2e8f0;
 }
@@ -298,7 +298,7 @@
 .form-group label {
   display: block;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: #475569;
   margin-bottom: 8px;
 }

@@ -11,24 +11,46 @@ router.post("/init", verifyTenant, async (req, res) => {
   }
 
   const startDate = new Date(onboardingDate);
-  const nextResetDate = new Date(startDate);
-  nextResetDate.setFullYear(startDate.getFullYear() + 1);
 
-  const leaveConfigs = [
-    { type: "Casual Leave", days: 9 },
-    { type: "Sick Leave", days: 12 },
-    { type: "Bereavement Leave", days: 3 }
+  // Note: Since this is an old route that doesn't have tenant context, 
+  // we will try to fetch from User or Employee to get companyId if needed,
+  // but for now, we'll return an error if we can't find companyId.
+  // Actually, since verifyTenant is used, req.tenant.companyId is available.
+  
+  const CompanyModelExport = require("../models/CompanyModel");
+  const { getMasterConnection: _getMasterConn, waitForConnection: _waitConn } = require("../db");
+  const db = _getMasterConn();
+  await _waitConn(db);
+  const Company = db.models.Company || db.model("Company", CompanyModelExport.schema);
+  
+  const company = await Company.findById(req.tenant.companyId);
+  const leavePolicies = company?.settings?.leavePolicies || [
+    { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+    { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
   ];
 
-  const records = leaveConfigs.map(l => ({
-    employeeId,
-    leaveType: l.type,
-    totalAllowed: l.days,
-    used: 0,
-    balance: l.days,
-    cycleStartDate: startDate,
-    nextResetDate
-  }));
+  const records = [];
+  for (const p of leavePolicies) {
+    if (p.appliesTo === 'both' || p.appliesTo === 'employee') {
+      const nextResetDate = new Date(startDate);
+      if (p.frequency === 'monthly') {
+        nextResetDate.setMonth(startDate.getMonth() + 1);
+      } else {
+        nextResetDate.setFullYear(startDate.getFullYear() + 1);
+      }
+      
+      records.push({
+        companyId: req.tenant.companyId,
+        employeeId,
+        leaveType: p.name,
+        totalAllowed: p.allowance,
+        used: 0,
+        balance: p.allowance,
+        cycleStartDate: startDate,
+        nextResetDate: nextResetDate
+      });
+    }
+  }
 
   try {
     await LeaveCounter.insertMany(records, { ordered: false });

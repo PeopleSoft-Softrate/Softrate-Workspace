@@ -1,6 +1,6 @@
 .leave-container {
   padding: 2rem;
-  background-color: #f8fafc;
+  background-color: var(--hc-bg);
   min-height: calc(100vh - 64px);
 }
 
@@ -13,7 +13,7 @@
 
 .title-group h1 {
   font-size: 1.875rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #1e293b;
   margin: 0;
 }
@@ -35,7 +35,7 @@
 
 .stats-badge .count {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #0f172a;
 }
 
@@ -91,13 +91,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 1.25rem;
 }
 
 .details h3 {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #1e293b;
   margin: 0;
 }
@@ -113,7 +113,7 @@
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .card-body {
@@ -132,12 +132,12 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   color: #64748b;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin-bottom: 0.25rem;
 }
 
 .info-item .value {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #0f172a;
 }
 
@@ -146,7 +146,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   color: #64748b;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin-bottom: 0.5rem;
 }
 
@@ -154,7 +154,7 @@
   color: #334155;
   font-size: 0.875rem;
   line-height: 1.5;
-  background: #f8fafc;
+  background: var(--hc-bg);
   padding: 0.75rem;
   border-radius: 8px;
 }
@@ -172,7 +172,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .step.completed {
@@ -191,7 +191,7 @@
 
 .card-actions {
   padding: 1.25rem;
-  background: #f8fafc;
+  background: var(--hc-bg);
   display: flex;
   gap: 1rem;
 }
@@ -200,7 +200,7 @@
   flex: 1;
   padding: 0.625rem;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 0.875rem;
   display: flex;
   align-items: center;
@@ -266,7 +266,7 @@
 
 .modal-body label {
   display: block;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin-bottom: 0.5rem;
   color: #1e293b;
 }
@@ -293,7 +293,7 @@
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .btn-danger {
@@ -302,7 +302,7 @@
   color: white;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Loading Spinner */

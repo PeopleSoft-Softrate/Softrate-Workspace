@@ -78,7 +78,7 @@
 .payment-history-table th {
   background: #f7faff;
   color: #334155;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .leads-sidebar {
@@ -205,7 +205,7 @@ body,
   border-radius: 10px;
   color: #334155;
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .sidebar-item:hover {
@@ -237,7 +237,7 @@ body,
 .dash-title,
 .drilldown-name {
   font-size: 1.95rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.035em;
 }
 
@@ -255,7 +255,7 @@ body,
 .period-toggle-pill button {
   border-radius: 8px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .period-tabs button.active,
@@ -479,7 +479,7 @@ body,
   border-top: 1px solid #e4e4e7;
   color: #71717a;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -497,7 +497,7 @@ body,
   border-radius: 6px;
   color: #52525b;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   gap: 12px;
   transition: background 140ms ease, color 140ms ease;
 }
@@ -531,7 +531,7 @@ body,
 .sidebar-item.active {
   background: transparent;
   color: #09090b;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .sidebar-item.active::before {
@@ -578,7 +578,7 @@ body,
   color: #111827;
   font-family: var(--font-head);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
 }
 
@@ -598,7 +598,7 @@ body,
   border-radius: 6px;
   color: #475569;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
 }
 
@@ -645,7 +645,7 @@ body,
 
 .kpi-val {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1;
 }
 
@@ -654,7 +654,7 @@ body,
 .stat-unit-v2 {
   color: #64748b;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -667,7 +667,7 @@ body,
 .kpi-progress-text {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .charts-row {
@@ -711,7 +711,7 @@ body,
   color: #111827 !important;
   font-family: var(--font-head);
   font-size: 17px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0 !important;
 }
 
@@ -726,13 +726,13 @@ body,
 .legend-item {
   color: #475569;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .lg-val {
   color: #111827;
   font-family: var(--font-mono);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -758,7 +758,7 @@ body,
   background: #f8fafc !important;
   color: #475569;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -788,7 +788,7 @@ body,
   border: 1px solid #18181b;
   background: #ffffff;
   color: #111827;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .bottom-stats-grid {
@@ -876,7 +876,7 @@ body,
   border: 1px solid currentColor;
   background: transparent !important;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.04em;
 }
 
@@ -937,7 +937,7 @@ body,
   letter-spacing: 0.15em !important;
   text-transform: uppercase !important;
   font-size: 10px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   color: var(--admin-muted) !important;
 }
 
@@ -1009,7 +1009,7 @@ body,
   background: #111827;
   color: #fff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1;
 }
 
@@ -1030,7 +1030,7 @@ body,
   overflow: hidden;
   color: var(--admin-ink);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1039,7 +1039,7 @@ body,
 .admin-profile-code {
   color: var(--admin-muted);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
   opacity: 0.4;
 }
@@ -1078,7 +1078,7 @@ body,
 .admin-dropdown-name {
   color: var(--admin-ink);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1.25;
 }
 
@@ -1086,7 +1086,7 @@ body,
   margin-top: 2px;
   color: var(--admin-muted);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .admin-dropdown-action {
@@ -1100,7 +1100,7 @@ body,
   color: #111827;
   cursor: pointer;
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   text-align: left;
 }
 
@@ -1121,7 +1121,7 @@ body,
   color: var(--admin-ink) !important;
   font-family: var(--font-heading, var(--font-body)) !important;
   font-size: 30px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: -0.03em !important;
   line-height: 1.1 !important;
 }
@@ -1171,7 +1171,7 @@ body,
 .dashboard-wrapper .kpi-val {
   color: var(--admin-ink) !important;
   font-size: 30px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: -0.03em !important;
   line-height: 1.1 !important;
 }
@@ -1179,7 +1179,7 @@ body,
 .dashboard-wrapper .kpi-label {
   color: var(--admin-muted) !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
   line-height: 1.25 !important;
@@ -1208,7 +1208,7 @@ body,
   border-radius: 0 !important;
   background: transparent !important;
   font-size: 11px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   line-height: 1.2 !important;
   font-family: var(--font-mono) !important;
   font-variant-numeric: tabular-nums !important;
@@ -1255,7 +1255,7 @@ body,
 .dashboard-wrapper .chart-card h3 {
   color: var(--admin-ink) !important;
   font-size: 16px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.03em !important;
 }
 
@@ -1293,14 +1293,14 @@ body,
   color: var(--admin-ink) !important;
   font-family: var(--font-mono) !important;
   font-size: 24px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   font-variant-numeric: tabular-nums !important;
 }
 
 .dashboard-wrapper .donut-center-sub {
   color: var(--admin-muted) !important;
   font-size: 10px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .dashboard-wrapper .donut-legend-grid {
@@ -1335,7 +1335,7 @@ body,
 .dashboard-wrapper .lg-label {
   color: #52525b !important;
   font-size: 10px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.15em !important;
   text-transform: uppercase !important;
 }
@@ -1343,7 +1343,7 @@ body,
 .dashboard-wrapper .lg-val {
   color: var(--admin-ink) !important;
   font-size: 12px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
 }
 
 .dashboard-wrapper .top-list-table-container,
@@ -1390,7 +1390,7 @@ body,
   background: transparent !important;
   color: #52525b !important;
   font-size: 22px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   line-height: 1 !important;
   opacity: 0;
   transform: translateX(-4px);
@@ -1465,7 +1465,7 @@ body,
 
 .dashboard-wrapper .dash-title {
   font-size: 28px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: -0.03em !important;
 }
 
@@ -1519,7 +1519,7 @@ body,
   color: var(--admin-muted) !important;
   font-family: var(--font-body) !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -1528,7 +1528,7 @@ body,
   color: #111827 !important;
   font-family: var(--font-mono) !important;
   font-size: 30px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: -0.03em !important;
   line-height: 1.1 !important;
 }
@@ -1565,7 +1565,7 @@ body,
   color: #111827 !important;
   font-family: var(--font-body) !important;
   font-size: 22px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: -0.03em !important;
 }
 
@@ -1584,7 +1584,7 @@ body,
   color: #6b7280 !important;
   font-family: var(--font-body) !important;
   font-size: 12px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
 }
@@ -1623,7 +1623,7 @@ body,
   color: #6b7280 !important;
   font-family: var(--font-body) !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -1632,7 +1632,7 @@ body,
   color: #111827 !important;
   font-family: var(--font-mono) !important;
   font-size: 14px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .dashboard-wrapper .top-list-table-container {
@@ -1647,7 +1647,7 @@ body,
   color: #6b7280 !important;
   font-family: var(--font-body) !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -1658,7 +1658,7 @@ body,
   color: #374151 !important;
   font-family: var(--font-body) !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .top-list-table td:nth-child(2),
@@ -1697,7 +1697,7 @@ body,
   color: #111827 !important;
   font-family: var(--font-body) !important;
   font-size: 22px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: -0.03em !important;
 }
 
@@ -1705,7 +1705,7 @@ body,
   color: var(--admin-muted);
   font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -1737,7 +1737,7 @@ body,
   color: var(--admin-muted);
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1746,7 +1746,7 @@ body,
   color: #111827;
   font-family: var(--font-mono);
   font-size: 30px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -1759,14 +1759,14 @@ body,
   color: #6b7280;
   font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .dashboard-wrapper .analytics-row b {
   color: #111827;
   font-family: var(--font-mono);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1812,7 +1812,7 @@ body,
   margin: 0;
   color: #8a93a3;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 @media (max-width: 1440px) {
@@ -1860,7 +1860,7 @@ body,
   color: #71717a !important;
   font-family: var(--font-body) !important;
   font-size: 10px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.15em !important;
   text-transform: uppercase !important;
   white-space: nowrap !important;
@@ -1890,7 +1890,7 @@ body,
   color: #52525b !important;
   font-family: var(--font-body) !important;
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   text-align: left !important;
   box-shadow: none !important;
   transition: background 140ms ease, color 140ms ease !important;
@@ -1959,7 +1959,7 @@ body,
 .dashboard-wrapper .admin-insight-cell span {
   color: var(--admin-muted);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0.14em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -1970,7 +1970,7 @@ body,
   color: #111827;
   font-family: var(--font-mono);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2012,7 +2012,7 @@ body,
 .dashboard-wrapper .cd-header-title {
   color: var(--crm-ink) !important;
   font-family: var(--font-body, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif) !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.045em !important;
 }
 
@@ -2062,7 +2062,7 @@ body,
 .dashboard-wrapper .sidebar-header {
   color: #6f7785 !important;
   font-size: 11px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
 }
@@ -2141,7 +2141,7 @@ body,
 .dashboard-wrapper .admin-statistics-card .chart-header .lg-label {
   color: var(--crm-muted) !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .admin-stat-insights {
@@ -2255,7 +2255,7 @@ body,
   color: #475467 !important;
   font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
   font-size: 15px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -2286,7 +2286,7 @@ body,
 .dashboard-wrapper .donut-legend-row span {
   color: #475467 !important;
   font-size: 15px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .donut-legend-row strong {
@@ -2338,7 +2338,7 @@ body,
   border-bottom: 1px solid var(--crm-line-soft) !important;
   color: var(--crm-ink) !important;
   font-size: 15px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .top-list-table tr:last-child td {
@@ -2355,7 +2355,7 @@ body,
   border-radius: 4px !important;
   background: #18181b !important;
   color: #fff !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
 }
 
 .dashboard-wrapper .top-employee-board-header {
@@ -2371,7 +2371,7 @@ body,
   color: var(--crm-ink) !important;
   font-family: var(--font-body, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif) !important;
   font-size: 26px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.04em !important;
 }
 
@@ -2379,7 +2379,7 @@ body,
   margin: 8px 0 0 !important;
   color: #667085 !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .top-employee-board {
@@ -2424,7 +2424,7 @@ body,
   width: 22px !important;
   color: #94a3b8 !important;
   font-size: 12px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   text-align: center !important;
 }
 
@@ -2438,7 +2438,7 @@ body,
   overflow: hidden !important;
   color: var(--crm-ink) !important;
   font-size: 16px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.03em !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
@@ -2449,7 +2449,7 @@ body,
   color: #667085 !important;
   font-family: var(--font-mono, "Geist Mono", ui-monospace, monospace) !important;
   font-size: 11px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
   font-variant-numeric: tabular-nums !important;
@@ -2480,7 +2480,7 @@ body,
   display: block !important;
   color: #98a2b3 !important;
   font-size: 10px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
 }
@@ -2523,7 +2523,7 @@ body,
   display: block !important;
   color: #6f7785 !important;
   font-size: 11px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
 }
@@ -2544,7 +2544,7 @@ body,
   margin: 8px 0 0 !important;
   color: #667085 !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   line-height: 1.45 !important;
 }
 
@@ -2582,7 +2582,7 @@ body,
   gap: 8px !important;
   color: #475467 !important;
   font-size: 12px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .signal-dot {
@@ -2604,7 +2604,7 @@ body,
   border-radius: 8px !important;
   color: #667085 !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   background: #fff !important;
 }
 
@@ -2684,7 +2684,7 @@ body,
   font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
   font-size: 13px !important;
   font-style: normal !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0 !important;
 }
 
@@ -2737,7 +2737,7 @@ body,
   background: #fff !important;
   color: var(--crm-ink) !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   box-shadow: none !important;
 }
 
@@ -2756,7 +2756,7 @@ body,
   box-shadow: none !important;
   color: #fff !important;
   font-size: 12px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.08em !important;
 }
 
@@ -2796,7 +2796,7 @@ body,
 .dashboard-wrapper .leads-sidebar-header > div:last-child {
   color: var(--crm-muted) !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .leads-list {
@@ -2843,7 +2843,7 @@ body,
 .dashboard-wrapper .lead-item-name {
   color: var(--crm-ink) !important;
   font-size: 14px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.02em !important;
   line-height: 1.32 !important;
 }
@@ -2851,14 +2851,14 @@ body,
 .dashboard-wrapper .lead-item-meta {
   color: var(--crm-muted) !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .lead-item-meta span[style*="color"] {
   color: var(--crm-blue-strong) !important;
   font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
   font-size: 12px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .dashboard-wrapper .lead-detail-view {
@@ -2925,7 +2925,7 @@ body,
 .dashboard-wrapper .contact-card h4 {
   color: var(--crm-ink) !important;
   font-size: 17px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.025em !important;
 }
 
@@ -2967,7 +2967,7 @@ body,
   color: #6f7785 !important;
   font-family: var(--font-body, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif) !important;
   font-size: 10px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
 }
@@ -2999,7 +2999,7 @@ body,
   color: var(--crm-ink) !important;
   font-family: var(--font-body, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif) !important;
   font-size: 26px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.04em !important;
 }
 
@@ -3022,7 +3022,7 @@ body,
 .dashboard-wrapper .admin-statistics-label {
   color: #667085 !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   margin-top: 4px !important;
 }
 
@@ -3081,7 +3081,7 @@ body,
   gap: 10px !important;
   color: #475467 !important;
   font-size: 14px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .admin-stats-bars-track {
@@ -3125,7 +3125,7 @@ body,
   display: block !important;
   color: #6f7785 !important;
   font-size: 11px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
 }
@@ -3136,7 +3136,7 @@ body,
   color: var(--crm-ink) !important;
   font-family: var(--font-body, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif) !important;
   font-size: 18px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: -0.03em !important;
 }
 
@@ -3145,7 +3145,7 @@ body,
   margin-top: 6px !important;
   color: #667085 !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 @media (max-width: 1280px) {
@@ -3241,7 +3241,7 @@ body,
 .dashboard-wrapper .top-employee-metrics span {
   font-family: var(--font-body) !important;
   font-size: 11px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0.08em !important;
 }
 
@@ -3353,7 +3353,7 @@ body,
 
 .dashboard-wrapper .top-employee-name {
   font-size: 14px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .dashboard-wrapper .top-employee-sub {
@@ -3452,7 +3452,7 @@ body,
   font-family: var(--font-head) !important;
   color: #667085 !important;
   font-size: 13px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0 !important;
   line-height: 1.25 !important;
   text-transform: none !important;
@@ -3562,7 +3562,7 @@ body,
 .dashboard-wrapper .emp-table th {
   color: #667085;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   text-transform: none;
 }
 .dashboard-wrapper .reports-filter-card {
@@ -3586,7 +3586,7 @@ body,
   background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   cursor: pointer;
 }
 
@@ -3660,7 +3660,7 @@ body,
   border-radius: 8px;
   background: #eff6ff;
   color: #1e3a8a;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-kpi-strip {
@@ -3681,7 +3681,7 @@ body,
   color: #64748b;
   font-size: 0.78rem;
   font-style: normal;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-kpi-card strong {
@@ -3736,7 +3736,7 @@ body,
   color: #047857;
   border: 1px solid rgba(4, 120, 87, 0.16);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   white-space: nowrap;
 }
 
@@ -3765,7 +3765,7 @@ body,
 .crm-panel-head p {
   margin: 0.35rem 0 0;
   color: #64748b;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .crm-panel-actions {
@@ -3857,7 +3857,7 @@ body,
   background: #ffffff !important;
   color: #111827 !important;
   font-size: 14px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .crm-amc-board .crm-map-client-button.cta-primary,
@@ -3869,7 +3869,7 @@ body,
   background: #2563eb !important;
   color: #ffffff !important;
   font-size: 14px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
 }
 
 .dashboard-wrapper .crm-amc-board .crm-map-client-button.cta-primary:hover:not(:disabled),
@@ -3917,14 +3917,14 @@ body,
 .dashboard-wrapper .crm-amc-metrics-strip .metric-label {
   color: #667085;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .dashboard-wrapper .crm-amc-metrics-strip .metric-value {
   margin-top: 12px;
   color: #111827;
   font-size: 40px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1;
   letter-spacing: -0.03em;
 }
@@ -3933,7 +3933,7 @@ body,
   margin-top: 12px;
   color: #667085;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-map-import-button {
@@ -4021,7 +4021,7 @@ body,
   margin: 0;
   color: #111827;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
@@ -4030,7 +4030,7 @@ body,
   margin: 6px 0 0;
   color: #667085;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-map-modal-toolbar {
@@ -4136,7 +4136,7 @@ body,
   background: #fef2f2;
   color: #b91c1c;
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   white-space: nowrap;
 }
 
@@ -4163,7 +4163,7 @@ body,
 
 .crm-selected-client-card p {
   color: #64748b;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .crm-document-generate .mini-field {
@@ -4186,7 +4186,7 @@ body,
 .crm-project-placeholder p {
   margin: 0;
   color: #64748b;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-nda-shell {
@@ -4223,7 +4223,7 @@ body,
 
 .crm-nda-shell .invoice-feature-search .topbar-input {
   font-size: 13px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .crm-nda-shell .invoice-feature-grid {
@@ -4263,7 +4263,7 @@ body,
   margin: 0;
   color: #111827;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
 }
 
@@ -4271,7 +4271,7 @@ body,
   margin: 6px 0 0;
   color: #6b7280;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 .crm-nda-shell .invoice-history-tools {
@@ -4289,7 +4289,7 @@ body,
 
 .crm-nda-shell .invoice-history-search .topbar-input {
   font-size: 13px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .crm-nda-shell .invoice-date-filter-button {
@@ -4361,7 +4361,7 @@ body,
   overflow: hidden;
   color: #111827;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4370,7 +4370,7 @@ body,
 .crm-nda-shell .invoice-lead-main span {
   color: #6b7280;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 1.35;
 }
 
@@ -4396,7 +4396,7 @@ body,
 .crm-nda-shell .invoice-history-table th {
   color: #6b7280 !important;
   font-size: 11px !important;
-  font-weight: 800 !important;
+  font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
 }
@@ -4437,7 +4437,7 @@ body,
 .crm-nda-modal-title {
   color: #111827;
   font-size: 1.35rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.2;
 }
 
@@ -4469,7 +4469,7 @@ body,
   margin: 0;
   color: #111827;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.35;
 }
 
@@ -4477,7 +4477,7 @@ body,
   margin: -0.45rem 0 0;
   color: #4b5563;
   font-size: 0.88rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .crm-nda-modebar,
@@ -4502,7 +4502,7 @@ body,
 .crm-nda-status {
   color: #475569;
   font-size: 0.84rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-nda-generate-layout {
@@ -4522,7 +4522,7 @@ body,
   gap: 0.35rem;
   color: #475569;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -4541,7 +4541,7 @@ body,
 .crm-nda-builder-head p {
   margin: 0.35rem 0 0;
   color: #64748b;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-nda-tab-remove {
@@ -4601,7 +4601,7 @@ body,
   justify-content: space-between;
   color: #111827;
   font-size: 0.86rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-nda-two-col {
@@ -4620,7 +4620,7 @@ body,
   gap: 0.4rem;
   color: #475569;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .crm-nda-check input {
@@ -4665,7 +4665,7 @@ body,
 .crm-nda-clause-count {
   color: #64748b;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -4680,7 +4680,7 @@ body,
   overflow: hidden;
   color: #111827;
   font-size: 0.98rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4690,7 +4690,7 @@ body,
   overflow: hidden;
   color: #6b7280;
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4714,7 +4714,7 @@ body,
   gap: 0.35rem;
   color: #475569;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -4741,7 +4741,7 @@ body,
 .crm-nda-row-head {
   color: #64748b;
   font-size: 0.7rem;
-  font-weight: 900;
+  font-weight: var(--font-weight-black);
   text-transform: uppercase;
 }
 
@@ -4760,7 +4760,7 @@ body,
   border-radius: 8px;
   color: #64748b;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .crm-nda-para-editor {
@@ -4782,7 +4782,7 @@ body,
 .crm-nda-para-head span {
   color: #64748b;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .crm-nda-para-body {
@@ -4933,7 +4933,7 @@ body,
   color: #ffffff;
   font-family: Inter, sans-serif;
   font-size: 9px;
-  font-weight: 900;
+  font-weight: var(--font-weight-black);
 }
 
 .crm-nda-chip.dragging,

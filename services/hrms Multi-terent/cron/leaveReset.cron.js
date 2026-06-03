@@ -13,6 +13,14 @@ cron.schedule(
         nextResetDate: { $lte: now },
       });
 
+      // Cache company leave policies to avoid querying the DB for every counter
+      const companyPoliciesCache = {};
+      const CompanyModelExport = require("../models/CompanyModel");
+      const { getMasterConnection: _getMasterConn, waitForConnection: _waitConn } = require("../db");
+      const db = _getMasterConn();
+      await _waitConn(db);
+      const Company = db.models.Company || db.model("Company", CompanyModelExport.schema);
+
       for (const counter of countersToReset) {
         // ❌ Do not auto-reset maternity leave
         if (counter.leaveType === "Maternity Leave") continue;
@@ -20,8 +28,25 @@ cron.schedule(
         const newCycleStartDate = new Date(counter.nextResetDate);
         newCycleStartDate.setHours(0, 0, 0, 0);
 
+        // Fetch company policies to determine frequency
+        let frequency = 'annual'; // default
+        if (counter.companyId) {
+          if (!companyPoliciesCache[counter.companyId]) {
+            const company = await Company.findById(counter.companyId);
+            companyPoliciesCache[counter.companyId] = company?.settings?.leavePolicies || [];
+          }
+          const policy = companyPoliciesCache[counter.companyId].find(p => p.name === counter.leaveType);
+          if (policy && policy.frequency === 'monthly') {
+            frequency = 'monthly';
+          }
+        }
+
         const newNextResetDate = new Date(counter.nextResetDate);
-        newNextResetDate.setFullYear(newNextResetDate.getFullYear() + 1);
+        if (frequency === 'monthly') {
+          newNextResetDate.setMonth(newNextResetDate.getMonth() + 1);
+        } else {
+          newNextResetDate.setFullYear(newNextResetDate.getFullYear() + 1);
+        }
         newNextResetDate.setHours(0, 0, 0, 0);
 
         counter.used = 0;
@@ -32,7 +57,7 @@ cron.schedule(
         await counter.save();
 
         console.log(
-          `✅ ${counter.leaveType} reset for ${counter.employeeId}`
+          `✅ ${counter.leaveType} reset for ${counter.employeeId} (Frequency: ${frequency})`
         );
       }
     } catch (error) {

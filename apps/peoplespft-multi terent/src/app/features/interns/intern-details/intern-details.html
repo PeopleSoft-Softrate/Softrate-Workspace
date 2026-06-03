@@ -146,12 +146,12 @@
             <p>{{ intern().status }}</p>
           </div>
           <div class="info-item" *ngIf="intern().linkedin">
-            <label>LinkedIn Profile</label>
-            <p>
+            <label style="display: flex; align-items: center; gap: 6px;">
+              LinkedIn Profile
               <a [href]="intern().linkedin" target="_blank" class="linkedin-link" title="View LinkedIn Profile">
-                <hugeicons-icon [icon]="Share05Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+                <hugeicons-icon [icon]="Share05Icon" size="18" [strokeWidth]="2" color="#0077b5"></hugeicons-icon>
               </a>
-            </p>
+            </label>
           </div>
         </div>
       </div>
@@ -166,8 +166,8 @@
             <p>{{ intern().college || intern().collegeName || 'N/A' }}</p>
           </div>
           <div class="info-item">
-            <label>Department</label>
-            <p>{{ intern().department || 'N/A' }}</p>
+            <label>Role</label>
+            <p>{{ intern().role || intern().domain || 'N/A' }}</p>
           </div>
           <div class="info-item">
             <label>Assigned Project</label>

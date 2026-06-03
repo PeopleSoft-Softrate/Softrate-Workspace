@@ -344,27 +344,49 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
 
     // 3. Initialize leave counter
     const startDate = new Date(onboardingDate);
-    const nextResetDate = new Date(startDate);
-    nextResetDate.setFullYear(startDate.getFullYear() + 1);
 
-    const leaveConfigs = [
-      { type: "Casual Leave", days: 9 },
-      { type: "Sick Leave", days: 12 },
-      { type: "Bereavement Leave", days: 3 },
-    ];
+    // Fetch dynamic leave policies
+    const Company = await _getMasterCompany();
+    const company = await Company.findById(req.tenant.companyId);
+    let leavePolicies = company?.leavePolicies;
+    if (!leavePolicies || leavePolicies.length === 0) {
+      leavePolicies = [
+        { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+        { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
+      ];
+    }
 
-    const records = leaveConfigs.map(l => ({
-      companyId: req.tenant.companyId,
-      employeeId: newEmployeeId,
-      leaveType: l.type,
-      totalAllowed: l.days,
-      used: 0,
-      balance: l.days,
-      cycleStartDate: startDate,
-      nextResetDate,
-    }));
+    const records = [];
+    for (const p of leavePolicies) {
+      if (p.appliesTo === 'both' || p.appliesTo === 'employee') {
+        const nextResetDate = new Date(startDate);
+        if (p.frequency === 'monthly') {
+          nextResetDate.setMonth(startDate.getMonth() + 1);
+        } else {
+          nextResetDate.setFullYear(startDate.getFullYear() + 1);
+        }
+        
+        records.push({
+          companyId: req.tenant.companyId,
+          employeeId: newEmployeeId,
+          leaveType: p.name,
+          totalAllowed: p.allowance,
+          used: 0,
+          balance: p.allowance,
+          cycleStartDate: startDate,
+          nextResetDate: nextResetDate,
+        });
+      }
+    }
 
-    await LeaveCounter.insertMany(records, { ordered: false }).catch(() => {});
+    try {
+      if (records.length > 0) {
+        await LeaveCounter.insertMany(records, { ordered: false });
+        console.log(`[DEBUG] Initialized leave counters for employee ${newEmployeeId}:`, records.length);
+      }
+    } catch (err) {
+      console.error("[DEBUG] Error initializing leave counters:", err);
+    }
 
     // 4. Send approval email
     try {

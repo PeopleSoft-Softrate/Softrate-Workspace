@@ -49,7 +49,7 @@
   min-height: 40px !important;
   border-radius: 14px !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .dashboard-wrapper .admin-followups-date-control {
@@ -68,7 +68,7 @@
   background: #ffffff !important;
   color: #111827 !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search {
@@ -84,7 +84,7 @@
 .dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search .topbar-input {
   height: 38px !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .dashboard-wrapper .admin-followups-filter-chip,
@@ -104,7 +104,7 @@
 
 .remarks-filter-label {
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .remarks-pill-row {
@@ -301,7 +301,7 @@
   margin: 0 !important;
   color: #111827 !important;
   font-size: 20px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   line-height: 1.1 !important;
   letter-spacing: -0.02em !important;
   white-space: nowrap !important;
@@ -312,7 +312,7 @@
   margin-top: 6px !important;
   color: #71717a !important;
   font-size: 13px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
   line-height: 1.55 !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
@@ -351,7 +351,7 @@
 .admin-ai-modal .section-kicker {
   color: #111827 !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -360,7 +360,7 @@
   margin: 0 !important;
   color: #111827 !important;
   font-size: 24px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: -0.02em !important;
 }
 
@@ -368,7 +368,7 @@
   margin: 0 !important;
   color: #6b7280 !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .admin-ai-modal .followup-modal-head .secondary-action {
@@ -379,7 +379,7 @@
   background: #ffffff !important;
   color: #111827 !important;
   font-size: 14px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   line-height: 1 !important;
   box-shadow: none !important;
 }
@@ -404,7 +404,7 @@
   margin: 0 0 8px !important;
   color: #111827 !important;
   font-size: 18px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .admin-ai-modal .ai-summary-empty-panel p {
@@ -421,7 +421,7 @@
   border-radius: 10px !important;
   background: #ffffff !important;
   color: #111827 !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .admin-ai-modal .ai-summary-modal-body .lead-ai-grid {
@@ -461,14 +461,14 @@
   background: rgba(255, 255, 255, 0.7) !important;
   color: #1d4ed8 !important;
   font-size: 12px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   text-decoration: none !important;
 }
 
 .admin-ai-modal .lead-ai-section-label {
   color: #6b7280 !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -478,7 +478,7 @@
   color: #374151 !important;
   font-size: 15px !important;
   font-style: normal !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
   line-height: 1.65 !important;
 }
 
@@ -508,7 +508,7 @@
   background: linear-gradient(135deg, #2563eb, #3d7dfe) !important;
   color: #ffffff !important;
   font-size: 12px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .admin-ai-modal .lead-ai-tier {
@@ -520,7 +520,7 @@
   background: rgba(240, 253, 244, 0.92) !important;
   color: #166534 !important;
   font-size: 11px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   text-transform: uppercase !important;
 }
 
@@ -528,7 +528,7 @@
   margin: 0 !important;
   color: #0f172a !important;
   font-size: 14px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   line-height: 1.35 !important;
 }
 
@@ -545,7 +545,7 @@
 .admin-ai-modal .lead-ai-source-title {
   color: #0f172a !important;
   font-size: 13px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   line-height: 1.4 !important;
 }
 
@@ -642,7 +642,7 @@
   margin: 0 !important;
   color: #111827 !important;
   font-size: 17px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   line-height: 1.25 !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
@@ -663,7 +663,7 @@
   min-width: 0 !important;
   color: #4b5563 !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
   line-height: 1.45 !important;
   text-transform: none !important;
 }
@@ -691,7 +691,7 @@
   background: #ffffff !important;
   color: #526176 !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .admin-lead-record-card .lead-card-remarks,
@@ -727,7 +727,7 @@
   min-height: 44px !important;
   border-radius: 0 !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .dashboard-wrapper .admin-lead-record-card .lead-card-add-remark,
@@ -759,7 +759,7 @@
   border-radius: 12px !important;
   background: #ffffff !important;
   font-size: 15px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .admin-lead-record-card .lead-card-icon-action,
@@ -795,7 +795,7 @@
   margin-top: 4px !important;
   color: #667085 !important;
   font-size: 12px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .admin-followup-contact-card .followup-card-edit {
@@ -813,7 +813,7 @@
   gap: 8px !important;
   color: #667085 !important;
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 .dashboard-wrapper .admin-followup-contact-card .fu-reminder svg {
@@ -839,7 +839,7 @@
   border-radius: 14px !important;
   background: #ffffff !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 @media (max-width: 980px) {
@@ -1003,7 +1003,7 @@
 .dashboard-wrapper .admin-leads-filter-strip .toolbar-button,
 .dashboard-wrapper .remarks-command-panel button,
 .dashboard-wrapper .remarks-filter-label {
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .dashboard-wrapper .admin-followups-filter-buttons {
@@ -1021,7 +1021,7 @@
 }
 
 .dashboard-wrapper .admin-followups-filter-buttons .toolbar-button.active {
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .dashboard-wrapper .admin-followups-toolbar .admin-followups-toolbar-search,
@@ -1044,7 +1044,7 @@
   height: 38px !important;
   color: #526176 !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 /* Final rail alignment pass: single-line company names with ellipsis and a tighter follow-ups rail. */
@@ -1168,7 +1168,7 @@
   color: var(--text-muted, #6b7280) !important;
   font-family: var(--font-ui) !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -1204,7 +1204,7 @@
   box-shadow: none !important;
   font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
   font-size: 14px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   line-height: 1 !important;
   white-space: nowrap !important;
   cursor: pointer !important;

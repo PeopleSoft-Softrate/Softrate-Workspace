@@ -61,6 +61,37 @@ export class Dashboard implements OnInit {
   readonly UserGroupIcon = UserGroupIcon;
 
   currentTime = signal<Date>(new Date());
+  searchQuery = signal('');
+  showSearchDropdown = signal(false);
+
+  appFeatures = [
+    { name: 'Dashboard', link: '/dashboard' },
+    { name: 'Today Attendance', link: '/attendance/today' },
+    { name: 'Approvals Hub', link: '/approvals' },
+    { name: 'Onboarding', link: '/onboarding' },
+    { name: 'Interns Management', link: '/interns' },
+    { name: 'Employees Management', link: '/employees' },
+    { name: 'Leave Management', link: '/leaves' },
+    { name: 'Off-boarding', link: '/offboarding' },
+    { name: 'Projects', link: '/projects' },
+    { name: 'Settings', link: '/app-settings' }
+  ];
+
+  filteredFeatures() {
+    const query = this.searchQuery().toLowerCase();
+    if (!query) return [];
+    return this.appFeatures.filter(f => f.name.toLowerCase().includes(query));
+  }
+
+  onSearch(event: any) {
+    this.searchQuery.set(event.target.value);
+  }
+
+  hideSearchDropdown() {
+    setTimeout(() => {
+      this.showSearchDropdown.set(false);
+    }, 150);
+  }
 
   ngOnInit() {
     this.fetchStats();

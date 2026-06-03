@@ -60,7 +60,7 @@
 .logo-text {
   font-family: var(--font-heading);
   font-size: var(--text-5xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #ffffff;
   letter-spacing: -1px;
   display: flex;
@@ -74,7 +74,7 @@
 
 .crm-tag {
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -86,7 +86,7 @@
   font-family: var(--font-heading);
   font-size: var(--text-6xl);
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #ffffff;
   max-width: 500px;
   margin: 0 0 1.5rem 0;
@@ -122,7 +122,7 @@
 .form-header h2 {
   font-family: var(--font-heading);
   font-size: var(--text-4xl);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #1a1a1a;
   margin: 0 0 0.5rem 0;
 }
@@ -152,7 +152,7 @@
 .form-group label {
   display: block;
   font-size: var(--text-lg);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: #6b7280;
   margin-bottom: 0.5rem;
 }
@@ -228,7 +228,7 @@
   border: none;
   padding: 1rem;
   font-size: var(--text-2xl);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -259,7 +259,7 @@
   font-size: var(--text-lg);
   color: #3b82f6;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .form-footer a:hover {

@@ -37,7 +37,7 @@ export class InternAdd implements OnInit {
     role: '',
     onboardingDate: '',
     endDate: '',
-    durationValue: 3,
+    durationValue: 1,
     durationType: 'month' as 'day' | 'month',
     internshipType: 'Stipend',
     applicationType: 'Internship'

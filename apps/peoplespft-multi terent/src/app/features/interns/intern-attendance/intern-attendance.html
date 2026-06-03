@@ -21,8 +21,51 @@
 </div>
 
 <div class="data-container" [class.loading]="isLoading()">
+
+  <!-- Premium Attendance Filter Panel -->
+  <div class="filter-panel card" *ngIf="!isLoading() && attendance() && attendance().length > 0">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="filterType">Filter By</label>
+        <select id="filterType" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)" class="form-input select">
+          <option value="all">All Logs</option>
+          <option value="month">Select Month</option>
+          <option value="range">Custom Date Range</option>
+          <option value="date">Particular Date</option>
+        </select>
+      </div>
+
+      <!-- Conditionally shown controls -->
+      <div class="filter-group" *ngIf="filterType() === 'month'">
+        <label for="selectedMonth">Choose Month</label>
+        <input type="month" id="selectedMonth" [ngModel]="selectedMonth()" (ngModelChange)="selectedMonth.set($event)" class="form-input" />
+      </div>
+
+      <ng-container *ngIf="filterType() === 'range'">
+        <div class="filter-group">
+          <label for="startDate">Start Date</label>
+          <input type="date" id="startDate" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" class="form-input" />
+        </div>
+        <div class="filter-group">
+          <label for="endDate">End Date</label>
+          <input type="date" id="endDate" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" class="form-input" />
+        </div>
+      </ng-container>
+
+      <div class="filter-group" *ngIf="filterType() === 'date'">
+        <label for="selectedDate">Choose Date</label>
+        <input type="date" id="selectedDate" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)" class="form-input" />
+      </div>
+      
+      <!-- Reset Button -->
+      <button class="btn-reset" (click)="resetFilters()" *ngIf="filterType() !== 'all'">
+        Clear Filter
+      </button>
+    </div>
+  </div>
+
   <!-- Table View -->
-  <div class="table-responsive" *ngIf="!isLoading() && attendance() && attendance().length > 0">
+  <div class="table-responsive" *ngIf="!isLoading() && filteredAttendance() && filteredAttendance().length > 0">
     <table class="data-table">
       <thead>
         <tr>
@@ -35,7 +78,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let record of attendance()">
+        <tr *ngFor="let record of filteredAttendance()">
           <td>{{ record.date | date:'mediumDate' }}</td>
           <td>
             <span class="status-badge" [ngClass]="record.punchOutTime ? 'status-green' : 'status-orange'">
@@ -69,10 +112,22 @@
     </table>
   </div>
 
+  <!-- Empty state for no filter results -->
+  <div class="empty-state" *ngIf="!isLoading() && attendance() && attendance().length > 0 && filteredAttendance().length === 0">
+    <div class="empty-content">
+      <hugeicons-icon [icon]="LicenseDraftIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+      <h3>No records match filter</h3>
+      <p>Try choosing a different filter configuration or clear it to view all logs.</p>
+      <button class="btn-reset" (click)="resetFilters()" style="margin-top: 1rem; width: auto; display: inline-flex; height: auto; padding: 8px 16px;">
+        Clear Filter
+      </button>
+    </div>
+  </div>
+
   <!-- Empty State -->
   <div class="empty-state" *ngIf="!isLoading() && (!attendance() || attendance().length === 0)">
     <div class="empty-content">
-      <i class="fa-solid fa-calendar-days empty-icon"></i>
+      <hugeicons-icon [icon]="FingerAccessIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
       <h3>No records found</h3>
       <p>This intern hasn't marked any attendance yet for the selected period.</p>
     </div>

@@ -744,23 +744,28 @@
             </button>
           </div>
 
-          <div class="locations-list">
-            <div class="location-header location-header-grid" style="padding: 0 12px 8px; font-size: 12px; font-weight: 700; color: #64748b; display: grid; grid-template-columns: 2fr 1fr 1.5fr auto; gap: 16px;">
+          <div class="leave-policies-list">
+            <div class="leave-policy-header">
               <span>Leave Name</span>
-              <span>Annual Quota (Days)</span>
+              <span>Quota (Days)</span>
+              <span>Frequency</span>
               <span>Applies To</span>
               <span></span>
             </div>
 
-            <div class="location-item" *ngFor="let policy of leavePolicies(); let i = index" style="display: grid; grid-template-columns: 2fr 1fr 1.5fr auto; gap: 16px;">
-              <input type="text" class="location-input" [(ngModel)]="policy.name" placeholder="e.g. Sick Leave">
-              <input type="number" class="location-input" [(ngModel)]="policy.allowance" placeholder="12" min="0">
-              <select class="location-input" [(ngModel)]="policy.appliesTo">
+            <div class="leave-policy-item" *ngFor="let policy of leavePolicies(); let i = index">
+              <input type="text" class="leave-input" [(ngModel)]="policy.name" placeholder="e.g. Sick Leave">
+              <input type="number" class="leave-input" [(ngModel)]="policy.allowance" placeholder="12" min="0">
+              <select class="leave-input leave-input-select" [(ngModel)]="policy.frequency">
+                <option value="annual">Annual</option>
+                <option value="monthly">Monthly</option>
+              </select>
+              <select class="leave-input leave-input-select" [(ngModel)]="policy.appliesTo">
                 <option value="both">All Staff (Emp & Interns)</option>
                 <option value="employee">Employees Only</option>
                 <option value="intern">Interns Only</option>
               </select>
-              <button class="btn-remove" (click)="removeLeavePolicy(i)">
+              <button class="btn-remove-leave" (click)="removeLeavePolicy(i)" title="Remove Leave Type">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>

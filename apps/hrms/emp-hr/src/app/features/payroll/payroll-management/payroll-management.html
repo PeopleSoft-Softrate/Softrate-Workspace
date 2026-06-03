@@ -164,7 +164,6 @@
                 <th>Intern</th>
                 <th>Department</th>
                 <th class="text-right">Basic Stipend</th>
-                <th class="text-right">HRA</th>
                 <th class="text-right">Allowances</th>
                 <th class="text-right">Deductions</th>
                 <th class="text-center">LOP Days</th>
@@ -185,7 +184,6 @@
                 </td>
                 <td class="dept-cell">{{ intern.department || '—' }}</td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.basicSalary | number:'1.0-0' }}</td>
-                <td class="text-right amount-cell">₹{{ intern.payroll.hra | number:'1.0-0' }}</td>
                 <td class="text-right amount-cell">₹{{ intern.payroll.allowances | number:'1.0-0' }}</td>
                 <td class="text-right text-deductions">₹{{ intern.payroll.deductions | number:'1.0-0' }}</td>
                 <td class="text-center">

@@ -105,7 +105,7 @@ button {
 .brand-wordmark {
   color: var(--text-strong);
   font-size: 34px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1;
 }
 
@@ -113,7 +113,7 @@ button {
   margin: 0;
   color: var(--text-strong);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.1;
 }
 
@@ -135,7 +135,7 @@ button {
   gap: 8px;
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .field-input,
@@ -148,7 +148,7 @@ button {
   background: #ffffff;
   color: var(--text-strong);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   outline: 0;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -191,7 +191,7 @@ textarea.field-input {
   background: #ffffff;
   color: var(--text-strong);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   white-space: nowrap;
 }
 
@@ -219,7 +219,7 @@ textarea.field-input {
 .section-kicker {
   color: var(--text-muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -231,7 +231,7 @@ textarea.field-input {
   background: rgba(180, 35, 24, 0.06);
   color: var(--status-negative);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .empty-state-inline {
@@ -241,7 +241,7 @@ textarea.field-input {
   padding: 24px;
   color: var(--text-muted);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
 }
 

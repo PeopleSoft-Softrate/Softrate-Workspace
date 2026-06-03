@@ -46,7 +46,7 @@
 
 .alert-title {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #111827;
   margin-bottom: 0.5rem;
 }
@@ -73,7 +73,7 @@
   border-radius: 8px;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   border: none;
   transition: background-color 0.2s;

@@ -14,7 +14,7 @@
 .header-left h1 {
   font-family: var(--font-heading);
   font-size: var(--text-3xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.5px;
@@ -63,7 +63,7 @@
   color: #2563eb;
   border-radius: 99px;
   font-size: var(--text-md);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
 }
 
@@ -75,7 +75,7 @@
 .project-title {
   font-family: var(--font-heading);
   font-size: var(--text-2xl);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0;
 }
@@ -97,7 +97,7 @@
   display: flex;
   justify-content: space-between;
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
@@ -130,7 +130,7 @@
   gap: 0.5rem;
   font-size: var(--text-base);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   position: relative;
 }
 
@@ -171,7 +171,7 @@
 
 .tooltip-header {
   font-size: var(--text-sm);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -189,7 +189,7 @@
 .tooltip-member {
   font-size: var(--text-base);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -210,7 +210,7 @@
 .checklist-preview h4 {
   font-family: var(--font-heading);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0 0 0.75rem 0;
 }
@@ -244,7 +244,7 @@
 .more-tasks {
   font-size: var(--text-md);
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin: 0.25rem 0 0 26px;
 }
 
@@ -302,7 +302,7 @@
 .header-text h2 {
   font-family: var(--font-heading);
   font-size: var(--text-3xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin: 0;
 }
@@ -336,7 +336,7 @@
 .form-section label {
   display: block;
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
@@ -390,7 +390,7 @@
   background: var(--border-color);
   border-radius: var(--border-radius, 8px);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
 }
 
@@ -513,7 +513,7 @@
   border: none;
   border-radius: var(--border-radius, 8px);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   cursor: pointer;
   width: 100%;
@@ -564,7 +564,7 @@
   border: 1px dashed #16a34a;
   padding: 0.625rem 1rem;
   border-radius: var(--border-radius, 8px);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   width: 100%;
   justify-content: center;
@@ -581,7 +581,7 @@
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: var(--border-radius, 8px);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -600,7 +600,7 @@
   border: 1px solid var(--border-color);
   padding: 0.75rem 1.5rem;
   border-radius: var(--border-radius, 8px);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: var(--transition-fast);
 }
@@ -634,7 +634,7 @@
 .empty-state h3 {
   font-family: var(--font-heading);
   font-size: var(--text-4xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin: 0 0 12px 0;
 }
@@ -671,7 +671,7 @@
   gap: 0.5rem;
   color: var(--text-muted);
   text-decoration: none !important;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: var(--text-base);
   transition: var(--transition-fast);
   margin-bottom: 0.5rem;

@@ -147,7 +147,7 @@
   padding: 0 0 0 10px;
   color: #71717a;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -172,7 +172,7 @@
   background: transparent;
   color: #52525b;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: left;
   transition: background 140ms ease, color 140ms ease;
 }
@@ -203,7 +203,7 @@
 
 .sidebar-link.active {
   color: #09090b;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .sidebar-link.active::before {
@@ -304,7 +304,7 @@
   overflow: hidden;
   color: var(--text-strong);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -366,13 +366,13 @@
   background: transparent;
   color: #09090b;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .topbar-input::placeholder {
   color: #6b7280;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 .topbar-actions {
@@ -435,7 +435,7 @@
 .utility-label {
   color: #71717a;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -443,7 +443,7 @@
 .utility-value {
   color: #09090b;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -457,7 +457,7 @@
   background: #ffffff;
   color: #111827;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   white-space: nowrap;
 }
 
@@ -512,7 +512,7 @@
   background: #141a24;
   color: #f8fafc;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.02em;
 }
 
@@ -545,7 +545,7 @@
   overflow: hidden;
   color: var(--text-strong);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -606,20 +606,20 @@
 .profile-menu-name {
   color: #111827;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .profile-menu-meta,
 .profile-menu-code {
   color: #6b7280;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .profile-menu-status {
   color: #16a34a;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .profile-menu-divider {
@@ -639,7 +639,7 @@
   background: #ffffff;
   color: #111827;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: left;
 }
 

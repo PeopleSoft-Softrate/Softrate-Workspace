@@ -20,8 +20,24 @@
         <hugeicons-icon [icon]="FilterIcon" size="18" [strokeWidth]="1.5" color="#94A3B8"
           style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;">
         </hugeicons-icon>
-        <input type="text" placeholder="Search data..."
+        <input type="text" placeholder="Search features..." 
+          (input)="onSearch($event)"
+          (focus)="showSearchDropdown.set(true)"
+          (blur)="hideSearchDropdown()"
           style="padding: 0.625rem 1rem 0.625rem 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); font-size: var(--text-sm); outline: none; width: 240px; transition: border-color 0.2s;">
+          
+        <!-- Command Palette Dropdown -->
+        <div class="search-dropdown" *ngIf="showSearchDropdown() && filteredFeatures().length > 0"
+             style="position: absolute; top: calc(100% + 8px); left: 0; width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; overflow: hidden; max-height: 300px; overflow-y: auto;">
+          <a *ngFor="let feature of filteredFeatures()" [routerLink]="feature.link"
+             (mousedown)="$event.preventDefault()"
+             style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-primary); text-decoration: none; transition: background 0.2s;"
+             onmouseover="this.style.background='var(--bg-secondary)'"
+             onmouseout="this.style.background='transparent'">
+            <hugeicons-icon [icon]="FilterIcon" size="16" color="#64748B"></hugeicons-icon>
+            <span style="font-size: 14px; font-weight: 500;">{{feature.name}}</span>
+          </a>
+        </div>
       </div>
 
 
@@ -38,11 +54,11 @@
           <span class="stat-label">{{ stat.label }}</span>
         </div>
         <div class="stat-icon-container">
-          <hugeicons-icon *ngIf="stat.label.includes('Attendance')" [icon]="FingerAccessIcon" size="20"
+          <hugeicons-icon *ngIf="stat.label === 'Active Interns' || stat.label.includes('Attendance')" [icon]="FingerAccessIcon" size="20"
             [strokeWidth]="2" color="currentColor"></hugeicons-icon>
           <hugeicons-icon *ngIf="stat.label.includes('Leaves')" [icon]="CalendarCheckOut01Icon" size="20"
             [strokeWidth]="2" color="currentColor"></hugeicons-icon>
-          <hugeicons-icon *ngIf="stat.label.includes('Interns') || stat.label.includes('Employees')"
+          <hugeicons-icon *ngIf="stat.label === 'Total Interns' || stat.label === 'Total Employees' || stat.label === 'Active Employees'"
             [icon]="StudentsIcon" size="20" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
           <hugeicons-icon *ngIf="stat.label.includes('Applications')" [icon]="UserCircleIcon" size="20"
             [strokeWidth]="2" color="currentColor"></hugeicons-icon>
@@ -105,16 +121,6 @@
         </div>
       </div>
 
-      <div class="action-card purple" routerLink="/offboarding" style="cursor: pointer;">
-        <div class="action-icon-box">
-          <hugeicons-icon [icon]="Delete01Icon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
-        </div>
-        <div class="action-details">
-          <h4>Off-boarding</h4>
-          <p>Process exits</p>
-        </div>
-      </div>
-
       <div class="action-card blue" routerLink="/performance-goals" style="cursor: pointer;">
         <div class="action-icon-box">
           <hugeicons-icon [icon]="LicenseDraftIcon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
@@ -122,6 +128,16 @@
         <div class="action-details">
           <h4>Review Performance</h4>
           <p>Track progress</p>
+        </div>
+      </div>
+
+      <div class="action-card purple" routerLink="/offboarding" style="cursor: pointer;">
+        <div class="action-icon-box">
+          <hugeicons-icon [icon]="Delete01Icon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
+        </div>
+        <div class="action-details">
+          <h4>Off-boarding</h4>
+          <p>Process exits</p>
         </div>
       </div>
     </div>

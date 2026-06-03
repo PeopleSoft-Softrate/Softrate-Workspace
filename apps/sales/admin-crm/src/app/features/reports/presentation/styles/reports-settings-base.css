@@ -34,7 +34,7 @@
 .report-table thead th {
   background: var(--bg-card-2);
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   vertical-align: middle;
   position: relative;
 }
@@ -117,7 +117,7 @@
 
 .filter-field label {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-2);
 }
 
@@ -173,7 +173,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 0.85rem;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -194,7 +194,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -300,14 +300,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .kpi-card-mini .kpi-val {
   font-family: var(--font-head);
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.2;
   color: var(--text-1);
 }
 
 .kpi-card-mini .kpi-label {
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-2);
   margin-top: 4px;
 }
@@ -519,7 +519,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .detailed-history-header .modal-title {
   margin: 0;
   font-size: 2.2rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #0f172a;
   letter-spacing: -0.05em;
 }
@@ -527,7 +527,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .detailed-history-header .modal-subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: #8d8d8d;
 }
 
@@ -551,7 +551,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .log-stat-val {
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.2;
 }
 
@@ -573,7 +573,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .log-stat-label {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #8d8d8d;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -600,7 +600,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: #fdfdfd;
   color: var(--text-3);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   border-bottom: 2px solid var(--border);
@@ -652,13 +652,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-2);
 }
 
 .log-name {
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-heading);
   margin-bottom: 2px;
 }
@@ -672,7 +672,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .sim-badge {
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   padding: 2px 6px;
   border-radius: 5px;
   background: #f8fafc;
@@ -698,7 +698,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .dur-pill {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   padding: 4px 12px;
   background: #f1f5f9;
   border-radius: 99px;
@@ -756,7 +756,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .cc-title {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #1e293b;
   margin: 0;
 }
@@ -768,7 +768,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding: 2px 8px;
   border-radius: 6px;
   font-family: inherit;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .cc-details-grid {
@@ -779,7 +779,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .cc-detail label {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #8d8d8d;
   letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
@@ -788,7 +788,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .cc-detail div {
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #334155;
 }
 
@@ -806,7 +806,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 6px;
   font-size: 0.75rem;
   color: #8d8d8d;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .check-dot {
@@ -849,7 +849,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Table adjustments */
 .payment-history-table th {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #8d8d8d;
   letter-spacing: 0.05em;
   padding: 0.75rem 0.5rem;

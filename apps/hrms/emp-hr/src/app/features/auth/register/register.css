@@ -43,7 +43,7 @@
 .login-brand h1 {
   font-family: var(--font-heading, inherit);
   font-size: 2.5rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   margin: 0 0 0.5rem 0;
   letter-spacing: -1px;
 }
@@ -52,7 +52,7 @@
   font-size: 1.1rem;
   color: #64748b;
   margin: 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 /* Make the login card pop out beautifully */
@@ -81,7 +81,7 @@
 
 .form-group label {
   color: #475569;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 0.95rem;
 }
 
@@ -131,7 +131,7 @@
 
 .form-footer a {
   color: #64748b;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   transition: color 0.2s;
   font-size: 0.95rem;
 }

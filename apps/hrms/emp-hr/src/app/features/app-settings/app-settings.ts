@@ -63,8 +63,8 @@ export class AppSettings implements OnInit {
   employeeRoles = signal<string[]>([]);
   internRoles = signal<string[]>([]);
   leavePolicies = signal<any[]>([
-    { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
-    { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+    { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+    { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
   ]);
 
   // Default Payroll settings
@@ -194,8 +194,8 @@ export class AppSettings implements OnInit {
             'Other'
           ]);
           this.leavePolicies.set(s.leavePolicies || [
-            { name: 'Casual Leave', allowance: 12, appliesTo: 'both' },
-            { name: 'Sick Leave', allowance: 12, appliesTo: 'both' }
+            { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+            { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
           ]);
 
           if (s.payrollSettings) {
@@ -512,7 +512,7 @@ export class AppSettings implements OnInit {
 
   addLeavePolicy() {
     const current = this.leavePolicies();
-    current.push({ name: '', allowance: 12, appliesTo: 'both' });
+    current.push({ name: '', allowance: 12, frequency: 'annual', appliesTo: 'both' });
     this.leavePolicies.set([...current]);
   }
 

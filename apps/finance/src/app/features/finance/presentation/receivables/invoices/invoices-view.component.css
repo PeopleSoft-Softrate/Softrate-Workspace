@@ -18,7 +18,7 @@
   margin: 0;
   color: #111827;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .invoice-list-refresh {
@@ -34,7 +34,7 @@
   color: #111827;
   font: inherit;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   cursor: pointer;
 }
 

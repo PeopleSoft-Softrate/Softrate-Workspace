@@ -1,5 +1,5 @@
 <app-alert></app-alert>
-<div class="app-container" [class.login-mode]="isLoginPage()">
+<div class="app-container" [class.login-mode]="isLoginPage()" [class.sidebar-minimized]="isSidebarMinimized()">
   <!-- Sidebar -->
   <aside class="sidebar" *ngIf="!isLoginPage()">
     <div class="sidebar-header">
@@ -10,6 +10,10 @@
         <h2 class="primary-color">PeopleSoft</h2>
         <p class="subtitle">{{ isManager() ? 'Manager Dashboard' : (isHrType() ? 'HR Dashboard' : 'Employee Portal') }}</p>
       </div>
+      <button class="minimize-btn" (click)="toggleSidebar()" title="Toggle Sidebar">
+        <hugeicons-icon [icon]="PanelLeftCloseIcon" size="20" [strokeWidth]="1.5" color="currentColor" *ngIf="!isSidebarMinimized()"></hugeicons-icon>
+        <hugeicons-icon [icon]="PanelLeftOpenIcon" size="20" [strokeWidth]="1.5" color="currentColor" *ngIf="isSidebarMinimized()"></hugeicons-icon>
+      </button>
     </div>
     
     <nav class="sidebar-nav">
@@ -279,7 +283,7 @@
         </div>
         
         <div class="top-bar-divider"></div>
-        <div class="profile-menu-wrapper">
+        <div class="profile-menu-wrapper" #profileMenuWrapper>
           <input #profilePhotoInput type="file" class="profile-photo-input" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="onProfilePhotoSelected($event)">
 
           <button type="button" class="profile-trigger" [class.open]="showUserMenu()" (click)="toggleUserMenu()" aria-label="Open profile menu">
@@ -301,22 +305,12 @@
                 <h3>{{ displayName() }}</h3>
                 <p *ngIf="userPhone()">{{ userPhone() }}</p>
                 <p class="profile-code">{{ userCode() || roleLabel() }}</p>
-                <p class="profile-online">Active now</p>
               </div>
             </div>
 
-            <button type="button" class="profile-menu-action" (click)="removeProfilePhoto()">
-              <i class="fa-regular fa-trash-can"></i>
-              <span>{{ profilePhotoSaving() ? 'Saving...' : 'Remove photo' }}</span>
-            </button>
-
-            <p class="profile-photo-feedback" *ngIf="profilePhotoError()">{{ profilePhotoError() }}</p>
-
-            <div class="profile-menu-separator"></div>
-
             <button type="button" class="profile-menu-action sign-out" (click)="logout()">
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
               <span>Sign Out</span>
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </button>
           </div>
         </div>

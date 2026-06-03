@@ -760,14 +760,12 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                   inputField(
                     "LinkedIn Profile URL *",
                     linkedinController,
-                    validator: (val) {
-                      if (val == null || val.isEmpty) {
-                        return "Enter valid LinkedIn URL";
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "LinkedIn profile is required";
                       }
-                      final trimmed = val.trim();
-                      if (!trimmed.startsWith("https://www.linkedin.com/in/") &&
-                          !trimmed.startsWith("https://linkedin.com/in/")) {
-                        return "Enter valid LinkedIn URL";
+                      if (!value.trim().contains("linkedin.com")) {
+                        return "Enter a valid LinkedIn profile URL";
                       }
                       return null;
                     },

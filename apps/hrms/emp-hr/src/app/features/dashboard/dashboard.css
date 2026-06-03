@@ -29,9 +29,9 @@
 }
 
 .header-main h1 {
-  font-size: var(--text-4xl);
+  
   color: var(--accent-primary);
-  margin-bottom: 0.75rem;
+  
   letter-spacing: -0.02em;
 }
 
@@ -49,7 +49,7 @@
   border: none;
   background: transparent;
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -78,7 +78,7 @@
 .date-display .time {
   font-family: var(--font-heading);
   font-size: var(--text-xl);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent-primary);
   display: block;
 }
@@ -126,7 +126,7 @@
 
 .stat-value {
   font-size: var(--text-3xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--accent-primary);
   line-height: 1.1;
   margin: 0 0 0.25rem 0;
@@ -135,7 +135,7 @@
 .stat-label {
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .stat-icon-container {
@@ -202,7 +202,7 @@
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .trend-badge.positive {
@@ -223,13 +223,13 @@
 .trend-text {
   font-size: 0.75rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 /* Quick Actions Section */
 .section-title {
   font-size: var(--text-xl);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent-primary);
   margin-bottom: 1.25rem;
   display: flex;
@@ -292,7 +292,7 @@
 
 .action-details h4 {
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent-primary);
   margin: 0;
 }
@@ -334,7 +334,7 @@
 
 .card-header h3 {
   font-size: var(--text-xl);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .card-header .header-meta {
@@ -382,14 +382,14 @@
 .summary-stat .label {
   font-size: 0.75rem;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .summary-stat .value {
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
 }
 
@@ -414,7 +414,7 @@
 
 .avg-label {
   font-size: 0.65rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #94A3B8;
   background: white;
   padding: 0.2rem 0.5rem;
@@ -518,7 +518,7 @@
 
 .tt-date {
   display: block;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #94A3B8;
   margin-bottom: 0.5rem;
   border-bottom: 1px solid #334155;
@@ -545,7 +545,7 @@
 .bar-label {
   font-size: var(--text-xs);
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-transform: uppercase;
 }
 
@@ -600,7 +600,7 @@
 
 .activity-content h5 {
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent-primary);
   margin: 0 0 0.25rem;
 }
@@ -628,7 +628,7 @@
   border: 1px solid var(--border-color);
   background: transparent;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: var(--text-sm);
   cursor: pointer;
   display: flex;

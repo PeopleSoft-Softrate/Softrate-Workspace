@@ -21,7 +21,7 @@
   background: rgba(180, 35, 24, 0.06);
   color: var(--status-negative);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .ticket-command-bar {
@@ -45,7 +45,7 @@
   margin: 0;
   color: var(--text-strong);
   font-size: 22px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.15;
   letter-spacing: 0;
 }
@@ -105,13 +105,13 @@
 .metric-cell span {
   color: #667085;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .metric-cell strong {
   color: #111827;
   font-size: 30px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -156,7 +156,7 @@
   margin-top: 4px;
   color: #111827;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .queue-live-dot {
@@ -215,7 +215,7 @@
 .ticket-key {
   color: #667085;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -223,7 +223,7 @@
   overflow: hidden;
   color: #111827;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -243,7 +243,7 @@
 .conversation-meta {
   color: #667085;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
 
@@ -334,7 +334,7 @@
   background: #111827;
   color: #ffffff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .message-card:not(.client-message) .message-avatar {
@@ -363,7 +363,7 @@
 
 .message-head strong {
   color: #111827;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .message-body p,
@@ -404,7 +404,7 @@
 .reply-actions span {
   color: #667085;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .context-panel {
@@ -455,7 +455,7 @@
   align-items: center;
   gap: 8px;
   color: #111827;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: right;
 }
 
@@ -477,7 +477,7 @@
   background: #f8fafc;
   color: #334155;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 }
 

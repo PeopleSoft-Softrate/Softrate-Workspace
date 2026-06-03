@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { CheckmarkCircle01Icon, DiplomaIcon, OrientationLandscapeToPotraitIcon, OrientationPotraitToLandscapeIcon } from '@hugeicons/core-free-icons';
+import { CheckmarkCircle01Icon, DiplomaIcon, OrientationLandscapeToPotraitIcon, OrientationPotraitToLandscapeIcon, LicenseDraftIcon, Invoice01Icon, Shield01Icon } from '@hugeicons/core-free-icons';
 import { finalize } from 'rxjs';
 
 @Component({
@@ -24,6 +24,9 @@ export class CertificateSettings implements OnInit {
   readonly DiplomaIcon = DiplomaIcon;
   readonly OrientationLandscapeToPotraitIcon = OrientationLandscapeToPotraitIcon;
   readonly OrientationPotraitToLandscapeIcon = OrientationPotraitToLandscapeIcon;
+  readonly LicenseDraftIcon = LicenseDraftIcon;
+  readonly Invoice01Icon = Invoice01Icon;
+  readonly Shield01Icon = Shield01Icon;
 
   /** Safe placeholder hint for the paragraph textarea — avoids Angular strict-template parsing {{}} */
   readonly paraPlaceholderHint =
@@ -77,17 +80,17 @@ export class CertificateSettings implements OnInit {
     {
       name: 'Onboarding Documents',
       docs: [
-        { id: 'offerLetter', label: 'Offer Letter' },
-        { id: 'annexure',    label: 'Annexure' },
-        { id: 'nda',         label: 'NDA' }
+        { id: 'offerLetter', label: 'Offer Letter', icon: this.LicenseDraftIcon },
+        { id: 'annexure',    label: 'Annexure', icon: this.Invoice01Icon },
+        { id: 'nda',         label: 'NDA', icon: this.Shield01Icon }
       ]
     },
     {
       name: 'Offboarding Documents',
       docs: [
-        { id: 'lor',                  label: 'Letter of Recommendation' },
-        { id: 'internshipCompletion', label: 'Internship Completion' },
-        { id: 'projectCompletion',    label: 'Project Completion' }
+        { id: 'lor',                  label: 'Letter of Recommendation', icon: this.DiplomaIcon },
+        { id: 'internshipCompletion', label: 'Internship Completion', icon: this.CheckmarkCircle01Icon },
+        { id: 'projectCompletion',    label: 'Project Completion', icon: this.CheckmarkCircle01Icon }
       ]
     }
   ];

@@ -8,8 +8,8 @@ import { Observable, forkJoin, map } from 'rxjs';
 export class ApiService {
   private useLocalBackend = false;
   private baseUrl = this.useLocalBackend
-    ? 'http://192.168.29.43:5001'
-    : 'https://softrate-workspace-jd1c.onrender.com';
+    ? 'http://localhost:5001'
+    : 'https://workspace.softrateglobal.com/hrms-api';
 
 
   constructor(private http: HttpClient) { }
@@ -226,12 +226,18 @@ export class ApiService {
         const internSummary = getSummary(fullInternTrend, data.activeInterns?.length || 0, maxIntern);
         const employeeSummary = getSummary(fullEmployeeTrend, data.activeEmployees?.length || 0, maxEmployee);
 
+        const now = new Date();
+        const totalInternsCount = (data.activeInterns || []).filter(i => {
+           if (!i.onboardingDate) return false;
+           return new Date(i.onboardingDate) <= now;
+        }).length;
+
         return {
           interns: [
-            { label: 'Today Attendance', value: data.internAttendance.count.toString(), icon: 'fa-solid fa-circle-check', color: 'green', link: '/attendance/today', trend: internAttTrend },
+            { label: 'Total Interns', value: totalInternsCount.toString(), icon: 'fa-solid fa-users', color: 'teal', link: '/interns', trend: '+4.1%' },
+            { label: 'Active Interns', value: data.internAttendance.count.toString(), icon: 'fa-solid fa-fingerprint', color: 'green', link: '/attendance/today', trend: internAttTrend },
             { label: 'Pending Leaves', value: data.pendingLeaves.length.toString(), icon: 'fa-solid fa-clock', color: 'orange', link: '/leaves', trend: '-2.5%' },
-            { label: 'Active Interns', value: data.activeInterns.length.toString(), icon: 'fa-solid fa-users', color: 'teal', link: '/interns', trend: '+4.1%' },
-            { label: 'New Applications', value: data.initialInterns.length.toString(), icon: 'fa-solid fa-list-check', color: 'blue', link: '/interns/requests', trend: '+12%' }
+            { label: 'New Applications', value: data.initialInterns.length.toString(), icon: 'fa-solid fa-user-plus', color: 'blue', link: '/interns/requests', trend: '+12%' }
           ],
           employees: [
             { label: 'Today Attendance', value: data.employeeAttendance.count.toString(), icon: 'fa-solid fa-circle-check', color: 'green', link: '/attendance/today', trend: empAttTrend },

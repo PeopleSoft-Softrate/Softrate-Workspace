@@ -102,7 +102,7 @@ a {
   background: rgba(248, 250, 252, 0.8);
   color: #1e293b;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   transition: all 0.2s ease;
   outline: none;
 }
@@ -116,7 +116,7 @@ a {
 .input-label {
   display: block;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #94a3b8;
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -125,7 +125,7 @@ a {
 
 .settings-section-title {
   font-size: 1.2rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #334155;
   letter-spacing: -0.01em;
 }
@@ -199,7 +199,7 @@ a {
 
 .search-input::placeholder {
   color: #94a3b8;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .btn-edit-followup {

@@ -2,7 +2,7 @@
   display: flex;
   height: 100vh;
   width: 100vw;
-  background-color: var(--bg-primary);
+  background-color: var(--hc-bg);
   overflow: hidden;
 }
 
@@ -21,32 +21,59 @@
   padding: 1.5rem 1.25rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
   height: 80px;
 }
 
+.minimize-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  transition: var(--transition-fast);
+}
+
+.minimize-btn:hover {
+  background: var(--bg-primary);
+  color: var(--accent-primary);
+}
+
 .logo-box {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .logo-box img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 4px;
+  padding: 6px;
+}
+
+.header-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .header-text h2 {
   font-size: var(--text-3xl); /* 20px */
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   letter-spacing: -0.025em;
 }
@@ -54,7 +81,7 @@
 .header-text .subtitle {
   font-size: var(--text-md); /* 12px */
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .sidebar-nav {
@@ -83,12 +110,15 @@
 
 .nav-label {
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.075em;
   padding: 0 1rem;
   margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-item {
@@ -99,9 +129,17 @@
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-size: var(--text-base);
   transition: var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-item:hover {
@@ -112,7 +150,7 @@
 .nav-item.active {
   background-color: var(--border-color);
   color: var(--accent-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .icon-box {
@@ -159,13 +197,48 @@
   background-color: transparent;
 }
 
+/* Minimized Sidebar State */
+.app-container.sidebar-minimized .sidebar {
+  width: 80px;
+}
+
+.app-container.sidebar-minimized .header-text {
+  display: none;
+}
+
+.app-container.sidebar-minimized .sidebar-header {
+  padding: 1.5rem 0.5rem;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  height: auto;
+}
+
+.app-container.sidebar-minimized .minimize-btn {
+  margin: 0;
+}
+
+.app-container.sidebar-minimized .nav-label {
+  display: none;
+}
+
+.app-container.sidebar-minimized .nav-item {
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.app-container.sidebar-minimized .nav-item span {
+  display: none;
+}
+
 /* Main Content Area */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  background: var(--bg-primary);
+  background: var(--hc-bg);
   transition: all 0.3s ease;
 }
 
@@ -293,14 +366,14 @@
 
 .dropdown-header h3 {
   font-size: var(--text-2xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin: 0;
 }
 
 .count-badge {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-secondary);
   background: var(--border-color);
   padding: 0.25rem 0.625rem;
@@ -349,7 +422,7 @@
 
 .item-label {
   font-size: 0.6875rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -357,7 +430,7 @@
 
 .item-subject {
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0.125rem 0;
 }
@@ -397,7 +470,7 @@
   color: var(--bg-secondary);
   border-radius: 10px;
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -487,7 +560,7 @@
   justify-content: center;
   flex-shrink: 0;
   font-size: var(--text-lg);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1;
   box-shadow: 0 0 0 3px var(--bg-secondary), var(--hc-shadow-sm);
   overflow: hidden;
@@ -509,7 +582,7 @@
   min-width: 0;
   color: var(--text-primary);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -562,7 +635,7 @@
   width: var(--profile-dropdown-avatar-size);
   height: var(--profile-dropdown-avatar-size);
   border: none;
-  border-radius: var(--hc-radius);
+  border-radius: 50%;
   background: var(--accent-primary);
   color: var(--bg-secondary);
   display: flex;
@@ -570,7 +643,7 @@
   justify-content: center;
   flex-shrink: 0;
   font-size: var(--text-4xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   line-height: 1;
   padding: 0;
   cursor: pointer;
@@ -602,7 +675,7 @@
 .profile-summary-copy h3 {
   color: var(--text-primary);
   font-size: var(--text-2xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   margin: 0 0 0.125rem;
   white-space: nowrap;
   overflow: hidden;
@@ -613,18 +686,18 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-lg);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 1.3;
 }
 
 .profile-summary-copy .profile-code {
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .profile-summary-copy .profile-online {
   color: var(--success-strong);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .profile-menu-action {
@@ -639,7 +712,7 @@
   padding: 0 1.25rem;
   cursor: pointer;
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: left;
   transition: var(--transition-fast);
 }
@@ -656,12 +729,13 @@
 
 .profile-menu-action.sign-out {
   color: var(--hc-danger);
+  justify-content: space-between;
 }
 
 .profile-photo-feedback {
   color: var(--hc-danger);
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   padding: 0 1.25rem 0.75rem;
 }
 

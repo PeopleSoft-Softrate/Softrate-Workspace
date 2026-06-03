@@ -185,7 +185,7 @@
   color: #18181b;
   font-family: var(--font-heading, var(--font-body));
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: left;
 }
 
@@ -209,7 +209,7 @@
   color: #71717a;
   font-family: var(--font-ui, var(--font-body));
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -238,7 +238,7 @@
   color: #52525b;
   font-family: var(--font-heading, var(--font-body));
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: left;
   box-shadow: none;
   transition: background 140ms ease, color 140ms ease;
@@ -271,7 +271,7 @@
 
 .sidebar-link.active {
   color: #09090b;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .sidebar-link.active::before {
@@ -387,7 +387,7 @@
   color: #111827;
   font-family: var(--font-ui, var(--font-body));
   font-size: 20px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
   line-height: 1.1;
   overflow: hidden;
@@ -456,7 +456,7 @@
   background: #ffffff;
   color: #111827;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 .record-toolbar .field-select {
@@ -492,7 +492,7 @@
   background: #ffffff;
   padding: 10px 12px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .finance-content {
@@ -555,7 +555,7 @@
   background: #141a24;
   color: #f8fafc;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.02em;
 }
 
@@ -588,7 +588,7 @@
   overflow: hidden;
   color: #111827;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -654,19 +654,19 @@
 .profile-menu-name {
   color: #111827;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .profile-menu-meta {
   color: #6b7280;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .profile-menu-status {
   color: #16a34a;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .modal-backdrop {
@@ -702,7 +702,7 @@
   margin: 0 0 4px;
   color: #64748b;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -725,7 +725,7 @@
   background: #ffffff;
   color: #111827;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .detail-grid {
@@ -754,7 +754,7 @@
 .detail-item span {
   color: #64748b;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .detail-item strong {
@@ -762,7 +762,7 @@
   overflow-wrap: anywhere;
   color: #111827;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 @media (max-width: 980px) {

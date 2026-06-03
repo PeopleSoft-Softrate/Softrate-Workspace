@@ -8,8 +8,8 @@
 
 .page-header h1 {
   font-family: var(--font-heading);
-  font-size: var(--text-3xl);
-  font-weight: 800;
+  
+  
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
@@ -59,7 +59,7 @@
 .hero-content h2 {
   font-family: var(--font-heading);
   font-size: var(--text-2xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
@@ -85,7 +85,7 @@
 .section-title h3 {
   font-family: var(--font-heading);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
 
@@ -100,7 +100,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border: 1px solid var(--border-color);
   padding: 0.5rem 0.75rem;
   border-radius: 12px;
@@ -131,7 +131,7 @@
   background: transparent;
   outline: none;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
@@ -140,7 +140,7 @@
 .empty-state-card {
   text-align: center;
   padding: 3rem 2rem;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border-radius: 16px;
   border: 2px dashed #e2e8f0;
   color: #94a3b8;
@@ -154,7 +154,7 @@
 
 .empty-state-card p {
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 /* NAVIGATION SIDEBAR */
@@ -205,7 +205,7 @@
 .menu-title {
   font-family: var(--font-heading);
   font-size: 0.625rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #94a3b8;
@@ -238,7 +238,7 @@
   justify-content: center;
   font-size: 1.25rem;
   transition: all 0.2s ease;
-  background: #f8fafc;
+  background: var(--hc-bg);
   color: var(--text-secondary);
 }
 
@@ -251,7 +251,7 @@
 .action-label {
   font-family: var(--font-body);
   font-size: 0.6rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   text-align: center;
   line-height: 1.2;
@@ -288,7 +288,7 @@
 
 .nav-link:hover .action-label,
 .nav-link.active .action-label {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
 
@@ -308,7 +308,7 @@
 .header-content h1 {
   font-family: var(--font-heading);
   font-size: var(--text-4xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #0f172a;
   letter-spacing: -0.02em;
   margin-bottom: 0.5rem;
@@ -326,7 +326,7 @@
   border: none;
   padding: 0.875rem 1.75rem;
   border-radius: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: var(--text-lg);
   display: flex;
   align-items: center;
@@ -390,7 +390,7 @@
   border: 1px solid #dcfce7;
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -409,7 +409,7 @@
 
 .location-item {
   padding: 0.75rem;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border-radius: 12px;
   border: 1px solid var(--border-color);
 }
@@ -420,7 +420,7 @@
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   width: 100%;
   outline: none;
 }
@@ -431,7 +431,7 @@
   padding: 12px;
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   line-height: 1.6;
   resize: vertical;
   overflow: auto;
@@ -456,13 +456,99 @@
   color: white;
 }
 
+/* LEAVE POLICIES UI */
+.leave-policies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.leave-policy-header {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1fr 1.5fr auto;
+  gap: 1.5rem;
+  padding: 0 1rem 0.5rem;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.leave-policy-item {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1fr 1.5fr auto;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-smooth);
+}
+
+.leave-policy-item:hover {
+  background: var(--bg-primary);
+  border-color: #cbd5e1;
+}
+
+.leave-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.625rem 1rem;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  width: 100%;
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.leave-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05);
+}
+
+.leave-input-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px;
+  padding-right: 2.5rem;
+}
+
+.btn-remove-leave {
+  background: #fee2e2;
+  color: var(--hc-danger);
+  border: 1px solid transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-remove-leave:hover {
+  background: var(--hc-danger);
+  color: white;
+  border-color: var(--hc-danger);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
+}
+
 /* TOGGLE STYLES */
 .toggle-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border-radius: 16px;
   border: 1px solid var(--border-color);
 }
@@ -470,7 +556,7 @@
 .toggle-info h4 {
   font-family: var(--font-heading);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin-bottom: 0.25rem;
 }
 
@@ -539,7 +625,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .field-group label {
   display: block;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.025em;
   color: #94a3b8;
@@ -566,7 +652,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   font-size: 0.75rem;
   color: #94a3b8;
   margin-top: 0.5rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .branding-grid {
@@ -598,7 +684,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   gap: 1rem;
   padding: 1.25rem;
   text-align: center;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border: 1px dashed #cbd5e1;
   border-radius: 12px;
 }
@@ -627,7 +713,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .upload-empty-state {
   color: #64748b;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .upload-action {
@@ -638,7 +724,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   gap: 0.5rem;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   border-radius: 999px;
 }
 
@@ -666,7 +752,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .payroll-category {
-  background: #f8fafc;
+  background: var(--hc-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
@@ -692,7 +778,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   border-left: 4px solid #10b981;
 }
 
@@ -732,7 +818,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .header-left h3 {
   font-family: var(--font-heading);
   font-size: var(--text-xl);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
@@ -754,7 +840,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   position: relative;
   display: flex;
   align-items: center;
-  background: #f8fafc;
+  background: var(--hc-bg);
   border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 0 1rem;
@@ -774,7 +860,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   background: transparent;
   outline: none;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-primary);
   padding-left: 0.5rem;
   width: 100%;
@@ -793,7 +879,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   background: transparent;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   border-radius: 8px;
   cursor: pointer;
@@ -822,10 +908,10 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .payroll-table th {
-  background: #f8fafc;
+  background: var(--hc-bg);
   padding: 1rem 1.25rem;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #64748b;
@@ -863,14 +949,14 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .user-name {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   font-size: 0.9375rem;
 }
 
 .user-id {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #64748b;
 }
 
@@ -886,10 +972,10 @@ input:checked + .slider:before { transform: translateX(20px); }
   border-radius: 8px;
   padding: 0 0.5rem;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   outline: none;
-  background: #f8fafc;
+  background: var(--hc-bg);
   transition: all 0.2s;
 }
 
@@ -900,7 +986,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .net-salary-cell {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #10b981;
   font-size: 1rem;
 }
@@ -909,12 +995,12 @@ input:checked + .slider:before { transform: translateX(20px); }
   text-align: center;
   padding: 3rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .muted-dash {
   color: #cbd5e1;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 /* PF and Tax Rules Styling */
@@ -957,7 +1043,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .toggle-info-payroll h4 {
   margin: 0;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
@@ -1011,7 +1097,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .lop-card-header h3 {
   font-family: var(--font-heading);
   font-size: var(--text-lg);
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: var(--text-primary);
   margin: 0 0 0.25rem;
 }
@@ -1146,7 +1232,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .lop-type-info strong {
   display: block;
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin-bottom: 0.2rem;
 }
@@ -1180,7 +1266,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   position: absolute;
   right: 0.75rem;
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-muted);
   pointer-events: none;
 }
@@ -1196,7 +1282,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   padding: 0.75rem 1rem;
   font-size: var(--text-base);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin-top: 0.5rem;
 }
 

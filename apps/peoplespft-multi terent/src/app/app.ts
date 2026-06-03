@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon } from '@hugeicons/core-free-icons';
+import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '@hugeicons/core-free-icons';
 import { ApiService } from './services/api.service';
 import { forkJoin } from 'rxjs';
 import { Alert } from './shared/components/alert/alert';
@@ -24,6 +24,7 @@ import { GlobalSearch } from './shared/components/global-search/global-search';
   styleUrl: './app.css',
 })
 export class App {
+  @ViewChild('profileMenuWrapper') profileMenuWrapper!: ElementRef;
   title = 'admin-page';
   router = inject(Router);
   readonly StudentsIcon = StudentsIcon;
@@ -42,6 +43,8 @@ export class App {
   readonly SentIcon = SentIcon;
   readonly Invoice01Icon = Invoice01Icon;
   readonly Notification01Icon = Notification01Icon;
+  readonly PanelLeftCloseIcon = PanelLeftCloseIcon;
+  readonly PanelLeftOpenIcon = PanelLeftOpenIcon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   userName = signal<string | null>(null);
@@ -56,6 +59,14 @@ export class App {
   apiService = inject(ApiService);
 
   currentUrl = signal<string>('');
+  isSidebarMinimized = signal<boolean>(false);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.showUserMenu() && this.profileMenuWrapper && !this.profileMenuWrapper.nativeElement.contains(event.target)) {
+      this.showUserMenu.set(false);
+    }
+  }
 
   constructor() {
     this.currentUrl.set(this.router.url);
@@ -104,6 +115,10 @@ export class App {
     this.showNotifications.set(false);
     this.profilePhotoError.set(null);
     this.showUserMenu.update(v => !v);
+  }
+
+  toggleSidebar() {
+    this.isSidebarMinimized.update(v => !v);
   }
 
   checkNotifications() {
@@ -321,23 +336,6 @@ export class App {
         this.profilePhotoSaving.set(false);
         this.profilePhotoError.set(err.error?.message || 'Unable to update profile photo.');
         input.value = '';
-      }
-    });
-  }
-
-  removeProfilePhoto() {
-    if (this.profilePhotoSaving()) return;
-
-    this.profilePhotoSaving.set(true);
-    this.profilePhotoError.set(null);
-    this.apiService.removeProfilePhoto().subscribe({
-      next: (res: any) => {
-        if (res.user) this.setCurrentUser(res.user, true);
-        this.profilePhotoSaving.set(false);
-      },
-      error: (err) => {
-        this.profilePhotoSaving.set(false);
-        this.profilePhotoError.set(err.error?.message || 'Unable to remove profile photo.');
       }
     });
   }

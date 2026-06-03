@@ -146,7 +146,7 @@
   margin: 0;
   color: var(--admin-text);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: -0.03em;
   line-height: 1.15;
   text-transform: uppercase;
@@ -156,7 +156,7 @@
   margin: 8px 0 0;
   color: #71717a;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -211,7 +211,7 @@
   margin: 0;
   color: var(--admin-text);
   font-size: 17px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: -0.02em;
   line-height: 1.25;
   text-transform: uppercase;
@@ -236,7 +236,7 @@
   background: #e5eaf2;
   color: #667085;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   text-transform: uppercase;
 }
 
@@ -330,7 +330,7 @@
   background: transparent;
   color: #3157c8;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .admin-leads-company-pane .empty-state-inline-pane {
@@ -375,7 +375,7 @@
 }
 
 .navbar.dashboard-nav .admin-topbar-page-title {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
 }
 
@@ -427,7 +427,7 @@
 .admin-leads-rail-item .rail-item-name,
 .admin-remarks-view .lead-item-name,
 .admin-followups-view .custom-scroll > div > div:first-child {
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
   letter-spacing: 0 !important;
   text-transform: uppercase;
 }
@@ -439,7 +439,7 @@
 }
 
 .admin-leads-company-header h3 {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0;
 }
 
@@ -448,7 +448,7 @@
   min-height: 42px !important;
   border-radius: 999px !important;
   background: #ffffff !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
   color: #111827 !important;
   box-shadow: none !important;
 }
@@ -467,7 +467,7 @@
   padding: 0 28px !important;
   border-radius: 999px !important;
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   line-height: 1 !important;
   white-space: nowrap !important;
 }
@@ -496,7 +496,7 @@
 .admin-lead-card-head h4 {
   flex: 1;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   letter-spacing: 0;
 }
 
@@ -516,7 +516,7 @@
   align-items: center;
   gap: 8px;
   color: #111827;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .admin-lead-record-card .lead-card-remark-entry {
@@ -541,7 +541,7 @@
   background: #ffffff !important;
   border: 1px solid #d8dee8 !important;
   color: #667085 !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .admin-lead-record-card .lead-card-invoice-action:hover {
@@ -625,7 +625,7 @@
   flex: 0 0 auto;
   color: #667085;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   white-space: nowrap;
 }
 
@@ -650,7 +650,7 @@
   border: 1px solid;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
@@ -671,7 +671,7 @@
 .admin-remarks-view .leads-sidebar-header h3,
 .admin-remarks-view .leads-sidebar-header div,
 .admin-remarks-view .lead-item-name {
-  font-weight: 500 !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 .admin-followups-view .dash-header-row {
@@ -742,7 +742,7 @@
   background: #ffffff !important;
   color: #111827 !important;
   font-size: 14px !important;
-  font-weight: 700 !important;
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .admin-followups-filter-chip.active {
@@ -762,7 +762,7 @@
   background: #111827;
   color: #ffffff;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1;
 }
 
@@ -825,7 +825,7 @@
   background: transparent;
   color: #111827;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .admin-followups-date-input::-webkit-calendar-picker-indicator {
@@ -940,7 +940,7 @@
   gap: 6px;
   color: #667085;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .invoice-preview {
@@ -959,7 +959,7 @@
 
 .invoice-text-logo {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .quotation-logo {
@@ -972,7 +972,7 @@
 .quotation-hero-title h2 {
   margin: 0 0 8px;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .quotation-hero-company p {
@@ -1001,7 +1001,7 @@
 
 .quotation-service-header {
   color: #667085;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   background: #f8fafc;
 }
 
@@ -1045,7 +1045,7 @@
 .company-full-label {
   color: #667085;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .company-full-stat strong {
@@ -1081,7 +1081,7 @@
 .company-director-main h4 {
   margin: 0 0 4px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .company-director-main span,

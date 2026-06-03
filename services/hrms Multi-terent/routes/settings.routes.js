@@ -40,6 +40,7 @@ router.get('/company', verifyTenant, async (req, res) => {
       success: true,
       settings: {
         ...settings,
+        leavePolicies: companyObj.leavePolicies || settings.leavePolicies || [],
         internRoles: internRoles,
         employeeRoles: employeeRoles
       },
@@ -81,7 +82,70 @@ router.put('/company', verifyTenant, async (req, res) => {
     if (communication !== undefined) company.settings.communication = communication;
     if (employeeRoles !== undefined) company.settings.employeeRoles = employeeRoles;
     if (internRoles !== undefined) company.settings.internRoles = internRoles;
-    if (leavePolicies !== undefined) company.settings.leavePolicies = leavePolicies;
+    
+    if (leavePolicies !== undefined) {
+      company.leavePolicies = leavePolicies;
+      company.markModified('leavePolicies');
+
+      try {
+        const Employee = require('../models/EmployeeModel.js');
+        const Intern = require('../models/Intern.js');
+        const LeaveCounter = require('../models/leaveCounter.model.js');
+        
+        const employees = await Employee.find({ companyId: req.tenant.companyId, status: { $in: ['approved', 'ongoing'] } });
+        const interns = await Intern.find({ companyId: req.tenant.companyId, status: { $in: ['approved', 'ongoing'] } });
+        
+        const now = new Date();
+        
+        const syncCounters = async (users, userType) => {
+          for (const user of users) {
+            const userId = userType === 'employee' ? user.EmployeeId : user.internid;
+            if (!userId) continue;
+            
+            const existingCounters = await LeaveCounter.find({ companyId: req.tenant.companyId, employeeId: userId });
+            
+            for (const policy of leavePolicies) {
+              if (policy.appliesTo === 'both' || policy.appliesTo === userType) {
+                const existing = existingCounters.find(c => c.leaveType === policy.name);
+                if (existing) {
+                  if (existing.totalAllowed !== policy.allowance) {
+                    const diff = policy.allowance - existing.totalAllowed;
+                    existing.totalAllowed = policy.allowance;
+                    existing.balance = existing.balance + diff;
+                    await existing.save();
+                  }
+                } else {
+                  const startDate = user.onboardingDate ? new Date(user.onboardingDate) : now;
+                  const nextResetDate = new Date(startDate);
+                  if (policy.frequency === 'monthly') {
+                    nextResetDate.setMonth(now.getMonth() + 1);
+                  } else {
+                    nextResetDate.setFullYear(now.getFullYear() + 1);
+                  }
+                  
+                  await LeaveCounter.create({
+                    companyId: req.tenant.companyId,
+                    employeeId: userId,
+                    leaveType: policy.name,
+                    totalAllowed: policy.allowance,
+                    used: 0,
+                    balance: policy.allowance,
+                    cycleStartDate: startDate,
+                    nextResetDate: nextResetDate
+                  });
+                }
+              }
+            }
+          }
+        };
+        
+        await syncCounters(employees, 'employee');
+        await syncCounters(interns, 'intern');
+        console.log(`[DEBUG] Synced leave policies for ${employees.length} employees and ${interns.length} interns.`);
+      } catch (syncErr) {
+        console.error('[DEBUG] Error syncing leave counters:', syncErr);
+      }
+    }
     
     if (offerLetterSettings !== undefined) {
       company.settings.offerLetterSettings = {
@@ -114,7 +178,10 @@ router.put('/company', verifyTenant, async (req, res) => {
     res.json({
       success: true,
       message: 'Settings updated successfully',
-      settings: company.settings,
+      settings: {
+        ...company.settings,
+        leavePolicies: company.leavePolicies
+      },
       workDurationSettings: company.workDurationSettings,
       offerLetterSettings: company.settings.offerLetterSettings
     });

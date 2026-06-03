@@ -137,7 +137,7 @@
 
 .sidebar-header {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #6b7280;
   /* Gray for headers on dark bg */
   text-transform: uppercase;
@@ -164,7 +164,7 @@
   color: #9ca3af;
   /* Light color for dark theme */
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: var(--font-body);
@@ -202,7 +202,7 @@
   /* Emerald Green with transparency */
   color: #10b981;
   /* Emerald Green */
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .sidebar-item.active::after {
@@ -247,7 +247,7 @@
 .dash-title {
   font-family: var(--font-head);
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: -0.02em;
   color: var(--text-heading);
   margin: 0;
@@ -267,7 +267,7 @@
   background: transparent;
   color: var(--text-2);
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   padding: 0.35rem 0.875rem;
   border-radius: 8px;
   cursor: pointer;
@@ -278,7 +278,7 @@
 .period-tabs button.active {
   background: #10b981;
   color: white;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -366,7 +366,7 @@
 
 .kpi-val {
   font-size: 1.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-heading);
   letter-spacing: -0.5px;
   line-height: 1.2;
@@ -374,7 +374,7 @@
 
 .kpi-label {
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-2);
   white-space: nowrap;
 }
@@ -392,7 +392,7 @@
 .kpi-progress-text {
   position: absolute;
   font-size: 0.6rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: center;
   line-height: 1.1;
   pointer-events: none;
@@ -420,7 +420,7 @@
 .kpi-progress-text {
   position: absolute;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: center;
 }
 
@@ -479,7 +479,7 @@
 
 .chart-card-header h3 {
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-heading);
   margin-bottom: 1rem;
 }
@@ -523,12 +523,12 @@
 
 .dl-lbl {
   color: var(--text-2);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   flex: 1;
 }
 
 .dl-val {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
 }
 
@@ -565,13 +565,13 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
 }
 
 .kbh-icon {
   font-size: 0.9rem;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .kpi-bar-track {
@@ -594,7 +594,7 @@
   border-radius: 100px;
   padding: 0.4rem 1rem;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all 0.2s;
   font-family: var(--font-body);
@@ -632,7 +632,7 @@
   text-align: left;
   padding: 0.6rem 0.75rem;
   color: var(--text-2);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-size: 0.8rem;
 }
 
@@ -698,7 +698,7 @@
 .emp-table th {
   padding: 0.875rem 1.25rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -735,7 +735,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: 1rem;
   flex-shrink: 0;
 }
@@ -761,7 +761,7 @@
 }
 
 .emp-name {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
   line-height: 1.2;
 }
@@ -774,7 +774,7 @@
 
 .num-cell {
   text-align: right;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
   font-variant-numeric: tabular-nums;
 }
@@ -891,7 +891,7 @@
   border-radius: 99px;
   color: var(--text-1);
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
@@ -909,7 +909,7 @@
 
 .drilldown-name {
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-1);
 }
 
@@ -944,11 +944,11 @@
 .ds-label {
   font-size: 0.85rem;
   color: var(--text-2);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .ds-val {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: 1rem;
   color: var(--text-heading);
   font-variant-numeric: tabular-nums;
@@ -1008,7 +1008,7 @@
   background: transparent;
   color: var(--text-3);
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   padding: 0.5rem 0.875rem;
   cursor: pointer;
   font-family: var(--font-body);
@@ -1020,7 +1020,7 @@
 .drilldown-tabs button.active {
   color: var(--accent-2);
   border-color: var(--accent-2);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .badge-count {
@@ -1028,7 +1028,7 @@
   background: var(--accent-2);
   color: white;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   min-width: 16px;
   height: 16px;
   line-height: 16px;
@@ -1065,7 +1065,7 @@
 
 .dm-row span:last-child {
   color: var(--text-1);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 /* Call history list */
@@ -1091,7 +1091,7 @@
 .ch-type-badge {
   flex-shrink: 0;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 3px 7px;
@@ -1132,7 +1132,7 @@
 
 .ch-number {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
@@ -1160,7 +1160,7 @@
 
 .ch-dur {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--green);
   margin-top: 1px;
 }
@@ -1186,7 +1186,7 @@
 
 .cr-field label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-3);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1228,7 +1228,7 @@
 
 .da-header h3 {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-2);
   margin: 0;
 }
@@ -1369,14 +1369,14 @@
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   flex-shrink: 0;
 }
 
 .cc-title {
   font-family: var(--font-head);
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
   margin: 0;
   letter-spacing: -0.02em;
@@ -1415,7 +1415,7 @@
   padding: 0.25rem 0.65rem;
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   display: inline-block;
   border: 1px solid var(--border);
 }
@@ -1429,7 +1429,7 @@
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .btn-add-tag:hover {
@@ -1492,7 +1492,7 @@
 
 .cc-detail label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1500,7 +1500,7 @@
 
 .cc-detail div {
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-1);
 }
 
@@ -1513,7 +1513,7 @@
   border: none;
   color: var(--accent-2);
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   margin-left: 8px;
   padding: 2px 6px;
@@ -1528,7 +1528,7 @@
 
 .cc-address-value {
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-1);
 }
 
@@ -1536,7 +1536,7 @@
   color: var(--green);
   font-size: 0.8rem;
   margin-left: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .cc-address-edit {
@@ -1576,7 +1576,7 @@
 .cc-addr-error {
   font-size: 0.8rem;
   color: #f87171;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .legend-item {
@@ -1596,12 +1596,12 @@
 
 .lg-label {
   color: var(--text-2);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   flex: 1;
 }
 
 .lg-val {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
 }
 
@@ -1670,7 +1670,7 @@
   margin-bottom: 16px;
   color: #be123c;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .dash-error-banner.dash-error-soft {
@@ -1693,7 +1693,7 @@
   border-radius: 6px;
   padding: 4px 12px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: inherit;
   cursor: pointer;
   white-space: nowrap;
@@ -1737,7 +1737,7 @@
 
 .donut-center-val {
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-heading);
   font-family: var(--font-head);
   line-height: 1;
@@ -1746,7 +1746,7 @@
 .donut-center-sub {
   font-size: 0.7rem;
   color: var(--text-3);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   margin-top: 3px;
 }
 

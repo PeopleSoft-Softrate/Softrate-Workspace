@@ -45,7 +45,7 @@
 }
 
 .lead-item-name {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-1);
   margin-bottom: 4px;
   white-space: nowrap;
@@ -89,7 +89,7 @@
 
 .cd-header-title {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text-1);
   margin: 0;
 }
@@ -121,7 +121,7 @@
 
 .customer-identity h2 {
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin: 0 0 1rem 0;
   color: #334155;
 }
@@ -155,7 +155,7 @@
 .meta-label {
   width: 100px;
   color: #94a3b8;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-size: 0.95rem;
 }
 
@@ -186,7 +186,7 @@
 }
 
 .nav-link {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-2);
 }
 
@@ -389,7 +389,7 @@
 .period-tabs button,
 .period-toggle-pill button {
   border-radius: 11px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .period-tabs button.active,
@@ -454,7 +454,7 @@
 .payment-history-table th {
   background: #f7faff;
   color: #334155;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .top-list-table tbody tr,
@@ -506,7 +506,7 @@
 
 .drilldown-tabs button {
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .drilldown-tabs button.active {
@@ -613,7 +613,7 @@
 
 .meta-value {
   color: #334155;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 0.95rem;
 }
 
@@ -653,14 +653,14 @@
   top: 45%;
   transform: translateY(-50%);
   font-size: 2.8rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #451a03;
   letter-spacing: -0.02em;
 }
 
 .card-footer-label {
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #92400e;
   letter-spacing: 0.05em;
   opacity: 0.6;
@@ -735,7 +735,7 @@
 .sub-nav-pill {
   padding: 0.5rem 1.25rem;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #64748b;
   border: none;
   background: transparent;

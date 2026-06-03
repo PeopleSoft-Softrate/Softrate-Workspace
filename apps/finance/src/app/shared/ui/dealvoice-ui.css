@@ -93,7 +93,7 @@
 .mini-field span {
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .topbar-search {
@@ -137,7 +137,7 @@
   color: var(--text-strong);
   padding: 0 16px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .utility-button:hover,
@@ -178,7 +178,7 @@
   display: block;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .analytics-strip strong {
@@ -222,7 +222,7 @@
 .metric-label {
   color: #68758a;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
 }
 
@@ -230,7 +230,7 @@
   margin-top: 8px;
   color: #0f172a;
   font-size: 30px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 1.1;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
@@ -283,13 +283,13 @@
 .data-table th {
   color: #6b778b;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   letter-spacing: 0;
   text-transform: none;
 }
 
 .data-table td {
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 .data-table tbody tr {
@@ -323,7 +323,7 @@
   min-height: 40px;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   text-transform: uppercase;
 }
 
@@ -340,11 +340,11 @@
 
 .amount-cell {
   text-align: right;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 .data-table .amount-cell {
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 .status-pill {
@@ -360,7 +360,7 @@
   overflow: hidden;
   font-size: 12px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -371,7 +371,7 @@
   place-items: center;
   color: var(--text-muted);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
 }
 

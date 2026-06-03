@@ -49,6 +49,8 @@ export const routes: Routes = [
   { path: 'holiday-calendar', component: HolidayCalendar }, 
   { path: 'interns', component: InternList },
   { path: 'interns/requests', component: InternRequests },
+  { path: 'interns/add', component: InternAdd },
+  { path: 'interns/add/:id', component: InternAdd },
   { path: 'interns/approve/:id', component: InternAdd },
   { path: 'interns/:id', component: InternDetails },
   { path: 'interns/:id/attendance', component: InternAttendance },

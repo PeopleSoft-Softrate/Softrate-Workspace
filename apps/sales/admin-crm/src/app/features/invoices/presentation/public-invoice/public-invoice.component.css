@@ -37,14 +37,14 @@
 .public-invoice-toolbar span {
   color: #64748b;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .public-invoice-toolbar strong {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #1e293b;
 }
 
@@ -55,7 +55,7 @@
   border-radius: 6px;
   background: #2563eb;
   color: #ffffff;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -101,14 +101,14 @@
 
 .invoice-title-main {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #2563eb;
   letter-spacing: 0.1em;
 }
 
 .invoice-title-sub {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #475569;
   letter-spacing: 0.05em;
 }
@@ -160,7 +160,7 @@
   background: #f1f5f9;
   color: #1e293b;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,7 +177,7 @@
 .company-title {
   margin: 0 0 4px;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #111827;
   text-transform: uppercase;
 }
@@ -212,7 +212,7 @@
 .block-kicker {
   margin: 0 0 6px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -220,7 +220,7 @@
 
 .client-company-title {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: #111827;
   margin-bottom: 6px;
   display: block;
@@ -239,7 +239,7 @@
 
 .client-phone {
   margin-top: 4px !important;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 /* METADATA GRID RIGHT COLUMN */
@@ -265,7 +265,7 @@
 
 .field-label {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #4b5563;
   text-transform: uppercase;
 }
@@ -313,7 +313,7 @@
 
 .invoice-main-table th {
   background-color: #f8fafc;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #1e293b;
   text-transform: uppercase;
   font-size: 10px;
@@ -374,7 +374,7 @@
 }
 
 .summary-left-cell {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #374151;
   vertical-align: middle !important;
 }
@@ -404,7 +404,7 @@
 .grand-total-val {
   font-size: 14px;
   color: #111827;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
 }
 
 /* TOTAL IN WORDS ROW */
@@ -434,7 +434,7 @@
 
 .gst-breakdown-table th {
   background-color: #f8fafc;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #1e293b;
   text-transform: uppercase;
 }
@@ -462,7 +462,7 @@
   align-items: center;
   gap: 4px;
   color: #15803d;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -488,7 +488,7 @@
 .footer-kicker {
   margin: 0 0 6px;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #4b5563;
   text-transform: uppercase;
 }
@@ -503,13 +503,13 @@
 
 .bank-details-list dt {
   color: #4b5563;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .bank-details-list dd {
   margin: 0;
   color: #111827;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .footer-col-upi {
@@ -557,7 +557,7 @@
 
 .sig-header {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #374151;
   line-height: 1.2;
 }
@@ -575,7 +575,7 @@
 
 .sig-footer {
   font-size: 9.5px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #4b5563;
 }
 
@@ -595,7 +595,7 @@
 .terms-kicker {
   margin: 0 0 6px;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: #4b5563;
   text-transform: uppercase;
 }
@@ -632,7 +632,7 @@
 }
 
 .digitally-signed-note {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 @media (max-width: 768px) {

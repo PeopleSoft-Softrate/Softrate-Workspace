@@ -3,6 +3,7 @@ const verifyTenant = require("../middleware/tenant.middleware.js");
 const mongoose = require("mongoose");
 const Intern = require("../models/Intern.js");
 const Resignation = require("../models/resignation.model.js");
+const LeaveCounter = require("../models/leaveCounter.model.js");
 const router = express.Router();
 const multer = require('multer');
 const upload = multer();
@@ -291,6 +292,49 @@ router.put("/accept/:id", verifyTenant,
       if (role) intern.role = role;
 
       await intern.save();
+
+      // 4.5 Initialize Leave Counter for Intern
+      if (onboardingDate) {
+        const startDate = new Date(onboardingDate);
+        let policies = company?.leavePolicies;
+        if (!policies || policies.length === 0) {
+          policies = [
+            { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+            { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
+          ];
+        }
+
+        const records = [];
+        policies.forEach((policy) => {
+          if (policy.appliesTo === 'both' || policy.appliesTo === 'intern') {
+            let resetDate = new Date(startDate);
+            if (policy.frequency === 'monthly') {
+              resetDate.setMonth(resetDate.getMonth() + 1);
+            } else {
+              resetDate.setFullYear(resetDate.getFullYear() + 1);
+            }
+            records.push({
+              companyId: req.tenant.companyId,
+              employeeId: newId,
+              leaveType: policy.name,
+              totalAllowed: policy.allowance,
+              used: 0,
+              balance: policy.allowance,
+              cycleStartDate: startDate,
+              nextResetDate: resetDate
+            });
+          }
+        });
+
+        try {
+          if (records.length > 0) {
+            await LeaveCounter.insertMany(records, { ordered: false });
+            console.log(`[DEBUG] Initialized leave counters for intern ${newId}:`, records.length);
+          }
+        } catch (err) {
+          console.error("[DEBUG] Error initializing leave counters for intern:", err);
+        }
+      }
 
       // 5. Synchronize with User Record (Unified Collection)
       const updatedUser = await User.findOneAndUpdate(

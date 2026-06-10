@@ -77,7 +77,9 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
     _leaveHistoryFuture = fetchLeavesForEmployee();
   }
 
-  final List<String> _leaveTypes = const [
+
+
+  List<String> _leaveTypes = [
     'Casual Leave',
     'Sick Leave',
     'Bereavement Leave',
@@ -101,6 +103,8 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
   DateTime? _toDate;
   int _numberOfDays = 0;
   bool _isSubmitting = false;
+  int _selectedHistoryMonth = DateTime.now().month;
+  int _selectedHistoryYear = DateTime.now().year;
 
   final Map<String, String> _perDayDurations = {};
   final TextEditingController _reasonController = TextEditingController();
@@ -407,7 +411,21 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       final List data = body['data'];
-      return data.map((e) => LeaveBalance.fromJson(e)).toList();
+      final balances = data.map((e) => LeaveBalance.fromJson(e)).toList();
+      
+      if (mounted) {
+        setState(() {
+          _leaveTypes = balances
+              .where((b) => b.balance > 0)
+              .map((b) => b.leaveType)
+              .toList();
+              
+          if (_selectedLeaveType != null && !_leaveTypes.contains(_selectedLeaveType)) {
+            _selectedLeaveType = null;
+          }
+        });
+      }
+      return balances;
     } else {
       throw Exception("Failed to load leave balance");
     }
@@ -570,6 +588,14 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
     }
   }
 
+  Future<void> _refreshData() async {
+    setState(() {
+      _leaveBalanceFuture = fetchLeaveBalance();
+      _leaveHistoryFuture = fetchLeavesForEmployee();
+    });
+    await Future.wait([_leaveBalanceFuture, _leaveHistoryFuture]);
+  }
+
   /* -------------------------------------------------------
      BUILD
   ------------------------------------------------------- */
@@ -593,7 +619,11 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: SingleChildScrollView(
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          color: const Color(0xFF00657F),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -623,17 +653,99 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
               const SizedBox(height: 20),
               _buildSubmitButton(),
               const SizedBox(height: 16),
-              Text(
-                "Leave History",
+                            Text(
+                "Upcoming Leave",
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
-              _buildLeavesList(),
+              _buildLeavesList(isUpcoming: true),
+
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Leave History",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      DropdownButton2<int>(
+                        value: _selectedHistoryMonth,
+                        underline: const SizedBox(),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF00657F)),
+                        iconStyleData: const IconStyleData(
+                          icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF00657F), size: 16),
+                        ),
+                        buttonStyleData: ButtonStyleData(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        dropdownStyleData: DropdownStyleData(
+                          elevation: 0,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        menuItemStyleData: const MenuItemStyleData(height: 40),
+                        items: List.generate(12, (index) {
+                          final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                          return DropdownMenuItem(value: index + 1, child: Text(months[index]));
+                        }),
+                        onChanged: (val) => setState(() => _selectedHistoryMonth = val!),
+                      ),
+                      const SizedBox(width: 8),
+                      DropdownButton2<int>(
+                        value: _selectedHistoryYear,
+                        underline: const SizedBox(),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF00657F)),
+                        iconStyleData: const IconStyleData(
+                          icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF00657F), size: 16),
+                        ),
+                        buttonStyleData: ButtonStyleData(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        dropdownStyleData: DropdownStyleData(
+                          elevation: 0,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        menuItemStyleData: const MenuItemStyleData(height: 40),
+                        items: [DateTime.now().year, DateTime.now().year - 1, DateTime.now().year - 2].map((y) {
+                          return DropdownMenuItem(value: y, child: Text(y.toString()));
+                        }).toList(),
+                        onChanged: (val) => setState(() => _selectedHistoryYear = val!),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildLeavesList(isUpcoming: false),
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -797,6 +909,7 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _Label("LEAVE TYPE"),
+                const SizedBox(height: 8),
                 _dropdownField(
                   value: _selectedLeaveType,
                   items: _leaveTypes,
@@ -805,9 +918,11 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
                 ),
                 const SizedBox(height: 18),
                 _Label("LEAVE REASON"),
+                const SizedBox(height: 8),
                 _textField(_reasonController),
                 const SizedBox(height: 18),
                 _Label("LEAVE DATES"),
+                const SizedBox(height: 8),
                 InkWell(
                   onTap: () async {
                     await _pickFromDate();
@@ -956,7 +1071,7 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
      HISTORY LIST
   ------------------------------------------------------- */
 
-  Widget _buildLeavesList() {
+  Widget _buildLeavesList({required bool isUpcoming}) {
     return Container(
       constraints: const BoxConstraints(minHeight: 120),
       decoration: BoxDecoration(
@@ -987,19 +1102,42 @@ class _EmployeeLeaveRequestState extends State<EmployeeLeaveRequest> {
 
           final leaves = allLeaves.where((leave) {
             try {
-              final from = DateTime.parse(leave.fromDate);
-              return _isRelevantForHistory(from);
+              final from = DateTime.parse(leave.fromDate).toLocal();
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+              final fromDay = DateTime(from.year, from.month, from.day);
+              
+              if (isUpcoming) {
+                return fromDay.isAtSameMomentAs(today) || fromDay.isAfter(today);
+              } else {
+                return fromDay.isBefore(today) && fromDay.month == _selectedHistoryMonth && fromDay.year == _selectedHistoryYear;
+              }
             } catch (_) {
               return false;
             }
           }).toList();
 
+          // Sort leaves: Upcoming -> nearest first. History -> latest first.
+          leaves.sort((a, b) {
+            try {
+              final dateA = DateTime.parse(a.fromDate).toLocal();
+              final dateB = DateTime.parse(b.fromDate).toLocal();
+              if (isUpcoming) {
+                return dateA.compareTo(dateB);
+              } else {
+                return dateB.compareTo(dateA);
+              }
+            } catch (_) {
+              return 0;
+            }
+          });
+
           if (leaves.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
+            return Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                "No upcoming leave records.",
-                style: TextStyle(fontSize: 13, color: Colors.black54),
+                isUpcoming ? "No upcoming leave records." : "No leave history found for selected month/year.",
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
             );
           }

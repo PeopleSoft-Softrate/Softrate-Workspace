@@ -1,3 +1,4 @@
+/* Premium Backdrop */
 .alert-overlay {
   position: fixed;
   inset: 0;
@@ -5,99 +6,124 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
   padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Window */
 .alert-modal {
   background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   overflow: hidden;
-  border: 1px solid #f3f4f6;
-  text-align: center;
+  padding: 24px;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.alert-body {
-  padding: 1.5rem;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.alert-icon-container {
-  margin: 0 auto 1rem;
+/* Header & Content */
+.alert-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.alert-icon-wrapper {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 4rem;
-  width: 4rem;
-  border-radius: 50%;
 }
 
 .alert-icon {
-  height: 2rem;
-  width: 2rem;
+  width: 20px;
+  height: 20px;
 }
 
-.icon-success { background-color: #d1fae5; color: #059669; }
-.icon-error { background-color: #fee2e2; color: #dc2626; }
-.icon-info { background-color: #dbeafe; color: #2563eb; }
-.icon-confirm { background-color: #fef3c7; color: #d97706; }
+/* Themes */
+.alert-success .alert-icon-wrapper { background: #f0fdf4; color: #16a34a; }
+.alert-error .alert-icon-wrapper { background: #fef2f2; color: #dc2626; }
+.alert-info .alert-icon-wrapper { background: #eff6ff; color: #2563eb; }
+.alert-confirm .alert-icon-wrapper { background: #fffbeb; color: #d97706; }
 
 .alert-title {
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-bold);
-  color: #111827;
-  margin-bottom: 0.5rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  line-height: 1.4;
 }
 
 .alert-message {
-  color: #4b5563;
-  font-size: 1rem;
+  color: #64748b;
+  font-size: 14px;
   line-height: 1.5;
+  margin: 0;
 }
 
-.alert-footer {
-  padding: 1rem 1.5rem;
-  background-color: #f9fafb;
+/* Actions */
+.alert-actions {
   display: flex;
-  justify-content: center;
-  gap: 1rem;
-  border-top: 1px solid #f3f4f6;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .btn-cancel, .btn-ok {
-  width: 100%;
-  display: inline-flex;
-  justify-content: center;
+  padding: 8px 16px;
   border-radius: 8px;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  font-weight: var(--font-weight-semibold);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   border: none;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-cancel {
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 .btn-cancel:hover {
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 .btn-ok {
+  background-color: #0f172a;
   color: #ffffff;
 }
 
-.btn-success { background-color: #16a34a; }
-.btn-success:hover { background-color: #15803d; }
+.btn-ok:hover {
+  background-color: #1e293b;
+  transform: translateY(-1px);
+}
 
-.btn-error { background-color: #dc2626; }
-.btn-error:hover { background-color: #b91c1c; }
+.btn-ok:active {
+  transform: translateY(0);
+}
 
-.btn-info { background-color: #2563eb; }
-.btn-info:hover { background-color: #1d4ed8; }
+/* Contextual OK buttons (Optional) */
+.alert-error .btn-ok { background-color: #dc2626; color: white; }
+.alert-error .btn-ok:hover { background-color: #b91c1c; }
+
+.alert-success .btn-ok { background-color: #16a34a; color: white; }
+.alert-success .btn-ok:hover { background-color: #15803d; }

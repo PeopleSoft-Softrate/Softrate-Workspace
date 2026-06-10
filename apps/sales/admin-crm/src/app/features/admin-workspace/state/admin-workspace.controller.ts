@@ -1134,6 +1134,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   changePwdSuccess = '';
   changePwdChecks = { length: false, upper: false, number: false, symbol: false };
 
+  // Add a property to store the token if found early
+  private _initialResetToken: string | null = null;
+
   onResetPasswordInput(val: string): void {
     this.resetNewPassword = val;
     this.resetPwdChecks.length = val.length >= 8;
@@ -1184,7 +1187,16 @@ export abstract class AdminWorkspaceController implements OnInit {
     protected adminFollowupsWorkflow: AdminFollowupsWorkflow,
     protected adminSettingsWorkflow: AdminSettingsWorkflow,
     protected adminEmployeesWorkflow: AdminEmployeesWorkflow
-  ) { }
+  ) { 
+    try {
+      // Check as early as possible before Angular router clears the URL
+      const href = window.location.href;
+      const match = href.match(/[?&]resetToken=([^&#]+)/);
+      if (match && match[1]) {
+        this._initialResetToken = match[1];
+      }
+    } catch (e) {}
+  }
 
   private resolveCrmSalesCompanyCode(user: any): string {
     const code = user.salesCompanyCode || user.adminCompanyCode || user.companyCode || '';
@@ -1237,7 +1249,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
     // Check for reset token in URL
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('resetToken');
+    const token = this._initialResetToken || params.get('resetToken');
     if (token) {
       this.resetTokenValue = token;
       this.isResetPwdOpen = true;

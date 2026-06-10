@@ -1,5 +1,5 @@
 <div class="page-header">
-  <div class="header-content">
+  <div class="header-main">
     <div class="breadcrumb">
       <a routerLink="/employees" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> Back to Employees
@@ -11,7 +11,20 @@
 </div>
 
 <div class="data-container" [class.loading]="isLoading()">
-  <div *ngIf="!isLoading() && requests().length > 0" class="requests-table-wrapper">
+  <div class="search-sort-group" style="display: flex; gap: 0.75rem; align-items: center; justify-content: flex-end; padding: 1rem 1.5rem; background: white; border-bottom: 1px solid var(--border-color);">
+    <div style="position: relative; width: 280px;">
+      <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px;"></i>
+      <input type="text" placeholder="Search by name, role..." (input)="onSearch($event)" style="padding: 0.4rem 0.875rem 0.4rem 32px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; background: var(--hc-bg); font-size: 13px; width: 100%; height: 38px; box-sizing: border-box;">
+    </div>
+    <select [value]="sortFilter()" (change)="setSort($any($event.target).value)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0.4rem 0.875rem; outline: none; background: white; font-size: 13px; color: var(--text-secondary); cursor: pointer; height: 38px;">
+      <option value="recent">Newest to Oldest</option>
+      <option value="oldest">Oldest to Newest</option>
+      <option value="az">Alphabetical (A-Z)</option>
+      <option value="za">Alphabetical (Z-A)</option>
+    </select>
+  </div>
+
+  <div *ngIf="!isLoading() && filteredRequests().length > 0" class="requests-table-wrapper">
     <table class="requests-table">
       <thead>
         <tr>
@@ -22,11 +35,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let req of requests()">
+        <tr *ngFor="let req of filteredRequests()">
           <!-- Applicant -->
           <td>
             <div class="tbl-person">
-              <div class="tbl-avatar onboarding">{{ req.fullName ? req.fullName.substring(0,2).toUpperCase() : 'NA' }}</div>
+              <div class="tbl-avatar onboarding">{{ req.fullName ? req.fullName.substring(0,1).toUpperCase() : 'NA' }}</div>
               <div>
                 <div class="tbl-name" style="display: flex; align-items: center; gap: 6px;">
                   {{ req.fullName }}
@@ -44,8 +57,31 @@
           </td>
           <!-- Info -->
           <td>
-            <div class="tbl-info-icon" [attr.data-tooltip]="'Education: ' + (req.qualification || 'N/A') + '&#xa;College: ' + (req.college || 'N/A') + '&#xa;UG CGPA: ' + (req.ugCgpa || 'N/A') + ' | PG CGPA: ' + (req.pgCgpa || 'N/A') + '&#xa;Experience: ' + (req.isExperienced ? req.experienceYears + ' Yrs' : 'Fresher') + '&#xa;DOB: ' + ((req.dob | date:'shortDate') || 'N/A') + '&#xa;Applied: ' + (req.createdAt | date:'d MMM y')">
+            <div class="tbl-info-icon">
               <i class="fa-solid fa-circle-info"></i>
+              
+              <!-- Unified Info Hover Card -->
+              <div class="links-popover">
+                <div class="popover-title">Applicant Info</div>
+                <div class="info-grid">
+                  <div class="info-popover-row"><span>Education:</span> <strong>{{ req.qualification || 'N/A' }}</strong></div>
+                  <div class="info-popover-row"><span>College:</span> <strong>{{ req.college || 'N/A' }}</strong></div>
+                  <div class="info-popover-row"><span>CGPA:</span> <strong>{{ req.ugCgpa || 'N/A' }} (UG) | {{ req.pgCgpa || 'N/A' }} (PG)</strong></div>
+                  <div class="info-popover-row"><span>Experience:</span> <strong>{{ req.isExperienced ? req.experienceYears + ' Yrs' : 'Fresher' }}</strong></div>
+                  <div class="info-popover-row"><span>DOB:</span> <strong>{{ (req.dob | date:'shortDate') || 'N/A' }}</strong></div>
+                  <div class="info-popover-row"><span>Applied:</span> <strong>{{ req.createdAt | date:'d MMM y' }}</strong></div>
+                </div>
+
+                <ng-container *ngIf="req.projectLinks?.length">
+                  <div class="popover-title" style="margin-top: 12px;">Project Links</div>
+                  <div class="links-list">
+                    <a *ngFor="let link of req.projectLinks" [href]="link" target="_blank" class="link-pill">
+                      <i class="fa-solid fa-link"></i>
+                      <span class="link-text">{{ link }}</span>
+                    </a>
+                  </div>
+                </ng-container>
+              </div>
             </div>
           </td>
           <!-- Actions -->
@@ -64,7 +100,7 @@
     </table>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading() && requests().length === 0">
+  <div class="empty-state" *ngIf="!isLoading() && filteredRequests().length === 0">
     <div class="empty-content">
       <hugeicons-icon [icon]="UserCircleIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
       <h3>No pending employees</h3>

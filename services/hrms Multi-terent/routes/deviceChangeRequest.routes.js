@@ -62,7 +62,7 @@ router.post("/:id/approve", verifyTenant, async (req, res) => {
     if (role === 'manager') {
       request.managerApprovalStatus = "approved";
       request.managerId = req.user.id;
-    } else if (role === 'hr') {
+    } else if (role === 'hr' || role === 'hr_admin') {
       request.hrApprovalStatus = "approved";
       request.hrId = req.user.id;
       request.status = "approved"; // Fully approved
@@ -93,7 +93,7 @@ router.post("/:id/reject", verifyTenant, async (req, res) => {
     if (role === 'manager') {
       request.managerApprovalStatus = "rejected";
       request.managerId = req.user.id;
-    } else if (role === 'hr') {
+    } else if (role === 'hr' || role === 'hr_admin') {
       request.hrApprovalStatus = "rejected";
       request.hrId = req.user.id;
     }

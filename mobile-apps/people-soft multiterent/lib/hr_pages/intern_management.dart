@@ -701,52 +701,59 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
                     ),
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     elevation: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  intern.fullName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
+                    clipBehavior: Clip.antiAlias,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        dividerColor: Colors.transparent,
+                      ),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+                        title: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    intern.fullName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'ID: ${intern.internId} • ${intern.department}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF757575),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              statusBadge(intern.status),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'ID: ${intern.internId} • ${intern.department}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF757575),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.event_available_rounded,
-                                size: 16,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'End date: ${intern.endDate}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF424242),
-                                ),
-                              ),
-                            ],
+                            statusBadge(intern.status),
+                          ],
+                        ),
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            color: const Color(0xFFF8FAFC),
+                            child: Column(
+                              children: [
+                                _buildDetailRow(Icons.school_rounded, 'College', intern.college),
+                                _buildDetailRow(Icons.calendar_today_rounded, 'Year', intern.year),
+                                _buildDetailRow(Icons.work_rounded, 'Role', intern.role),
+                                _buildDetailRow(Icons.email_rounded, 'Email', intern.email),
+                                _buildDetailRow(Icons.phone_rounded, 'Contact', intern.contact),
+                                _buildDetailRow(Icons.emergency_rounded, 'Emergency Contact', intern.emergencyContact),
+                                _buildDetailRow(Icons.event_available_rounded, 'Onboarding Date', intern.onboardingDate.split('T').first),
+                                _buildDetailRow(Icons.event_busy_rounded, 'End Date', intern.endDate.split('T').first),
+                                _buildDetailRow(Icons.category_rounded, 'Type', '${intern.internshipType} • ${intern.applicationType}'),
+                                _buildDetailRow(Icons.link_rounded, 'LinkedIn', intern.linkedin.isNotEmpty ? 'View Profile' : 'N/A'),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -866,6 +873,45 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
       ),
     );
   }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    if (value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF475569)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ========= MODELS =========
@@ -896,6 +942,17 @@ class PastOutIntern {
   final String department;
   final String endDate;
   final String status;
+  final String college;
+  final String year;
+  final String role;
+  final String email;
+  final String contact;
+  final String emergencyContact;
+  final String onboardingDate;
+  final String linkedin;
+  final String internshipType;
+  final String applicationType;
+  final int leaveCount;
 
   PastOutIntern({
     required this.internId,
@@ -903,15 +960,37 @@ class PastOutIntern {
     required this.department,
     required this.endDate,
     required this.status,
+    this.college = '',
+    this.year = '',
+    this.role = '',
+    this.email = '',
+    this.contact = '',
+    this.emergencyContact = '',
+    this.onboardingDate = '',
+    this.linkedin = '',
+    this.internshipType = '',
+    this.applicationType = '',
+    this.leaveCount = 0,
   });
 
   factory PastOutIntern.fromJson(Map<String, dynamic> json) {
     return PastOutIntern(
-      internId: json['internId'] ?? '',
+      internId: json['internid'] ?? json['internId'] ?? '',
       fullName: json['fullName'] ?? '',
       department: json['department'] ?? '',
       endDate: json['endDate'] ?? '',
       status: json['status'] ?? '',
+      college: json['college'] ?? '',
+      year: json['year'] ?? '',
+      role: json['role'] ?? '',
+      email: json['email'] ?? '',
+      contact: json['contact'] ?? '',
+      emergencyContact: json['emergencyContact'] ?? '',
+      onboardingDate: json['onboardingDate'] ?? '',
+      linkedin: json['linkedin'] ?? '',
+      internshipType: json['internshipType'] ?? '',
+      applicationType: json['applicationType'] ?? '',
+      leaveCount: json['leaveCount'] ?? 0,
     );
   }
 }

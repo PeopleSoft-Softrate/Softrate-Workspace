@@ -50,7 +50,8 @@ export class EmployeeAdd implements OnInit {
     dob: '',
     linkedin: '',
     emergencyName: '',
-    emergencyPhone: ''
+    emergencyPhone: '',
+    isRemote: false
   };
 
   employeeRoles = signal<string[]>([]);
@@ -75,7 +76,10 @@ export class EmployeeAdd implements OnInit {
     this.apiService.getCompanySettings().subscribe({
       next: (res: any) => {
         if (res.success && res.settings) {
-          this.employeeRoles.set(res.settings.employeeRoles || []);
+          const fetchedRoles = res.settings.employeeRoles || [];
+          const currentRoles = this.employeeRoles();
+          const mergedRoles = Array.from(new Set([...fetchedRoles, ...currentRoles]));
+          this.employeeRoles.set(mergedRoles);
         }
       },
       error: (err) => console.error('Failed to fetch settings', err)
@@ -92,8 +96,18 @@ export class EmployeeAdd implements OnInit {
           // Handle potential date format issues
           dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
           onboardingDate: data.onboardingDate ? new Date(data.onboardingDate).toISOString().split('T')[0] : '',
-          designation: data.designation || data.role || ''
+          designation: data.designation || data.role || '',
+          isRemote: data.isRemote || false
         };
+        
+        // Ensure the designation exists in the dropdown options if it came from the DB
+        if (this.employee.designation) {
+          const currentRoles = this.employeeRoles();
+          if (!currentRoles.includes(this.employee.designation)) {
+            this.employeeRoles.set([...currentRoles, this.employee.designation]);
+          }
+        }
+
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -104,8 +118,8 @@ export class EmployeeAdd implements OnInit {
   }
 
   saveEmployee() {
-    if (!this.employee.fullName || !this.employee.email || !this.employee.onboardingDate) {
-      this.alertService.show('Full Name, Email, and Onboarding Date are required');
+    if (!this.employee.fullName || !this.employee.email || !this.employee.onboardingDate || !this.employee.department || !this.employee.designation) {
+      this.alertService.show('Please fill all required fields including Department, Designation, and Onboarding Date');
       return;
     }
 

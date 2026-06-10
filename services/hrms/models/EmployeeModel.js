@@ -13,6 +13,7 @@ const EmployeeSchema = new mongoose.Schema({
   emergencyName: String,
   emergencyPhone: String,
   dob: Date,
+  age: Number,
   address: String,
   role: String,
   department: String,
@@ -21,6 +22,10 @@ const EmployeeSchema = new mongoose.Schema({
   nationality: String,
   maritalStatus: String,
   deviceId: { type: String, default: null },
+  nickName: { type: String, default: "" },
+  aboutMe: { type: String, default: "" },
+  askMeAboutExpertise: { type: String, default: "" },
+  profileCompletion: { type: Number, default: 70 },
 
   // Section 2 – Education
   qualification: String,

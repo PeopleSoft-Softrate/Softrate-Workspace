@@ -1,14 +1,11 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
-  <div class="header-content">
-    <div class="breadcrumb">
-      <a routerLink="/employee/dashboard" class="back-link" *ngIf="isSelfPortal()">
-        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-      </a>
-      <a routerLink="/employees" class="back-link" *ngIf="!isSelfPortal()">
-        <i class="fa-solid fa-arrow-left"></i> Back to Employees
-      </a>
+  <div class="header-main">
+    <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
+      <a (click)="goBack()" *ngIf="isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Dashboard</a>
+      <a (click)="goBack()" *ngIf="!isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
+      <span style="color: #94a3b8;"> / Payroll</span>
     </div>
     <h1>{{ isSelfPortal() ? 'My Payslips' : 'Payroll & Salary' }}</h1>
     <p>{{ isSelfPortal() ? 'Track salary details, gross/net breakdown, and download monthly payslips' : 'Salary breakdown and payslip history for ' + (employee()?.fullName || 'Employee') }}</p>
@@ -114,7 +111,7 @@
         <div class="card-header">
           <h3>Payslip History</h3>
         </div>
-        <div class="history-list">
+        <div class="history-list" *ngIf="salaryHistory.length > 0">
           <div class="history-item" *ngFor="let item of salaryHistory">
             <div class="item-info">
               <span class="month">{{ item.month }}</span>
@@ -128,6 +125,10 @@
               <hugeicons-icon [icon]="Download02Icon" size="18" [strokeWidth]="1.5"></hugeicons-icon>
             </button>
           </div>
+        </div>
+        <div *ngIf="salaryHistory.length === 0" style="padding: 2rem; text-align: center; color: #94a3b8;">
+          <p style="font-size: 14px;">No pay slips available yet.</p>
+          <p style="font-size: 12px; margin-top: 4px;">Payslips will appear here after the first completed month.</p>
         </div>
       </div>
     </div>

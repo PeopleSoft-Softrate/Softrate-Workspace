@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart' as p;
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/port.dart';
+import 'package:http_parser/http_parser.dart';
 
 class InternProfilepage extends StatefulWidget {
   final Map<String, dynamic>? internData;
@@ -115,14 +116,34 @@ class _InternProfilepageState extends State<InternProfilepage> {
         builder: (_) => const Center(child: CircularProgressIndicator()),
       );
 
+      // Manually read token from SharedPreferences and attach it
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? prefs.getString('hr_auth_token') ?? '';
+
       final url = Uri.parse("${getBaseUrl()}/api/auth/me/profile-photo");
       final request = http.MultipartRequest('PATCH', url);
-      request.files.add(await http.MultipartFile.fromPath('profilePhoto', imagePath));
+
+      // Explicitly set Authorization before finalize/send
+      if (token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // Determine MIME type from file extension (avoids octet-stream fallback)
+      final ext = imagePath.split('.').last.toLowerCase();
+      final mimeSubtype = (ext == 'jpg' || ext == 'jpeg') ? 'jpeg' : (ext == 'png' ? 'png' : 'jpeg');
+
+      request.files.add(await http.MultipartFile.fromPath(
+        'profilePhoto',
+        imagePath,
+        contentType: MediaType('image', mimeSubtype),
+      ));
 
       final streamedResponse = await http.send(request);
       final response = await http.Response.fromStream(streamedResponse);
 
       if (mounted) Navigator.pop(context); // close dialog
+
+      debugPrint("Upload response: ${response.statusCode} — ${response.body}");
 
       if (response.statusCode == 200) {
         if (mounted) {
@@ -136,8 +157,8 @@ class _InternProfilepageState extends State<InternProfilepage> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to sync profile photo to server.'),
+            SnackBar(
+              content: Text('Failed to sync photo (${response.statusCode})'),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -529,15 +550,6 @@ class _InternProfilepageState extends State<InternProfilepage> {
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _StatusBadge(status: status),
-                                    _InternshipTypeBadge(type: internshipType),
-                                  ],
-                                ),
                                 const SizedBox(height: 20),
                                 _ContactItem(
                                   icon: Icons.email_outlined,
@@ -708,7 +720,6 @@ class _InternProfilepageState extends State<InternProfilepage> {
                           url: linkedin,
                           onTap: () => _launchLinkedIn(context, linkedin),
                         ),
-                        _InfoRow(Icons.info_outline_rounded, 'Status', status),
                       ],
                     ),
                   ),

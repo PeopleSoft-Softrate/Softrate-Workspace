@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:hrmappfrontend/manager/managerrecrument.dart';
 import 'package:hrmappfrontend/manager/managerattendance.dart';
 import 'package:hrmappfrontend/manager/managerleave.dart';
-import 'package:hrmappfrontend/manager/managershift.dart';
-import 'package:hrmappfrontend/manager/managerappraisal.dart';
-import 'package:hrmappfrontend/manager/managerdocuments.dart';
-import 'package:hrmappfrontend/manager/managerteam.dart';
 import 'package:hrmappfrontend/manager/managerholiday.dart';
-import 'package:hrmappfrontend/manager/manageroffboarding.dart';
+import 'package:hrmappfrontend/Employee/Employee_policy.dart';
+import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
+import 'package:hrmappfrontend/manager/managerpayroll.dart';
+import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
+ // in case FundApprovalRole is needed
 
 class ManagerAccessSection extends StatelessWidget {
   final Map<String, dynamic> employeeData;
@@ -40,14 +39,6 @@ class ManagerAccessSection extends StatelessWidget {
           children: [
             _buildOptionCard(
               context,
-              "Team",
-              "Management",
-              Icons.people_rounded,
-              const Color(0xFF818CF8),
-              const ManagerTeamPage(),
-            ),
-            _buildOptionCard(
-              context,
               "Attendance",
               "Team Records",
               Icons.how_to_reg_rounded,
@@ -56,43 +47,11 @@ class ManagerAccessSection extends StatelessWidget {
             ),
             _buildOptionCard(
               context,
-              "Recruitment",
-              "Hiring",
-              Icons.person_search_rounded,
-              const Color(0xFFA78BFA),
-              const ManagerRecruitmentPage(),
-            ),
-            _buildOptionCard(
-              context,
-              "Leaves",
+              "Leave",
               "Approvals",
               Icons.event_note_rounded,
               const Color(0xFFF87171),
               const ManagerLeavePage(),
-            ),
-            _buildOptionCard(
-              context,
-              "Shifts",
-              "Schedules",
-              Icons.schedule_rounded,
-              const Color(0xFF60A5FA),
-              const ManagerShiftPage(),
-            ),
-            _buildOptionCard(
-              context,
-              "Appraisal",
-              "Performance",
-              Icons.reviews_rounded,
-              const Color(0xFFC084FC),
-              const ManagerAppraisalPage(),
-            ),
-            _buildOptionCard(
-              context,
-              "Details",
-              "Team Mates",
-              Icons.person_rounded,
-              const Color(0xFFFB923C),
-              const ManagerDocumentsPage(),
             ),
             _buildOptionCard(
               context,
@@ -104,11 +63,35 @@ class ManagerAccessSection extends StatelessWidget {
             ),
             _buildOptionCard(
               context,
-              "Offboarding",
-              "Team Exits",
-              Icons.person_off_rounded,
-              const Color(0xFFF43F5E),
-              const ManagerOffboardingPage(),
+              "HR Policy",
+              "View",
+              Icons.policy_rounded,
+              const Color(0xFF60A5FA),
+              const EmployeePolicyPage(),
+            ),
+            _buildOptionCard(
+              context,
+              "Hierarchy",
+              "View",
+              Icons.account_tree_rounded,
+              const Color(0xFFA78BFA),
+              const intern_Organizational_Hierarchy(),
+            ),
+            _buildOptionCard(
+              context,
+              "Payroll",
+              "My Salary",
+              Icons.account_balance_rounded,
+              const Color(0xFF4ADE80),
+              const ManagerPayrollPage(),
+            ),
+            _buildOptionCard(
+              context,
+              "Reimbursement",
+              "Approvals",
+              Icons.receipt_long_rounded,
+              const Color(0xFF7C3AED),
+              const FundRequestApprovalPage(role: FundApprovalRole.manager),
             ),
           ],
         ),

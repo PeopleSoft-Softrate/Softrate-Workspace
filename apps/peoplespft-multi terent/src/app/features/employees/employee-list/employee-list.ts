@@ -10,11 +10,12 @@ import { LeaveManagement } from '../../leaves/leave-management/leave-management'
 import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
 import { OffboardingRequests } from '../../offboarding/offboarding-requests/offboarding-requests';
 import { EmployeeRejected } from '../employee-rejected/employee-rejected';
+import { UnifiedRequests } from '../../unified-requests/unified-requests';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, EmployeeRequests, LeaveManagement, OffboardingRequests, EmployeeRejected, HugeiconsIconComponent, EmployeeSidebar],
+  imports: [CommonModule, RouterModule, EmployeeRequests, LeaveManagement, OffboardingRequests, EmployeeRejected, HugeiconsIconComponent, EmployeeSidebar, UnifiedRequests],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.css'
 })
@@ -32,7 +33,8 @@ export class EmployeeList implements OnInit {
   readonly Shield02Icon = Shield02Icon;
 
   getPhotoUrl(id: string): string {
-    return `${this.apiService.getBaseUrl()}/api/employees/profile-photo/${id}`;
+    const token = localStorage.getItem('auth_token') || '';
+    return `${this.apiService.getBaseUrl()}/api/employee/profile-photo/${id}?token=${token}`;
   }
 
   onImageError(event: any) {
@@ -56,6 +58,13 @@ export class EmployeeList implements OnInit {
   isLoading = signal(true);
   roleFilter = signal<string>('all');
   searchQuery = signal<string>('');
+  sortFilter = signal<string>('recent');
+
+
+  get allCount(): number { return this.allEmployees().length; }
+  get managerCount(): number { return this.allEmployees().filter(e => e.isManager).length; }
+  get hrCount(): number { return this.allEmployees().filter(e => e.isHr).length; }
+  get employeeCount(): number { return this.allEmployees().filter(e => !e.isManager && !e.isHr).length; }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -109,7 +118,23 @@ export class EmployeeList implements OnInit {
       );
     }
 
+    const sortVal = this.sortFilter();
+    if (sortVal === 'az') {
+      filtered.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    } else if (sortVal === 'za') {
+      filtered.sort((a, b) => (b.fullName || '').localeCompare(a.fullName || ''));
+    } else if (sortVal === 'recent') {
+      filtered.sort((a, b) => new Date(b.createdAt || b.dateOfJoining || 0).getTime() - new Date(a.createdAt || a.dateOfJoining || 0).getTime());
+    } else if (sortVal === 'oldest') {
+      filtered.sort((a, b) => new Date(a.createdAt || a.dateOfJoining || 0).getTime() - new Date(b.createdAt || b.dateOfJoining || 0).getTime());
+    }
+
     this.employees.set(filtered);
+  }
+
+  setSort(sort: string) {
+    this.sortFilter.set(sort);
+    this.applyFilter();
   }
 
   onSearch(event: Event) {

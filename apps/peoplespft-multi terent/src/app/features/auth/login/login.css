@@ -55,6 +55,19 @@
 
 .logo-container {
   margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-logo-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  background-color: var(--bg-secondary, #fff);
+  border-radius: var(--hc-radius, 10px);
+  padding: 5px;
+  border: 1px solid var(--border-color, #e5e7eb);
 }
 
 .logo-text {
@@ -65,11 +78,6 @@
   letter-spacing: -1px;
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-}
-
-.logo-text span {
-  color: #93c5fd; /* Light blue accent */
 }
 
 .crm-tag {

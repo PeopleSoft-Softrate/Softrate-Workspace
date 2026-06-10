@@ -46,15 +46,28 @@ export class GlobalSearchService {
     }
 
     const q = query.toLowerCase();
+    const userRole = localStorage.getItem('user_role')?.toLowerCase();
+    const isNormalEmployee = userRole === 'employee';
+    let currentUserId: string | null = null;
+    
+    if (isNormalEmployee) {
+      try {
+        const userDataStr = localStorage.getItem('user_data');
+        if (userDataStr) {
+          currentUserId = JSON.parse(userDataStr)._id;
+        }
+      } catch (e) {}
+    }
 
     const empResults: SearchResult[] = this.employees
-      .filter(e =>
-        e.fullName?.toLowerCase().includes(q) ||
-        e.EmployeeId?.toLowerCase().includes(q) ||
-        e.department?.toLowerCase().includes(q) ||
-        e.role?.toLowerCase().includes(q) ||
-        e.email?.toLowerCase().includes(q)
-      )
+      .filter(e => {
+        if (isNormalEmployee && e._id !== currentUserId) return false;
+        return e.fullName?.toLowerCase().includes(q) ||
+          e.EmployeeId?.toLowerCase().includes(q) ||
+          e.department?.toLowerCase().includes(q) ||
+          e.role?.toLowerCase().includes(q) ||
+          e.email?.toLowerCase().includes(q);
+      })
       .slice(0, 5)
       .map(e => ({
         id: e._id,
@@ -65,24 +78,28 @@ export class GlobalSearchService {
         route: `/employees/${e._id}`
       }));
 
-    const internResults: SearchResult[] = this.interns
-      .filter(i =>
-        i.fullName?.toLowerCase().includes(q) ||
-        i.internid?.toLowerCase().includes(q) ||
-        i.internId?.toLowerCase().includes(q) ||
-        i.department?.toLowerCase().includes(q) ||
-        i.role?.toLowerCase().includes(q) ||
-        i.email?.toLowerCase().includes(q)
-      )
-      .slice(0, 5)
-      .map(i => ({
-        id: i._id,
-        type: 'intern',
-        name: i.fullName,
-        subtitle: `${i.internid || i.internId || ''} · ${i.role || i.department || 'Intern'}`,
-        initials: this.getInitials(i.fullName),
-        route: `/interns/${i._id}`
-      }));
+    let internResults: SearchResult[] = [];
+
+    if (!isNormalEmployee) {
+      internResults = this.interns
+        .filter(i =>
+          i.fullName?.toLowerCase().includes(q) ||
+          i.internid?.toLowerCase().includes(q) ||
+          i.internId?.toLowerCase().includes(q) ||
+          i.department?.toLowerCase().includes(q) ||
+          i.role?.toLowerCase().includes(q) ||
+          i.email?.toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+        .map(i => ({
+          id: i._id,
+          type: 'intern',
+          name: i.fullName,
+          subtitle: `${i.internid || i.internId || ''} · ${i.role || i.department || 'Intern'}`,
+          initials: this.getInitials(i.fullName),
+          route: `/interns/${i._id}`
+        }));
+    }
 
     this.results.set([...empResults, ...internResults]);
   }

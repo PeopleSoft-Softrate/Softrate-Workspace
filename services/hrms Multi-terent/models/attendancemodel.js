@@ -37,6 +37,8 @@ const AttendanceSchema = new mongoose.Schema({
 // Indexes for faster querying
 AttendanceSchema.index({ internId: 1, date: 1 });
 AttendanceSchema.index({ companyId: 1, date: 1 });
+AttendanceSchema.index({ date: 1 });  // trend endpoint: date-only scans
+
 
 // ─── Multi-Tenant Proxy Wrapper ─────────────────────────────────────────────
 // The modelLoader reads exported.name + exported.schema to register models.

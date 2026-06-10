@@ -3,7 +3,7 @@
 
   <!-- Employee Self-Portal Page Header -->
   <div class="page-header" *ngIf="isSelfPortal()">
-    <div class="header-content">
+    <div class="header-main">
       <div class="breadcrumb">
         <a routerLink="/employee/dashboard" class="back-link">
           <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
@@ -22,7 +22,7 @@
 
   <!-- Admin View Page Header -->
   <div class="page-header" *ngIf="!isSelfPortal()">
-    <div class="header-content">
+    <div class="header-main">
       <h1>Organizational Hierarchy</h1>
       <p>Visualize and manage the company's structural reporting lines.</p>
     </div>

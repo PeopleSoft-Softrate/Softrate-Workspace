@@ -96,12 +96,11 @@
   <!-- Quick Actions Section -->
   <section class="actions-section">
     <h3 class="section-title">
-      <hugeicons-icon [icon]="PlusSignIcon" size="20" [strokeWidth]="2" color="var(--accent-primary)"></hugeicons-icon>
       Quick Management
     </h3>
     <div class="actions-grid">
       <div class="action-card teal"
-        [routerLink]="selectedModel() === 'interns' ? '/interns/requests' : '/employees/add'" style="cursor: pointer;">
+        (click)="selectedModel() === 'interns' ? navigateTo(['/interns'], {tab: 'requests'}) : navigateTo(['/employees/add'])" style="cursor: pointer;">
         <div class="action-icon-box">
           <hugeicons-icon [icon]="UserCircleIcon" size="20" [strokeWidth]="1.5"></hugeicons-icon>
         </div>
@@ -149,57 +148,138 @@
     <!-- Attendance Trend Chart -->
     <div class="analytics-card">
       <div class="card-header">
-        <div class="header-main">
-          <h3>Attendance Trend</h3>
-          <p class="caption">Weekly participation analysis</p>
+        <div class="header-titles">
+          <h3>Project Analytics</h3>
+          <p class="subtitle" style="font-size: var(--text-sm); color: var(--text-muted); margin: 0.25rem 0 0 0;">Weekly participation analysis</p>
+        </div>
+        <div class="header-meta">
+          <!-- Chart Toggle -->
+          <div class="chart-toggle-group">
+            <button class="chart-toggle-btn" [class.active]="chartType() === 'bar'" (click)="setChartType('bar')">Bar</button>
+            <button class="chart-toggle-btn" [class.active]="chartType() === 'line'" (click)="setChartType('line')">Line</button>
+            <button class="chart-toggle-btn" [class.active]="chartType() === 'pie'" (click)="setChartType('pie')">Pie</button>
+          </div>
         </div>
       </div>
 
-      <!-- Analytics Summary Row -->
-      <div class="analytics-summary">
-        <div class="summary-stat">
-          <span class="label">Average Present</span>
-          <div class="value">{{ selectedModel() === 'interns' ? stats().internSummary?.avgPresent :
-            stats().employeeSummary?.avgPresent }}</div>
-        </div>
-        <div class="summary-stat">
-          <span class="label">Average Absent</span>
-          <div class="value">{{ selectedModel() === 'interns' ? stats().internSummary?.avgAbsent :
-            stats().employeeSummary?.avgAbsent }}</div>
-        </div>
-        <div class="summary-stat">
-          <span class="label">Best Day</span>
-          <div class="value" style="text-transform: capitalize;">{{ selectedModel() === 'interns' ?
-            stats().internSummary?.bestDay : stats().employeeSummary?.bestDay }}</div>
-        </div>
-      </div>
-
-      <div class="chart-container">
-        <!-- Average Line -->
-        <div class="avg-line-container"
-          [style.bottom.%]="selectedModel() === 'interns' ? stats().internSummary?.avgLineHeight : stats().employeeSummary?.avgLineHeight">
-          <div class="avg-line"></div>
-          <span class="avg-label">AVG</span>
-        </div>
-
-        <div class="chart-grid-lines">
-          <div class="grid-line" *ngFor="let line of [1,2,3,4,5]"></div>
-        </div>
-
-        <div class="chart-bar-group"
-          *ngFor="let day of (selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)">
+      <!-- BAR CHART VIEW -->
+      <div class="chart-container custom-bar-chart" *ngIf="chartType() === 'bar'">
+        <div class="chart-bar-group" *ngFor="let day of (selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend); let i = index">
           <div class="bar-wrapper">
-            <div class="bar" [style.height.%]="day.height || 5">
-              <!-- Custom Hover Tooltip -->
+            <!-- Previous week bar overlay (striped) -->
+            <div class="bar striped-green"
+              [style.height.%]="(selectedModel() === 'interns' ? stats().internPrevTrend?.[i]?.height : stats().employeePrevTrend?.[i]?.height) || 0"
+              [style.animation-delay]="(i * 80) + 'ms'"
+              *ngIf="(selectedModel() === 'interns' ? stats().internPrevTrend?.[i]?.height : stats().employeePrevTrend?.[i]?.height) > 0">
+            </div>
+            <!-- Current week bar -->
+            <div class="bar solid-green"
+              [style.height.%]="day.height || 5"
+              [style.animation-delay]="(i * 80) + 'ms'"
+              [class.has-data]="day.count > 0">
+              <div class="bar-value-circle"
+                *ngIf="day.count > 0"
+                [style.animation-delay]="(i * 80 + 400) + 'ms'">{{ day.count }}%</div>
+              <!-- Hover tooltip -->
               <div class="chart-tooltip">
                 <span class="tt-date">{{ day.day }}</span>
                 <div class="tt-data">
-                  <div class="tt-row"><span class="dot present"></span> Present: <b>{{ day.count }}</b></div>
+                  <div class="tt-row">Present: <b>{{ day.count }}</b></div>
                 </div>
               </div>
             </div>
           </div>
-          <span class="bar-label">{{ day.day | slice:0:3 }}</span>
+          <span class="bar-label" style="text-transform: uppercase;">{{ day.day | slice:0:1 }}</span>
+        </div>
+      </div>
+      <div class="chart-legend-bottom" *ngIf="chartType() === 'bar'" style="display: flex; gap: 2rem; justify-content: center; width: 100%; margin-top: 0.5rem; padding-bottom: 1rem; font-size: 0.85rem; color: #64748b; font-weight: 500;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="width: 14px; height: 14px; border-radius: 4px; background: #14532d;"></span> This Week
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="width: 14px; height: 14px; border-radius: 4px; background: repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 4px, #f0fdf4 4px, #f0fdf4 8px);"></span> Last Week
+        </div>
+      </div>
+
+      <!-- LINE CHART VIEW -->
+      <div class="chart-container custom-line-chart" *ngIf="chartType() === 'line'">
+        <svg class="trend-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="lineFillGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#4ade80" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#4ade80" stop-opacity="0.0"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Area fill -->
+          <path [attr.d]="getAreaPath(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)" fill="url(#lineFillGradient)" />
+          
+          <!-- Previous Week Smooth Line -->
+          <path [attr.d]="getSmoothLinePath(selectedModel() === 'interns' ? stats().internPrevTrend : stats().employeePrevTrend)"
+                fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6, 6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+
+          <!-- Current Week Smooth Line -->
+          <path [attr.d]="getSmoothLinePath(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)"
+                fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        </svg>
+
+        <div class="line-x-axis" style="display: flex; justify-content: space-around; position: absolute; bottom: -25px; width: 100%; padding: 0 10px;">
+          <span class="bar-label" *ngFor="let day of (selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)" style="text-transform: uppercase;">{{ day.day | slice:0:1 }}</span>
+        </div>
+      </div>
+      <div class="chart-legend-bottom" *ngIf="chartType() === 'line'" style="display: flex; gap: 2rem; justify-content: center; width: 100%; margin-top: 1.5rem; padding-bottom: 1rem; font-size: 0.85rem; color: #64748b; font-weight: 500;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="width: 14px; height: 3px; border-radius: 2px; background: #22c55e;"></span> This Week
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="width: 14px; height: 0px; border-bottom: 2px dashed #94a3b8;"></span> Last Week
+        </div>
+      </div>
+
+      <!-- PIE CHART VIEW (GAUGE) -->
+      <div class="chart-container custom-pie-chart" *ngIf="chartType() === 'pie'" style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4rem; border-bottom: none;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+          <!-- Gauge SVG — contained, no overflow -->
+          <svg viewBox="-5 -5 110 60" style="width: 420px; height: 230px; overflow: hidden; display: block;">
+            <defs>
+              <pattern id="stripes2" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="4" stroke="#cbd5e1" stroke-width="2" />
+              </pattern>
+            </defs>
+            <!-- Background Arc -->
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="url(#stripes2)" stroke-width="16" stroke-linecap="butt" />
+            <!-- Foreground Arc -->
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#15803d" stroke-width="16" stroke-linecap="butt" stroke-dasharray="125.6" [attr.stroke-dashoffset]="125.6 - (125.6 * getGaugePercentage() / 100)" style="transition: stroke-dashoffset 1.2s ease-out;" />
+            <!-- Center Text -->
+            <text x="50" y="38" text-anchor="middle" font-size="16" font-weight="800" fill="#0f172a" font-family="inherit">{{ getGaugePercentage() }}%</text>
+            <text x="50" y="50" text-anchor="middle" font-size="6" fill="#64748b" font-family="inherit">Attendance</text>
+          </svg>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.25rem; font-size: 0.95rem; color: #334155; font-weight: 600;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="width: 16px; height: 16px; border-radius: 4px; background: #15803d; flex-shrink: 0;"></span>
+            <span>Present</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="width: 16px; height: 16px; border-radius: 4px; background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 2px, transparent 2px, transparent 4px); flex-shrink: 0;"></span>
+            <span>Absent / Leave</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-summary-row" #summaryRow [class.in-view]="isSummaryInView()" style="display: flex; gap: 4rem; padding: 0.5rem 1rem 1rem; border-top: none; margin-top: 0.5rem;">
+        <div class="summary-stat" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <span class="label" style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Average Present</span>
+          <div class="value" style="font-size: 1.75rem; font-weight: 800; color: #0f172a; line-height: 1;">{{ animAvgPresent() }}%</div>
+        </div>
+        <div class="summary-stat" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <span class="label" style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Average Absent</span>
+          <div class="value" style="font-size: 1.75rem; font-weight: 800; color: #0f172a; line-height: 1;">{{ animAvgAbsent() }}%</div>
+        </div>
+        <div class="summary-stat" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <span class="label" style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Best Day</span>
+          <div class="value" style="font-size: 1.75rem; font-weight: 800; color: #0f172a; line-height: 1; text-transform: capitalize;">{{ selectedModel() === 'interns' ? stats().internSummary?.bestDay : stats().employeeSummary?.bestDay }}</div>
         </div>
       </div>
     </div>

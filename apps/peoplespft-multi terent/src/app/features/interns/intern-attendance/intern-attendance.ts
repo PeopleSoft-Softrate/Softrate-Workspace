@@ -7,6 +7,7 @@ import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { Home01Icon, FileDownloadIcon, Location01Icon, LicenseDraftIcon, FingerAccessIcon } from '@hugeicons/core-free-icons';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Location } from '@angular/common';
 import { InternSidebar } from '../intern-sidebar/intern-sidebar';
 
 @Component({
@@ -22,6 +23,11 @@ export class InternAttendance implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
 
   readonly Location01Icon = Location01Icon;
   readonly FileDownloadIcon = FileDownloadIcon;

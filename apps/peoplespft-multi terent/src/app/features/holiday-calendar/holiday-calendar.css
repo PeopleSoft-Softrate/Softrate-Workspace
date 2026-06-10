@@ -178,8 +178,8 @@
 .hc-card-title {
   font-family: var(--font-heading);
   font-size: var(--text-3xl);
-  font-weight: var(--font-weight-extrabold);
-  letter-spacing: -.03em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: .02em;
   color: var(--hc-text-1);
   margin: 0 0 .5rem;
 }

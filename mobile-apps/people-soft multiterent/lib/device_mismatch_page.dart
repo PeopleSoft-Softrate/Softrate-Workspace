@@ -7,6 +7,7 @@ import 'package:hugeicons/hugeicons.dart';
 class DeviceMismatchPage extends StatefulWidget {
   final String identifier;
   final String password;
+  final String companyCode;
   final String newDeviceId;
   final String requestStatus; // 'none', 'pending', 'rejected', 'approved'
 
@@ -14,6 +15,7 @@ class DeviceMismatchPage extends StatefulWidget {
     super.key,
     required this.identifier,
     required this.password,
+    required this.companyCode,
     required this.newDeviceId,
     required this.requestStatus,
   });
@@ -78,6 +80,7 @@ class _DeviceMismatchPageState extends State<DeviceMismatchPage>
         body: jsonEncode({
           'id': widget.identifier,
           'password': widget.password,
+          'companyCode': widget.companyCode,
           'newDeviceId': widget.newDeviceId,
           'reason': reason,
         }),

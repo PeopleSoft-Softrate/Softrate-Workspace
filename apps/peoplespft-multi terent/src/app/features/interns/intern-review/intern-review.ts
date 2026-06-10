@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Location } from '@angular/common';
 import { InternSidebar } from '../intern-sidebar/intern-sidebar';
 
 @Component({
@@ -19,6 +20,11 @@ export class InternReview implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
 
   navigateTo(path: string[]) {
     this.router.navigate(path).then(() => {
@@ -48,7 +54,7 @@ export class InternReview implements OnInit {
     }
     
     const monthList = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = -1; i < 6; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i);
       const month = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
       monthList.push(month);

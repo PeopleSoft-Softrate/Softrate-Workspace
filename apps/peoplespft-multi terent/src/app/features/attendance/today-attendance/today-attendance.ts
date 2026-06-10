@@ -26,6 +26,7 @@ export class TodayAttendance implements OnInit {
   attendance = signal<any[]>([]);
   isLoading = signal(true);
   searchQuery = signal('');
+  selectedDate = signal<string>(new Date().toLocaleDateString("en-CA"));
   
   userRole = signal<string>('');
   userId = signal<string>('');
@@ -86,7 +87,7 @@ export class TodayAttendance implements OnInit {
     const isManager = this.userRole() === 'manager';
     const managerId = isManager ? this.userId() : undefined;
 
-    this.apiService.getTodayUnifiedAttendance(managerId).subscribe({
+    this.apiService.getTodayUnifiedAttendance(managerId, this.selectedDate()).subscribe({
       next: (data) => {
         this.attendance.set(data.attendance || []);
         this.isLoading.set(false);
@@ -104,6 +105,11 @@ export class TodayAttendance implements OnInit {
 
   onSearch(event: any) {
     this.searchQuery.set(event.target.value);
+  }
+
+  onDateChange(event: any) {
+    this.selectedDate.set(event.target.value);
+    this.fetchAttendance();
   }
 
   openMap(location: string | undefined) {

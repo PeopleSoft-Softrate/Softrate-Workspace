@@ -21,11 +21,12 @@ exports.hrSignup = async (req, res) => {
 
     let companyId = null;
     if (companyName && companyCode) {
-      let company = await (await _HrLoginControllerjs_getMasterCompany()).findOne({ companyCode });
+      const CompanyModel = await _HrLoginControllerjs_getMasterCompany();
+      let company = await CompanyModel.findOne({ companyCode });
       if (company) {
         return res.status(400).json({ msg: "Company code already exists" });
       }
-      company = new Company({ name: companyName, companyCode });
+      company = new CompanyModel({ name: companyName, companyCode });
       await company.save();
       companyId = company._id;
     } else {
@@ -59,7 +60,8 @@ exports.savePolicyUrl = async (req, res) => {
       return res.status(400).json({ msg: "policyUrl is required" });
     }
 
-    const company = await Company.findByIdAndUpdate(
+    const CompanyModel = await _HrLoginControllerjs_getMasterCompany();
+    const company = await CompanyModel.findByIdAndUpdate(
       companyId,
       { 
         "settings.hrPolicyUrl": policyUrl,

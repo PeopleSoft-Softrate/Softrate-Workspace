@@ -47,6 +47,8 @@ class _AttendancePageState extends State<AttendancePage>
 
   bool loading = false;
   bool punchLoading = false;
+  bool _showOverlay = true;
+  double _overlayOpacity = 1.0;
 
   Map<String, dynamic>? internData;
   Map<String, dynamic>? myResignation;
@@ -86,10 +88,9 @@ class _AttendancePageState extends State<AttendancePage>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder:
-              (_) => Employeedashboard(
-                employeeId: prefs.getString('employeeId') ?? '',
-              ),
+          builder: (_) => Employeedashboard(
+            employeeId: prefs.getString('employeeId') ?? '',
+          ),
         ),
       );
     }
@@ -114,7 +115,7 @@ class _AttendancePageState extends State<AttendancePage>
           await handleDropStatus(internData?['status'] ?? '');
           await checkDropAndLogout();
           await resetAttendanceIfNewDay();
-          
+
           // Run independent network requests concurrently to reduce load time
           await Future.wait([
             loadTodayAttendance(),
@@ -129,7 +130,17 @@ class _AttendancePageState extends State<AttendancePage>
       debugPrint("Error in _initializeAppData: $e");
     } finally {
       if (mounted) {
-        setState(() => loading = false);
+        setState(() {
+          loading = false;
+          _overlayOpacity = 0.0;
+        });
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _showOverlay = false;
+            });
+          }
+        });
       }
     }
   }
@@ -321,8 +332,12 @@ class _AttendancePageState extends State<AttendancePage>
         setState(() {
           punchInTime = record['punchInTime'];
           punchOutTime = record['punchOutTime'];
-          punchInLocation = record['punchInLocation'] != null ? jsonEncode(record['punchInLocation']) : null;
-          punchOutLocation = record['punchOutLocation'] != null ? jsonEncode(record['punchOutLocation']) : null;
+          punchInLocation = record['punchInLocation'] != null
+              ? jsonEncode(record['punchInLocation'])
+              : null;
+          punchOutLocation = record['punchOutLocation'] != null
+              ? jsonEncode(record['punchOutLocation'])
+              : null;
         });
       }
 
@@ -399,12 +414,15 @@ class _AttendancePageState extends State<AttendancePage>
             fullData['employee'] ??
             fullData['user'] ??
             fullData;
-        
+
         internStatus = internData?['status']?.toString().toLowerCase();
 
         // Track internship type for Stipend button visibility
         final internshipType = internData?['internshipType']?.toString() ?? '';
-        if (mounted) setState(() => _isStipendIntern = internshipType.toLowerCase() == 'stipend');
+        if (mounted)
+          setState(
+            () => _isStipendIntern = internshipType.toLowerCase() == 'stipend',
+          );
 
         // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
         final dbDeviceId = internData?['deviceId'];
@@ -415,11 +433,13 @@ class _AttendancePageState extends State<AttendancePage>
             await prefs.remove('internLoggedIn');
             await prefs.remove('auth_token');
             await prefs.remove('internId');
-            
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Session expired: Account bound to another device.'),
+                  content: Text(
+                    'Session expired: Account bound to another device.',
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -572,14 +592,21 @@ class _AttendancePageState extends State<AttendancePage>
 
         // ✅ Cache updated data
         await prefs.setString("punchInTime", record['punchInTime']);
-        await prefs.setString("punchInLocation", record['punchInLocation'] != null ? jsonEncode(record['punchInLocation']) : '');
+        await prefs.setString(
+          "punchInLocation",
+          record['punchInLocation'] != null
+              ? jsonEncode(record['punchInLocation'])
+              : '',
+        );
         await prefs.setBool("isPunchedIn", true);
         await prefs.setString("attendanceDate", today);
 
         if (mounted) {
           setState(() {
             punchInTime = record['punchInTime'];
-            punchInLocation = record['punchInLocation'] != null ? jsonEncode(record['punchInLocation']) : null;
+            punchInLocation = record['punchInLocation'] != null
+                ? jsonEncode(record['punchInLocation'])
+                : null;
           });
         }
       } else {
@@ -678,14 +705,21 @@ class _AttendancePageState extends State<AttendancePage>
         final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         prefs.setString("punchOutTime", record['punchOutTime']);
-        await prefs.setString("punchOutLocation", record['punchOutLocation'] != null ? jsonEncode(record['punchOutLocation']) : '');
+        await prefs.setString(
+          "punchOutLocation",
+          record['punchOutLocation'] != null
+              ? jsonEncode(record['punchOutLocation'])
+              : '',
+        );
         prefs.setBool("isPunchedIn", false);
         prefs.setString("attendanceDate", today);
 
         if (mounted) {
           setState(() {
             punchOutTime = record['punchOutTime'];
-            punchOutLocation = record['punchOutLocation'] != null ? jsonEncode(record['punchOutLocation']) : null;
+            punchOutLocation = record['punchOutLocation'] != null
+                ? jsonEncode(record['punchOutLocation'])
+                : null;
           });
         }
       } else {
@@ -744,13 +778,32 @@ class _AttendancePageState extends State<AttendancePage>
     );
   }
 
+  String _getGreetingName(String? rawName, String fallback) {
+    if (rawName == null || rawName.trim().isEmpty) return fallback;
+    final words = rawName.split(' ').where((w) => w.trim().isNotEmpty).toList();
+    if (words.isEmpty) return fallback;
+
+    String selectedName = words[0];
+    for (final word in words) {
+      final cleanWord = word.replaceAll(RegExp(r'[^\w]'), '');
+      if (cleanWord.length > 2) {
+        selectedName = word;
+        break;
+      }
+    }
+    final cleanSelected = selectedName.replaceAll(RegExp(r'[^\w]'), '');
+    if (cleanSelected.length <= 2) {
+      selectedName = words[0];
+    }
+
+    final cleanWord = selectedName.replaceAll(RegExp(r'[^\w]'), '');
+    if (cleanWord.isEmpty) return selectedName;
+    return '${selectedName[0].toUpperCase()}${selectedName.substring(1).toLowerCase()}';
+  }
+
   Widget _buildHeader(ThemeData theme) {
     final rawName = internData?['fullName']?.toString() ?? 'Intern';
-    final name = rawName
-        .split(' ')
-        .where((w) => w.isNotEmpty)
-        .map((w) => '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
-        .join(' ');
+    final name = _getGreetingName(rawName, 'Intern');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
@@ -786,18 +839,17 @@ class _AttendancePageState extends State<AttendancePage>
             ),
           ),
           InkWell(
-            onTap:
-                internData == null
-                    ? null
-                    : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => InternProfilepage(internData: internData!),
-                        ),
-                      ).then((_) => _loadProfileImage());
-                    },
+            onTap: internData == null
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            InternProfilepage(internData: internData!),
+                      ),
+                    ).then((_) => _loadProfileImage());
+                  },
             borderRadius: BorderRadius.circular(30),
             child: Container(
               width: 52,
@@ -821,28 +873,25 @@ class _AttendancePageState extends State<AttendancePage>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF0EA5E9),
-                  gradient:
-                      (_profileImagePath == null)
-                          ? const LinearGradient(
-                            colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                          )
-                          : null,
-                  image:
-                      (_profileImagePath != null)
-                          ? DecorationImage(
-                            image: FileImage(File(_profileImagePath!)),
-                            fit: BoxFit.cover,
-                          )
-                          : null,
-                ),
-                child:
-                    (_profileImagePath == null)
-                        ? const Icon(
-                          Icons.person_rounded,
-                          size: 28,
-                          color: Colors.white,
+                  gradient: (_profileImagePath == null)
+                      ? const LinearGradient(
+                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
                         )
-                        : null,
+                      : null,
+                  image: (_profileImagePath != null)
+                      ? DecorationImage(
+                          image: FileImage(File(_profileImagePath!)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: (_profileImagePath == null)
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 28,
+                        color: Colors.white,
+                      )
+                    : null,
               ),
             ),
           ),
@@ -874,64 +923,101 @@ class _AttendancePageState extends State<AttendancePage>
         ),
         child: Scaffold(
           backgroundColor: const Color(0xFFF1F5F9),
-          body: SizedBox.expand(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [const Color(0xFF00657F), const Color(0xFFF1F5F9)],
-                  stops: const [0.0, 0.75],
-                ),
-              ),
-              child: SafeArea(
-                child: Stack(
-                  children: [
-                    Column(
+          body: Stack(
+            children: [
+              SizedBox.expand(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color(0xFF00657F),
+                        const Color(0xFFF1F5F9),
+                      ],
+                      stops: const [0.0, 0.75],
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Stack(
                       children: [
-                        buildNetworkStatusBanner(),
-                        _buildHeader(theme),
-                        Expanded(
-                          child:
-                              loading
-                                  ? const Center(
-                                    child: CircularProgressIndicator(),
-                                  )
-                                  : _buildMainUI(name, now, isLast5Days),
+                        Column(
+                          children: [
+                            buildNetworkStatusBanner(),
+                            _buildHeader(theme),
+                            Expanded(
+                              child: _buildMainUI(name, now, isLast5Days),
+                            ),
+                          ],
                         ),
+
+                        /// FULL-SCREEN OVERLAY LOADER (Punch action)
+                        if (punchLoading)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.5),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                  SizedBox(height: 20),
+                                  Text(
+                                    "Processing...",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-
-                    /// FULL-SCREEN OVERLAY LOADER (Punch action)
-                    if (punchLoading)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.5),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                              SizedBox(height: 20),
-                              Text(
-                                "Processing...",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+
+              if (_showOverlay)
+                IgnorePointer(
+                  ignoring: _overlayOpacity == 0.0,
+                  child: AnimatedOpacity(
+                    opacity: _overlayOpacity,
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeInOut,
+                    child: Scaffold(
+                      backgroundColor: Colors.white,
+                      body: Stack(
+                        children: [
+                          SizedBox.expand(
+                            child: Image.asset(
+                              'assets/images/app_launch.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(child: Icon(Icons.error));
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 250,
+                            left: 40,
+                            right: 40,
+                            child: const DotLoadingIndicator(
+                              color: Color(0xFF00657F),
+                              size: 10.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1002,11 +1088,10 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (_) => InternAttendanceDetails(
-                                  internId: internId ?? '',
-                                  internName: name,
-                                ),
+                            builder: (_) => InternAttendanceDetails(
+                              internId: internId ?? '',
+                              internName: name,
+                            ),
                           ),
                         );
                       },
@@ -1021,11 +1106,10 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (_) => LeaveApplyScreen(
-                                  internId: internId ?? '',
-                                  internName: name,
-                                ),
+                            builder: (_) => LeaveApplyScreen(
+                              internId: internId ?? '',
+                              internName: name,
+                            ),
                           ),
                         );
                       },
@@ -1044,11 +1128,10 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (_) => InternProcess(
-                                  internId: internId ?? '',
-                                  internName: name,
-                                ),
+                            builder: (_) => InternProcess(
+                              internId: internId ?? '',
+                              internName: name,
+                            ),
                           ),
                         );
                       },
@@ -1099,8 +1182,8 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (_) => const intern_Organizational_Hierarchy(),
+                            builder: (_) =>
+                                const intern_Organizational_Hierarchy(),
                           ),
                         );
                       },
@@ -1126,27 +1209,7 @@ class _AttendancePageState extends State<AttendancePage>
                         },
                       ),
                       const SizedBox(width: 12),
-                      _buildManagerStyleBox(
-                        "Reimbursement",
-                        "Company Claims",
-                        Icons.receipt_long_rounded,
-                        const Color(0xFF7C3AED),
-                        onTap: internId == null
-                                ? null
-                                : () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => FundRequestPage(
-                                            requesterId: internId!,
-                                            requesterName: name,
-                                            requesterType: 'intern',
-                                          ),
-                                    ),
-                                  );
-                                },
-                      ),
+                      const Expanded(child: SizedBox()),
                     ],
                   ),
                 ],
@@ -1179,7 +1242,8 @@ class _AttendancePageState extends State<AttendancePage>
         statusLabel = 'Accepted';
         break;
       case 'rejected':
-        statusColor = Color(0xFFB00020); {}
+        statusColor = Color(0xFFB00020);
+        {}
         statusLabel = 'Rejected';
         break;
       default:
@@ -1522,80 +1586,78 @@ class _AttendancePageState extends State<AttendancePage>
           // Button at bottom of stack
           Center(
             child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap:
-                    punchLoading
-                        ? null
-                        : () async {
-                          if (hasPunchedIn && hasPunchedOut) {
-                            showDialog(
-                              context: context,
-                              builder:
-                                  (_) => AlertDialog(
-                                    content: const Text(
-                                      "Attendance locked - you are good 😄",
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text("OK"),
-                                      ),
-                                    ],
-                                  ),
-                            );
-                            return;
-                          }
+              behavior: HitTestBehavior.opaque,
+              onTap: punchLoading
+                  ? null
+                  : () async {
+                      if (hasPunchedIn && hasPunchedOut) {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            content: const Text(
+                              "Attendance locked - you are good 😄",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("OK"),
+                              ),
+                            ],
+                          ),
+                        );
+                        return;
+                      }
 
-                          if (mounted) setState(() => punchLoading = true);
+                      if (mounted) setState(() => punchLoading = true);
 
-                          // Note: checkDistanceFromOffice is not present in intern dashboard,
-                          // but it seems the punchIn/punchOut methods might handle location.
-                          // I will stick to the existing logic but update the UI.
+                      // Note: checkDistanceFromOffice is not present in intern dashboard,
+                      // but it seems the punchIn/punchOut methods might handle location.
+                      // I will stick to the existing logic but update the UI.
 
-                          if (!hasPunchedIn) {
-                            await punchIn();
-                          } else if (!hasPunchedOut) {
-                            await punchOut();
-                          }
+                      if (!hasPunchedIn) {
+                        await punchIn();
+                      } else if (!hasPunchedOut) {
+                        await punchOut();
+                      }
 
-                          if (mounted) setState(() => punchLoading = false);
-                        },
-                child: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(32),
-                  color: Colors.transparent,
-                  child: Container(
-                    width: 220,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(32),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [startColor, endColor],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: startColor.withOpacity(0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      if (mounted) setState(() => punchLoading = false);
+                    },
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(32),
+                color: Colors.transparent,
+                child: Container(
+                  width: 220,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(32),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [startColor, endColor],
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1,
+                    boxShadow: [
+                      BoxShadow(
+                        color: startColor.withOpacity(0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
@@ -1764,7 +1826,7 @@ class _AttendancePageState extends State<AttendancePage>
   }
 
   Future<bool> checkDistanceFromOffice() async {
-    if (internStatus == 'remote') return true;
+    if (internStatus == 'remote' || internData?['isRemote'] == true || internData?['isRemote']?.toString() == 'true') return true;
 
     bool hasPermission = await handleLocationPermission();
     if (!hasPermission) return false;
@@ -1970,20 +2032,20 @@ class _AttendancePageState extends State<AttendancePage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B),
-                            ),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
                           ),
                         ),
                         Text(
                           subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.grey.shade500,
@@ -2061,10 +2123,12 @@ class LeaveRecord {
       perDay = Map<String, String>.from(json['perDayDurations']);
     }
 
-    final from =
-        json['fromDate'] is Map ? json['fromDate']['\$date'] : json['fromDate'];
-    final to =
-        json['toDate'] is Map ? json['toDate']['\$date'] : json['toDate'];
+    final from = json['fromDate'] is Map
+        ? json['fromDate']['\$date']
+        : json['fromDate'];
+    final to = json['toDate'] is Map
+        ? json['toDate']['\$date']
+        : json['toDate'];
 
     return LeaveRecord(
       id: json['_id'] ?? '',
@@ -2121,6 +2185,84 @@ class _ActionButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class DotLoadingIndicator extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const DotLoadingIndicator({
+    super.key,
+    this.color = const Color(0xFF00657F),
+    this.size = 10.0,
+  });
+
+  @override
+  State<DotLoadingIndicator> createState() => _DotLoadingIndicatorState();
+}
+
+class _DotLoadingIndicatorState extends State<DotLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final double delay = index * 0.2;
+            final double progress = (_controller.value - delay) % 1.0;
+            final double scale =
+                0.6 +
+                0.4 *
+                    (progress < 0.5
+                        ? (progress * 2)
+                        : (1.0 - (progress - 0.5) * 2));
+            final double opacity =
+                0.3 +
+                0.7 *
+                    (progress < 0.5
+                        ? (progress * 2)
+                        : (1.0 - (progress - 0.5) * 2));
+
+            return Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: scale,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                  width: widget.size,
+                  height: widget.size,
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }

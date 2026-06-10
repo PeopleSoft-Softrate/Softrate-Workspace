@@ -102,8 +102,8 @@
               <span>Data Field</span>
               <span>X</span>
               <span>Y</span>
-              <span>Font</span>
-              <span>Bold</span>
+              <span>Size (px/pt)</span>
+              <span>Style</span>
               <span>Color</span>
               <span></span>
             </div>
@@ -114,11 +114,20 @@
               </select>
               <input type="number" class="location-input" [(ngModel)]="p.x" placeholder="X">
               <input type="number" class="location-input" [(ngModel)]="p.y" placeholder="Y">
-              <input type="number" class="location-input" [(ngModel)]="p.fontSize" placeholder="Size">
-              <div class="checkbox-container">
-                <input type="checkbox" [(ngModel)]="p.isBold">
-              </div>
-              <input type="color" [(ngModel)]="p.color" class="chip-color-picker">
+              <ng-container *ngIf="!isImageKey(p.key)">
+                <input type="number" class="location-input" [(ngModel)]="p.fontSize" placeholder="Size">
+                <div class="checkbox-container">
+                  <input type="checkbox" [(ngModel)]="p.isBold" title="Bold">
+                </div>
+                <input type="color" [(ngModel)]="p.color" class="chip-color-picker">
+              </ng-container>
+
+              <ng-container *ngIf="isImageKey(p.key)">
+                <!-- Init imgSize if it's missing on older chips -->
+                <input type="number" class="location-input" [ngModel]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)" (ngModelChange)="p.imgSize = $event" placeholder="Size (px)">
+                <span></span>
+                <span></span>
+              </ng-container>
               <button class="btn-remove" (click)="removePlaceholder(i)">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
@@ -296,6 +305,10 @@
           <div class="section-divider"></div>
 
           <!-- ─── VISUAL CANVAS ──────────────────────────────────────────── -->
+          <p class="help-text center" style="margin-bottom: 12px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+            💡 Each page becomes one PDF page. Drag chips and paragraph blocks to position them. Paragraph blocks wrap text within their set width.<br>
+            <strong>Tip:</strong> You can bold specific words inside a paragraph by wrapping them in double asterisks, like <code>**this**</code>.
+          </p>
           <div class="section-title">
             <h3>Visual Mapping – Page {{ selectedPageIndex + 1 }}</h3>
           </div>
@@ -305,7 +318,7 @@
               (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()"
               [style.width.px]="currentTemplate.orientation === 'portrait' ? 595 : 842"
               [style.height.px]="currentTemplate.orientation === 'portrait' ? 842 : 595"
-              [style.backgroundImage]="'url(' + (currentPage.backgroundUrl || 'assets/images/cert_fallback.png') + ')'">
+              [style.backgroundImage]="currentPage.backgroundUrl ? 'url(' + currentPage.backgroundUrl + ')' : 'none'">
 
               <!-- Placeholder chip overlays -->
               <div class="placeholder-overlay"
@@ -313,11 +326,20 @@
                 (mousedown)="onMouseDown($event, i)"
                 [class.dragging]="draggingType === 'placeholder' && draggingIndex === i"
                 [style.left.px]="p.x" [style.top.px]="p.y"
-                [style.fontSize.px]="p.fontSize"
-                [style.fontWeight]="p.isBold ? 'bold' : 'normal'"
-                [style.color]="p.color || '#000'">
-                <i class="fa-solid fa-arrows-up-down-left-right"></i>
-                {{ '{' + '{' + p.key + '}' + '}' }}
+                [style.fontSize.px]="isImageKey(p.key) ? 12 : p.fontSize"
+                [style.fontWeight]="p.isBold && !isImageKey(p.key) ? 'bold' : 'normal'"
+                [style.color]="p.color || '#000'"
+                [style.width.px]="isImageKey(p.key) ? (p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)) : null"
+                [style.height.px]="isImageKey(p.key) ? (p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)) : null"
+                [style.display]="isImageKey(p.key) ? 'flex' : 'block'"
+                [style.alignItems]="isImageKey(p.key) ? 'center' : 'initial'"
+                [style.justifyContent]="isImageKey(p.key) ? 'center' : 'initial'"
+                [style.border]="isImageKey(p.key) ? '1px dashed #64748b' : 'none'"
+                [style.borderRadius]="p.key === 'profilePhoto' ? '50%' : '4px'"
+                [style.backgroundColor]="isImageKey(p.key) ? 'rgba(255,255,255,0.8)' : 'transparent'">
+                <i class="fa-solid fa-arrows-up-down-left-right" [style.marginRight.px]="isImageKey(p.key) ? 4 : 8"></i>
+                <span *ngIf="!isImageKey(p.key)">{{ '{' + '{' + p.key + '}' + '}' }}</span>
+                <span *ngIf="isImageKey(p.key)" style="font-size: 11px;">Image ({{p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)}}px)</span>
               </div>
 
               <!-- Paragraph block overlays -->
@@ -345,9 +367,6 @@
 
             </div>
           </div>
-          <p class="help-text center" style="margin-top:12px;text-align:center">
-            💡 Each page becomes one PDF page. Drag chips and paragraph blocks to position them. Paragraph blocks wrap text within their set width.
-          </p>
         </div>
 
         <!-- Save -->

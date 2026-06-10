@@ -64,7 +64,7 @@ router.get('/company', verifyTenant, async (req, res) => {
  */
 router.put('/company', verifyTenant, async (req, res) => {
   try {
-    const { receivingEmail, themeColor, locations, communication, employeeRoles, internRoles, offerLetterSettings, payrollSettings, workDurationSettings, leavePolicies } = req.body;
+    const { receivingEmail, themeColor, locations, communication, employeeRoles, internRoles, offerLetterSettings, payrollSettings, workDurationSettings, leavePolicies, defaultPassword } = req.body;
     
     const Company = await getMasterCompany();
     const company = await Company.findById(req.tenant.companyId);
@@ -82,6 +82,7 @@ router.put('/company', verifyTenant, async (req, res) => {
     if (communication !== undefined) company.settings.communication = communication;
     if (employeeRoles !== undefined) company.settings.employeeRoles = employeeRoles;
     if (internRoles !== undefined) company.settings.internRoles = internRoles;
+    if (defaultPassword !== undefined) company.settings.defaultPassword = defaultPassword;
     
     if (leavePolicies !== undefined) {
       company.leavePolicies = leavePolicies;
@@ -134,6 +135,17 @@ router.put('/company', verifyTenant, async (req, res) => {
                     nextResetDate: nextResetDate
                   });
                 }
+              }
+            }
+            
+            // Delete counters for policies that have been removed
+            const validPolicyNames = leavePolicies
+              .filter(p => p.appliesTo === 'both' || p.appliesTo === userType)
+              .map(p => p.name);
+              
+            for (const existing of existingCounters) {
+              if (!validPolicyNames.includes(existing.leaveType)) {
+                await LeaveCounter.deleteOne({ _id: existing._id });
               }
             }
           }
@@ -208,7 +220,7 @@ router.get('/public', verifyTenant, async (req, res) => {
       success: true,
       locations: company.settings?.locations || [],
       themeColor: company.settings?.themeColor || '#00657F',
-      leavePolicies: company.settings?.leavePolicies || []
+      leavePolicies: company.leavePolicies || company.settings?.leavePolicies || []
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });

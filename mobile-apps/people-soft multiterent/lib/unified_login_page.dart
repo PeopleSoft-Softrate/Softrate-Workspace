@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'package:hrmappfrontend/device_mismatch_page.dart';
+import 'package:hrmappfrontend/force_password_reset_page.dart';
+import 'package:hrmappfrontend/Employee/employee_complete_details.dart';
 
 class UnifiedLoginPage extends StatefulWidget {
   const UnifiedLoginPage({super.key});
@@ -45,7 +47,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
     final String enteredPass = _passCtrl.text.trim();
 
     // ── Test/Review Accounts Bypass ──────────────────────────────────────────
-    if (enteredId == 'testintern@softrate.com' && enteredPass == 'Test@1234') {
+    if ((enteredId == 'testintern@softrate.com' && enteredPass == 'Test@1234') ||
+        (enteredId == 'test@peoplesoft' && enteredPass == '123456')) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', 'mock_token_123');
       await prefs.setString('user_role', 'intern');
@@ -65,6 +68,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       await prefs.setString('auth_token', 'mock_token_123');
       await prefs.setString('user_role', 'employee');
       await prefs.setString('employeeId', 'test_employee_id');
+      await prefs.setString('employeeMongoId', 'mock_mongo_id_employee');
       await prefs.setBool('employeeLoggedIn', true);
       setState(() => _loading = false);
       if (!mounted) return;
@@ -109,6 +113,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
               builder: (_) => DeviceMismatchPage(
                 identifier: _idCtrl.text.trim(),
                 password: _passCtrl.text.trim(),
+                companyCode: _companyCtrl.text.trim(),
                 newDeviceId: deviceId,
                 requestStatus: data['requestStatus'] ?? 'none',
               ),
@@ -141,6 +146,25 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
 
       if (!mounted) return;
 
+      if (data['forcePasswordReset'] == true) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ForcePasswordResetPage(
+              userId: (user['_id'] ?? '').toString(),
+              onSuccess: (BuildContext resetContext) {
+                // Return to login page so they can login with new password
+                Navigator.pushReplacement(
+                  resetContext,
+                  MaterialPageRoute(builder: (_) => const UnifiedLoginPage()),
+                );
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
       // ── Route by role ──────────────────────────────────────────────────────
       debugPrint("Routing for role: $role");
       switch (role) {
@@ -157,14 +181,40 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
 
         case 'employee':
           final empId = user['EmployeeId'] ?? user['_id'] ?? '';
+          final empMongoId = (user['_id'] ?? '').toString();
           await prefs.setString('employeeId', empId);
+          await prefs.setString('employeeMongoId', empMongoId);
           await prefs.setBool('employeeLoggedIn', true);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => Employeedashboard(employeeId: empId),
-            ),
-          );
+
+          // Check if employee still needs to complete their profile details
+          final bool completeDetails = data['completeDetails'] == true;
+
+          if (!completeDetails) {
+            // Show the Complete Details screen, then go to dashboard
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EmployeeCompleteDetails(
+                  employeeMongoId: empMongoId,
+                  onDone: (BuildContext detailsContext) {
+                    Navigator.pushReplacement(
+                      detailsContext,
+                      MaterialPageRoute(
+                        builder: (_) => Employeedashboard(employeeId: empId),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Employeedashboard(employeeId: empId),
+              ),
+            );
+          }
           break;
 
         case 'manager':
@@ -335,7 +385,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
     final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           // Gradient background
@@ -410,16 +460,20 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Use your registered email address to sign in.',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                      letterSpacing: 0.2,
+                  if (!isKeyboardOpen) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Use your registered email address to sign in.',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                        letterSpacing: 0.2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 40),
+                  ] else ...[
+                    const SizedBox(height: 16),
+                  ],
 
                   // ── Form Card ───────────────────────────────────────────────────
                   Expanded(

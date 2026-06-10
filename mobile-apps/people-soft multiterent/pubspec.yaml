@@ -26,15 +26,11 @@ dependencies:
 
 
   # Location
-  location: ^8.0.1
   geolocator: ^10.0.0
 
   # Files & PDF
   file_picker: ^10.3.7
   pdf: ^3.10.0
-  webview_flutter: ^4.2.1
-  webview_flutter_android: ^3.10.0
-  webview_flutter_wkwebview: ^3.10.0
   syncfusion_flutter_pdfviewer: ^32.1.19
   printing: ^5.14.2
   image_picker: ^1.2.1

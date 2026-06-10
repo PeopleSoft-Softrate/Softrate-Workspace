@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { CheckmarkCircle01Icon, DiplomaIcon, OrientationLandscapeToPotraitIcon, OrientationPotraitToLandscapeIcon, LicenseDraftIcon, Invoice01Icon, Shield01Icon } from '@hugeicons/core-free-icons';
+import { CheckmarkCircle01Icon, DiplomaIcon, OrientationLandscapeToPotraitIcon, OrientationPotraitToLandscapeIcon, LicenseDraftIcon, Invoice01Icon, Shield01Icon, IdCardLanyardIcon } from '@hugeicons/core-free-icons';
 import { finalize } from 'rxjs';
 
 @Component({
@@ -20,6 +20,9 @@ export class CertificateSettings implements OnInit {
   private apiService = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
 
+  /** Preview URL for the current logged-in user's profile photo (used in canvas preview) */
+  currentUserPhotoUrl: string | null = null;
+
   readonly CheckmarkCircle01Icon = CheckmarkCircle01Icon;
   readonly DiplomaIcon = DiplomaIcon;
   readonly OrientationLandscapeToPotraitIcon = OrientationLandscapeToPotraitIcon;
@@ -27,6 +30,7 @@ export class CertificateSettings implements OnInit {
   readonly LicenseDraftIcon = LicenseDraftIcon;
   readonly Invoice01Icon = Invoice01Icon;
   readonly Shield01Icon = Shield01Icon;
+  readonly IdCardLanyardIcon = IdCardLanyardIcon;
 
   /** Safe placeholder hint for the paragraph textarea — avoids Angular strict-template parsing {{}} */
   readonly paraPlaceholderHint =
@@ -59,7 +63,8 @@ export class CertificateSettings implements OnInit {
     nda:                  this.defaultTemplate('portrait'),
     lor:                  this.defaultTemplate('landscape'),
     internshipCompletion: this.defaultTemplate('landscape'),
-    projectCompletion:    this.defaultTemplate('landscape')
+    projectCompletion:    this.defaultTemplate('landscape'),
+    virtualIdCard:        this.defaultTemplate('portrait')
   };
 
   otherSettings: any = {};
@@ -92,6 +97,12 @@ export class CertificateSettings implements OnInit {
         { id: 'internshipCompletion', label: 'Internship Completion', icon: this.CheckmarkCircle01Icon },
         { id: 'projectCompletion',    label: 'Project Completion', icon: this.CheckmarkCircle01Icon }
       ]
+    },
+    {
+      name: 'Identity Documents',
+      docs: [
+        { id: 'virtualIdCard',        label: 'Virtual ID Card', icon: this.IdCardLanyardIcon }
+      ]
     }
   ];
 
@@ -106,11 +117,27 @@ export class CertificateSettings implements OnInit {
     { key: 'department',     label: 'Department' },
     { key: 'logo',           label: 'Company Logo' },
     { key: 'signature',      label: 'Company Signature' },
-    { key: 'qrCode',         label: 'QR Code (Virtual ID)' }
+    { key: 'qrCode',         label: 'QR Code (Virtual ID)' },
+    { key: 'profilePhoto',   label: 'User Profile Photo' }
   ];
+
+  isImageKey(key: string): boolean {
+    return ['logo', 'signature', 'qrCode', 'profilePhoto'].includes(key);
+  }
 
   ngOnInit() {
     this.fetchSettings();
+    this.fetchCurrentUserPhoto();
+  }
+
+  fetchCurrentUserPhoto() {
+    this.apiService.getMe().subscribe({
+      next: (res: any) => {
+        if (res?.user?.profilePhotoUrl) {
+          this.currentUserPhotoUrl = res.user.profilePhotoUrl;
+        }
+      }
+    });
   }
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -210,6 +237,17 @@ export class CertificateSettings implements OnInit {
       text = text.replace(/\{\{qrCode\}\}/gi, img);
     }
     
+    // Replace {{profilePhoto}} with actual user photo if available, else placeholder
+    if (text.includes('{{profilePhoto}}')) {
+      const img = this.currentUserPhotoUrl
+        ? `<img src="${this.currentUserPhotoUrl}" class="preview-img-placeholder" style="width:80px;height:80px;object-fit:cover;border-radius:50%;">`
+        : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block; border-radius:50%; width:60px; height:60px; text-align:center; line-height:60px; color:#999; font-size:11px;">Photo</span>';
+      text = text.replace(/\{\{profilePhoto\}\}/gi, img);
+    }
+    
+    // Markdown support for inline bold (**text**)
+    text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
     // Convert newlines to <br> for HTML rendering in the preview
     return text.replace(/\n/g, '<br>');
   }
@@ -288,7 +326,7 @@ export class CertificateSettings implements OnInit {
   // ── Placeholder chips ──────────────────────────────────────────────────────
   addPlaceholder() {
     this.currentPage.placeholders.push({
-      key: 'fullName', x: 100, y: 100, fontSize: 18, isBold: false, color: '#000000'
+      key: 'fullName', x: 100, y: 100, fontSize: 18, imgSize: 120, isBold: false, color: '#000000'
     });
   }
 

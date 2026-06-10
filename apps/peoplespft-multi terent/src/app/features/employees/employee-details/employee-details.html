@@ -1,7 +1,7 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
-  <div class="header-content">
+  <div class="header-main">
     <div class="breadcrumb">
       <a routerLink="/employees" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> Back to Employees
@@ -23,13 +23,21 @@
     <div class="profile-sidebar">
       <div class="card profile-card">
         <div class="profile-image">
-          <div class="avatar-placeholder">{{ employee().fullName?.charAt(0) }}</div>
+          <img *ngIf="!employee().imgError" [src]="getPhotoUrl(employee()._id)" (error)="onImageError($event); $any(employee()).imgError = true" class="avatar-placeholder" style="object-fit: cover; display: block;" />
+          <div *ngIf="employee().imgError || !employee()._id" class="avatar-placeholder" style="display: flex;">{{ employee().fullName?.charAt(0) }}</div>
           <div class="status-dot" [class.active]="employee().status === 'approved'"></div>
         </div>
-        <h3>
+        <h3 style="display: flex; align-items: center; gap: 8px;">
           {{ employee().fullName }}
-          <i *ngIf="employee().isManager" class="fa-solid fa-crown" style="color: #f59e0b; font-size: 1rem; margin-left: 8px;" title="Manager"></i>
-          <i *ngIf="employee().isHr" class="fa-solid fa-shield-halved" style="color: #0ea5e9; font-size: 1rem; margin-left: 8px;" title="HR Admin"></i>
+          <svg *ngIf="employee().isManager" title="Manager" style="color: #f59e0b;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M9 16v-8l3 5l3 -5v8" />
+          </svg>
+          <svg *ngIf="employee().isHr" title="HR Admin" style="color: #0ea5e9;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M10 16v-8m4 0v8" />
+            <path d="M10 12h4" />
+          </svg>
         </h3>
         <p class="employee-id-label">Employee ID: {{ employee().EmployeeId || 'N/A' }}</p>
         <div class="status-pill" [ngClass]="getStatusColor(employee().status)">
@@ -97,6 +105,22 @@
           <span *ngIf="!isPromoting()">Demote to Employee</span>
           <span *ngIf="isPromoting()">Updating...</span>
         </button>
+      </div>
+
+      <!-- Access Control -->
+      <div class="card promotion-card">
+        <h4>Access Control</h4>
+        <p class="stat-desc">Manage geofence bypassing for this staff member.</p>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <span style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">Remote Access</span>
+          <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+            <input type="checkbox" [ngModel]="employee().isRemote" (click)="toggleRemoteAccess()" style="opacity: 0; width: 0; height: 0; position: absolute;">
+            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {{ employee().isRemote ? '#10b981' : '#cbd5e1' }}; transition: .4s; border-radius: 24px;">
+              <span [style.transform]="employee().isRemote ? 'translateX(20px)' : 'translateX(4px)'" style="position: absolute; height: 16px; width: 16px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <!-- Termination Actions -->

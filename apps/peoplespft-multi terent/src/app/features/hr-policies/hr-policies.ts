@@ -44,7 +44,7 @@ export class HrPolicies implements OnInit {
   };
 
   ngOnInit() {
-    const isSelf = this.router.url.includes('/employee/');
+    const isSelf = this.router.url.includes('/employee/') || this.router.url.includes('/intern/');
     this.isSelfPortal.set(isSelf);
     this.fetchPolicies();
   }
@@ -53,7 +53,15 @@ export class HrPolicies implements OnInit {
     if (!isRefresh) this.isLoading.set(true);
     this.apiService.getPolicies().subscribe({
       next: (data: any[]) => {
-        this.policies.set(data);
+        let displayData = data;
+        const url = this.router.url;
+        if (url.includes('/employee/')) {
+          displayData = data.filter(p => p.policy_view_by && p.policy_view_by.map((r: string) => r.toLowerCase()).includes('employee'));
+        } else if (url.includes('/intern/')) {
+          displayData = data.filter(p => p.policy_view_by && p.policy_view_by.map((r: string) => r.toLowerCase()).includes('intern'));
+        }
+        
+        this.policies.set(displayData);
         this.isLoading.set(false);
       },
       error: (err: any) => {

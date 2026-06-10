@@ -7,24 +7,7 @@ import 'api_service.dart';
 class CallLogService {
   static const _lastSyncKey = 'lastCallLogSyncTimestamp';
 
-  static Future<void> resetSyncTimestampIfNewDay() async {
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-    final startOfToday =
-        DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
-
-    final lastSync = prefs.getInt(_lastSyncKey) ?? 0;
-
-    // Only reset if no sync has happened yet today (avoids re-sending all
-    // today's calls every time the app is opened).
-    if (lastSync < startOfToday) {
-      await prefs.setInt(_lastSyncKey, startOfToday);
-      debugPrint(
-          'CallLog: New day detected — reset sync timestamp to start of today');
-    } else {
-      debugPrint('CallLog: Sync timestamp already set for today, keeping it');
-    }
-  }
+  // Removed resetSyncTimestampIfNewDay to avoid ignoring previous days' logs
 
   static Future<Map<String, dynamic>> syncNewEntries({
     required String companyCode,
@@ -46,8 +29,9 @@ class CallLogService {
 
     final now = DateTime.now();
     final queryTo = now.millisecondsSinceEpoch;
+    // Default to 30 days ago if no sync has happened yet
     final lastSync = prefs.getInt(_lastSyncKey) ??
-        DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+        now.subtract(const Duration(days: 30)).millisecondsSinceEpoch;
 
     final Iterable<CallLogEntry> entries =
         await CallLog.query(dateFrom: lastSync, dateTo: queryTo);
@@ -245,17 +229,17 @@ class CallLogService {
   static String? _extractSlotFromAccountId(String accountId) {
     if (accountId.isEmpty) return null;
 
-    // Already a plain number (e.g. "1" or "2")
-    if (RegExp(r'^\d+$').hasMatch(accountId)) return accountId;
+    // Already a plain number (max 2 digits to exclude ICCIDs)
+    if (RegExp(r'^\d{1,2}$').hasMatch(accountId)) return accountId;
 
     // Samsung handle like "com.xxx.yyy/1"
     final slashIndex = accountId.lastIndexOf('/');
     if (slashIndex != -1) {
       final afterSlash = accountId.substring(slashIndex + 1).trim();
-      if (RegExp(r'^\d+$').hasMatch(afterSlash)) return afterSlash;
+      if (RegExp(r'^\d{1,2}$').hasMatch(afterSlash)) return afterSlash;
     }
 
-    // Phone-number handle or unknown format — cannot determine slot
+    // Phone-number handle or unknown format (like ICCID) — cannot determine slot
     return null;
   }
 
@@ -401,14 +385,20 @@ class CallLogService {
       return fuzzy;
     }
 
-    // ── Step 4: No-metadata fallback (old Android 8/9 devices) ───────────────
-    //
-    // Old devices often expose accountId="" and simDisplayName="" for every
-    // call log entry. We cannot confirm SIM identity.
-    // To prevent showing an empty call log on these devices, we must allow 
-    // these calls to pass through even if a SIM preference is set.
-    if (accountId.isEmpty && simName.isEmpty) {
-      debugPrint('SIMFilter → PASS via no-metadata fallback (old device)');
+    // ── Step 4: Universal Missing Metadata Fallback ──────────────────────────
+    // When the device provides NO display name (simName is empty), we must rely
+    // entirely on the accountId.
+    // 1. If we successfully extracted a slot number (e.g. "2") from accountId 
+    //    and it reached here, it means it MISMATCHED our expected slot. We reject it.
+    // 2. Otherwise (accountId is empty, an ICCID, or a UUID), we have no
+    //    reliable way to verify. We allow it through to prevent dropping logs.
+    if (simName.isEmpty) {
+      final slotFromHandle = _extractSlotFromAccountId(accountId);
+      if (slotFromHandle != null) {
+        debugPrint('SIMFilter → FAIL via explicit slot mismatch on empty simName');
+        return false;
+      }
+      debugPrint('SIMFilter → PASS via universal missing metadata fallback (accountId="$accountId")');
       return true;
     }
 

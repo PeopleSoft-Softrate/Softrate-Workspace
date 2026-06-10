@@ -1,6 +1,6 @@
 import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UserCircleIcon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, Money03Icon, Download02Icon } from '@hugeicons/core-free-icons';
@@ -20,6 +20,11 @@ export class EmployeePayroll implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
 
   readonly UserCircleIcon = UserCircleIcon;
   readonly FingerAccessIcon = FingerAccessIcon;
@@ -49,11 +54,40 @@ export class EmployeePayroll implements OnInit {
     tax: '₹ 1,200'
   };
 
-  salaryHistory = [
-    { month: 'March 2024', status: 'Paid', amount: '₹ 41,200', date: '01 Mar 2024' },
-    { month: 'February 2024', status: 'Paid', amount: '₹ 41,200', date: '01 Feb 2024' },
-    { month: 'January 2024', status: 'Paid', amount: '₹ 41,200', date: '01 Jan 2024' }
-  ];
+  // Dynamic payslip history based on onboarding date
+  get salaryHistory(): { month: string; status: string; amount: string; date: string }[] {
+    const emp = this.employee();
+    const now = new Date();
+    const results: { month: string; status: string; amount: string; date: string }[] = [];
+
+    // Start from the month prior to current month (last completed month)
+    let checkDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    // Determine earliest payslip month from onboardingDate
+    let onboardDate: Date | null = null;
+    if (emp?.onboardingDate) {
+      try { onboardDate = new Date(emp.onboardingDate); } catch (_) {}
+    }
+
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const maxSlips = 12;
+
+    for (let i = 0; i < maxSlips; i++) {
+      if (onboardDate) {
+        const onboardStart = new Date(onboardDate.getFullYear(), onboardDate.getMonth(), 1);
+        if (checkDate < onboardStart) break;
+      }
+
+      const monthLabel = `${monthNames[checkDate.getMonth()]} ${checkDate.getFullYear()}`;
+      const issueDate = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 1);
+      const issueDateStr = `${String(issueDate.getDate()).padStart(2,'0')} ${monthNames[issueDate.getMonth()].substring(0,3)} ${issueDate.getFullYear()}`;
+
+      results.push({ month: monthLabel, status: 'Paid', amount: this.payrollStats.netSalary, date: issueDateStr });
+      checkDate = new Date(checkDate.getFullYear(), checkDate.getMonth() - 1, 1);
+    }
+
+    return results;
+  }
 
   ngOnInit() {
     const isSelf = this.router.url.includes('/employee/payroll');

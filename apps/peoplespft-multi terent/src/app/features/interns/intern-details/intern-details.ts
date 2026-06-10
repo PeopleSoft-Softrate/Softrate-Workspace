@@ -35,6 +35,7 @@ export class InternDetails implements OnInit {
   isTerminating = signal(false);
   showTerminateForm = signal(false);
   terminationReason = signal('');
+  isResendingMail = signal(false);
   userRole = signal<string | null>(localStorage.getItem('user_role'));
 
   navigateTo(path: string[]) {
@@ -44,6 +45,18 @@ export class InternDetails implements OnInit {
       if (mainContent) mainContent.scrollTop = 0;
       window.scrollTo({ top: 0, behavior: 'instant' });
     });
+  }
+
+  getPhotoUrl(id: string): string {
+    const token = localStorage.getItem('auth_token') || '';
+    return `${this.apiService.getBaseUrl()}/api/intern/profile-photo/${id}?token=${token}`;
+  }
+
+  onImageError(event: any) {
+    event.target.style.display = 'none';
+    if (event.target.nextElementSibling) {
+      event.target.nextElementSibling.style.display = 'flex';
+    }
   }
 
   ngOnInit() {
@@ -140,6 +153,21 @@ export class InternDetails implements OnInit {
     }
   }
 
+  toggleRemoteAccess() {
+    const isNowRemote = !this.intern().isRemote;
+    this.apiService.updateIntern(this.internId(), { isRemote: isNowRemote }).subscribe({
+      next: () => {
+        this.alertService.show(`Remote access ${isNowRemote ? 'enabled' : 'disabled'}`);
+        this.fetchDetails();
+      },
+      error: (err: any) => {
+        console.error('Failed to update remote status', err);
+        const errMsg = err?.error?.message || err?.message || 'Unknown error';
+        this.alertService.show(`Failed to update remote status: ${errMsg}`);
+      }
+    });
+  }
+
   async terminateIntern() {
     if (!this.terminationReason().trim()) {
       this.alertService.show("Please provide a reason for termination.");
@@ -159,6 +187,22 @@ export class InternDetails implements OnInit {
       error: (err: any) => {
         this.alertService.show('Termination failed: ' + (err.error?.message || err.message));
         this.isTerminating.set(false);
+      }
+    });
+  }
+
+  async resendOnboardingMail() {
+    if (!await this.alertService.confirm('Are you sure you want to resend the onboarding email? This will include the original attachments.')) return;
+
+    this.isResendingMail.set(true);
+    this.apiService.resendOnboardingMail(this.intern()._id).subscribe({
+      next: () => {
+        this.alertService.show('Onboarding email resent successfully!');
+        this.isResendingMail.set(false);
+      },
+      error: (err: any) => {
+        this.alertService.show('Failed to resend email: ' + (err.error?.message || err.message));
+        this.isResendingMail.set(false);
       }
     });
   }

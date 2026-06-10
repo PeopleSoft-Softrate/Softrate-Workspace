@@ -4,7 +4,7 @@
     <!-- VIEW 1: INTERN LIST -->
     <ng-container *ngIf="currentTab() === 'list'">
       <div class="page-header-embedded">
-        <div class="header-content">
+        <div class="header-main">
           <h1>Manage Interns</h1>
           <p>View and manage all interns across different stages.</p>
         </div>
@@ -16,19 +16,19 @@
                 class="filter-chip" 
                 [class.active]="rangeFilter() === 'current'"
                 (click)="setFilter('current')">
-                Currently Active
+                Currently Active ({{ filterCounts().current }})
               </button>
               <button 
                 class="filter-chip" 
                 [class.active]="rangeFilter() === 'all'"
                 (click)="setFilter('all')">
-                All time
+                All time ({{ filterCounts().all }})
               </button>
               <button 
                 class="filter-chip" 
                 [class.active]="rangeFilter() === 'alumni'"
                 (click)="setFilter('alumni')">
-                Alumni
+                Alumni ({{ filterCounts().alumni }})
               </button>
             </div>
             
@@ -120,16 +120,28 @@
     </ng-container>
 
     <!-- VIEW 2: APPROVE LEAVE -->
-    <app-leave-management *ngIf="currentTab() === 'leaves'"></app-leave-management>
+    <app-unified-requests *ngIf="currentTab() === 'leaves'" 
+      [embeddedCategory]="'leave'" 
+      [embeddedUserType]="'intern'"
+      [embeddedTitle]="'Intern Leave Requests'"
+      [embeddedSubtitle]="'Manage leave applications from interns.'"></app-unified-requests>
 
     <!-- VIEW 3: PENDING REQUESTS -->
     <app-intern-requests *ngIf="currentTab() === 'requests'"></app-intern-requests>
 
-    <!-- VIEW 4: ATTENDANCE CORRECTIONS -->
-    <app-attendance-corrections *ngIf="currentTab() === 'corrections'"></app-attendance-corrections>
+    <!-- VIEW 4: ATTENDANCE RATIFICATION -->
+    <app-unified-requests *ngIf="currentTab() === 'corrections'" 
+      [embeddedCategory]="'correction'" 
+      [embeddedUserType]="'intern'"
+      [embeddedTitle]="'Attendance Ratification'"
+      [embeddedSubtitle]="'Review intern attendance anomaly ratifications.'"></app-unified-requests>
 
     <!-- VIEW 5: OFFBOARDING -->
-    <app-offboarding-requests *ngIf="currentTab() === 'offboarding'"></app-offboarding-requests>
+    <app-unified-requests *ngIf="currentTab() === 'offboarding'" 
+      [embeddedCategory]="'offboarding'" 
+      [embeddedUserType]="'intern'"
+      [embeddedTitle]="'Intern Offboarding Requests'"
+      [embeddedSubtitle]="'Review resignation and exit requests for interns.'"></app-unified-requests>
 
     <!-- VIEW 6: REJECTED -->
     <app-intern-rejected *ngIf="currentTab() === 'rejected'"></app-intern-rejected>

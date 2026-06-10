@@ -44,8 +44,8 @@ android {
         applicationId = "com.softrate.peoplesoft"
         minSdk = flutter.minSdkVersion
         targetSdk = 35
-        versionCode = 20
-        versionName = "3.1.0"
+        versionCode = 22
+        versionName = "4.2.0"
     }
 
     buildTypes {

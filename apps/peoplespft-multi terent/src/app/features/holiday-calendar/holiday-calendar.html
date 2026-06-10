@@ -1,12 +1,12 @@
 <div class="hc-root">
   <!-- Page Header -->
   <div class="hc-header">
-    <div class="hc-header-left">
+    <div class="header-main">
       <div class="hc-header-eyebrow">
         <span>HR &amp; Attendance</span>
       </div>
-      <h1 class="hc-title">Holiday Calendar</h1>
-      <p class="hc-subtitle">Configure company-wide holidays and weekly off-days</p>
+      <h1>Holiday Calendar</h1>
+      <p>Configure company-wide holidays and weekly off-days</p>
     </div>
 
   </div>
@@ -107,7 +107,10 @@
         </div>
 
         <div class="hc-empty-hint" *ngIf="!selectedDay()">
-          <hugeicons-icon [icon]="ClockIcon" size="28" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
           <p>Select a day to configure</p>
         </div>
       </div>

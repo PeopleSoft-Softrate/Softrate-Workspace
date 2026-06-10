@@ -1,23 +1,19 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+// Set to true during local development to hit your local server.
 const bool useLocalBackend = true;
-const bool isEmulator = false;
+
+/// The local network IP of your dev machine (used when useLocalBackend = true).
+const String _localIp = '192.168.29.43';
+const int _localPort = 5001;
 
 String getBaseUrl() {
   if (useLocalBackend) {
-    if (kIsWeb) {
-      return 'http://localhost:5001';
-    }
-    if (Platform.isAndroid) {
-      if (isEmulator) {
-        return 'http://192.168.29.43:5001';
-      } else {
-        return 'http://192.168.29.43:5001';
-      }
-    }
-    return 'http://localhost:5001';
+    if (kIsWeb) return 'http://localhost:$_localPort';
+    if (Platform.isAndroid || Platform.isIOS) return 'http://$_localIp:$_localPort';
+    return 'http://localhost:$_localPort';
   }
-  return 'https://peoplesoft-develop.onrender.com'; // Develop Backend
-  // return 'https://peoplesoft-backend.onrender.com'; // Actual Backend
+  return 'https://workspace.softrateglobal.com/hrms-api';
 }
+

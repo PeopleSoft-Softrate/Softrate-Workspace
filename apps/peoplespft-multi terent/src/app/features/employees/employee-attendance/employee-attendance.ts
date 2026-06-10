@@ -1,6 +1,6 @@
 import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, computed, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -21,6 +21,11 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
 
   readonly UserCircleIcon = UserCircleIcon;
   readonly FingerAccessIcon = FingerAccessIcon;

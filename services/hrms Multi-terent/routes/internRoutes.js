@@ -47,8 +47,20 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
       endDate,
       linkedin,
       internshipType,
-      resume // Base64 PDF
+      resume, // Base64 PDF
+      projectLinks: projectLinksRaw
     } = req.body;
+
+    // Parse projectLinks (sent as JSON string from Flutter)
+    let projectLinks = [];
+    try {
+      if (projectLinksRaw) {
+        const parsed = JSON.parse(projectLinksRaw);
+        if (Array.isArray(parsed)) {
+          projectLinks = parsed.filter(l => l && l.trim()).slice(0, 5);
+        }
+      }
+    } catch (_) { projectLinks = []; }
 
     // 1. Check if user already exists in this company
     const existingUser = await User.findOne({ companyId: req.tenant.companyId, email });
@@ -72,7 +84,7 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
     const newUser = new User({
       companyId: req.tenant.companyId,
       email: email,
-      password: "", // Set on first login
+      password: req.tenant.defaultPassword, // Set to company's default password, will require reset
       roleId: internRole._id,
       profile: {
         firstName: fullName,
@@ -117,7 +129,9 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
       endDate,
       linkedin,
       internshipType,
-      status: 'initial'
+      projectLinks,
+      status: 'initial',
+      password: req.tenant.defaultPassword // Backward compatibility
     });
 
     await newIntern.save();
@@ -215,7 +229,7 @@ router.put("/accept/:id", verifyTenant,
     try {
       const { onboardingDate, endDate, internshipType, role } = req.body;
 
-      const intern = await Intern.findById(req.params.id);
+      const intern = await Intern.findById(req.params.id).select('+profilePhoto.data');
       if (!intern) {
         return res.status(404).json({ message: "Intern not found" });
       }
@@ -234,10 +248,25 @@ router.put("/accept/:id", verifyTenant,
       const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
 
       // Generate Virtual ID URL
-      const virtualIdUrl = `https://workspace.softrateglobal.com/id-card/${req.tenant.companyId}/${newId}`;
+      const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.softrateglobal.com/hrms';
+      const virtualIdUrl = `${frontendUrl}/id-card/${req.tenant.companyId}/${newId}`;
       const qrCodeDataUrl = await QRCode.toDataURL(virtualIdUrl);
 
       // 3. Prepare data for dynamic PDF generation
+      // Build profilePhoto data URL if available
+      let profilePhotoDataUrl = null;
+      if (intern.profilePhoto?.data) {
+        const rawData = intern.profilePhoto.data;
+        let buffer = null;
+        if (Buffer.isBuffer(rawData)) buffer = rawData;
+        else if (rawData.buffer && Buffer.isBuffer(rawData.buffer)) buffer = rawData.buffer;
+        else if (Array.isArray(rawData.data)) buffer = Buffer.from(rawData.data);
+        if (buffer?.length) {
+          const ct = intern.profilePhoto.contentType || 'image/jpeg';
+          profilePhotoDataUrl = `data:${ct};base64,${buffer.toString('base64')}`;
+        }
+      }
+
       const docData = {
         fullName: intern.fullName,
         internId: newId,
@@ -249,7 +278,8 @@ router.put("/accept/:id", verifyTenant,
         workLocation: olSettings.workLocation,
         logo: company?.settings?.communication?.emailLogoUrl || null,
         signature: company?.settings?.communication?.emailSignatureUrl || null,
-        qrCode: qrCodeDataUrl
+        qrCode: qrCodeDataUrl,
+        profilePhoto: profilePhotoDataUrl
       };
 
       const attachments = [];
@@ -303,6 +333,8 @@ router.put("/accept/:id", verifyTenant,
       // 4.5 Initialize Leave Counter for Intern
       if (onboardingDate) {
         const startDate = new Date(onboardingDate);
+        const Company = await _getMasterCompany();
+        const company = await Company.findById(req.tenant.companyId);
         let policies = company?.leavePolicies;
         if (!policies || policies.length === 0) {
           policies = [
@@ -432,6 +464,136 @@ router.put("/accept/:id", verifyTenant,
   }
 );
 
+
+router.post("/resend-onboarding/:id", verifyTenant, async (req, res) => {
+  try {
+    const intern = await Intern.findById(req.params.id).select('+profilePhoto.data');
+    if (!intern) return res.status(404).json({ message: "Intern not found" });
+    if (intern.status !== "approved" && intern.status !== "ongoing") {
+      return res.status(400).json({ message: "Intern is not approved yet" });
+    }
+
+    const Company = await _getMasterCompany();
+    const company = await Company.findById(req.tenant.companyId);
+    const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.softrateglobal.com/hrms';
+    const virtualIdUrl = `${frontendUrl}/id-card/${req.tenant.companyId}/${intern.internid}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(virtualIdUrl);
+
+    let profilePhotoDataUrl = null;
+    if (intern.profilePhoto?.data) {
+      const rawData = intern.profilePhoto.data;
+      let buffer = null;
+      if (Buffer.isBuffer(rawData)) buffer = rawData;
+      else if (rawData.buffer && Buffer.isBuffer(rawData.buffer)) buffer = rawData.buffer;
+      else if (Array.isArray(rawData.data)) buffer = Buffer.from(rawData.data);
+      if (buffer?.length) {
+        const ct = intern.profilePhoto.contentType || 'image/jpeg';
+        profilePhotoDataUrl = `data:${ct};base64,${buffer.toString('base64')}`;
+      }
+    }
+
+    const docData = {
+      fullName: intern.fullName,
+      internId: intern.internid,
+      onboardingDate: intern.onboardingDate,
+      endDate: intern.endDate,
+      todayDate: new Date(),
+      role: intern.role,
+      companyName: olSettings.companyName,
+      workLocation: olSettings.workLocation,
+      logo: company?.settings?.communication?.emailLogoUrl || null,
+      signature: company?.settings?.communication?.emailSignatureUrl || null,
+      qrCode: qrCodeDataUrl,
+      profilePhoto: profilePhotoDataUrl
+    };
+
+    const attachments = [];
+    if (olSettings.documentTemplates?.offerLetter?.pages?.length > 0 || olSettings.documentTemplates?.offerLetter?.backgroundUrl) {
+      const buffer = await generateDynamicPDF(docData, olSettings.documentTemplates.offerLetter);
+      attachments.push({ filename: `${intern.internid}-Offer-Letter.pdf`, content: buffer });
+    } else {
+      const buffer = await generateOfferLetter(docData, olSettings);
+      attachments.push({ filename: `${intern.internid}-Offer-Letter.pdf`, content: buffer });
+    }
+
+    if (olSettings.documentTemplates?.annexure?.pages?.length > 0 || olSettings.documentTemplates?.annexure?.backgroundUrl) {
+      const buffer = await generateDynamicPDF(docData, olSettings.documentTemplates.annexure);
+      attachments.push({ filename: `${intern.internid}-Annexure.pdf`, content: buffer });
+    } else if (olSettings.annexureUrl) {
+      const annBuf = await getAssetBuffer(olSettings.annexureUrl);
+      if (annBuf) attachments.push({ filename: `${intern.internid}-Annexure.pdf`, content: annBuf });
+    } else {
+      const annexurePath = path.join(__dirname, '../assets/pdf/Softrate_Internship_Annexure.pdf');
+      if (fs.existsSync(annexurePath)) attachments.push({ filename: `${intern.internid}-Annexure.pdf`, content: fs.readFileSync(annexurePath) });
+    }
+
+    if (olSettings.documentTemplates?.nda?.pages?.length > 0 || olSettings.documentTemplates?.nda?.backgroundUrl) {
+      const buffer = await generateDynamicPDF(docData, olSettings.documentTemplates.nda);
+      attachments.push({ filename: `${intern.internid}-NDA.pdf`, content: buffer });
+    } else if (olSettings.ndaUrl) {
+      const ndaBuf = await getAssetBuffer(olSettings.ndaUrl);
+      if (ndaBuf) attachments.push({ filename: `${intern.internid}-NDA.pdf`, content: ndaBuf });
+    } else {
+      const ndaPath = path.join(__dirname, '../assets/pdf/Internship NDA.pdf');
+      if (fs.existsSync(ndaPath)) attachments.push({ filename: `${intern.internid}-NDA.pdf`, content: fs.readFileSync(ndaPath) });
+    }
+
+    const companyTemplate = await Company.findById(req.tenant.companyId);
+    const template = companyTemplate?.settings?.communication?.onboardingTemplateIntern;
+    const customSignature = companyTemplate?.settings?.communication?.emailSignatureUrl;
+    const customLogo = companyTemplate?.settings?.communication?.emailLogoUrl;
+
+    const internName = intern.fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    const formattedOnboardingDate = intern.onboardingDate ? new Date(intern.onboardingDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+    const formattedEndDate = intern.endDate ? new Date(intern.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+
+    const signatureHtml = customSignature ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>` : getSignature(getLogoUrl());
+    const logoHtml = customLogo ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>` : `<div style="margin-bottom: 20px;"><img src="${getLogoUrl()}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
+
+    let htmlContent = "";
+    if (template) {
+      htmlContent = template
+        .replace(/{formattedName}/g, internName)
+        .replace(/{onboardingDate}/g, formattedOnboardingDate)
+        .replace(/{endDate}/g, formattedEndDate)
+        .replace(/{signature}/g, signatureHtml)
+        .replace(/{logo}/g, logoHtml);
+    } else {
+      htmlContent = `
+        ${logoHtml}
+        <p>Dear ${internName},</p>
+        <p>Softrate Global welcomes you Onboard, We herein have attached your Official Offer Letter and Company Culture Book for joining us.</p>
+        <p>You can share your offer letter on Linkedin by mentioning @softrate with hashtags #careeratsoftrate #softratetechpark #softratetechnologies</p>
+        <p>Also read out the annexure completely that had been attached in this mail and make sure you are agreeing with our policies by signing and filling up the date in the attached annexure.</p>
+        <p>Your internship details are as follows:</p>
+        <ul>
+          <li>Onboarding Date: ${formattedOnboardingDate}</li>
+          <li>End Date: ${formattedEndDate}</li>
+        </ul>
+        <p style="margin: 0 0 0 0;">To proceed further, please log in to the PeopleSoft portal using the credentials shared separately.</p>
+        <p style="margin: 0 0 0 0;">For first-time login, you will be required to set your own password and complete your profile by providing the necessary details.</p>
+        <p style="margin: 0 0 0 0;">Kindly ensure that all required information is submitted before your onboarding date to avoid any delays.</p>
+        <p style="margin: 0 0 15px 0;">For any queries, feel free to contact us.</p>
+        ${signatureHtml}
+      `;
+    }
+
+    await sendEmail({
+      to: intern.email,
+      subject: "Internship Application – Approval Notification (Resend)",
+      html: htmlContent,
+      attachments: attachments,
+      replyTo: req.tenant.receivingEmail,
+    });
+    
+    res.json({ success: true, message: "Onboarding email resent successfully" });
+  } catch (err) {
+    console.error("Resend Email Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
 
 router.put("/reject/:id", verifyTenant, async (req, res) => {
   try {
@@ -677,16 +839,26 @@ router.get("/export/excel", verifyTenant, async (req, res) => {
 /* ============================
    GET INTERN PROFILE PHOTO
 ============================ */
-router.get("/profile-photo/:id", async (req, res) => {
+router.get("/profile-photo/:id", async (req, res, next) => {
+  if (req.query.token) {
+    req.headers['authorization'] = `Bearer ${req.query.token}`;
+  }
+  next();
+}, verifyTenant, async (req, res) => {
   try {
     const { id } = req.params;
     let intern;
     if (id.match(/^[0-9a-fA-F]{24}$/)) {
-      intern = await Intern.findById(id);
+      intern = await Intern.findById(id).select('+profilePhoto.data');
     } else {
-      intern = await Intern.findOne({ internid: { $regex: new RegExp(`^${id}$`, 'i') } });
+      intern = await Intern.findOne({ internid: { $regex: new RegExp(`^${id}$`, 'i') } }).select('+profilePhoto.data');
     }
     if (!intern) return res.status(404).send("Intern not found");
+
+    if (intern.profilePhoto && intern.profilePhoto.data) {
+      res.set("Content-Type", intern.profilePhoto.contentType || "image/png");
+      return res.send(intern.profilePhoto.data);
+    }
 
     const user = await User.findOne({ email: { $regex: new RegExp(`^${intern.email.trim()}$`, 'i') } }).select('+profilePhoto.data');
     if (!user || !user.profilePhoto || !user.profilePhoto.data) {
@@ -756,8 +928,17 @@ router.put("/manager-review/:id", verifyTenant, async (req, res) => {
 
 router.put("/update/:id", verifyTenant, async (req, res) => {
   try {
+    const { id } = req.params;
+    let query = { companyId: req.tenant.companyId };
+    
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      query._id = id;
+    } else {
+      query.internid = id;
+    }
+
     const updatedIntern = await Intern.findOneAndUpdate(
-      { _id: req.params.id, companyId: req.tenant.companyId },
+      query,
       { $set: req.body },
       { new: true }
     );

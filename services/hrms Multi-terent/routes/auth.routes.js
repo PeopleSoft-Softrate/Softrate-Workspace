@@ -2,12 +2,22 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/AuthController");
 const verifyTenant = require("../middleware/tenant.middleware");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const Intern = require("../models/Intern");
-const Employee = require("../models/EmployeeModel");
-const User = require("../models/User");
+const rateLimit = require("express-rate-limit");
+
+// ── Rate Limiting ──────────────────────────────────────────────────────────
+// Brute-force protection: max 10 login attempts per 15 minutes per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many login attempts. Please try again in 15 minutes."
+  }
+});
+// ──────────────────────────────────────────────────────────────────────────
 
 const profilePhotoUpload = multer({
   storage: multer.memoryStorage(),
@@ -29,14 +39,16 @@ const handleProfilePhotoUpload = (req, res, next) => {
   });
 };
 
-router.post("/login", authController.login);
-router.post("/unified-login", authController.login);
+router.post("/login", loginLimiter, authController.login);
+router.post("/unified-login", loginLimiter, authController.login);
 router.get("/me", verifyTenant, authController.getMe);
 router.patch("/me/profile-photo", verifyTenant, handleProfilePhotoUpload, authController.updateProfilePhoto);
 router.delete("/me/profile-photo", verifyTenant, authController.removeProfilePhoto);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
+router.post("/force-reset-password", verifyTenant, authController.forceResetPassword);
 router.get("/verify-company/:code", authController.verifyCompany);
 router.post("/device-change-request", authController.requestDeviceChange);
 
 module.exports = router;
+

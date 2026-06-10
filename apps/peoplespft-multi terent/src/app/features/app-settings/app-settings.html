@@ -1,6 +1,6 @@
 <div class="settings-container">
   <div class="page-header">
-    <div class="header-content">
+    <div class="header-main">
       <h1>App Settings</h1>
       <p>Configure office locations, communication preferences, and system behavior.</p>
     </div>
@@ -806,6 +806,21 @@
             <i class="fa-solid fa-circle-info"></i>
             <span>These settings apply to the mobile app's attendance page. The <strong>"Short (S)"</strong> badge and <strong>short hours label</strong> are calculated using these thresholds per role.</span>
           </div>
+          
+          <div class="section-title" style="margin-top: 2.5rem;">
+            <h3>Security & Passwords</h3>
+          </div>
+          
+          <div class="field-group" style="margin-top: 1rem;">
+            <label>Default Onboarding Password</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-lock"></i>
+              <input type="text" class="location-input" [ngModel]="defaultPassword()" (ngModelChange)="defaultPassword.set($event)" placeholder="Softrate@123">
+            </div>
+            <p class="field-hint">This password is automatically assigned to new Employees and Interns. They will be forced to change it on their first login.</p>
+          </div>
+
+
         </div>
       </section>
 

@@ -35,6 +35,11 @@ class _FormOneState extends State<FormOne> {
   bool isOtherRoleSelected = false;
   String selectedApplicationType = "Internship";
 
+  // Project Links (optional, max 5)
+  final List<TextEditingController> projectLinkControllers = [
+    TextEditingController(),
+  ];
+
   PlatformFile? resumeFile;
 
   String? selectedYear;
@@ -330,6 +335,12 @@ class _FormOneState extends State<FormOne> {
       "linkedin": linkedinController.text.trim(),
       "applicationType": selectedApplicationType,
       "resume": resumeBase64,
+      "projectLinks": jsonEncode(
+        projectLinkControllers
+            .map((c) => c.text.trim())
+            .where((l) => l.isNotEmpty)
+            .toList(),
+      ),
     };
 
     final url = Uri.parse('$baseUrl/api/intern/add');
@@ -1013,6 +1024,9 @@ class _FormOneState extends State<FormOne> {
                                               ).hasMatch(value.trim())) {
                                                 return "Enter a valid 10-digit number";
                                               }
+                                              if (value.trim() == contactController.text.trim()) {
+                                                return "Emergency contact cannot be same as contact number";
+                                              }
                                               return null;
                                             },
                                           ),
@@ -1173,6 +1187,107 @@ class _FormOneState extends State<FormOne> {
                                             ),
 
                                           const SizedBox(height: 22),
+
+                                          // Project Links (optional, max 5)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4, bottom: 8),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                const Row(
+                                                  children: [
+                                                    Icon(Icons.link_rounded, size: 16, color: Color(0xFF008C9E)),
+                                                    SizedBox(width: 6),
+                                                    Text(
+                                                      "Project Links",
+                                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                                                    ),
+                                                    SizedBox(width: 6),
+                                                    Text(
+                                                      "(optional)",
+                                                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFF7F9FC),
+                                                    borderRadius: BorderRadius.circular(14),
+                                                    border: Border.all(color: const Color(0xFFE1E6F0)),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      ...List.generate(projectLinkControllers.length, (i) {
+                                                        return Padding(
+                                                          padding: const EdgeInsets.only(bottom: 8),
+                                                          child: Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child: TextFormField(
+                                                                  controller: projectLinkControllers[i],
+                                                                  keyboardType: TextInputType.url,
+                                                                  validator: (_) => null,
+                                                                  decoration: InputDecoration(
+                                                                    labelText: "Project ${i + 1} URL",
+                                                                    filled: true,
+                                                                    fillColor: Colors.white,
+                                                                    prefixIcon: const Icon(Icons.link, size: 16, color: Color(0xFF008C9E)),
+                                                                    border: OutlineInputBorder(
+                                                                      borderRadius: BorderRadius.circular(12),
+                                                                      borderSide: BorderSide.none,
+                                                                    ),
+                                                                    enabledBorder: OutlineInputBorder(
+                                                                      borderRadius: BorderRadius.circular(12),
+                                                                      borderSide: const BorderSide(color: Color(0xFFE1E6F0)),
+                                                                    ),
+                                                                    focusedBorder: OutlineInputBorder(
+                                                                      borderRadius: BorderRadius.circular(12),
+                                                                      borderSide: const BorderSide(color: Color(0xFF008C9E), width: 1.2),
+                                                                    ),
+                                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              if (i > 0)
+                                                                Padding(
+                                                                  padding: const EdgeInsets.only(left: 6),
+                                                                  child: IconButton(
+                                                                    padding: EdgeInsets.zero,
+                                                                    constraints: const BoxConstraints(),
+                                                                    onPressed: () {
+                                                                      setState(() {
+                                                                        projectLinkControllers[i].dispose();
+                                                                        projectLinkControllers.removeAt(i);
+                                                                      });
+                                                                    },
+                                                                    icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
+                                                                  ),
+                                                                ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      }),
+                                                      if (projectLinkControllers.length < 5)
+                                                        TextButton.icon(
+                                                          onPressed: () {
+                                                            setState(() => projectLinkControllers.add(TextEditingController()));
+                                                          },
+                                                          icon: const Icon(Icons.add_circle_outline, color: Color(0xFF008C9E), size: 18),
+                                                          label: const Text(
+                                                            "Add project",
+                                                            style: TextStyle(color: Color(0xFF008C9E), fontSize: 13),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 22),
                                           const Text(
                                             "By submitting this form you agree to be contacted by our HR team for internship related communication.",
                                             style: TextStyle(
@@ -1182,6 +1297,7 @@ class _FormOneState extends State<FormOne> {
                                             ),
                                           ),
                                           const SizedBox(height: 20),
+
 
                                           SizedBox(
                                             width: double.infinity,

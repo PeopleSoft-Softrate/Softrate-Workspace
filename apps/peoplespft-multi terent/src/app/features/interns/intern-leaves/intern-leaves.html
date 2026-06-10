@@ -1,9 +1,10 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
-  <div class="header-content">
-    <div class="breadcrumb">
-      <a routerLink="/interns">Interns</a> / <span>Leaves</span>
+  <div class="header-main">
+    <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
+      <a (click)="goBack()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Interns</a>
+      <span style="color: #94a3b8;"> / Leaves</span>
     </div>
     <h1>Leave History</h1>
     <p>Viewing leave applications for Intern ID: {{ internId() }}</p>

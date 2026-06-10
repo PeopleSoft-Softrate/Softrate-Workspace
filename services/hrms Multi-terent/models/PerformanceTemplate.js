@@ -26,9 +26,9 @@ PerformanceTemplateSchema.pre('save', async function() {
 
 // Multi-Tenant Proxy Wrapper
 // Target MUST be a function for the construct trap to work with new Model()
-function _GoalDefinitionProxyTarget() {}
+function _PerformanceTemplateProxyTarget() {}
 
-function _getGoalDefinitionModel() {
+function _getPerformanceTemplateModel() {
   const { getTenantConnection } = require('../db');
   const { getModelsForConnection } = require('../utilities/modelLoader');
   const { tenantLocalStorage } = require('../utilities/tenantContext');
@@ -36,23 +36,23 @@ function _getGoalDefinitionModel() {
   const dbName = store && store.dbName ? store.dbName : 'hrdb';
   const connection = getTenantConnection(dbName);
   const models = getModelsForConnection(connection);
-  return models["GoalDefinition"];
+  return models["PerformanceTemplate"];
 }
 
-module.exports = new Proxy(_GoalDefinitionProxyTarget, {
+module.exports = new Proxy(_PerformanceTemplateProxyTarget, {
   get(target, prop) {
-    if (prop === 'name') return "GoalDefinition";
-    if (prop === 'schema') return GoalDefinitionSchema;
-    if (prop === '_name') return "GoalDefinition";
-    if (prop === '_schema') return GoalDefinitionSchema;
-    const actualModel = _getGoalDefinitionModel();
-    if (!actualModel) throw new Error("Model GoalDefinition not found for current tenant");
+    if (prop === 'name') return "PerformanceTemplate";
+    if (prop === 'schema') return PerformanceTemplateSchema;
+    if (prop === '_name') return "PerformanceTemplate";
+    if (prop === '_schema') return PerformanceTemplateSchema;
+    const actualModel = _getPerformanceTemplateModel();
+    if (!actualModel) throw new Error("Model PerformanceTemplate not found for current tenant");
     if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
     return actualModel[prop];
   },
   construct(target, args) {
-    const actualModel = _getGoalDefinitionModel();
-    if (!actualModel) throw new Error("Model GoalDefinition not found for current tenant");
+    const actualModel = _getPerformanceTemplateModel();
+    if (!actualModel) throw new Error("Model PerformanceTemplate not found for current tenant");
     return new actualModel(...args);
   }
 });

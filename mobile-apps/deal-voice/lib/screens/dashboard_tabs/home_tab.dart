@@ -58,8 +58,6 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
       duration: const Duration(seconds: 2),
     );
     _loadProfile().then((_) {
-      // Reset sync timestamp only if it's a new day (not on every app open)
-      CallLogService.resetSyncTimestampIfNewDay();
       // First full load
       _fetchAllAndSync();
       // Monitor background service status

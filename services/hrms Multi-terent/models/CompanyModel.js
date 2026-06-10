@@ -20,6 +20,7 @@ const CompanySchema = new mongoose.Schema({
     intern:   { type: Number, default: 6 },
   },
   settings: {
+    defaultPassword: { type: String, default: null },
     themeColor: { type: String, default: '#00657F' },
     receivingEmail: { type: String, default: null }, // Email to receive system notifications
     locations: [{
@@ -123,12 +124,13 @@ const CompanySchema = new mongoose.Schema({
       logoSize: { type: Number, default: 50 },
       borderWidth: { type: Number, default: 10 },
       documentTemplates: {
-        offerLetter: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
-        annexure: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
-        nda: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
-        lor: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
-        internshipCompletion: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
-        projectCompletion: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] }
+        offerLetter: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
+        annexure: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
+        nda: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
+        lor: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
+        internshipCompletion: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
+        projectCompletion: { orientation: { type: String, default: 'landscape' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] },
+        virtualIdCard: { orientation: { type: String, default: 'portrait' }, pages: [{ backgroundUrl: String, placeholders: [{ key: String, x: Number, y: Number, fontSize: Number, imgSize: Number, isBold: Boolean, color: String }], paragraphs: [mongoose.Schema.Types.Mixed] }] }
       }
     },
     leavePolicies: {

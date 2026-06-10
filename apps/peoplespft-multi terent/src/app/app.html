@@ -10,9 +10,10 @@
         <h2 class="primary-color">PeopleSoft</h2>
         <p class="subtitle">{{ isManager() ? 'Manager Dashboard' : (isHrType() ? 'HR Dashboard' : 'Employee Portal') }}</p>
       </div>
-      <button class="minimize-btn" (click)="toggleSidebar()" title="Toggle Sidebar">
+      <button class="minimize-btn" (click)="toggleSidebar()">
         <hugeicons-icon [icon]="PanelLeftCloseIcon" size="20" [strokeWidth]="1.5" color="currentColor" *ngIf="!isSidebarMinimized()"></hugeicons-icon>
         <hugeicons-icon [icon]="PanelLeftOpenIcon" size="20" [strokeWidth]="1.5" color="currentColor" *ngIf="isSidebarMinimized()"></hugeicons-icon>
+        <span class="minimize-tooltip">Maximize</span>
       </button>
     </div>
     
@@ -228,11 +229,11 @@
             </div>
             <span>HR Policies</span>
           </a>
-          <a routerLink="/employee/projects" routerLinkActive="active" class="nav-item">
-            <div class="icon-box dark-blue">
-              <hugeicons-icon [icon]="DashboardSquare02Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          <a routerLink="/employee/review" routerLinkActive="active" class="nav-item">
+            <div class="icon-box teal">
+              <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             </div>
-            <span>My Projects</span>
+            <span>Performance Review</span>
           </a>
         </div>
       </ng-container>
@@ -245,7 +246,7 @@
     <header class="top-bar" *ngIf="!isLoginPage()">
       <app-global-search></app-global-search>
       <div class="top-actions">
-        <div class="notification-wrapper">
+        <div class="notification-wrapper" #notificationWrapper *ngIf="isHrType() || isManager()">
           <button class="icon-btn" title="Notifications" (click)="toggleNotifications()">
             <hugeicons-icon [icon]="Notification01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             <span class="dot" *ngIf="hasNotifications()"></span>
@@ -253,7 +254,7 @@
         </div>
 
         <!-- Notification Dropdown -->
-        <div class="notification-dropdown" *ngIf="showNotifications()">
+        <div class="notification-dropdown" #notificationDropdown *ngIf="showNotifications()">
           <div class="dropdown-header">
             <h3>Pending Requests</h3>
             <span class="count-badge">{{ notificationItems().length }} items</span>
@@ -261,7 +262,14 @@
           <div class="dropdown-body">
             <div class="notification-item" *ngFor="let item of notificationItems()" [routerLink]="item.link" (click)="showNotifications.set(false)">
               <div class="item-icon-circle" [ngClass]="item.color">
-                <i [class]="item.icon"></i>
+                <i *ngIf="!item.isSvg" [class]="item.icon"></i>
+                <svg *ngIf="item.isSvg && item.icon === 'leave'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                  <path d="M16 3l0 4" />
+                  <path d="M8 3l0 4" />
+                  <path d="M4 11l16 0" />
+                  <path d="M8 15h2v2h-2z" />
+                </svg>
               </div>
               <div class="item-details">
                 <div class="item-top">
@@ -309,13 +317,15 @@
             </div>
 
             <button type="button" class="profile-menu-action" routerLink="/profile" (click)="showUserMenu.set(false)">
+              <hugeicons-icon [icon]="UserAccountIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
               <span>My Profile</span>
-              <i class="fa-solid fa-id-card"></i>
             </button>
+            
+            <div class="profile-menu-separator"></div>
 
             <button type="button" class="profile-menu-action sign-out" (click)="logout()">
+              <hugeicons-icon [icon]="Logout02Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
               <span>Sign Out</span>
-              <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </button>
           </div>
         </div>

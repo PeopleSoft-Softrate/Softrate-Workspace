@@ -36,6 +36,18 @@ export class EmployeeDetails implements OnInit {
       window.scrollTo({ top: 0, behavior: 'instant' });
     });
   }
+
+  getPhotoUrl(id: string): string {
+    const token = localStorage.getItem('auth_token') || '';
+    return `${this.apiService.getBaseUrl()}/api/employee/profile-photo/${id}?token=${token}`;
+  }
+
+  onImageError(event: any) {
+    event.target.style.display = 'none';
+    if (event.target.nextElementSibling) {
+      event.target.nextElementSibling.style.display = 'flex';
+    }
+  }
   
   employeeId = signal<string>('');
   employee = signal<any>(null);
@@ -189,6 +201,21 @@ export class EmployeeDetails implements OnInit {
     if (!this.showTerminateForm()) {
       this.terminationReason.set('');
     }
+  }
+
+  toggleRemoteAccess() {
+    const isNowRemote = !this.employee().isRemote;
+    this.apiService.updateEmployee(this.employeeId(), { isRemote: isNowRemote }).subscribe({
+      next: () => {
+        this.alertService.show(`Remote access ${isNowRemote ? 'enabled' : 'disabled'}`);
+        this.fetchDetails();
+      },
+      error: (err: any) => {
+        console.error('Failed to update remote status', err);
+        const errMsg = err?.error?.message || err?.message || 'Unknown error';
+        this.alertService.show(`Failed to update remote status: ${errMsg}`);
+      }
+    });
   }
 
   async terminateEmployee() {

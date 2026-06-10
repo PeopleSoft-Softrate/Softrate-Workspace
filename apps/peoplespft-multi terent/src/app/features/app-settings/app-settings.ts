@@ -62,6 +62,7 @@ export class AppSettings implements OnInit {
     onboardingTemplateEmployee: '',
     onboardingTemplateIntern: ''
   });
+  defaultPassword = signal<string>('');
   employeeRoles = signal<string[]>([]);
   internRoles = signal<string[]>([]);
   leavePolicies = signal<any[]>([
@@ -136,6 +137,15 @@ export class AppSettings implements OnInit {
 
   isSaving = signal(false);
   isLoading = signal(true);
+  
+  isDemoMode = signal(localStorage.getItem('demo_mode') === 'true');
+
+  toggleDemoMode(enabled: boolean) {
+    this.isDemoMode.set(enabled);
+    localStorage.setItem('demo_mode', enabled ? 'true' : 'false');
+    // We should reload to apply the interceptor across all data sources
+    window.location.reload();
+  }
 
   ngOnInit() {
     const data = localStorage.getItem('user_data');
@@ -175,6 +185,7 @@ export class AppSettings implements OnInit {
       next: (res: any) => {
         if (res.settings && res.settings.success && res.settings.settings) {
           const s = res.settings.settings;
+          this.defaultPassword.set(s.defaultPassword || '');
           this.receivingEmail.set(s.receivingEmail || '');
           this.locations.set(s.locations || []);
           this.communication.set(s.communication || {
@@ -201,7 +212,7 @@ export class AppSettings implements OnInit {
             'HR Analyst',
             'Other'
           ]);
-          this.leavePolicies.set(s.leavePolicies || [
+          this.leavePolicies.set((s.leavePolicies && s.leavePolicies.length > 0) ? s.leavePolicies : [
             { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
             { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
           ]);
@@ -326,6 +337,7 @@ export class AppSettings implements OnInit {
   saveAllSettings() {
     this.isSaving.set(true);
     const payload = {
+      defaultPassword: this.defaultPassword(),
       receivingEmail: this.receivingEmail(),
       locations: this.locations(),
       communication: this.communication(),

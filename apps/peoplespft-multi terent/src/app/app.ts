@@ -2,7 +2,7 @@ import { Component, inject, signal, HostListener, ViewChild, ElementRef } from '
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '@hugeicons/core-free-icons';
+import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon, UserAccountIcon, Logout02Icon, LicenseDraftIcon } from '@hugeicons/core-free-icons';
 import { ApiService } from './services/api.service';
 import { forkJoin } from 'rxjs';
 import { Alert } from './shared/components/alert/alert';
@@ -25,6 +25,8 @@ import { GlobalSearch } from './shared/components/global-search/global-search';
 })
 export class App {
   @ViewChild('profileMenuWrapper') profileMenuWrapper!: ElementRef;
+  @ViewChild('notificationWrapper') notificationWrapper!: ElementRef;
+  @ViewChild('notificationDropdown') notificationDropdown!: ElementRef;
   title = 'admin-page';
   router = inject(Router);
   readonly StudentsIcon = StudentsIcon;
@@ -38,6 +40,7 @@ export class App {
   readonly WorkIcon = WorkIcon;
   readonly Calendar03Icon = Calendar03Icon;
   readonly PolicyIcon = PolicyIcon;
+  readonly LicenseDraftIcon = LicenseDraftIcon;
   readonly FingerAccessIcon = FingerAccessIcon;
   readonly CalendarCheckIn01Icon = CalendarCheckIn01Icon;
   readonly SentIcon = SentIcon;
@@ -45,6 +48,8 @@ export class App {
   readonly Notification01Icon = Notification01Icon;
   readonly PanelLeftCloseIcon = PanelLeftCloseIcon;
   readonly PanelLeftOpenIcon = PanelLeftOpenIcon;
+  readonly UserAccountIcon = UserAccountIcon;
+  readonly Logout02Icon = Logout02Icon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   userName = signal<string | null>(null);
@@ -66,6 +71,14 @@ export class App {
     if (this.showUserMenu() && this.profileMenuWrapper && !this.profileMenuWrapper.nativeElement.contains(event.target)) {
       this.showUserMenu.set(false);
     }
+    
+    if (this.showNotifications()) {
+      const clickedInsideWrapper = this.notificationWrapper?.nativeElement.contains(event.target);
+      const clickedInsideDropdown = this.notificationDropdown?.nativeElement.contains(event.target);
+      if (!clickedInsideWrapper && !clickedInsideDropdown) {
+        this.showNotifications.set(false);
+      }
+    }
   }
 
   constructor() {
@@ -77,8 +90,8 @@ export class App {
     });
 
     this.loadUserData();
+    this.refreshMe(); // Always fetch fresh profile including photo
     if (this.isHrType()) {
-      this.refreshMe(); // Auto-refresh profile
       this.checkNotifications();
       // Poll every 2 minutes
       setInterval(() => this.checkNotifications(), 120000);
@@ -122,67 +135,91 @@ export class App {
   }
 
   checkNotifications() {
-    forkJoin({
-      leaves: this.apiService.getHrPendingLeaves(),
-      requests: this.apiService.getHrPendingAttendanceRequests(),
-      applications: this.apiService.getAllActiveInterns('all', 'initial'),
-      offboarding: this.apiService.getPendingOffboarding()
-    }).subscribe({
-      next: (data) => {
-        const items: any[] = [];
-        
-        if (data.leaves) {
-          data.leaves.forEach((l: any) => items.push({
-            type: 'Leave Request',
-            title: l.employeeName || 'Staff Member',
-            desc: `${l.leaveType}: ${l.reason}`,
-            link: '/employees',
-            icon: 'fa-solid fa-calendar-minus',
-            color: 'orange'
-          }));
-        }
+    if (this.isEmployee() && !this.isManager() && !this.isHrType()) {
+      return;
+    }
 
-        if (data.requests) {
-          data.requests.forEach((r: any) => items.push({
-            type: 'Attendance Correction',
-            title: r.employeeName || 'Staff Member',
-            desc: `Correction for ${new Date(r.date).toLocaleDateString()}`,
-            link: '/employees',
-            icon: 'fa-solid fa-clock-rotate-left',
-            color: 'blue'
-          }));
+    if (this.isHrType()) {
+      forkJoin({
+        leaves: this.apiService.getHrPendingLeaves(),
+        requests: this.apiService.getHrPendingAttendanceRequests(),
+        applications: this.apiService.getAllActiveInterns('all', 'initial'),
+        offboarding: this.apiService.getPendingOffboarding()
+      }).subscribe({
+        next: (data) => this.processNotificationData(data),
+        error: () => {
+          this.hasNotifications.set(false);
+          this.notificationItems.set([]);
         }
+      });
+    } else if (this.isManager()) {
+      const managerId = this.currentUser()?._id || this.currentUser()?.id;
+      if (!managerId) return;
 
-        if (data.applications) {
-          data.applications.forEach((a: any) => items.push({
-            type: 'New Application',
-            title: a.fullName,
-            desc: `New intern application submitted`,
-            link: '/interns',
-            icon: 'fa-solid fa-user-plus',
-            color: 'green'
-          }));
+      forkJoin({
+        leaves: this.apiService.getManagerPendingLeaves(managerId),
+        requests: this.apiService.getManagerPendingAttendanceRequests(managerId),
+        offboarding: this.apiService.getManagerPendingOffboarding(managerId)
+      }).subscribe({
+        next: (data) => this.processNotificationData(data),
+        error: () => {
+          this.hasNotifications.set(false);
+          this.notificationItems.set([]);
         }
+      });
+    }
+  }
 
-        if (data.offboarding) {
-          data.offboarding.forEach((o: any) => items.push({
-            type: 'Offboarding Request',
-            title: o.internName,
-            desc: `Pending HR approval for ${o.internId}`,
-            link: '/offboarding',
-            icon: 'fa-solid fa-user-minus',
-            color: 'red'
-          }));
-        }
+  private processNotificationData(data: any) {
+    const items: any[] = [];
+    
+    if (data.leaves) {
+      data.leaves.forEach((l: any) => items.push({
+        type: 'Leave Request',
+        title: l.employeeName || 'Staff Member',
+        desc: `${l.leaveType}: ${l.reason}`,
+        link: '/employees',
+        isSvg: true,
+        icon: 'leave',
+        color: 'orange'
+      }));
+    }
 
-        this.notificationItems.set(items);
-        this.hasNotifications.set(items.length > 0);
-      },
-      error: () => {
-        this.hasNotifications.set(false);
-        this.notificationItems.set([]);
-      }
-    });
+    if (data.requests) {
+      data.requests.forEach((r: any) => items.push({
+        type: 'Attendance Correction',
+        title: r.employeeName || 'Staff Member',
+        desc: `Correction for ${new Date(r.date).toLocaleDateString()}`,
+        link: '/employees',
+        icon: 'fa-solid fa-clock-rotate-left',
+        color: 'blue'
+      }));
+    }
+
+    if (data.applications) {
+      data.applications.forEach((a: any) => items.push({
+        type: 'New Application',
+        title: a.fullName,
+        desc: `New intern application submitted`,
+        link: '/interns',
+        icon: 'fa-solid fa-user-plus',
+        color: 'green'
+      }));
+    }
+
+    if (data.offboarding) {
+      data.offboarding.forEach((o: any) => items.push({
+        type: 'Offboarding Request',
+        title: o.internName || o.employeeName || 'Staff Member',
+        desc: `Pending approval for ${o.internId || o.employeeId || 'Exit'}`,
+        link: '/offboarding',
+        icon: 'fa-solid fa-user-minus',
+        color: 'red'
+      }));
+    }
+
+    this.notificationItems.set(items);
+    this.hasNotifications.set(items.length > 0);
   }
 
   loadUserData() {
@@ -247,9 +284,7 @@ export class App {
   userInitials(): string {
     const words = this.displayName().trim().split(/\s+/).filter(Boolean);
     if (words.length === 0) return 'U';
-    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-
-    return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+    return words[0][0].toUpperCase();
   }
 
   userPhone(): string | null {
@@ -273,8 +308,8 @@ export class App {
     const user = this.currentUser();
     const profile = user?.profile || {};
     const candidates = [
-      user?.profilePhotoUrl,
-      user?.profilePhoto?.url,
+      user?.profilePhotoUrl,          // Direct field from login/getMe response
+      user?.profilePhoto?.url,        // Nested object with url
       profile?.avatar,
       profile?.photo,
       profile?.photoUrl,
@@ -288,7 +323,7 @@ export class App {
     ];
 
     for (const value of candidates) {
-      if (typeof value === 'string' && value.trim()) return value;
+      if (typeof value === 'string' && value.trim() && !value.startsWith('null')) return value;
     }
 
     return null;
@@ -358,7 +393,7 @@ export class App {
 
   isLoginPage(): boolean {
     const url = this.currentUrl().split('?')[0]; // Use signal for reactivity
-    return url === '/login' || url === '/register' || url === '/';
+    return url === '/login' || url === '/register' || url === '/' || url.startsWith('/id-card');
   }
 
   getGreeting(): string {

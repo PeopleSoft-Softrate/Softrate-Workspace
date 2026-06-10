@@ -1,3 +1,5 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -150,10 +152,10 @@ String formatDate(String isoOrDate) {
   try {
     if (isoOrDate.length == 10) {
       final d = DateTime.parse(isoOrDate);
-      return DateFormat("E, dd MMM yyyy").format(d);
+      return DateFormat("E, dd MMM").format(d);
     }
     final d = DateTime.parse(isoOrDate).toLocal();
-    return DateFormat("E, dd MMM yyyy").format(d);
+    return DateFormat("E, dd MMM").format(d);
   } catch (_) {
     return isoOrDate;
   }
@@ -346,6 +348,18 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
     TimeOfDay? newPunchOut;
     final reasonController = TextEditingController();
 
+    final prefs = await SharedPreferences.getInstance();
+    final employeeMongoId = prefs.getString("employeeMongoId");
+
+    if (employeeMongoId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Authentication error. Please re-login.")),
+        );
+      }
+      return;
+    }
+
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -480,38 +494,51 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                   return;
                 }
 
-                final payload = {
-                  "employeeId": widget.employeeId,
-                  "employeeName": widget.employeeName,
-                  "leaveType": "Attendance Correction",
-                  "fromDate": date,
-                  "toDate": date,
-                  "numberOfDays": 0,
-                  "reason":
-                      "Correction Request: Punch-In [${newPunchIn?.format(context) ?? 'No Change'}], Punch-Out [${newPunchOut?.format(context) ?? 'No Change'}]. Reason: ${reasonController.text.trim()}",
-                  "status": "pending",
-                  "perDayDurations": {date: "Correction Request"},
-                };
+                try {
+                  final payload = {
+                    "employeeMongoId": employeeMongoId,
+                    "date": date,
+                    "requestedPunchIn": newPunchIn?.format(context),
+                    "requestedPunchOut": newPunchOut?.format(context),
+                    "reason": reasonController.text.trim()
+                  };
 
-                final response = await http.post(
-                  Uri.parse("${getBaseUrl()}/api/employee-leave/apply"),
-                  headers: {"Content-Type": "application/json"},
-                  body: jsonEncode(payload),
-                );
-
-                if (response.statusCode == 200 || response.statusCode == 201) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Correction request sent to HR"),
-                      backgroundColor: Colors.green,
-                    ),
+                  final response = await http.post(
+                    Uri.parse("${getBaseUrl()}/api/attendance-requests/apply"),
+                    headers: {"Content-Type": "application/json"},
+                    body: jsonEncode(payload),
                   );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Failed to send request"),
+
+                  if (response.statusCode == 200 || response.statusCode == 201) {
+                    if (mounted) Navigator.pop(context);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Correction request sent!"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    String errMsg;
+                    try {
+                      final body = jsonDecode(response.body);
+                      errMsg = body['message'] ?? body['error'] ?? body['msg'] ?? response.body;
+                    } catch (_) {
+                      errMsg = response.body;
+                    }
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Error ${response.statusCode}: $errMsg"),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 6),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Network error: $e"),
                       backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 6),
                     ),
                   );
                 }
@@ -558,6 +585,25 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
         // Default to this month if no range picked
         startDate = DateTime(now.year, now.month, 1);
         endDate = DateTime(now.year, now.month + 1, 0);
+      }
+    }
+
+    // Prevent showing absent days before the user's first attendance record
+    if (records.isNotEmpty) {
+      DateTime? earliest;
+      for (var r in records) {
+        try {
+          final d = DateTime.parse(_normalizeDate(r.date));
+          if (earliest == null || d.isBefore(earliest)) earliest = d;
+        } catch (_) {}
+      }
+      if (earliest != null && startDate.isBefore(earliest)) {
+        startDate = earliest;
+      }
+    } else {
+      final today = DateTime(now.year, now.month, now.day);
+      if (startDate.isBefore(today)) {
+        startDate = today;
       }
     }
 
@@ -888,7 +934,7 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                                             }
                                             return Text(
                                               DateFormat(
-                                                "E, dd MMM yyyy",
+                                                "E, dd MMM",
                                               ).format(d),
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.w600,
@@ -1223,15 +1269,25 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
       await MediaStore.ensureInitialized();
       MediaStore.appFolder = "SoftPeople";
 
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? prefs.getString('hr_auth_token') ?? '';
+      final companyCode = prefs.getString('companyCode') ?? '';
+
       final dio = Dio();
 
       final response = await dio.get(
         "${getBaseUrl()}/api/employeeAttanance/export/pdf/employee/${widget.employeeId}",
         queryParameters: {
-          "from": fromDate.toIso8601String(),
-          "to": toDate.toIso8601String(),
+          "from": DateFormat('yyyy-MM-dd').format(fromDate),
+          "to": DateFormat('yyyy-MM-dd').format(toDate),
         },
-        options: Options(responseType: ResponseType.bytes),
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+            if (companyCode.isNotEmpty) 'x-company-code': companyCode,
+          },
+        ),
       );
 
       final fileName =
@@ -1255,7 +1311,7 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("PDF export failed"),
+          content: Text("PDF export failed: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
       );

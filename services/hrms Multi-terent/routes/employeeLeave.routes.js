@@ -16,6 +16,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post("/apply", verifyTenant, upload.single("document"), async (req, res) => {
   try {
     const data = req.body;
+    const employeeId = data.employeeId || data.internId;
+    const employeeName = data.employeeName || data.internName;
 
     const fromDate = new Date(data.fromDate);
     const toDate = new Date(data.toDate);
@@ -26,7 +28,7 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
     // 1. Overlapping Leave Check
     const overlapping = await EmployeeLeave.find({
       companyId: req.tenant.companyId,
-      employeeId: data.employeeId,
+      employeeId: employeeId,
       hrStatus: { $ne: "rejected" },
       fromDate: { $lte: toDay },
       toDate: { $gte: fromDay },
@@ -38,11 +40,11 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
 
     // 2. Fetch Assigned Manager
     let assignedManagerId = null;
-    const intern = await Intern.findOne({ internid: data.employeeId, companyId: req.tenant.companyId });
+    const intern = await Intern.findOne({ internid: employeeId, companyId: req.tenant.companyId });
     if (intern) {
       assignedManagerId = intern.assignedManager;
     } else {
-      const employee = await Employee.findOne({ EmployeeId: data.employeeId, companyId: req.tenant.companyId });
+      const employee = await Employee.findOne({ EmployeeId: employeeId, companyId: req.tenant.companyId });
       if (employee) assignedManagerId = employee.assignedManager;
     }
 
@@ -50,31 +52,48 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
     const isMaternityLeave = data.leaveType?.trim().toLowerCase() === "maternity leave";
     let normalizedLeaveType = data.leaveType;
 
-    if (intern) {
-      // Intern Limit: 2 days per month
-      const monthStart = new Date(Date.UTC(fromDay.getUTCFullYear(), fromDay.getUTCMonth(), 1));
-      const monthEnd = new Date(Date.UTC(fromDay.getUTCFullYear(), fromDay.getUTCMonth() + 1, 0, 23, 59, 59));
-      const monthlyLeaves = await EmployeeLeave.find({
-        companyId: req.tenant.companyId,
-        employeeId: data.employeeId,
-        hrStatus: { $ne: "rejected" },
-        fromDate: { $gte: monthStart, $lte: monthEnd }
-      });
-      const usedThisMonth = monthlyLeaves.reduce((sum, l) => sum + (l.numberOfDays || 0), 0);
-      if (usedThisMonth + Number(data.numberOfDays) > 2) {
-        return res.status(400).json({ success: false, message: `Interns are allowed only 2 leaves per month. Used: ${usedThisMonth}` });
-      }
-    } else if (!isMaternityLeave) {
+    if (!isMaternityLeave) {
       const today = new Date();
-      const counter = await LeaveCounter.findOne({
+      console.log(`[DEBUG] Apply Leave Request Headers:`, req.headers);
+      console.log(`[DEBUG] Apply Leave Request Body:`, req.body);
+      console.log(`[DEBUG] Apply Leave Balance Check:`, {
         companyId: req.tenant.companyId,
-        employeeId: data.employeeId,
+        employeeId: employeeId,
+        leaveType: data.leaveType,
+        today: today.toISOString()
+      });
+      
+      let counter = await LeaveCounter.findOne({
+        companyId: req.tenant.companyId,
+        employeeId: employeeId,
         leaveType: { $regex: `^${data.leaveType.trim()}$`, $options: "i" },
         cycleStartDate: { $lte: today },
         nextResetDate: { $gte: today },
       });
 
-      if (!counter) return res.status(404).json({ success: false, message: "Leave balance not found" });
+      if (!counter) {
+        // Fallback: Query without date restrictions (sorted by cycleStartDate descending)
+        counter = await LeaveCounter.findOne({
+          companyId: req.tenant.companyId,
+          employeeId: employeeId,
+          leaveType: { $regex: `^${data.leaveType.trim()}$`, $options: "i" },
+        }).sort({ cycleStartDate: -1 });
+
+        if (counter) {
+          console.log(`[DEBUG] Found counter via fallback (without date restrictions) for employee ${employeeId}:`, counter._id);
+        }
+      }
+
+      if (!counter) {
+        // Find existing counters to see if date ranges or types are mismatched
+        const existingCounters = await LeaveCounter.find({
+          companyId: req.tenant.companyId,
+          employeeId: employeeId
+        });
+        console.warn(`[DEBUG] Leave balance not found! Existing counters for employee ${employeeId}:`, existingCounters);
+        return res.status(404).json({ success: false, message: "Leave balance not found" });
+      }
+      
       if (Number(data.numberOfDays) > counter.balance) {
         return res.status(400).json({ success: false, message: `Insufficient balance. Available: ${counter.balance}` });
       }
@@ -96,8 +115,8 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
     // 4. Create Leave Request
     const leave = await EmployeeLeave.create({
       companyId: req.tenant.companyId,
-      employeeId: data.employeeId,
-      employeeName: data.employeeName,
+      employeeId: employeeId,
+      employeeName: employeeName,
       leaveType: normalizedLeaveType,
       fromDate: fromDay,
       toDate: toDay,
@@ -180,7 +199,7 @@ router.get("/hr-pending", verifyTenant, async (req, res) => {
 ============================ */
 router.put("/hr-action/:id", verifyTenant, async (req, res) => {
   try {
-    let { status, rejectionReason } = req.body;
+    let { status, rejectionReason, fromDate, toDate, numberOfDays } = req.body;
     if (status === "approved") status = "accepted";
 
     const leave = await EmployeeLeave.findOne({ _id: req.params.id, companyId: req.tenant.companyId });
@@ -190,31 +209,47 @@ router.put("/hr-action/:id", verifyTenant, async (req, res) => {
       return res.status(400).json({ success: false, message: "Manager approval required first" });
     }
 
+    // Update dates if provided by HR
+    let finalNumberOfDays = leave.numberOfDays;
+    if (fromDate && toDate && numberOfDays) {
+      leave.fromDate = new Date(fromDate);
+      leave.toDate = new Date(toDate);
+      leave.numberOfDays = Number(numberOfDays);
+      finalNumberOfDays = leave.numberOfDays;
+    }
+
     // Process balance deduction if HR accepts
     if (status === "accepted") {
-      // Check if it's an intern (they don't have LeaveCounters)
-      const isIntern = await Intern.findOne({ internid: leave.employeeId, companyId: req.tenant.companyId });
+      const today = new Date();
       
-      if (!isIntern) {
-        const today = new Date();
-        const counter = await LeaveCounter.findOne({
+      let counter = await LeaveCounter.findOne({
+        companyId: req.tenant.companyId,
+        employeeId: leave.employeeId,
+        leaveType: { $regex: `^${leave.leaveType.trim()}$`, $options: "i" },
+        cycleStartDate: { $lte: today },
+        nextResetDate: { $gte: today },
+      });
+
+      if (!counter) {
+        // Fallback: Query without date restrictions (sorted by cycleStartDate descending)
+        counter = await LeaveCounter.findOne({
           companyId: req.tenant.companyId,
           employeeId: leave.employeeId,
           leaveType: { $regex: `^${leave.leaveType.trim()}$`, $options: "i" },
-          cycleStartDate: { $lte: today },
-          nextResetDate: { $gte: today },
-        });
-
-        if (!counter) return res.status(404).json({ success: false, message: "Leave balance not found" });
-
-        const updatedCounter = await LeaveCounter.findOneAndUpdate(
-          { _id: counter._id, balance: { $gte: leave.numberOfDays } },
-          { $inc: { used: leave.numberOfDays, balance: -leave.numberOfDays } },
-          { new: true }
-        );
-
-        if (!updatedCounter) return res.status(400).json({ success: false, message: "Insufficient leave balance" });
+        }).sort({ cycleStartDate: -1 });
       }
+
+      if (!counter) {
+        return res.status(404).json({ success: false, message: "Leave balance not found" });
+      }
+
+      const updatedCounter = await LeaveCounter.findOneAndUpdate(
+        { _id: counter._id, balance: { $gte: finalNumberOfDays } },
+        { $inc: { used: finalNumberOfDays, balance: -finalNumberOfDays } },
+        { new: true }
+      );
+
+      if (!updatedCounter) return res.status(400).json({ success: false, message: "Insufficient leave balance" });
     }
 
     leave.hrStatus = status;

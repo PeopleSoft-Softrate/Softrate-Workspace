@@ -64,9 +64,9 @@ const ReviewSchema = new mongoose.Schema({
 
 // Multi-Tenant Proxy Wrapper
 // Target MUST be a function for the construct trap to work with new Model()
-function _GoalProxyTarget() {}
+function _ReviewProxyTarget() {}
 
-function _getGoalModel() {
+function _getReviewModel() {
   const { getTenantConnection } = require('../db');
   const { getModelsForConnection } = require('../utilities/modelLoader');
   const { tenantLocalStorage } = require('../utilities/tenantContext');
@@ -74,23 +74,23 @@ function _getGoalModel() {
   const dbName = store && store.dbName ? store.dbName : 'hrdb';
   const connection = getTenantConnection(dbName);
   const models = getModelsForConnection(connection);
-  return models["Goal"];
+  return models["InternReview"];
 }
 
-module.exports = new Proxy(_GoalProxyTarget, {
+module.exports = new Proxy(_ReviewProxyTarget, {
   get(target, prop) {
-    if (prop === 'name') return "Goal";
-    if (prop === 'schema') return GoalSchema;
-    if (prop === '_name') return "Goal";
-    if (prop === '_schema') return GoalSchema;
-    const actualModel = _getGoalModel();
-    if (!actualModel) throw new Error("Model Goal not found for current tenant");
+    if (prop === 'name') return "InternReview";
+    if (prop === 'schema') return ReviewSchema;
+    if (prop === '_name') return "InternReview";
+    if (prop === '_schema') return ReviewSchema;
+    const actualModel = _getReviewModel();
+    if (!actualModel) throw new Error("Model InternReview not found for current tenant");
     if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
     return actualModel[prop];
   },
   construct(target, args) {
-    const actualModel = _getGoalModel();
-    if (!actualModel) throw new Error("Model Goal not found for current tenant");
+    const actualModel = _getReviewModel();
+    if (!actualModel) throw new Error("Model InternReview not found for current tenant");
     return new actualModel(...args);
   }
 });

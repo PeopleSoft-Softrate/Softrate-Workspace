@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const AttendanceRequestSchema = new mongoose.Schema({
   
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },internId: { type: String, required: true }, // The readable ID (e.g., 2025001)
-  internMongoId: { type: mongoose.Schema.Types.ObjectId, ref: "Intern", required: true },
+  internMongoId: { type: mongoose.Schema.Types.ObjectId, ref: "Intern" },
+  employeeMongoId: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
   internName: { type: String, required: true },
   managerMongoId: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
   date: { type: Date, required: true },

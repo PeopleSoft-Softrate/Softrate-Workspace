@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:hrmappfrontend/Employee/Employee_policy.dart';
+import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
+
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
@@ -33,6 +37,8 @@ class _ManagerDashboardState extends State<ManagerDashboard>
     with NetworkAwareMixin<ManagerDashboard> {
   String? managerEmail;
   bool _isLoading = true;
+  bool _showSplash = true;
+  bool _removeSplash = false;
 
   // Real-time Stats
   int totalTeam = 0;
@@ -67,6 +73,12 @@ class _ManagerDashboardState extends State<ManagerDashboard>
   @override
   void initState() {
     super.initState();
+    Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _showSplash = false);
+    });
+    Timer(const Duration(milliseconds: 2500), () {
+      if (mounted) setState(() => _removeSplash = true);
+    });
     _checkInitialRole();
     _loadManagerData();
   }
@@ -357,8 +369,10 @@ class _ManagerDashboardState extends State<ManagerDashboard>
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
-      child: Scaffold(
-        backgroundColor: neutralLight,
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: neutralLight,
         appBar: AppBar(
           elevation: 0,
           backgroundColor: const Color(0xFF00657F),
@@ -458,19 +472,6 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                     Row(
                       children: [
                         _buildSimpleStat(
-                          "Total Team Members",
-                          totalTeam.toString().padLeft(2, '0'),
-                          Icons.people_rounded,
-                          const Color(0xFF818CF8), // Soft Indigo
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerTeamPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        _buildSimpleStat(
                           "Attendance",
                           attendance,
                           Icons.how_to_reg_rounded,
@@ -482,32 +483,9 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                             );
                           },
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _buildSimpleStat(
-                          "Recruitment",
-                          recruitment.toString().padLeft(2, '0'),
-                          Icons.person_search_rounded,
-                          const Color(0xFFA78BFA), // Soft Violet
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerRecruitmentPage()),
-                            );
-                          },
-                        ),
                         const SizedBox(width: 12),
-                        const Expanded(child: SizedBox()),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
                         _buildSimpleStat(
-                          "Leaves",
+                          "Leave",
                           leaveCount.toString().padLeft(2, '0'),
                           Icons.event_note_rounded,
                           const Color(0xFFF87171), // Soft Red
@@ -518,67 +496,11 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                             );
                           },
                         ),
-                        const SizedBox(width: 12),
-                        _buildSimpleStat(
-                          "Shifts",
-                          "Active",
-                          Icons.schedule_rounded,
-                          const Color(0xFF60A5FA), // Soft Blue
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerShiftPage()),
-                            );
-                          },
-                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        _buildSimpleStat(
-                          "Payroll",
-                          "My Salary",
-                          Icons.account_balance_rounded,
-                          const Color(0xFF4ADE80), // Soft Green
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerPayrollPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        _buildSimpleStat(
-                          "Appraisal",
-                          "Reviews",
-                          Icons.reviews_rounded,
-                          const Color(0xFFC084FC), // Soft Purple
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerAppraisalPage()),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _buildSimpleStat(
-                          "Details",
-                          "Team Mates",
-                          Icons.person_rounded,
-                          const Color(0xFFFB923C), // Soft Orange
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              _createRoute(const ManagerDocumentsPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
                         _buildSimpleStat(
                           "Holiday",
                           "Calendar",
@@ -591,26 +513,56 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                             );
                           },
                         ),
+                        const SizedBox(width: 12),
+                        _buildSimpleStat(
+                          "HR Policy",
+                          "View",
+                          Icons.policy_rounded,
+                          const Color(0xFF60A5FA), // Soft Blue
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              _createRoute(const EmployeePolicyPage()),
+                            );
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         _buildSimpleStat(
-                          "Offboarding",
-                          "Team Exits",
-                          Icons.person_off_rounded,
-                          const Color(0xFFF43F5E), // Rose / Red
+                          "Hierarchy",
+                          "View",
+                          Icons.account_tree_rounded,
+                          const Color(0xFFA78BFA), // Soft Violet
                           onTap: () {
                             Navigator.push(
                               context,
-                              _createRoute(const ManagerOffboardingPage()),
+                              _createRoute(const intern_Organizational_Hierarchy()),
                             );
                           },
                         ),
                         const SizedBox(width: 12),
                         _buildSimpleStat(
-                          "Fund Requests",
+                          "Payroll",
+                          "My Salary",
+                          Icons.account_balance_rounded,
+                          const Color(0xFF4ADE80), // Soft Green
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              _createRoute(const ManagerPayrollPage()),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildSimpleStat(
+                          "Reimbursement",
                           fundRequestCount.toString().padLeft(2, '0'),
                           Icons.receipt_long_rounded,
                           const Color(0xFF7C3AED),
@@ -625,6 +577,8 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                             );
                           },
                         ),
+                        const SizedBox(width: 12),
+                        const Expanded(child: SizedBox()),
                       ],
                     ),
 
@@ -715,8 +669,46 @@ class _ManagerDashboardState extends State<ManagerDashboard>
           ),
         ),
       ),
-    );
-  }
+      if (!_removeSplash)
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !_showSplash,
+              child: AnimatedOpacity(
+                opacity: _showSplash ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeInOut,
+                child: Scaffold(
+                  backgroundColor: Colors.white,
+                  body: Stack(
+                    children: [
+                      SizedBox.expand(
+                        child: Image.asset(
+                          'assets/images/app_launch.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(child: Icon(Icons.error));
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 250,
+                        left: 40,
+                        right: 40,
+                        child: const DotLoadingIndicator(
+                          color: Color(0xFF00657F),
+                          size: 10.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   Widget _buildSimpleStat(
     String title,
@@ -1234,6 +1226,84 @@ class _ShimmerBoxState extends State<_ShimmerBox>
           ),
         );
       },
+    );
+  }
+}
+
+class DotLoadingIndicator extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const DotLoadingIndicator({
+    super.key,
+    this.color = const Color(0xFF00657F),
+    this.size = 10.0,
+  });
+
+  @override
+  State<DotLoadingIndicator> createState() => _DotLoadingIndicatorState();
+}
+
+class _DotLoadingIndicatorState extends State<DotLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final double delay = index * 0.2;
+            final double progress = (_controller.value - delay) % 1.0;
+            final double scale =
+                0.6 +
+                0.4 *
+                    (progress < 0.5
+                        ? (progress * 2)
+                        : (1.0 - (progress - 0.5) * 2));
+            final double opacity =
+                0.3 +
+                0.7 *
+                    (progress < 0.5
+                        ? (progress * 2)
+                        : (1.0 - (progress - 0.5) * 2));
+
+            return Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: scale,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                  width: widget.size,
+                  height: widget.size,
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }

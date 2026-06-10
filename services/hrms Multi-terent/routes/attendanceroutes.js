@@ -7,7 +7,7 @@ const PDFDocument = require("pdfkit");
 const moment = require("moment");
 const Intern = require("../models/Intern");
 const Employee = require("../models/EmployeeModel");
-const Holiday = require("../models/Holiday"); 
+const Holiday = require("../models/Holiday");
 const router = express.Router();
 
 /**
@@ -49,8 +49,8 @@ router.post("/punch-in", verifyTenant, async (req, res) => {
     });
 
     if (specialHoliday) {
-      return res.status(400).json({ 
-        message: `Cannot punch in - Today is holiday: ${specialHoliday.reason}` 
+      return res.status(400).json({
+        message: `Cannot punch in - Today is holiday: ${specialHoliday.reason}`
       });
     }
 
@@ -67,8 +67,8 @@ router.post("/punch-in", verifyTenant, async (req, res) => {
     });
 
     if (weeklyHoliday) {
-      return res.status(400).json({ 
-        message: `Cannot punch in - ${dayName} ${weekNum}st week holiday` 
+      return res.status(400).json({
+        message: `Cannot punch in - ${dayName} ${weekNum}st week holiday`
       });
     }
 
@@ -157,7 +157,7 @@ router.get("/intern/:id", verifyTenant, async (req, res) => {
     const { year, month, from, to } = req.query;  // Add these params
 
     let query = { internId };
-    
+
     if (year && month) {
       const start = new Date(parseInt(year), parseInt(month) - 1, 1);
       const end = new Date(parseInt(year), parseInt(month), 0);
@@ -176,9 +176,9 @@ router.get("/intern/:id", verifyTenant, async (req, res) => {
 
 router.get("/today/unified", verifyTenant, async (req, res) => {
   try {
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const targetDate = req.query.date || new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
     const { managerId } = req.query;
-    
+
     // Filter by company and optional manager
     const matchQuery = { companyId: req.tenant.companyId };
     if (managerId) {
@@ -187,21 +187,23 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
 
     // 1. Fetch Interns with Attendance
     const interns = await Intern.aggregate([
-      { $match: { 
-          ...matchQuery, 
+      {
+        $match: {
+          ...matchQuery,
           status: { $in: ["approved", "ongoing"] },
-          onboardingDate: { $ne: "", $lte: today }
-      } },
+          onboardingDate: { $ne: "", $lte: targetDate }
+        }
+      },
       {
         $lookup: {
           from: "attendances",
           let: { internId: "$internid" },
           pipeline: [
-            { 
-              $match: { 
+            {
+              $match: {
                 $expr: { $eq: ["$internId", "$$internId"] },
-                date: today
-              } 
+                date: targetDate
+              }
             }
           ],
           as: "attendance"
@@ -218,7 +220,13 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
           punchOutTime: "$attendance.punchOutTime",
           punchInLocation: "$attendance.punchInLocation",
           punchOutLocation: "$attendance.punchOutLocation",
-          duration: { $ifNull: ["$attendance.duration", "--"] },
+          duration: { 
+            $cond: [
+              { $ifNull: ["$attendance.punchInTime", false] },
+              { $ifNull: ["$attendance.duration", "00:00"] },
+              "--"
+            ]
+          },
           status: { $cond: [{ $ifNull: ["$attendance.punchInTime", false] }, "Present", "Absent"] }
         }
       }
@@ -226,21 +234,23 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
 
     // 2. Fetch Employees with Attendance
     const employees = await Employee.aggregate([
-      { $match: { 
-          ...matchQuery, 
+      {
+        $match: {
+          ...matchQuery,
           status: { $in: ["approved", "ongoing"] },
           onboardingDate: { $ne: null, $lte: new Date() }
-      } },
+        }
+      },
       {
         $lookup: {
           from: "employeeattendances",
           let: { empId: "$EmployeeId" },
           pipeline: [
-            { 
-              $match: { 
+            {
+              $match: {
                 $expr: { $eq: ["$employeeId", "$$empId"] },
-                date: today
-              } 
+                date: targetDate
+              }
             }
           ],
           as: "attendance"
@@ -257,7 +267,13 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
           punchOutTime: "$attendance.punchOutTime",
           punchInLocation: "$attendance.punchInLocation",
           punchOutLocation: "$attendance.punchOutLocation",
-          duration: { $ifNull: ["$attendance.duration", "--"] },
+          duration: { 
+            $cond: [
+              { $ifNull: ["$attendance.punchInTime", false] },
+              { $ifNull: ["$attendance.duration", "00:00"] },
+              "--"
+            ]
+          },
           status: { $cond: [{ $ifNull: ["$attendance.punchInTime", false] }, "Present", "Absent"] }
         }
       }
@@ -269,7 +285,7 @@ router.get("/today/unified", verifyTenant, async (req, res) => {
     });
 
     res.json({
-      date: today,
+      date: targetDate,
       count: combined.filter(a => a.status === "Present").length,
       attendance: combined
     });
@@ -300,10 +316,16 @@ router.get("/today/all", verifyTenant, async (req, res) => {
         $project: {
           internId: "$internid",
           name: { $concat: [{ $toUpper: { $substrCP: ["$fullName", 0, 1] } }, { $substrCP: ["$fullName", 1, { $strLenCP: "$fullName" }] }] },
-          contact: 1, 
+          contact: 1,
           punchInTime: "$attendance.punchInTime",
           punchOutTime: "$attendance.punchOutTime",
-          duration: { $ifNull: ["$attendance.duration", "--"] }
+          duration: { 
+            $cond: [
+              { $ifNull: ["$attendance.punchInTime", false] },
+              { $ifNull: ["$attendance.duration", "00:00"] },
+              "--"
+            ]
+          }
         }
       },
       { $sort: { punchInTime: 1 } }
@@ -373,10 +395,30 @@ router.get("/export/pdf/:internId", verifyTenant, async (req, res) => {
       `attachment; filename=attendance_${resolvedId}.pdf`
     );
 
-    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    const doc = new PDFDocument({ margin: 40, size: "A4", bufferPages: true });
     doc.pipe(res);
 
     /* ================= HEADER ================= */
+    try {
+      // req.tenant.logo is already set to emailLogoUrl by tenant middleware
+      const logoData = req.tenant?.logo;
+      console.log("PDF Logo available:", !!logoData, logoData ? logoData.substring(0, 30) : "none");
+
+      if (logoData && logoData.startsWith("data:image")) {
+        const base64Data = logoData.split(",")[1];
+        const logoBuffer = Buffer.from(base64Data, "base64");
+        doc.image(logoBuffer, 50, 40, { width: 100, fit: [100, 100] });
+      } else {
+        const fallbackPath = require("path").join(__dirname, "../assets/images/pdf_logo.png");
+        const fs = require("fs");
+        if (fs.existsSync(fallbackPath)) {
+          doc.image(fallbackPath, 50, 40, { width: 100 });
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load PDF logo:", e.message);
+    }
+
     doc
       .fontSize(20)
       .fillColor("#00657F")
@@ -418,7 +460,7 @@ router.get("/export/pdf/:internId", verifyTenant, async (req, res) => {
     doc.font("Helvetica");
 
     /* ================= TABLE ROWS ================= */
-    records.forEach((r) => {
+    records.forEach((r, index) => {
       const y = doc.y;
 
       let status = "Absent";
@@ -449,17 +491,26 @@ router.get("/export/pdf/:internId", verifyTenant, async (req, res) => {
       doc.moveDown(0.4);
 
       // Auto page break
-      if (doc.y > 750) {
+      if (doc.y > 750 && index < records.length - 1) {
         doc.addPage();
       }
     });
 
     /* ================= FOOTER ================= */
-    doc.moveDown(1);
-    doc
-      .fontSize(9)
-      .fillColor("gray")
-      .text("Generated by SoftPeople HRM", { align: "center" });
+    const pages = doc.bufferedPageRange();
+    for (let i = 0; i < pages.count; i++) {
+      doc.switchToPage(i);
+      
+      const oldBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      
+      doc
+        .fontSize(9)
+        .fillColor("gray")
+        .text("Generated by PeopleSoft", 50, doc.page.height - 50, { align: "right", width: doc.page.width - 100, lineBreak: false });
+        
+      doc.page.margins.bottom = oldBottomMargin;
+    }
 
     doc.end();
   } catch (err) {
@@ -600,7 +651,7 @@ router.get("/export/excel/all-interns", verifyTenant, async (req, res) => {
     sheet.addRow([]);
     sheet.mergeCells(`A${sheet.rowCount}:G${sheet.rowCount}`);
     const footer = sheet.getRow(sheet.rowCount);
-    footer.getCell(1).value = "Generated by SoftPeople HRM";
+    footer.getCell(1).value = "Generated by SoftPeople";
     footer.getCell(1).alignment = { horizontal: "center" };
     footer.getCell(1).font = { italic: true, color: { argb: "FF808080" } };
 
@@ -666,24 +717,57 @@ router.post("/update-manual", verifyTenant, async (req, res) => {
 });
 
 /* ======================
-   📌 Get Attendance Trend (Last 7 Days)
+   📌 Get Attendance Trend (Last 14 Days)
 ====================== */
 router.get("/trend", verifyTenant, async (req, res) => {
   try {
-    const trend = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-      
-      const count = await Attendance.countDocuments({ date: dateStr, punchInTime: { $exists: true } });
-      trend.push({
-        date: dateStr,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-        count
-      });
+    // Build the list of the last 14 days (as YYYY-MM-DD strings, IST)
+    const currentWeekDays = [];
+    const previousWeekDays = [];
+    
+    for (let i = 13; i >= 7; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      previousWeekDays.push(d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }));
     }
-    res.json(trend);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      currentWeekDays.push(d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }));
+    }
+    
+    const fourteenDaysAgo = previousWeekDays[0];
+
+    // Single aggregation — 1 DB round-trip instead of 14
+    const results = await Attendance.aggregate([
+      {
+        $match: {
+          date: { $gte: fourteenDaysAgo },
+          punchInTime: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $group: { _id: "$date", count: { $sum: 1 } }
+      }
+    ]);
+
+    // Map aggregation results by date for O(1) lookup
+    const countByDate = {};
+    results.forEach(r => { countByDate[r._id] = r.count; });
+
+    const currentWeek = currentWeekDays.map(dateStr => ({
+      date: dateStr,
+      day: new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+      count: countByDate[dateStr] || 0
+    }));
+
+    const previousWeek = previousWeekDays.map(dateStr => ({
+      date: dateStr,
+      day: new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+      count: countByDate[dateStr] || 0
+    }));
+
+    res.json({ currentWeek, previousWeek });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

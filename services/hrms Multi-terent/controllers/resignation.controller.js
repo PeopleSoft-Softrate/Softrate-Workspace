@@ -4,6 +4,14 @@ const Employee = require("../models/EmployeeModel");
 const QRCode = require("qrcode");
 const { sendEmail, LOGO_URL } = require("../utilities/sendEmail");
 const { getSignature } = require("../utilities/emailSignature");
+const { getMasterConnection: _resignationcontrollerjs_GetMC, waitForConnection: _resignationcontrollerjs_WFC } = require('../db');
+const _resignationcontrollerjs_CompanyExport = require('../models/CompanyModel');
+
+async function _resignationcontrollerjs_getMasterCompany() {
+  const db = _resignationcontrollerjs_GetMC();
+  await _resignationcontrollerjs_WFC(db);
+  return db.models.Company || db.model('Company', _resignationcontrollerjs_CompanyExport.schema);
+}
 
 const findUser = async (userId, userType) => {
   if (userType === "employee") {
@@ -87,7 +95,11 @@ exports.checkResignation = async (req, res) => {
 // GET all resignations
 exports.getAllResignations = async (req, res) => {
   try {
-    const list = await Resignation.find({ companyId: req.tenant.companyId }).sort({ createdAt: -1 });
+    const list = await Resignation.find({ companyId: req.tenant.companyId }).lean().sort({ createdAt: -1 });
+    for (let r of list) {
+      const user = await findUser(r.userId, r.userType);
+      if (user) r.onboardingDate = user.onboardingDate;
+    }
     res.json({ success: true, data: list });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -97,8 +109,10 @@ exports.getAllResignations = async (req, res) => {
 // GET resignation by userId
 exports.getResignationByUserId = async (req, res) => {
   try {
-    const record = await Resignation.findOne({ userId: req.params.userId, companyId: req.tenant.companyId });
+    const record = await Resignation.findOne({ userId: req.params.userId, companyId: req.tenant.companyId }).lean();
     if (!record) return res.json({ success: false, message: "No record found" });
+    const user = await findUser(record.userId, record.userType);
+    if (user) record.onboardingDate = user.onboardingDate;
     res.json({ success: true, data: record });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -108,7 +122,11 @@ exports.getResignationByUserId = async (req, res) => {
 // GET pending resignations for HR
 exports.getPendingResignations = async (req, res) => {
   try {
-    const pendingList = await Resignation.find({ status: "pending_hr", companyId: req.tenant.companyId }).sort({ createdAt: -1 });
+    const pendingList = await Resignation.find({ status: "pending_hr", companyId: req.tenant.companyId }).lean().sort({ createdAt: -1 });
+    for (let r of pendingList) {
+      const user = await findUser(r.userId, r.userType);
+      if (user) r.onboardingDate = user.onboardingDate;
+    }
     res.json({ success: true, data: pendingList });
   } catch (err) {
     console.error("Fetch Pending Resignations Error:", err);
@@ -120,7 +138,11 @@ exports.getPendingResignations = async (req, res) => {
 exports.getManagerPendingResignations = async (req, res) => {
   try {
     const { managerId } = req.params;
-    const list = await Resignation.find({ managerId, status: "pending_manager", companyId: req.tenant.companyId }).sort({ createdAt: -1 });
+    const list = await Resignation.find({ managerId, status: "pending_manager", companyId: req.tenant.companyId }).lean().sort({ createdAt: -1 });
+    for (let r of list) {
+      const user = await findUser(r.userId, r.userType);
+      if (user) r.onboardingDate = user.onboardingDate;
+    }
     res.json({ success: true, data: list });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -184,7 +206,8 @@ exports.hrReview = async (req, res) => {
       const company = await Company.findById(resignation.companyId);
       const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
       
-      const virtualIdUrl = `https://workspace.softrateglobal.com/id-card/${resignation.companyId}/${user.internid || user.EmployeeId}`;
+      const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.softrateglobal.com/hrms';
+      const virtualIdUrl = `${frontendUrl}/id-card/${resignation.companyId}/${user.internid || user.EmployeeId}`;
       const qrCodeDataUrl = await QRCode.toDataURL(virtualIdUrl);
 
       const docData = {

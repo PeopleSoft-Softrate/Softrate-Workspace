@@ -50,7 +50,8 @@ const verifyPublicTenant = async (req, res, next) => {
       companyId: company._id,
       companyCode: company.companyCode,
       dbName: dbName,
-      receivingEmail: company.settings?.receivingEmail || process.env.RECIVER_EMAIL_USER
+      receivingEmail: company.settings?.receivingEmail || process.env.RECIVER_EMAIL_USER,
+      defaultPassword: company.settings?.defaultPassword || ""
     };
 
     runWithTenant({ companyId: company._id, dbName }, () => {

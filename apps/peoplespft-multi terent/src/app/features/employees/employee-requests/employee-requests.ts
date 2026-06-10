@@ -1,5 +1,5 @@
 import { AlertService } from '../../../shared/services/alert';
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
@@ -35,6 +35,42 @@ export class EmployeeRequests implements OnInit {
   
   requests = signal<any[]>([]);
   isLoading = signal(true);
+  searchQuery = signal('');
+  sortFilter = signal<string>('recent');
+
+  setSort(sort: string) {
+    this.sortFilter.set(sort);
+  }
+
+  onSearch(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchQuery.set(input.value);
+  }
+
+  filteredRequests = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    const all = this.requests();
+    const result = all.filter(r => {
+      if (!query) return true;
+      return r.fullName?.toLowerCase().includes(query) || 
+             r.email?.toLowerCase().includes(query) || 
+             r.designation?.toLowerCase().includes(query) ||
+             r.department?.toLowerCase().includes(query) ||
+             r.phone?.toLowerCase().includes(query);
+    });
+
+    const sortVal = this.sortFilter();
+    if (sortVal === 'az') {
+      result.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    } else if (sortVal === 'za') {
+      result.sort((a, b) => (b.fullName || '').localeCompare(a.fullName || ''));
+    } else if (sortVal === 'recent') {
+      result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    } else if (sortVal === 'oldest') {
+      result.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    }
+    return result;
+  });
 
   ngOnInit() {
     this.fetchRequests();

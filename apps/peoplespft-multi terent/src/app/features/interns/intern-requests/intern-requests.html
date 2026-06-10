@@ -1,5 +1,5 @@
-<div class="page-header">
-  <div class="header-content">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+  <div class="header-main">
     <div class="breadcrumb">
       <a routerLink="/interns" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> Back to Interns
@@ -7,6 +7,23 @@
     </div>
     <h1>Pending Intern Requests</h1>
     <p>Review and approve new applications for Internships and Jobs.</p>
+  </div>
+
+  <div class="search-sort-group" style="display: flex; align-items: center; gap: 0.75rem;">
+    <div class="tab-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" placeholder="Search by name, dept, college..." (input)="onSearch($event)">
+    </div>
+    <select *ngIf="roles().length > 0" [value]="roleFilter()" (change)="setRole($any($event.target).value)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0.4rem 0.875rem; outline: none; background: white; font-size: 13px; color: var(--text-secondary); cursor: pointer; height: 38px;">
+      <option value="all">All Roles</option>
+      <option *ngFor="let role of roles()" [value]="role">{{ role }}</option>
+    </select>
+    <select [value]="sortFilter()" (change)="setSort($any($event.target).value)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0.4rem 0.875rem; outline: none; background: white; font-size: 13px; color: var(--text-secondary); cursor: pointer; height: 38px;">
+      <option value="recent">Newest to Oldest</option>
+      <option value="oldest">Oldest to Newest</option>
+      <option value="az">Alphabetical (A-Z)</option>
+      <option value="za">Alphabetical (Z-A)</option>
+    </select>
   </div>
 </div>
 
@@ -39,10 +56,6 @@
     </button>
   </div>
 
-  <div class="tab-search">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" placeholder="Search by name, dept, college..." (input)="onSearch($event)">
-  </div>
 </div>
 
 <div class="data-container" [class.loading]="isLoading()">

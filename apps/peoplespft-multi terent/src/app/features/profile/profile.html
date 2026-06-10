@@ -1,34 +1,124 @@
 <div class="profile-container">
-  <div class="page-header">
-    <h1>My Profile</h1>
-    <p>Manage your personal details and view your Virtual ID Card</p>
+  <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1>My Profile</h1>
+      <p>Manage your personal details and view your Virtual ID Card</p>
+    </div>
   </div>
 
   <div class="profile-layout" *ngIf="!isLoading()">
     <!-- Left Column: Details -->
     <div class="details-column">
-      <div class="info-card">
-        <h3>Personal Information</h3>
+      
+      <!-- Profile Summary Card with Progress Line -->
+      <div class="info-card profile-summary-card" style="position: relative;">
+        <div class="summary-avatar-wrapper">
+          <img *ngIf="profilePhoto()" [src]="profilePhoto()" alt="Profile" class="summary-avatar">
+          <div *ngIf="!profilePhoto()" class="summary-avatar-placeholder">{{ userInitials() }}</div>
+        </div>
+        <div class="summary-details">
+          <h2>{{ displayName() }}</h2>
+          <p>{{ displayRole() }}</p>
+        </div>
+        
+        <div class="progress-section circular">
+          <div class="circular-progress">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+              <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="circle" [attr.stroke-dasharray]="profileCompletion() + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <text x="18" y="20.35" class="percentage">{{ profileCompletion() }}%</text>
+            </svg>
+          </div>
+          <span class="progress-label">Profile Completion</span>
+        </div>
+      </div>
+
+      <div class="info-card" style="margin-top: 24px;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
+          <h3 style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Basic Information</h3>
+          
+          <!-- Edit Actions -->
+          <div style="display: flex; gap: 8px;">
+            <button class="edit-btn" style="padding: 6px 12px; font-size: 13px;" *ngIf="!isEditing()" (click)="toggleEdit()">
+              <i class="fa-solid fa-pen" style="margin-right: 4px;"></i> Edit Details
+            </button>
+            <ng-container *ngIf="isEditing()">
+              <button class="save-btn" style="padding: 6px 12px; font-size: 13px;" (click)="saveProfile()">Save changes</button>
+              <button class="cancel-btn" style="padding: 6px 12px; font-size: 13px;" (click)="toggleEdit()">Cancel</button>
+            </ng-container>
+          </div>
+        </div>
         <div class="info-grid">
           <div class="info-item">
-            <span class="info-label">Full Name</span>
-            <span class="info-value">{{ displayName() }}</span>
+            <span class="info-label">Employee ID</span>
+            <span class="info-value">{{ displayId() }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">Email Address</span>
-            <span class="info-value">{{ displayEmail() }}</span>
+            <span class="info-label">Nick name</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayNickName() }}</span>
+            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.nickName" class="edit-input" placeholder="e.g. Sam">
+          </div>
+          <div class="info-item">
+            <span class="info-label">Full Name</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayName() }}</span>
+            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.fullName" class="edit-input" placeholder="e.g. Sam Kumar">
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email address</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayEmail() }}</span>
+            <input *ngIf="isEditing()" type="email" [(ngModel)]="editData.email" class="edit-input" placeholder="e.g. sam@example.com">
           </div>
           <div class="info-item">
             <span class="info-label">Phone Number</span>
-            <span class="info-value">{{ displayPhone() }}</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayPhone() }}</span>
+            <input *ngIf="isEditing()" type="tel" [(ngModel)]="editData.phone" class="edit-input" placeholder="e.g. +1 234 567 8900">
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card" style="margin-top: 24px;">
+        <h3>Personal Details</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Date of Birth</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayDob() }}</span>
+            <input *ngIf="isEditing()" type="date" [(ngModel)]="editData.dob" class="edit-input">
           </div>
           <div class="info-item">
-            <span class="info-label">Role / Designation</span>
-            <span class="info-value">{{ displayRole() }}</span>
+            <span class="info-label">Ask me about/Expertise</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayExpertise() }}</span>
+            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.askMeAboutExpertise" class="edit-input" placeholder="e.g. React, Angular, Node">
           </div>
           <div class="info-item">
-            <span class="info-label">Company ID</span>
-            <span class="info-value">{{ displayId() }}</span>
+            <span class="info-label">Age</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayAge() }}</span>
+            <input *ngIf="isEditing()" type="number" [(ngModel)]="editData.age" class="edit-input" placeholder="e.g. 25">
+          </div>
+          <div class="info-item"></div>
+          <div class="info-item">
+            <span class="info-label">Gender</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayGender() }}</span>
+            <select *ngIf="isEditing()" [(ngModel)]="editData.gender" class="edit-input">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="info-item"></div>
+          <div class="info-item">
+            <span class="info-label">Marital Status</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayMaritalStatus() }}</span>
+            <select *ngIf="isEditing()" [(ngModel)]="editData.maritalStatus" class="edit-input">
+              <option value="">Select</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+            </select>
+          </div>
+          <div class="info-item" style="grid-column: 1 / -1;">
+            <span class="info-label">About Me</span>
+            <span class="info-value" *ngIf="!isEditing()" style="white-space: pre-wrap;">{{ displayAboutMe() }}</span>
+            <textarea *ngIf="isEditing()" [(ngModel)]="editData.aboutMe" class="edit-input edit-textarea" rows="4" placeholder="Tell us about yourself..."></textarea>
           </div>
         </div>
       </div>
@@ -36,30 +126,110 @@
 
     <!-- Right Column: Virtual ID Card -->
     <div class="id-card-column">
-      <div class="virtual-id-card">
-        <div class="id-card-header">
-          <img *ngIf="companyLogo()" [src]="companyLogo()" alt="Company Logo" class="id-company-logo">
-          <span *ngIf="!companyLogo()" class="id-company-name">Softrate Global</span>
-        </div>
-        
-        <div class="id-card-body">
-          <div class="id-avatar-wrapper">
-            <img *ngIf="profilePhoto()" [src]="profilePhoto()" alt="Profile" class="id-avatar">
-            <div *ngIf="!profilePhoto()" class="id-avatar-placeholder">{{ userInitials() }}</div>
+
+      <!-- ── CUSTOM VID TEMPLATE (from Certificate Settings builder) ── -->
+      <ng-container *ngIf="vidPage(); else defaultVid">
+        <div class="custom-vid-wrapper"
+             [style.width.px]="VID_CARD_W"
+             [style.height.px]="vidCardH">
+
+          <!-- Background image -->
+          <div class="custom-vid-canvas"
+               [style.backgroundImage]="vidBgStyle(vidPage())"
+               [style.width.px]="VID_CANVAS_W"
+               [style.height]="'842px'"
+               [style.transform]="'scale(' + vidScale + ')'"
+               [style.transformOrigin]="'top left'">
+
+            <!-- Legacy placeholder chips -->
+            <ng-container *ngFor="let p of vidPage()?.placeholders">
+              <!-- Image chips: logo, qrCode, profilePhoto, signature -->
+              <img *ngIf="isVidImageKey(p.key) && resolveVidValue(p.key)"
+                   [src]="resolveVidValue(p.key)"
+                   [style.position]="'absolute'"
+                   [style.left.px]="p.x"
+                   [style.top.px]="p.y"
+                   [style.width.px]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)"
+                   [style.height.px]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)"
+                   [style.objectFit]="'cover'"
+                   [style.borderRadius]="p.key === 'profilePhoto' ? '50%' : '4px'"
+                   alt="">
+              <!-- Text chips -->
+              <span *ngIf="!isVidImageKey(p.key)"
+                    [style.position]="'absolute'"
+                    [style.left.px]="p.x"
+                    [style.top.px]="p.y"
+                    [style.fontSize.px]="p.fontSize || 14"
+                    [style.fontWeight]="p.isBold ? '700' : '400'"
+                    [style.color]="p.color || '#000'"
+                    style="white-space: nowrap;">
+                {{ resolveVidValue(p.key) }}
+              </span>
+            </ng-container>
+
+            <!-- Rich paragraph blocks -->
+            <ng-container *ngFor="let para of vidPage()?.paragraphs">
+              <!-- Image-only paragraphs -->
+              <img *ngIf="resolveVidParagraph(para.text) !== para.text && isVidImageKey(para.text?.trim()?.replace(/[{}]/g,'')) && resolveVidValue(para.text?.trim()?.replace(/[{}]/g,''))"
+                   [src]="resolveVidValue(para.text?.trim()?.replace(/[{}]/g,''))"
+                   [style.position]="'absolute'"
+                   [style.left.px]="(para.x || 0) + 10"
+                   [style.top.px]="(para.y || 0) + 24"
+                   [style.width.px]="para.width || 120"
+                   style="object-fit: cover; border-radius: 4px;"
+                   alt="">
+              <!-- Text paragraphs -->
+              <div *ngIf="!isVidImageKey(para.text?.trim()?.replace(/\{\{|\}\}/g,''))"
+                   [style.position]="'absolute'"
+                   [style.left.px]="(para.x || 0) + 10"
+                   [style.top.px]="(para.y || 0) + 24"
+                   [style.width.px]="para.width || 400"
+                   [style.fontSize.px]="para.fontSize || 14"
+                   [style.fontWeight]="para.isBold ? '700' : '400'"
+                   [style.fontStyle]="para.isItalic ? 'italic' : 'normal'"
+                   [style.color]="para.color || '#000'"
+                   [style.textAlign]="para.alignment || 'left'"
+                   [style.lineHeight]="para.lineHeight || 1.6"
+                   [style.letterSpacing.em]="para.letterSpacing || 0"
+                   [innerHTML]="resolveVidParagraph(para.text)?.replace('\n','<br>')">
+              </div>
+            </ng-container>
+
           </div>
-          <h2 class="id-name">{{ displayName() }}</h2>
-          <p class="id-role">{{ displayRole() }}</p>
-          <div class="id-divider"></div>
-          <p class="id-number">ID: <strong>{{ displayId() }}</strong></p>
         </div>
-        
-        <div class="id-card-footer">
-          <div class="qr-code-placeholder">
-            <i class="fa-solid fa-qrcode"></i>
+      </ng-container>
+
+      <!-- ── DEFAULT VID CARD (fallback when no custom template saved) ── -->
+      <ng-template #defaultVid>
+        <div class="virtual-id-card">
+          <div class="id-card-header">
+            <img *ngIf="companyLogo()" [src]="companyLogo()" alt="Company Logo" class="id-company-logo">
+            <span *ngIf="!companyLogo()" class="id-company-name">Softrate Global</span>
           </div>
-          <p class="qr-label">Scan to Verify</p>
+
+          <div class="id-card-body">
+            <div class="id-avatar-wrapper">
+              <img *ngIf="profilePhoto()" [src]="profilePhoto()" alt="Profile" class="id-avatar">
+              <div *ngIf="!profilePhoto()" class="id-avatar-placeholder">{{ userInitials() }}</div>
+            </div>
+            <h2 class="id-name">{{ displayName() }}</h2>
+            <p class="id-role">{{ displayRole() }}</p>
+            <div class="id-divider"></div>
+            <p class="id-number">ID: <strong>{{ displayId() }}</strong></p>
+          </div>
+
+          <div class="id-card-footer">
+            <div class="qr-code-wrapper">
+              <img *ngIf="qrCodeUrl()" [src]="qrCodeUrl()!" alt="QR Code" class="qr-code-img">
+              <div *ngIf="!qrCodeUrl()" class="qr-code-placeholder">
+                <i class="fa-solid fa-qrcode"></i>
+              </div>
+            </div>
+            <p class="qr-label">SCAN TO VERIFY</p>
+          </div>
         </div>
-      </div>
+      </ng-template>
+
     </div>
   </div>
 

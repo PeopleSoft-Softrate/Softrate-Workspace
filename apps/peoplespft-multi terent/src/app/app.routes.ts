@@ -72,11 +72,13 @@ export const routes: Routes = [
   { path: 'employee/org-hierarchy', component: OrgHierarchy },
   { path: 'employee/hr-policies', component: HrPolicies },
   { path: 'employee/projects', component: ProjectManagement },
+  { path: 'employee/review', loadComponent: () => import('./features/employees/employee-self-review/employee-self-review').then(m => m.EmployeeSelfReview) },
   { path: 'leaves', component: LeaveManagement },
   { path: 'assignments', loadComponent: () => import('./features/assignments/manager-assignments/manager-assignments').then(m => m.ManagerAssignments) },
   { path: 'manager/reviews', loadComponent: () => import('./features/manager/team-reviews/team-reviews').then(m => m.TeamReviews) },
   { path: 'offboarding', component: OffboardingRequests },
   { path: 'approvals', component: UnifiedRequests },
   { path: 'profile', component: ProfileComponent },
+  { path: 'id-card/:companyId/:id', loadComponent: () => import('./features/id-card/id-card').then(m => m.IdCardComponent) },
   { path: 'interns/attendance/corrections', loadComponent: () => import('./features/interns/attendance-corrections/attendance-corrections').then(m => m.AttendanceCorrections) },
 ];

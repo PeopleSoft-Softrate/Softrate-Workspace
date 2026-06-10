@@ -30,6 +30,7 @@ class _PayrollPageState extends State<PayrollPage>
   String? _error;
 
   // Profile
+  DateTime? _onboardingDate;
   String _internName  = '';
   String _department  = '';
 
@@ -191,6 +192,7 @@ class _PayrollPageState extends State<PayrollPage>
       if (obDateStr.isNotEmpty) {
         try { onboardingDate = DateTime.parse(obDateStr); } catch (_) {}
       }
+      _onboardingDate = onboardingDate;
 
       _lopDays      = _calculateLopDays(weeklyHolidays, specialHolidayDates, approvedLeaveDates, punchedDays, onboardingDate);
       _lopDeduction = _calculateLopDeduction();
@@ -321,9 +323,7 @@ class _PayrollPageState extends State<PayrollPage>
                         const Text('Pay Slips',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: primaryColor)),
                         const SizedBox(height: 12),
-                        _buildPaySlipItem('April 2025', 'May 01, 2025'),
-                        _buildPaySlipItem('March 2025', 'Apr 01, 2025'),
-                        _buildPaySlipItem('February 2025', 'Mar 01, 2025'),
+                        ..._buildDynamicPaySlips(),
                       ],
                     ),
                   ),
@@ -623,6 +623,35 @@ class _PayrollPageState extends State<PayrollPage>
   Widget _divLine() => const Divider(color: borderColor, height: 1);
 
   // ── Pay Slip Item ─────────────────────────────────────────────────────────────
+  List<Widget> _buildDynamicPaySlips() {
+    final List<Widget> slips = [];
+    final now = DateTime.now();
+    DateTime currentCheck = DateTime(now.year, now.month - 1, 1);
+
+    int maxSlips = _onboardingDate == null ? 3 : 12;
+
+    for (int i = 0; i < maxSlips; i++) {
+      if (_onboardingDate != null) {
+        if (currentCheck.year < _onboardingDate!.year ||
+            (currentCheck.year == _onboardingDate!.year && currentCheck.month < _onboardingDate!.month)) {
+          break;
+        }
+      }
+
+      final monthStr = DateFormat('MMMM yyyy').format(currentCheck);
+      final issueDate = DateTime(currentCheck.year, currentCheck.month + 1, 1);
+      final issueDateStr = DateFormat('MMM dd, yyyy').format(issueDate);
+
+      slips.add(_buildPaySlipItem(monthStr, issueDateStr));
+      currentCheck = DateTime(currentCheck.year, currentCheck.month - 1, 1);
+    }
+
+    if (slips.isEmpty) {
+      return [const Text('No pay slips available yet.', style: TextStyle(color: subtitleColor, fontSize: 13))];
+    }
+    return slips;
+  }
+
   Widget _buildPaySlipItem(String month, String date) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

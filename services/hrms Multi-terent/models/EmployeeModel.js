@@ -13,6 +13,7 @@ const EmployeeSchema = new mongoose.Schema({
   emergencyName: String,
   emergencyPhone: String,
   dob: Date,
+  age: Number,
   address: String,
   role: String,
   department: String,
@@ -21,6 +22,12 @@ const EmployeeSchema = new mongoose.Schema({
   nationality: String,
   maritalStatus: String,
   deviceId: { type: String, default: null },
+  nickName: { type: String, default: "" },
+  aboutMe: { type: String, default: "" },
+  askMeAboutExpertise: { type: String, default: "" },
+  profileCompletion: { type: Number, default: 70 },
+  completeDetails: { type: Boolean, default: false },
+  projectLinks: { type: [String], default: [] },
 
   // Section 2 – Education
   qualification: String,
@@ -37,6 +44,9 @@ const EmployeeSchema = new mongoose.Schema({
   experienceYears: String,
   previousOrg: String,
   designation: String,
+
+  // Remote Worker Flag
+  isRemote: { type: Boolean, default: false },
 
   // Section 6 – Declarations
   declaration: { type: Boolean, default: false },
@@ -64,6 +74,13 @@ const EmployeeSchema = new mongoose.Schema({
     updatedAt: { type: Date }
   }
 });
+
+// Indexes — login lookups, attendance export, and aggregation match filters
+EmployeeSchema.index({ email: 1 });
+EmployeeSchema.index({ EmployeeId: 1 });
+EmployeeSchema.index({ companyId: 1, status: 1 });
+EmployeeSchema.index({ assignedManager: 1, companyId: 1 });
+
 // Helper function to capitalize the first letter of each word
 function capitalizeWords(str) {
   if (!str) return str;

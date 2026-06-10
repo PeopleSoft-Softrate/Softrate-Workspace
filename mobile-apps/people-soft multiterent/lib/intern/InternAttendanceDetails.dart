@@ -107,10 +107,10 @@ String formatDate(String isoOrDate) {
   try {
     if (isoOrDate.length == 10) {
       final d = DateTime.parse(isoOrDate);
-      return DateFormat("E, dd MMM yyyy").format(d);
+      return DateFormat("E, dd MMM").format(d);
     }
     final d = DateTime.parse(isoOrDate).toLocal();
-    return DateFormat("E, dd MMM yyyy").format(d);
+    return DateFormat("E, dd MMM").format(d);
   } catch (_) {
     return isoOrDate;
   }
@@ -525,6 +525,25 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
       }
     }
 
+    // Prevent showing absent days before the user's first attendance record
+    if (records.isNotEmpty) {
+      DateTime? earliest;
+      for (var r in records) {
+        try {
+          final d = DateTime.parse(_normalizeDate(r.date));
+          if (earliest == null || d.isBefore(earliest)) earliest = d;
+        } catch (_) {}
+      }
+      if (earliest != null && startDate.isBefore(earliest)) {
+        startDate = earliest;
+      }
+    } else {
+      final today = DateTime(now.year, now.month, now.day);
+      if (startDate.isBefore(today)) {
+        startDate = today;
+      }
+    }
+
     // Generate all dates in range
     for (int i = 0; i <= endDate.difference(startDate).inDays; i++) {
       final date = startDate.add(Duration(days: i));
@@ -820,7 +839,6 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                             child: Container(
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
@@ -830,12 +848,16 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                                   ),
                                 ],
                               ),
-                              child: Theme(
-                                data: Theme.of(
-                                  context,
-                                ).copyWith(dividerColor: Colors.transparent),
-                                child: ExpansionTile(
-                                  tilePadding: const EdgeInsets.symmetric(
+                              child: Material(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                clipBehavior: Clip.antiAlias,
+                                child: Theme(
+                                  data: Theme.of(
+                                    context,
+                                  ).copyWith(dividerColor: Colors.transparent),
+                                  child: ExpansionTile(
+                                    tilePadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 4,
                                   ),
@@ -863,7 +885,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                                             }
                                             return Text(
                                               DateFormat(
-                                                "E, dd MMM yyyy",
+                                                "E, dd MMM",
                                               ).format(d),
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.w600,
@@ -1002,7 +1024,8 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                                 ),
                               ),
                             ),
-                          );
+                          ),
+                        );
                         },
                       ),
               ),
@@ -1227,15 +1250,23 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
       await MediaStore.ensureInitialized();
       MediaStore.appFolder = "SoftPeople";
 
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
       final dio = Dio();
 
       final response = await dio.get(
         "${getBaseUrl()}/api/attendance/export/pdf/${widget.internId}",
         queryParameters: {
-          "from": fromDate.toIso8601String(),
-          "to": toDate.toIso8601String(),
+          "from": DateFormat('yyyy-MM-dd').format(fromDate),
+          "to": DateFormat('yyyy-MM-dd').format(toDate),
         },
-        options: Options(responseType: ResponseType.bytes),
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+          },
+        ),
       );
 
       final fileName =
@@ -1259,7 +1290,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("PDF export failed"),
+          content: Text("PDF export failed: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
       );

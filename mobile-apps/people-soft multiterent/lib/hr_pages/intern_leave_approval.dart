@@ -22,11 +22,12 @@ class _InternLeaveApprovalState extends State<InternLeaveApproval> {
 
   // Fetch pending leaves from API
   Future<List<LeaveRecord>> fetchPendingLeaves() async {
-    final url = Uri.parse("${getBaseUrl()}/api/leave/pending");
+    final url = Uri.parse("${getBaseUrl()}/api/employee-leave/hr-pending");
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> jsonResp = jsonDecode(response.body);
+      final List<dynamic> data = jsonResp['data'] ?? jsonResp;
       return data.map((e) => LeaveRecord.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch leaves');
@@ -181,12 +182,12 @@ class _InternLeaveApprovalState extends State<InternLeaveApproval> {
       rejectionReason = reason;
     }
 
-    final url = Uri.parse("${getBaseUrl()}/api/leave/${leave.id}");
+    final url = Uri.parse("${getBaseUrl()}/api/employee-leave/hr-action/${leave.id}");
     final response = await http.put(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "status": action == 'accepted' ? 'accepted' : 'rejected',
+        "status": action == 'accepted' ? 'approved' : 'rejected',
         "rejectionReason": rejectionReason,
       }),
     );
@@ -516,12 +517,12 @@ class LeaveRecord {
 
     return LeaveRecord(
       id: json['_id'] ?? '',
-      internName: json['internName'] ?? '',
+      internName: json['employeeName'] ?? json['internName'] ?? 'Unknown Employee',
       leaveType: json['leaveType'] ?? '',
       fromDate: json['fromDate'] ?? '',
       toDate: json['toDate'] ?? '',
       reason: json['reason'] ?? '',
-      status: json['status'] ?? 'pending',
+      status: json['hrStatus'] ?? json['status'] ?? 'pending',
       rejectionReason: json['rejectionReason'] ?? '',
       perDayDurations: perDay,
     );

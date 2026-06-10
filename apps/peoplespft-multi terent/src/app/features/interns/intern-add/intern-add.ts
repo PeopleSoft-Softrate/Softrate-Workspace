@@ -40,7 +40,8 @@ export class InternAdd implements OnInit {
     durationValue: 1,
     durationType: 'month' as 'day' | 'month',
     internshipType: 'Stipend',
-    applicationType: 'Internship'
+    applicationType: 'Internship',
+    isRemote: false
   };
 
   internRoles = signal<string[]>([]);
@@ -65,7 +66,10 @@ export class InternAdd implements OnInit {
     this.apiService.getCompanySettings().subscribe({
       next: (res: any) => {
         if (res.success && res.settings) {
-          this.internRoles.set(res.settings.internRoles || []);
+          const fetchedRoles = res.settings.internRoles || [];
+          const currentRoles = this.internRoles();
+          const mergedRoles = Array.from(new Set([...fetchedRoles, ...currentRoles]));
+          this.internRoles.set(mergedRoles);
         }
       },
       error: (err) => console.error('Failed to fetch settings', err)
@@ -83,6 +87,16 @@ export class InternAdd implements OnInit {
         this.intern.college = data.college || '';
         this.intern.department = data.department || '';
         this.intern.role = data.role || '';
+        this.intern.isRemote = data.isRemote || false;
+        
+        // Ensure the role exists in the dropdown options if it came from the DB
+        if (this.intern.role) {
+          const currentRoles = this.internRoles();
+          if (!currentRoles.includes(this.intern.role)) {
+            this.internRoles.set([...currentRoles, this.intern.role]);
+          }
+        }
+
         this.intern.applicationType = data.applicationType || 'Internship';
         this.intern._id = data._id;
         this.cdr.detectChanges();
@@ -114,7 +128,8 @@ export class InternAdd implements OnInit {
   saveIntern() {
     this.submitted.set(true);
     
-    if (!this.intern.fullName || !this.intern.email || !this.intern.onboardingDate) {
+    if (!this.intern.fullName || !this.intern.email || !this.intern.onboardingDate || !this.intern.department || !this.intern.role) {
+      this.alertService.show('Please fill all required fields including Department, Role, and Onboarding Date');
       return;
     }
 

@@ -853,6 +853,56 @@ class _AttendancePageState extends State<AttendancePage>
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return PopScope(
+        canPop: false,
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: Stack(
+            children: [
+              SizedBox.expand(
+                child: Image.asset(
+                  'assets/images/app_launch.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Icon(Icons.error));
+                  },
+                ),
+              ),
+              Positioned(
+                bottom: 80,
+                left: 40,
+                right: 40,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00657F)),
+                        strokeWidth: 3.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Loading Dashboard...",
+                      style: TextStyle(
+                        color: const Color(0xFF00657F).withOpacity(0.8),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final rawName = internData?['fullName']?.toString() ?? 'Intern';
     final name = rawName
         .split(' ')
@@ -892,12 +942,7 @@ class _AttendancePageState extends State<AttendancePage>
                         buildNetworkStatusBanner(),
                         _buildHeader(theme),
                         Expanded(
-                          child:
-                              loading
-                                  ? const Center(
-                                    child: CircularProgressIndicator(),
-                                  )
-                                  : _buildMainUI(name, now, isLast5Days),
+                          child: _buildMainUI(name, now, isLast5Days),
                         ),
                       ],
                     ),

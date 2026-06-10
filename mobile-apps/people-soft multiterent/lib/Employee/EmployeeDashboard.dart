@@ -48,6 +48,8 @@ class _EmployeedashboardState extends State<Employeedashboard>
 
   bool loading = false;
   bool punchLoading = false;
+  bool _showOverlay = true;
+  double _overlayOpacity = 1.0;
 
   Map<String, dynamic>? employeeData;
   Map<String, dynamic>? myResignation;
@@ -116,7 +118,17 @@ class _EmployeedashboardState extends State<Employeedashboard>
     } finally {
       // Only hide loading if NOT terminated
       if (mounted && employeeData?['status'] != 'terminated') {
-        setState(() => loading = false);
+        setState(() {
+          loading = false;
+          _overlayOpacity = 0.0;
+        });
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _showOverlay = false;
+            });
+          }
+        });
       }
     }
   }
@@ -505,6 +517,11 @@ class _EmployeedashboardState extends State<Employeedashboard>
   }
 
   Future<bool> checkDistanceFromOffice() async {
+    // 🔥 Remote Worker Bypass
+    if (employeeData?['isRemote'] == true || employeeData?['isRemote']?.toString() == 'true') {
+      return true;
+    }
+
     bool hasPermission = await handleLocationPermission();
     if (!hasPermission) return false;
 
@@ -824,77 +841,133 @@ class _EmployeedashboardState extends State<Employeedashboard>
         ),
         child: Scaffold(
           backgroundColor: const Color(0xFFF1F5F9),
-          body: SizedBox.expand(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF00657F), // Consistent brand color
-                    const Color(0xFFF1F5F9), // Smooth transition
-                  ],
-                  stops: const [0.0, 0.75], // Extended depth for immersive feel
-                ),
-              ),
-              child: SafeArea(
-                child: Stack(
-                  children: [
-                    Column(
+          body: Stack(
+            children: [
+              SizedBox.expand(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color(0xFF00657F), // Consistent brand color
+                        const Color(0xFFF1F5F9), // Smooth transition
+                      ],
+                      stops: const [0.0, 0.75], // Extended depth for immersive feel
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Stack(
                       children: [
-                        buildNetworkStatusBanner(),
-                        _buildHeader(theme),
-                        Expanded(
-                          child: loading
-                              ? const Center(child: CircularProgressIndicator())
-                              : _buildMainUI(name, now, isLast5Days),
+                        Column(
+                          children: [
+                            buildNetworkStatusBanner(),
+                            _buildHeader(theme),
+                            Expanded(
+                              child: _buildMainUI(name, now, isLast5Days),
+                            ),
+                          ],
                         ),
+
+                        /// FULL-SCREEN OVERLAY LOADER (Punch action)
+                        if (punchLoading)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.5),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                  SizedBox(height: 20),
+                                  Text(
+                                    "Processing...",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-
-                    /// FULL-SCREEN OVERLAY LOADER (Punch action)
-                    if (punchLoading)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.5),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                              SizedBox(height: 20),
-                              Text(
-                                "Processing...",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+
+              if (_showOverlay)
+                IgnorePointer(
+                  ignoring: _overlayOpacity == 0.0,
+                  child: AnimatedOpacity(
+                    opacity: _overlayOpacity,
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeInOut,
+                    child: Scaffold(
+                      backgroundColor: Colors.white,
+                      body: Stack(
+                        children: [
+                          SizedBox.expand(
+                            child: Image.asset(
+                              'assets/images/app_launch.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(child: Icon(Icons.error));
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 250,
+                            left: 40,
+                            right: 40,
+                            child: const DotLoadingIndicator(
+                              color: Color(0xFF00657F),
+                              size: 10.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
     );
   }
 
+  String _getGreetingName(String? rawName, String fallback) {
+    if (rawName == null || rawName.trim().isEmpty) return fallback;
+    final words = rawName.split(' ').where((w) => w.trim().isNotEmpty).toList();
+    if (words.isEmpty) return fallback;
+
+    String selectedName = words[0];
+    for (final word in words) {
+      final cleanWord = word.replaceAll(RegExp(r'[^\w]'), '');
+      if (cleanWord.length > 2) {
+        selectedName = word;
+        break;
+      }
+    }
+    final cleanSelected = selectedName.replaceAll(RegExp(r'[^\w]'), '');
+    if (cleanSelected.length <= 2) {
+      selectedName = words[0];
+    }
+
+    final cleanWord = selectedName.replaceAll(RegExp(r'[^\w]'), '');
+    if (cleanWord.isEmpty) return selectedName;
+    return '${selectedName[0].toUpperCase()}${selectedName.substring(1).toLowerCase()}';
+  }
+
   Widget _buildHeader(ThemeData theme) {
     final rawName = employeeData?['fullName']?.toString() ?? 'Employee';
-    final name = rawName
-        .split(' ')
-        .where((w) => w.isNotEmpty)
-        .map((w) => '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
-        .join(' ');
+    final name = _getGreetingName(rawName, 'Employee');
     final isTestAccount = widget.employeeId == "test@peopleSoft";
 
     final isManager =
@@ -1069,26 +1142,6 @@ class _EmployeedashboardState extends State<Employeedashboard>
                 Row(
                   children: [
                     _buildManagerStyleBox(
-                      "Review",
-                      "Appraisal",
-                      Icons.rate_review_rounded,
-                      const Color(0xFFF59E0B),
-                      onTap: employeeId == null
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EmployeeProgress(
-                                    employeeId: employeeId!,
-                                    employeeName: name,
-                                  ),
-                                ),
-                              );
-                            },
-                    ),
-                    const SizedBox(width: 12),
-                    _buildManagerStyleBox(
                       "Holiday",
                       "Calendar",
                       Icons.event_note_rounded,
@@ -1104,11 +1157,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         );
                       },
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
+                    const SizedBox(width: 12),
                     _buildManagerStyleBox(
                       "HR Policies",
                       "Guidelines",
@@ -1123,7 +1172,11 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         );
                       },
                     ),
-                    const SizedBox(width: 12),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
                     _buildManagerStyleBox(
                       "Hierarchy",
                       "Organization",
@@ -1139,11 +1192,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         );
                       },
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
+                    const SizedBox(width: 12),
                     _buildManagerStyleBox(
                       "Payroll",
                       "Self Service",
@@ -1158,15 +1207,13 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         );
                       },
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(child: SizedBox()),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     _buildManagerStyleBox(
-                      "Fund Request",
+                      "Reimbursement",
                       "Company Claims",
                       Icons.receipt_long_rounded,
                       const Color(0xFF7C3AED),
@@ -1713,6 +1760,8 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       children: [
                         Text(
                           title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -1721,6 +1770,8 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         ),
                         Text(
                           subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.grey.shade500,
@@ -1949,3 +2000,76 @@ class _ActionButtonState extends State<_ActionButton> {
     );
   }
 }
+
+class DotLoadingIndicator extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const DotLoadingIndicator({
+    super.key,
+    this.color = const Color(0xFF00657F),
+    this.size = 10.0,
+  });
+
+  @override
+  State<DotLoadingIndicator> createState() => _DotLoadingIndicatorState();
+}
+
+class _DotLoadingIndicatorState extends State<DotLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final double delay = index * 0.2;
+            final double progress = (_controller.value - delay) % 1.0;
+            final double scale = 0.6 + 0.4 * (progress < 0.5
+                ? (progress * 2)
+                : (1.0 - (progress - 0.5) * 2));
+            final double opacity = 0.3 + 0.7 * (progress < 0.5
+                ? (progress * 2)
+                : (1.0 - (progress - 0.5) * 2));
+
+            return Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: scale,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                  width: widget.size,
+                  height: widget.size,
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }),
+    );
+  }
+}
+

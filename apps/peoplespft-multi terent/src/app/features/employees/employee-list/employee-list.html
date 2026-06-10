@@ -3,16 +3,16 @@
   <div class="data-section">
     <ng-container *ngIf="currentTab() === 'list'">
       <div class="page-header-embedded">
-        <div class="header-content">
+        <div class="header-main">
           <h1>Manage Employees</h1>
           <p>Complete overview of your organization's human capital.</p>
         </div>
         <div class="header-tools">
           <div class="status-filters">
-            <button class="filter-chip" [class.active]="roleFilter() === 'all'" (click)="setRoleFilter('all')">All Staff</button>
-            <button class="filter-chip" [class.active]="roleFilter() === 'manager'" (click)="setRoleFilter('manager')">Manager</button>
-            <button class="filter-chip" [class.active]="roleFilter() === 'hr'" (click)="setRoleFilter('hr')">Hr</button>
-            <button class="filter-chip" [class.active]="roleFilter() === 'employee'" (click)="setRoleFilter('employee')">Employee</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'all'" (click)="setRoleFilter('all')">All Staff ({{ allCount }})</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'manager'" (click)="setRoleFilter('manager')">Manager ({{ managerCount }})</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'hr'" (click)="setRoleFilter('hr')">HR ({{ hrCount }})</button>
+            <button class="filter-chip" [class.active]="roleFilter() === 'employee'" (click)="setRoleFilter('employee')">Employee ({{ employeeCount }})</button>
           </div>
 
           <div class="search-container">
@@ -35,10 +35,17 @@
             <img *ngIf="!emp.imgError" [src]="getPhotoUrl(emp._id)" (error)="$any(emp).imgError = true" class="avatar-initial" style="object-fit: cover;" />
             <div *ngIf="emp.imgError || !emp._id" class="avatar-initial">{{ emp.fullName ? emp.fullName[0] : 'U' }}</div>
             <div class="identity-text">
-              <span class="full-name">
+              <span class="full-name" style="display: flex; align-items: center; gap: 6px;">
                 {{ emp.fullName }}
-                <i *ngIf="emp.isManager" class="fa-solid fa-crown" style="color: #f59e0b; font-size: 0.75rem; margin-left: 4px;" title="Manager"></i>
-                <i *ngIf="emp.isHr" class="fa-solid fa-shield-halved" style="color: #0ea5e9; font-size: 0.75rem; margin-left: 4px;" title="HR Admin"></i>
+                <svg *ngIf="emp.isManager" title="Manager" style="color: #f59e0b;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                  <path d="M9 16v-8l3 5l3 -5v8" />
+                </svg>
+                <svg *ngIf="emp.isHr" title="HR Admin" style="color: #0ea5e9;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                  <path d="M10 16v-8m4 0v8" />
+                  <path d="M10 12h4" />
+                </svg>
               </span>
               <span class="emp-id">{{ emp.EmployeeId || emp._id.substring(0, 8) }}</span>
             </div>
@@ -99,13 +106,21 @@
     </ng-container>
 
     <!-- VIEW 2: LEAVE REQUESTS -->
-    <app-leave-management *ngIf="currentTab() === 'leaves'"></app-leave-management>
+    <app-unified-requests *ngIf="currentTab() === 'leaves'" 
+      [embeddedCategory]="'leave'" 
+      [embeddedUserType]="'employee'"
+      [embeddedTitle]="'Employee Leave Requests'"
+      [embeddedSubtitle]="'Manage leave applications from employees.'"></app-unified-requests>
 
     <!-- VIEW 3: EMPLOYEE REQUESTS -->
     <app-employee-requests *ngIf="currentTab() === 'requests'"></app-employee-requests>
 
     <!-- VIEW 4: OFFBOARDING -->
-    <app-offboarding-requests *ngIf="currentTab() === 'offboarding'"></app-offboarding-requests>
+    <app-unified-requests *ngIf="currentTab() === 'offboarding'" 
+      [embeddedCategory]="'offboarding'" 
+      [embeddedUserType]="'employee'"
+      [embeddedTitle]="'Employee Offboarding Requests'"
+      [embeddedSubtitle]="'Review resignation and exit requests for employees.'"></app-unified-requests>
 
     <!-- VIEW 5: REJECTED -->
     <app-employee-rejected *ngIf="currentTab() === 'rejected'"></app-employee-rejected>

@@ -1,5 +1,5 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -16,6 +16,11 @@ export class InternLeaves implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
 
   navigateTo(path: string[]) {
     this.router.navigate(path).then(() => {

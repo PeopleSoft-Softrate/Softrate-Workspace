@@ -1,24 +1,34 @@
 import { AlertService } from '../../../shared/services/alert';
-import { Component, signal, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Component, signal, OnInit, inject, OnDestroy } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { CalendarCheckOut01Icon, UserCircleIcon, FingerAccessIcon, LicenseDraftIcon, Money03Icon, FileDownloadIcon, Upload02Icon } from '@hugeicons/core-free-icons';
 import { ApiService } from '../../../services/api.service';
+import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
 
 @Component({
   selector: 'app-employee-leaves',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HugeiconsIconComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HugeiconsIconComponent, EmployeeSidebar],
   templateUrl: './employee-leaves.html',
-  styleUrl: './employee-leaves.css'
+  styleUrls: ['./employee-leaves.css', '../employee-list/employee-list.css']
 })
-export class EmployeeLeaves implements OnInit {
+export class EmployeeLeaves implements OnInit, OnDestroy {
   private alertService = inject(AlertService);
-
   private apiService = inject(ApiService);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
+
+  ngOnDestroy() {
+    // Component cleanup
+  }
 
   readonly CalendarCheckOut01Icon = CalendarCheckOut01Icon;
   readonly UserCircleIcon = UserCircleIcon;

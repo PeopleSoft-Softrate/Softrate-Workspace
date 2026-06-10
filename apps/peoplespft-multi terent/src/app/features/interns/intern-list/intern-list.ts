@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { Home01Icon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, UserCircleIcon } from '@hugeicons/core-free-icons';
@@ -11,11 +11,12 @@ import { LeaveManagement } from '../../leaves/leave-management/leave-management'
 import { AttendanceCorrections } from '../attendance-corrections/attendance-corrections';
 import { OffboardingRequests } from '../../offboarding/offboarding-requests/offboarding-requests';
 import { InternRejected } from '../intern-rejected/intern-rejected';
+import { UnifiedRequests } from '../../unified-requests/unified-requests';
 
 @Component({
   selector: 'app-intern-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, InternRequests, LeaveManagement, AttendanceCorrections, OffboardingRequests, InternRejected, HugeiconsIconComponent, InternSidebar],
+  imports: [CommonModule, RouterModule, InternRequests, LeaveManagement, AttendanceCorrections, OffboardingRequests, InternRejected, HugeiconsIconComponent, InternSidebar, UnifiedRequests],
   templateUrl: './intern-list.html',
   styleUrl: './intern-list.css'
 })
@@ -56,6 +57,37 @@ export class InternList implements OnInit {
   statusFilter = signal<string>('all');
   rangeFilter = signal<string>('current');
   searchQuery = signal<string>('');
+  sortFilter = signal<string>('recent');
+  roles = signal<string[]>([]);
+  internRoleFilter = signal<string>('all');
+
+  filterCounts = computed(() => {
+    const all = this.allInterns();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let current = 0;
+    let alumni = 0;
+    
+    all.forEach(i => {
+      const isStatusValid = i.status === 'approved' || i.status === 'ongoing';
+      let isCurrent = false;
+      if (isStatusValid && i.onboardingDate) {
+        const d = new Date(i.onboardingDate);
+        d.setHours(0, 0, 0, 0);
+        if (d <= today) isCurrent = true;
+      }
+
+      if (isCurrent) current++;
+      if (i.status === 'alumni' || i.status === 'completed') alumni++;
+    });
+
+    return {
+      all: all.length,
+      current,
+      alumni
+    };
+  });
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -66,6 +98,11 @@ export class InternList implements OnInit {
       }
     });
     this.fetchInterns();
+    this.apiService.getCompanySettings().subscribe(res => {
+      if (res?.settings?.internRoles) {
+        this.roles.set(res.settings.internRoles);
+      }
+    });
   }
 
   fetchInterns() {
@@ -113,7 +150,33 @@ export class InternList implements OnInit {
       );
     }
     
+    const roleVal = this.internRoleFilter();
+    if (roleVal !== 'all') {
+      filtered = filtered.filter(i => i.role === roleVal || i.domain === roleVal);
+    }
+
+    const sortVal = this.sortFilter();
+    if (sortVal === 'az') {
+      filtered.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    } else if (sortVal === 'za') {
+      filtered.sort((a, b) => (b.fullName || '').localeCompare(a.fullName || ''));
+    } else if (sortVal === 'recent') {
+      filtered.sort((a, b) => new Date(b.createdAt || b.onboardingDate || 0).getTime() - new Date(a.createdAt || a.onboardingDate || 0).getTime());
+    } else if (sortVal === 'oldest') {
+      filtered.sort((a, b) => new Date(a.createdAt || a.onboardingDate || 0).getTime() - new Date(b.createdAt || b.onboardingDate || 0).getTime());
+    }
+
     this.interns.set(filtered);
+  }
+
+  setSort(sort: string) {
+    this.sortFilter.set(sort);
+    this.applyFilter();
+  }
+
+  setInternRole(role: string) {
+    this.internRoleFilter.set(role);
+    this.applyFilter();
   }
 
   onSearch(event: Event) {

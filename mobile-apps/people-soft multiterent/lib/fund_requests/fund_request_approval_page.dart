@@ -88,7 +88,7 @@ class _FundRequestApprovalPageState extends State<FundRequestApprovalPage> {
               borderRadius: BorderRadius.circular(18),
             ),
             title: Text(
-              isReject ? 'Reject fund request' : 'Approve fund request',
+              isReject ? 'Reject reimbursement' : 'Approve reimbursement',
             ),
             content: TextField(
               controller: controller,
@@ -146,7 +146,7 @@ class _FundRequestApprovalPageState extends State<FundRequestApprovalPage> {
         SnackBar(
           content: Text(
             success
-                ? 'Fund request ${status == 'accepted' ? 'approved' : 'rejected'}'
+                ? 'Reimbursement ${status == 'accepted' ? 'approved' : 'rejected'}'
                 : 'Unable to update request',
           ),
           backgroundColor:
@@ -286,7 +286,7 @@ class _FundRequestApprovalPageState extends State<FundRequestApprovalPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            request['category'] ?? 'Fund Request',
+            request['category'] ?? 'Reimbursement',
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
@@ -354,7 +354,7 @@ class _FundRequestApprovalPageState extends State<FundRequestApprovalPage> {
     if (data.isEmpty) {
       return Center(
         child: Text(
-          pendingOnly ? 'No pending fund requests' : 'No request history',
+          pendingOnly ? 'No pending reimbursements' : 'No request history',
           style: const TextStyle(color: muted, fontWeight: FontWeight.w700),
         ),
       );
@@ -373,7 +373,7 @@ class _FundRequestApprovalPageState extends State<FundRequestApprovalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isManager ? 'Fund Approvals' : 'HR Fund Approval';
+    final title = _isManager ? 'Reimbursement Approvals' : 'HR Reimbursement Approval';
     final subtitle =
         _isManager
             ? 'Manager review before HR'

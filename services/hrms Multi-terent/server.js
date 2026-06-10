@@ -13,12 +13,40 @@ const compression = require('compression');
   dotenv.config({ path: envPath });
 });
 
+// ============================
+// Startup Guards
+// ============================
+if (!process.env.JWT_SECRET) {
+  console.error('❌ FATAL: JWT_SECRET is not set in environment. Refusing to start.');
+  process.exit(1);
+}
+
 require("./cron/leaveReset.cron");
 
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(compression());
-app.use(cors({ origin: '*' }));
+
+// ── CORS: use env-driven allowlist in production ──
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : null;
+app.use(cors({
+  origin: allowedOrigins || '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-company-code',
+    'X-Demo-Mode',
+    'Cache-Control',
+    'Pragma',
+    'Expires'
+  ]
+}));
+
+// ── Body limits: 50 MB for JSON, multer handles large uploads separately ──
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
@@ -69,6 +97,7 @@ app.use('/api/performance-templates', require('./routes/performance.routes'));
 app.use('/api/convert', require('./routes/conversion.routes'));
 app.use('/api/fund-requests', require('./routes/fundRequest.routes'));
 app.use('/api/device-change-requests', require('./routes/deviceChangeRequest.routes'));
+app.use('/api/public', require('./routes/public.routes'));
 
 // ============================
 // Test Route
@@ -107,6 +136,23 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('🔌 Client disconnected:', socket.id);
   });
+});
+
+// ============================
+// Global Error Handler
+// ============================
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : (err.message || 'Internal server error')
+  });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled Promise Rejection:', reason);
 });
 
 server.listen(PORT, '0.0.0.0', () => {

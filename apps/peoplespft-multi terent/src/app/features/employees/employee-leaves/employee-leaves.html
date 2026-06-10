@@ -1,11 +1,10 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
-  <div class="header-content">
-    <div class="breadcrumb">
-      <a routerLink="/employee/dashboard" class="back-link">
-        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-      </a>
+  <div class="header-main">
+    <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
+      <a (click)="goBack()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
+      <span style="color: #94a3b8;"> / Leaves</span>
     </div>
     <h1>Leave Applications</h1>
     <p>Track your leave balance, request time off, and monitor manager/HR approvals</p>
@@ -22,7 +21,7 @@
       </div>
       <div class="balance-info">
         <span class="label">{{ bal.leaveType }}</span>
-        <h3 class="value">{{ bal.balance }} <span class="total">/ {{ bal.totalAllowed }} Days Left</span></h3>
+        <h3 class="value">{{ bal.totalAllowed - bal.balance }} <span class="total">/ {{ bal.totalAllowed }}</span></h3>
       </div>
     </div>
   </div>

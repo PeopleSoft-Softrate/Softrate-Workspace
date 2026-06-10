@@ -24,6 +24,17 @@ const waitForConnection = (conn) => {
   });
 };
 
+// Shared connection options for all DBs
+const CONNECTION_OPTIONS = {
+  maxPoolSize: 10,               // max concurrent connections per DB
+  minPoolSize: 2,                // keep at least 2 warm
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  heartbeatFrequencyMS: 10000,
+  retryWrites: true,
+  retryReads: true,
+};
+
 /**
  * Get or create the master connection
  */
@@ -33,7 +44,7 @@ const getMasterConnection = () => {
   }
 
   const masterUri = `${mongoURI}/${masterDbName}`;
-  const masterConnection = mongoose.createConnection(masterUri);
+  const masterConnection = mongoose.createConnection(masterUri, CONNECTION_OPTIONS);
 
   masterConnection.on('connected', () => {
     console.log(`Connected to Master DB: ${masterDbName}`);
@@ -56,7 +67,7 @@ const getTenantConnection = (dbName) => {
   }
 
   const tenantUri = `${mongoURI}/${dbName}`;
-  const tenantConnection = mongoose.createConnection(tenantUri);
+  const tenantConnection = mongoose.createConnection(tenantUri, CONNECTION_OPTIONS);
 
   tenantConnection.on('connected', () => {
     console.log(`Connected to Tenant DB: ${dbName}`);

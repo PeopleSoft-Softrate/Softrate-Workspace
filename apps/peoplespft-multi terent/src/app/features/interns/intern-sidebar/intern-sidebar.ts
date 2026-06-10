@@ -41,12 +41,12 @@ import { ApiService } from '../../../services/api.service';
 
     <div class="sidebar-divider"></div>
 
-    <!-- ATTENDANCE CORRECTIONS -->
-    <button routerLink="/interns" [queryParams]="{tab: 'corrections'}" class="sidebar-action-item" [class.active]="activeTab === 'corrections'" title="Attendance Corrections">
+    <!-- ATTENDANCE RATIFICATION -->
+    <button routerLink="/interns" [queryParams]="{tab: 'corrections'}" class="sidebar-action-item" [class.active]="activeTab === 'corrections'" title="Attendance Ratification">
       <div class="action-icon-circle">
         <hugeicons-icon [icon]="NoteEditIcon" size="20" [strokeWidth]="1.5" color="#3b82f6"></hugeicons-icon>
       </div>
-      <span class="action-label">Attendance Correction</span>
+      <span class="action-label">Attendance Ratification</span>
     </button>
 
     <div class="sidebar-divider"></div>

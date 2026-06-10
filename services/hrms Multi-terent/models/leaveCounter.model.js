@@ -44,8 +44,9 @@ const leaveCounterSchema = new mongoose.Schema({
   }
 });
 
+// Unique per tenant: same employee+leaveType can exist in different company DBs
 leaveCounterSchema.index(
-  { employeeId: 1, leaveType: 1 },
+  { companyId: 1, employeeId: 1, leaveType: 1 },
   { unique: true }
 );
 

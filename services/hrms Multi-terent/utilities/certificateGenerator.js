@@ -25,15 +25,16 @@ function resolveParagraphText(text, data) {
 function resolveImagePlaceholder(text, data) {
     if (!text) return null;
     const trimmed = text.trim();
-    const match = trimmed.match(/^\{\{(logo|signature|qrCode)\}\}$/i);
+    const match = trimmed.match(/^\{\{(logo|signature|qrCode|profilePhoto)\}\}$/i);
     if (!match) return null;
     let key = match[1];
     // Normalize key name (case sensitivity)
     if (key.toLowerCase() === 'qrcode') key = 'qrCode';
+    if (key.toLowerCase() === 'profilephoto') key = 'profilePhoto';
     const val = data[key];
     if (!val) return null;
     // Convert base64 data URL to Buffer for PDFKit
-    if (val.startsWith('data:image')) {
+    if (typeof val === 'string' && val.startsWith('data:image')) {
         const base64Data = val.split(',')[1];
         return Buffer.from(base64Data, 'base64');
     }
@@ -193,12 +194,14 @@ async function generateDynamicPDF(data, template = {}) {
                 // 2. Draw Legacy Placeholder Chips
                 const placeholders = page.placeholders || [];
                 for (const p of placeholders) {
-                    // Check if it's an image chip
-                    if (['logo', 'signature', 'qrCode'].includes(p.key)) {
+                                    // Check if it's an image chip
+                    if (['logo', 'signature', 'qrCode', 'profilePhoto'].includes(p.key)) {
                         const imgBuffer = resolveImagePlaceholder(`{{${p.key}}}`, data);
                         if (imgBuffer) {
                             try {
-                                doc.image(imgBuffer, p.x, p.y, { fit: [120, 120] });
+                                // Profile photo shown as a circle-ish square crop
+                                const imgSize = p.imgSize || (p.key === 'profilePhoto' ? 80 : 120);
+                                doc.image(imgBuffer, p.x, p.y, { fit: [imgSize, imgSize] });
                             } catch (e) {
                                 console.warn('PDF image insert failed for chip:', e.message);
                             }
@@ -282,7 +285,30 @@ async function generateDynamicPDF(data, template = {}) {
                     const finalX = (para.x || 0) + 10;
                     const finalY = (para.y || 0) + 24;
 
-                    doc.text(text, finalX, finalY, options);
+                    // Parse **bold** markdown for inline bolding
+                    const parts = text.split(/(\*\*.*?\*\*)/g);
+                    let isFirst = true;
+
+                    for (let j = 0; j < parts.length; j++) {
+                        const part = parts[j];
+                        if (!part) continue;
+                        
+                        const isInlineBold = part.startsWith('**') && part.endsWith('**');
+                        const actualText = isInlineBold ? part.slice(2, -2) : part;
+                        
+                        // Switch font if needed
+                        setPdfFont(doc, para.fontFamily, para.isBold || isInlineBold, para.isItalic, assetsDir);
+                        
+                        const isLast = (j === parts.length - 1) || (parts.slice(j+1).join('') === '');
+                        const partOptions = { ...options, continued: !isLast };
+                        
+                        if (isFirst) {
+                            doc.text(actualText, finalX, finalY, partOptions);
+                            isFirst = false;
+                        } else {
+                            doc.text(actualText, partOptions);
+                        }
+                    }
                 }
             }
 

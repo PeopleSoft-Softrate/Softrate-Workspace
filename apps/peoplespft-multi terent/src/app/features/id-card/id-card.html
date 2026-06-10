@@ -1,0 +1,115 @@
+<div class="public-id-container">
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading ID Card...</p>
+  </div>
+
+  <div class="error-state" *ngIf="!isLoading() && error()">
+    <i class="fa-solid fa-circle-exclamation error-icon"></i>
+    <h2>Access Denied</h2>
+    <p>{{ error() }}</p>
+  </div>
+
+  <div class="id-wrapper" *ngIf="!isLoading() && profileData()">
+    <ng-container *ngIf="vidPage; else defaultVid">
+      <div class="custom-vid-wrapper"
+           [style.width.px]="VID_CARD_W"
+           [style.height.px]="vidCardH">
+        <!-- Background image -->
+        <div class="custom-vid-canvas"
+             [style.backgroundImage]="vidBgStyle(vidPage)"
+             [style.width.px]="VID_CANVAS_W"
+             [style.height]="'842px'"
+             [style.transform]="'scale(' + vidScale + ')'"
+             [style.transformOrigin]="'top left'">
+
+          <!-- Legacy placeholder chips -->
+          <ng-container *ngFor="let p of vidPage?.placeholders">
+            <!-- Image chips: logo, qrCode, profilePhoto, signature -->
+            <img *ngIf="isVidImageKey(p.key) && resolveVidValue(p.key)"
+                 [src]="resolveVidValue(p.key)"
+                 [style.position]="'absolute'"
+                 [style.left.px]="p.x"
+                 [style.top.px]="p.y"
+                 [style.width.px]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)"
+                 [style.height.px]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)"
+                 [style.objectFit]="'cover'"
+                 [style.borderRadius]="p.key === 'profilePhoto' ? '50%' : '4px'"
+                 alt="">
+            <!-- Text chips -->
+            <span *ngIf="!isVidImageKey(p.key)"
+                  [style.position]="'absolute'"
+                  [style.left.px]="p.x"
+                  [style.top.px]="p.y"
+                  [style.fontSize.px]="p.fontSize || 14"
+                  [style.fontWeight]="p.isBold ? '700' : '400'"
+                  [style.color]="p.color || '#000'"
+                  style="white-space: nowrap;">
+              {{ resolveVidValue(p.key) }}
+            </span>
+          </ng-container>
+
+          <!-- Rich paragraph blocks -->
+          <ng-container *ngFor="let para of vidPage?.paragraphs">
+            <!-- Image-only paragraphs -->
+            <img *ngIf="resolveVidParagraph(para.text) !== para.text && isVidImageKey(para.text?.trim()?.replace(/[{}]/g,'')) && resolveVidValue(para.text?.trim()?.replace(/[{}]/g,''))"
+                 [src]="resolveVidValue(para.text?.trim()?.replace(/[{}]/g,''))"
+                 [style.position]="'absolute'"
+                 [style.left.px]="(para.x || 0) + 10"
+                 [style.top.px]="(para.y || 0) + 24"
+                 [style.width.px]="para.width || 120"
+                 style="object-fit: cover; border-radius: 4px;"
+                 alt="">
+            <!-- Text paragraphs -->
+            <div *ngIf="!isVidImageKey(para.text?.trim()?.replace(/\{\{|\}\}/g,''))"
+                 [style.position]="'absolute'"
+                 [style.left.px]="(para.x || 0) + 10"
+                 [style.top.px]="(para.y || 0) + 24"
+                 [style.width.px]="para.width || 400"
+                 [style.fontSize.px]="para.fontSize || 14"
+                 [style.fontWeight]="para.isBold ? '700' : '400'"
+                 [style.fontStyle]="para.isItalic ? 'italic' : 'normal'"
+                 [style.color]="para.color || '#000'"
+                 [style.textAlign]="para.alignment || 'left'"
+                 [style.lineHeight]="para.lineHeight || 1.6"
+                 [style.letterSpacing.em]="para.letterSpacing || 0"
+                 [innerHTML]="resolveVidParagraph(para.text)?.replace('\n','<br>')">
+            </div>
+          </ng-container>
+
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ── DEFAULT VID CARD (fallback when no custom template saved) ── -->
+    <ng-template #defaultVid>
+      <div class="virtual-id-card">
+        <div class="id-card-header">
+          <img *ngIf="profileData().companyLogo" [src]="profileData().companyLogo" alt="Company Logo" class="id-company-logo">
+          <span *ngIf="!profileData().companyLogo" class="id-company-name">{{ profileData().companyName || 'Softrate Global' }}</span>
+        </div>
+
+        <div class="id-card-body">
+          <div class="id-avatar-wrapper">
+            <img *ngIf="profileData().profilePhoto" [src]="profileData().profilePhoto" alt="Profile" class="id-avatar">
+            <div *ngIf="!profileData().profilePhoto" class="id-avatar-placeholder">{{ userInitials }}</div>
+          </div>
+          <h2 class="id-name">{{ profileData().fullName }}</h2>
+          <p class="id-role">{{ profileData().role || 'Employee' }}</p>
+          <div class="id-divider"></div>
+          <p class="id-number">ID: <strong>{{ profileData().id }}</strong></p>
+        </div>
+
+        <div class="id-card-footer">
+          <p class="verified-label"><i class="fa-solid fa-circle-check"></i> VERIFIED MEMBER</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <div class="action-bar no-print">
+      <button class="btn btn-primary" (click)="downloadCard()">
+        <i class="fa-solid fa-download"></i> Download / Print
+      </button>
+    </div>
+  </div>
+</div>

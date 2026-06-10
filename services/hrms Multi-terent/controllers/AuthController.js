@@ -51,34 +51,51 @@ function serializeUser(userDoc) {
 
 async function findCurrentUser(req, includePhoto = false) {
   const photoSelect = includePhoto ? PROFILE_PHOTO_SELECT : "";
-  let role = "employee";
-  const { User, Employee, Intern } = req.models; // Use dynamic models
+  const { User, Employee, Intern } = req.models;
 
-  let query = User.findById(req.user.id).populate("roleId companyId departmentId branchId");
+  // Use the role encoded in JWT to target the right collection directly.
+  // This avoids the 3-collection sequential waterfall.
+  const role = req.user?.role || req.user?.roleName?.toLowerCase();
+
+  let Model, resolvedRole;
+  if (role === 'hr' || role === 'admin') {
+    Model = User;
+    resolvedRole = role;
+  } else if (role === 'employee' || role === 'manager') {
+    Model = Employee;
+    resolvedRole = role;
+  } else {
+    // Default / intern / unknown — check Intern first, fallback to Employee
+    Model = Intern;
+    resolvedRole = 'intern';
+  }
+
+  let query = Model.findById(req.user.id);
   if (photoSelect) query = query.select(photoSelect);
+  if (Model === User) query = query.populate('roleId companyId departmentId branchId');
+
   let user = await query;
-  if (user) {
-    role = user.roleId?.name?.toLowerCase() || "hr";
-    return { user, role, Model: User };
+
+  // Fallback: if not found in primary model, try others (handles stale tokens)
+  if (!user) {
+    const fallbacks = [User, Employee, Intern].filter(m => m !== Model);
+    for (const FallbackModel of fallbacks) {
+      let fq = FallbackModel.findById(req.user.id);
+      if (photoSelect) fq = fq.select(photoSelect);
+      if (FallbackModel === User) fq = fq.populate('roleId companyId departmentId branchId');
+      user = await fq;
+      if (user) {
+        Model = FallbackModel;
+        resolvedRole = FallbackModel === User ? (user.roleId?.name?.toLowerCase() || 'hr')
+          : FallbackModel === Employee ? (user.isHr ? 'hr' : user.isManager ? 'manager' : 'employee')
+          : (user.isHr ? 'hr' : 'intern');
+        break;
+      }
+    }
   }
 
-  query = Employee.findById(req.user.id);
-  if (photoSelect) query = query.select(photoSelect);
-  user = await query;
-  if (user) {
-    role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");
-    return { user, role, Model: Employee };
-  }
-
-  query = Intern.findById(req.user.id);
-  if (photoSelect) query = query.select(photoSelect);
-  user = await query;
-  if (user) {
-    role = user.isHr ? "hr" : "intern";
-    return { user, role, Model: Intern };
-  }
-
-  return { user: null, role, Model: null };
+  if (!user) return { user: null, role: resolvedRole, Model: null };
+  return { user, role: resolvedRole, Model };
 }
 
 /**
@@ -143,7 +160,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign(
           tokenPayload,
-          process.env.JWT_SECRET || "fallback_secret_key",
+          process.env.JWT_SECRET,
           { expiresIn: "7d" }
         );
 
@@ -160,37 +177,35 @@ exports.login = async (req, res) => {
         });
       }
     }
+    // ── 2. Lookup — normalize identifier, use exact match (enables index hit) ──
+    // Lowercase the identifier so indexes with collation or lowercase emails match.
     let user = null;
     let role = null;
+    const normalizedId = id.toLowerCase();
 
-    // ── 2. Lookup ──
-    console.log(`[LOGIN] Identifier: ${id}`);
-    
-    // Try Intern
+    // Try Intern (exact match, case-insensitive via lowercased value)
     user = await Intern.findOne({
       $or: [
-        { internid: { $regex: new RegExp(`^${id}$`, "i") } },
-        { email:    { $regex: new RegExp(`^${id}$`, "i") } }
+        { internid: { $regex: new RegExp(`^${normalizedId}$`, "i") } },
+        { email: normalizedId }
       ],
       status: { $nin: ['completed', 'drop'] }
     }).select(PROFILE_PHOTO_SELECT);
     if (user) {
       role = user.isHr ? "hr" : "intern";
-      console.log(`[LOGIN] Found in Intern collection. Role: ${role}`);
     }
 
     // Try Employee / Manager
     if (!user) {
       user = await Employee.findOne({
         $or: [
-          { EmployeeId: { $regex: new RegExp(`^${id}$`, "i") } },
-          { email:      { $regex: new RegExp(`^${id}$`, "i") } }
+          { EmployeeId: { $regex: new RegExp(`^${normalizedId}$`, "i") } },
+          { email: normalizedId }
         ],
         status: { $nin: ['resigned', 'terminated'] }
       }).select(PROFILE_PHOTO_SELECT);
       if (user) {
         role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");
-        console.log(`[LOGIN] Found in Employee collection. Role: ${role}`);
       }
     }
 
@@ -198,15 +213,13 @@ exports.login = async (req, res) => {
     if (!user) {
       user = await User.findOne({
         $or: [
-          { employeeId: { $regex: new RegExp(`^${id}$`, "i") } },
-          { email:      { $regex: new RegExp(`^${id}$`, "i") } }
+          { employeeId: { $regex: new RegExp(`^${normalizedId}$`, "i") } },
+          { email: normalizedId }
         ]
       }).select(`+password ${PROFILE_PHOTO_SELECT}`).populate('roleId');
       
       if (user) {
-        // Use the actual name from Role model if available, fallback to 'hr'
         role = user.roleId?.name?.toLowerCase() || "hr";
-        console.log(`[LOGIN] Found in User collection. Role: ${role}`);
       }
     }
 
@@ -214,14 +227,31 @@ exports.login = async (req, res) => {
       return res.status(404).json({ success: false, message: "No account found with that ID or email" });
     }
 
-    // ── 3. Password Verification ──
+    if (user.status === 'initial') {
+      return res.status(403).json({ success: false, message: "Your application is still pending HR approval. Please wait until your account is approved." });
+    }
+
+    // ── 3.1 Get Company Settings for Default Password ──
+    if (!resolvedCompany) {
+      const masterDb = getMasterConnection();
+      await waitForConnection(masterDb);
+      const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+      resolvedCompany = await MasterCompany.findById(user.companyId);
+    }
+    
+    let forcePasswordReset = false;
     let isMatch = false;
-    if (!user.password || user.password === "") {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
-      await user.save();
+
+    // Check if entered password matches the company default password
+    if (resolvedCompany && resolvedCompany.settings?.defaultPassword && password === resolvedCompany.settings.defaultPassword) {
       isMatch = true;
+      forcePasswordReset = true;
     } else {
+      // ── 3. Normal Password Verification ──
+      if (!user.password || user.password === "") {
+        return res.status(401).json({ success: false, message: "Your account is not fully set up. Please contact HR." });
+      }
+
       const isHashed = user.password.startsWith("$2a$") || user.password.startsWith("$2b$");
       if (isHashed) {
         isMatch = await bcrypt.compare(password, user.password);
@@ -274,7 +304,7 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign(
       tokenPayload,
-      process.env.JWT_SECRET || "fallback_secret_key",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
@@ -283,12 +313,15 @@ exports.login = async (req, res) => {
       role, 
       token, 
       auth_token: token, 
-      user: serializeUser(user)
+      user: serializeUser(user),
+      forcePasswordReset
     };
 
     // Web portal compatibility
     if (role === 'employee' || role === 'manager') {
       response.employee = response.user;
+      // Include completeDetails flag so Flutter can show post-login complete-details screen
+      response.completeDetails = user.completeDetails === true;
     }
 
     res.json(response);
@@ -547,11 +580,29 @@ exports.verifyCompany = async (req, res) => {
  */
 exports.requestDeviceChange = async (req, res) => {
   try {
-    const { id, password, newDeviceId, reason } = req.body; // id is the email/employeeId
+    const { id, password, companyCode, newDeviceId, reason } = req.body; // id is the email/employeeId
 
     if (!id || !password || !newDeviceId || !reason) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
+
+    let dbName = 'hrdb';
+    if (companyCode && companyCode.trim()) {
+      const cleanCode = companyCode.trim();
+      const masterDb = getMasterConnection();
+      await waitForConnection(masterDb);
+      const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+      const escapedCode = cleanCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const resolvedCompany = await MasterCompany.findOne({ companyCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') } });
+      if (!resolvedCompany) {
+        return res.status(404).json({ success: false, message: "Company not found. Please check your Company Code." });
+      }
+      dbName = resolvedCompany.dbName || `hrdb_${cleanCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
+    }
+
+    const tenantConn = getTenantConnection(dbName);
+    await waitForConnection(tenantConn);
+    const { Intern, Employee, User, DeviceChangeRequest } = getModelsForConnection(tenantConn);
 
     // Lookup user to get their companyId and oldDeviceId
     let user = null;
@@ -620,5 +671,97 @@ exports.requestDeviceChange = async (req, res) => {
   } catch (err) {
     console.error("Device Change Request Error:", err);
     res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+
+/**
+ * Force Password Reset (Used after login with default password)
+ */
+exports.forceResetPassword = async (req, res) => {
+  try {
+    const userId = req.body.userId || (req.user && (req.user._id || req.user.id));
+    const { newPassword } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID is required' });
+    }
+    
+    if (!newPassword) {
+      return res.status(400).json({ success: false, message: 'New Password is required' });
+    }
+
+    // Server-side validation
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, and 1 symbol.' 
+      });
+    }
+
+    const { getModelsForConnection } = require('../utilities/modelLoader');
+    const dbName = req.tenant?.dbName || 'hrdb';
+    const tenantDb = getTenantConnection(dbName);
+    const tenantModels = getModelsForConnection(tenantDb);
+    const User = tenantModels.User;
+    const Employee = tenantModels.Employee;
+    const Intern = tenantModels.Intern;
+
+    // Find the user in any of the collections to get their email/identifier
+    let targetUser = await User.findById(userId);
+    if (!targetUser) targetUser = await Employee.findById(userId);
+    if (!targetUser) targetUser = await Intern.findById(userId);
+
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const email = targetUser.email;
+    const phone = targetUser.profile?.phone || targetUser.phone;
+
+    const bcrypt = require("bcryptjs");
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    let updatedAny = false;
+
+    // Update in User collection
+    if (email || phone) {
+      const userDoc = await User.findOne({ $or: [{ email }, { "profile.phone": phone }] });
+      if (userDoc) {
+        userDoc.password = hashedPassword;
+        await userDoc.save();
+        updatedAny = true;
+      }
+
+      // Update in Employee collection
+      const empDoc = await Employee.findOne({ $or: [{ email }, { phone }] });
+      if (empDoc) {
+        empDoc.password = hashedPassword;
+        await empDoc.save();
+        updatedAny = true;
+      }
+
+      // Update in Intern collection
+      const internDoc = await Intern.findOne({ $or: [{ email }, { contact: phone }] });
+      if (internDoc) {
+        internDoc.password = hashedPassword;
+        await internDoc.save();
+        updatedAny = true;
+      }
+    } else {
+      // Fallback if no email/phone (shouldn't happen)
+      targetUser.password = hashedPassword;
+      await targetUser.save();
+      updatedAny = true;
+    }
+
+    if (!updatedAny) {
+      return res.status(500).json({ success: false, message: 'Failed to update password' });
+    }
+
+    res.json({ success: true, message: 'Password has been successfully updated.' });
+  } catch (err) {
+    console.error("Force Reset Password Error:", err);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };

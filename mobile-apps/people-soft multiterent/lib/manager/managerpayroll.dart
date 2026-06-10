@@ -24,7 +24,7 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
   static const Color subtitleColor = Color(0xFF64748B);
 
   String selectedMonth = "All";
-  String selectedYear = "2024";
+  String selectedYear = DateTime.now().year.toString();
 
   final List<String> months = [
     "All",
@@ -41,7 +41,10 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
     "November",
     "December"
   ];
-  final List<String> years = ["2024", "2023", "2022"];
+  final List<String> years = List.generate(3, (i) {
+    final y = DateTime.now().year - i;
+    return y.toString();
+  });
 
   // Salary Components (Exact Numbers)
   final double basicSalary = 35000.0;
@@ -513,9 +516,9 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "NET TAKE-HOME (APRIL 2024)",
-              style: TextStyle(
+            Text(
+              "NET TAKE-HOME (${DateFormat('MMMM yyyy').format(DateTime(DateTime.now().year, DateTime.now().month - 1, 1)).toUpperCase()})",
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -724,32 +727,21 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
   }
 
   Widget _buildHistoryTab() {
-    final history = [
-      {
-        "month": "March",
-        "year": "2024",
-        "status": "Processed",
-        "amount": currencyFormatter.format(netSalary),
-      },
-      {
-        "month": "February",
-        "year": "2024",
-        "status": "Processed",
-        "amount": currencyFormatter.format(netSalary),
-      },
-      {
-        "month": "January",
-        "year": "2024",
-        "status": "Processed",
-        "amount": currencyFormatter.format(netSalary),
-      },
-      {
-        "month": "December",
-        "year": "2023",
-        "status": "Processed",
-        "amount": currencyFormatter.format(netSalary),
-      },
-    ];
+    // Generate dynamic history: last 12 completed months from today
+    final now = DateTime.now();
+    final history = List.generate(12, (i) {
+      final d = DateTime(now.year, now.month - 1 - i, 1);
+      final monthNames = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      return {
+        'month': monthNames[d.month - 1],
+        'year': d.year.toString(),
+        'status': 'Processed',
+        'amount': currencyFormatter.format(netSalary),
+      };
+    });
 
     final filteredHistory = history.where((item) {
       bool monthMatch = selectedMonth == "All" || item['month'] == selectedMonth;
@@ -934,6 +926,9 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
   }
 
   Widget _buildDownloadAction() {
+    final now = DateTime.now();
+    final prevMonth = DateTime(now.year, now.month - 1, 1);
+    final monthLabel = DateFormat('MMM yyyy').format(prevMonth);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -950,12 +945,12 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
             size: 32,
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Current Month Payslip",
+                const Text(
+                  "Latest Month Payslip",
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: primaryColor,
@@ -963,8 +958,8 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
                   ),
                 ),
                 Text(
-                  "Download PDF format (Apr 2024)",
-                  style: TextStyle(color: subtitleColor, fontSize: 11),
+                  "Download PDF format ($monthLabel)",
+                  style: const TextStyle(color: subtitleColor, fontSize: 11),
                 ),
               ],
             ),

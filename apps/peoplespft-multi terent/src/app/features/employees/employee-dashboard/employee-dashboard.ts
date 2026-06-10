@@ -254,4 +254,21 @@ export class EmployeeDashboard implements OnInit {
     const d = project.deadline.$date || project.deadline;
     return new Date(d);
   }
+
+  getPhotoUrl(id: string): string {
+    const token = localStorage.getItem('auth_token') || '';
+    return `${this.apiService.getBaseUrl()}/api/employee/profile-photo/${id}?token=${token}`;
+  }
+
+  getInternPhotoUrl(id: string): string {
+    const token = localStorage.getItem('auth_token') || '';
+    return `${this.apiService.getBaseUrl()}/api/intern/profile-photo/${id}?token=${token}`;
+  }
+
+  onImageError(event: any) {
+    event.target.style.display = 'none';
+    if (event.target.nextElementSibling) {
+      event.target.nextElementSibling.style.display = 'flex';
+    }
+  }
 }

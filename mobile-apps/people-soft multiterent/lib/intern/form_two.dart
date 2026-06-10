@@ -77,6 +77,24 @@ class _FormTwoState extends State<FormTwo> {
       return;
     }
 
+    final selectedFileName = path.split('/').last;
+
+    final allSelectedFiles = [
+      if (type != 'aadhaar') aadhaarFile,
+      if (type != 'college') collegeIdFile,
+      if (type != 'annexure') annexureFile,
+      if (type != 'nda') ndaFile,
+      if (type != 'passbook') passbookFile,
+    ];
+
+    bool isDuplicate = allSelectedFiles.any(
+        (f) => f != null && f.path.split('/').last == selectedFileName);
+
+    if (isDuplicate) {
+      _showSnackBar("Please upload a relevant file. This file is already selected.", const Color(0xFFB00020));
+      return;
+    }
+
     setState(() {
       final file = File(path);
       switch (type) {

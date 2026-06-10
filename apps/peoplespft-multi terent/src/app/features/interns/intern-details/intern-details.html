@@ -1,7 +1,7 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
-  <div class="header-content">
+  <div class="header-main">
     <div class="breadcrumb">
       <a routerLink="/interns" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> Back to List
@@ -10,7 +10,7 @@
     <h1>Intern Profile</h1>
     <p>Detailed overview and management for {{ intern()?.fullName || 'Intern' }}</p>
   </div>
-  <div class="header-actions">
+  <div class="header-actions" *ngIf="intern()?.status !== 'drop'">
     <button class="btn-secondary" (click)="editProfile()">
       <i class="fa-solid fa-pen-to-square"></i> Edit Profile
     </button>
@@ -23,7 +23,8 @@
     <div class="profile-sidebar">
       <div class="card profile-card">
         <div class="profile-image">
-          <div class="avatar-placeholder">{{ intern().fullName?.charAt(0) }}</div>
+          <img *ngIf="!intern().imgError" [src]="getPhotoUrl(intern()._id)" (error)="onImageError($event); $any(intern()).imgError = true" class="avatar-placeholder" style="object-fit: cover; display: block;" />
+          <div *ngIf="intern().imgError || !intern()._id" class="avatar-placeholder" style="display: flex;">{{ intern().fullName?.charAt(0) }}</div>
         </div>
         <h3>
           {{ intern().fullName }}
@@ -69,7 +70,7 @@
       </div>
 
       <!-- Conversion Actions -->
-      <div class="card promotion-card" *ngIf="canConvert() || canConvertToHr()">
+      <div class="card promotion-card" *ngIf="(canConvert() || canConvertToHr()) && intern()?.status !== 'drop'">
         <h4>Role Actions</h4>
         <p class="stat-desc">Manage role transitions for this staff member.</p>
         
@@ -83,6 +84,34 @@
           <i class="fa-solid fa-user-gear" *ngIf="!isConverting()"></i>
           <span *ngIf="!isConverting()">Convert to HR Staff</span>
           <span *ngIf="isConverting()">Converting...</span>
+        </button>
+      </div>
+
+      <!-- Access Control -->
+      <div class="card promotion-card">
+        <h4>Access Control</h4>
+        <p class="stat-desc">Manage geofence bypassing for this intern.</p>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <span style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">Remote Access</span>
+          <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+            <input type="checkbox" [ngModel]="intern().isRemote" (click)="toggleRemoteAccess()" style="opacity: 0; width: 0; height: 0; position: absolute;">
+            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {{ intern().isRemote ? '#10b981' : '#cbd5e1' }}; transition: .4s; border-radius: 24px;">
+              <span [style.transform]="intern().isRemote ? 'translateX(20px)' : 'translateX(4px)'" style="position: absolute; height: 16px; width: 16px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Email Actions -->
+      <div class="card promotion-card" *ngIf="intern().status?.toLowerCase() === 'approved' || intern().status?.toLowerCase() === 'ongoing'">
+        <h4>Email & Onboarding</h4>
+        <p class="stat-desc">Resend the original onboarding mail and attachments.</p>
+        
+        <button class="btn-primary-outline w-100 mt-2 mb-2" (click)="resendOnboardingMail()" [disabled]="isResendingMail()">
+          <i class="fa-solid fa-paper-plane" *ngIf="!isResendingMail()"></i>
+          <span *ngIf="!isResendingMail()">Resend Onboarding Mail</span>
+          <span *ngIf="isResendingMail()">Resending...</span>
         </button>
       </div>
 

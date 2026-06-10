@@ -68,6 +68,29 @@ class _HolidayCalendarScreenState extends State<HolidayCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final upcomingHolidays = specialHolidays.where((h) {
+      final to = DateTime.parse(h['toDate']);
+      return !to.isBefore(today);
+    }).toList();
+
+    final pastHolidays = specialHolidays.where((h) {
+      final to = DateTime.parse(h['toDate']);
+      return to.isBefore(today);
+    }).toList();
+
+    // Sort upcoming ascending (nearest first)
+    upcomingHolidays.sort(
+      (a, b) => DateTime.parse(a['fromDate']).compareTo(DateTime.parse(b['fromDate'])),
+    );
+
+    // Sort past descending (most recent first)
+    pastHolidays.sort(
+      (a, b) => DateTime.parse(b['fromDate']).compareTo(DateTime.parse(a['fromDate'])),
+    );
+
     return Scaffold(
       backgroundColor: surfaceColor,
       appBar: AppBar(
@@ -93,21 +116,24 @@ class _HolidayCalendarScreenState extends State<HolidayCalendarScreen> {
                     const SizedBox(height: 12),
                     _buildWeeklyHolidaysCard(),
                     const SizedBox(height: 32),
-                    _buildSectionHeader("Special Holidays"),
+                    _buildSectionHeader("Upcoming Holidays"),
                     const SizedBox(height: 12),
-                    if (specialHolidays.isEmpty)
-                      _buildEmptyState("No special holidays scheduled.")
+                    if (upcomingHolidays.isEmpty)
+                      _buildEmptyState("No upcoming holidays scheduled.")
                     else
-                      ..._buildGroupedSpecialHolidays(),
+                      ..._buildGroupedHolidaysList(upcomingHolidays, isGovt: false),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Past Holidays"),
+                    const SizedBox(height: 12),
+                    if (pastHolidays.isEmpty)
+                      _buildEmptyState("No past holidays.")
+                    else
+                      ..._buildGroupedHolidaysList(pastHolidays, isGovt: false),
                   ],
                 ),
               ),
             ),
     );
-  }
-
-  List<Widget> _buildGroupedSpecialHolidays() {
-    return _buildGroupedHolidaysList(specialHolidays, isGovt: false);
   }
 
 

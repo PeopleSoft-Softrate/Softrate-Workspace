@@ -1134,20 +1134,9 @@ class _InternProcessState extends State<InternProcess> {
               const SizedBox(height: 14),
               TextField(
                 enableInteractiveSelection: false,
-                contextMenuBuilder: (context, editableTextState) {
-                  return const SizedBox.shrink();
-                },
                 controller: review.commentController,
                 maxLines: 4,
                 maxLength: 5000,
-                inputFormatters: [
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    if (newValue.text.length - oldValue.text.length > 1) {
-                      return oldValue;
-                    }
-                    return newValue;
-                  }),
-                ],
                 buildCounter:
                     (
                       BuildContext context, {
@@ -1160,7 +1149,7 @@ class _InternProcessState extends State<InternProcess> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: currentLength < 80 ? Colors.red : Colors.green,
+                          color: currentLength < 5 ? Colors.red : Colors.green,
                         ),
                       );
                     },

@@ -1,11 +1,10 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
-  <div class="header-content">
-    <div class="breadcrumb">
-      <a routerLink="/employees" class="back-link">
-        <i class="fa-solid fa-arrow-left"></i> Back to Employees
-      </a>
+  <div class="header-main">
+    <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
+      <a (click)="goBack()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
+      <span style="color: #94a3b8;"> / Performance</span>
     </div>
     <h1>Performance Reviews</h1>
     <p>Comprehensive feedback history for Employee ID: {{ employeeId() }}</p>

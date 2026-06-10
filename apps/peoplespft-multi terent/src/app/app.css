@@ -9,6 +9,7 @@
 /* Sidebar Styling */
 .sidebar {
   width: 240px;
+  flex-shrink: 0;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -215,8 +216,31 @@
   height: auto;
 }
 
+.minimize-tooltip {
+  display: none;
+}
+
 .app-container.sidebar-minimized .minimize-btn {
   margin: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.app-container.sidebar-minimized .minimize-btn:hover .minimize-tooltip {
+  display: block;
+  position: absolute;
+  left: calc(100% + 15px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .app-container.sidebar-minimized .nav-label {
@@ -226,10 +250,33 @@
 .app-container.sidebar-minimized .nav-item {
   justify-content: center;
   padding: 0.5rem;
+  position: relative;
+  overflow: visible;
+}
+
+.app-container.sidebar-minimized .sidebar-nav {
+  overflow: visible;
 }
 
 .app-container.sidebar-minimized .nav-item span {
   display: none;
+}
+
+.app-container.sidebar-minimized .nav-item:hover span {
+  display: block;
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 /* Main Content Area */
@@ -702,17 +749,17 @@
 
 .profile-menu-action {
   width: 100%;
-  min-height: var(--profile-menu-action-height);
+  min-height: 2.5rem;
   border: none;
   background: var(--bg-secondary);
   color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.875rem;
-  padding: 0 1.25rem;
+  padding: 0.5rem 1.25rem;
   cursor: pointer;
   font-size: var(--text-lg);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-medium);
   text-align: left;
   transition: var(--transition-fast);
 }
@@ -721,15 +768,18 @@
   background: var(--bg-primary);
 }
 
-.profile-menu-action i {
+.profile-menu-action i, 
+.profile-menu-action hugeicons-icon {
   width: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   color: currentColor;
   font-size: var(--text-lg);
 }
 
 .profile-menu-action.sign-out {
   color: var(--hc-danger);
-  justify-content: space-between;
 }
 
 .profile-photo-feedback {

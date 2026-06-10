@@ -33,6 +33,7 @@ router.get('/role/:roleName', verifyTenant, async (req, res) => {
 router.post('/', verifyTenant, async (req, res) => {
   try {
     const { roleName, category, goals } = req.body;
+    console.log("Saving template. Received goals:", JSON.stringify(goals, null, 2));
     
     let template = await PerformanceTemplate.findOne({
       companyId: req.tenant.companyId,

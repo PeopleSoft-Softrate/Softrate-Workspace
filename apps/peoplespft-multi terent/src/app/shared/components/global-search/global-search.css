@@ -20,7 +20,7 @@
 
 .gs-bar.focused {
   background: #ffffff;
-  border-color: #0f172a;
+  border-color: transparent;
   box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
 }
 

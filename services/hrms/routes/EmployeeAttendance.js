@@ -308,8 +308,9 @@ router.get("/export/pdf/employee/:employeeId", verifyTenant, async (req, res) =>
         .moveDown(2)
         .fontSize(12)
         .fillColor("gray")
-        .text("No attendance records found for selected date range.", {
+        .text("No attendance records found for selected date range.", 50, doc.y, {
           align: "center",
+          width: doc.page.width - 100
         });
     }
 

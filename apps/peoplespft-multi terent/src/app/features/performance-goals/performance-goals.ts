@@ -85,30 +85,63 @@ export class PerformanceGoals implements OnInit {
         description: '',
         weight: 0
       });
-      this.editingTemplate.set({ ...current });
+      this.editingTemplate.set({ ...current, goals: [...current.goals] });
     }
   }
 
   removeGoal(index: number) {
     const current = this.editingTemplate();
     if (current) {
-      current.goals.splice(index, 1);
-      this.editingTemplate.set({ ...current });
+      const goals = [...current.goals];
+      goals.splice(index, 1);
+      this.editingTemplate.set({ ...current, goals });
+    }
+  }
+
+  updateGoal(index: number, field: keyof Goal, value: any) {
+    const current = this.editingTemplate();
+    if (current) {
+      const goals = [...current.goals];
+      goals[index] = { ...goals[index], [field]: field === 'weight' ? Number(value) : value };
+      this.editingTemplate.set({ ...current, goals });
     }
   }
 
   save() {
     const current = this.editingTemplate();
-    if (current) {
-      this.apiService.savePerformanceTemplate(current).subscribe({
-        next: () => {
-          this.editingTemplate.set(null);
-          this.loadTemplates();
-        },
-        error: (err) => this.alertService.show(err.error?.message || 'Save failed')
-      });
+    if (!current) return;
+
+    if (!current.roleName?.trim() || !current.category?.trim()) {
+      this.alertService.show('Please fill in Role Name and Category.');
+      return;
     }
+
+    if (current.goals.length === 0) {
+      this.alertService.show('Please add at least one goal.');
+      return;
+    }
+
+    for (let i = 0; i < current.goals.length; i++) {
+      const g = current.goals[i];
+      if (!g.perspective?.trim() || !g.kpiName?.trim() || !g.title?.trim() || !g.description?.trim()) {
+        this.alertService.show(`Goal #${i + 1}: Please fill in all required fields (Perspective, KPI Name, Title, Description).`);
+        return;
+      }
+      if (!g.weight || g.weight <= 0) {
+        this.alertService.show(`Goal #${i + 1}: Weight must be greater than 0.`);
+        return;
+      }
+    }
+
+    this.apiService.savePerformanceTemplate(current).subscribe({
+      next: () => {
+        this.editingTemplate.set(null);
+        this.loadTemplates();
+      },
+      error: (err) => this.alertService.show(err.error?.message || 'Save failed')
+    });
   }
+
 
   async deleteTemplate(id: string) {
     if (await this.alertService.confirm('Are you sure you want to delete this template?')) {

@@ -1,0 +1,285 @@
+.public-id-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
+}
+
+.id-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ── Custom VID canvas (scaled A4 template) ───────────────────────── */
+.custom-vid-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  background: white;
+}
+
+.custom-vid-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ID Card Styles */
+.virtual-id-card {
+  width: 320px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #eee;
+  z-index: 1;
+}
+
+.virtual-id-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(135deg, var(--primary-color, #2563eb), var(--secondary-color, #1d4ed8));
+  z-index: -1;
+}
+
+.id-card-header {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.id-company-logo {
+  max-height: 40px;
+  max-width: 160px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.id-company-name {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.id-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px 24px;
+  margin-top: -10px;
+}
+
+.id-avatar-wrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  padding: 4px;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.id-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.id-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
+.id-name {
+  margin: 0 0 4px 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+}
+
+.id-role {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #64748b;
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.id-divider {
+  width: 40px;
+  height: 3px;
+  background: var(--primary-color, #2563eb);
+  margin: 16px 0;
+  border-radius: 2px;
+}
+
+.id-number {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.id-number strong {
+  color: #1e293b;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.id-card-footer {
+  background: #f8fafc;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+.verified-label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-bar {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error-icon {
+  font-size: 3rem;
+  color: #ef4444;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media print {
+  @page {
+    margin: 0; /* Removes browser headers and footers */
+  }
+
+  body {
+    background: white;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Hide EVERYTHING by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make ONLY the ID card container visible */
+  .id-wrapper, .id-wrapper * {
+    visibility: visible;
+  }
+
+  /* Position the ID card at the top left of the printed page */
+  .id-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 20px; /* Give it a little breathing room */
+  }
+
+  .public-id-container {
+    background: transparent;
+    padding: 0;
+    min-height: auto;
+  }
+
+  .virtual-id-card, .custom-vid-wrapper {
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .virtual-id-card::before {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

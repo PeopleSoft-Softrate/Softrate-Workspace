@@ -2,13 +2,15 @@
   <header class="page-header">
     <div class="header-main">
       <div class="header-title">
-        <h1>Today's Attendance</h1>
-        <p class="subtitle">Live tracking of team presence for {{ (attendance().length > 0 ? (attendance()[0].date |
-          date:'MMMM d, y') : 'Today') }}</p>
+        <h1>Attendance</h1>
+        <p class="subtitle">Tracking of team presence for {{ selectedDate() | date:'MMMM d, y' }}</p>
       </div>
     </div>
 
     <div class="header-actions">
+      <div class="search-bar" style="width: auto; padding: 0.625rem 1rem;">
+        <input type="date" [value]="selectedDate()" (change)="onDateChange($event)" style="font-family: inherit;">
+      </div>
       <div class="search-bar">
         <hugeicons-icon [icon]="Search01Icon" size="18" [strokeWidth]="1.5"></hugeicons-icon>
         <input type="text" placeholder="Search by name, ID or dept..." (input)="onSearch($event)">
@@ -51,7 +53,7 @@
               <div class="avatar">{{ record.name.charAt(0) }}</div>
               <div class="info">
                 <span class="name">{{ record.name }}</span>
-                <span class="id">{{ record.id }} • {{ record.department }}</span>
+                <span class="id">{{ record.id }}</span>
               </div>
             </td>
             <td>

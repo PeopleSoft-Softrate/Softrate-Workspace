@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "googleapis": "^105.0.0",
     "jsonwebtoken": "^9.0.3",
     "moment": "^2.30.1",
@@ -31,6 +32,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.4.0",
     "nodemon": "^3.1.11"
   },
   "description": ""

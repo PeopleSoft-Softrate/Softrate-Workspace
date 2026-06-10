@@ -52,7 +52,7 @@ const sendEmail = async ({ to, subject, html, text, attachments = [], replyTo })
 
     console.log("Sending email with config (attachments converted to base64):", {
       ...emailConfig,
-      attachments: emailConfig.attachments.map(a => ({ filename: a.filename, base64Length: a.content.length }))
+      attachments: emailConfig.attachments ? emailConfig.attachments.map(a => ({ filename: a.filename, base64Length: a.content.length })) : []
     });
 
     const { data, error } = await resend.emails.send(emailConfig);

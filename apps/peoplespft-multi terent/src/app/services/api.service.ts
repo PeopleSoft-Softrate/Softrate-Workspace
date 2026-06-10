@@ -9,7 +9,9 @@ export class ApiService {
   private useLocalBackend = false;
   private baseUrl = this.useLocalBackend
     ? 'http://localhost:5001'
-    : 'https://workspace.softrateglobal.com/hrms-api';
+    : window.location.hostname === '192.168.29.43'
+        ? 'http://192.168.29.43:5001'
+        : 'https://peoplesoft.softrateglobal.com/hrms-api';
 
 
   constructor(private http: HttpClient) { }
@@ -34,6 +36,13 @@ export class ApiService {
       companyCode: companyCode,
       identifier: identifier,
       password
+    });
+  }
+
+  forceResetPassword(userId: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/auth/force-reset-password`, {
+      userId,
+      newPassword
     });
   }
 
@@ -91,8 +100,8 @@ export class ApiService {
       ),
       pendingLeaves: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/employee-leave/hr-pending`), { headers: this.getHeaders() }),
       activeProjects: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/projects/all`), { headers: this.getHeaders() }),
-      internTrend: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/attendance/trend`), { headers: this.getHeaders() }),
-      employeeTrend: this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/employeeAttanance/trend`), { headers: this.getHeaders() }),
+      internTrend: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/attendance/trend`), { headers: this.getHeaders() }),
+      employeeTrend: this.http.get<any>(this.addCacheBuster(`${this.baseUrl}/api/employeeAttanance/trend`), { headers: this.getHeaders() }),
     }).pipe(
       map(data => {
         // Map recent activities
@@ -115,6 +124,7 @@ export class ApiService {
               initials: intern.fullName?.[0] || 'I',
               description: `Applied for ${intern.role || 'Internship'}`,
               time: getRelativeTime(intern.createdAt || new Date()),
+              rawTime: new Date(intern.createdAt || new Date()).getTime(),
               badge: 'New Intern',
               badgeColor: 'blue',
               color: 'blue'
@@ -130,6 +140,7 @@ export class ApiService {
               initials: (leave.employeeName || 'S')[0],
               description: `Requested ${leave.leaveType || 'Leave'}`,
               time: getRelativeTime(leave.createdAt || new Date()),
+              rawTime: new Date(leave.createdAt || new Date()).getTime(),
               badge: 'Pending',
               badgeColor: 'orange',
               color: 'orange'
@@ -159,11 +170,21 @@ export class ApiService {
           return result;
         };
 
-        const fullInternTrend = fillMissingDays(data.internTrend);
-        const fullEmployeeTrend = fillMissingDays(data.employeeTrend);
+        const fullInternTrend = fillMissingDays(data.internTrend.currentWeek);
+        const prevInternTrend = fillMissingDays(data.internTrend.previousWeek);
+        const fullEmployeeTrend = fillMissingDays(data.employeeTrend.currentWeek);
+        const prevEmployeeTrend = fillMissingDays(data.employeeTrend.previousWeek);
 
-        const maxIntern = Math.max(...fullInternTrend.map(t => t.count), 1);
-        const maxEmployee = Math.max(...fullEmployeeTrend.map(t => t.count), 1);
+        const maxIntern = Math.max(
+          ...fullInternTrend.map(t => t.count),
+          ...prevInternTrend.map(t => t.count),
+          1
+        );
+        const maxEmployee = Math.max(
+          ...fullEmployeeTrend.map(t => t.count),
+          ...prevEmployeeTrend.map(t => t.count),
+          1
+        );
 
         // Calculate actual day-over-day attendance trend if available
         const getTrend = (trendData: any[]) => {
@@ -175,8 +196,8 @@ export class ApiService {
           return diff > 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`;
         };
 
-        const internAttTrend = getTrend(data.internTrend);
-        const empAttTrend = getTrend(data.employeeTrend);
+        const internAttTrend = getTrend(data.internTrend.currentWeek);
+        const empAttTrend = getTrend(data.employeeTrend.currentWeek);
 
         // Calculate Analytics Summary
         const getSummary = (trendArray: any[], totalPeople: number, maxCount: number) => {
@@ -223,14 +244,25 @@ export class ApiService {
           };
         };
 
-        const internSummary = getSummary(fullInternTrend, data.activeInterns?.length || 0, maxIntern);
-        const employeeSummary = getSummary(fullEmployeeTrend, data.activeEmployees?.length || 0, maxEmployee);
-
         const now = new Date();
+        const validStatus = ['approved', 'ongoing'];
+
         const totalInternsCount = (data.activeInterns || []).filter(i => {
+           const status = i.status?.toLowerCase() || '';
+           if (!validStatus.includes(status)) return false;
            if (!i.onboardingDate) return false;
            return new Date(i.onboardingDate) <= now;
         }).length;
+
+        const totalEmployeesCount = (data.activeEmployees || []).filter(e => {
+           const status = e.status?.toLowerCase() || '';
+           if (!validStatus.includes(status)) return false;
+           if (!e.onboardingDate) return false;
+           return new Date(e.onboardingDate) <= now;
+        }).length;
+
+        const internSummary = getSummary(fullInternTrend, totalInternsCount, maxIntern);
+        const employeeSummary = getSummary(fullEmployeeTrend, totalEmployeesCount, maxEmployee);
 
         return {
           interns: [
@@ -241,15 +273,17 @@ export class ApiService {
           ],
           employees: [
             { label: 'Today Attendance', value: data.employeeAttendance.count.toString(), icon: 'fa-solid fa-circle-check', color: 'green', link: '/attendance/today', trend: empAttTrend },
-            { label: 'Total Employees', value: data.activeEmployees.length.toString(), icon: 'fa-solid fa-briefcase', color: 'teal', link: '/employees', trend: '+1.5%' },
+            { label: 'Total Employees', value: totalEmployeesCount.toString(), icon: 'fa-solid fa-briefcase', color: 'teal', link: '/employees', trend: '+1.5%' },
             { label: 'Active Projects', value: (data.activeProjects.projects?.length || 0).toString(), icon: 'fa-solid fa-list-ul', color: 'purple', link: '/projects', trend: '+5.0%' },
             { label: 'Payroll Status', value: 'Paid', icon: 'fa-solid fa-circle-dollar-to-slot', color: 'green', link: '/employees', trend: '100%' }
           ],
           internTrend: fullInternTrend.map(t => ({ ...t, height: (t.count / maxIntern) * 100 })),
+          internPrevTrend: prevInternTrend.map(t => ({ ...t, height: (t.count / maxIntern) * 100 })),
           employeeTrend: fullEmployeeTrend.map(t => ({ ...t, height: (t.count / maxEmployee) * 100 })),
+          employeePrevTrend: prevEmployeeTrend.map(t => ({ ...t, height: (t.count / maxEmployee) * 100 })),
           internSummary,
           employeeSummary,
-          activities: activities.length > 0 ? activities.reverse().slice(0, 3) : [
+          activities: activities.length > 0 ? activities.sort((a, b) => b.rawTime - a.rawTime).slice(0, 4) : [
             { title: 'No recent activity', description: 'Everything is up to date', time: 'Now', icon: 'fa-solid fa-circle-check', color: 'green' }
           ]
         };
@@ -419,6 +453,9 @@ export class ApiService {
   acceptIntern(id: string, data: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/intern/accept/${id}`, data);
   }
+  resendOnboardingMail(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/intern/resend-onboarding/${id}`, {});
+  }
   deleteIntern(id: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/intern/reject/${id}`, {});
   }
@@ -440,6 +477,10 @@ export class ApiService {
 
   assignInternToManager(internId: string, managerId: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/intern/assign-manager/${internId}`, { managerId });
+  }
+
+  assignEmployeeToManager(employeeId: string, managerId: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/api/employee/assign-manager/${employeeId}`, { managerId });
   }
 
   getAssignedInterns(managerId: string): Observable<any[]> {
@@ -472,8 +513,14 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/api/employee-leave/hr-pending`);
   }
 
-  hrReviewLeave(id: string, status: 'approved' | 'rejected', rejectionReason: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/api/employee-leave/hr-action/${id}`, { status, rejectionReason });
+  hrReviewLeave(id: string, status: 'approved' | 'rejected', rejectionReason: string, dates?: { fromDate: string, toDate: string, numberOfDays: number }): Observable<any> {
+    const payload: any = { status, rejectionReason };
+    if (dates) {
+      payload.fromDate = dates.fromDate;
+      payload.toDate = dates.toDate;
+      payload.numberOfDays = dates.numberOfDays;
+    }
+    return this.http.put(`${this.baseUrl}/api/employee-leave/hr-action/${id}`, payload);
   }
 
   // Company Settings
@@ -570,6 +617,14 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/api/projects/${projectId}`);
   }
 
+  getEmployeeSelfReview(employeeId: string) {
+    return this.http.get(`${this.baseUrl}/api/employee-reviews/self/${employeeId}`, { headers: this.getHeaders() });
+  }
+
+  submitEmployeeSelfReview(payload: any) {
+    return this.http.post(`${this.baseUrl}/api/employee-reviews/submit-review`, payload, { headers: this.getHeaders() });
+  }
+
   // Generic Download with Auth
   downloadFile(url: string): Observable<Blob> {
     return this.http.get(url, { responseType: 'blob' });
@@ -599,10 +654,11 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/api/convert/terminate/${staffId}`, { type, reason });
   }
 
-  getTodayUnifiedAttendance(managerId?: string): Observable<any> {
+  getTodayUnifiedAttendance(managerId?: string, date?: string): Observable<any> {
     let url = `${this.baseUrl}/api/attendance/today/unified`;
     const params: any = {};
     if (managerId) params.managerId = managerId;
+    if (date) params.date = date;
     return this.http.get<any>(this.addCacheBuster(url), { params, headers: this.getHeaders() }).pipe(
       map(data => {
         if (data && data.attendance) {

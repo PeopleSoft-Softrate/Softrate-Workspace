@@ -1,0 +1,124 @@
+<div class="main-content-layout">
+<div class="data-section">
+<div class="page-header">
+  <div class="header-main">
+    <div class="breadcrumb">
+      <a routerLink="/employee/dashboard" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+    <h1>Performance Review</h1>
+    <p>Submit your self-appraisal or view your monthly review status</p>
+  </div>
+</div>
+
+<div class="data-container" [class.loading]="isLoading()">
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>Loading performance details...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <!-- If Already Submitted -->
+    <div class="submitted-view" *ngIf="submittedReview()">
+      <div class="card status-card">
+        <div class="status-header">
+          <hugeicons-icon [icon]="LicenseDraftIcon" size="32" [strokeWidth]="1.5" color="#00657f"></hugeicons-icon>
+          <div>
+            <h3>Review Submitted</h3>
+            <p>You have successfully submitted your performance review for this month.</p>
+          </div>
+          <span class="status-badge" [ngClass]="submittedReview().isGraded ? 'status-green' : 'status-orange'">
+            {{ submittedReview().isGraded ? 'Graded by Manager' : 'Pending Review' }}
+          </span>
+        </div>
+        
+        <div class="review-details">
+          <div class="detail-row">
+            <span class="label">Date Submitted</span>
+            <span class="value">{{ submittedReview().date | date:'longDate' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Team / Category</span>
+            <span class="value">{{ submittedReview().team | titlecase }}</span>
+          </div>
+          <div class="detail-row" *ngIf="submittedReview().isGraded">
+            <span class="label">Manager Rating</span>
+            <span class="value" [ngClass]="getRatingColor(submittedReview().summary?.percentage || 0)">
+              {{ submittedReview().summary?.percentage || 0 }}% Score
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card goals-card mt-4">
+        <h3>Submitted Goals</h3>
+        <div class="goal-item" *ngFor="let goal of submittedReview().goals; let i = index">
+          <div class="goal-header">
+            <h4>{{ i + 1 }}. {{ goal.title }}</h4>
+            <span class="weight-badge">Weight: {{ goal.weight }}</span>
+          </div>
+          <p class="description">{{ goal.description }}</p>
+          <div class="comment-box">
+            <span class="comment-label">Your Comment:</span>
+            <p>{{ goal.comment || 'No comment provided' }}</p>
+          </div>
+          <div class="grade-box" *ngIf="submittedReview().isGraded && goal.grade">
+            <span class="grade-label">Manager Grade:</span>
+            <span class="grade-value">{{ goal.grade }} (Score: {{ goal.score }})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- If Not Submitted -->
+    <div class="form-view" *ngIf="!submittedReview()">
+      <div class="card form-card">
+        <h3>Submit Self Appraisal</h3>
+        <p class="subtitle">Select your team category to load your performance goals for this month.</p>
+
+        <div class="form-group mt-4">
+          <label>Select Team / Category <span class="required">*</span></label>
+          <select class="form-input" [ngModel]="selectedTeam()" (ngModelChange)="onTeamChanged($event)">
+            <option value="" disabled>Select your category</option>
+            <option *ngFor="let t of dynamicTemplates()" [value]="t.category">
+              {{ t.category | titlecase }} ({{ t.roleName }})
+            </option>
+          </select>
+        </div>
+
+        <div class="goals-section mt-4" *ngIf="teamGoals().length > 0">
+          <h4 class="section-title">Performance Goals</h4>
+          
+          <div class="goal-form-item card" *ngFor="let goal of teamGoals(); let i = index">
+            <div class="goal-header">
+              <h5>{{ i + 1 }}. {{ goal.title }}</h5>
+              <span class="kpi-badge">{{ goal.kpiName }}</span>
+            </div>
+            <p class="goal-desc">{{ goal.description }}</p>
+            
+            <div class="form-group mt-3">
+              <label>Your Comment / Self-Evaluation</label>
+              <textarea class="form-input textarea" [(ngModel)]="goal.comment" rows="3" placeholder="Describe your achievements and challenges for this goal..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions mt-4">
+            <button class="btn-submit" (click)="submitReview()" [disabled]="isSubmitting()">
+              <span *ngIf="isSubmitting()">Submitting...</span>
+              <span *ngIf="!isSubmitting()">Submit Review</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="selectedTeam() && teamGoals().length === 0">
+          <p>No goals defined for this category. Please contact your manager.</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</div>
+</div>

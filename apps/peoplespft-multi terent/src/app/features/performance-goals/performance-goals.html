@@ -1,6 +1,6 @@
 <div class="page-container">
   <div class="page-header">
-    <div class="header-content">
+    <div class="header-main">
       <h1>Performance Goal Templates</h1>
       <p>Define KPIs and goal definitions for different intern roles.</p>
     </div>
@@ -29,7 +29,7 @@
       </div>
       <div class="card-body">
         <p>{{ t.goals.length }} Goals Defined</p>
-        <p>Total Weight: {{ 100 }}%</p> <!-- Simplified, should calculate -->
+        <p>Total Weight: {{ t.goals.length > 0 ? t.goals.length + ' goals' : 'None' }}</p>
       </div>
     </div>
   </div>
@@ -47,17 +47,21 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Intern Role</label>
-        <input type="text" [(ngModel)]="editingTemplate()!.roleName" placeholder="e.g. Software Development">
+        <input type="text" [ngModel]="editingTemplate()!.roleName"
+               (ngModelChange)="editingTemplate.set({ ...editingTemplate()!, roleName: $event })"
+               placeholder="e.g. Software Development">
       </div>
       <div class="form-group">
         <label>Category</label>
-        <input type="text" [(ngModel)]="editingTemplate()!.category" placeholder="e.g. Development Goals">
+        <input type="text" [ngModel]="editingTemplate()!.category"
+               (ngModelChange)="editingTemplate.set({ ...editingTemplate()!, category: $event })"
+               placeholder="e.g. Development Goals">
       </div>
     </div>
 
     <div class="goals-section">
       <div class="section-header">
-        <h3>Goals & KPIs</h3>
+        <h3>Goals &amp; KPIs</h3>
         <button class="add-goal-btn" (click)="addGoal()">+ Add Goal</button>
       </div>
 
@@ -69,29 +73,43 @@
         
         <div class="goal-form-grid">
           <div class="form-group">
-            <label>Perspective</label>
-            <input type="text" [(ngModel)]="goal.perspective" list="perspectiveList" placeholder="e.g. Quality Perspective">
+            <label>Perspective <span class="required">*</span></label>
+            <input type="text" [value]="goal.perspective"
+                   (input)="updateGoal(i, 'perspective', $any($event.target).value)"
+                   list="perspectiveList" placeholder="e.g. Quality Perspective">
             <datalist id="perspectiveList">
               <option *ngFor="let p of existingPerspectives()" [value]="p"></option>
             </datalist>
           </div>
           <div class="form-group">
-            <label>KPI Name</label>
-            <input type="text" [(ngModel)]="goal.kpiName" placeholder="e.g. Code Quality">
+            <label>KPI Name <span class="required">*</span></label>
+            <input type="text" [value]="goal.kpiName"
+                   (input)="updateGoal(i, 'kpiName', $any($event.target).value)"
+                   placeholder="e.g. Code Quality">
           </div>
           <div class="form-group full-width">
-            <label>Goal Title</label>
-            <input type="text" [(ngModel)]="goal.title" placeholder="e.g. Deliver High-Quality Output">
+            <label>Goal Title <span class="required">*</span></label>
+            <input type="text" [value]="goal.title"
+                   (input)="updateGoal(i, 'title', $any($event.target).value)"
+                   placeholder="e.g. Deliver High-Quality Output">
           </div>
           <div class="form-group full-width">
-            <label>Description</label>
-            <textarea [(ngModel)]="goal.description" rows="3" placeholder="Detailed description of the goal..."></textarea>
+            <label>Description <span class="required">*</span></label>
+            <textarea [value]="goal.description"
+                      (input)="updateGoal(i, 'description', $any($event.target).value)"
+                      rows="3" placeholder="Detailed description of the goal..."></textarea>
           </div>
           <div class="form-group">
-            <label>Weight (%)</label>
-            <input type="number" [(ngModel)]="goal.weight" placeholder="e.g. 25">
+            <label>Weight (%) <span class="required">*</span></label>
+            <input type="number" [value]="goal.weight"
+                   (input)="updateGoal(i, 'weight', $any($event.target).value)"
+                   placeholder="e.g. 25" min="1" max="100">
           </div>
         </div>
+      </div>
+
+      <div class="empty-goals" *ngIf="editingTemplate()!.goals.length === 0">
+        <p>No goals defined yet. Click "+ Add Goal" to get started.</p>
       </div>
     </div>
   </div>

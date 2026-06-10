@@ -22,10 +22,26 @@ export class InternRequests implements OnInit {
   isLoading = signal(true);
   isAssigning = signal<string | null>(null);
   searchQuery = signal('');
+  sortFilter = signal<string>('recent');
+  roles = signal<string[]>([]);
+  roleFilter = signal<string>('all');
+
+  setSort(sort: string) {
+    this.sortFilter.set(sort);
+  }
+
+  setRole(role: string) {
+    this.roleFilter.set(role);
+  }
 
   ngOnInit() {
     this.fetchRequests();
     this.fetchManagers();
+    this.apiService.getCompanySettings().subscribe(res => {
+      if (res?.settings?.internRoles) {
+        this.roles.set(res.settings.internRoles);
+      }
+    });
   }
 
   fetchRequests() {
@@ -73,8 +89,7 @@ export class InternRequests implements OnInit {
     const query = this.searchQuery().toLowerCase();
     const category = this.currentCategory();
     const all = this.allRequests();
-    
-    return all.filter(r => {
+    const result = all.filter(r => {
       // 1. Search Logic
       const matchesSearch = !query || 
         r.fullName?.toLowerCase().includes(query) || 
@@ -103,9 +118,29 @@ export class InternRequests implements OnInit {
         return managerStatus === 'rejected';
       }
 
+      // 3. Role filter logic
+      const selectedRole = this.roleFilter();
+      if (selectedRole !== 'all') {
+        const reqRole = r.role || r.domain || '';
+        if (reqRole !== selectedRole) return false;
+      }
+
       // In Internship/Job tabs, show ONLY unassigned requests matching the type
       return !isAssigned && type === category;
     });
+
+    const sortVal = this.sortFilter();
+    if (sortVal === 'az') {
+      result.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    } else if (sortVal === 'za') {
+      result.sort((a, b) => (b.fullName || '').localeCompare(a.fullName || ''));
+    } else if (sortVal === 'recent') {
+      result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    } else if (sortVal === 'oldest') {
+      result.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    }
+
+    return result;
   });
 
   setCategory(category: 'Internship' | 'Job' | 'Assigned' | 'Approved' | 'Rejected') {

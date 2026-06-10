@@ -134,7 +134,7 @@ class _FundRequestPageState extends State<FundRequestPage> {
           content: Text(
             body['message'] ??
                 (success
-                    ? 'Fund request submitted'
+                    ? 'Reimbursement submitted'
                     : 'Unable to submit request'),
           ),
           backgroundColor:
@@ -228,7 +228,7 @@ class _FundRequestPageState extends State<FundRequestPage> {
             children: [
               Expanded(
                 child: Text(
-                  item['category'] ?? 'Fund Request',
+                  item['category'] ?? 'Reimbursement',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
@@ -283,7 +283,7 @@ class _FundRequestPageState extends State<FundRequestPage> {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
         title: const Text(
-          'Fund Request',
+          'Reimbursement',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
@@ -404,7 +404,7 @@ class _FundRequestPageState extends State<FundRequestPage> {
               padding: EdgeInsets.all(24),
               child: Center(
                 child: Text(
-                  'No fund requests submitted yet.',
+                  'No reimbursements submitted yet.',
                   style: TextStyle(color: muted),
                 ),
               ),

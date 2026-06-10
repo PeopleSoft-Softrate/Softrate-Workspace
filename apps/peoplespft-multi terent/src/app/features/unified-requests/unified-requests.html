@@ -1,8 +1,8 @@
 <div class="approvals-container">
 
   <!-- PAGE HEADER (Full Width Strip) -->
-  <div class="page-header">
-    <div class="header-content">
+  <div class="page-header" *ngIf="!embeddedCategory()">
+    <div class="header-main">
       <h1>Approvals & Requests Hub</h1>
       <p>Centralized real-time center to manage leaves, offboardings, and onboarding requests.</p>
     </div>
@@ -13,11 +13,19 @@
     </div>
   </div>
 
+  <!-- EMBEDDED HEADER (Shown only when embeddedTitle is provided) -->
+  <div class="page-header-embedded" *ngIf="embeddedTitle()">
+    <div class="header-main">
+      <h1>{{ embeddedTitle() }}</h1>
+      <p *ngIf="embeddedSubtitle()">{{ embeddedSubtitle() }}</p>
+    </div>
+  </div>
+
   <!-- SINGLE UNIFIED SECTION -->
   <div class="unified-section">
 
     <!-- STATS ROW -->
-    <div class="section-stats">
+    <div class="section-stats" *ngIf="!embeddedCategory()">
       <div class="stats-row">
         <div class="stat-item total">
           <div class="stat-icon-wrapper">
@@ -69,7 +77,8 @@
 
         <div class="stat-item correction">
           <div class="stat-icon-wrapper">
-            <hugeicons-icon [icon]="FingerAccessIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            <hugeicons-icon [icon]="FingerAccessIcon" size="20" [strokeWidth]="1.5"
+              color="currentColor"></hugeicons-icon>
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingCorrectionsCount() }}</span>
@@ -81,7 +90,8 @@
 
         <div class="stat-item fund">
           <div class="stat-icon-wrapper">
-            <hugeicons-icon [icon]="WalletDone02Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            <hugeicons-icon [icon]="WalletDone02Icon" size="20" [strokeWidth]="1.5"
+              color="currentColor"></hugeicons-icon>
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingFundsCount() }}</span>
@@ -93,7 +103,8 @@
 
         <div class="stat-item device-change">
           <div class="stat-icon-wrapper">
-            <hugeicons-icon [icon]="SmartPhone01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            <hugeicons-icon [icon]="SmartPhone01Icon" size="20" [strokeWidth]="1.5"
+              color="currentColor"></hugeicons-icon>
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingDeviceChangesCount() }}</span>
@@ -109,52 +120,28 @@
     <!-- FILTERS BAR -->
     <div class="section-filters">
       <div class="search-wrapper">
-        <hugeicons-icon [icon]="Search01Icon" size="16" [strokeWidth]="1.5" color="#94A3B8" class="search-icon"></hugeicons-icon>
-        <input 
-          type="text" 
-          placeholder="Search by name, ID, department..." 
-          [(ngModel)]="searchQuery" 
-          class="search-input"
-        />
+        <hugeicons-icon [icon]="Search01Icon" size="16" [strokeWidth]="1.5" color="#94A3B8"
+          class="search-icon"></hugeicons-icon>
+        <input type="text" placeholder="Search by name, ID, department..." [(ngModel)]="searchQuery"
+          class="search-input" />
       </div>
 
       <div class="filter-controls">
-        <div class="category-tabs">
-          <button 
-            (click)="activeCategory.set('all')" 
-            [class.active]="activeCategory() === 'all'"
-            class="tab-btn"
-          >All Requests</button>
-          <button 
-            (click)="activeCategory.set('leave')" 
-            [class.active]="activeCategory() === 'leave'"
-            class="tab-btn"
-          >Leaves</button>
-          <button 
-            (click)="activeCategory.set('offboarding')" 
-            [class.active]="activeCategory() === 'offboarding'"
-            class="tab-btn"
-          >Offboardings</button>
-          <button 
-            (click)="activeCategory.set('onboarding')" 
-            [class.active]="activeCategory() === 'onboarding'"
-            class="tab-btn"
-          >Onboarding</button>
-          <button 
-            (click)="activeCategory.set('correction')" 
-            [class.active]="activeCategory() === 'correction'"
-            class="tab-btn"
-          >Ratification</button>
-          <button
-            (click)="activeCategory.set('fund')"
-            [class.active]="activeCategory() === 'fund'"
-            class="tab-btn"
-          >Reimbursement</button>
-          <button
-            (click)="activeCategory.set('device_change')"
-            [class.active]="activeCategory() === 'device_change'"
-            class="tab-btn"
-          >Device Changes</button>
+        <div class="category-tabs" *ngIf="!embeddedCategory()">
+          <button (click)="activeCategory.set('all')" [class.active]="activeCategory() === 'all'" class="tab-btn">All
+            Requests</button>
+          <button (click)="activeCategory.set('leave')" [class.active]="activeCategory() === 'leave'"
+            class="tab-btn">Leaves</button>
+          <button (click)="activeCategory.set('offboarding')" [class.active]="activeCategory() === 'offboarding'"
+            class="tab-btn">Offboardings</button>
+          <button (click)="activeCategory.set('onboarding')" [class.active]="activeCategory() === 'onboarding'"
+            class="tab-btn">Onboarding</button>
+          <button (click)="activeCategory.set('correction')" [class.active]="activeCategory() === 'correction'"
+            class="tab-btn">Ratification</button>
+          <button (click)="activeCategory.set('fund')" [class.active]="activeCategory() === 'fund'"
+            class="tab-btn">Reimbursement</button>
+          <button (click)="activeCategory.set('device_change')" [class.active]="activeCategory() === 'device_change'"
+            class="tab-btn">Device Changes</button>
         </div>
       </div>
     </div>
@@ -170,7 +157,8 @@
 
     <!-- EMPTY STATE -->
     <div *ngIf="!loading() && filteredRequests().length === 0" class="empty-state">
-      <hugeicons-icon [icon]="WorkflowSquare03Icon" size="48" [strokeWidth]="1.5" color="#94A3B8" class="empty-icon"></hugeicons-icon>
+      <hugeicons-icon [icon]="WorkflowSquare03Icon" size="48" [strokeWidth]="1.5" color="#94A3B8"
+        class="empty-icon"></hugeicons-icon>
       <h3>All Clear!</h3>
       <p>No pending or filtered approvals match your selection.</p>
     </div>
@@ -183,6 +171,7 @@
             <th>Applicant</th>
             <th>Type</th>
             <th>Details</th>
+            <th>Info</th>
             <th>Manager</th>
             <th>HR</th>
             <th>Applied</th>
@@ -204,19 +193,73 @@
             <!-- Type badge -->
             <td>
               <span class="tbl-type-badge" [ngClass]="req.type">
-                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type === 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Reimbursement' : req.type === 'device_change' ? 'Device Change' : 'Ratification' }}
+                {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type ===
+                'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Reimbursement' : req.type === 'device_change' ?
+                'Device Change' : 'Ratification' }}
               </span>
             </td>
             <!-- Details -->
             <td>
               <div class="tbl-detail-primary">{{ req.subType }}</div>
               <div class="tbl-detail-secondary" *ngIf="req.days">{{ req.days }} day(s)</div>
-              <div class="tbl-detail-secondary" *ngIf="req.type === 'fund'">₹{{ req.amount || 0 | number:'1.0-0' }}</div>
-              <div class="tbl-detail-secondary" *ngIf="req.reason" title="{{ req.reason }}">{{ req.reason | slice:0:40 }}{{ req.reason?.length > 40 ? '…' : '' }}</div>
+              <div class="tbl-detail-secondary" *ngIf="req.type === 'fund'">₹{{ req.amount || 0 | number:'1.0-0' }}
+              </div>
+              <div class="tbl-detail-secondary" *ngIf="req.reason" title="{{ req.reason }}">{{ req.reason | slice:0:40
+                }}{{ req.reason?.length > 40 ? '…' : '' }}</div>
+            </td>
+            <!-- Info -->
+            <td>
+              <div class="info-cell-wrapper" (mouseenter)="req.showTooltip = true"
+                (mouseleave)="req.showTooltip = false" style="position: relative; display: inline-block;">
+                <div *ngIf="req.reason || req.raw?.projectLinks?.length > 0" class="tbl-info-icon"
+                  style="position: relative;">
+                  <div
+                    style="background: #4f46e5; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: help; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);">
+                    i</div>
+                </div>
+                <span *ngIf="!req.reason && (!req.raw?.projectLinks || req.raw?.projectLinks?.length === 0)"
+                  style="color: #cbd5e1;">&mdash;</span>
+
+                <!-- The Rich Tooltip Overlay -->
+                <div class="custom-tooltip-popup"
+                  *ngIf="req.showTooltip && (req.raw?.projectLinks?.length > 0 || req.reason)">
+                  <div class="tooltip-arrow"></div>
+                  <div class="tooltip-content">
+                    <div *ngIf="req.reason">
+                      <div class="tooltip-title">Reason / Details</div>
+                      <div class="tooltip-text">{{ req.reason }}</div>
+                    </div>
+                    <div *ngIf="req.raw?.projectLinks?.length > 0" [style.marginTop]="req.reason ? '12px' : '0'">
+                      <div class="tooltip-title" style="text-align: center; margin-bottom: 8px;">Project Links</div>
+                      <div class="project-links-list">
+                        <a *ngFor="let link of req.raw.projectLinks" [href]="link" target="_blank"
+                          class="project-link-item">
+                          <hugeicons-icon [icon]="Link01Icon" size="14" [strokeWidth]="2"
+                            color="#64748b"></hugeicons-icon>
+                          <span class="link-text">{{ link | slice:0:30 }}{{ link.length > 30 ? '...' : '' }}</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </td>
             <!-- Manager status -->
             <td>
-              <span class="tbl-status-chip" [ngClass]="req.managerStatus || 'pending'">{{ req.managerStatus || 'pending' }}</span>
+              <div class="tbl-assign-row"
+                *ngIf="req.type === 'onboarding' && (req.managerStatus === 'pending' || req.managerStatus === 'approved') && isHr()">
+                <select class="tbl-select" #mgrSelect>
+                  <option value="">Assign Manager...</option>
+                  <option *ngFor="let m of managers()" [value]="m._id">{{ m.fullName }}</option>
+                </select>
+                <button class="tbl-btn-assign" (click)="assignToManager(req, mgrSelect.value)"
+                  [disabled]="isAssigning() === req._id">Assign</button>
+              </div>
+              <span
+                *ngIf="!(req.type === 'onboarding' && (req.managerStatus === 'pending' || req.managerStatus === 'approved') && isHr())"
+                class="tbl-status-chip" [ngClass]="req.managerStatus || 'pending'">
+                {{ req.managerStatus || 'pending' }}
+              </span>
             </td>
             <!-- HR status -->
             <td>
@@ -236,7 +279,9 @@
                   </button>
                 </ng-container>
                 <ng-container *ngIf="req.type === 'onboarding' && isHr()">
-                  <a class="tbl-btn tbl-btn-approve" [routerLink]="req.subType === 'Intern' ? ['/interns/approve', req._id] : ['/employees/approve', req._id]" title="Onboard">
+                  <a class="tbl-btn tbl-btn-approve"
+                    [routerLink]="req.subType === 'Intern' ? ['/interns/approve', req._id] : ['/employees/approve', req._id]"
+                    title="Onboard">
                     <i class="fa-solid fa-user-plus"></i>
                   </a>
                 </ng-container>
@@ -247,129 +292,133 @@
                 </ng-container>
               </div>
               <div class="tbl-status-done" *ngIf="req.status !== 'pending'" [ngClass]="req.status">
-                {{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Approved' : 'Rejected' }}
+                {{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Approved' :
+                'Rejected' }}
               </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  <!-- ACTION REVIEW MODAL OVERLAY -->
-  <div class="modal-backdrop" *ngIf="showReviewModal()">
-    <div class="modal-container card slide-in">
-      <div class="modal-header">
-        <h3>
-          Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ? 'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Ratification' : (selectedRequest()?.type === 'fund' ? 'Fund Request' : (selectedRequest()?.type === 'device_change' ? 'Device Change' : 'Onboarding')))) }} Decision
-        </h3>
-        <button (click)="closeModal()" class="close-btn">&times;</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="selected-meta card">
-          <p><strong>Applicant:</strong> {{ selectedRequest()?.requesterName }}</p>
-          <p><strong>Request Category:</strong> {{ selectedRequest()?.subType }}</p>
-          <p><strong>Timeline:</strong> {{ selectedRequest()?.dateText }}</p>
+    <!-- ACTION REVIEW MODAL OVERLAY -->
+    <div class="modal-backdrop" *ngIf="showReviewModal()">
+      <div class="modal-container card slide-in">
+        <div class="modal-header">
+          <h3>
+            Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ?
+            'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Ratification' : (selectedRequest()?.type ===
+            'fund' ? 'Fund Request' : (selectedRequest()?.type === 'device_change' ? 'Device Change' : 'Onboarding'))))
+            }} Decision
+          </h3>
+          <button (click)="closeModal()" class="close-btn">&times;</button>
         </div>
 
-        <div class="decision-alert" [ngClass]="reviewAction()">
-          <p>
-            You are about to <strong>{{ reviewAction() === 'approve' ? 'APPROVE & LEGITIMIZE' : 'REJECT & DENY' }}</strong> this request.
-          </p>
-        </div>
-
-        <!-- ONBOARDING FORM FIELD INPUTS (HR APPROVAL SPECIFIC) -->
-        <div class="form-container" *ngIf="selectedRequest()?.type === 'onboarding' && reviewAction() === 'approve' && isHr()">
-          <p class="form-section-title">Configure Onboarding Parameters:</p>
-          
-          <div class="form-group">
-            <label>Onboarding Date:</label>
-            <input type="date" [(ngModel)]="onboardingDate" class="form-control" />
+        <div class="modal-body">
+          <div class="selected-meta card">
+            <p><strong>Applicant:</strong> {{ selectedRequest()?.requesterName }}</p>
+            <p><strong>Request Category:</strong> {{ selectedRequest()?.subType }}</p>
+            <p><strong>Timeline:</strong> {{ selectedRequest()?.dateText }}</p>
           </div>
 
-          <!-- Intern specific fields -->
-          <div *ngIf="selectedRequest()?.subType === 'Intern'">
+          <div class="decision-alert" [ngClass]="reviewAction()">
+            <p>
+              You are about to <strong>{{ reviewAction() === 'approve' ? 'APPROVE & LEGITIMIZE' : 'REJECT & DENY'
+                }}</strong> this request.
+            </p>
+          </div>
+
+          <!-- ONBOARDING FORM FIELD INPUTS (HR APPROVAL SPECIFIC) -->
+          <div class="form-container"
+            *ngIf="selectedRequest()?.type === 'onboarding' && reviewAction() === 'approve' && isHr()">
+            <p class="form-section-title">Configure Onboarding Parameters:</p>
+
             <div class="form-group">
-              <label>Expected Internship End Date:</label>
+              <label>Onboarding Date:</label>
+              <input type="date" [(ngModel)]="onboardingDate" class="form-control" />
+            </div>
+
+            <!-- Intern specific fields -->
+            <div *ngIf="selectedRequest()?.subType === 'Intern'">
+              <div class="form-group">
+                <label>Expected Internship End Date:</label>
+                <input type="date" [(ngModel)]="endDate" class="form-control" />
+              </div>
+
+              <div class="form-group">
+                <label>Internship Compensation Scheme:</label>
+                <select [(ngModel)]="internshipType" class="form-control">
+                  <option value="Stipend">Stipend-based Internship</option>
+                  <option value="Paid">Paid Internship</option>
+                  <option value="Free">Unpaid/Free Internship</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Assigned Designation/Role:</label>
+              <input type="text" [(ngModel)]="assignedRole" class="form-control" placeholder="E.g., Software Intern" />
+            </div>
+          </div>
+
+          <!-- OFFBOARDING DOCUMENTS GENERATION (HR APPROVAL SPECIFIC) -->
+          <div class="form-container flags-box"
+            *ngIf="selectedRequest()?.type === 'offboarding' && reviewAction() === 'approve' && isHr()">
+            <p class="form-section-title">Configure Offboarding Dates:</p>
+
+            <div class="form-group">
+              <label>Onboarding Date:</label>
+              <input type="date" [(ngModel)]="onboardingDate" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label>End Date (Last Working Day):</label>
               <input type="date" [(ngModel)]="endDate" class="form-control" />
             </div>
 
-            <div class="form-group">
-              <label>Internship Compensation Scheme:</label>
-              <select [(ngModel)]="internshipType" class="form-control">
-                <option value="Stipend">Stipend-based Internship</option>
-                <option value="Paid">Paid Internship</option>
-                <option value="Free">Unpaid/Free Internship</option>
-              </select>
-            </div>
+            <p class="form-section-title" style="margin-top: 15px;">Select Documents to Generate automatically (PDF):
+            </p>
+
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="certInternship" />
+              <span>Generate Internship Completion Certificate</span>
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="certProject" />
+              <span>Generate Project Completion Certificate</span>
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="certLor" />
+              <span>Generate Letter of Recommendation (LOR)</span>
+            </label>
           </div>
 
-          <div class="form-group">
-            <label>Assigned Designation/Role:</label>
-            <input type="text" [(ngModel)]="assignedRole" class="form-control" placeholder="E.g., Software Intern" />
+          <!-- REMARKS FIELD -->
+          <div class="form-group remarks-group">
+            <label>{{ reviewAction() === 'approve' ? 'Action Remarks / Notes:' : 'Reason for Rejection (Required):'
+              }}</label>
+            <textarea [(ngModel)]="reviewRemarks"
+              placeholder="Add notes explaining your action or detailing feedback..."
+              class="form-control text-area"></textarea>
           </div>
         </div>
 
-        <!-- OFFBOARDING DOCUMENTS GENERATION (HR APPROVAL SPECIFIC) -->
-        <div class="form-container flags-box" *ngIf="selectedRequest()?.type === 'offboarding' && reviewAction() === 'approve' && isHr()">
-          <p class="form-section-title">Configure Offboarding Dates:</p>
-          
-          <div class="form-group">
-            <label>Onboarding Date:</label>
-            <input type="date" [(ngModel)]="onboardingDate" class="form-control" />
-          </div>
-
-          <div class="form-group">
-            <label>End Date (Last Working Day):</label>
-            <input type="date" [(ngModel)]="endDate" class="form-control" />
-          </div>
-
-          <p class="form-section-title" style="margin-top: 15px;">Select Documents to Generate automatically (PDF):</p>
-          
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="certInternship" />
-            <span>Generate Internship Completion Certificate</span>
-          </label>
-
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="certProject" />
-            <span>Generate Project Completion Certificate</span>
-          </label>
-
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="certLor" />
-            <span>Generate Letter of Recommendation (LOR)</span>
-          </label>
+        <div class="modal-footer">
+          <button (click)="closeModal()" class="btn-secondary" [disabled]="loading()">Cancel</button>
+          <button (click)="submitReview()"
+            [disabled]="(reviewAction() === 'reject' && !reviewRemarks().trim()) || loading()" class="btn-primary"
+            [ngClass]="reviewAction() === 'approve' ? 'approve' : 'reject'">
+            <ng-container *ngIf="!loading()">
+              Confirm Decision
+            </ng-container>
+            <ng-container *ngIf="loading()">
+              <i class="fa-solid fa-spinner fa-spin"></i> Processing...
+            </ng-container>
+          </button>
         </div>
-
-        <!-- REMARKS FIELD -->
-        <div class="form-group remarks-group">
-          <label>{{ reviewAction() === 'approve' ? 'Action Remarks / Notes:' : 'Reason for Rejection (Required):' }}</label>
-          <textarea 
-            [(ngModel)]="reviewRemarks" 
-            placeholder="Add notes explaining your action or detailing feedback..." 
-            class="form-control text-area"
-          ></textarea>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button (click)="closeModal()" class="btn-secondary" [disabled]="loading()">Cancel</button>
-        <button 
-          (click)="submitReview()" 
-          [disabled]="(reviewAction() === 'reject' && !reviewRemarks().trim()) || loading()"
-          class="btn-primary" 
-          [ngClass]="reviewAction() === 'approve' ? 'approve' : 'reject'"
-        >
-          <ng-container *ngIf="!loading()">
-            Confirm Decision
-          </ng-container>
-          <ng-container *ngIf="loading()">
-            <i class="fa-solid fa-spinner fa-spin"></i> Processing...
-          </ng-container>
-        </button>
       </div>
     </div>
-  </div>
 
   </div><!-- /unified-section -->
 </div>

@@ -23,6 +23,8 @@ const InternSchema = new mongoose.Schema({
   internshipType: { type: String, default: ""},
   applicationType: { type: String, enum: ["Internship", "Job"], default: "Internship" },
   deviceId: { type: String, default: null },
+  projectLinks: { type: [String], default: [] },
+  isRemote: { type: Boolean, default: false },
 
 
 
@@ -52,6 +54,12 @@ const InternSchema = new mongoose.Schema({
     updatedAt: { type: Date }
   }
 });
+
+// Indexes — used by login (exact match on email/internid) and aggregation filters
+InternSchema.index({ email: 1 });
+InternSchema.index({ companyId: 1, status: 1 });
+InternSchema.index({ assignedManager: 1, companyId: 1 });
+
 // Helper function to capitalize the first letter of each word
 function capitalizeWords(str) {
   if (!str) return str;

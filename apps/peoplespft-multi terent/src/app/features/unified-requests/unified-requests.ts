@@ -1,5 +1,5 @@
 import { AlertService } from '../../shared/services/alert';
-import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -20,7 +20,8 @@ import {
   Login01Icon,
   FingerAccessIcon,
   WalletDone02Icon,
-  SmartPhone01Icon
+  SmartPhone01Icon,
+  Link01Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -49,6 +50,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   readonly FingerAccessIcon = FingerAccessIcon;
   readonly WalletDone02Icon = WalletDone02Icon;
   readonly SmartPhone01Icon = SmartPhone01Icon;
+  readonly Link01Icon = Link01Icon;
 
   // Role and Profile Info
   userRole = signal<string | null>(null);
@@ -62,6 +64,9 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   activeCategory = signal<string>('all'); // 'all', 'leave', 'offboarding', 'onboarding'
   activeStatus = signal<string>('pending'); // 'pending', 'approved', 'rejected'
   searchQuery = signal<string>('');
+
+  managers = signal<any[]>([]);
+  isAssigning = signal<string | null>(null);
 
   // Sockets Subscription
   private socketSub?: Subscription;
@@ -83,11 +88,41 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   internshipType = signal<string>('Stipend'); // Stipend / Paid
   assignedRole = signal<string>('');
 
+  // Input signals for embedding
+  embeddedCategory = signal<string | null>(null);
+  embeddedUserType = signal<'intern' | 'employee' | null>(null);
+  embeddedTitle = signal<string | null>(null);
+  embeddedSubtitle = signal<string | null>(null);
+
+  // Set Inputs programmatically since we can't use @Input with signal easily in older Angular unless input(), let's use standard @Input
+  @Input('embeddedCategory') set _category(val: string) {
+    if (val) {
+      this.embeddedCategory.set(val);
+      this.activeCategory.set(val);
+    }
+  }
+
+  @Input('embeddedUserType') set _userType(val: 'intern' | 'employee') {
+    if (val) this.embeddedUserType.set(val);
+  }
+
+  @Input('embeddedTitle') set _title(val: string) {
+    if (val) this.embeddedTitle.set(val);
+  }
+
+  @Input('embeddedSubtitle') set _subtitle(val: string) {
+    if (val) this.embeddedSubtitle.set(val);
+  }
+
   ngOnInit() {
     this.userRole.set(localStorage.getItem('user_role'));
     const storedUserData = localStorage.getItem('user_data');
     if (storedUserData) {
       this.userData.set(JSON.parse(storedUserData));
+    }
+
+    if (this.isHr()) {
+      this.fetchManagers();
     }
 
     this.fetchRequests();
@@ -106,6 +141,42 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     if (this.socketSub) {
       this.socketSub.unsubscribe();
     }
+  }
+
+  fetchManagers() {
+    this.apiService.getManagers().subscribe({
+      next: (data) => this.managers.set(data),
+      error: (err) => console.error('Failed to fetch managers', err)
+    });
+  }
+
+  assignToManager(request: any, managerId: string) {
+    if (!managerId) {
+      this.alertService.show('Please select a manager first');
+      return;
+    }
+
+    this.isAssigning.set(request._id);
+    
+    let assignObservable;
+    if (request.subType === 'Intern') {
+      assignObservable = this.apiService.assignInternToManager(request._id, managerId);
+    } else {
+      assignObservable = this.apiService.assignEmployeeToManager(request._id, managerId);
+    }
+
+    assignObservable.subscribe({
+      next: () => {
+        this.alertService.show('Assigned to manager successfully');
+        this.isAssigning.set(null);
+        this.fetchRequests(true); // Silent refresh
+      },
+      error: (err: any) => {
+        console.error('Failed to assign manager', err);
+        this.alertService.show('Failed to assign manager: ' + (err.error?.message || err.message));
+        this.isAssigning.set(null);
+      }
+    });
   }
 
   fetchRequests(silent: boolean = false) {
@@ -187,8 +258,8 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     leaves.forEach(l => {
       list.push({
         _id: l._id,
-        requesterName: l.employeeName,
-        requesterId: l.employeeId,
+        requesterName: l.internName || l.employeeName || l.userId?.fullName || 'Unknown',
+        requesterId: l.internId || l.employeeId || l.userId?._id || l.userId || 'Unknown',
         type: 'leave',
         subType: l.leaveType,
         dateText: `${new Date(l.fromDate).toLocaleDateString('en-IN')} - ${new Date(l.toDate).toLocaleDateString('en-IN')}`,
@@ -209,7 +280,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       list.push({
         _id: r._id,
         requesterName: r.fullName,
-        requesterId: r.internId || 'EMP',
+        requesterId: r.internId || r.employeeId || r.EmployeeId || r.userId || 'Unknown',
         type: 'offboarding',
         subType: r.exitType || 'Resignation',
         dateText: r.lastWorkingDay ? new Date(r.lastWorkingDay).toLocaleDateString('en-IN') : 'Not Set',
@@ -343,8 +414,8 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     leaves.forEach(l => {
       list.push({
         _id: l._id,
-        requesterName: l.employeeName,
-        requesterId: l.employeeId,
+        requesterName: l.internName || l.employeeName || l.userId?.fullName || 'Unknown',
+        requesterId: l.internId || l.employeeId || l.userId?._id || l.userId || 'Unknown',
         type: 'leave',
         subType: l.leaveType,
         dateText: `${new Date(l.fromDate).toLocaleDateString('en-IN')} - ${new Date(l.toDate).toLocaleDateString('en-IN')}`,
@@ -365,7 +436,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         list.push({
           _id: r._id,
           requesterName: r.fullName,
-          requesterId: r.internId || 'EMP',
+          requesterId: r.internId || r.employeeId || r.EmployeeId || r.userId || 'Unknown',
           type: 'offboarding',
           subType: r.exitType || 'Resignation',
           dateText: r.lastWorkingDay ? new Date(r.lastWorkingDay).toLocaleDateString('en-IN') : 'Not Set',
@@ -493,6 +564,41 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     let requests = this.requestsList();
     const cat = this.activeCategory();
     const query = this.searchQuery().toLowerCase().trim();
+    const forcedType = this.embeddedUserType();
+
+    if (forcedType) {
+      if (forcedType === 'intern') {
+        requests = requests.filter(r => {
+          if (r.type === 'onboarding') return r.subType === 'Intern';
+          
+          if (r.raw?.userType) return r.raw.userType === 'intern';
+          if (r.raw?.internId != null || r.raw?.internid != null || r.raw?.internName != null) return true;
+          
+          const reqId = String(r.requesterId || '').toUpperCase();
+          if (reqId.startsWith('STP')) return true;
+          if (reqId.startsWith('EMP')) return false;
+          
+          if (reqId.length === 24 && /^[0-9A-F]+$/.test(reqId)) return false;
+          
+          return true;
+        });
+      } else {
+        requests = requests.filter(r => {
+          if (r.type === 'onboarding') return r.subType === 'Employee';
+          
+          if (r.raw?.userType) return r.raw.userType === 'employee';
+          if (r.raw?.internId != null || r.raw?.internid != null || r.raw?.internName != null) return false;
+          
+          const reqId = String(r.requesterId || '').toUpperCase();
+          if (reqId.startsWith('EMP')) return true;
+          if (reqId.startsWith('STP')) return false;
+          
+          if (reqId.length === 24 && /^[0-9A-F]+$/.test(reqId)) return true;
+          
+          return false;
+        });
+      }
+    }
 
     // 1. Filter by Request Type
     if (cat !== 'all') {
@@ -551,8 +657,26 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         const day = String(d.getDate()).padStart(2, '0');
         parsedLastDate = `${year}-${month}-${day}`;
       }
-      this.onboardingDate.set('');
+      let parsedOnboardingDate = '';
+      if (request.raw.onboardingDate) {
+        const d = new Date(request.raw.onboardingDate);
+        parsedOnboardingDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+      this.onboardingDate.set(parsedOnboardingDate);
       this.endDate.set(parsedLastDate);
+    } else if (request.type === 'leave') {
+      let fromStr = '';
+      let toStr = '';
+      if (request.raw.fromDate) {
+        const d = new Date(request.raw.fromDate);
+        fromStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+      if (request.raw.toDate) {
+        const d = new Date(request.raw.toDate);
+        toStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+      this.onboardingDate.set(fromStr);
+      this.endDate.set(toStr);
     }
 
     // Default offboarding certificate flags
@@ -568,6 +692,15 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     this.selectedRequest.set(null);
     this.reviewAction.set(null);
     this.reviewRemarks.set('');
+  }
+
+  calculateDays(start: string, end: string): number {
+    if (!start || !end) return 0;
+    const d1 = new Date(start);
+    const d2 = new Date(end);
+    const diff = d2.getTime() - d1.getTime();
+    if (diff < 0) return 0;
+    return Math.ceil(diff / (1000 * 3600 * 24)) + 1;
   }
 
   submitReview() {
@@ -667,7 +800,21 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   handleLeaveReview(request: any, action: 'approve' | 'reject', remarks: string) {
     if (this.isHr()) {
       const status = action === 'approve' ? 'approved' : 'rejected';
-      this.apiService.hrReviewLeave(request._id, status, remarks).subscribe({
+      const payload: any = undefined;
+      
+      let hrReviewObs;
+      if (action === 'approve') {
+        const dates = {
+          fromDate: this.onboardingDate(),
+          toDate: this.endDate(),
+          numberOfDays: this.calculateDays(this.onboardingDate(), this.endDate())
+        };
+        hrReviewObs = this.apiService.hrReviewLeave(request._id, status, remarks, dates);
+      } else {
+        hrReviewObs = this.apiService.hrReviewLeave(request._id, status, remarks);
+      }
+
+      hrReviewObs.subscribe({
         next: () => {
           this.fetchRequests();
           this.closeModal();

@@ -13,16 +13,16 @@ services:
       - "${GATEWAY_PORT:-80}:80"
       - "${GATEWAY_HTTPS_PORT:-443}:443"
     volumes:
-      - ./deploy/certbot/conf:/etc/letsencrypt:ro
-      - ./deploy/certbot/www:/var/www/certbot:ro
+      - /opt/softrate-workspace/deploy/certbot/conf:/etc/letsencrypt:ro
+      - /opt/softrate-workspace/deploy/certbot/www:/var/www/certbot:ro
     command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     restart: unless-stopped
 
   certbot:
     image: certbot/certbot:latest
     volumes:
-      - ./deploy/certbot/conf:/etc/letsencrypt
-      - ./deploy/certbot/www:/var/www/certbot
+      - /opt/softrate-workspace/deploy/certbot/conf:/etc/letsencrypt
+      - /opt/softrate-workspace/deploy/certbot/www:/var/www/certbot
     entrypoint: /bin/sh
     command: -c "trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot --quiet; sleep 12h & wait $${!}; done"
     restart: unless-stopped
@@ -89,7 +89,7 @@ services:
       context: .
       dockerfile: deploy/docker/services/hrms-api.Dockerfile
     env_file:
-      - services/hrms/.env
+      - "services/hrms Multi-terent/.env"
     environment:
       NODE_ENV: production
       PORT: 5001

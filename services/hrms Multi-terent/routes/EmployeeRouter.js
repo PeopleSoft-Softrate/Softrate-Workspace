@@ -48,14 +48,24 @@ router.post(
         await employeeRole.save();
       }
 
-      // 2. Create User in unified collection
+      // Parse projectLinks (sent as JSON string from Flutter)
+      let projectLinks = [];
+      try {
+        if (req.body.projectLinks) {
+          projectLinks = JSON.parse(req.body.projectLinks);
+          if (!Array.isArray(projectLinks)) projectLinks = [];
+          projectLinks = projectLinks.filter(l => l && l.trim()).slice(0, 5);
+        }
+      } catch (_) { projectLinks = []; }
+
+      // 3. Create User in unified collection
       const newUser = new User({
         companyId: req.tenant.companyId,
         email: req.body.email,
-        password: "", // Will be set on first login
+        password: req.tenant.defaultPassword, // Set to company's default password, will require reset
         roleId: employeeRole._id,
         profile: {
-          firstName: req.body.fullName, // Legacy field name mapping
+          firstName: req.body.fullName,
           phone: req.body.phone,
           dob: req.body.dob,
           address: req.body.address,
@@ -72,20 +82,6 @@ router.post(
           designation: req.body.designation || req.body.role,
           status: 'ONBOARDING'
         },
-        education: {
-          qualification: req.body.qualification,
-          specialization: req.body.specialization,
-          college: req.body.college,
-          passingYear: req.body.passingYear,
-          ugCgpa: req.body.ugCgpa,
-          pgCgpa: req.body.pgCgpa
-        },
-        experience: {
-          isExperienced: req.body.isExperienced === 'true' || req.body.isExperienced === true,
-          years: req.body.experienceYears,
-          previousOrg: req.body.previousOrg,
-          designation: req.body.designation
-        },
         system: {
           onboardingStatus: 'initial',
           declaration: req.body.declaration === 'true' || req.body.declaration === true,
@@ -96,7 +92,7 @@ router.post(
 
       await newUser.save();
 
-      // 3. ALSO Create Employee in legacy collection (Backward Compatibility for Admin Dashboard)
+      // 4. Create Employee in legacy collection (Backward Compatibility)
       const newEmployee = new Employee({
         companyId: req.tenant.companyId,
         fullName: req.body.fullName,
@@ -107,25 +103,17 @@ router.post(
         dob: req.body.dob,
         address: req.body.address,
         role: req.body.designation || req.body.role,
-        department: req.body.department,
         linkedin: req.body.linkedin,
         gender: req.body.gender,
         nationality: req.body.nationality,
         maritalStatus: req.body.maritalStatus,
-        qualification: req.body.qualification,
-        specialization: req.body.specialization,
-        college: req.body.college,
-        passingYear: req.body.passingYear,
-        ugCgpa: req.body.ugCgpa,
-        pgCgpa: req.body.pgCgpa,
-        isExperienced: req.body.isExperienced === 'true' || req.body.isExperienced === true,
-        experienceYears: req.body.experienceYears,
-        previousOrg: req.body.previousOrg,
-        designation: req.body.designation,
         declaration: req.body.declaration === 'true' || req.body.declaration === true,
         bgConsent: req.body.bgConsent === 'true' || req.body.bgConsent === true,
         whatsappConsent: req.body.whatsappConsent === 'true' || req.body.whatsappConsent === true,
-        status: 'initial'
+        projectLinks,
+        completeDetails: false,
+        status: 'initial',
+        password: req.tenant.defaultPassword // Backward compatibility
       });
 
       await newEmployee.save();
@@ -136,33 +124,129 @@ router.post(
         io.emit('activity-updated', { type: 'new_employee', employee: newEmployee });
       }
 
-      // Map uploaded files to attachments
-      const attachments = req.files?.map(file => ({
-        filename: file.originalname,
-        content: file.buffer,
-      }));
-
-      // Send email to receiver
+      // Send initial application email to HR (no file attachments on initial submission)
       await sendEmail({
         to: req.tenant.receivingEmail,
-        subject: `New Employee Submission: ${newUser.profile.firstName}`,
+        subject: `New Employee Application: ${req.body.fullName}`,
         html: `
-          <h3>New employee submission received</h3>
-          <p>Name: ${newUser.profile.firstName}</p>
-          <p>Email: ${newUser.email}</p>
-          <p>Phone: ${newUser.profile.phone}</p>
+          <h3>New employee application received</h3>
+          <p><b>Name:</b> ${req.body.fullName}</p>
+          <p><b>Email:</b> ${req.body.email}</p>
+          <p><b>Phone:</b> ${req.body.phone}</p>
+          <p><b>Role:</b> ${req.body.role || req.body.designation || ''}</p>
+          <p><b>LinkedIn:</b> ${req.body.linkedin || 'N/A'}</p>
+          <p><i>Note: Education, experience &amp; identification documents will be submitted after first login.</i></p>
         `,
-        attachments,
         replyTo: req.tenant.receivingEmail,
       });
 
-      res.status(200).json({ message: "Employee submitted & email sent", userId: newUser._id });
+      res.status(201).json({ message: "Employee submitted & email sent", userId: newUser._id, employeeMongoId: newEmployee._id });
     } catch (err) {
       console.error("Employee Add Error:", err);
       res.status(500).json({ message: "Server error", error: err.message });
     }
   }
 );
+
+/* ============================
+   COMPLETE DETAILS (post-login)
+   Saves deferred education/experience/docs fields.
+   Emails uploaded files to company communication email.
+   Sets completeDetails = true.
+============================ */
+router.post(
+  "/complete-details/:id",
+  upload.any(),
+  verifyTenant,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      let query = { companyId: req.tenant.companyId };
+      if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        query._id = id;
+      } else {
+        query.EmployeeId = { $regex: new RegExp(`^${id}$`, 'i') };
+      }
+
+      const employee = await Employee.findOne(query);
+      if (!employee) return res.status(404).json({ message: "Employee not found" });
+
+      // Parse projectLinks if re-submitted
+      let projectLinks = employee.projectLinks || [];
+      try {
+        if (req.body.projectLinks) {
+          const parsed = JSON.parse(req.body.projectLinks);
+          if (Array.isArray(parsed)) {
+            projectLinks = parsed.filter(l => l && l.trim()).slice(0, 5);
+          }
+        }
+      } catch (_) {}
+
+      // Update deferred fields
+      employee.qualification = req.body.qualification || employee.qualification;
+      employee.specialization = req.body.specialization || employee.specialization;
+      employee.college = req.body.college || employee.college;
+      employee.passingYear = req.body.passingYear || employee.passingYear;
+      employee.ugCgpa = req.body.ugCgpa ? Number(req.body.ugCgpa) : employee.ugCgpa;
+      employee.pgCgpa = req.body.pgCgpa ? Number(req.body.pgCgpa) : employee.pgCgpa;
+      employee.isExperienced = req.body.isExperienced === 'true' || req.body.isExperienced === true;
+      employee.experienceYears = req.body.experienceYears || employee.experienceYears;
+      employee.previousOrg = req.body.previousOrg || employee.previousOrg;
+      employee.designation = req.body.designation || employee.designation;
+      employee.projectLinks = projectLinks;
+      employee.completeDetails = true;
+
+      await employee.save();
+
+      // Sync education/experience to User record as well
+      await User.findOneAndUpdate(
+        { email: { $regex: new RegExp(`^${employee.email.trim()}$`, 'i') }, companyId: req.tenant.companyId },
+        {
+          $set: {
+            'education.qualification': employee.qualification,
+            'education.specialization': employee.specialization,
+            'education.college': employee.college,
+            'education.passingYear': employee.passingYear,
+            'education.ugCgpa': employee.ugCgpa,
+            'education.pgCgpa': employee.pgCgpa,
+            'experience.isExperienced': employee.isExperienced,
+            'experience.years': employee.experienceYears,
+            'experience.previousOrg': employee.previousOrg,
+            'experience.designation': employee.designation,
+          }
+        }
+      );
+
+      // Email uploaded files to company communication email
+      const attachments = (req.files || []).map(file => ({
+        filename: `${file.fieldname}-${file.originalname}`,
+        content: file.buffer,
+      }));
+
+      if (attachments.length > 0) {
+        await sendEmail({
+          to: req.tenant.receivingEmail,
+          subject: `Employee Documents Submitted: ${employee.fullName} (${employee.EmployeeId || employee.email})`,
+          html: `
+            <h3>Employee documents received</h3>
+            <p><b>Name:</b> ${employee.fullName}</p>
+            <p><b>Email:</b> ${employee.email}</p>
+            <p><b>Employee ID:</b> ${employee.EmployeeId || 'Pending Approval'}</p>
+            <p>The employee has completed their profile details. Attached documents are included above.</p>
+          `,
+          attachments,
+          replyTo: req.tenant.receivingEmail,
+        });
+      }
+
+      res.json({ success: true, message: "Details saved successfully", completeDetails: true });
+    } catch (err) {
+      console.error("Complete Details Error:", err);
+      res.status(500).json({ message: "Server error", error: err.message });
+    }
+  }
+);
+
 
 /* ============================
    GET INITIAL EMPLOYEES
@@ -284,16 +368,26 @@ router.get("/get/:id", verifyTenant, async (req, res) => {
 /* ============================
    GET EMPLOYEE PROFILE PHOTO
 ============================ */
-router.get("/profile-photo/:id", async (req, res) => {
+router.get("/profile-photo/:id", async (req, res, next) => {
+  if (req.query.token) {
+    req.headers['authorization'] = `Bearer ${req.query.token}`;
+  }
+  next();
+}, verifyTenant, async (req, res) => {
   try {
     const { id } = req.params;
     let employee;
     if (id.match(/^[0-9a-fA-F]{24}$/)) {
-      employee = await Employee.findById(id);
+      employee = await Employee.findById(id).select('+profilePhoto.data');
     } else {
-      employee = await Employee.findOne({ EmployeeId: { $regex: new RegExp(`^${id}$`, 'i') } });
+      employee = await Employee.findOne({ EmployeeId: { $regex: new RegExp(`^${id}$`, 'i') } }).select('+profilePhoto.data');
     }
     if (!employee) return res.status(404).send("Employee not found");
+
+    if (employee.profilePhoto && employee.profilePhoto.data) {
+      res.set("Content-Type", employee.profilePhoto.contentType || "image/png");
+      return res.send(employee.profilePhoto.data);
+    }
 
     const user = await User.findOne({ email: { $regex: new RegExp(`^${employee.email.trim()}$`, 'i') } }).select('+profilePhoto.data');
     if (!user || !user.profilePhoto || !user.profilePhoto.data) {
@@ -761,6 +855,25 @@ router.put("/update/:id", verifyTenant, async (req, res) => {
   } catch (err) {
     console.error("Employee Update Error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+/* ============================
+   ASSIGN EMPLOYEE TO MANAGER
+============================ */
+router.put("/assign-manager/:id", verifyTenant, async (req, res) => {
+  try {
+    const { managerId } = req.body;
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) return res.status(404).json({ message: "Employee not found" });
+
+    employee.assignedManager = managerId;
+    employee.managerApprovalStatus = "pending";
+    await employee.save();
+
+    res.json({ message: "Employee assigned to manager", employee });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
   }
 });
 

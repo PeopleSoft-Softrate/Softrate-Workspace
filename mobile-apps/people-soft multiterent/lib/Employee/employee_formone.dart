@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'dart:convert';
 
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hrmappfrontend/port.dart';
@@ -26,6 +24,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
   String? verifiedCompanyName;
 
   final TextEditingController companyCodeController = TextEditingController();
+
   // SECTION 1 – Personal Details
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -45,54 +44,15 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
   String? maritalStatus;
   final List<String> maritalOptions = ['Single', 'Married', 'Other'];
 
-  // SECTION 2 – Education
-  String? highestQualification;
-  final List<String> qualifications = [
-    'High School',
-    'UG',
-    'PG',
-    'PhD',
-    'Other',
-  ];
-
   String? selectedRole;
   List<String> roles = ['Other'];
 
-  final TextEditingController specializationController =
-      TextEditingController();
-  final TextEditingController collegeController = TextEditingController();
-  String? yearOfPassing;
-  final List<String> passingYears = List.generate(
-    50,
-    (index) => '${DateTime.now().year - index}',
-  );
+  // SECTION 2 – Project Links (optional, max 5)
+  final List<TextEditingController> projectLinkControllers = [
+    TextEditingController(),
+  ];
 
-  // SECTION 3 – Marksheets & CGPA
-  final TextEditingController ugCgpaController = TextEditingController();
-  final TextEditingController pgCgpaController = TextEditingController();
-  File? marksheet10File;
-  File? marksheet12File;
-  File? ugCertificateFile;
-  File? pgCertificateFile;
-  bool isExperienced = false;
-
-  // SECTION 4 – Experience
-  final TextEditingController totalExperienceController =
-      TextEditingController();
-  final TextEditingController prevOrgController = TextEditingController();
-  final TextEditingController prevDesignationController =
-      TextEditingController();
-  File? experienceLetterFile;
-  File? relievingLetterFile;
-
-  // SECTION 5 – Identification
-  File? resumeFile;
-  File? passportPhotoFile;
-  File? aadhaarFile;
-  File? panFile;
-  File? bankDetailsFile;
-
-  // SECTION 6 – Declarations
+  // SECTION 3 – Declarations
   bool declareAccuracy = false;
   bool consentBackground = false;
   bool agreeCommunication = false;
@@ -113,6 +73,25 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
       });
     }
     _startAnimation();
+  }
+
+  @override
+  void dispose() {
+    companyCodeController.dispose();
+    fullNameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    emergencyNameController.dispose();
+    emergencyNumberController.dispose();
+    dobController.dispose();
+    addressController.dispose();
+    linkedinController.dispose();
+    otherRoleController.dispose();
+    nationalityController.dispose();
+    for (final c in projectLinkControllers) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   void _startAnimation() {
@@ -152,22 +131,6 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
 
   final String baseUrl = getBaseUrl();
 
-  // ------------- FILE PICKER -------------
-
-  Future<void> pickFile(
-    Function(File) assignFile, {
-    List<String>? allowedExtensions,
-  }) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: allowedExtensions == null ? FileType.any : FileType.custom,
-      allowedExtensions: allowedExtensions,
-    );
-
-    if (result != null && result.files.single.path != null) {
-      assignFile(File(result.files.single.path!));
-    }
-  }
-
   Future<void> _pickDob() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -181,7 +144,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
       final formatted =
           '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       setState(() {
-        dobController.text = formatted; // e.g. 2004-11-29
+        dobController.text = formatted;
       });
     }
   }
@@ -209,22 +172,23 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
         setState(() {
           isVerified = true;
           verifiedCompanyName = data['company']['name'];
-          
-          // Update roles dynamically from backend
+
           try {
-            if (data['company'] != null && 
-                data['company']['settings'] != null && 
+            if (data['company'] != null &&
+                data['company']['settings'] != null &&
                 data['company']['settings']['employeeRoles'] != null) {
-              final List<dynamic> fetchedRoles = data['company']['settings']['employeeRoles'];
+              final List<dynamic> fetchedRoles =
+                  data['company']['settings']['employeeRoles'];
               if (fetchedRoles.isNotEmpty) {
                 roles = fetchedRoles.map((e) {
                   return e.toString().split(' ').map((word) {
                     if (word.isEmpty) return word;
-                    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+                    return word[0].toUpperCase() +
+                        word.substring(1).toLowerCase();
                   }).join(' ');
                 }).toList();
                 if (!roles.contains('Other')) roles.add('Other');
-                selectedRole = null; // Clear previous selection
+                selectedRole = null;
               }
             }
           } catch (e) {
@@ -272,10 +236,9 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
       final uri = Uri.parse('$baseUrl/api/employee/add');
       final request = http.MultipartRequest('POST', uri);
 
-      // ---- fields (unchanged) ----
-      request.fields['companyCode'] = companyCodeController.text
-          .trim()
-          .toUpperCase();
+      // Basic fields
+      request.fields['companyCode'] =
+          companyCodeController.text.trim().toUpperCase();
       request.fields['fullName'] = fullNameController.text.trim();
       request.fields['email'] = emailController.text.trim();
       request.fields['phone'] = phoneController.text.trim();
@@ -292,44 +255,17 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
       request.fields['nationality'] = nationalityController.text.trim();
       request.fields['maritalStatus'] = maritalStatus ?? '';
 
-      request.fields['qualification'] = highestQualification ?? '';
-      request.fields['specialization'] = specializationController.text.trim();
-      request.fields['college'] = collegeController.text.trim();
-      request.fields['passingYear'] = yearOfPassing ?? '';
+      // Project links (JSON array)
+      final validLinks = projectLinkControllers
+          .map((c) => c.text.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      request.fields['projectLinks'] = jsonEncode(validLinks);
 
-      request.fields['ugCgpa'] = ugCgpaController.text.trim();
-      request.fields['pgCgpa'] = pgCgpaController.text.trim();
-      request.fields['isExperienced'] = isExperienced.toString();
-
-      request.fields['experienceYears'] = totalExperienceController.text.trim();
-      request.fields['previousOrg'] = prevOrgController.text.trim();
-      request.fields['designation'] = prevDesignationController.text.trim();
-
+      // Declarations
       request.fields['declaration'] = declareAccuracy.toString();
       request.fields['bgConsent'] = consentBackground.toString();
       request.fields['whatsappConsent'] = agreeCommunication.toString();
-
-      Future<void> attach(File? f, String name) async {
-        if (f == null) return;
-        request.files.add(
-          http.MultipartFile(
-            name,
-            f.readAsBytes().asStream(),
-            await f.length(),
-            filename: f.path.split('/').last,
-          ),
-        );
-      }
-
-      await attach(resumeFile, 'resume');
-      await attach(passportPhotoFile, 'photo');
-      await attach(aadhaarFile, 'aadhaar');
-      await attach(panFile, 'pan');
-      await attach(ugCertificateFile, 'ugCertificate');
-      await attach(pgCertificateFile, 'pgCertificate');
-      await attach(experienceLetterFile, 'experienceLetter');
-      await attach(relievingLetterFile, 'relievingLetter');
-      await attach(bankDetailsFile, 'bankProof');
 
       final response = await http.send(request);
 
@@ -337,7 +273,6 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         otherRoleController.clear();
-
         setState(() {
           selectedRole = null;
           isOtherRoleSelected = false;
@@ -345,7 +280,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
 
         showSuccessPopup(
           context,
-          "Your application is submitted and thank you for applying!",
+          "Your application is submitted!\n\nAfter your first login, you'll be asked to complete your profile details (education, documents, etc.).",
         );
       } else {
         String errorMsg = "Submission failed";
@@ -388,9 +323,9 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFFFA726), // orange
-              Color(0xFF8ED1DC), // light teal
-              Color(0xFF00657F), // dark teal
+              Color(0xFFFFA726),
+              Color(0xFF8ED1DC),
+              Color(0xFF00657F),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -398,7 +333,6 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
         ),
         child: Stack(
           children: [
-            // Animated Orbs
             _buildBackgroundOrb(
               size.width * 0.8,
               size.height * 0.1,
@@ -435,8 +369,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(16, 60, 16, 20),
                       decoration: const BoxDecoration(
-                        color: Colors
-                            .transparent, // Background handled by outer container
+                        color: Colors.transparent,
                       ),
                       child: Container(
                         padding: const EdgeInsets.all(22),
@@ -473,16 +406,16 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
+                                    const Text(
                                       "Welcome to",
                                       style: TextStyle(
-                                        color: const Color(0xFF8ED1DC),
+                                        color: Color(0xFF8ED1DC),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: 1.5,
                                       ),
                                     ),
-                                    Text(
+                                    const Text(
                                       "Softrate Global",
                                       style: TextStyle(
                                         color: Colors.white,
@@ -525,9 +458,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
                       decoration: const BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(28),
-                        ), // Full rounding for a floating look
+                        borderRadius: BorderRadius.all(Radius.circular(28)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black12,
@@ -562,7 +493,36 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+
+          // Info banner: remaining fields after login
+          // const SizedBox(height: 10),
+          // Container(
+          //   padding: const EdgeInsets.all(12),
+          //   decoration: BoxDecoration(
+          //     color: const Color(0xFF00657F).withOpacity(0.06),
+          //     borderRadius: BorderRadius.circular(12),
+          //     border: Border.all(
+          //       color: const Color(0xFF00657F).withOpacity(0.2),
+          //     ),
+          //   ),
+          //   // child: Row(
+          //   //   children: [
+          //   //     const Icon(Icons.info_outline, color: Color(0xFF00657F), size: 18),
+          //   //     const SizedBox(width: 8),
+          //   //     Expanded(
+          //   //     //   child: Text(
+          //   //     //     "Education, experience & documents will be collected after your first login.",
+          //   //     //     style: TextStyle(
+          //   //     //       fontSize: 12,
+          //   //     //       color: const Color(0xFF00657F).withOpacity(0.85),
+          //   //     //       height: 1.4,
+          //   //     //     ),
+          //   //     //   ),
+          //   //     // ),
+          //   //   ],
+          //   // ),
+          // ),
+          // const SizedBox(height: 12),
 
           if (!isVerified)
             Row(
@@ -585,9 +545,8 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                           ? null
                           : _verifyCompany,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isVerified
-                            ? Colors.green
-                            : const Color(0xFF008C9E),
+                        backgroundColor:
+                            isVerified ? Colors.green : const Color(0xFF008C9E),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -687,7 +646,6 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       return null;
                     },
                   ),
-
                   inputField(
                     "Emergency Contact Name *",
                     emergencyNameController,
@@ -706,6 +664,9 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       }
                       if (val.trim().length != 10) {
                         return 'Enter a valid 10-digit number';
+                      }
+                      if (val.trim() == phoneController.text.trim()) {
+                        return 'Emergency contact cannot be same as contact number';
                       }
                       return null;
                     },
@@ -727,24 +688,26 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                       ),
                     ),
                   ),
-
                   inputField(
                     "Residential Address *",
                     addressController,
                     maxLines: 3,
                   ),
-                  dropdownField("Role applying for *", selectedRole, roles, (
-                    val,
-                  ) {
-                    setState(() {
-                      selectedRole = val;
-                      isOtherRoleSelected = val == 'Other';
-
-                      if (!isOtherRoleSelected) {
-                        otherRoleController.clear();
-                      }
-                    });
-                  }, key: Key(roles.join(','))),
+                  dropdownField(
+                    "Role applying for *",
+                    selectedRole,
+                    roles,
+                    (val) {
+                      setState(() {
+                        selectedRole = val;
+                        isOtherRoleSelected = val == 'Other';
+                        if (!isOtherRoleSelected) {
+                          otherRoleController.clear();
+                        }
+                      });
+                    },
+                    key: Key(roles.join(',')),
+                  ),
                   if (isOtherRoleSelected)
                     inputField(
                       "Specify Role *",
@@ -756,7 +719,6 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                         return null;
                       },
                     ),
-
                   inputField(
                     "LinkedIn Profile URL *",
                     linkedinController,
@@ -784,167 +746,10 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                     (val) => setState(() => maritalStatus = val),
                   ),
 
-                  // SECTION 2 – Education
-                  sectionHeader("Education", icon: Icons.school_outlined),
-                  dropdownField(
-                    "Highest Qualification *",
-                    highestQualification,
-                    qualifications,
-                    (val) => setState(() => highestQualification = val),
-                  ),
-                  inputField(
-                    "Stream/Specialization *",
-                    specializationController,
-                  ),
-                  inputField("College/University Name *", collegeController),
-                  dropdownField(
-                    "Year of Passing *",
-                    yearOfPassing,
-                    passingYears,
-                    (val) => setState(() => yearOfPassing = val),
-                  ),
+                  // SECTION 2 – Project Links
+                  _buildProjectLinksSection(),
 
-                  // SECTION 3 – Marksheets & CGPA
-                  sectionHeader(
-                    "Marksheets & CGPA",
-                    icon: Icons.folder_open_outlined,
-                  ),
-                  inputField(
-                    "Total CGPA scored in UG degree *",
-                    ugCgpaController,
-                    type: TextInputType.number,
-                  ),
-                  inputField(
-                    "Total CGPA scored in PG degree (optional)",
-                    pgCgpaController,
-                    type: TextInputType.number,
-                    validator: (val) => null,
-                  ),
-                  filePickerField(
-                    "10th Marksheet (PDF) *",
-                    marksheet10File,
-                    (file) => setState(() => marksheet10File = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  filePickerField(
-                    "12th Marksheet (PDF) *",
-                    marksheet12File,
-                    (file) => setState(() => marksheet12File = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  filePickerField(
-                    "UG Certificate (PDF) *",
-                    ugCertificateFile,
-                    (file) => setState(() => ugCertificateFile = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  filePickerField(
-                    "PG Certificate (PDF, optional)",
-                    pgCertificateFile,
-                    (file) => setState(() => pgCertificateFile = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Fresher / Experienced
-                  sectionHeader("Experience type", icon: Icons.work_outline),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F9FC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE1E6F0)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<bool>(
-                            dense: true,
-                            title: const Text("Fresher"),
-                            value: false,
-                            groupValue: isExperienced,
-                            onChanged: (val) =>
-                                setState(() => isExperienced = val ?? false),
-                          ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<bool>(
-                            dense: true,
-                            title: const Text("Experienced"),
-                            value: true,
-                            groupValue: isExperienced,
-                            onChanged: (val) =>
-                                setState(() => isExperienced = val ?? false),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // SECTION 4 – Experience
-                  if (isExperienced) ...[
-                    sectionHeader("Experience", icon: Icons.badge_outlined),
-                    inputField(
-                      "Total Years of Experience",
-                      totalExperienceController,
-                      type: TextInputType.number,
-                    ),
-                    inputField("Previous Organization(s)", prevOrgController),
-                    inputField(
-                      "Previous Designation(s)",
-                      prevDesignationController,
-                    ),
-                    filePickerField(
-                      "Experience Letter (PDF)",
-                      experienceLetterFile,
-                      (file) => setState(() => experienceLetterFile = file),
-                      allowedExtensions: ['pdf'],
-                    ),
-                    filePickerField(
-                      "Relieving Letter (PDF)",
-                      relievingLetterFile,
-                      (file) => setState(() => relievingLetterFile = file),
-                      allowedExtensions: ['pdf'],
-                    ),
-                  ],
-
-                  // SECTION 5 – Identification
-                  sectionHeader(
-                    "Identification documents",
-                    icon: Icons.verified_user_outlined,
-                  ),
-                  filePickerField(
-                    "Updated Resume (PDF)",
-                    resumeFile,
-                    (file) => setState(() => resumeFile = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  filePickerField(
-                    "Passport-Size Photo (JPG/PNG)",
-                    passportPhotoFile,
-                    (file) => setState(() => passportPhotoFile = file),
-                    allowedExtensions: ['jpg', 'png', 'jpeg'],
-                  ),
-                  filePickerField(
-                    "Aadhaar Card (PDF)",
-                    aadhaarFile,
-                    (file) => setState(() => aadhaarFile = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  filePickerField(
-                    "PAN Card (PDF)",
-                    panFile,
-                    (file) => setState(() => panFile = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-                  filePickerField(
-                    "Bank Account Details (PDF)",
-                    bankDetailsFile,
-                    (file) => setState(() => bankDetailsFile = file),
-                    allowedExtensions: ['pdf'],
-                  ),
-
-                  // SECTION 6 – Declarations
+                  // SECTION 3 – Declarations
                   sectionHeader(
                     "Declarations",
                     icon: Icons.check_circle_outline,
@@ -977,7 +782,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                               ),
                             )
                           : const Text(
-                              "Submit Form",
+                              "Submit Application",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -993,6 +798,90 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
           ),
         ],
       ),
+    );
+  }
+
+  // ------------- PROJECT LINKS SECTION -------------
+
+  Widget _buildProjectLinksSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        sectionHeader("Project Links", icon: Icons.link_rounded),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7F9FC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE1E6F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Add up to 5 project links (GitHub, portfolio, etc.) — optional",
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 8),
+              ...List.generate(projectLinkControllers.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: projectLinkControllers[index],
+                          keyboardType: TextInputType.url,
+                          decoration: _fieldDecoration(
+                            "Project ${index + 1} URL",
+                          ).copyWith(
+                            prefixIcon: const Icon(
+                              Icons.link,
+                              size: 18,
+                              color: Color(0xFF008C9E),
+                            ),
+                          ),
+                          validator: (_) => null, // optional
+                        ),
+                      ),
+                      if (index > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                projectLinkControllers[index].dispose();
+                                projectLinkControllers.removeAt(index);
+                              });
+                            },
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+              if (projectLinkControllers.length < 5)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      projectLinkControllers.add(TextEditingController());
+                    });
+                  },
+                  icon: const Icon(Icons.add_circle_outline,
+                      color: Color(0xFF008C9E)),
+                  label: const Text(
+                    "Add another project",
+                    style: TextStyle(color: Color(0xFF008C9E), fontSize: 13),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1050,7 +939,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
     String? Function(String?)? validator,
     int maxLines = 1,
     bool enabled = true,
-    List<TextInputFormatter>? inputFormatters, // Add this
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1059,7 +948,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
         keyboardType: type,
         maxLines: maxLines,
         enabled: enabled,
-        inputFormatters: inputFormatters, // Add this
+        inputFormatters: inputFormatters,
         validator:
             validator ??
             (val) => val == null || val.trim().isEmpty
@@ -1104,7 +993,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
           width: MediaQuery.of(context).size.width * 0.9,
           offset: const Offset(0, 8),
           decoration: BoxDecoration(
-            color: Colors.white, // 👈 clean white background
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -1114,64 +1003,6 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget filePickerField(
-    String label,
-    File? file,
-    Function(File) onPicked, {
-    List<String>? allowedExtensions,
-  }) {
-    final fileName = file != null ? file.path.split("/").last : label;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE1E6F0)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                fileName,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: file == null
-                      ? Colors.grey[500]
-                      : const Color(0xFF102A43),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFE0F4F7),
-                foregroundColor: const Color(0xFF008C9E),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              onPressed: () =>
-                  pickFile(onPicked, allowedExtensions: allowedExtensions),
-              child: const Text(
-                "Choose file",
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1193,7 +1024,8 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
             controlAffinity: ListTileControlAffinity.leading,
             title: const Text("I declare information is accurate"),
             value: declareAccuracy,
-            onChanged: (val) => setState(() => declareAccuracy = val ?? false),
+            onChanged: (val) =>
+                setState(() => declareAccuracy = val ?? false),
           ),
           CheckboxListTile(
             dense: true,

@@ -58,10 +58,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       }
     }
 
-    // 2. Wait 2 seconds, then fade out and go to next screen
+    final bool isUserLoggedIn = widget.hrLoggedIn || widget.employeeLoggedIn || widget.initialInternId != null;
+
+    // Wait 2 seconds, then proceed
     Timer(const Duration(seconds: 2), () {
       if (mounted) {
-        _controller.forward().then((_) => _navigate());
+        if (isUserLoggedIn) {
+          _navigate();
+        } else {
+          _controller.forward().then((_) => _navigate());
+        }
       }
     });
   }
@@ -71,29 +77,45 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     try {
       Widget initialScreen;
+      bool isDashboard = false;
+
       if (widget.hrLoggedIn) {
         initialScreen = const HrdashBoard();
+        isDashboard = true;
       } else if (widget.employeeLoggedIn && widget.employeeId != null) {
         initialScreen = Employeedashboard(employeeId: widget.employeeId!);
+        isDashboard = true;
       } else if (widget.initialInternId != null) {
         initialScreen = const AttendancePage();
+        isDashboard = true;
       } else {
         initialScreen = const homescreen();
       }
 
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => initialScreen,
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 1000),
-        ),
-      );
+      if (isDashboard) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => initialScreen,
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => initialScreen,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 1000),
+          ),
+        );
+      }
     } catch (e) {
       debugPrint("Splash Navigation Error: $e");
       // Fallback to Home if everything fails

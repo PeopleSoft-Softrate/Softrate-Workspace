@@ -68,22 +68,26 @@ export class InternList implements OnInit {
 
     let current = 0;
     let alumni = 0;
+    let allActive = 0;
     
     all.forEach(i => {
       const isStatusValid = i.status === 'approved' || i.status === 'ongoing';
-      let isCurrent = false;
-      if (isStatusValid && i.onboardingDate) {
-        const d = new Date(i.onboardingDate);
-        d.setHours(0, 0, 0, 0);
-        if (d <= today) isCurrent = true;
+      if (isStatusValid) {
+        allActive++;
+        let isCurrent = false;
+        if (i.onboardingDate) {
+          const d = new Date(i.onboardingDate);
+          d.setHours(0, 0, 0, 0);
+          if (d <= today) isCurrent = true;
+        }
+        if (isCurrent) current++;
       }
 
-      if (isCurrent) current++;
-      if (i.status === 'alumni' || i.status === 'completed') alumni++;
+      if (i.status === 'alumni' || i.status === 'completed' || i.status === 'drop') alumni++;
     });
 
     return {
-      all: all.length,
+      all: allActive,
       current,
       alumni
     };
@@ -107,18 +111,27 @@ export class InternList implements OnInit {
 
   fetchInterns() {
     this.isLoading.set(true);
-    const backendStatus = this.statusFilter();
-    
-    this.apiService.getAllActiveInterns(this.rangeFilter(), backendStatus).subscribe({
-      next: (data) => {
-        this.allInterns.set(data);
+    let activeInterns: any[] = [];
+    let alumniInterns: any[] = [];
+    let completed = 0;
+
+    const finalize = () => {
+      completed++;
+      if (completed === 2) {
+        this.allInterns.set([...activeInterns, ...alumniInterns]);
         this.applyFilter();
         this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to fetch interns', err);
-        this.isLoading.set(false);
       }
+    };
+
+    this.apiService.getAllActiveInterns('all', 'all').subscribe({
+      next: (data) => { activeInterns = data; finalize(); },
+      error: () => finalize()
+    });
+
+    this.apiService.getAllActiveInterns('alumni', 'all').subscribe({
+      next: (data) => { alumniInterns = data; finalize(); },
+      error: () => finalize()
     });
   }
 
@@ -126,11 +139,13 @@ export class InternList implements OnInit {
     const query = this.searchQuery().toLowerCase();
     let filtered = this.allInterns();
     
-    const isCurrentActive = this.rangeFilter() === 'current';
-    if (isCurrentActive) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
+    const range = this.rangeFilter();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (range === 'alumni') {
+      filtered = filtered.filter(i => i.status === 'drop' || i.status === 'alumni' || i.status === 'completed');
+    } else if (range === 'current') {
       filtered = filtered.filter(i => {
         const isStatusValid = i.status === 'approved' || i.status === 'ongoing';
         if (!isStatusValid) return false;
@@ -140,6 +155,8 @@ export class InternList implements OnInit {
         onboardingDate.setHours(0, 0, 0, 0);
         return onboardingDate <= today;
       });
+    } else if (range === 'all') {
+      filtered = filtered.filter(i => i.status === 'approved' || i.status === 'ongoing');
     }
 
     if (query) {
@@ -188,12 +205,12 @@ export class InternList implements OnInit {
   setFilter(range: string) {
     this.rangeFilter.set(range);
     this.statusFilter.set('all');
-    this.fetchInterns();
+    this.applyFilter(); // Filter locally instead of refetching
   }
 
   setStatus(status: string) {
     this.statusFilter.set(status);
-    this.fetchInterns();
+    this.applyFilter(); // You can add status filtering in applyFilter if needed, or rely on it
   }
 
   getStatusColor(status: string): string {

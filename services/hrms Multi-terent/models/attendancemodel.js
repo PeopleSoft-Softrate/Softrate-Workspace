@@ -30,8 +30,8 @@ const AttendanceSchema = new mongoose.Schema({
   punchInTime: { type: Date, default: null },
   punchOutTime: { type: Date, default: null, sparse: true },
   duration: { type: String, default: null },
-  punchInLocation: { type: pointSchema, default: null },
-  punchOutLocation: { type: pointSchema, default: null },
+  punchInLocation: { type: String, default: null },
+  punchOutLocation: { type: String, default: null },
 });
 
 // Indexes for faster querying

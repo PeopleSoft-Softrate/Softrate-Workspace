@@ -97,7 +97,7 @@ router.post("/punch-in", verifyTenant, async (req, res) => {
     }
 
     record.punchInTime = new Date();
-    record.punchInLocation = toGeoPoint(location);
+    record.punchInLocation = location || null;
 
     await record.save();
 
@@ -133,7 +133,7 @@ router.post("/punch-out", verifyTenant, async (req, res) => {
     }
 
     record.punchOutTime = new Date();
-    record.punchOutLocation = toGeoPoint(location);
+    record.punchOutLocation = location || null;
 
     // Calculate duration (HH:mm)
     const diffMs = record.punchOutTime - record.punchInTime;
@@ -384,7 +384,8 @@ router.get("/export/pdf/:internId", verifyTenant, async (req, res) => {
       }
     }
 
-    const fullName = intern?.fullName || employee?.fullName || "N/A";
+    const rawFullName = intern?.fullName || employee?.fullName || "N/A";
+    const fullName = rawFullName.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
     const resolvedId = intern?.internid || employee?.EmployeeId || internId;
     console.log('Resolved Name:', fullName, 'Resolved ID:', resolvedId);
 
@@ -416,24 +417,28 @@ router.get("/export/pdf/:internId", verifyTenant, async (req, res) => {
       if (logoData && logoData.startsWith("data:image")) {
         const base64Data = logoData.split(",")[1];
         const logoBuffer = Buffer.from(base64Data, "base64");
-        doc.image(logoBuffer, 50, 40, { width: 100, fit: [100, 100] });
+        doc.image(logoBuffer, 40, 30, { width: 160 });
       } else {
         const fallbackPath = require("path").join(__dirname, "../assets/images/pdf_logo.png");
         const fs = require("fs");
         if (fs.existsSync(fallbackPath)) {
-          doc.image(fallbackPath, 50, 40, { width: 100 });
+          doc.image(fallbackPath, 40, 30, { width: 160 });
         }
       }
     } catch (e) {
       console.warn("Could not load PDF logo:", e.message);
     }
 
+    // Draw "Attendance Report" on the right, straight with the logo (y=45 centers it vertically with the logo)
+    doc.y = 45;
     doc
       .fontSize(20)
       .fillColor("#00657F")
-      .text("Attendance Report", { align: "center" });
+      .text("Attendance Report", { align: "right" });
 
-    doc.moveDown(0.5);
+    // Move cursor below the logo to ensure the employee info doesn't overlap
+    // Logo starts at y=30 and has some height, so y=110 provides a nice gap
+    doc.y = 110;
 
     doc
       .fontSize(11)

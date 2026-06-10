@@ -43,6 +43,41 @@ export class Dashboard implements OnInit {
   chartType = signal<'bar' | 'line' | 'pie'>('bar');
   isLoading = signal(true);
 
+  showDayFilter = signal(false);
+  hiddenDays = signal<string[]>([]);
+
+  toggleDay(day: string) {
+    this.hiddenDays.update(days => {
+      const newDays = days.includes(day) ? days.filter(d => d !== day) : [...days, day];
+      localStorage.setItem('dashboard_hidden_days', JSON.stringify(newDays));
+      return newDays;
+    });
+  }
+
+  getFullWeekday(item: any): string {
+    if (item.date) {
+      const dateParts = item.date.split('-');
+      const dateObj = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]));
+      return dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+    } else {
+      const map: any = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday' };
+      return map[item.day] || item.day;
+    }
+  }
+
+  getFilteredTrend(trend: any[] | undefined): any[] {
+    if (!trend) return [];
+    
+    // Filter hidden days
+    let filtered = trend.filter(t => {
+      const fullDay = this.getFullWeekday(t);
+      const shortDay = fullDay.substring(0, 3);
+      return !this.hiddenDays().includes(shortDay);
+    });
+
+    return filtered;
+  }
+
   // Intersection Observer properties
   @ViewChild('summaryRow') summaryRow!: ElementRef;
   isSummaryInView = signal(false);
@@ -115,6 +150,15 @@ export class Dashboard implements OnInit {
     setInterval(() => {
       this.currentTime.set(new Date());
     }, 1000);
+
+    const savedHiddenDays = localStorage.getItem('dashboard_hidden_days');
+    if (savedHiddenDays) {
+      try {
+        this.hiddenDays.set(JSON.parse(savedHiddenDays));
+      } catch (e) {
+        console.error('Failed to parse saved hidden days', e);
+      }
+    }
   }
 
   ngAfterViewInit() {
@@ -193,8 +237,9 @@ export class Dashboard implements OnInit {
   getLinePath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     let path = '';
+    const segment = 100 / trend.length;
     trend.forEach((day, index) => {
-      const x = (index + 0.5) * (100 / 7);
+      const x = (index + 0.5) * segment;
       const y = 100 - (day.height || 0); // Y is inverted in SVG
       if (index === 0) {
         path += `M ${x} ${y} `;
@@ -208,8 +253,9 @@ export class Dashboard implements OnInit {
   getSmoothLinePath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     let path = '';
+    const segment = 100 / trend.length;
     const points = trend.map((day, index) => ({
-      x: (index + 0.5) * (100 / 7),
+      x: (index + 0.5) * segment,
       y: 100 - (day.height || 0)
     }));
     
@@ -231,8 +277,9 @@ export class Dashboard implements OnInit {
   getAreaPath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     const linePath = this.getSmoothLinePath(trend);
-    const lastX = (trend.length - 0.5) * (100 / 7);
-    const firstX = 0.5 * (100 / 7);
+    const segment = 100 / trend.length;
+    const lastX = (trend.length - 0.5) * segment;
+    const firstX = 0.5 * segment;
     return `${linePath} L ${lastX} 100 L ${firstX} 100 Z`;
   }
 

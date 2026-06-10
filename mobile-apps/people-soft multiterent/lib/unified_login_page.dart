@@ -11,8 +11,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'package:hrmappfrontend/device_mismatch_page.dart';
+import 'package:hrmappfrontend/device_mismatch_page.dart';
 import 'package:hrmappfrontend/force_password_reset_page.dart';
 import 'package:hrmappfrontend/Employee/employee_complete_details.dart';
+import 'package:hrmappfrontend/manager/manager_dashboard.dart';
 
 class UnifiedLoginPage extends StatefulWidget {
   const UnifiedLoginPage({super.key});
@@ -173,6 +175,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           final internId = (user['internid'] ?? user['email'] ?? '').toString();
           await prefs.setString('internId', internId);
           await prefs.setString('internMongoId', (user['_id'] ?? '').toString());
+          await prefs.setBool('internLoggedIn', true);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const AttendancePage()),
@@ -238,7 +241,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => Employeedashboard(employeeId: empId),
+              builder: (_) => const ManagerDashboard(),
             ),
           );
           break;

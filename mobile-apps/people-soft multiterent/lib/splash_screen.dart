@@ -6,12 +6,14 @@ import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
+import 'package:hrmappfrontend/manager/manager_dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool hrLoggedIn;
   final String? initialInternId;
   final bool employeeLoggedIn;
   final String? employeeId;
+  final bool managerLoggedIn;
 
   const SplashScreen({
     super.key,
@@ -19,6 +21,7 @@ class SplashScreen extends StatefulWidget {
     this.initialInternId,
     required this.employeeLoggedIn,
     this.employeeId,
+    this.managerLoggedIn = false,
   });
 
   @override
@@ -58,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       }
     }
 
-    final bool isUserLoggedIn = widget.hrLoggedIn || widget.employeeLoggedIn || widget.initialInternId != null;
+    final bool isUserLoggedIn = widget.hrLoggedIn || widget.employeeLoggedIn || widget.managerLoggedIn || widget.initialInternId != null;
 
     // Wait 2 seconds, then proceed
     Timer(const Duration(seconds: 2), () {
@@ -81,6 +84,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
       if (widget.hrLoggedIn) {
         initialScreen = const HrdashBoard();
+        isDashboard = true;
+      } else if (widget.managerLoggedIn) {
+        initialScreen = const ManagerDashboard();
         isDashboard = true;
       } else if (widget.employeeLoggedIn && widget.employeeId != null) {
         initialScreen = Employeedashboard(employeeId: widget.employeeId!);

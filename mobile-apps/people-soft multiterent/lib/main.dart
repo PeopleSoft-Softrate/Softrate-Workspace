@@ -15,13 +15,15 @@ void main() async {
   final internId = prefs.getString('internId');
   final employeeLoggedIn = prefs.getBool("employeeLoggedIn") ?? false;
   final employeeId = prefs.getString("employeeId");
+  final managerLoggedIn = prefs.getBool("manager_logged_in") ?? false;
 
   runApp(MainApp(
     hrLoggedIn: hrLoggedIn,
     // Only pass IDs if actually logged in (prevents device-mismatch redirect loop)
     initialInternId: internLoggedIn ? internId : null,
-    employeeLoggedIn: employeeLoggedIn,
+    employeeLoggedIn: employeeLoggedIn && !managerLoggedIn,
     employeeId: employeeLoggedIn ? employeeId : null,
+    managerLoggedIn: managerLoggedIn,
   ));
 }
 
@@ -30,6 +32,7 @@ class MainApp extends StatelessWidget {
   final String? initialInternId;
   final bool employeeLoggedIn;
   final String? employeeId;
+  final bool managerLoggedIn;
 
   const MainApp({
     super.key,
@@ -37,6 +40,7 @@ class MainApp extends StatelessWidget {
     this.initialInternId,
     required this.employeeLoggedIn,
     this.employeeId,
+    required this.managerLoggedIn,
   });
 
   @override
@@ -49,6 +53,7 @@ class MainApp extends StatelessWidget {
         initialInternId: initialInternId,
         employeeLoggedIn: employeeLoggedIn,
         employeeId: employeeId,
+        managerLoggedIn: managerLoggedIn,
       ),
     );
   }

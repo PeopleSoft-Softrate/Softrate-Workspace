@@ -160,11 +160,15 @@ export class ApiService {
           for (let i = 0; i < 7; i++) {
             if (i < missingCount) {
               // Pad older missing days with 0 counts
-              result.push({ day: daysFallback[i], count: 0 });
+              result.push({ day: daysFallback[i], count: 0, date: null });
             } else {
               // Use actual data
               const actualData = trendArray[i - missingCount];
-              result.push({ day: actualData.day || daysFallback[i], count: actualData.count || 0 });
+              result.push({ 
+                day: actualData.day || daysFallback[i], 
+                count: actualData.count || 0,
+                date: actualData.date || null
+              });
             }
           }
           return result;

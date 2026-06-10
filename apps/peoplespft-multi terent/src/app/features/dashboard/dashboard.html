@@ -152,25 +152,55 @@
           <h3>Project Analytics</h3>
           <p class="subtitle" style="font-size: var(--text-sm); color: var(--text-muted); margin: 0.25rem 0 0 0;">Weekly participation analysis</p>
         </div>
-        <div class="header-meta">
+        <div class="header-meta" style="display: flex; gap: 10px; align-items: center;">
           <!-- Chart Toggle -->
           <div class="chart-toggle-group">
             <button class="chart-toggle-btn" [class.active]="chartType() === 'bar'" (click)="setChartType('bar')">Bar</button>
             <button class="chart-toggle-btn" [class.active]="chartType() === 'line'" (click)="setChartType('line')">Line</button>
             <button class="chart-toggle-btn" [class.active]="chartType() === 'pie'" (click)="setChartType('pie')">Pie</button>
           </div>
+          <!-- Filter toggle -->
+          <div class="chart-filter-toggle" style="position: relative;">
+            <button (click)="showDayFilter.set(!showDayFilter())" class="icon-btn" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            </button>
+            <div class="filter-dropdown-overlay" *ngIf="showDayFilter()" (click)="showDayFilter.set(false)" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99;"></div>
+            <div class="filter-dropdown" *ngIf="showDayFilter()" style="position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; padding: 12px; width: 160px; display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Mon')" (change)="toggleDay('Mon')"> Monday
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Tue')" (change)="toggleDay('Tue')"> Tuesday
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Wed')" (change)="toggleDay('Wed')"> Wednesday
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Thu')" (change)="toggleDay('Thu')"> Thursday
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Fri')" (change)="toggleDay('Fri')"> Friday
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Sat')" (change)="toggleDay('Sat')"> Saturday
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                <input type="checkbox" [checked]="!hiddenDays().includes('Sun')" (change)="toggleDay('Sun')"> Sunday
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- BAR CHART VIEW -->
       <div class="chart-container custom-bar-chart" *ngIf="chartType() === 'bar'">
-        <div class="chart-bar-group" *ngFor="let day of (selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend); let i = index">
+        <div class="chart-bar-group" *ngFor="let day of getFilteredTrend(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend); let i = index">
           <div class="bar-wrapper">
             <!-- Previous week bar overlay (striped) -->
             <div class="bar striped-green"
-              [style.height.%]="(selectedModel() === 'interns' ? stats().internPrevTrend?.[i]?.height : stats().employeePrevTrend?.[i]?.height) || 0"
+              [style.height.%]="getFilteredTrend(selectedModel() === 'interns' ? stats().internPrevTrend : stats().employeePrevTrend)[i]?.height || 0"
               [style.animation-delay]="(i * 80) + 'ms'"
-              *ngIf="(selectedModel() === 'interns' ? stats().internPrevTrend?.[i]?.height : stats().employeePrevTrend?.[i]?.height) > 0">
+              *ngIf="(getFilteredTrend(selectedModel() === 'interns' ? stats().internPrevTrend : stats().employeePrevTrend)[i]?.height || 0) > 0">
             </div>
             <!-- Current week bar -->
             <div class="bar solid-green"
@@ -189,7 +219,7 @@
               </div>
             </div>
           </div>
-          <span class="bar-label" style="text-transform: uppercase;">{{ day.day | slice:0:1 }}</span>
+          <span class="bar-label" style="text-transform: capitalize;">{{ getFullWeekday(day) | slice:0:3 }}</span>
         </div>
       </div>
       <div class="chart-legend-bottom" *ngIf="chartType() === 'bar'" style="display: flex; gap: 2rem; justify-content: center; width: 100%; margin-top: 0.5rem; padding-bottom: 1rem; font-size: 0.85rem; color: #64748b; font-weight: 500;">
@@ -212,19 +242,19 @@
           </defs>
 
           <!-- Area fill -->
-          <path [attr.d]="getAreaPath(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)" fill="url(#lineFillGradient)" />
+          <path [attr.d]="getAreaPath(getFilteredTrend(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend))" fill="url(#lineFillGradient)" />
           
           <!-- Previous Week Smooth Line -->
-          <path [attr.d]="getSmoothLinePath(selectedModel() === 'interns' ? stats().internPrevTrend : stats().employeePrevTrend)"
+          <path [attr.d]="getSmoothLinePath(getFilteredTrend(selectedModel() === 'interns' ? stats().internPrevTrend : stats().employeePrevTrend))"
                 fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6, 6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
 
           <!-- Current Week Smooth Line -->
-          <path [attr.d]="getSmoothLinePath(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)"
+          <path [attr.d]="getSmoothLinePath(getFilteredTrend(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend))"
                 fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
         </svg>
 
         <div class="line-x-axis" style="display: flex; justify-content: space-around; position: absolute; bottom: -25px; width: 100%; padding: 0 10px;">
-          <span class="bar-label" *ngFor="let day of (selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)" style="text-transform: uppercase;">{{ day.day | slice:0:1 }}</span>
+          <span class="bar-label" *ngFor="let day of getFilteredTrend(selectedModel() === 'interns' ? stats().internTrend : stats().employeeTrend)" style="text-transform: capitalize;">{{ getFullWeekday(day) | slice:0:3 }}</span>
         </div>
       </div>
       <div class="chart-legend-bottom" *ngIf="chartType() === 'line'" style="display: flex; gap: 2rem; justify-content: center; width: 100%; margin-top: 1.5rem; padding-bottom: 1rem; font-size: 0.85rem; color: #64748b; font-weight: 500;">

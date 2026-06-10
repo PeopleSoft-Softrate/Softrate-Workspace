@@ -41,6 +41,7 @@
   padding: 0.25rem;
   border-radius: 12px;
   gap: 0.25rem;
+  margin-top: 0.25ren;
 }
 
 .model-toggle-group button {
@@ -104,7 +105,7 @@
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: .25rem;
   position: relative;
   overflow: hidden;
   transition: all var(--transition-smooth);
@@ -125,10 +126,11 @@
 }
 
 .stat-value {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-weight-extrabold);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-medium);
   color: var(--accent-primary);
   line-height: 1.1;
+  letter-spacing: 0.02em;
   margin: 0 0 0.25rem 0;
 }
 
@@ -151,27 +153,22 @@
 
 /* Color Themes for Stats */
 .stat-card.green .stat-icon-container {
-  background: #DCFCE7;
   color: #166534;
 }
 
 .stat-card.orange .stat-icon-container {
-  background: #FFEDD5;
   color: #9A3412;
 }
 
 .stat-card.teal .stat-icon-container {
-  background: #CCFBF1;
   color: #115E59;
 }
 
 .stat-card.blue .stat-icon-container {
-  background: #DBEAFE;
   color: #1E40AF;
 }
 
 .stat-card.purple .stat-icon-container {
-  background: #F3E8FF;
   color: #6B21A8;
 }
 
@@ -250,7 +247,7 @@
   padding: 1rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   cursor: pointer;
   transition: all var(--transition-smooth);
 }
@@ -270,22 +267,18 @@
 }
 
 .action-card.teal .action-icon-box {
-  background: #F0FDFA;
   color: #0D9488;
 }
 
 .action-card.orange .action-icon-box {
-  background: #FFF7ED;
   color: #EA580C;
 }
 
 .action-card.purple .action-icon-box {
-  background: #FAF5FF;
   color: #9333EA;
 }
 
 .action-card.blue .action-icon-box {
-  background: #EFF6FF;
   color: #2563EB;
 }
 

@@ -65,6 +65,7 @@ export class EmployeeDashboard implements OnInit {
   readonly Mail01Icon = Mail01Icon;
   readonly CallIcon = CallIcon;
 
+  isLoading = signal<boolean>(true);
   employeeData = signal<any>(null);
   currentTime = signal(new Date());
   pendingTeamRequests = signal<any[]>([]);
@@ -73,12 +74,95 @@ export class EmployeeDashboard implements OnInit {
   // Real-time Dashboard Stats signals
   monthlyAttendance = signal<string>('0%');
   attendanceSubtitle = signal<string>('0 days present');
-  leavesAvailable = signal<string>('0 Days');
-  leavesSubtitle = signal<string>('Casual & Sick');
-  activeTasksCount = signal<string>('00');
-  tasksSubtitle = signal<string>('0 active projects');
+  performanceScore = signal<string>('0.0');
+  performanceSubtitle = signal<string>('No review yet');
+  
+  // Timer signals
+  todayPunchInTime = signal<Date | null>(null);
+  todayPunchOutTime = signal<Date | null>(null);
+  timerDisplay = signal<string>('00:00:00');
+  timerStatus = signal<string>('Please Punch In');
 
   isManager = computed(() => this.employeeData()?.isManager === true);
+
+  // Trend Chart signals
+  workDuration = signal<number>(8);
+  chartType = signal<'bar' | 'line'>('bar');
+  showDayFilter = signal<boolean>(false);
+  hiddenDays = signal<string[]>([]);
+  
+  employeeTrend = signal<any[]>([
+    { day: 'Mon', count: 100, height: 100 },
+    { day: 'Tue', count: 100, height: 100 },
+    { day: 'Wed', count: 100, height: 100 },
+    { day: 'Thu', count: 100, height: 100 },
+    { day: 'Fri', count: 100, height: 100 },
+    { day: 'Sat', count: 0, height: 5 },
+    { day: 'Sun', count: 0, height: 5 }
+  ]);
+  
+  employeePrevTrend = signal<any[]>([
+    { day: 'Mon', count: 100, height: 100 },
+    { day: 'Tue', count: 100, height: 100 },
+    { day: 'Wed', count: 100, height: 100 },
+    { day: 'Thu', count: 100, height: 100 },
+    { day: 'Fri', count: 100, height: 100 },
+    { day: 'Sat', count: 0, height: 5 },
+    { day: 'Sun', count: 0, height: 5 }
+  ]);
+
+  setChartType(type: 'bar' | 'line') {
+    this.chartType.set(type);
+  }
+
+  toggleDay(day: string) {
+    this.hiddenDays.update(days => {
+      return days.includes(day) ? days.filter(d => d !== day) : [...days, day];
+    });
+  }
+
+  getFullWeekday(dayObj: any): string {
+    const map: any = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday' };
+    return map[dayObj.day] || dayObj.day;
+  }
+
+  getFilteredTrend(trendArray: any[]) {
+    if (!trendArray) return [];
+    return trendArray.filter(t => !this.hiddenDays().includes(t.day));
+  }
+
+  getSmoothLinePath(trend: any[] | undefined): string {
+    if (!trend || trend.length === 0) return '';
+    let path = '';
+    const segment = 100 / trend.length;
+    const points = trend.map((day, index) => ({
+      x: (index + 0.5) * segment,
+      y: 100 - (day.height || 0)
+    }));
+    
+    points.forEach((point, i) => {
+      if (i === 0) {
+        path += `M ${point.x} ${point.y} `;
+      } else {
+        const prev = points[i - 1];
+        const cp1x = prev.x + (point.x - prev.x) / 2;
+        const cp1y = prev.y;
+        const cp2x = prev.x + (point.x - prev.x) / 2;
+        const cp2y = point.y;
+        path += `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${point.x} ${point.y} `;
+      }
+    });
+    return path;
+  }
+
+  getAreaPath(trend: any[] | undefined): string {
+    if (!trend || trend.length === 0) return '';
+    const linePath = this.getSmoothLinePath(trend);
+    const segment = 100 / trend.length;
+    const lastX = (trend.length - 0.5) * segment;
+    const firstX = 0.5 * segment;
+    return `${linePath} L ${lastX} 100 L ${firstX} 100 Z`;
+  }
 
   ngOnInit() {
     const data = localStorage.getItem('user_data');
@@ -89,8 +173,26 @@ export class EmployeeDashboard implements OnInit {
       const empId = parsedData.EmployeeId || parsedData.internid;
       const mongoId = parsedData._id;
 
-      this.fetchAttendanceStats(empId);
-      this.fetchLeaveStats(empId);
+      this.apiService.getCompanySettings().subscribe({
+        next: (res: any) => {
+          if (res && res.settings && res.settings.workDurationSettings) {
+             const wds = res.settings.workDurationSettings;
+             const role = parsedData.role?.toLowerCase() || '';
+             let duration = 8;
+             if (parsedData.isHr) duration = wds.hr || 8;
+             else if (parsedData.isManager) duration = wds.manager || 8;
+             else if (parsedData.internid || role.includes('intern')) duration = wds.intern || 6;
+             else duration = wds.employee || 8;
+             this.workDuration.set(duration);
+          }
+          this.fetchAttendanceStats(empId);
+        },
+        error: () => {
+          this.fetchAttendanceStats(empId);
+        }
+      });
+
+      this.fetchPerformanceStats(empId);
       this.fetchProjectStats(mongoId);
 
       if (parsedData.isManager) {
@@ -98,10 +200,42 @@ export class EmployeeDashboard implements OnInit {
       }
     }
 
-    // Update clock
+    // Update clock and timer
     setInterval(() => {
       this.currentTime.set(new Date());
+      this.updateTimer();
     }, 1000);
+
+    // Turn off skeleton loading after a short delay
+    setTimeout(() => {
+      this.isLoading.set(false);
+    }, 1200);
+  }
+
+  updateTimer() {
+    const punchIn = this.todayPunchInTime();
+    const punchOut = this.todayPunchOutTime();
+    
+    if (!punchIn) {
+      this.timerDisplay.set('00:00:00');
+      this.timerStatus.set('Please Punch In');
+      return;
+    }
+    
+    const endTime = punchOut ? punchOut.getTime() : new Date().getTime();
+    const diff = Math.max(0, endTime - punchIn.getTime());
+    
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    
+    this.timerDisplay.set(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    
+    if (punchOut) {
+      this.timerStatus.set('Punched Out');
+    } else {
+      this.timerStatus.set('Punched In');
+    }
   }
 
   fetchAttendanceStats(empId: string) {
@@ -132,47 +266,97 @@ export class EmployeeDashboard implements OnInit {
         const rate = passedDays > 0 ? Math.round((presentDays / passedDays) * 100) : 0;
         this.monthlyAttendance.set(`${Math.min(rate, 100)}%`);
         this.attendanceSubtitle.set(`${presentDays} of ${passedDays} days present`);
+        
+        // Extract today's punch in/out times
+        const todayStr = `${currentYearStr}-${currentMonthStr}-${String(now.getDate()).padStart(2, '0')}`;
+        const todayRecord = attendanceList.find((r: any) => r.date === todayStr);
+        if (todayRecord && todayRecord.punchInTime) {
+          this.todayPunchInTime.set(new Date(todayRecord.punchInTime));
+          if (todayRecord.punchOutTime) {
+            this.todayPunchOutTime.set(new Date(todayRecord.punchOutTime));
+          } else {
+            this.todayPunchOutTime.set(null);
+          }
+        } else {
+          this.todayPunchInTime.set(null);
+          this.todayPunchOutTime.set(null);
+        }
+        this.updateTimer();
+
+        // Calculate and set actual weekly trends
+        const currentWeekTrend = this.calculateWeekTrend(attendanceList, 0);
+        const prevWeekTrend = this.calculateWeekTrend(attendanceList, 1);
+        this.employeeTrend.set(currentWeekTrend);
+        this.employeePrevTrend.set(prevWeekTrend);
       },
       error: (err) => console.error('Failed to fetch attendance stats', err)
     });
   }
 
-  fetchLeaveStats(empId: string) {
+  calculateWeekTrend(attendanceList: any[], weeksAgo: number): any[] {
+    const trend = [];
+    const now = new Date();
+    
+    // The last day in the chart should be today (or exactly 'weeksAgo' weeks ago from today)
+    const lastDayDate = new Date(now);
+    lastDayDate.setDate(now.getDate() - (weeksAgo * 7));
+    lastDayDate.setHours(0, 0, 0, 0);
+
+    const firstDayDate = new Date(lastDayDate);
+    firstDayDate.setDate(lastDayDate.getDate() - 6);
+
+    const daysMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const requiredHours = this.workDuration() || 8;
+    
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(firstDayDate);
+      d.setDate(firstDayDate.getDate() + i);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      
+      const record = attendanceList.find((r: any) => r.date === dateStr);
+      let count = 0;
+      let height = 5;
+      
+      if (record && record.punchInTime) {
+        count = 100;
+        height = 100;
+        
+        // Detailed hour calculation based on company work duration
+        if (record.punchOutTime) {
+          const inTime = new Date(record.punchInTime).getTime();
+          const outTime = new Date(record.punchOutTime).getTime();
+          const hours = (outTime - inTime) / 3600000;
+          count = Math.min(Math.round((hours / requiredHours) * 100), 100);
+          height = Math.max(count, 5);
+        }
+      }
+      
+      trend.push({
+        day: daysMap[d.getDay()],
+        count: count,
+        height: height
+      });
+    }
+    
+    return trend;
+  }
+
+  fetchPerformanceStats(empId: string) {
     if (!empId) return;
-    this.apiService.getEmployeeLeaveBalance(empId).subscribe({
-      next: (res: any) => {
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const balances = res.data;
-          const totalBalance = balances.reduce((sum: number, b: any) => sum + (b.balance || 0), 0);
-          this.leavesAvailable.set(`${totalBalance} Days`);
+    this.apiService.getEmployeeReview(empId).subscribe({
+      next: (res: any[]) => {
+        if (res && res.length > 0) {
+          const latest = res.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())[0];
+          this.performanceScore.set(Number(latest.rating || 0).toFixed(1));
           
-          const casual = balances.find((b: any) => b.leaveType === 'Casual Leave')?.balance || 0;
-          const sick = balances.find((b: any) => b.leaveType === 'Sick Leave')?.balance || 0;
-          this.leavesSubtitle.set(`Casual: ${casual} | Sick: ${sick}`);
+          const monthName = latest.date ? new Date(latest.date).toLocaleString('default', { month: 'long' }) : 'last month';
+          this.performanceSubtitle.set(`Score for ${monthName}`);
         } else {
-          // Fallback for Interns (2 days per month limit) or missing balance record
-          this.apiService.getEmployeeLeaves(empId).subscribe({
-            next: (leaves: any[]) => {
-              const now = new Date();
-              const currentMonth = now.getMonth();
-              const currentYear = now.getFullYear();
-              const usedThisMonth = leaves.filter((l: any) => {
-                const leaveDate = new Date(l.fromDate);
-                return leaveDate.getMonth() === currentMonth && leaveDate.getFullYear() === currentYear && l.hrStatus !== 'rejected';
-              }).reduce((sum, l) => sum + (l.numberOfDays || 0), 0);
-              
-              const available = Math.max(0, 2 - usedThisMonth);
-              this.leavesAvailable.set(`${available} Days`);
-              this.leavesSubtitle.set(`Used this month: ${usedThisMonth}`);
-            },
-            error: () => {
-              this.leavesAvailable.set('12 Days');
-              this.leavesSubtitle.set('Casual & Sick');
-            }
-          });
+          this.performanceScore.set('--');
+          this.performanceSubtitle.set('No records found');
         }
       },
-      error: (err) => console.error('Failed to fetch leave stats', err)
+      error: (err) => console.error('Failed to fetch performance stats', err)
     });
   }
 
@@ -190,10 +374,6 @@ export class EmployeeDashboard implements OnInit {
             }
           });
 
-          const countStr = String(incompleteTasks).padStart(2, '0');
-          this.activeTasksCount.set(countStr);
-          this.tasksSubtitle.set(`${inProgress.length} active project${inProgress.length !== 1 ? 's' : ''}`);
-
           // Determine the most urgent active task (closest/earliest deadline)
           if (inProgress.length > 0) {
             const getDeadlineTime = (proj: any): number => {
@@ -207,15 +387,11 @@ export class EmployeeDashboard implements OnInit {
             this.urgentProject.set(null);
           }
         } else {
-          this.activeTasksCount.set('00');
-          this.tasksSubtitle.set('0 active projects');
           this.urgentProject.set(null);
         }
       },
       error: (err) => {
         console.error('Failed to fetch project stats', err);
-        this.activeTasksCount.set('00');
-        this.tasksSubtitle.set('0 active projects');
         this.urgentProject.set(null);
       }
     });

@@ -290,6 +290,17 @@ export class Dashboard implements OnInit {
     return Number(present) || 0;
   }
 
+  getAbsTrend(trend: string): string {
+    if (!trend) return '0';
+    return trend.replace(/[+%-]/g, '');
+  }
+
+  getTrendText(trend: string): string {
+    if (!trend || trend === '0%') return 'No change from last week';
+    if (trend.startsWith('-')) return 'Decreased from last week';
+    return 'Increased from last week';
+  }
+
   selectModel(model: 'interns' | 'employees') {
     this.selectedModel.set(model);
     this.hasAnimatedSummary = false;

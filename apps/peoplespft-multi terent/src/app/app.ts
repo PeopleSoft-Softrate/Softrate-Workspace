@@ -81,6 +81,15 @@ export class App {
     }
   }
 
+  @HostListener('document:input', ['$event'])
+  onGlobalInput(event: Event) {
+    const target = event.target as HTMLElement;
+    if (target && target.tagName.toLowerCase() === 'textarea') {
+      target.style.height = 'auto';
+      target.style.height = target.scrollHeight + 'px';
+    }
+  }
+
   constructor() {
     this.currentUrl.set(this.router.url);
     this.router.events.subscribe(() => {

@@ -68,16 +68,14 @@
             color="currentColor"></hugeicons-icon>
         </div>
       </div>
-      <div class="stat-bottom">
-        <div class="trend-badge"
-          [ngClass]="stat.trend.startsWith('-') ? 'negative' : (stat.trend === '0%' ? 'neutral' : 'positive')">
-          <hugeicons-icon [icon]="AnalyticsUpIcon" size="14" [strokeWidth]="2" color="currentColor"
-            *ngIf="!stat.trend.startsWith('-') && stat.trend !== '0%'"></hugeicons-icon>
-          <hugeicons-icon [icon]="AnalyticsDownIcon" size="14" [strokeWidth]="2" color="currentColor"
-            *ngIf="stat.trend.startsWith('-')"></hugeicons-icon>
-          <span>{{ stat.trend }}</span>
+      <div class="stat-bottom" style="border-top: none; padding-top: 0.5rem; gap: 0.4rem;">
+        <div class="trend-badge" style="background: transparent; color: #475569; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; gap: 0.2rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500;">
+          <span>{{ getAbsTrend(stat.trend) }}</span>
+          <svg *ngIf="!stat.trend.startsWith('-') && stat.trend !== '0%'" width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 16H4z"/></svg>
+          <svg *ngIf="stat.trend.startsWith('-')" width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-16H4z"/></svg>
+          <svg *ngIf="stat.trend === '0%'" width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h16v2H4z"/></svg>
         </div>
-        <span class="trend-text">from last week</span>
+        <span class="trend-text" style="color: #64748b; font-size: 0.75rem; font-weight: 500;">{{ getTrendText(stat.trend) }}</span>
       </div>
     </div>
   </div>
@@ -108,6 +106,11 @@
           <h4>{{ selectedModel() === 'interns' ? 'Intern Applications' : 'Add Employee' }}</h4>
           <p>Onboard new talent</p>
         </div>
+        <svg style="margin-left: auto;" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="action-arrow">
+          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+          <path d="M15 9l-6 6" />
+          <path d="M15 15v-6h-6" />
+        </svg>
       </div>
 
       <div class="action-card orange" routerLink="/leaves" style="cursor: pointer;">
@@ -118,6 +121,11 @@
           <h4>Leave Requests</h4>
           <p>Review and approve</p>
         </div>
+        <svg style="margin-left: auto;" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="action-arrow">
+          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+          <path d="M15 9l-6 6" />
+          <path d="M15 15v-6h-6" />
+        </svg>
       </div>
 
       <div class="action-card blue" routerLink="/performance-goals" style="cursor: pointer;">
@@ -128,6 +136,11 @@
           <h4>Review Performance</h4>
           <p>Track progress</p>
         </div>
+        <svg style="margin-left: auto;" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="action-arrow">
+          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+          <path d="M15 9l-6 6" />
+          <path d="M15 15v-6h-6" />
+        </svg>
       </div>
 
       <div class="action-card purple" routerLink="/offboarding" style="cursor: pointer;">
@@ -138,6 +151,11 @@
           <h4>Off-boarding</h4>
           <p>Process exits</p>
         </div>
+        <svg style="margin-left: auto;" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="action-arrow">
+          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+          <path d="M15 9l-6 6" />
+          <path d="M15 15v-6h-6" />
+        </svg>
       </div>
     </div>
   </section>
@@ -149,7 +167,7 @@
     <div class="analytics-card">
       <div class="card-header">
         <div class="header-titles">
-          <h3>Project Analytics</h3>
+          <h3>Trend Analytics</h3>
           <p class="subtitle" style="font-size: var(--text-sm); color: var(--text-muted); margin: 0.25rem 0 0 0;">Weekly participation analysis</p>
         </div>
         <div class="header-meta" style="display: flex; gap: 10px; align-items: center;">

@@ -114,11 +114,20 @@ export class InternAttendance implements OnInit {
     });
   }
 
-  openMap(locationStr: string) {
-    if (locationStr) {
-      window.open(`https://www.google.com/maps?q=${locationStr}`, '_blank');
-    } else {
+  openMap(locationData: any) {
+    if (!locationData) {
       this.alertService.show('Location not available for this record');
+      return;
+    }
+
+    if (typeof locationData === 'object' && locationData.coordinates) {
+      const lng = locationData.coordinates[0];
+      const lat = locationData.coordinates[1];
+      window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+    } else if (typeof locationData === 'string') {
+      window.open(`https://www.google.com/maps?q=${locationData}`, '_blank');
+    } else {
+      this.alertService.show('Invalid location format');
     }
   }
 

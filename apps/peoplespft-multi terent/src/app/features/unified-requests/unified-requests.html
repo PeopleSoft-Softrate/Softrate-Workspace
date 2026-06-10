@@ -314,10 +314,59 @@
         </div>
 
         <div class="modal-body">
-          <div class="selected-meta card">
-            <p><strong>Applicant:</strong> {{ selectedRequest()?.requesterName }}</p>
-            <p><strong>Request Category:</strong> {{ selectedRequest()?.subType }}</p>
-            <p><strong>Timeline:</strong> {{ selectedRequest()?.dateText }}</p>
+          <div class="selected-meta card" style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Applicant</div>
+                <div style="font-weight: 500; color: #0f172a;">{{ selectedRequest()?.requesterName }}</div>
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Category</div>
+                <div style="font-weight: 500; color: #0f172a;">{{ selectedRequest()?.subType }}</div>
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Timeline</div>
+                <div style="font-weight: 500; color: #0f172a;">{{ selectedRequest()?.dateText }}</div>
+              </div>
+            </div>
+
+            <!-- RATIFICATION DETAILS -->
+            <ng-container *ngIf="selectedRequest()?.type === 'correction'">
+              <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+              
+              <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Actual In</div>
+                  <div style="font-weight: 500; color: #ef4444;">{{ selectedRequest()?.raw?.actualPunchIn ? formatTime(selectedRequest()?.raw?.actualPunchIn) : 'Missed' }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Actual Out</div>
+                  <div style="font-weight: 500; color: #ef4444;">{{ selectedRequest()?.raw?.actualPunchOut ? formatTime(selectedRequest()?.raw?.actualPunchOut) : 'Missed' }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Requested In</div>
+                  <div style="font-weight: 600; color: #10b981;">{{ formatTime(selectedRequest()?.raw?.requestedPunchIn) }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Requested Out</div>
+                  <div style="font-weight: 600; color: #10b981;">{{ formatTime(selectedRequest()?.raw?.requestedPunchOut) }}</div>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Reason</div>
+                <div style="color: #334155; font-size: 0.95rem; line-height: 1.5;">{{ selectedRequest()?.raw?.reason }}</div>
+              </div>
+            </ng-container>
+
+            <!-- GENERIC REASON FOR OTHER TYPES (e.g. Leave, Offboarding) -->
+            <ng-container *ngIf="selectedRequest()?.type !== 'correction' && selectedRequest()?.reason">
+              <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Reason / Remarks</div>
+                <div style="color: #334155; font-size: 0.95rem; line-height: 1.5;">{{ selectedRequest()?.reason }}</div>
+              </div>
+            </ng-container>
           </div>
 
           <div class="decision-alert" [ngClass]="reviewAction()">

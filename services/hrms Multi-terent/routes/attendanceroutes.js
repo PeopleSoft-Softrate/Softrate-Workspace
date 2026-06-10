@@ -22,8 +22,17 @@ function toGeoPoint(location) {
   if (!location) return null;
   // Already a valid GeoJSON Point
   if (location.type === 'Point' && Array.isArray(location.coordinates)) return location;
-  const lat = parseFloat(location.latitude ?? location.lat);
-  const lng = parseFloat(location.longitude ?? location.lng);
+  
+  let lat, lng;
+  if (typeof location === 'string') {
+    const parts = location.split(',');
+    lat = parseFloat(parts[0]);
+    lng = parseFloat(parts[1]);
+  } else {
+    lat = parseFloat(location.latitude ?? location.lat);
+    lng = parseFloat(location.longitude ?? location.lng);
+  }
+  
   if (isNaN(lat) || isNaN(lng)) return null;
   return { type: 'Point', coordinates: [lng, lat] };
 }

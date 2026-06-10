@@ -256,10 +256,12 @@
         <!-- Notification Dropdown -->
         <div class="notification-dropdown" #notificationDropdown *ngIf="showNotifications()">
           <div class="dropdown-header">
-            <h3>Pending Requests</h3>
-            <span class="count-badge">{{ notificationItems().length }} items</span>
+            <h3>Recent Updates</h3>
           </div>
           <div class="dropdown-body">
+            <div class="no-pending" *ngIf="notificationItems().length === 0">
+              <p>No recent updates</p>
+            </div>
             <div class="notification-item" *ngFor="let item of notificationItems()" [routerLink]="item.link" (click)="showNotifications.set(false)">
               <div class="item-icon-circle" [ngClass]="item.color">
                 <i *ngIf="!item.isSvg" [class]="item.icon"></i>
@@ -273,20 +275,12 @@
               </div>
               <div class="item-details">
                 <div class="item-top">
-                  <span class="item-label">{{ item.type }}</span>
+                  <h4 class="item-subject">{{ item.title }}</h4>
+                  <span class="item-time">{{ formatTimeAgo(item.timestamp) }}</span>
                 </div>
-                <p class="item-subject">{{ item.title }}</p>
                 <p class="item-snippet">{{ item.desc }}</p>
               </div>
             </div>
-
-            <div class="no-pending" *ngIf="notificationItems().length === 0">
-              <i class="fa-solid fa-circle-check"></i>
-              <p>Everything is up to date!</p>
-            </div>
-          </div>
-          <div class="dropdown-footer">
-            <button class="view-all-btn" (click)="showNotifications.set(false)" routerLink="/employees">Go to Management</button>
           </div>
         </div>
         

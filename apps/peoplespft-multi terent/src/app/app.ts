@@ -181,18 +181,20 @@ export class App {
         link: '/employees',
         isSvg: true,
         icon: 'leave',
-        color: 'orange'
+        color: 'orange',
+        timestamp: l.createdAt || l.date
       }));
     }
 
     if (data.requests) {
       data.requests.forEach((r: any) => items.push({
         type: 'Attendance Correction',
-        title: r.employeeName || 'Staff Member',
+        title: r.employeeName || r.internName || 'Staff Member',
         desc: `Correction for ${new Date(r.date).toLocaleDateString()}`,
         link: '/employees',
         icon: 'fa-solid fa-clock-rotate-left',
-        color: 'blue'
+        color: 'blue',
+        timestamp: r.createdAt || r.date
       }));
     }
 
@@ -203,7 +205,8 @@ export class App {
         desc: `New intern application submitted`,
         link: '/interns',
         icon: 'fa-solid fa-user-plus',
-        color: 'green'
+        color: 'green',
+        timestamp: a.createdAt
       }));
     }
 
@@ -214,7 +217,8 @@ export class App {
         desc: `Pending approval for ${o.internId || o.employeeId || 'Exit'}`,
         link: '/offboarding',
         icon: 'fa-solid fa-user-minus',
-        color: 'red'
+        color: 'red',
+        timestamp: o.createdAt || o.date
       }));
     }
 
@@ -401,6 +405,29 @@ export class App {
     if (hours < 12) return 'Good Morning';
     if (hours < 17) return 'Good Afternoon';
     return 'Good Evening';
+  }
+
+  formatTimeAgo(dateInput: string | Date | undefined): string {
+    if (!dateInput) return 'Just now';
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return 'Just now';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) return 'Just now';
+    
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHrs = Math.floor(diffMins / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    
+    const diffDays = Math.floor(diffHrs / 24);
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
   }
 
   logout() {

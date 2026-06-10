@@ -21,6 +21,9 @@
   background: white;
   border-bottom: 1px solid var(--border-color);
   border-radius: var(--border-radius, 8px) var(--border-radius, 8px) 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .back-link {
@@ -386,8 +389,9 @@
 
 .filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   min-width: 180px;
 }
 
@@ -396,6 +400,7 @@
   font-weight: var(--font-weight-bold);
   color: var(--text-muted);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .filter-group .form-input {
@@ -408,6 +413,17 @@
   outline: none;
   transition: all 0.2s;
   width: 100%;
+}
+
+select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
 }
 
 .filter-group .form-input:focus {

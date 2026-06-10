@@ -1,23 +1,21 @@
 <div class="main-content-layout">
 <div class="data-section">
 <div class="page-header">
+  <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
+    <a (click)="goBack()" *ngIf="isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Dashboard</a>
+    <a (click)="goBack()" *ngIf="!isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
+    <span style="color: #94a3b8;"> / Attendance</span>
+  </div>
   <div class="header-main">
-    <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
-      <a (click)="goBack()" *ngIf="isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Dashboard</a>
-      <a (click)="goBack()" *ngIf="!isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
-      <span style="color: #94a3b8;"> / Attendance</span>
+    <div class="header-text">
+      <h1>{{ isSelfPortal() ? 'My Attendance' : 'Attendance Details' }}</h1>
+      <p>{{ isSelfPortal() ? 'Mark your presence, check logs, and track work hours' : 'Viewing attendance history for Employee ID: ' + employeeId() }}</p>
     </div>
-    <div class="header-main">
-      <div class="header-text">
-        <h1>{{ isSelfPortal() ? 'My Attendance' : 'Attendance Details' }}</h1>
-        <p>{{ isSelfPortal() ? 'Mark your presence, check logs, and track work hours' : 'Viewing attendance history for Employee ID: ' + employeeId() }}</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-export" (click)="exportAttendance()">
-          <hugeicons-icon [icon]="FileDownloadIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-          <span>Export PDF</span>
-        </button>
-      </div>
+    <div class="header-actions">
+      <button class="btn-export" (click)="exportAttendance()">
+        <hugeicons-icon [icon]="FileDownloadIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+        <span>Export PDF</span>
+      </button>
     </div>
   </div>
 </div>
@@ -84,8 +82,8 @@
         <tr *ngFor="let record of filteredAttendance()">
           <td>{{ record.date | date:'mediumDate' }}</td>
           <td>
-            <span class="status-badge" [ngClass]="getStatusColor(record.status)">
-              {{ record.status }}
+            <span class="status-badge" [ngClass]="getStatusColor(record.status || (record.punchOutTime ? 'Present' : 'Active'))">
+              {{ record.status || (record.punchOutTime ? 'Present' : 'Active') }}
             </span>
           </td>
           <td>{{ record.punchInTime | date:'shortTime' }}</td>

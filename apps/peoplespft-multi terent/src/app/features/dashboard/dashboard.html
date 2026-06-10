@@ -24,7 +24,7 @@
           (input)="onSearch($event)"
           (focus)="showSearchDropdown.set(true)"
           (blur)="hideSearchDropdown()"
-          style="padding: 0.625rem 1rem 0.625rem 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); font-size: var(--text-sm); outline: none; width: 240px; transition: border-color 0.2s;">
+          style="padding: 0.625rem 1rem 0.625rem 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); font-size: var(--text-sm); outline: none; width: 400px; transition: border-color 0.2s;">
           
         <!-- Command Palette Dropdown -->
         <div class="search-dropdown" *ngIf="showSearchDropdown() && filteredFeatures().length > 0"

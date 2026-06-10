@@ -264,6 +264,7 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
       case 'present': return 'status-green';
       case 'absent': return 'status-red';
       case 'on leave': return 'status-orange';
+      case 'active': return 'status-teal';
       default: return 'status-gray';
     }
   }

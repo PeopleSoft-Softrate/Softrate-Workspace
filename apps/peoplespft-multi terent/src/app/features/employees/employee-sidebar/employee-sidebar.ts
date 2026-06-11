@@ -2,7 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { Home01Icon, FileDownloadIcon, Calendar01Icon, Chat01Icon, LogoutIcon, CancelCircleIcon } from '@hugeicons/core-free-icons';
+import { Home01Icon, FileDownloadIcon, Calendar01Icon, Chat01Icon, LogoutIcon, CancelCircleIcon, NoteEditIcon } from '@hugeicons/core-free-icons';
 import { ApiService } from '../../../services/api.service';
 
 @Component({
@@ -11,6 +11,16 @@ import { ApiService } from '../../../services/api.service';
   imports: [CommonModule, RouterModule, HugeiconsIconComponent],
   template: `
   <aside class="action-sidebar">
+    <!-- NEW REQUESTS -->
+    <button routerLink="/employees" [queryParams]="{tab: 'requests'}" class="sidebar-action-item" [class.active]="activeTab === 'requests'" title="New Requests">
+      <div class="action-icon-circle">
+        <hugeicons-icon [icon]="Chat01Icon" size="20" [strokeWidth]="1.5" color="#f97316"></hugeicons-icon>
+      </div>
+      <span class="action-label">New Request</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+
     <!-- MANAGE LIST (Home) -->
     <button routerLink="/employees" [queryParams]="{tab: 'list'}" class="sidebar-action-item" [class.active]="activeTab === 'list'" title="Employee List">
       <div class="action-icon-circle">
@@ -31,12 +41,12 @@ import { ApiService } from '../../../services/api.service';
 
     <div class="sidebar-divider"></div>
 
-    <!-- NEW REQUESTS -->
-    <button routerLink="/employees" [queryParams]="{tab: 'requests'}" class="sidebar-action-item" [class.active]="activeTab === 'requests'" title="New Requests">
+    <!-- RATIFICATION -->
+    <button routerLink="/employees" [queryParams]="{tab: 'corrections'}" class="sidebar-action-item" [class.active]="activeTab === 'corrections'" title="Ratification">
       <div class="action-icon-circle">
-        <hugeicons-icon [icon]="Chat01Icon" size="20" [strokeWidth]="1.5" color="#f97316"></hugeicons-icon>
+        <hugeicons-icon [icon]="NoteEditIcon" size="20" [strokeWidth]="1.5" color="#3b82f6"></hugeicons-icon>
       </div>
-      <span class="action-label">New Request</span>
+      <span class="action-label">Ratification</span>
     </button>
 
     <div class="sidebar-divider"></div>
@@ -47,16 +57,6 @@ import { ApiService } from '../../../services/api.service';
         <hugeicons-icon [icon]="LogoutIcon" size="20" [strokeWidth]="1.5" color="#ef4444"></hugeicons-icon>
       </div>
       <span class="action-label">Offboarding</span>
-    </button>
-
-    <div class="sidebar-divider"></div>
-
-    <!-- REJECTED APPLICATIONS -->
-    <button routerLink="/employees" [queryParams]="{tab: 'rejected'}" class="sidebar-action-item" [class.active]="activeTab === 'rejected'" title="Rejected Applications">
-      <div class="action-icon-circle">
-        <hugeicons-icon [icon]="CancelCircleIcon" size="20" [strokeWidth]="1.5" color="#eab308"></hugeicons-icon>
-      </div>
-      <span class="action-label">Rejected Applications</span>
     </button>
 
     <div class="sidebar-divider"></div>
@@ -82,6 +82,7 @@ export class EmployeeSidebar {
   readonly Chat01Icon = Chat01Icon;
   readonly LogoutIcon = LogoutIcon;
   readonly CancelCircleIcon = CancelCircleIcon;
+  readonly NoteEditIcon = NoteEditIcon;
 
   exportEmployeeData() {
     const baseUrl = this.apiService.getBaseUrl();

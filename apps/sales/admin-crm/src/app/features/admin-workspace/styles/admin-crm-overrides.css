@@ -1473,7 +1473,7 @@ body,
   max-width: 1680px !important;
   margin: 0 auto !important;
   display: block !important;
-  border: 1px solid var(--admin-line) !important;
+  border-top: 1px solid var(--admin-line) !important;
   background: #fff !important;
 }
 

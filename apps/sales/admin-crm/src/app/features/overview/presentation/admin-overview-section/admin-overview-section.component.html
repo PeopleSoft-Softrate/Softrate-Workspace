@@ -438,6 +438,20 @@
                       </div>
                     </div>
                   </section>
+                  <div class="admin-stat-insights peak-insights-grid" *ngIf="adminPeakActivity.count > 0">
+                    <div class="admin-insight-cell">
+                      <span>Peak Time</span>
+                      <strong>{{ adminPeakActivity.label }}</strong>
+                    </div>
+                    <div class="admin-insight-cell">
+                      <span>Calls</span>
+                      <strong>{{ adminPeakActivity.count }}</strong>
+                    </div>
+                    <div class="admin-insight-cell">
+                      <span>Duration</span>
+                      <strong>{{ fmtDur(adminPeakActivity.duration) }}</strong>
+                    </div>
+                  </div>
                 </div>
               </ng-container>
 

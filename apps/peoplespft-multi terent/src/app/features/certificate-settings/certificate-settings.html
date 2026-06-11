@@ -248,6 +248,15 @@
                     <input type="number" class="font-sz-input width-input" [(ngModel)]="para.width" min="80" max="820" placeholder="px">
                   </div>
 
+                  <!-- Image Size (if inline image exists) -->
+                  <div class="toolbar-group" *ngIf="hasImagePlaceholder(para.text)">
+                    <span class="toolbar-label">Img Size (W x H)</span>
+                    <div style="display: flex; gap: 4px;">
+                      <input type="number" class="font-sz-input" [(ngModel)]="para.imgWidth" placeholder="W" style="width: 50px;">
+                      <input type="number" class="font-sz-input" [(ngModel)]="para.imgHeight" placeholder="H" style="width: 50px;">
+                    </div>
+                  </div>
+
                 </div><!-- /para-toolbar -->
 
                 <!-- Toolbar Row 2: Sliders -->
@@ -362,7 +371,7 @@
                   <i class="fa-solid fa-up-down-left-right"></i>
                   <span>P{{ i + 1 }}</span>
                 </div>
-                <div class="para-canvas-text" [innerHTML]="renderCanvasText(para.text)"></div>
+                <div class="para-canvas-text" [innerHTML]="renderCanvasText(para)"></div>
               </div>
 
             </div>

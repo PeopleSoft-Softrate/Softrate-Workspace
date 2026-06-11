@@ -25,6 +25,7 @@ const InternSchema = new mongoose.Schema({
   deviceId: { type: String, default: null },
   projectLinks: { type: [String], default: [] },
   isRemote: { type: Boolean, default: false },
+  askMeAboutExpertise: { type: [String], default: [] },
 
 
 

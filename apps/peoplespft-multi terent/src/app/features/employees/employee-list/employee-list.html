@@ -122,7 +122,14 @@
       [embeddedTitle]="'Employee Offboarding Requests'"
       [embeddedSubtitle]="'Review resignation and exit requests for employees.'"></app-unified-requests>
 
-    <!-- VIEW 5: REJECTED -->
+    <!-- VIEW 5: RATIFICATION -->
+    <app-unified-requests *ngIf="currentTab() === 'corrections'" 
+      [embeddedCategory]="'correction'" 
+      [embeddedUserType]="'employee'"
+      [embeddedTitle]="'Attendance Ratification'"
+      [embeddedSubtitle]="'Review employee attendance anomaly ratifications.'"></app-unified-requests>
+
+    <!-- VIEW 6: REJECTED -->
     <app-employee-rejected *ngIf="currentTab() === 'rejected'"></app-employee-rejected>
   </div>
 

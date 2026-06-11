@@ -37,13 +37,7 @@
           <label for="leaveType">Leave Type <span class="required">*</span></label>
           <select id="leaveType" [(ngModel)]="leaveForm.leaveType" name="leaveType" required class="form-input">
             <option value="" disabled selected>Select Leave Type</option>
-            <option *ngIf="isIntern()" value="Casual Leave">Casual Leave</option>
-            <option *ngIf="isIntern()" value="Sick Leave">Sick Leave</option>
-            <option *ngIf="!isIntern()" value="Casual Leave">Casual Leave</option>
-            <option *ngIf="!isIntern()" value="Sick Leave">Sick Leave</option>
-            <option *ngIf="!isIntern()" value="Maternity Leave">Maternity Leave</option>
-            <option *ngIf="!isIntern()" value="Paternity Leave">Paternity Leave</option>
-            <option *ngIf="!isIntern()" value="Loss of Pay">Loss of Pay</option>
+            <option *ngFor="let bal of balances()" [value]="bal.leaveType">{{ bal.leaveType }}</option>
           </select>
         </div>
 

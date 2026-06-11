@@ -50,18 +50,14 @@
         </div>
         <div class="info-grid">
           <div class="info-item">
-            <span class="info-label">Employee ID</span>
-            <span class="info-value">{{ displayId() }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Nick name</span>
-            <span class="info-value" *ngIf="!isEditing()">{{ displayNickName() }}</span>
-            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.nickName" class="edit-input" placeholder="e.g. Sam">
-          </div>
-          <div class="info-item">
             <span class="info-label">Full Name</span>
             <span class="info-value" *ngIf="!isEditing()">{{ displayName() }}</span>
             <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.fullName" class="edit-input" placeholder="e.g. Sam Kumar">
+          </div>
+          <div class="info-item">
+            <span class="info-label">Phone Number</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayPhone() }}</span>
+            <input *ngIf="isEditing()" type="tel" [(ngModel)]="editData.phone" class="edit-input" placeholder="e.g. +1 234 567 8900">
           </div>
           <div class="info-item">
             <span class="info-label">Email address</span>
@@ -69,32 +65,28 @@
             <input *ngIf="isEditing()" type="email" [(ngModel)]="editData.email" class="edit-input" placeholder="e.g. sam@example.com">
           </div>
           <div class="info-item">
-            <span class="info-label">Phone Number</span>
-            <span class="info-value" *ngIf="!isEditing()">{{ displayPhone() }}</span>
-            <input *ngIf="isEditing()" type="tel" [(ngModel)]="editData.phone" class="edit-input" placeholder="e.g. +1 234 567 8900">
+            <span class="info-label">Work Location</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayWorkLocation() }}</span>
+            <select *ngIf="isEditing()" [(ngModel)]="editData.workLocation" class="edit-input">
+              <option value="">Select Location</option>
+              <option *ngFor="let loc of companyLocations()" [value]="loc.name">{{ loc.name }}</option>
+            </select>
           </div>
-        </div>
-      </div>
-
-      <div class="info-card" style="margin-top: 24px;">
-        <h3>Personal Details</h3>
-        <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Date of Birth</span>
             <span class="info-value" *ngIf="!isEditing()">{{ displayDob() }}</span>
             <input *ngIf="isEditing()" type="date" [(ngModel)]="editData.dob" class="edit-input">
           </div>
           <div class="info-item">
-            <span class="info-label">Ask me about/Expertise</span>
-            <span class="info-value" *ngIf="!isEditing()">{{ displayExpertise() }}</span>
-            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.askMeAboutExpertise" class="edit-input" placeholder="e.g. React, Angular, Node">
-          </div>
-          <div class="info-item">
             <span class="info-label">Age</span>
             <span class="info-value" *ngIf="!isEditing()">{{ displayAge() }}</span>
-            <input *ngIf="isEditing()" type="number" [(ngModel)]="editData.age" class="edit-input" placeholder="e.g. 25">
+            <input *ngIf="isEditing()" type="text" [value]="calculateAge(editData.dob)" class="edit-input" placeholder="Auto-calculated" disabled style="background-color: var(--bg-primary); cursor: not-allowed; color: var(--text-muted); opacity: 0.8;">
           </div>
-          <div class="info-item"></div>
+          <div class="info-item">
+            <span class="info-label">Blood Group</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayBloodGroup() }}</span>
+            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.bloodGroup" class="edit-input" placeholder="e.g. O+">
+          </div>
           <div class="info-item">
             <span class="info-label">Gender</span>
             <span class="info-value" *ngIf="!isEditing()">{{ displayGender() }}</span>
@@ -105,7 +97,6 @@
               <option value="Other">Other</option>
             </select>
           </div>
-          <div class="info-item"></div>
           <div class="info-item">
             <span class="info-label">Marital Status</span>
             <span class="info-value" *ngIf="!isEditing()">{{ displayMaritalStatus() }}</span>
@@ -114,6 +105,40 @@
               <option value="Single">Single</option>
               <option value="Married">Married</option>
             </select>
+          </div>
+          <div class="info-item" style="grid-column: 1 / -1;">
+            <span class="info-label">Current Address</span>
+            <span class="info-value" *ngIf="!isEditing()" style="white-space: pre-wrap;">{{ displayAddress() }}</span>
+            <textarea *ngIf="isEditing()" [(ngModel)]="editData.address" class="edit-input edit-textarea" rows="2" placeholder="Enter full address..."></textarea>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Emergency Contact Name</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayEmergencyName() }}</span>
+            <input *ngIf="isEditing()" type="text" [(ngModel)]="editData.emergencyName" class="edit-input" placeholder="e.g. John Doe">
+          </div>
+          <div class="info-item">
+            <span class="info-label">Emergency Phone</span>
+            <span class="info-value" *ngIf="!isEditing()">{{ displayEmergencyPhone() }}</span>
+            <input *ngIf="isEditing()" type="tel" [(ngModel)]="editData.emergencyPhone" class="edit-input" placeholder="e.g. +1 234 567 8900">
+          </div>
+          <div class="info-item" style="grid-column: 1 / -1;">
+            <span class="info-label">Area of Expectation</span>
+            <div class="tags-container" *ngIf="!isEditing()">
+              <span class="expertise-tag" *ngFor="let tag of expertiseTags()">{{ tag }}</span>
+              <span *ngIf="expertiseTags().length === 0" class="info-value">-</span>
+            </div>
+            <ng-container *ngIf="isEditing()">
+              <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" [ngModel]="newExpertiseTag()" (ngModelChange)="newExpertiseTag.set($event)" (keydown.enter)="addTag($event)" class="edit-input" style="flex: 1;" placeholder="New expectation...">
+                <button class="save-btn" (click)="addTag($event)" style="white-space: nowrap; background-color: #f1f5f9; color: #1a1a1a; border: 1px solid #cbd5e1; font-weight: 500;">Add</button>
+              </div>
+              <div class="tags-edit-container">
+                <div class="expertise-tag edit-tag" *ngFor="let tag of expertiseTags(); let i = index" style="background-color: white; border-radius: 20px; padding: 6px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                  {{ tag }}
+                  <button class="remove-tag-btn" (click)="removeTag(i)">&times;</button>
+                </div>
+              </div>
+            </ng-container>
           </div>
           <div class="info-item" style="grid-column: 1 / -1;">
             <span class="info-label">About Me</span>
@@ -229,6 +254,31 @@
           </div>
         </div>
       </ng-template>
+      <!-- Manager Details -->
+      <div class="info-card" style="margin-top: 24px; width: 100%; box-sizing: border-box;">
+        <h3 style="margin-bottom: 16px; padding-bottom: 12px; font-size: 16px;">Reporting Manager</h3>
+        <ng-container *ngIf="user()?.assignedManager; else noManager">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span class="info-label" style="font-size: 11px;">Name</span>
+              <span class="info-value" style="font-size: 14px;">{{ user()?.assignedManager?.fullName || '-' }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span class="info-label" style="font-size: 11px;">Phone Number</span>
+              <span class="info-value" style="font-size: 14px;">{{ user()?.assignedManager?.phone || user()?.assignedManager?.contact || '-' }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span class="info-label" style="font-size: 11px;">Email</span>
+              <span class="info-value" style="font-size: 14px; word-break: break-all;">{{ user()?.assignedManager?.email || '-' }}</span>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #noManager>
+          <div style="padding: 12px; background: #f8fafc; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px; font-weight: 500;">
+            Not Assigned
+          </div>
+        </ng-template>
+      </div>
 
     </div>
   </div>

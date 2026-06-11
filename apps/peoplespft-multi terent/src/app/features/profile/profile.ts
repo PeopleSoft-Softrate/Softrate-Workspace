@@ -26,6 +26,11 @@ export class ProfileComponent implements OnInit {
 
   isEditing = signal<boolean>(false);
   editData: any = {};
+  
+  // New state variables
+  companyLocations = signal<any[]>([]);
+  expertiseTags = signal<string[]>([]);
+  newExpertiseTag = signal('');
 
   // ── Computed: handles HR / Employee / Intern field differences ──────────────
   displayName = computed(() => {
@@ -86,11 +91,45 @@ export class ProfileComponent implements OnInit {
     const dob = this.user()?.dob;
     return dob ? new Date(dob).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '-';
   });
-  displayAge = computed(() => this.user()?.age || '-');
+
+  calculateAge(dobString: string | Date | undefined): string {
+    if (!dobString) return '';
+    const birthDate = new Date(dobString);
+    if (isNaN(birthDate.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age.toString();
+  }
+
+  displayAge = computed(() => {
+    const dob = this.user()?.dob;
+    if (dob) {
+      const computedAge = this.calculateAge(dob);
+      if (computedAge) return computedAge;
+    }
+    return this.user()?.age || '-';
+  });
   displayGender = computed(() => this.user()?.gender || '-');
   displayMaritalStatus = computed(() => this.user()?.maritalStatus || '-');
   displayAboutMe = computed(() => this.user()?.aboutMe || '-');
-  displayExpertise = computed(() => this.user()?.askMeAboutExpertise || '-');
+  displayBloodGroup = computed(() => this.user()?.bloodGroup || '-');
+  displayWorkLocation = computed(() => this.user()?.workLocation || '-');
+  displayAddress = computed(() => this.user()?.address || '-');
+  displayEmergencyName = computed(() => this.user()?.emergencyName || '-');
+  displayEmergencyPhone = computed(() => this.user()?.emergencyPhone || '-');
+  
+  displayExpertise = computed(() => {
+    const expertise = this.user()?.askMeAboutExpertise;
+    if (expertise) {
+      if (Array.isArray(expertise)) return expertise.join(', ');
+      return expertise.toString();
+    }
+    return '-';
+  });
   displayNickName = computed(() => this.user()?.nickName || '-');
 
   userInitials = computed(() => {
@@ -194,6 +233,11 @@ export class ProfileComponent implements OnInit {
           if (tmpl?.pages?.some((p: any) => p.backgroundUrl || p.placeholders?.length || p.paragraphs?.length)) {
             this.virtualIdTemplate.set(tmpl);
           }
+          if (res.settings?.locations) {
+            this.companyLocations.set(res.settings.locations);
+          } else if (res.company?.locations) {
+            this.companyLocations.set(res.company.locations);
+          }
         }
       }
     });
@@ -204,6 +248,18 @@ export class ProfileComponent implements OnInit {
       this.isEditing.set(false);
     } else {
       const u = this.user();
+      
+      // Parse tags
+      let tags: string[] = [];
+      if (u?.askMeAboutExpertise) {
+        if (Array.isArray(u.askMeAboutExpertise)) {
+          tags = [...u.askMeAboutExpertise];
+        } else if (typeof u.askMeAboutExpertise === 'string') {
+          tags = u.askMeAboutExpertise.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+        }
+      }
+      this.expertiseTags.set(tags);
+
       this.editData = {
         fullName: u?.fullName || '',
         email: u?.email || '',
@@ -213,15 +269,45 @@ export class ProfileComponent implements OnInit {
         age: u?.age || '',
         gender: u?.gender || '',
         maritalStatus: u?.maritalStatus || '',
+        bloodGroup: u?.bloodGroup || '',
+        workLocation: u?.workLocation || '',
+        address: u?.address || '',
+        emergencyName: u?.emergencyName || '',
+        emergencyPhone: u?.emergencyPhone || '',
         aboutMe: u?.aboutMe || '',
-        askMeAboutExpertise: u?.askMeAboutExpertise || ''
+        askMeAboutExpertise: tags.join(',')
       };
       this.isEditing.set(true);
     }
   }
 
+  addTag(event: any) {
+    event.preventDefault();
+    const val = this.newExpertiseTag().trim();
+    if (val) {
+      this.expertiseTags.update(t => [...t, val]);
+      this.newExpertiseTag.set('');
+    }
+  }
+
+  removeTag(index: number) {
+    this.expertiseTags.update(t => t.filter((_, i) => i !== index));
+  }
+
   saveProfile() {
-    const data = this.editData;
+    const data = { ...this.editData };
+    
+    // Auto-calculate age from DOB if present
+    if (data.dob) {
+      const calcAge = this.calculateAge(data.dob);
+      if (calcAge) {
+        data.age = parseInt(calcAge, 10);
+      }
+    }
+
+    // Convert tags back to string (or keep as array if backend accepts it)
+    data.askMeAboutExpertise = this.expertiseTags();
+
     const u = this.user();
     if (!u || !u._id) return;
     

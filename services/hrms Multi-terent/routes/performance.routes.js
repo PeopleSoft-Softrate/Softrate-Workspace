@@ -32,17 +32,39 @@ router.get('/role/:roleName', verifyTenant, async (req, res) => {
 // @desc    Create or update a template
 router.post('/', verifyTenant, async (req, res) => {
   try {
-    const { roleName, category, goals } = req.body;
-    console.log("Saving template. Received goals:", JSON.stringify(goals, null, 2));
+    const { _id, roleName, category, goals } = req.body;
+    console.log("Saving template. _id:", _id, "roleName:", roleName);
     
-    let template = await PerformanceTemplate.findOne({
+    let template;
+    
+    // If editing an existing template by ID
+    if (_id) {
+      template = await PerformanceTemplate.findOne({
+        _id,
+        companyId: req.tenant.companyId
+      });
+      
+      console.log("Found existing template by ID:", !!template);
+      if (template) {
+        template.roleName = roleName;
+        template.category = category;
+        template.set('goals', goals);
+        template.markModified('goals');
+        await template.save();
+        return res.json(template);
+      }
+    }
+
+    // Fallback or New template creation
+    template = await PerformanceTemplate.findOne({
       companyId: req.tenant.companyId,
       roleName,
       category
     });
 
     if (template) {
-      template.goals = goals;
+      template.set('goals', goals);
+      template.markModified('goals');
       await template.save();
     } else {
       template = new PerformanceTemplate({

@@ -1695,23 +1695,23 @@ export abstract class AdminWorkspaceController implements OnInit {
     return top || 1;
   }
 
-  get adminPeakActivity(): { label: string; count: number } {
+  get adminPeakActivity(): { label: string; count: number; duration: number } {
     const peak = (this.timelineData || []).reduce((best, row) => {
       const count = (row?.incoming || 0) + (row?.outgoing || 0) + (row?.missed || 0) + (row?.rejected || 0);
       return count > best.count ? { row, count } : best;
     }, { row: null as any, count: 0 });
 
-    if (!peak.row || peak.count <= 0) return { label: 'No activity', count: 0 };
+    if (!peak.row || peak.count <= 0) return { label: 'No activity', count: 0, duration: 0 };
 
-    const rawDate = peak.row._isHourly ? peak.row.hour : peak.row.date;
-    if (!rawDate) return { label: 'Peak window', count: peak.count };
+    const rawDate = peak.row.date;
+    if (!rawDate) return { label: 'Peak window', count: peak.count, duration: peak.row.totalDuration || 0 };
 
-    const date = new Date(rawDate);
+    const date = new Date(rawDate.includes('T') ? rawDate + 'Z' : rawDate.replace(/-/g, '/'));
     const label = peak.row._isHourly
       ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-    return { label, count: peak.count };
+    return { label, count: peak.count, duration: peak.row.totalDuration || 0 };
   }
 
   empMapCache: { [phone: string]: string } | null = null;

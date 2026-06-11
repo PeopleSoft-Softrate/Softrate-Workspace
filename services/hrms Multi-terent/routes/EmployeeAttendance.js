@@ -234,25 +234,32 @@ router.get("/export/pdf/employee/:employeeId", verifyTenant, async (req, res) =>
         const matches = logoData.match(/^data:image\/([a-zA-Z0-9+;]+);base64,(.+)$/);
         if (matches && matches[2]) {
           const buffer = Buffer.from(matches[2], "base64");
-          doc.image(buffer, 50, 40, { width: 100, fit: [100, 100] });
+          doc.image(buffer, 40, 30, { width: 160 });
           console.log("PDF Logo rendered successfully from base64 at top left");
         } else {
           console.log("PDF Logo regex failed to match data URI");
         }
       } else if (logoData) {
-        doc.image(logoData, 50, 40, { width: 100, fit: [100, 100] });
+        doc.image(logoData, 40, 30, { width: 160 });
         console.log("PDF Logo rendered from plain URL or path");
+      } else {
+        const fallbackPath = require("path").join(__dirname, "../assets/images/pdf_logo.png");
+        const fs = require("fs");
+        if (fs.existsSync(fallbackPath)) {
+          doc.image(fallbackPath, 40, 30, { width: 160 });
+        }
       }
     } catch (err) {
       console.error("PDF Logo render error:", err.message);
     }
 
+    doc.y = 45;
     doc
       .fontSize(20)
       .fillColor("#00657F")
-      .text("Attendance Report", { align: "center" });
+      .text("Attendance Report", { align: "right" });
 
-    doc.moveDown(0.5);
+    doc.y = 110;
 
     const mongoose = require("mongoose");
     const queryConditions = [{ EmployeeId: employeeId }, { email: employeeId }];
@@ -309,14 +316,14 @@ router.get("/export/pdf/employee/:employeeId", verifyTenant, async (req, res) =>
       doc.text(moment(r.date).format("DD MMM YYYY"), col.date, y);
       doc.text(
         r.punchInTime
-          ? moment(r.punchInTime).format("hh:mm A")
+          ? moment(r.punchInTime).utcOffset("+05:30").format("hh:mm A")
           : "--",
         col.in,
         y
       );
       doc.text(
         r.punchOutTime
-          ? moment(r.punchOutTime).format("hh:mm A")
+          ? moment(r.punchOutTime).utcOffset("+05:30").format("hh:mm A")
           : "--",
         col.out,
         y
@@ -431,8 +438,8 @@ router.get("/export/excel/all", verifyTenant, async (req, res) => {
 
     // Fill rows
     for (const r of attendances) {
-      const punchIn = r.punchInTime ? moment(r.punchInTime).format("hh:mm A") : "--";
-      const punchOut = r.punchOutTime ? moment(r.punchOutTime).format("hh:mm A") : "--";
+      const punchIn = r.punchInTime ? moment(r.punchInTime).utcOffset("+05:30").format("hh:mm A") : "--";
+      const punchOut = r.punchOutTime ? moment(r.punchOutTime).utcOffset("+05:30").format("hh:mm A") : "--";
 
       let status = "Absent";
       if (r.punchInTime && r.punchOutTime) {

@@ -1108,7 +1108,6 @@ svg.search-icon {
 }
 
 .admin-overview-view .dash-grid-layout {
-  border: 1px solid var(--admin-line) !important;
   background: #ffffff !important;
 }
 

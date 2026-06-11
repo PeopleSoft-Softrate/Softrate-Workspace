@@ -1,4 +1,4 @@
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem;">
   <div class="header-main">
     <div class="breadcrumb">
       <a routerLink="/interns" class="back-link">
@@ -9,7 +9,7 @@
     <p>Review and approve new applications for Internships and Jobs.</p>
   </div>
 
-  <div class="search-sort-group" style="display: flex; align-items: center; gap: 0.75rem;">
+  <div class="search-sort-group" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
     <div class="tab-search">
       <i class="fa-solid fa-magnifying-glass"></i>
       <input type="text" placeholder="Search by name, dept, college..." (input)="onSearch($event)">

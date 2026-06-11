@@ -182,7 +182,8 @@
 /* Virtual ID Card */
 .id-card-column {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* ── Custom VID canvas (scaled A4 template) ───────────────────────── */
@@ -461,4 +462,59 @@
 .edit-textarea {
   resize: vertical;
   font-family: inherit;
+}
+
+/* Tag Styles */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tags-edit-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.expertise-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.expertise-tag.edit-tag {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.remove-tag-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  margin-left: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-tag-btn:hover {
+  color: #ef4444;
+}
+
+.tag-input {
+  flex: 1;
+  min-width: 150px;
 }

@@ -487,14 +487,14 @@ router.get("/export/pdf/:internId", verifyTenant, async (req, res) => {
       doc.text(moment(r.date).format("DD MMM YYYY"), col.date, y);
       doc.text(
         r.punchInTime
-          ? moment(r.punchInTime).format("hh:mm A")
+          ? moment(r.punchInTime).utcOffset("+05:30").format("hh:mm A")
           : "--",
         col.in,
         y
       );
       doc.text(
         r.punchOutTime
-          ? moment(r.punchOutTime).format("hh:mm A")
+          ? moment(r.punchOutTime).utcOffset("+05:30").format("hh:mm A")
           : "--",
         col.out,
         y
@@ -630,12 +630,12 @@ router.get("/export/excel/all-interns", verifyTenant, async (req, res) => {
 
       // Punch-in only → SHORT
       if (r.punchInTime) {
-        punchIn = moment(r.punchInTime).format("hh:mm A");
+        punchIn = moment(r.punchInTime).utcOffset("+05:30").format("hh:mm A");
         status = "Short";
       }
 
       if (r.punchOutTime) {
-        punchOut = moment(r.punchOutTime).format("hh:mm A");
+        punchOut = moment(r.punchOutTime).utcOffset("+05:30").format("hh:mm A");
       }
 
       // Punch-in + Punch-out

@@ -97,6 +97,7 @@ app.use('/api/performance-templates', require('./routes/performance.routes'));
 app.use('/api/convert', require('./routes/conversion.routes'));
 app.use('/api/fund-requests', require('./routes/fundRequest.routes'));
 app.use('/api/device-change-requests', require('./routes/deviceChangeRequest.routes'));
+app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api/public', require('./routes/public.routes'));
 
 // ============================

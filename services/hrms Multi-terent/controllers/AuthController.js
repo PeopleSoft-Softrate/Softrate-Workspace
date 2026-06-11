@@ -72,7 +72,11 @@ async function findCurrentUser(req, includePhoto = false) {
 
   let query = Model.findById(req.user.id);
   if (photoSelect) query = query.select(photoSelect);
-  if (Model === User) query = query.populate('roleId companyId departmentId branchId');
+  if (Model === User) {
+    query = query.populate('roleId companyId departmentId branchId');
+  } else {
+    query = query.populate({ path: 'assignedManager', select: 'fullName email phone contact' });
+  }
 
   let user = await query;
 
@@ -82,13 +86,17 @@ async function findCurrentUser(req, includePhoto = false) {
     for (const FallbackModel of fallbacks) {
       let fq = FallbackModel.findById(req.user.id);
       if (photoSelect) fq = fq.select(photoSelect);
-      if (FallbackModel === User) fq = fq.populate('roleId companyId departmentId branchId');
+      if (FallbackModel === User) {
+        fq = fq.populate('roleId companyId departmentId branchId');
+      } else {
+        fq = fq.populate({ path: 'assignedManager', select: 'fullName email phone contact' });
+      }
       user = await fq;
       if (user) {
         Model = FallbackModel;
         resolvedRole = FallbackModel === User ? (user.roleId?.name?.toLowerCase() || 'hr')
           : FallbackModel === Employee ? (user.isHr ? 'hr' : user.isManager ? 'manager' : 'employee')
-          : (user.isHr ? 'hr' : 'intern');
+            : (user.isHr ? 'hr' : 'intern');
         break;
       }
     }
@@ -166,11 +174,11 @@ exports.login = async (req, res) => {
 
         const responseUser = serializeUser(reviewerUser);
 
-        return res.json({ 
+        return res.json({
           success: true,
-          role: reviewerRole, 
-          token, 
-          auth_token: token, 
+          role: reviewerRole,
+          token,
+          auth_token: token,
           user: responseUser,
           intern: responseUser,
           employee: responseUser
@@ -217,7 +225,7 @@ exports.login = async (req, res) => {
           { email: normalizedId }
         ]
       }).select(`+password ${PROFILE_PHOTO_SELECT}`).populate('roleId');
-      
+
       if (user) {
         role = user.roleId?.name?.toLowerCase() || "hr";
       }
@@ -238,7 +246,7 @@ exports.login = async (req, res) => {
       const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
       resolvedCompany = await MasterCompany.findById(user.companyId);
     }
-    
+
     let forcePasswordReset = false;
     let isMatch = false;
 
@@ -277,9 +285,9 @@ exports.login = async (req, res) => {
         await user.save();
       } else if (user.deviceId !== incomingDeviceId) {
         // Mismatch! Check if there's a pending request
-        const existingRequest = await DeviceChangeRequest.findOne({ 
-          userId: user._id, 
-          status: "pending" 
+        const existingRequest = await DeviceChangeRequest.findOne({
+          userId: user._id,
+          status: "pending"
         });
 
         return res.status(403).json({
@@ -308,11 +316,11 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    const response = { 
+    const response = {
       success: true,
-      role, 
-      token, 
-      auth_token: token, 
+      role,
+      token,
+      auth_token: token,
       user: serializeUser(user),
       forcePasswordReset
     };
@@ -436,9 +444,9 @@ exports.forgotPassword = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "No user exists with this email address." 
+      return res.status(404).json({
+        success: false,
+        message: "No user exists with this email address."
       });
     }
 
@@ -482,9 +490,9 @@ exports.forgotPassword = async (req, res) => {
       `
     });
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Reset link has been sent to your email." 
+    res.status(200).json({
+      success: true,
+      message: "Reset link has been sent to your email."
     });
 
   } catch (err) {
@@ -523,9 +531,9 @@ exports.resetPassword = async (req, res) => {
     // Invalidate the token
     await PasswordReset.deleteOne({ token });
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Password reset successful! You can now log in with your new password." 
+    res.status(200).json({
+      success: true,
+      message: "Password reset successful! You can now log in with your new password."
     });
 
   } catch (err) {
@@ -635,7 +643,7 @@ exports.requestDeviceChange = async (req, res) => {
     const bcrypt = require("bcryptjs");
     const isHashed = user.password && (user.password.startsWith("$2a$") || user.password.startsWith("$2b$"));
     let isMatch = false;
-    
+
     if (isHashed) {
       isMatch = await bcrypt.compare(password, user.password);
     } else {
@@ -681,20 +689,20 @@ exports.forceResetPassword = async (req, res) => {
   try {
     const userId = req.body.userId || (req.user && (req.user._id || req.user.id));
     const { newPassword } = req.body;
-    
+
     if (!userId) {
       return res.status(400).json({ success: false, message: 'User ID is required' });
     }
-    
+
     if (!newPassword) {
       return res.status(400).json({ success: false, message: 'New Password is required' });
     }
 
     // Server-side validation
     if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, and 1 symbol.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, and 1 symbol.'
       });
     }
 

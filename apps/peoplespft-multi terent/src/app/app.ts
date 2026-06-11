@@ -2,11 +2,13 @@ import { Component, inject, signal, HostListener, ViewChild, ElementRef } from '
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon, UserAccountIcon, Logout02Icon, LicenseDraftIcon } from '@hugeicons/core-free-icons';
-import { ApiService } from './services/api.service';
+import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon, UserAccountIcon, Logout02Icon, LicenseDraftIcon, Delete01Icon } from '@hugeicons/core-free-icons';
 import { forkJoin } from 'rxjs';
 import { Alert } from './shared/components/alert/alert';
+import { AlertService } from './shared/services/alert';
+import { ApiService } from './services/api.service';
 import { GlobalSearch } from './shared/components/global-search/global-search';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +18,7 @@ import { GlobalSearch } from './shared/components/global-search/global-search';
     RouterLink,
     RouterLinkActive,
     CommonModule,
+    FormsModule,
     HugeiconsIconComponent,
     Alert,
     GlobalSearch
@@ -50,6 +53,7 @@ export class App {
   readonly PanelLeftOpenIcon = PanelLeftOpenIcon;
   readonly UserAccountIcon = UserAccountIcon;
   readonly Logout02Icon = Logout02Icon;
+  readonly Delete01Icon = Delete01Icon;
 
   userRole = signal<string | null>(localStorage.getItem('user_role'));
   userName = signal<string | null>(null);
@@ -62,6 +66,7 @@ export class App {
   profilePhotoError = signal<string | null>(null);
   readonly profilePhotoMaxSizeMb = 2;
   apiService = inject(ApiService);
+  alertService = inject(AlertService);
 
   currentUrl = signal<string>('');
   isSidebarMinimized = signal<boolean>(false);
@@ -143,8 +148,67 @@ export class App {
     this.isSidebarMinimized.update(v => !v);
   }
 
+  showBroadcastModal = signal(false);
+  isBroadcasting = signal(false);
+  broadcastData = {
+    title: '',
+    description: '',
+    sendToEmployees: true,
+    sendToInterns: true
+  };
+
+  openBroadcastModal() {
+    this.showNotifications.set(false);
+    this.showBroadcastModal.set(true);
+    this.broadcastData = { title: '', description: '', sendToEmployees: true, sendToInterns: true };
+  }
+
+  closeBroadcastModal() {
+    this.showBroadcastModal.set(false);
+  }
+
+  submitBroadcast() {
+    let targetAudience: 'employee' | 'intern' | 'all' = 'all';
+    if (this.broadcastData.sendToEmployees && !this.broadcastData.sendToInterns) targetAudience = 'employee';
+    if (!this.broadcastData.sendToEmployees && this.broadcastData.sendToInterns) targetAudience = 'intern';
+    if (this.broadcastData.sendToEmployees && this.broadcastData.sendToInterns) targetAudience = 'all';
+
+    this.isBroadcasting.set(true);
+    this.apiService.createGeneralNotification({
+      title: this.broadcastData.title,
+      description: this.broadcastData.description,
+      targetAudience
+    }).subscribe({
+      next: () => {
+        this.isBroadcasting.set(false);
+        this.closeBroadcastModal();
+        this.alertService.show('Notification broadcasted successfully!', 'success');
+        this.checkNotifications();
+      },
+      error: (err: any) => {
+        console.error(err);
+        this.isBroadcasting.set(false);
+        this.alertService.show('Failed to send broadcast', 'error');
+      }
+    });
+  }
+
   checkNotifications() {
     if (this.isEmployee() && !this.isManager() && !this.isHrType()) {
+      const employeeId = this.currentUser()?._id || this.currentUser()?.id;
+      if (!employeeId) return;
+
+      forkJoin({
+        myLeaves: this.apiService.getEmployeeLeaves(employeeId),
+        myFunds: this.apiService.getEmployeeFundRequests(employeeId),
+        general: this.apiService.getGeneralNotifications(this.isRole('intern') ? 'intern' : 'employee')
+      }).subscribe({
+        next: (data) => this.processNotificationData(data),
+        error: () => {
+          this.hasNotifications.set(false);
+          this.notificationItems.set([]);
+        }
+      });
       return;
     }
 
@@ -153,7 +217,8 @@ export class App {
         leaves: this.apiService.getHrPendingLeaves(),
         requests: this.apiService.getHrPendingAttendanceRequests(),
         applications: this.apiService.getAllActiveInterns('all', 'initial'),
-        offboarding: this.apiService.getPendingOffboarding()
+        offboarding: this.apiService.getPendingOffboarding(),
+        general: this.apiService.getGeneralNotifications('hr')
       }).subscribe({
         next: (data) => this.processNotificationData(data),
         error: () => {
@@ -168,7 +233,8 @@ export class App {
       forkJoin({
         leaves: this.apiService.getManagerPendingLeaves(managerId),
         requests: this.apiService.getManagerPendingAttendanceRequests(managerId),
-        offboarding: this.apiService.getManagerPendingOffboarding(managerId)
+        offboarding: this.apiService.getManagerPendingOffboarding(managerId),
+        general: this.apiService.getGeneralNotifications('employee')
       }).subscribe({
         next: (data) => this.processNotificationData(data),
         error: () => {
@@ -182,6 +248,35 @@ export class App {
   private processNotificationData(data: any) {
     const items: any[] = [];
     
+    if (data.myLeaves) {
+      const recentLeaves = data.myLeaves.filter((l: any) => l.status && l.status.toLowerCase() !== 'pending');
+      recentLeaves.sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+      recentLeaves.slice(0, 5).forEach((l: any) => items.push({
+        type: 'Leave Ratification',
+        title: `Leave ${l.status}`,
+        desc: `${l.leaveType || 'Leave'}`,
+        link: '/employees',
+        isSvg: true,
+        icon: 'leave',
+        color: l.status.toLowerCase() === 'approved' || l.status.toLowerCase() === 'accepted' ? 'green' : 'red',
+        timestamp: l.updatedAt || l.createdAt || l.date
+      }));
+    }
+
+    if (data.myFunds) {
+      const recentFunds = data.myFunds.filter((f: any) => f.status && f.status.toLowerCase() !== 'pending');
+      recentFunds.sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+      recentFunds.slice(0, 5).forEach((f: any) => items.push({
+        type: 'Reimbursement',
+        title: `Reimbursement ${f.status}`,
+        desc: `${f.expenseType || f.title || 'Expense request'}`,
+        link: '/unified-requests',
+        icon: 'fa-solid fa-money-bill-transfer',
+        color: f.status.toLowerCase() === 'approved' || f.status.toLowerCase() === 'accepted' ? 'green' : 'red',
+        timestamp: f.updatedAt || f.createdAt || f.date
+      }));
+    }
+
     if (data.leaves) {
       data.leaves.forEach((l: any) => items.push({
         type: 'Leave Request',
@@ -231,6 +326,20 @@ export class App {
       }));
     }
 
+    if (data.general && data.general.success && data.general.notifications) {
+      data.general.notifications.forEach((n: any) => items.push({
+        type: 'General Announcement',
+        title: n.title,
+        desc: n.description,
+        link: '', // No specific link
+        icon: 'fa-solid fa-bullhorn',
+        color: 'teal',
+        timestamp: n.createdAt
+      }));
+    }
+
+    // Sort all notifications by time
+    items.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
     this.notificationItems.set(items);
     this.hasNotifications.set(items.length > 0);
   }

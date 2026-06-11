@@ -574,7 +574,7 @@ export class ApiService {
 
   // Performance Templates
   getPerformanceTemplates(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/performance-templates`);
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/performance-templates`), { headers: this.getHeaders() });
   }
 
   savePerformanceTemplate(template: any): Observable<any> {
@@ -705,6 +705,12 @@ export class ApiService {
   }
 
   // Fund Requests
+  getEmployeeFundRequests(userId: string): Observable<any[]> {
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/fund-requests/user/${userId}`), {
+      headers: this.getHeaders()
+    });
+  }
+
   getHrAllFundRequests(): Observable<any[]> {
     return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/fund-requests/hr-all`), {
       headers: this.getHeaders()
@@ -742,5 +748,14 @@ export class ApiService {
   hrReviewDeviceRequest(id: string, status: string, remarks: string): Observable<any> {
     const action = (status === 'approved' || status === 'accepted') ? 'approve' : 'reject';
     return this.http.post(`${this.baseUrl}/api/device-change-requests/${id}/${action}`, { remarks });
+  }
+
+  // General Notifications
+  createGeneralNotification(data: { title: string, description: string, targetAudience: 'employee' | 'intern' | 'all' }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/notifications`, data, { headers: this.getHeaders() });
+  }
+
+  getGeneralNotifications(role: string): Observable<any> {
+    return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/notifications?role=${role}`), { headers: this.getHeaders() });
   }
 }

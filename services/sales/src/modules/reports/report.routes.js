@@ -453,7 +453,7 @@ router.get('/timeline', async (req, res) => {
         for (let i = 0; i < 24; i++) {
           const hourStr = i.toString().padStart(2, '0');
           const pseudoDate = `${from}T${hourStr}:00:00`;
-          byHour[i] = { date: pseudoDate, incoming: 0, outgoing: 0, missed: 0, rejected: 0, _isHourly: true };
+          byHour[i] = { date: pseudoDate, incoming: 0, outgoing: 0, missed: 0, rejected: 0, _isHourly: true, totalDuration: 0 };
         }
 
         for (const c of calls) {
@@ -464,6 +464,7 @@ router.get('/timeline', async (req, res) => {
             else if (type === 'outgoing') byHour[hour].outgoing++;
             else if (type === 'missed') byHour[hour].missed++;
             else if (type === 'rejected') byHour[hour].rejected++;
+            byHour[hour].totalDuration += (c.duration || 0);
           }
         }
 
@@ -473,11 +474,12 @@ router.get('/timeline', async (req, res) => {
       const docs = await CallLog.find(baseQuery).sort({ date: 1 }).lean();
       const byDate = {};
       for (const d of docs) {
-        if (!byDate[d.date]) byDate[d.date] = { date: d.date, incoming: 0, outgoing: 0, missed: 0, rejected: 0 };
+        if (!byDate[d.date]) byDate[d.date] = { date: d.date, incoming: 0, outgoing: 0, missed: 0, rejected: 0, totalDuration: 0 };
         byDate[d.date].incoming  += d.incoming;
         byDate[d.date].outgoing  += d.outgoing;
         byDate[d.date].missed    += d.missed;
         byDate[d.date].rejected  += d.rejected;
+        byDate[d.date].totalDuration += (d.totalDuration || 0);
       }
       return { success: true, timeline: Object.values(byDate).sort((a,b) => a.date.localeCompare(b.date)) };
     });

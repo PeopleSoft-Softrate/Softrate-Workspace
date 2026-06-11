@@ -52,7 +52,7 @@ export class EmployeeList implements OnInit {
     });
   }
 
-  currentTab = signal<'list' | 'leaves' | 'requests' | 'offboarding' | 'rejected'>('list');
+  currentTab = signal<'list' | 'leaves' | 'requests' | 'offboarding' | 'rejected' | 'corrections'>('list');
   employees = signal<any[]>([]);
   allEmployees = signal<any[]>([]);
   isLoading = signal(true);

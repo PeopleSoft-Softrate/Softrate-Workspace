@@ -1,5 +1,6 @@
 import { Component, signal, OnInit, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
@@ -20,13 +21,14 @@ import {
   LicenseDraftIcon,
   AnalyticsUpIcon,
   AnalyticsDownIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  Notification01Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HugeiconsIconComponent, RouterModule],
+  imports: [CommonModule, FormsModule, HugeiconsIconComponent, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -40,7 +42,7 @@ export class Dashboard implements OnInit {
   }
   
   selectedModel = signal<'interns' | 'employees'>('interns');
-  chartType = signal<'bar' | 'line' | 'pie'>('bar');
+  chartType = signal<'bar' | 'line' | 'pie'>('line');
   isLoading = signal(true);
 
   showDayFilter = signal(false);
@@ -110,6 +112,7 @@ export class Dashboard implements OnInit {
   readonly AnalyticsUpIcon = AnalyticsUpIcon;
   readonly AnalyticsDownIcon = AnalyticsDownIcon;
   readonly UserGroupIcon = UserGroupIcon;
+  readonly Notification01Icon = Notification01Icon;
 
   currentTime = signal<Date>(new Date());
   searchQuery = signal('');
@@ -253,11 +256,13 @@ export class Dashboard implements OnInit {
   getSmoothLinePath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     let path = '';
-    const segment = 100 / trend.length;
-    const points = trend.map((day, index) => ({
-      x: (index + 0.5) * segment,
-      y: 100 - (day.height || 0)
-    }));
+    const points = trend.map((day, index) => {
+      const x = trend.length > 1 ? (index / (trend.length - 1)) * 100 : 50;
+      return {
+        x: x,
+        y: 100 - (day.height || 0)
+      };
+    });
     
     points.forEach((point, i) => {
       if (i === 0) {
@@ -277,10 +282,7 @@ export class Dashboard implements OnInit {
   getAreaPath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     const linePath = this.getSmoothLinePath(trend);
-    const segment = 100 / trend.length;
-    const lastX = (trend.length - 0.5) * segment;
-    const firstX = 0.5 * segment;
-    return `${linePath} L ${lastX} 100 L ${firstX} 100 Z`;
+    return `${linePath} L 100 100 L 0 100 Z`;
   }
 
   getGaugePercentage(): number {

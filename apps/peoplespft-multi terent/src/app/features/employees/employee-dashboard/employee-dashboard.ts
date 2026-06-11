@@ -2,6 +2,7 @@ import { AlertService } from '../../../shared/services/alert';
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { ApiService } from '../../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { 
@@ -40,6 +41,7 @@ export class EmployeeDashboard implements OnInit {
   private alertService = inject(AlertService);
 
   private apiService = inject(ApiService);
+  private sanitizer  = inject(DomSanitizer);
   
   // Icons
   readonly Calendar01Icon = Calendar01Icon;
@@ -71,6 +73,10 @@ export class EmployeeDashboard implements OnInit {
   pendingTeamRequests = signal<any[]>([]);
   urgentProject = signal<any>(null);
 
+  companyLogo = signal<string | null>(null);
+  qrCodeUrl = signal<string | null>(null);
+  virtualIdTemplate = signal<any>(null);
+
   // Real-time Dashboard Stats signals
   monthlyAttendance = signal<string>('0%');
   attendanceSubtitle = signal<string>('0 days present');
@@ -87,7 +93,7 @@ export class EmployeeDashboard implements OnInit {
 
   // Trend Chart signals
   workDuration = signal<number>(8);
-  chartType = signal<'bar' | 'line'>('bar');
+  chartType = signal<'bar' | 'line'>('line');
   showDayFilter = signal<boolean>(false);
   hiddenDays = signal<string[]>([]);
   
@@ -134,11 +140,13 @@ export class EmployeeDashboard implements OnInit {
   getSmoothLinePath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     let path = '';
-    const segment = 100 / trend.length;
-    const points = trend.map((day, index) => ({
-      x: (index + 0.5) * segment,
-      y: 100 - (day.height || 0)
-    }));
+    const points = trend.map((day, index) => {
+      const x = trend.length > 1 ? (index / (trend.length - 1)) * 100 : 50;
+      return {
+        x: x,
+        y: 100 - (day.height || 0)
+      };
+    });
     
     points.forEach((point, i) => {
       if (i === 0) {
@@ -158,10 +166,61 @@ export class EmployeeDashboard implements OnInit {
   getAreaPath(trend: any[] | undefined): string {
     if (!trend || trend.length === 0) return '';
     const linePath = this.getSmoothLinePath(trend);
-    const segment = 100 / trend.length;
-    const lastX = (trend.length - 0.5) * segment;
-    const firstX = 0.5 * segment;
-    return `${linePath} L ${lastX} 100 L ${firstX} 100 Z`;
+    return `${linePath} L 100 100 L 0 100 Z`;
+  }
+
+  // ── Custom VID template renderer ─────────────────────────────────────────────
+  vidPage = computed(() => {
+    const t = this.virtualIdTemplate();
+    return t?.pages?.[0] ?? null;
+  });
+
+  readonly VID_CANVAS_W = 595;
+  readonly VID_CARD_W   = 340;
+  get vidScale() { return this.VID_CARD_W / this.VID_CANVAS_W; }
+  get vidCardH()  { return Math.round(842 * this.vidScale); }
+
+  vidBgStyle(page: any): SafeStyle {
+    if (!page?.backgroundUrl) return '';
+    return this.sanitizer.bypassSecurityTrustStyle(`url('${page.backgroundUrl}')`);
+  }
+
+  readonly IMAGE_KEYS = ['logo', 'signature', 'qrCode', 'profilePhoto'];
+  isVidImageKey(key: string) { return this.IMAGE_KEYS.includes(key); }
+
+  resolveVidValue(key: string): string {
+    const u = this.employeeData();
+    switch (key) {
+      case 'fullName':       return u?.fullName || 'Employee';
+      case 'internId':
+      case 'EmployeeId':     return u?.EmployeeId || u?.internid || '';
+      case 'role':           return u?.role || 'Employee';
+      case 'email':          return u?.email || '';
+      case 'department':     return u?.department || u?.departmentId?.name || '';
+      case 'college':        return u?.college || '';
+      case 'onboardingDate': return u?.onboardingDate ? new Date(u.onboardingDate).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '';
+      case 'endDate':        return u?.endDate       ? new Date(u.endDate).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '';
+      case 'todayDate':      return new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      case 'logo':           return this.companyLogo() || '';
+      case 'qrCode':         return this.qrCodeUrl()   || '';
+      case 'profilePhoto':   return this.getPhotoUrl(u?._id || u?.internid) || '';
+      default:               return u?.[key] || '';
+    }
+  }
+
+  resolveVidParagraph(text: string): string {
+    if (!text) return '';
+    return text.replace(/\{\{([^}]+)\}\}/g, (_, k) => this.resolveVidValue(k.trim()));
+  }
+
+  private _buildQrCode(user: any) {
+    const origin    = typeof window !== 'undefined' ? window.location.origin : 'https://peoplesoft.softrateglobal.com';
+    const companyId = user.companyId?._id || user.companyId || '';
+    const userId    = user.EmployeeId || user.internid || user.employeeId || user._id || '';
+    if (companyId && userId) {
+      const vidUrl = `${origin}/hrms/id-card/${companyId}/${userId}`;
+      this.qrCodeUrl.set(`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(vidUrl)}`);
+    }
   }
 
   ngOnInit() {
@@ -173,8 +232,22 @@ export class EmployeeDashboard implements OnInit {
       const empId = parsedData.EmployeeId || parsedData.internid;
       const mongoId = parsedData._id;
 
+      this._buildQrCode(parsedData);
+
+      this.pendingRequests = 3 + (parsedData.isManager ? 1 : 0);
+
       this.apiService.getCompanySettings().subscribe({
         next: (res: any) => {
+          if (res?.success) {
+            if (res.settings?.communication?.emailLogoUrl) {
+              this.companyLogo.set(res.settings.communication.emailLogoUrl);
+            }
+            const tmpl = res.offerLetterSettings?.documentTemplates?.virtualIdCard;
+            if (tmpl?.pages?.some((p: any) => p.backgroundUrl || p.placeholders?.length || p.paragraphs?.length)) {
+              this.virtualIdTemplate.set(tmpl);
+            }
+          }
+
           if (res && res.settings && res.settings.workDurationSettings) {
              const wds = res.settings.workDurationSettings;
              const role = parsedData.role?.toLowerCase() || '';
@@ -205,11 +278,15 @@ export class EmployeeDashboard implements OnInit {
       this.currentTime.set(new Date());
       this.updateTimer();
     }, 1000);
+  }
 
-    // Turn off skeleton loading after a short delay
-    setTimeout(() => {
+  private pendingRequests = 0;
+  
+  private requestFinished() {
+    this.pendingRequests--;
+    if (this.pendingRequests <= 0) {
       this.isLoading.set(false);
-    }, 1200);
+    }
   }
 
   updateTimer() {
@@ -288,8 +365,12 @@ export class EmployeeDashboard implements OnInit {
         const prevWeekTrend = this.calculateWeekTrend(attendanceList, 1);
         this.employeeTrend.set(currentWeekTrend);
         this.employeePrevTrend.set(prevWeekTrend);
+        this.requestFinished();
       },
-      error: (err) => console.error('Failed to fetch attendance stats', err)
+      error: (err) => {
+        console.error('Failed to fetch attendance stats', err);
+        this.requestFinished();
+      }
     });
   }
 
@@ -355,8 +436,12 @@ export class EmployeeDashboard implements OnInit {
           this.performanceScore.set('--');
           this.performanceSubtitle.set('No records found');
         }
+        this.requestFinished();
       },
-      error: (err) => console.error('Failed to fetch performance stats', err)
+      error: (err) => {
+        console.error('Failed to fetch performance stats', err);
+        this.requestFinished();
+      }
     });
   }
 
@@ -389,10 +474,12 @@ export class EmployeeDashboard implements OnInit {
         } else {
           this.urgentProject.set(null);
         }
+        this.requestFinished();
       },
       error: (err) => {
         console.error('Failed to fetch project stats', err);
         this.urgentProject.set(null);
+        this.requestFinished();
       }
     });
   }
@@ -401,9 +488,13 @@ export class EmployeeDashboard implements OnInit {
     this.apiService.getAssignedInterns(this.employeeData()._id).subscribe({
       next: (data) => {
         // Filter only those that haven't been reviewed by this manager yet
-        this.pendingTeamRequests.set(data.filter(r => r.managerApprovalStatus === 'pending'));
+        this.pendingTeamRequests.set(data.filter((r: any) => r.managerApprovalStatus === 'pending'));
+        this.requestFinished();
       },
-      error: (err) => console.error('Failed to fetch team requests', err)
+      error: (err) => {
+        console.error('Failed to fetch team requests', err);
+        this.requestFinished();
+      }
     });
   }
 

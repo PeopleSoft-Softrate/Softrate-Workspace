@@ -1646,8 +1646,9 @@
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-card {
   display: grid !important;
-  grid-template-rows: auto auto minmax(220px, auto) !important;
-  row-gap: 16px !important;
+  grid-template-rows: auto auto minmax(220px, 1fr) !important;
+  row-gap: 24px !important;
+  align-content: start !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-header {
@@ -1746,6 +1747,7 @@
   display: grid !important;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr) !important;
   gap: 18px !important;
+  row-gap: 0px !important;
   align-items: stretch !important;
   min-width: 0 !important;
   min-height: 0 !important;
@@ -1767,46 +1769,80 @@
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .section-header {
   margin: 0 !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  display: flex !important;
+  align-items: flex-start !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .section-kicker {
   font-size: 11px !important;
   line-height: 1.1 !important;
   letter-spacing: 0.07em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 0 !important;
+  text-align: left !important;
+  text-transform: uppercase !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .section-header h3 {
-  margin-top: 4px !important;
+  margin: 4px 0 0 0 !important;
+  padding: 0 !important;
+  text-indent: 0 !important;
+  text-align: left !important;
   font-size: clamp(20px, 1.8vw, 26px) !important;
   line-height: 1 !important;
 }
 
-.dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame,
-.dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame {
-  min-height: 220px !important;
-  height: 220px !important;
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame {
+  margin-top: 8px !important;
+  min-height: 240px !important;
+  height: 240px !important;
 }
 
-.dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame canvas,
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame {
+  min-height: 240px !important;
+  height: 240px !important;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 38px !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-panel .chart-frame canvas {
+  width: 100% !important;
+  max-height: 100% !important;
+}
+
 .dashboard-wrapper .admin-overview-view .admin-statistics-panel .donut-frame canvas {
-  height: 220px !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-mix .overview-side {
   grid-template-columns: minmax(128px, 0.72fr) minmax(144px, 1fr) !important;
   gap: 14px !important;
-  align-items: center !important;
+  align-items: flex-start !important;
+  margin-top: 8px !important;
   min-height: 220px !important;
-  height: 220px !important;
+  height: auto !important;
   min-width: 0 !important;
   overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-mix .donut-frame,
-.dashboard-wrapper .admin-overview-view .admin-statistics-mix .call-mix-legend,
 .dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-row,
 .dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-label {
   min-width: 0 !important;
+}
+
+.dashboard-wrapper .admin-overview-view .admin-statistics-mix .call-mix-legend {
+  min-width: 0 !important;
+  margin-top: 12px !important;
 }
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-mix .summary-row {
@@ -3757,3 +3793,17 @@
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
 }
+
+.dashboard-wrapper .admin-overview-view .peak-insights-grid {
+  grid-column: 1 / -1 !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  justify-self: stretch !important;
+  align-self: start !important;
+  margin-top: 0 !important;
+}
+
+
+

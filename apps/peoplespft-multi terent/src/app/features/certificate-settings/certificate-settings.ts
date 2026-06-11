@@ -1,5 +1,6 @@
 import { AlertService } from '../../shared/services/alert';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
@@ -19,6 +20,7 @@ export class CertificateSettings implements OnInit {
 
   private apiService = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
+  private sanitizer = inject(DomSanitizer);
 
   /** Preview URL for the current logged-in user's profile photo (used in canvas preview) */
   currentUserPhotoUrl: string | null = null;
@@ -216,40 +218,49 @@ export class CertificateSettings implements OnInit {
   }
 
   // ── Rendering for Canvas ───────────────────────────────────────────────────
-  renderCanvasText(text: string): string {
+  hasImagePlaceholder(text: string): boolean {
+    if (!text) return false;
+    return text.includes('{{logo}}') || text.includes('{{signature}}') || text.includes('{{qrCode}}') || text.includes('{{profilePhoto}}');
+  }
+
+  renderCanvasText(para: any): SafeHtml | string {
+    let text = para.text;
     if (!text) return '(empty paragraph)';
     
-    // Replace {{logo}} with actual image
-    if (text.includes('{{logo}}')) {
-      const img = this.emailLogoUrl ? `<img src="${this.emailLogoUrl}" class="preview-img-placeholder">` : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Company Logo Placeholder]</span>';
-      text = text.replace(/\{\{logo\}\}/g, img);
-    }
-    
-    // Replace {{signature}} with actual image
-    if (text.includes('{{signature}}')) {
-      const img = this.emailSignatureUrl ? `<img src="${this.emailSignatureUrl}" class="preview-img-placeholder">` : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Company Signature Placeholder]</span>';
-      text = text.replace(/\{\{signature\}\}/g, img);
-    }
-    
-    // Replace {{qrCode}} with dummy QR code
-    if (text.includes('{{qrCode}}')) {
-      const img = '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block;">[QR Code Placeholder]</span>';
-      text = text.replace(/\{\{qrCode\}\}/gi, img);
-    }
-    
-    // Replace {{profilePhoto}} with actual user photo if available, else placeholder
-    if (text.includes('{{profilePhoto}}')) {
-      const img = this.currentUserPhotoUrl
-        ? `<img src="${this.currentUserPhotoUrl}" class="preview-img-placeholder" style="width:80px;height:80px;object-fit:cover;border-radius:50%;">`
-        : '<span style="border: 1px dashed #ccc; padding: 10px; display: inline-block; border-radius:50%; width:60px; height:60px; text-align:center; line-height:60px; color:#999; font-size:11px;">Photo</span>';
-      text = text.replace(/\{\{profilePhoto\}\}/gi, img);
-    }
+    // Support regex parsing for sizes like {{signature:150x80}} in the preview too, or fallback to para.imgWidth/Height
+    const applySize = (match: string, key: string, w: string, h: string) => {
+      const parsedW = w ? `${w}px` : (para.imgWidth ? `${para.imgWidth}px` : 'auto');
+      const parsedH = h ? `${h}px` : (para.imgHeight ? `${para.imgHeight}px` : '80px');
+      const style = `max-width: 100%; width: ${parsedW}; height: ${parsedH}; object-fit: contain;`;
+      
+      if (key.toLowerCase() === 'logo') {
+        const fallback = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' fill='%23f1f5f9' stroke='%23cbd5e1' stroke-width='2' stroke-dasharray='4'/><text x='100' y='45' font-family='sans-serif' font-size='14' text-anchor='middle' fill='%2364748b'>[Logo]</text></svg>" style="${style}">`;
+        return this.emailLogoUrl ? `<img src="${this.emailLogoUrl}" style="${style}">` : fallback;
+      }
+      if (key.toLowerCase() === 'signature') {
+        const fallback = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' fill='%23f1f5f9' stroke='%23cbd5e1' stroke-width='2' stroke-dasharray='4'/><text x='100' y='45' font-family='sans-serif' font-size='14' text-anchor='middle' fill='%2364748b'>[Signature]</text></svg>" style="${style}">`;
+        return this.emailSignatureUrl ? `<img src="${this.emailSignatureUrl}" style="${style}">` : fallback;
+      }
+      if (key.toLowerCase() === 'qrcode') {
+        const fallback = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23f1f5f9' stroke='%23cbd5e1' stroke-width='2' stroke-dasharray='4'/><text x='50' y='55' font-family='sans-serif' font-size='16' text-anchor='middle' fill='%2364748b'>[QR]</text></svg>" style="${style}">`;
+        return fallback;
+      }
+      if (key.toLowerCase() === 'profilephoto') {
+        const fallback = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='48' fill='%23f1f5f9' stroke='%23cbd5e1' stroke-width='2' stroke-dasharray='4'/><text x='50' y='55' font-family='sans-serif' font-size='14' text-anchor='middle' fill='%2364748b'>[Photo]</text></svg>" style="border-radius:50%; object-fit:cover; width: ${parsedW}; height: ${parsedH};">`;
+        return this.currentUserPhotoUrl ? `<img src="${this.currentUserPhotoUrl}" style="border-radius:50%; object-fit:cover; width: ${parsedW}; height: ${parsedH};">` : fallback;
+      }
+      return match;
+    };
+
+    text = text.replace(/\{\{(logo|signature|qrCode|profilePhoto)(?::(\d+)(?:x(\d+))?)?\}\}/gi, applySize);
     
     // Markdown support for inline bold (**text**)
     text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
     // Convert newlines to <br> for HTML rendering in the preview
-    return text.replace(/\n/g, '<br>');
+    text = text.replace(/\n/g, '<br>');
+
+    return this.sanitizer.bypassSecurityTrustHtml(text);
   }
 
   // ── Tab Management ─────────────────────────────────────────────────────────

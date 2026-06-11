@@ -353,7 +353,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         status: c.hrApprovalStatus || 'pending',
         managerStatus: c.managerApprovalStatus || 'pending',
         hrStatus: c.hrApprovalStatus || 'pending',
-        rejectionReason: c.hrRemarks || '',
+        rejectionReason: c.hrRemarks || c.managerRemarks || '',
         createdAt: c.createdAt,
         raw: c
       });

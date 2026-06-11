@@ -39,8 +39,11 @@
     <div class="form-header">
       <h2>{{ editingTemplate()?._id ? 'Edit' : 'Create' }} Template</h2>
       <div class="header-actions">
-        <button class="secondary" (click)="cancel()">Cancel</button>
-        <button class="primary" (click)="save()">Save Template</button>
+        <button class="secondary" (click)="cancel()" [disabled]="isSaving()">Cancel</button>
+        <button class="primary" (click)="save()" [disabled]="isSaving()">
+          <i *ngIf="isSaving()" class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i>
+          {{ isSaving() ? 'Saving...' : 'Save Template' }}
+        </button>
       </div>
     </div>
 
@@ -65,7 +68,7 @@
         <button class="add-goal-btn" (click)="addGoal()">+ Add Goal</button>
       </div>
 
-      <div class="goal-item" *ngFor="let goal of editingTemplate()!.goals; let i = index">
+      <div class="goal-item" *ngFor="let goal of editingTemplate()!.goals; let i = index; trackBy: trackByIndex">
         <div class="goal-header">
           <h4>Goal #{{ i + 1 }}</h4>
           <button class="remove-btn" (click)="removeGoal(i)"><i class="fa-solid fa-times"></i></button>

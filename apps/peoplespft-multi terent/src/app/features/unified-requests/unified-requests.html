@@ -367,6 +367,15 @@
                 <div style="color: #334155; font-size: 0.95rem; line-height: 1.5;">{{ selectedRequest()?.reason }}</div>
               </div>
             </ng-container>
+
+            <!-- MANAGER REMARKS FOR HR -->
+            <ng-container *ngIf="isHr() && selectedRequest()?.rejectionReason">
+              <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Manager Remarks</div>
+                <div style="color: #334155; font-size: 0.95rem; line-height: 1.5; font-style: italic;">"{{ selectedRequest()?.rejectionReason }}"</div>
+              </div>
+            </ng-container>
           </div>
 
           <div class="decision-alert" [ngClass]="reviewAction()">

@@ -167,6 +167,34 @@
         </div>
 
         <div class="nav-section">
+          <p class="nav-label">Self Portal</p>
+          <a routerLink="/employee/attendance" routerLinkActive="active" class="nav-item">
+            <div class="icon-box green">
+              <hugeicons-icon [icon]="CalendarCheckIn01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>My Attendance</span>
+          </a>
+          <a routerLink="/employee/leaves" routerLinkActive="active" class="nav-item">
+            <div class="icon-box orange">
+              <hugeicons-icon [icon]="SentIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Leave Applications</span>
+          </a>
+          <a routerLink="/employee/payroll" routerLinkActive="active" class="nav-item">
+            <div class="icon-box purple">
+              <hugeicons-icon [icon]="Invoice01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>My Payslips</span>
+          </a>
+          <a routerLink="/employee/review" routerLinkActive="active" class="nav-item">
+            <div class="icon-box teal">
+              <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Performance Review</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
           <p class="nav-label">Company Resources</p>
           <a routerLink="/employee/org-hierarchy" routerLinkActive="active" class="nav-item">
             <div class="icon-box blue">
@@ -179,12 +207,6 @@
               <hugeicons-icon [icon]="PolicyIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             </div>
             <span>HR Policies</span>
-          </a>
-          <a routerLink="/app-settings" routerLinkActive="active" class="nav-item">
-            <div class="icon-box dark-blue">
-              <hugeicons-icon [icon]="Settings01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>App Settings</span>
           </a>
         </div>
       </ng-container>
@@ -217,6 +239,16 @@
             </div>
             <span>My Payslips</span>
           </a>
+          <a routerLink="/employee/review" routerLinkActive="active" class="nav-item">
+            <div class="icon-box teal">
+              <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Performance Review</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-label">Company Resources</p>
           <a routerLink="/employee/org-hierarchy" routerLinkActive="active" class="nav-item">
             <div class="icon-box blue">
               <hugeicons-icon [icon]="WorkflowSquare03Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
@@ -229,12 +261,16 @@
             </div>
             <span>HR Policies</span>
           </a>
-          <a routerLink="/employee/review" routerLinkActive="active" class="nav-item">
-            <div class="icon-box teal">
-              <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-            </div>
-            <span>Performance Review</span>
-          </a>
+        </div>
+
+        <!-- Mobile App Download Card -->
+        <div class="mobile-app-card">
+          <div class="mobile-app-icon">
+            <svg stroke="currentColor" height="18" width="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 19V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9 6.001V6m3 .001V6m3 .001V6M9 9.001V9m3 .001V9m3 .001V9m-6 3.001V12m3 .001V12m0 6.001V18"/></svg>
+          </div>
+          <h4 class="mobile-app-title">Download our<br>Mobile App</h4>
+          <p class="mobile-app-desc">Get easy in another way</p>
+          <button class="mobile-app-btn">Download</button>
         </div>
       </ng-container>
     </nav>
@@ -246,7 +282,7 @@
     <header class="top-bar" *ngIf="!isLoginPage()">
       <app-global-search></app-global-search>
       <div class="top-actions">
-        <div class="notification-wrapper" #notificationWrapper *ngIf="isHrType() || isManager()">
+        <div class="notification-wrapper" #notificationWrapper>
           <button class="icon-btn" title="Notifications" (click)="toggleNotifications()">
             <hugeicons-icon [icon]="Notification01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             <span class="dot" *ngIf="hasNotifications()"></span>
@@ -259,6 +295,18 @@
             <h3>Recent Updates</h3>
           </div>
           <div class="dropdown-body">
+            <div *ngIf="isHrType()" class="action-card" (click)="openBroadcastModal()" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin: 16px 16px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+              <div style="display: flex; flex-direction: column;">
+                <div style="font-weight: 700; font-size: 16px; color: #0f172a; margin-bottom: 4px;">Broadcast</div>
+                <div style="font-size: 14px; color: #64748b;">Send notification</div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M16 8L8 16"></path>
+                <path d="M16 16V8H8"></path>
+              </svg>
+            </div>
+
             <div class="no-pending" *ngIf="notificationItems().length === 0">
               <p>No recent updates</p>
             </div>
@@ -330,4 +378,50 @@
       <router-outlet></router-outlet>
     </div>
   </main>
+
+  <!-- Broadcast Notification Modal -->
+  <div class="modal-overlay" *ngIf="showBroadcastModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+    <div class="modal-content" style="max-width: 500px; width: 100%; border-radius: 12px; background: var(--bg-primary); padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;">
+      <button class="close-btn" (click)="closeBroadcastModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--text-muted);">
+        <hugeicons-icon [icon]="Delete01Icon" size="24"></hugeicons-icon>
+      </button>
+      
+      <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; color: var(--text-primary);">Broadcast Notification</h2>
+      
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary); font-size: 14px;">Title</label>
+        <input type="text" [(ngModel)]="broadcastData.title" placeholder="Enter notification title" 
+               style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary); font-size: 14px;">Description</label>
+        <textarea [(ngModel)]="broadcastData.description" placeholder="Enter details..." rows="4"
+                  style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;"></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 24px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary); font-size: 14px;">Target Audience</label>
+        <div style="display: flex; gap: 16px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" [(ngModel)]="broadcastData.sendToEmployees">
+            <span style="color: var(--text-primary); font-size: 14px;">Employees</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" [(ngModel)]="broadcastData.sendToInterns">
+            <span style="color: var(--text-primary); font-size: 14px;">Interns</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button (click)="closeBroadcastModal()" style="padding: 10px 16px; border-radius: 8px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; font-weight: 500;">Cancel</button>
+        <button (click)="submitBroadcast()" [disabled]="isBroadcasting() || !broadcastData.title || !broadcastData.description || (!broadcastData.sendToEmployees && !broadcastData.sendToInterns)" 
+                style="padding: 10px 16px; border-radius: 8px; background: #0f172a; color: white; border: none; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+          <span *ngIf="isBroadcasting()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 16px; height: 16px; border: 2px solid white; border-right-color: transparent; border-radius: 50%; animation: spin 0.75s linear infinite;"></span>
+          {{ isBroadcasting() ? 'Sending...' : 'Send Broadcast' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

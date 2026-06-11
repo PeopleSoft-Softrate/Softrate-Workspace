@@ -35,6 +35,7 @@ export class PerformanceGoals implements OnInit {
   isLoading = signal(false);
   
   editingTemplate = signal<Template | null>(null);
+  isSaving = signal(false);
   
   // Collect unique perspectives from all templates for suggestions
   existingPerspectives = signal<string[]>([]);
@@ -133,12 +134,17 @@ export class PerformanceGoals implements OnInit {
       }
     }
 
+    this.isSaving.set(true);
     this.apiService.savePerformanceTemplate(current).subscribe({
       next: () => {
+        this.isSaving.set(false);
         this.editingTemplate.set(null);
         this.loadTemplates();
       },
-      error: (err) => this.alertService.show(err.error?.message || 'Save failed')
+      error: (err) => {
+        this.isSaving.set(false);
+        this.alertService.show(err.error?.message || 'Save failed');
+      }
     });
   }
 
@@ -153,5 +159,9 @@ export class PerformanceGoals implements OnInit {
 
   cancel() {
     this.editingTemplate.set(null);
+  }
+
+  trackByIndex(index: number, obj: any): any {
+    return index;
   }
 }

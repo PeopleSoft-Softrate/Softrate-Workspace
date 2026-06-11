@@ -10,8 +10,13 @@ const moment = require('moment');
 function resolveParagraphText(text, data) {
     if (!text) return '';
     return text.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+        const kLower = key.trim().toLowerCase();
+        // Do not replace image placeholders so they can be rendered as actual PDF images later
+        if (['logo', 'signature', 'qrcode', 'profilephoto'].includes(kLower)) {
+            return match;
+        }
         let val = data[key.trim()] || '';
-        if (key.toLowerCase().includes('date') && val) {
+        if (kLower.includes('date') && val) {
             val = moment(val).format('DD MMM YYYY');
         }
         return val;
@@ -25,18 +30,22 @@ function resolveParagraphText(text, data) {
 function resolveImagePlaceholder(text, data) {
     if (!text) return null;
     const trimmed = text.trim();
-    const match = trimmed.match(/^\{\{(logo|signature|qrCode|profilePhoto)\}\}$/i);
+    const match = trimmed.match(/^\{\{(logo|signature|qrCode|profilePhoto)(?::(\d+)(?:x(\d+))?)?\}\}$/i);
     if (!match) return null;
     let key = match[1];
     // Normalize key name (case sensitivity)
     if (key.toLowerCase() === 'qrcode') key = 'qrCode';
     if (key.toLowerCase() === 'profilephoto') key = 'profilePhoto';
+    
+    const width = match[2] ? parseInt(match[2], 10) : null;
+    const height = match[3] ? parseInt(match[3], 10) : null;
+
     const val = data[key];
     if (!val) return null;
     // Convert base64 data URL to Buffer for PDFKit
     if (typeof val === 'string' && val.startsWith('data:image')) {
         const base64Data = val.split(',')[1];
-        return Buffer.from(base64Data, 'base64');
+        return { buffer: Buffer.from(base64Data, 'base64'), width, height, key };
     }
     return null;
 }
@@ -196,12 +205,12 @@ async function generateDynamicPDF(data, template = {}) {
                 for (const p of placeholders) {
                                     // Check if it's an image chip
                     if (['logo', 'signature', 'qrCode', 'profilePhoto'].includes(p.key)) {
-                        const imgBuffer = resolveImagePlaceholder(`{{${p.key}}}`, data);
-                        if (imgBuffer) {
+                        const imgData = resolveImagePlaceholder(`{{${p.key}}}`, data);
+                        if (imgData && imgData.buffer) {
                             try {
                                 // Profile photo shown as a circle-ish square crop
                                 const imgSize = p.imgSize || (p.key === 'profilePhoto' ? 80 : 120);
-                                doc.image(imgBuffer, p.x, p.y, { fit: [imgSize, imgSize] });
+                                doc.image(imgData.buffer, p.x, p.y, { fit: [imgSize, imgSize] });
                             } catch (e) {
                                 console.warn('PDF image insert failed for chip:', e.message);
                             }
@@ -223,13 +232,14 @@ async function generateDynamicPDF(data, template = {}) {
                 const paragraphs = page.paragraphs || [];
                 for (const para of paragraphs) {
                     // --- Check if this paragraph is purely an image placeholder ---
-                    const imgBuffer = resolveImagePlaceholder(para.text, data);
-                    if (imgBuffer) {
+                    const imgData = resolveImagePlaceholder(para.text, data);
+                    if (imgData && imgData.buffer) {
                         const finalX = (para.x || 0) + 10;
                         const finalY = (para.y || 0) + 24;
-                        const maxW = para.width || 200;
+                        const maxW = imgData.width || para.imgWidth || 200;
+                        const maxH = imgData.height || para.imgHeight || 80;
                         try {
-                            doc.image(imgBuffer, finalX, finalY, { fit: [maxW, 120], align: 'left' });
+                            doc.image(imgData.buffer, finalX, finalY, { fit: [maxW, maxH], align: 'left' });
                         } catch (imgErr) {
                             console.warn('PDF image insert failed:', imgErr.message);
                         }
@@ -285,28 +295,76 @@ async function generateDynamicPDF(data, template = {}) {
                     const finalX = (para.x || 0) + 10;
                     const finalY = (para.y || 0) + 24;
 
-                    // Parse **bold** markdown for inline bolding
-                    const parts = text.split(/(\*\*.*?\*\*)/g);
-                    let isFirst = true;
+                    // PDFKit has severe bugs when combining align: 'justify' with continued: true
+                    // and newlines. We must split the text by newlines and process each line.
+                    const lines = text.split('\n');
+                    let isFirstLine = true;
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                        const lineText = lines[i];
+                        
+                        const currentY = isFirstLine ? finalY : doc.y;
+                        
+                        if (lineText.trim() === '') {
+                            // Blank line
+                            doc.text(' ', finalX, currentY, { ...options });
+                            isFirstLine = false;
+                            continue;
+                        }
 
-                    for (let j = 0; j < parts.length; j++) {
-                        const part = parts[j];
-                        if (!part) continue;
-                        
-                        const isInlineBold = part.startsWith('**') && part.endsWith('**');
-                        const actualText = isInlineBold ? part.slice(2, -2) : part;
-                        
-                        // Switch font if needed
-                        setPdfFont(doc, para.fontFamily, para.isBold || isInlineBold, para.isItalic, assetsDir);
-                        
-                        const isLast = (j === parts.length - 1) || (parts.slice(j+1).join('') === '');
-                        const partOptions = { ...options, continued: !isLast };
-                        
-                        if (isFirst) {
-                            doc.text(actualText, finalX, finalY, partOptions);
-                            isFirst = false;
-                        } else {
-                            doc.text(actualText, partOptions);
+                        // Check if line is purely an image placeholder
+                        const imgData = resolveImagePlaceholder(lineText, data);
+                        if (imgData && imgData.buffer) {
+                            try {
+                                const maxW = imgData.width || para.imgWidth || 200;
+                                const maxH = imgData.height || para.imgHeight || 80;
+                                
+                                doc.x = finalX;
+                                doc.y = currentY;
+                                doc.image(imgData.buffer, { fit: [maxW, maxH], align: para.alignment || 'left' });
+                            } catch (e) {
+                                console.warn('PDF inline image insert failed:', e.message);
+                            }
+                            isFirstLine = false;
+                            continue;
+                        }
+
+                        const formattedParts = [];
+                        const parts = lineText.split(/(\*\*.*?\*\*)/g);
+                        for (let j = 0; j < parts.length; j++) {
+                            const part = parts[j];
+                            if (!part) continue;
+                            const isInlineBold = part.startsWith('**') && part.endsWith('**');
+                            const actualText = isInlineBold ? part.slice(2, -2) : part;
+                            formattedParts.push({ text: actualText, isBold: isInlineBold });
+                        }
+
+                        // Shift leading spaces to the previous part's trailing space to avoid PDFKit justify trim bug
+                        for (let j = 1; j < formattedParts.length; j++) {
+                            const match = formattedParts[j].text.match(/^(\s+)/);
+                            if (match) {
+                                formattedParts[j-1].text += match[1];
+                                formattedParts[j].text = formattedParts[j].text.substring(match[1].length);
+                            }
+                        }
+
+                        let isFirstPart = true;
+                        for (let j = 0; j < formattedParts.length; j++) {
+                            const fp = formattedParts[j];
+                            if (!fp.text && j !== formattedParts.length - 1) continue;
+                            
+                            setPdfFont(doc, para.fontFamily, para.isBold || fp.isBold, para.isItalic, assetsDir);
+                            
+                            const isLastPart = (j === formattedParts.length - 1) || (formattedParts.slice(j+1).every(p => !p.text));
+                            
+                            if (isFirstPart) {
+                                doc.text(fp.text, finalX, currentY, { ...options, continued: !isLastPart });
+                                isFirstPart = false;
+                                isFirstLine = false;
+                            } else {
+                                doc.text(fp.text, { continued: !isLastPart });
+                            }
+                            if (isLastPart) break;
                         }
                     }
                 }

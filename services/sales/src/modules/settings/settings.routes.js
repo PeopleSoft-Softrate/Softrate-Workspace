@@ -540,7 +540,10 @@ router.get('/company/:companyCode/settings', async (req, res) => {
         bankDetails: user.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' },
         contactDetails: user.contactDetails || { website: '', email: '', phone: '' },
         products: user.products || [],
-        productRemarks: user.productRemarks || []
+        productRemarks: user.productRemarks || [],
+        weCrmAccessEnabled: process.env.WE_CRM_ACCESS && companyCode === process.env.WE_CRM_ACCESS,
+        weCrmUrl: process.env.WE_CRM_URL || 'http://localhost:5001/api',
+        weCrmCompanyId: process.env.WE_CRM_COMPANYID || null
       }
     });
   } catch (err) {

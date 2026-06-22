@@ -232,7 +232,7 @@
       <span class="sidebar-label">Quotation</span>
     </button>
 
-    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Remarks Filter', 'Follow-ups', 'Employees', 'Periodic Reports'])">Admin Views</div>
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Client', 'Remarks Filter', 'Follow-ups', 'Employees', 'Periodic Reports'])">Admin Views</div>
 
     <button
       class="sidebar-link sidebar-link-leads"
@@ -252,6 +252,25 @@
         </svg>
       </span>
       <span class="sidebar-label">Leads</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-our-client"
+      type="button"
+      [class.active]="vm.dashTab==='our_clients'"
+      (click)="vm.switchTab('our_clients')"
+      *ngIf="vm.sidebarFeatureMatches('Client') || vm.sidebarFeatureMatches('Leads')"
+      [title]="vm.sidebarMinimized ? 'Client' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Client</span>
     </button>
 
     <button

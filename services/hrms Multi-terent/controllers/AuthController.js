@@ -543,7 +543,8 @@ exports.forgotPassword = async (req, res) => {
 
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     const host = req.get('host');
-    const resetLink = `${protocol}://${host}/reset-password.html?token=${token}`;
+    const basePath = req.originalUrl.split('/api/')[0];
+    const resetLink = `${protocol}://${host}${basePath}/reset-password.html?token=${token}`;
 
     await sendEmail({
       to: emailLower,

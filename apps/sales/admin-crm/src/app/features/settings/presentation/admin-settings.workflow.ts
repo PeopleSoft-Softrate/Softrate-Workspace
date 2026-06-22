@@ -185,6 +185,9 @@ export class AdminSettingsWorkflow {
           vm.settingsContactDetails = res.settings.contactDetails || { website: '', email: '', phone: '' };
           vm.settingsProducts = res.settings.products || [];
           vm.settingsProductRemarks = res.settings.productRemarks || [];
+          vm.weCrmAccessEnabled = res.settings.weCrmAccessEnabled || false;
+          vm.weCrmUrl = res.settings.weCrmUrl || 'http://localhost:5001/api';
+          vm.weCrmCompanyId = res.settings.weCrmCompanyId || null;
         }
       },
       error: () => { vm.settingsLoading = false; },

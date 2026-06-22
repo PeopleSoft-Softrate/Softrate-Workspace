@@ -48,6 +48,124 @@ export class AdminLeadsWorkflow {
       }
     });
   }
+
+  openWeCrmModal(vm: any, lead: Lead): void {
+    if (!vm.weCrmUrl) {
+      alert('WE CRM URL is not configured.');
+      return;
+    }
+
+    vm.weCrmManagers = [];
+    if (vm.weCrmCompanyId) {
+      vm.weCrmManagersLoading = true;
+      fetch(`${vm.weCrmUrl}/users/public/managers?company_id=${vm.weCrmCompanyId}`)
+        .then(res => res.json())
+        .then(data => {
+          vm.weCrmManagers = data || [];
+        })
+        .catch(err => console.error('Failed to load WE CRM managers', err))
+        .finally(() => {
+          vm.weCrmManagersLoading = false;
+        });
+    }
+
+    vm.weCrmClientData = {
+      owner_name: lead.contactName || 'Client',
+      company_name: lead.leadCompanyName || (lead as any).companyName || '',
+      email: lead.directorEmailAddress || (lead as any).email || `client_${lead.contactNumber}@example.com`,
+      phone: String(lead.contactNumber || ''),
+      password: '',
+      business_type: '',
+      pan: '',
+      gstin: '',
+      address: (lead as any).address || '',
+      created_by: '',
+      _leadId: lead._id
+    };
+    vm.showWeCrmModal = true;
+  }
+
+  closeWeCrmModal(vm: any): void {
+    vm.showWeCrmModal = false;
+  }
+
+  submitWeCrmClient(vm: any): void {
+    vm.updatingLeadId = vm.weCrmClientData._leadId;
+    const payload = {
+      ...vm.weCrmClientData,
+      role: 'customer',
+      status: 'active',
+      company_id: vm.weCrmCompanyId
+    };
+
+    fetch(`${vm.weCrmUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        alert('Successfully added to WE CRM!');
+        vm.showWeCrmModal = false;
+      } else {
+        alert('Failed: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch((err) => {
+      alert('Failed: ' + err.message);
+    })
+    .finally(() => {
+      vm.updatingLeadId = null;
+    });
+  }
+
+  addToWeCrm(vm: any, lead: Lead): void {
+    if (!vm.weCrmUrl) {
+      alert('WE CRM URL is not configured.');
+      return;
+    }
+    
+    // Disable button to prevent multiple clicks
+    vm.updatingLeadId = lead._id;
+    
+    const payload = {
+      email: lead.directorEmailAddress || (lead as any).email || `client_${lead.contactNumber}@example.com`,
+      password: 'WeCrm@123',
+      owner_name: lead.contactName || 'Client',
+      phone: String(lead.contactNumber || ''),
+      role: 'customer',
+      company_name: lead.leadCompanyName || (lead as any).companyName || '',
+      address: (lead as any).address || '',
+      status: 'active'
+    };
+
+    fetch(`${vm.weCrmUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        alert('Successfully added to WE CRM!');
+      } else {
+        alert('Failed to add to WE CRM: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch((err) => {
+      console.error('WE CRM Error:', err);
+      alert('Network error when contacting WE CRM.');
+    })
+    .finally(() => {
+      vm.updatingLeadId = null;
+    });
+  }
+
     fetchAdminLeads(vm: any, forceRefresh = false): void {
     if (!vm.dashboardCode) return;
     vm.adminLeadRequestRun++;

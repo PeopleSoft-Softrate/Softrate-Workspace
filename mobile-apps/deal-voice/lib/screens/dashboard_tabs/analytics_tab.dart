@@ -5,6 +5,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/api_service.dart';
 import '../../services/call_log_service.dart';
 
 class AnalyticsTab extends StatefulWidget {
@@ -32,6 +34,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
   // Data
   List<CallLogEntry> _allCallLogs = [];
   bool _isLoading = true;
+  int _connectedCallDuration = 0;
 
   // ── Touch state for PieChart
   int _pieTouchedIndex = -1;
@@ -65,10 +68,69 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
     setState(() => _isLoading = true);
     try {
       final now  = DateTime.now();
-      final from = now.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
-      final entries = await CallLogService.fetchLogsForPeriod(from, now.millisecondsSinceEpoch);
-      debugPrint('Analytics: Fetched ${entries.length} filtered entries for the last 7 days');
-      if (mounted) setState(() { _allCallLogs = entries; _isLoading = false; });
+      
+      // Default to 30 days to match web dashboard sync window
+      int fromMs = now.subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+      int toMs = now.millisecondsSinceEpoch;
+
+      // Expand window if custom range goes further back
+      if (_selectedFilter == 3 && _customFrom != null) {
+        final customFromMs = _customFrom!.millisecondsSinceEpoch;
+        if (customFromMs < fromMs) {
+          fromMs = customFromMs;
+        }
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final companyCode = prefs.getString('companyCode') ?? '';
+      final phone = prefs.getString('mobileNumber') ?? '';
+
+      // Convert ms to yyyy-MM-dd
+      final String fromDate = DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(fromMs));
+      final String toDate = DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(toMs));
+
+      final res = await ApiService.fetchCallLogDetails(
+        companyCode: companyCode,
+        phone: phone,
+        fromDate: fromDate,
+        toDate: toDate,
+      );
+
+      final settingsRes = await ApiService.fetchCompanySettings(companyCode);
+      int connThresh = 0;
+      if (settingsRes['success'] == true && settingsRes['settings'] != null) {
+        connThresh = settingsRes['settings']['connectedCallDuration'] ?? 0;
+      }
+
+      List<CallLogEntry> entries = [];
+      if (res['success'] == true && res['calls'] != null) {
+        final List<dynamic> dbCalls = res['calls'];
+        for (var c in dbCalls) {
+          final String callTypeStr = c['callType'] ?? '';
+          CallType cType = CallType.unknown;
+          if (callTypeStr == 'incoming') cType = CallType.incoming;
+          else if (callTypeStr == 'outgoing') cType = CallType.outgoing;
+          else if (callTypeStr == 'missed') cType = CallType.missed;
+          else if (callTypeStr == 'rejected') cType = CallType.rejected;
+
+          final tsStr = c['timestamp'];
+          int timestamp = 0;
+          if (tsStr != null) {
+             timestamp = DateTime.parse(tsStr).millisecondsSinceEpoch;
+          }
+
+          entries.add(CallLogEntry(
+            number: c['number'] ?? '',
+            name: c['name'] ?? '',
+            duration: c['duration'] ?? 0,
+            callType: cType,
+            timestamp: timestamp,
+          ));
+        }
+      }
+
+      debugPrint('Analytics: Fetched ${entries.length} filtered entries from DB');
+      if (mounted) setState(() { _allCallLogs = entries; _connectedCallDuration = connThresh; _isLoading = false; });
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -119,7 +181,6 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
   Map<String, int> get _stats {
     int total = 0, totalDur = 0, incoming = 0, inDur = 0, outgoing = 0, outDur = 0, missed = 0, rejected = 0, connected = 0;
     for (final e in _filteredLogs) {
-      total++;
       final d = e.duration ?? 0;
       
       final type = _effectiveType(e);
@@ -129,13 +190,14 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
         totalDur += d;
       }
       
-      if (d > 0) connected++;
+      final bool isConnected = _connectedCallDuration > 0 ? (d >= _connectedCallDuration) : (d > 0);
+      if (isConnected) connected++;
       
       switch (type) {
-        case CallType.incoming:  incoming++;  inDur  += d; break;
-        case CallType.outgoing:  outgoing++;  outDur += d; break;
-        case CallType.missed:    missed++;    break;
-        case CallType.rejected:  rejected++;  break;
+        case CallType.incoming:  incoming++;  inDur  += d; total++; break;
+        case CallType.outgoing:  outgoing++;  outDur += d; total++; break;
+        case CallType.missed:    missed++;    total++; break;
+        case CallType.rejected:  rejected++;  total++; break;
         default: break;
       }
     }
@@ -161,6 +223,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
     );
     if (picked != null) {
       setState(() { _selectedFilter = 3; _customFrom = picked.start; _customTo = picked.end; });
+      _fetchCallLogs(); // Fetch new logs if the custom range is outside the existing window
     } else if (_customFrom == null) {
       setState(() => _selectedFilter = 0);
     }

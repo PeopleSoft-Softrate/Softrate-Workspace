@@ -6,9 +6,9 @@ class ApiService {
   static String get baseUrl {
     if (Platform.isAndroid) {
       // return 'http://10.139.243.125:4000/api';
-      return 'https://softrate-call.onrender.com/api';
+      return 'https://dealvoice.softrateglobal.com/sales-api/api';
     }
-    return 'https://softrate-call.onrender.com/api';
+    return 'https://dealvoice.softrateglobal.com/sales-api/api';
     // return 'http://10.139.243.125:4000/api';
   }
 
@@ -117,6 +117,44 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Sync failed: $e'};
+    }
+  }
+
+  // ── Fetch Call Log Details ─────────────────────────────────
+  static Future<Map<String, dynamic>> fetchCallLogDetails({
+    required String companyCode,
+    required String phone,
+    required String fromDate,
+    required String toDate,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/calllogs/details?companyCode=$companyCode&phone=$phone&from=$fromDate&to=$toDate');
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(response.body);
+      } else {
+        final body = jsonDecode(response.body);
+        return {'success': false, 'message': body['message'] ?? 'Fetch failed: ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Failed to fetch call logs: $e'};
+    }
+  }
+
+  // ── Fetch Company Settings ───────────────────────────────────
+  static Future<Map<String, dynamic>> fetchCompanySettings(String companyCode) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/company/$companyCode/settings'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(response.body);
+      } else {
+        return {'success': false};
+      }
+    } catch (e) {
+      return {'success': false};
     }
   }
 

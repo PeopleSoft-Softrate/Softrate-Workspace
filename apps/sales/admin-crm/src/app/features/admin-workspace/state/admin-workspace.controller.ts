@@ -413,6 +413,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     private resetAdminLeadDerivedCaches(): void { return this.adminLeadsWorkflow.resetAdminLeadDerivedCaches(this); }
 
     updateLeadStatus(lead: Lead, status: string): void { return this.adminLeadsWorkflow.updateLeadStatus(this, lead, status); }
+    
+    addToWeCrm(lead: Lead): void { return this.adminLeadsWorkflow.addToWeCrm(this, lead); }
 
   getLeadStatusClass(status: string): string {
     return leadStatusClass(status);
@@ -605,6 +607,13 @@ export abstract class AdminWorkspaceController implements OnInit {
   adminAiSummaryOpen = false;
   aiBrief: AiBrief | null = null;
   aiBriefLoading = false;
+  weCrmAccessEnabled = false;
+  weCrmUrl = 'http://localhost:5001/api';
+  weCrmCompanyId: string | null = null;
+  showWeCrmModal = false;
+  weCrmClientData: any = {};
+  weCrmManagers: any[] = [];
+  weCrmManagersLoading = false;
   aiBriefError = '';
   aiBriefCacheStatus: 'hit' | 'miss' | '' = '';
   aiBriefCompany = '';
@@ -1296,8 +1305,15 @@ export abstract class AdminWorkspaceController implements OnInit {
       this.clearOverviewChartRetries();
     }
 
-    if (tab === 'leads' || tab === 'followups' || tab === 'remarks_filter') {
-      if (tab === 'remarks_filter') {
+    if (tab === 'leads' || tab === 'our_clients' || tab === 'followups' || tab === 'remarks_filter') {
+      if (tab === 'our_clients') {
+        this.adminLeadStatusFilter = 'Converted';
+        this.selectedAdminLeadSet = '';
+        this.fetchAdminLeads(true);
+      } else if (tab === 'leads' && prevTab === 'our_clients') {
+        this.adminLeadStatusFilter = '';
+        this.fetchAdminLeads(true);
+      } else if (tab === 'remarks_filter') {
         this.selectedAdminLeadSet = ''; // Reset set filter for global remarks search
         this.selectedRemarkFilter = this.settingsProductRemarks[0] || '';
         this.selectedRemarksFilterCompany = '';
@@ -4813,6 +4829,10 @@ export abstract class AdminWorkspaceController implements OnInit {
   selectOnboardingClient(client: any): void { return this.invoiceQuotationWorkflow.selectOnboardingClient(this, client); }
 
   get selectedOnboardingClient(): any { return this.invoiceQuotationWorkflow.selectedOnboardingClient(this); }
+
+  openWeCrmModal(lead: Lead): void { return this.adminLeadsWorkflow.openWeCrmModal(this, lead); }
+  closeWeCrmModal(): void { return this.adminLeadsWorkflow.closeWeCrmModal(this); }
+  submitWeCrmClient(): void { return this.adminLeadsWorkflow.submitWeCrmClient(this); }
 
   clientOnboardingRowKey(client: any): string {
     return String(client?._id || client?.id || client?.clientId || client?.companyName || '');

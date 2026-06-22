@@ -64,6 +64,7 @@ export const routes: Routes = [
   { path: 'employees/approve/:id', component: EmployeeAdd }, // We'll update details to handle approval if needed, or create EmployeeApprove
   { path: 'employees/:id', component: EmployeeDetails },
   { path: 'employees/:id/attendance', component: EmployeeAttendance },
+  { path: 'employees/:id/leaves', component: EmployeeLeaves },
   { path: 'employees/:id/payroll', component: EmployeePayroll },
   { path: 'employees/:id/review', component: EmployeeReview },
   { path: 'employee/attendance', component: EmployeeAttendance },

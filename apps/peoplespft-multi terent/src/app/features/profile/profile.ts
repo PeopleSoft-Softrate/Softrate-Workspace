@@ -32,6 +32,14 @@ export class ProfileComponent implements OnInit {
   expertiseTags = signal<string[]>([]);
   newExpertiseTag = signal('');
 
+  // MFA State
+  mfaEnabled = signal<boolean>(false);
+  mfaSetupActive = signal<boolean>(false);
+  mfaDisableActive = signal<boolean>(false);
+  mfaQrCodeUrl = signal<string>('');
+  mfaSetupCode = signal<string>('');
+  mfaDisableCode = signal<string>('');
+
   // ── Computed: handles HR / Employee / Intern field differences ──────────────
   displayName = computed(() => {
     const u = this.user();
@@ -199,6 +207,7 @@ export class ProfileComponent implements OnInit {
         if (res.success && res.user) {
           this.user.set(res.user);
           this.role.set(res.role || '');
+          this.mfaEnabled.set(res.user.mfaEnabled === true);
           this._buildQrCode(res.user);
         }
         this.isLoading.set(false);
@@ -326,6 +335,62 @@ export class ProfileComponent implements OnInit {
       error: (err) => {
         console.error('Failed to update profile', err);
         this.error.set('Failed to update profile');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  // MFA Methods
+  startMfaSetup() {
+    this.mfaSetupActive.set(true);
+    this.mfaQrCodeUrl.set('');
+    this.mfaSetupCode.set('');
+    
+    this.apiService.setupMfa().subscribe({
+      next: (res) => {
+        if (res.success && res.qrCodeUrl) {
+          this.mfaQrCodeUrl.set(res.qrCodeUrl);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to setup MFA', err);
+        this.error.set('Failed to initialize MFA setup');
+        this.mfaSetupActive.set(false);
+      }
+    });
+  }
+
+  verifyMfaSetup() {
+    if (this.mfaSetupCode().length < 6) return;
+    this.isLoading.set(true);
+    this.apiService.enableMfa(this.mfaSetupCode()).subscribe({
+      next: (res) => {
+        this.mfaEnabled.set(true);
+        this.mfaSetupActive.set(false);
+        this.mfaSetupCode.set('');
+        this.isLoading.set(false);
+        this.fetchProfile(); // reload user data
+      },
+      error: (err) => {
+        this.error.set('Invalid MFA code');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  confirmDisableMfa() {
+    if (this.mfaDisableCode().length < 6) return;
+    this.isLoading.set(true);
+    this.apiService.disableMfa(this.mfaDisableCode()).subscribe({
+      next: (res) => {
+        this.mfaEnabled.set(false);
+        this.mfaDisableActive.set(false);
+        this.mfaDisableCode.set('');
+        this.isLoading.set(false);
+        this.fetchProfile();
+      },
+      error: (err) => {
+        this.error.set('Invalid MFA code');
         this.isLoading.set(false);
       }
     });

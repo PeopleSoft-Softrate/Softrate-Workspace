@@ -16,8 +16,24 @@ const notificationSchema = new mongoose.Schema({
   },
   targetAudience: {
     type: String,
-    enum: ['employee', 'intern', 'all'],
+    enum: ['employee', 'intern', 'all', 'specific_user'],
     required: true
+  },
+  targetUserId: {
+    type: String,
+    required: false
+  },
+  read: {
+    type: Boolean,
+    default: false
+  },
+  readBy: {
+    type: [String],
+    default: []
+  },
+  deletedBy: {
+    type: [String],
+    default: []
   },
   createdAt: {
     type: Date,

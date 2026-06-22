@@ -30,6 +30,10 @@ const EmployeeSchema = new mongoose.Schema({
   profileCompletion: { type: Number, default: 70 },
   completeDetails: { type: Boolean, default: false },
   projectLinks: { type: [String], default: [] },
+  
+  // Security & MFA
+  mfaEnabled: { type: Boolean, default: false },
+  mfaSecret: { type: String, select: false },
 
   // Section 2 – Education
   qualification: String,

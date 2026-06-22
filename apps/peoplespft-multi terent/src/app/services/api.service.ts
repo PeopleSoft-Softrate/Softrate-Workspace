@@ -46,6 +46,33 @@ export class ApiService {
     });
   }
 
+  // MFA
+  verifyMfaLogin(tempToken: string, code: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/auth/mfa/verify-login`, {
+      tempToken,
+      code
+    });
+  }
+
+  setupMfa(): Observable<any> {
+    return this.http.post(this.addCacheBuster(`${this.baseUrl}/api/auth/mfa/setup`), {}, { headers: this.getHeaders() });
+  }
+
+  enableMfa(code: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/auth/mfa/enable`, { code }, { headers: this.getHeaders() });
+  }
+
+  disableMfa(code: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/auth/mfa/disable`, { code }, { headers: this.getHeaders() });
+  }
+
+  forgotPassword(companyCode: string, email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/auth/forgot-password`, {
+      companyCode,
+      email
+    });
+  }
+
   getMe(): Observable<any> {
     return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/auth/me`), { headers: this.getHeaders() });
   }

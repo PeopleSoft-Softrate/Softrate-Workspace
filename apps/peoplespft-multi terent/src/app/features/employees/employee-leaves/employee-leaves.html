@@ -6,8 +6,9 @@
       <a (click)="goBack()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
       <span style="color: #94a3b8;"> / Leaves</span>
     </div>
-    <h1>Leave Applications</h1>
-    <p>Track your leave balance, request time off, and monitor manager/HR approvals</p>
+    <h1>{{ isSelfPortal() ? 'Leave Applications' : 'Employee Leave Overview' }}</h1>
+    <p *ngIf="isSelfPortal()">Track your leave balance, request time off, and monitor manager/HR approvals</p>
+    <p *ngIf="!isSelfPortal()">View leave balances and history for this employee.</p>
   </div>
 </div>
 
@@ -26,9 +27,9 @@
     </div>
   </div>
 
-  <div class="leaves-content-grid" *ngIf="!isLoading()">
+  <div class="leaves-content-grid" *ngIf="!isLoading()" [class.single-column]="!isSelfPortal()">
     <!-- Apply for Leave Form -->
-    <div class="card form-card">
+    <div class="card form-card" *ngIf="isSelfPortal()">
       <div class="card-header">
         <h3>Request Time Off</h3>
       </div>

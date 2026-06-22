@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const verifyTenant = require("../middleware/tenant.middleware");
-const LeaveCounter = require("../models/leaveCounter.model");
+// const LeaveCounter = require("../models/leaveCounter.model");
 
 router.post("/init", verifyTenant, async (req, res) => {
+    const { LeaveCounter, Employee, Intern } = req.models;
+
   const { employeeId, onboardingDate } = req.body;
 
   if (!employeeId || !onboardingDate) {

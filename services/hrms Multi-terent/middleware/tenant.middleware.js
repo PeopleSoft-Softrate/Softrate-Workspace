@@ -43,6 +43,7 @@ const verifyTenant = async (req, res, next) => {
     if (isDemoMode) {
       dbName = 'demo_db';
     }
+    console.log(`[Tenant] URL: ${req.url} | User: ${decoded.user.id} | dbName from token: ${decoded.user.dbName} | Final DB: ${dbName}`);
     
     // Connect to specific tenant DB and attach models
     const tenantDbConnection = getTenantConnection(dbName);

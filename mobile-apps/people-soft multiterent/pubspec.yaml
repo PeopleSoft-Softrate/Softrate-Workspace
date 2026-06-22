@@ -38,6 +38,7 @@ dependencies:
   connectivity_plus: ^7.1.1
   hugeicons: ^1.1.6
   in_app_update: ^4.1.0
+  flutter_local_notifications: ^22.0.1
 
 
 

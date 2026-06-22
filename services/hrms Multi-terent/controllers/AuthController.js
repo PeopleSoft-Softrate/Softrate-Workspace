@@ -195,7 +195,7 @@ exports.login = async (req, res) => {
     user = await Intern.findOne({
       $or: [
         { internid: { $regex: new RegExp(`^${normalizedId}$`, "i") } },
-        { email: normalizedId }
+        { email: { $regex: new RegExp(`^${normalizedId}$`, "i") } }
       ],
       status: { $nin: ['completed', 'drop'] }
     }).select(PROFILE_PHOTO_SELECT);
@@ -208,7 +208,7 @@ exports.login = async (req, res) => {
       user = await Employee.findOne({
         $or: [
           { EmployeeId: { $regex: new RegExp(`^${normalizedId}$`, "i") } },
-          { email: normalizedId }
+          { email: { $regex: new RegExp(`^${normalizedId}$`, "i") } }
         ],
         status: { $nin: ['resigned', 'terminated'] }
       }).select(PROFILE_PHOTO_SELECT);
@@ -222,7 +222,7 @@ exports.login = async (req, res) => {
       user = await User.findOne({
         $or: [
           { employeeId: { $regex: new RegExp(`^${normalizedId}$`, "i") } },
-          { email: normalizedId }
+          { email: { $regex: new RegExp(`^${normalizedId}$`, "i") } }
         ]
       }).select(`+password ${PROFILE_PHOTO_SELECT}`).populate('roleId');
 
@@ -250,8 +250,11 @@ exports.login = async (req, res) => {
     let forcePasswordReset = false;
     let isMatch = false;
 
+    const isHashed = user.password && (user.password.startsWith("$2a$") || user.password.startsWith("$2b$"));
+
     // Check if entered password matches the company default password
-    if (resolvedCompany && resolvedCompany.settings?.defaultPassword && password === resolvedCompany.settings.defaultPassword) {
+    // ONLY allow if the user has not yet set a hashed password
+    if (resolvedCompany && resolvedCompany.settings?.defaultPassword && password === resolvedCompany.settings.defaultPassword && !isHashed) {
       isMatch = true;
       forcePasswordReset = true;
     } else {
@@ -260,7 +263,6 @@ exports.login = async (req, res) => {
         return res.status(401).json({ success: false, message: "Your account is not fully set up. Please contact HR." });
       }
 
-      const isHashed = user.password.startsWith("$2a$") || user.password.startsWith("$2b$");
       if (isHashed) {
         isMatch = await bcrypt.compare(password, user.password);
       } else {
@@ -295,6 +297,36 @@ exports.login = async (req, res) => {
           code: "DEVICE_MISMATCH",
           message: "This account is bound to another device.",
           requestStatus: existingRequest ? (existingRequest.managerApprovalStatus === 'approved' ? 'Pending HR Approval' : 'Pending Manager Approval') : null
+        });
+      }
+    }
+
+    // ── 3.6 MFA Check (Skip for interns) ──
+    // Load mfa fields explicitly if needed
+    if (role !== 'intern') {
+      const dbUser = await (role === 'hr' ? User : Employee).findById(user._id).select('+mfaSecret +mfaEnabled');
+      if (dbUser && dbUser.mfaEnabled && dbUser.mfaSecret) {
+        const tempTokenPayload = {
+          tempUser: {
+            id: user._id,
+            companyId: user.companyId,
+            dbName: dbName,
+            role: role,
+            roleName: role.toUpperCase()
+          }
+        };
+
+        const tempToken = jwt.sign(
+          tempTokenPayload,
+          process.env.JWT_SECRET,
+          { expiresIn: "5m" }
+        );
+
+        return res.json({
+          success: true,
+          mfaRequired: true,
+          tempToken: tempToken,
+          message: "MFA code required."
         });
       }
     }
@@ -435,36 +467,76 @@ exports.removeProfilePhoto = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, companyCode } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    // Search in unified User collection
-    const user = await User.findOne({ email: email.toLowerCase() });
+    let dbName = 'hrdb';
+    if (companyCode && companyCode.trim()) {
+      const cleanCode = companyCode.trim();
+      const masterDb = getMasterConnection();
+      await waitForConnection(masterDb);
+      const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+      const escapedCode = cleanCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const resolvedCompany = await MasterCompany.findOne({ companyCode: { $regex: new RegExp(`^${escapedCode}$`, 'i') } });
+      if (!resolvedCompany) {
+        return res.status(404).json({ success: false, message: "Company not found. Please check your Company Code." });
+      }
+      dbName = resolvedCompany.dbName || `hrdb_${cleanCode.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
+    }
+
+    const tenantConn = getTenantConnection(dbName);
+    await waitForConnection(tenantConn);
+    const { Intern, Employee, User, PasswordReset } = getModelsForConnection(tenantConn);
+
+    const emailLower = email.toLowerCase();
+    const emailRegex = new RegExp(`^${emailLower}$`, "i");
+    
+    // Search across User, Employee, Intern
+    let user = await User.findOne({ email: emailRegex });
+    let profileName = user ? (user.profile?.firstName || 'User') : '';
+    let userType = 'hr';
+
+    if (!user) {
+      user = await Employee.findOne({ email: emailRegex });
+      if (user) {
+        profileName = user.fullName || 'Employee';
+        userType = 'employee';
+      }
+    }
+
+    if (!user) {
+      user = await Intern.findOne({ email: emailRegex });
+      if (user) {
+        profileName = user.fullName || 'Intern';
+        userType = 'intern';
+      }
+    }
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "No user exists with this email address."
+        message: "No user exists with this email address in the specified company."
       });
     }
 
-    const name = (user.profile.firstName + (user.profile.lastName ? ' ' + user.profile.lastName : ''))
-      .split(" ")
+    const name = profileName.split(" ")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
 
     // Generate token valid for 5 mins
-    const token = crypto.randomBytes(32).toString('hex');
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const token = `${dbName}___${rawToken}`;
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     // Clean up old tokens for this email
-    await PasswordReset.deleteMany({ email });
+    await PasswordReset.deleteMany({ email: emailLower });
 
     await PasswordReset.create({
-      email,
-      userType: 'unified', // Marking as unified for future proofing
+      companyId: user.companyId,
+      email: emailLower,
+      userType: userType,
       token,
       expiresAt
     });
@@ -474,7 +546,7 @@ exports.forgotPassword = async (req, res) => {
     const resetLink = `${protocol}://${host}/reset-password.html?token=${token}`;
 
     await sendEmail({
-      to: email,
+      to: emailLower,
       subject: "Password Reset Request – Softrate Global",
       html: `
         <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
@@ -508,6 +580,21 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: "Token and new password are required" });
     }
 
+    // Server-side validation
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long, contain at least 1 uppercase letter, and 1 symbol.'
+      });
+    }
+
+    const parts = token.split("___");
+    const dbName = parts.length > 1 ? parts[0] : 'hrdb';
+
+    const tenantConn = getTenantConnection(dbName);
+    await waitForConnection(tenantConn);
+    const { Intern, Employee, User, PasswordReset } = getModelsForConnection(tenantConn);
+
     const resetRequest = await PasswordReset.findOne({ token });
     if (!resetRequest) {
       return res.status(400).json({ success: false, message: "Invalid or expired reset link." });
@@ -518,15 +605,39 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: "Reset link has expired." });
     }
 
-    const user = await User.findOne({ email: resetRequest.email });
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User account not found." });
+    const email = resetRequest.email;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    let updatedAny = false;
+
+    // Update in User collection
+    const userDoc = await User.findOne({ email });
+    if (userDoc) {
+      userDoc.password = hashedPassword;
+      await userDoc.save();
+      updatedAny = true;
     }
 
-    // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
+    // Update in Employee collection
+    const empDoc = await Employee.findOne({ email });
+    if (empDoc) {
+      empDoc.password = hashedPassword;
+      await empDoc.save();
+      updatedAny = true;
+    }
+
+    // Update in Intern collection
+    const internDoc = await Intern.findOne({ email });
+    if (internDoc) {
+      internDoc.password = hashedPassword;
+      await internDoc.save();
+      updatedAny = true;
+    }
+
+    if (!updatedAny) {
+      return res.status(404).json({ success: false, message: "User account not found." });
+    }
 
     // Invalidate the token
     await PasswordReset.deleteOne({ token });
@@ -773,3 +884,207 @@ exports.forceResetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };
+
+/**
+ * Verify MFA Code during Login
+ */
+exports.verifyMfaLogin = async (req, res) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) {
+      return res.status(400).json({ success: false, message: "Token and code are required" });
+    }
+
+    const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+    if (!decoded || !decoded.tempUser) {
+      return res.status(401).json({ success: false, message: "Invalid temporary token" });
+    }
+
+    const dbName = decoded.tempUser.dbName;
+    const tenantConn = require('../db').getTenantConnection(dbName);
+    await require('../db').waitForConnection(tenantConn);
+    const { Employee, User } = require('../utilities/modelLoader').getModelsForConnection(tenantConn);
+
+    const userId = decoded.tempUser.id;
+    const role = decoded.tempUser.role;
+
+    let user = null;
+    if (role === 'employee' || role === 'manager') {
+      user = await Employee.findById(userId).select('+mfaSecret +mfaEnabled ' + PROFILE_PHOTO_SELECT);
+    } else {
+      user = await User.findById(userId).select('+mfaSecret +mfaEnabled ' + PROFILE_PHOTO_SELECT).populate('roleId');
+    }
+
+    if (!user || !user.mfaSecret) {
+      return res.status(400).json({ success: false, message: "MFA is not enabled for this user" });
+    }
+
+    const speakeasy = require('speakeasy');
+    const verified = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (!verified) {
+      return res.status(401).json({ success: false, message: "Invalid MFA code" });
+    }
+
+    // Generate full token
+    const tokenPayload = {
+      user: {
+        id: user._id,
+        companyId: user.companyId,
+        dbName: dbName,
+        role: role,
+        roleName: role.toUpperCase()
+      }
+    };
+
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    const response = {
+      success: true,
+      role,
+      token,
+      auth_token: token,
+      user: serializeUser(user)
+    };
+
+    if (role === 'employee' || role === 'manager') {
+      response.employee = response.user;
+      response.completeDetails = user.completeDetails === true;
+    }
+
+    res.json(response);
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: "Temporary token expired. Please log in again." });
+    }
+    console.error("MFA Verify Login Error:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+
+/**
+ * Setup MFA (Generates secret and QR code)
+ */
+exports.setupMfa = async (req, res) => {
+  try {
+    const { user, role, Model } = await findCurrentUser(req);
+    if (!user || !Model) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (role === 'intern') {
+      return res.status(403).json({ success: false, message: "MFA is not supported for interns" });
+    }
+
+    const speakeasy = require('speakeasy');
+    const qrcode = require('qrcode');
+
+    // Generate a new secret
+    const secret = speakeasy.generateSecret({
+      name: `Softrate (${user.email})`
+    });
+
+    // Save secret to user but don't enable it yet
+    await Model.findByIdAndUpdate(user._id, {
+      $set: { mfaSecret: secret.base32, mfaEnabled: false }
+    });
+
+    // Generate QR code data URI
+    const dataUrl = await qrcode.toDataURL(secret.otpauth_url);
+
+    res.json({
+      success: true,
+      qrCodeUrl: dataUrl,
+      secret: secret.base32
+    });
+  } catch (err) {
+    console.error("MFA Setup Error:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+
+/**
+ * Enable MFA (Verify initial code)
+ */
+exports.enableMfa = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ success: false, message: "MFA code is required" });
+    }
+
+    const { user, role, Model } = await findCurrentUser(req);
+    if (!user || !Model) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Fetch user again to explicitly select mfaSecret
+    const dbUser = await Model.findById(user._id).select('+mfaSecret');
+    if (!dbUser || !dbUser.mfaSecret) {
+      return res.status(400).json({ success: false, message: "MFA setup not initiated" });
+    }
+
+    const speakeasy = require('speakeasy');
+    const verified = speakeasy.totp.verify({
+      secret: dbUser.mfaSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (!verified) {
+      return res.status(400).json({ success: false, message: "Invalid MFA code" });
+    }
+
+    dbUser.mfaEnabled = true;
+    await dbUser.save();
+
+    res.json({ success: true, message: "MFA successfully enabled" });
+  } catch (err) {
+    console.error("MFA Enable Error:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+
+/**
+ * Disable MFA
+ */
+exports.disableMfa = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ success: false, message: "MFA code is required to disable" });
+
+    const { user, role, Model } = await findCurrentUser(req);
+    if (!user || !Model) return res.status(404).json({ success: false, message: "User not found" });
+
+    const dbUser = await Model.findById(user._id).select('+mfaSecret +mfaEnabled');
+    if (!dbUser || !dbUser.mfaEnabled) {
+      return res.status(400).json({ success: false, message: "MFA is not enabled" });
+    }
+
+    const speakeasy = require('speakeasy');
+    const verified = speakeasy.totp.verify({
+      secret: dbUser.mfaSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (!verified) {
+      return res.status(400).json({ success: false, message: "Invalid MFA code" });
+    }
+
+    dbUser.mfaEnabled = false;
+    dbUser.mfaSecret = undefined;
+    await dbUser.save();
+
+    res.json({ success: true, message: "MFA successfully disabled" });
+  } catch (err) {
+    console.error("MFA Disable Error:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+

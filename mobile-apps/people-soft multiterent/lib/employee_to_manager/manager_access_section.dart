@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hrmappfrontend/manager/managerattendance.dart';
 import 'package:hrmappfrontend/manager/managerleave.dart';
 import 'package:hrmappfrontend/manager/managerholiday.dart';
-import 'package:hrmappfrontend/Employee/Employee_policy.dart';
-import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
-import 'package:hrmappfrontend/manager/managerpayroll.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
+import 'package:hrmappfrontend/manager/managerteam.dart';
  // in case FundApprovalRole is needed
 
 class ManagerAccessSection extends StatelessWidget {
@@ -55,36 +53,13 @@ class ManagerAccessSection extends StatelessWidget {
             ),
             _buildOptionCard(
               context,
-              "Holiday",
-              "Calendar",
-              Icons.event_available_rounded,
-              const Color(0xFF2DD4BF),
-              const ManagerHolidayCalendarPage(),
+              "Members",
+              "My Team",
+              Icons.groups_rounded,
+              const Color(0xFF3B82F6),
+              const ManagerTeamPage(),
             ),
-            _buildOptionCard(
-              context,
-              "HR Policy",
-              "View",
-              Icons.policy_rounded,
-              const Color(0xFF60A5FA),
-              const EmployeePolicyPage(),
-            ),
-            _buildOptionCard(
-              context,
-              "Hierarchy",
-              "View",
-              Icons.account_tree_rounded,
-              const Color(0xFFA78BFA),
-              const intern_Organizational_Hierarchy(),
-            ),
-            _buildOptionCard(
-              context,
-              "Payroll",
-              "My Salary",
-              Icons.account_balance_rounded,
-              const Color(0xFF4ADE80),
-              const ManagerPayrollPage(),
-            ),
+
             _buildOptionCard(
               context,
               "Reimbursement",

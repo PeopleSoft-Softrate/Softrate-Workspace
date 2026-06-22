@@ -131,6 +131,27 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
         return;
       }
 
+      if (data['mfaRequired'] == true) {
+        setState(() => _loading = false);
+        final tempToken = data['tempToken'] as String?;
+        if (tempToken != null) {
+          _promptMfa(tempToken);
+        } else {
+          setState(() => _errorMsg = 'MFA token missing. Please try again.');
+        }
+        return;
+      }
+
+      _processSuccessfulLogin(data);
+    } catch (e) {
+      setState(() {
+        _errorMsg = 'Connection error. Check your network.';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _processSuccessfulLogin(Map<String, dynamic> data) async {
       // ── Persist session ────────────────────────────────────────────────────
       final prefs = await SharedPreferences.getInstance();
       final role = data['role'] as String? ?? '';
@@ -238,12 +259,35 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           await prefs.setString('manager_dept', dept);
           await prefs.setString('manager_mongo_id', mongoId);
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const ManagerDashboard(),
-            ),
-          );
+          // Check if manager still needs to complete their profile details
+          final bool completeDetails = data['completeDetails'] == true;
+
+          if (!completeDetails) {
+            // Show the Complete Details screen, then go to dashboard
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EmployeeCompleteDetails(
+                  employeeMongoId: mongoId,
+                  onDone: (BuildContext detailsContext) {
+                    Navigator.pushReplacement(
+                      detailsContext,
+                      MaterialPageRoute(
+                        builder: (_) => Employeedashboard(employeeId: empId),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Employeedashboard(employeeId: empId),
+              ),
+            );
+          }
           break;
 
         case 'hr':
@@ -274,17 +318,138 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           debugPrint("Unknown role encountered: $role");
           setState(() => _errorMsg = 'Unknown role ($role). Contact HR.');
       }
-    } catch (e) {
-      setState(() {
-        _errorMsg = 'Connection error. Check your network.';
-        _loading = false;
-      });
-    }
+  }
+
+  // ── MFA Verification ───────────────────────────────────────────────────────
+  Future<void> _promptMfa(String tempToken) async {
+    final mfaCtrl = TextEditingController();
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) {
+          bool verifying = false;
+          String localError = '';
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text(
+              'Two-Factor Authentication',
+              style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF00657F)),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Please enter the 6-digit code from your Authenticator app.',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: mfaCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
+                  decoration: _inputDecoration(
+                    hint: '000000',
+                    icon: HugeIcons.strokeRoundedShield01,
+                  ).copyWith(counterText: ''),
+                ),
+                if (localError.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(localError, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                ]
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00657F),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: verifying
+                    ? null
+                    : () async {
+                        final code = mfaCtrl.text.trim();
+                        if (code.length < 6) {
+                          setS(() => localError = 'Please enter a 6-digit code');
+                          return;
+                        }
+                        setS(() {
+                          verifying = true;
+                          localError = '';
+                        });
+                        try {
+                          final r = await http.post(
+                            Uri.parse('$_baseUrl/api/auth/mfa/verify-login'),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode({
+                              'tempToken': tempToken,
+                              'code': code,
+                            }),
+                          );
+                          final mfaData = jsonDecode(r.body);
+                          if (r.statusCode == 200 && mfaData['success'] == true) {
+                            if (!mounted) return;
+                            Navigator.pop(ctx);
+                            _processSuccessfulLogin(mfaData);
+                          } else {
+                            final errorText = mfaData['message'] ?? 'Invalid code';
+                            setS(() {
+                              verifying = false;
+                              localError = errorText;
+                              mfaCtrl.clear();
+                            });
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(errorText),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        } catch (_) {
+                          setS(() {
+                            verifying = false;
+                            localError = 'Network error during verification';
+                          });
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Network error during verification'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: verifying
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Verify'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   // ── Forgot Password ────────────────────────────────────────────────────────
   Future<void> _forgotPassword() async {
     final emailCtrl = TextEditingController();
+    final forgotCompanyCtrl = TextEditingController(text: _companyCtrl.text);
+    
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -306,10 +471,18 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Enter your registered email address.',
+                  'Enter your company code and email address.',
                   style: TextStyle(fontSize: 13, color: Colors.black54),
                 ),
                 const SizedBox(height: 16),
+                TextField(
+                  controller: forgotCompanyCtrl,
+                  decoration: _inputDecoration(
+                    hint: 'Company Code',
+                    icon: HugeIcons.strokeRoundedBuilding03,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
@@ -344,7 +517,10 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                           final r = await http.post(
                             Uri.parse('$_baseUrl/api/auth/forgot-password'),
                             headers: {'Content-Type': 'application/json'},
-                            body: jsonEncode({'email': emailCtrl.text.trim()}),
+                            body: jsonEncode({
+                              'email': emailCtrl.text.trim(),
+                              'companyCode': forgotCompanyCtrl.text.trim(),
+                            }),
                           );
                           if (!mounted) return;
                           Navigator.pop(ctx);

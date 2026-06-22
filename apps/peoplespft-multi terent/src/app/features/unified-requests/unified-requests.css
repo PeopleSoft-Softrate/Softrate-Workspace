@@ -653,6 +653,9 @@
 .modal-container {
   width: 90%;
   max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-secondary);
   border-radius: 8px;
   overflow: hidden;
@@ -687,6 +690,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  overflow-y: auto;
 }
 
 .selected-meta {

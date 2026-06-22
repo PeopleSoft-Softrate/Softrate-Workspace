@@ -37,9 +37,22 @@ export class Login implements OnInit {
   }
 
   requiresPasswordReset = signal(false);
+  isForgotPasswordMode = signal(false);
+  forgotPasswordSuccess = signal(false);
+  
+  // MFA State
+  requiresMfa = signal(false);
+  mfaToken = '';
+  mfaCode = '';
+
   resetUserId = '';
   newPassword = '';
   confirmPassword = '';
+  
+  forgotPasswordData = {
+    companyCode: '',
+    email: ''
+  };
 
   ViewIcon = ViewIcon;
   ViewOffIcon = ViewOffIcon;
@@ -60,40 +73,72 @@ export class Login implements OnInit {
         const actualRole = res.role;
         const userData = res.user || res.employee || res.hr;
         
-        // Ensure name is present for the greeting
-        if (userData && !userData.profile && userData.firstName) {
-          userData.profile = { firstName: userData.firstName };
-        }
-
-        if (res.forcePasswordReset) {
-          this.requiresPasswordReset.set(true);
-          this.resetUserId = userData._id;
-          if (res.token) localStorage.setItem('auth_token', res.token);
+        if (res.mfaRequired) {
+          this.requiresMfa.set(true);
+          this.mfaToken = res.tempToken;
           this.isLoading.set(false);
           return;
         }
 
-        localStorage.setItem('user_role', actualRole);
-        localStorage.setItem('user_data', JSON.stringify(userData));
-        if (res.token) localStorage.setItem('auth_token', res.token);
-        
-        this.app.userRole.set(actualRole);
-        this.app.loadUserData();
-
-        if (actualRole === 'hr' || actualRole === 'hr_admin') {
-          this.router.navigate(['/dashboard']);
-        } else if (actualRole === 'employee' || actualRole === 'manager') {
-          this.router.navigate(['/employee/dashboard']);
-        } else {
-          this.errorMessage.set('Unauthorized role for this portal');
-          this.isLoading.set(false);
-        }
+        this.processSuccessfulLogin(res, actualRole, userData);
       },
       error: (err) => {
         this.errorMessage.set(err.error?.message || 'Login failed');
         this.isLoading.set(false);
       }
     });
+  }
+
+  onMfaSubmit() {
+    if (!this.mfaCode || this.mfaCode.length < 6) {
+      this.errorMessage.set('Please enter a valid 6-digit code.');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.apiService.verifyMfaLogin(this.mfaToken, this.mfaCode).subscribe({
+      next: (res) => {
+        const actualRole = res.role;
+        const userData = res.user || res.employee || res.hr;
+        this.processSuccessfulLogin(res, actualRole, userData);
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.message || 'Invalid Authenticator code');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  private processSuccessfulLogin(res: any, actualRole: string, userData: any) {
+    if (userData && !userData.profile && userData.firstName) {
+      userData.profile = { firstName: userData.firstName };
+    }
+
+    if (res.forcePasswordReset) {
+      this.requiresPasswordReset.set(true);
+      this.resetUserId = userData._id;
+      if (res.token) localStorage.setItem('auth_token', res.token);
+      this.isLoading.set(false);
+      return;
+    }
+
+    localStorage.setItem('user_role', actualRole);
+    localStorage.setItem('user_data', JSON.stringify(userData));
+    if (res.token) localStorage.setItem('auth_token', res.token);
+    
+    this.app.userRole.set(actualRole);
+    this.app.loadUserData();
+
+    if (actualRole === 'hr' || actualRole === 'hr_admin') {
+      this.router.navigate(['/dashboard']);
+    } else if (actualRole === 'employee' || actualRole === 'manager') {
+      this.router.navigate(['/employee/dashboard']);
+    } else {
+      this.errorMessage.set('Unauthorized role for this portal');
+      this.isLoading.set(false);
+    }
   }
 
   isPasswordValid(password: string): boolean {
@@ -136,5 +181,36 @@ export class Login implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  onForgotPasswordSubmit() {
+    if (!this.forgotPasswordData.email) {
+      this.errorMessage.set('Please provide an email address.');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.apiService.forgotPassword(this.forgotPasswordData.companyCode, this.forgotPasswordData.email).subscribe({
+      next: (res: any) => {
+        this.forgotPasswordSuccess.set(true);
+        this.isLoading.set(false);
+      },
+      error: (err: any) => {
+        this.errorMessage.set(err.error?.message || 'Failed to send reset link.');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  toggleForgotPasswordMode() {
+    this.isForgotPasswordMode.set(!this.isForgotPasswordMode());
+    this.forgotPasswordSuccess.set(false);
+    this.errorMessage.set('');
+    if (this.isForgotPasswordMode()) {
+      this.forgotPasswordData.companyCode = this.credentials.companyCode;
+      this.forgotPasswordData.email = this.credentials.identifier.includes('@') ? this.credentials.identifier : '';
+    }
   }
 }

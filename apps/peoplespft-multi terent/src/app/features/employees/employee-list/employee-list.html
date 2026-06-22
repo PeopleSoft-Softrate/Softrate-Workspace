@@ -79,6 +79,9 @@
             <button class="icon-btn-sm purple" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id])" title="View Profile">
               <hugeicons-icon [icon]="UserCircleIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             </button>
+            <button class="icon-btn-sm teal" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id, 'leaves'])" title="Leaves">
+              <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </button>
             <button class="icon-btn-sm green" (click)="navigateTo(['/employees', emp.EmployeeId || emp._id, 'attendance'])" title="Attendance">
               <hugeicons-icon [icon]="FingerAccessIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             </button>

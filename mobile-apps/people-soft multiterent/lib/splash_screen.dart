@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         initialScreen = const HrdashBoard();
         isDashboard = true;
       } else if (widget.managerLoggedIn) {
-        initialScreen = const ManagerDashboard();
+        initialScreen = Employeedashboard(employeeId: widget.employeeId ?? '');
         isDashboard = true;
       } else if (widget.employeeLoggedIn && widget.employeeId != null) {
         initialScreen = Employeedashboard(employeeId: widget.employeeId!);

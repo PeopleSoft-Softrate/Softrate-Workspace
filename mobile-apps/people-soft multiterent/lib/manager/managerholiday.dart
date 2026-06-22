@@ -5,15 +5,16 @@ import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:intl/intl.dart';
 import '../port.dart';
 
-
 class ManagerHolidayCalendarPage extends StatefulWidget {
   const ManagerHolidayCalendarPage({super.key});
 
   @override
-  State<ManagerHolidayCalendarPage> createState() => _ManagerHolidayCalendarPageState();
+  State<ManagerHolidayCalendarPage> createState() =>
+      _ManagerHolidayCalendarPageState();
 }
 
-class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage> {
+class _ManagerHolidayCalendarPageState
+    extends State<ManagerHolidayCalendarPage> {
   bool _isLoading = true;
   List<dynamic> _allRawHolidays = [];
   List<Map<String, String>> _filteredHolidays = [];
@@ -24,14 +25,25 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
   int _selectedYear = DateTime.now().year;
 
   final List<String> _months = [
-    'All Months', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'All Months',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   final List<int> _years = [
     DateTime.now().year - 1,
     DateTime.now().year,
-    DateTime.now().year + 1
+    DateTime.now().year + 1,
   ];
 
   // Sophisticated Management Palette
@@ -53,7 +65,9 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
     });
 
     try {
-      final response = await http.get(Uri.parse('${getBaseUrl()}/api/holidays'));
+      final response = await http.get(
+        Uri.parse('${getBaseUrl()}/api/holidays'),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -69,7 +83,9 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not sync holidays. Please try again.")),
+          const SnackBar(
+            content: Text("Could not sync holidays. Please try again."),
+          ),
         );
       }
     }
@@ -94,9 +110,9 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
       // Match Mode
       switch (_filterMode) {
         case 'today':
-          return (fromClean.isAtSameMomentAs(todayClean) || 
-                  toClean.isAtSameMomentAs(todayClean) ||
-                  (fromClean.isBefore(todayClean) && toClean.isAfter(todayClean)));
+          return (fromClean.isAtSameMomentAs(todayClean) ||
+              toClean.isAtSameMomentAs(todayClean) ||
+              (fromClean.isBefore(todayClean) && toClean.isAfter(todayClean)));
         case 'upcoming':
           return fromClean.isAfter(todayClean);
         case 'past':
@@ -153,7 +169,10 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -173,14 +192,15 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
               Expanded(
                 child: _isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: primaryColor))
+                        child: CircularProgressIndicator(color: primaryColor),
+                      )
                     : _filteredHolidays.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            itemCount: _filteredHolidays.length,
-                            itemBuilder: (context, index) {
-                              final holiday = _filteredHolidays[index];
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: _filteredHolidays.length,
+                        itemBuilder: (context, index) {
+                          final holiday = _filteredHolidays[index];
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
                             padding: const EdgeInsets.all(16),
@@ -216,7 +236,8 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         holiday["name"]!,
@@ -237,10 +258,6 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
                                       ),
                                     ],
                                   ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: borderColor,
                                 ),
                               ],
                             ),
@@ -315,8 +332,14 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
           decoration: BoxDecoration(
             color: isActive ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: isActive 
-                ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
                 : null,
           ),
           alignment: Alignment.center,
@@ -333,7 +356,11 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
     );
   }
 
-  Widget _buildSelector({required IconData? icon, required String value, required VoidCallback onTap}) {
+  Widget _buildSelector({
+    required IconData? icon,
+    required String value,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -358,7 +385,11 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
               ),
             ),
             const Spacer(),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: subtitleColor),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: subtitleColor,
+            ),
           ],
         ),
       ),
@@ -415,31 +446,58 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
         children: [
           Container(
             margin: const EdgeInsets.only(top: 12),
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(2)),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: borderColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: primaryColor)),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: primaryColor,
+              ),
+            ),
           ),
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.4,
+            ),
             child: ListView.separated(
               shrinkWrap: true,
               padding: const EdgeInsets.only(bottom: 32),
               itemCount: items.length,
-              separatorBuilder: (_, __) => Divider(height: 1, color: borderColor.withOpacity(0.5)),
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: borderColor.withOpacity(0.5)),
               itemBuilder: (context, index) {
                 bool isSelected = index == currentIndex;
                 return ListTile(
                   onTap: () => onSelected(index),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-                  title: Text(items[index], style: TextStyle(
-                    fontSize: 16, 
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? primaryColor : subtitleColor,
-                  )),
-                  trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: primaryColor) : null,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 4,
+                  ),
+                  title: Text(
+                    items[index],
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: isSelected ? primaryColor : subtitleColor,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          color: primaryColor,
+                        )
+                      : null,
                 );
               },
             ),
@@ -460,22 +518,34 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
               color: Colors.black.withOpacity(0.03),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.event_note_outlined, size: 48, color: subtitleColor.withOpacity(0.5)),
+            child: Icon(
+              Icons.event_note_outlined,
+              size: 48,
+              color: subtitleColor.withOpacity(0.5),
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
             "No holidays found",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: primaryColor),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: primaryColor,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             "Try changing your filter settings",
-            style: TextStyle(fontSize: 13, color: subtitleColor.withOpacity(0.8)),
+            style: TextStyle(
+              fontSize: 13,
+              color: subtitleColor.withOpacity(0.8),
+            ),
           ),
         ],
       ),
     );
   }
+
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -502,8 +572,11 @@ class _ManagerHolidayCalendarPageState extends State<ManagerHolidayCalendarPage>
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: borderColor),
               ),
-              child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: primaryColor, size: 20),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: primaryColor,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(width: 16),

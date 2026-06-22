@@ -329,6 +329,119 @@ async function generateDynamicPDF(data, template = {}) {
                             continue;
                         }
 
+                        // If alignment is justify, PDFKit's native 'continued: true' is catastrophically buggy.
+                        // We must manually measure and wrap words to achieve perfect justification with inline bolding.
+                        if (options.align === 'justify') {
+                            const parts = lineText.split(/(\*\*.*?\*\*)/g);
+                            const tokens = [];
+                            for (const part of parts) {
+                                if (!part) continue;
+                                const isBold = part.startsWith('**') && part.endsWith('**');
+                                const content = isBold ? part.slice(2, -2) : part;
+                                const subParts = content.split(/(\s+)/g);
+                                for (const sp of subParts) {
+                                    if (!sp) continue;
+                                    tokens.push({ text: sp, isBold, isSpace: /^\s+$/.test(sp) });
+                                }
+                            }
+
+                            let currentLine = [];
+                            let currentLineWidth = 0;
+                            const manualLines = [];
+                            
+                            setPdfFont(doc, para.fontFamily, false, para.isItalic, assetsDir);
+                            doc.fontSize(para.fontSize || 14);
+                            const spaceWidth = doc.widthOfString(' ', options);
+
+                            let isFirstLineManual = isFirstLine;
+                            let currentMaxWidth = options.width - (isFirstLineManual ? options.indent : 0);
+
+                            for (const token of tokens) {
+                                setPdfFont(doc, para.fontFamily, para.isBold || token.isBold, para.isItalic, assetsDir);
+                                doc.fontSize(para.fontSize || 14);
+                                
+                                let tokenWidth = 0;
+                                if (token.isSpace) {
+                                    tokenWidth = spaceWidth * token.text.length;
+                                } else {
+                                    tokenWidth = doc.widthOfString(token.text, options);
+                                }
+                                
+                                if (currentLine.length === 0) {
+                                    if (!token.isSpace) {
+                                        currentLine.push({ ...token, width: tokenWidth });
+                                        currentLineWidth += tokenWidth;
+                                    }
+                                } else {
+                                    if (currentLineWidth + tokenWidth <= currentMaxWidth) {
+                                        currentLine.push({ ...token, width: tokenWidth });
+                                        currentLineWidth += tokenWidth;
+                                    } else {
+                                        while (currentLine.length > 0 && currentLine[currentLine.length - 1].isSpace) {
+                                            currentLineWidth -= currentLine.pop().width;
+                                        }
+                                        manualLines.push({ tokens: currentLine, width: currentLineWidth, isIndented: isFirstLineManual });
+                                        currentLine = [];
+                                        currentLineWidth = 0;
+                                        isFirstLineManual = false;
+                                        currentMaxWidth = options.width;
+                                        
+                                        if (!token.isSpace) {
+                                            currentLine.push({ ...token, width: tokenWidth });
+                                            currentLineWidth += tokenWidth;
+                                        }
+                                    }
+                                }
+                            }
+                            if (currentLine.length > 0) {
+                                while (currentLine.length > 0 && currentLine[currentLine.length - 1].isSpace) {
+                                    currentLineWidth -= currentLine.pop().width;
+                                }
+                                manualLines.push({ tokens: currentLine, width: currentLineWidth, isIndented: isFirstLineManual });
+                            }
+
+                            const lineHeight = doc.currentLineHeight() + (options.lineGap || 0);
+
+                            let wrapperY = currentY;
+                            for (let i = 0; i < manualLines.length; i++) {
+                                const line = manualLines[i];
+                                const isLastLine = (i === manualLines.length - 1);
+                                
+                                let spaceCount = 0;
+                                let wordsWidth = 0;
+                                for (const t of line.tokens) {
+                                    if (t.isSpace) spaceCount++;
+                                    else wordsWidth += t.width;
+                                }
+                                
+                                let addedSpace = 0;
+                                const lineMaxWidth = line.isIndented ? options.width - options.indent : options.width;
+                                
+                                if (!isLastLine && spaceCount > 0) {
+                                    addedSpace = (lineMaxWidth - wordsWidth - (spaceCount * spaceWidth)) / spaceCount;
+                                    if (addedSpace > spaceWidth * 3) addedSpace = 0; 
+                                }
+                                
+                                let currentX = finalX + (line.isIndented ? options.indent : 0);
+                                for (const t of line.tokens) {
+                                    if (t.isSpace) {
+                                        setPdfFont(doc, para.fontFamily, false, para.isItalic, assetsDir);
+                                        doc.text(' ', currentX, wrapperY, { lineBreak: false });
+                                        currentX += (spaceWidth + addedSpace) * t.text.length;
+                                    } else {
+                                        setPdfFont(doc, para.fontFamily, para.isBold || t.isBold, para.isItalic, assetsDir);
+                                        doc.fontSize(para.fontSize || 14).fillColor(para.color || '#000000');
+                                        doc.text(t.text, currentX, wrapperY, { width: undefined, align: 'left', characterSpacing: options.characterSpacing, lineBreak: false });
+                                        currentX += t.width;
+                                    }
+                                }
+                                wrapperY += lineHeight;
+                            }
+                            doc.y = wrapperY;
+                            isFirstLine = false;
+                            continue;
+                        }
+
                         const formattedParts = [];
                         const parts = lineText.split(/(\*\*.*?\*\*)/g);
                         for (let j = 0; j < parts.length; j++) {
@@ -337,15 +450,6 @@ async function generateDynamicPDF(data, template = {}) {
                             const isInlineBold = part.startsWith('**') && part.endsWith('**');
                             const actualText = isInlineBold ? part.slice(2, -2) : part;
                             formattedParts.push({ text: actualText, isBold: isInlineBold });
-                        }
-
-                        // Shift leading spaces to the previous part's trailing space to avoid PDFKit justify trim bug
-                        for (let j = 1; j < formattedParts.length; j++) {
-                            const match = formattedParts[j].text.match(/^(\s+)/);
-                            if (match) {
-                                formattedParts[j-1].text += match[1];
-                                formattedParts[j].text = formattedParts[j].text.substring(match[1].length);
-                            }
                         }
 
                         let isFirstPart = true;

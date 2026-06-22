@@ -18,14 +18,16 @@ import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
-import 'package:hrmappfrontend/intern/HolidayCalendar.dart';
+import 'package:hrmappfrontend/manager/managerholiday.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:hrmappfrontend/employee_to_manager/manager_access_section.dart';
+import 'package:hrmappfrontend/utils/location_redirect_dialog.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
+import 'package:hrmappfrontend/notifications/notification_screen.dart';
 
 class Employeedashboard extends StatefulWidget {
   final String employeeId;
@@ -55,10 +57,13 @@ class _EmployeedashboardState extends State<Employeedashboard>
   Map<String, dynamic>? myResignation;
   bool resignationLoading = false;
   String? employeeId;
+  String? _latestHolidayState;
+  int _requiredEmployeeMinutes = 480; // default 8 hours
+
+  final ScrollController _scrollController = ScrollController();
   DateTime _currentTime = DateTime.now();
   java_timer.Timer? _timer;
   bool _showHolidayBadge = false;
-  String? _latestHolidayState;
 
   List<dynamic> _officeLocations = [];
 
@@ -272,7 +277,6 @@ class _EmployeedashboardState extends State<Employeedashboard>
             employeeData = data; // ✅ Single setState
           });
         }
-
         // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
         final dbDeviceId = data['deviceId'];
         if (dbDeviceId != null) {
@@ -307,6 +311,28 @@ class _EmployeedashboardState extends State<Employeedashboard>
         // 🔥 HR ROLE CHECK (PROMOTION)
         final role = data['role']?.toString().toLowerCase();
         final isHr = data['isHr'] == true || data['isHr']?.toString() == 'true';
+        final isManager =
+            (data['isManager'] == true ||
+            data['isManager']?.toString() == 'true' ||
+            data['role']?.toString().toLowerCase() == 'manager');
+
+        try {
+          final res = await http.get(
+            Uri.parse("${getBaseUrl()}/api/settings/company"),
+            headers: {"Content-Type": "application/json"},
+          );
+          if (res.statusCode == 200) {
+            final b = jsonDecode(res.body);
+            final wd = b['workDurationSettings'] ?? {};
+            if (role == 'hr' || role == 'hr_admin' || isHr) {
+               _requiredEmployeeMinutes = (((wd['hr'] as num?)?.toDouble() ?? 8.0) * 60).toInt();
+            } else if (isManager) {
+               _requiredEmployeeMinutes = (((wd['manager'] as num?)?.toDouble() ?? 8.0) * 60).toInt();
+            } else {
+               _requiredEmployeeMinutes = (((wd['employee'] as num?)?.toDouble() ?? 8.0) * 60).toInt();
+            }
+          }
+        } catch (_) {}
 
         if (role == 'hr' || role == 'hr_admin' || isHr) {
           await _handleHrPromotion();
@@ -320,10 +346,6 @@ class _EmployeedashboardState extends State<Employeedashboard>
         }
 
         // 🔥 Save manager info if they are a manager
-        final isManager =
-            (data['isManager'] == true ||
-            data['isManager']?.toString() == 'true' ||
-            data['role']?.toString().toLowerCase() == 'manager');
         if (isManager) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("manager_email", data['email'] ?? '');
@@ -687,6 +709,29 @@ class _EmployeedashboardState extends State<Employeedashboard>
 
     if (mounted) setState(() => punchLoading = true);
 
+    try {
+      final punchInDateTime = DateTime.parse(punchInTime!);
+      final difference = DateTime.now().difference(punchInDateTime);
+      int requiredMinutes = _requiredEmployeeMinutes;
+
+      if (difference.inMinutes < requiredMinutes) {
+        if (mounted) setState(() => punchLoading = false);
+        final remaining = requiredMinutes - difference.inMinutes;
+        final h = remaining ~/ 60;
+        final m = remaining % 60;
+        final timeStr = h > 0 ? "${h}h ${m}m" : "${m}m";
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Cannot punch out yet. Required time remaining: $timeStr"),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    } catch (e) {
+      debugPrint("Error parsing punchInTime: $e");
+    }
+
     final inside = await checkDistanceFromOffice();
     if (!inside) {
       if (mounted) setState(() => punchLoading = false);
@@ -1008,6 +1053,31 @@ class _EmployeedashboardState extends State<Employeedashboard>
               ],
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 28),
+            onPressed: () {
+              if (employeeId != null) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    child: NotificationScreen(
+                      role: employeeData?['role']?.toString().toLowerCase() ?? 'employee',
+                      userId: employeeId!,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(width: 8),
           InkWell(
             onTap: (employeeData == null && !isTestAccount)
                 ? null
@@ -1152,7 +1222,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const HolidayCalendarScreen(),
+                            builder: (context) => const ManagerHolidayCalendarPage(),
                           ),
                         );
                       },
@@ -1649,71 +1719,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
   }
 
   void _showLocationWarning() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        duration: const Duration(seconds: 5),
-        content: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.red, width: 2.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.red.withOpacity(0.2),
-                blurRadius: 25,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.location_off_rounded,
-                  color: Colors.red.shade700,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Location Required",
-                      style: TextStyle(
-                        color: Colors.grey.shade900,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Please turn on your GPS And enter the permitted zone.",
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    showLocationRedirectDialog(context);
   }
 
   Widget _buildManagerStyleBox(

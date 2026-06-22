@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-const EmployeeLeave = require("../models/employeeLeave.model");
-const LeaveCounter = require("../models/leaveCounter.model");
-const Intern = require("../models/Intern");
-const Employee = require("../models/EmployeeModel");
-const Leave = require("../models/leave.model"); // legacy intern leaves
+// const EmployeeLeave = require("../models/employeeLeave.model");
+// const LeaveCounter = require("../models/leaveCounter.model");
+// const Intern = require("../models/Intern");
+// const Employee = require("../models/EmployeeModel");
+// const Leave = require("../models/leave.model"); // legacy intern leaves
 const verifyTenant = require("../middleware/tenant.middleware");
+const Notification = require("../models/Notification");
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -14,6 +15,8 @@ const upload = multer({ storage: multer.memoryStorage() });
    APPLY LEAVE
 ============================ */
 router.post("/apply", verifyTenant, upload.single("document"), async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const data = req.body;
     const employeeId = data.employeeId || data.internId;
@@ -54,14 +57,6 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
 
     if (!isMaternityLeave) {
       const today = new Date();
-      console.log(`[DEBUG] Apply Leave Request Headers:`, req.headers);
-      console.log(`[DEBUG] Apply Leave Request Body:`, req.body);
-      console.log(`[DEBUG] Apply Leave Balance Check:`, {
-        companyId: req.tenant.companyId,
-        employeeId: employeeId,
-        leaveType: data.leaveType,
-        today: today.toISOString()
-      });
       
       let counter = await LeaveCounter.findOne({
         companyId: req.tenant.companyId,
@@ -72,30 +67,78 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
       });
 
       if (!counter) {
-        // Fallback: Query without date restrictions (sorted by cycleStartDate descending)
+        // Fallback 1: without date restrictions
         counter = await LeaveCounter.findOne({
           companyId: req.tenant.companyId,
           employeeId: employeeId,
           leaveType: { $regex: `^${data.leaveType.trim()}$`, $options: "i" },
         }).sort({ cycleStartDate: -1 });
+      }
+
+      if (!counter) {
+        // Fallback 2: without companyId (handles ObjectId vs string mismatch)
+        counter = await LeaveCounter.findOne({
+          employeeId: employeeId,
+          leaveType: { $regex: `^${data.leaveType.trim()}$`, $options: "i" },
+        }).sort({ cycleStartDate: -1 });
 
         if (counter) {
-          console.log(`[DEBUG] Found counter via fallback (without date restrictions) for employee ${employeeId}:`, counter._id);
+          console.log(`[DEBUG] Found counter via broad fallback (no companyId filter) for employee ${employeeId}`);
         }
       }
 
       if (!counter) {
-        // Find existing counters to see if date ranges or types are mismatched
-        const existingCounters = await LeaveCounter.find({
-          companyId: req.tenant.companyId,
-          employeeId: employeeId
-        });
-        console.warn(`[DEBUG] Leave balance not found! Existing counters for employee ${employeeId}:`, existingCounters);
-        return res.status(404).json({ success: false, message: "Leave balance not found" });
+        // Fallback 3: Auto-create from company leave policies
+        try {
+          const { getMasterConnection, waitForConnection } = require('../db');
+          const CompanyModelExport = require('../models/CompanyModel');
+          const masterDb = getMasterConnection();
+          await waitForConnection(masterDb);
+          const Company = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+          const company = await Company.findById(req.tenant.companyId);
+          const leavePolicies = company?.leavePolicies || [
+            { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
+            { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
+          ];
+
+          const matchingPolicy = leavePolicies.find(p =>
+            p.name.trim().toLowerCase() === data.leaveType.trim().toLowerCase() &&
+            (p.appliesTo === 'both' || p.appliesTo === 'employee' || p.appliesTo === 'intern')
+          );
+
+          if (matchingPolicy) {
+            const cycleStart = new Date();
+            const nextReset = new Date();
+            if (matchingPolicy.frequency === 'monthly') {
+              nextReset.setMonth(nextReset.getMonth() + 1);
+            } else {
+              nextReset.setFullYear(nextReset.getFullYear() + 1);
+            }
+            counter = await LeaveCounter.create({
+              companyId: req.tenant.companyId,
+              employeeId: employeeId,
+              leaveType: matchingPolicy.name,
+              totalAllowed: matchingPolicy.allowance,
+              used: 0,
+              balance: matchingPolicy.allowance,
+              cycleStartDate: cycleStart,
+              nextResetDate: nextReset,
+            });
+            console.log(`[DEBUG] Auto-created leave counter for employee ${employeeId}, leaveType: ${matchingPolicy.name}`);
+          }
+        } catch (autoCreateErr) {
+          console.error('[DEBUG] Failed to auto-create leave counter:', autoCreateErr.message);
+        }
+      }
+
+      if (!counter) {
+        const existingCounters = await LeaveCounter.find({ employeeId: employeeId });
+        console.warn(`[DEBUG] Leave balance not found! Existing counters for employee ${employeeId}:`, existingCounters.map(c => ({ type: c.leaveType, balance: c.balance })));
+        return res.status(404).json({ success: false, message: "Leave balance not found. Please contact HR to initialize your leave balance." });
       }
       
       if (Number(data.numberOfDays) > counter.balance) {
-        return res.status(400).json({ success: false, message: `Insufficient balance. Available: ${counter.balance}` });
+        return res.status(400).json({ success: false, message: `Insufficient balance. Available: ${counter.balance} day(s)` });
       }
       normalizedLeaveType = counter.leaveType;
     }
@@ -145,6 +188,8 @@ router.post("/apply", verifyTenant, upload.single("document"), async (req, res) 
    MANAGER: GET TEAM LEAVE REQUESTS
 ============================ */
 router.get("/manager-pending/:managerId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const leaves = await EmployeeLeave.find({ 
       companyId: req.tenant.companyId,
@@ -161,6 +206,8 @@ router.get("/manager-pending/:managerId", verifyTenant, async (req, res) => {
    MANAGER: APPROVE/REJECT LEAVE
 ============================ */
 router.put("/manager-action/:leaveId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const { status, rejectionReason } = req.body; // status: accepted or rejected
     const leave = await EmployeeLeave.findOne({ _id: req.params.leaveId, companyId: req.tenant.companyId });
@@ -172,6 +219,19 @@ router.put("/manager-action/:leaveId", verifyTenant, async (req, res) => {
       leave.rejectionReason = rejectionReason || "Rejected by Manager";
     }
     await leave.save();
+    
+    try {
+      await Notification.create({
+        companyId: req.tenant.companyId,
+        title: `Leave ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        description: `Your leave request was ${status} by your manager.`,
+        targetAudience: 'specific_user',
+        targetUserId: leave.employeeId,
+      });
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
+    
     res.json({ success: true, message: `Leave ${status} by manager` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -182,6 +242,8 @@ router.put("/manager-action/:leaveId", verifyTenant, async (req, res) => {
    HR: GET PENDING LEAVES (Only if Manager Approved)
 ============================ */
 router.get("/hr-pending", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const leaves = await EmployeeLeave.find({ 
       companyId: req.tenant.companyId,
@@ -198,6 +260,8 @@ router.get("/hr-pending", verifyTenant, async (req, res) => {
    HR: FINAL APPROVE/REJECT
 ============================ */
 router.put("/hr-action/:id", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     let { status, rejectionReason, fromDate, toDate, numberOfDays } = req.body;
     if (status === "approved") status = "accepted";
@@ -256,6 +320,18 @@ router.put("/hr-action/:id", verifyTenant, async (req, res) => {
     leave.rejectionReason = status === "rejected" ? rejectionReason || "" : "";
     await leave.save();
 
+    try {
+      await Notification.create({
+        companyId: req.tenant.companyId,
+        title: `Leave ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        description: `Your leave request was ${status} by HR.`,
+        targetAudience: 'specific_user',
+        targetUserId: leave.employeeId,
+      });
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
+
     res.json({ success: true, message: `Leave ${status} by HR`, leave });
   } catch (err) {
     console.error("HR Leave Action Error:", err);
@@ -263,20 +339,10 @@ router.put("/hr-action/:id", verifyTenant, async (req, res) => {
   }
 });
 
-/* ============================
-   COMMON GETTERS
-============================ */
-// Compatibility route for old frontend calls (e.g., GET /api/leave/:id)
-router.get("/:employeeId", verifyTenant, async (req, res) => {
-  try {
-    const leaves = await EmployeeLeave.find({ employeeId: req.params.employeeId, companyId: req.tenant.companyId }).sort({ fromDate: -1 });
-    res.json(leaves);
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 
 router.get("/employee/:employeeId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const { employeeId } = req.params;
     
@@ -311,6 +377,8 @@ router.get("/employee/:employeeId", verifyTenant, async (req, res) => {
 });
 
 router.get("/balance/:employeeId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const counters = await LeaveCounter.find({ employeeId: req.params.employeeId, companyId: req.tenant.companyId }).select("leaveType balance totalAllowed used").lean();
     res.json({ success: true, data: counters });
@@ -320,6 +388,8 @@ router.get("/balance/:employeeId", verifyTenant, async (req, res) => {
 });
 
 router.get("/count/:employeeId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const { employeeId } = req.params;
     const month = parseInt(req.query.month);
@@ -358,6 +428,8 @@ router.get("/count/:employeeId", verifyTenant, async (req, res) => {
    GET ALL LEAVE REQUESTS (FOR HR)
 ============================ */
 router.get("/all", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const leaves = await EmployeeLeave.find({ companyId: req.tenant.companyId }).sort({ createdAt: -1 });
     res.json(leaves);
@@ -370,6 +442,8 @@ router.get("/all", verifyTenant, async (req, res) => {
    GET ALL LEAVE REQUESTS FOR MANAGER'S TEAM
 ============================ */
 router.get("/manager-all/:managerId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
   try {
     const leaves = await EmployeeLeave.find({ 
       companyId: req.tenant.companyId,
@@ -378,6 +452,23 @@ router.get("/manager-all/:managerId", verifyTenant, async (req, res) => {
     res.json(leaves);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
+  }
+});
+
+
+/* ============================
+   CATCH-ALL: GET BY EMPLOYEE ID (must be last)
+============================ */
+// Compatibility route for old frontend calls (e.g., GET /api/leave/:id)
+// MUST be last to avoid shadowing /employee/:id, /balance/:id, /count/:id, /all, /manager-all/:id
+router.get("/:employeeId", verifyTenant, async (req, res) => {
+    const { EmployeeLeave, LeaveCounter, Intern, Employee, Leave } = req.models;
+
+  try {
+    const leaves = await EmployeeLeave.find({ employeeId: req.params.employeeId, companyId: req.tenant.companyId }).sort({ fromDate: -1 });
+    res.json(leaves);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

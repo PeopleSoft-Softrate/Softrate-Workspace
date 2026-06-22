@@ -30,7 +30,7 @@
       </div>
 
       <!-- Regular Login Form -->
-      <form *ngIf="!requiresPasswordReset()" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <form *ngIf="!requiresPasswordReset() && !isForgotPasswordMode() && !requiresMfa()" (ngSubmit)="onSubmit()" #loginForm="ngForm">
         <!-- Company Code Field -->
         <div class="form-group">
           <label for="companyCode">Company Code</label>
@@ -86,7 +86,93 @@
 
         <div class="form-footer">
           <a routerLink="/register">Register Company</a>
-          <a href="#">Forgot Password?</a>
+          <a href="#" (click)="$event.preventDefault(); toggleForgotPasswordMode()">Forgot Password?</a>
+        </div>
+      </form>
+
+      <!-- MFA Verification Form -->
+      <form *ngIf="requiresMfa()" (ngSubmit)="onMfaSubmit()" #mfaForm="ngForm">
+        <div class="form-header" style="margin-top: -10px; margin-bottom: 20px;">
+          <h3 style="font-size: 1.2rem; color: #333; margin-bottom: 8px;">Two-Factor Authentication</h3>
+          <p style="color: #666; font-size: 0.9rem;">Please enter the 6-digit code from your Authenticator app.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="mfaCode">Authenticator Code</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-shield-halved"></i>
+            <input 
+              id="mfaCode"
+              type="text" 
+              [(ngModel)]="mfaCode" 
+              name="mfaCode" 
+              required 
+              maxlength="6"
+              placeholder="000000"
+              style="letter-spacing: 4px; font-weight: bold; text-align: center; font-size: 1.2rem;">
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="isLoading() || !mfaForm.valid || mfaCode.length < 6">
+          <span *ngIf="!isLoading()">Verify & Login</span>
+          <div class="spinner" *ngIf="isLoading()"></div>
+        </button>
+
+        <div class="form-footer" style="justify-content: center; margin-top: 20px;">
+          <a href="#" (click)="$event.preventDefault(); requiresMfa.set(false); isLoading.set(false);">Cancel</a>
+        </div>
+      </form>
+
+      <!-- Forgot Password Form -->
+      <form *ngIf="isForgotPasswordMode() && !requiresPasswordReset()" (ngSubmit)="onForgotPasswordSubmit()" #forgotForm="ngForm">
+        <div class="form-header" style="margin-top: -10px; margin-bottom: 20px;">
+          <h3 style="font-size: 1.2rem; color: #333; margin-bottom: 8px;">Reset Password</h3>
+          <p style="color: #666; font-size: 0.9rem;">Enter your company code and email address to receive a reset link.</p>
+        </div>
+
+        <div class="success-banner" *ngIf="forgotPasswordSuccess()" style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; margin-bottom: 24px; border-radius: 4px;">
+          <p style="margin: 0; color: #047857; font-size: 13px; display: flex; align-items: flex-start; gap: 8px;">
+            <i class="fa-solid fa-circle-check" style="margin-top: 2px;"></i>
+            <span>Reset link sent successfully! Please check your inbox.</span>
+          </p>
+        </div>
+
+        <ng-container *ngIf="!forgotPasswordSuccess()">
+          <div class="form-group">
+            <label for="forgotCompanyCode">Company Code</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-building"></i>
+              <input 
+                id="forgotCompanyCode"
+                type="text" 
+                [(ngModel)]="forgotPasswordData.companyCode" 
+                name="forgotCompanyCode" 
+                placeholder="e.g. softrateglobal.com">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="forgotEmail">Email Address</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-envelope"></i>
+              <input 
+                id="forgotEmail"
+                type="email" 
+                [(ngModel)]="forgotPasswordData.email" 
+                name="forgotEmail" 
+                required 
+                placeholder="your@email.com">
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="isLoading() || !forgotForm.valid">
+            <span *ngIf="!isLoading()">Send Reset Link</span>
+            <div class="spinner" *ngIf="isLoading()"></div>
+          </button>
+        </ng-container>
+
+        <div class="form-footer" style="justify-content: center; margin-top: 20px;">
+          <a href="#" (click)="$event.preventDefault(); toggleForgotPasswordMode()">Back to Login</a>
         </div>
       </form>
 

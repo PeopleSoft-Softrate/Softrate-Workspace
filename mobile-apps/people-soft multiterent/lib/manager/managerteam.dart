@@ -5,6 +5,8 @@ import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:hrmappfrontend/hr_pages/InternFullDetails.dart';
+import 'package:hrmappfrontend/hr_pages/emplyee/EmployeeFullDetails.dart';
 
 class ManagerTeamPage extends StatefulWidget {
   const ManagerTeamPage({super.key});
@@ -136,103 +138,124 @@ class _ManagerTeamPageState extends State<ManagerTeamPage> {
         final String email = member["email"] ?? "";
         final String status = member["status"] ?? "Active";
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor.withOpacity(0.8)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: Text(
-                        name.isNotEmpty ? name[0] : "?",
-                        style: const TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(status),
-                        border: Border.all(color: surfaceColor, width: 2.5),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        final bool isIntern = member.containsKey("internid") || (member["role"]?.toString().toLowerCase().contains("intern") ?? false);
+
+        return GestureDetector(
+          onTap: () {
+            if (isIntern) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => InternFullDetails(internId: member["_id"]),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EmployeeFullDetails(employeeId: member["_id"]),
+                ),
+              );
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: borderColor.withOpacity(0.8)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Stack(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          name,
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(
+                        child: Text(
+                          name.isNotEmpty ? name[0] : "?",
                           style: const TextStyle(
-                            fontWeight: FontWeight.w600,
                             color: primaryColor,
-                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildStatusBadge(status),
-                      ],
-                    ),
-                    Text(
-                      role,
-                      style: const TextStyle(
-                        color: subtitleColor,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "ID: $id",
-                      style: const TextStyle(
-                        color: subtitleColor,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w500,
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(status),
+                          border: Border.all(color: surfaceColor, width: 2.5),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              if (email.isNotEmpty)
-                _buildModernIconButton(
-                  Icons.mail_outline_rounded,
-                  () => _launchEmail(email),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStatusBadge(status),
+                        ],
+                      ),
+                      Text(
+                        role,
+                        style: const TextStyle(
+                          color: subtitleColor,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "ID: $id",
+                        style: const TextStyle(
+                          color: subtitleColor,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-            ],
+                if (email.isNotEmpty)
+                  _buildModernIconButton(
+                    Icons.mail_outline_rounded,
+                    () => _launchEmail(email),
+                  ),
+              ],
+            ),
           ),
         );
       },

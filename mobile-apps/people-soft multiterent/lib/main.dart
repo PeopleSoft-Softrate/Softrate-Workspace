@@ -22,7 +22,7 @@ void main() async {
     // Only pass IDs if actually logged in (prevents device-mismatch redirect loop)
     initialInternId: internLoggedIn ? internId : null,
     employeeLoggedIn: employeeLoggedIn && !managerLoggedIn,
-    employeeId: employeeLoggedIn ? employeeId : null,
+    employeeId: employeeId ?? prefs.getString('manager_id'),
     managerLoggedIn: managerLoggedIn,
   ));
 }

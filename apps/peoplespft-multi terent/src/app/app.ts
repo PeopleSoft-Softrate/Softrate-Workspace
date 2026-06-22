@@ -110,6 +110,7 @@ export class App {
       // Poll every 2 minutes
       setInterval(() => this.checkNotifications(), 120000);
     }
+
   }
 
   isHrType(): boolean {
@@ -249,32 +250,52 @@ export class App {
     const items: any[] = [];
     
     if (data.myLeaves) {
-      const recentLeaves = data.myLeaves.filter((l: any) => l.status && l.status.toLowerCase() !== 'pending');
+      const getLeaveStatus = (l: any) => {
+        if (l.hrStatus === 'rejected' || l.managerStatus === 'rejected') return 'Rejected';
+        if (l.hrStatus === 'accepted') return 'Approved';
+        if (l.managerStatus === 'accepted') return 'Manager Approved';
+        return 'Pending';
+      };
+
+      const recentLeaves = data.myLeaves.filter((l: any) => getLeaveStatus(l) !== 'Pending');
       recentLeaves.sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
-      recentLeaves.slice(0, 5).forEach((l: any) => items.push({
-        type: 'Leave Ratification',
-        title: `Leave ${l.status}`,
-        desc: `${l.leaveType || 'Leave'}`,
-        link: '/employees',
-        isSvg: true,
-        icon: 'leave',
-        color: l.status.toLowerCase() === 'approved' || l.status.toLowerCase() === 'accepted' ? 'green' : 'red',
-        timestamp: l.updatedAt || l.createdAt || l.date
-      }));
+      recentLeaves.slice(0, 5).forEach((l: any) => {
+        const s = getLeaveStatus(l);
+        items.push({
+          type: 'Leave Update',
+          title: `Leave ${s}`,
+          desc: `${l.leaveType || 'Leave'}`,
+          link: '/employee/leaves',
+          isSvg: true,
+          icon: 'leave',
+          color: s === 'Approved' || s === 'Manager Approved' ? 'green' : 'red',
+          timestamp: l.updatedAt || l.createdAt || l.date
+        });
+      });
     }
 
     if (data.myFunds) {
-      const recentFunds = data.myFunds.filter((f: any) => f.status && f.status.toLowerCase() !== 'pending');
+      const getFundStatus = (f: any) => {
+        if (f.hrStatus === 'rejected' || f.managerStatus === 'rejected') return 'Rejected';
+        if (f.hrStatus === 'accepted') return 'Approved';
+        if (f.managerStatus === 'accepted') return 'Manager Approved';
+        return 'Pending';
+      };
+
+      const recentFunds = data.myFunds.filter((f: any) => getFundStatus(f) !== 'Pending');
       recentFunds.sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
-      recentFunds.slice(0, 5).forEach((f: any) => items.push({
-        type: 'Reimbursement',
-        title: `Reimbursement ${f.status}`,
-        desc: `${f.expenseType || f.title || 'Expense request'}`,
-        link: '/unified-requests',
-        icon: 'fa-solid fa-money-bill-transfer',
-        color: f.status.toLowerCase() === 'approved' || f.status.toLowerCase() === 'accepted' ? 'green' : 'red',
-        timestamp: f.updatedAt || f.createdAt || f.date
-      }));
+      recentFunds.slice(0, 5).forEach((f: any) => {
+        const s = getFundStatus(f);
+        items.push({
+          type: 'Reimbursement',
+          title: `Reimbursement ${s}`,
+          desc: `${f.expenseType || f.title || f.category || 'Expense request'}`,
+          link: '/employee/unified-requests',
+          icon: 'fa-solid fa-money-bill-transfer',
+          color: s === 'Approved' || s === 'Manager Approved' ? 'green' : 'red',
+          timestamp: f.updatedAt || f.createdAt || f.date
+        });
+      });
     }
 
     if (data.leaves) {
@@ -551,6 +572,7 @@ export class App {
   logout() {
     localStorage.removeItem('user_role');
     localStorage.removeItem('user_data');
+    localStorage.removeItem('auth_token');
     this.userRole.set(null);
     this.currentUser.set(null);
     this.showUserMenu.set(false);

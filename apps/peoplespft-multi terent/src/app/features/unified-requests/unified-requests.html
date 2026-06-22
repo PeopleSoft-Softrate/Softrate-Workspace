@@ -39,30 +39,6 @@
 
         <div class="stat-divider"></div>
 
-        <div class="stat-item leave">
-          <div class="stat-icon-wrapper">
-            <hugeicons-icon [icon]="Calendar01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ pendingLeavesCount() }}</span>
-            <span class="stat-label">Leaves</span>
-          </div>
-        </div>
-
-        <div class="stat-divider"></div>
-
-        <div class="stat-item offboarding">
-          <div class="stat-icon-wrapper">
-            <hugeicons-icon [icon]="Logout01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ pendingOffboardingsCount() }}</span>
-            <span class="stat-label">Offboardings</span>
-          </div>
-        </div>
-
-        <div class="stat-divider"></div>
-
         <div class="stat-item onboarding">
           <div class="stat-icon-wrapper">
             <hugeicons-icon [icon]="Login01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
@@ -70,6 +46,18 @@
           <div class="stat-info">
             <span class="stat-value">{{ pendingOnboardingsCount() }}</span>
             <span class="stat-label">Onboarding</span>
+          </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item leave">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="Calendar01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingLeavesCount() }}</span>
+            <span class="stat-label">Leaves</span>
           </div>
         </div>
 
@@ -88,14 +76,13 @@
 
         <div class="stat-divider"></div>
 
-        <div class="stat-item fund">
+        <div class="stat-item offboarding">
           <div class="stat-icon-wrapper">
-            <hugeicons-icon [icon]="WalletDone02Icon" size="20" [strokeWidth]="1.5"
-              color="currentColor"></hugeicons-icon>
+            <hugeicons-icon [icon]="Logout01Icon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
           </div>
           <div class="stat-info">
-            <span class="stat-value">{{ pendingFundsCount() }}</span>
-            <span class="stat-label">Reimbursement</span>
+            <span class="stat-value">{{ pendingOffboardingsCount() }}</span>
+            <span class="stat-label">Offboardings</span>
           </div>
         </div>
 
@@ -109,6 +96,19 @@
           <div class="stat-info">
             <span class="stat-value">{{ pendingDeviceChangesCount() }}</span>
             <span class="stat-label">Device Changes</span>
+          </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item fund">
+          <div class="stat-icon-wrapper">
+            <hugeicons-icon [icon]="WalletDone02Icon" size="20" [strokeWidth]="1.5"
+              color="currentColor"></hugeicons-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ pendingFundsCount() }}</span>
+            <span class="stat-label">Reimbursement</span>
           </div>
         </div>
       </div>
@@ -130,18 +130,18 @@
         <div class="category-tabs" *ngIf="!embeddedCategory()">
           <button (click)="activeCategory.set('all')" [class.active]="activeCategory() === 'all'" class="tab-btn">All
             Requests</button>
-          <button (click)="activeCategory.set('leave')" [class.active]="activeCategory() === 'leave'"
-            class="tab-btn">Leaves</button>
-          <button (click)="activeCategory.set('offboarding')" [class.active]="activeCategory() === 'offboarding'"
-            class="tab-btn">Offboardings</button>
           <button (click)="activeCategory.set('onboarding')" [class.active]="activeCategory() === 'onboarding'"
             class="tab-btn">Onboarding</button>
+          <button (click)="activeCategory.set('leave')" [class.active]="activeCategory() === 'leave'"
+            class="tab-btn">Leaves</button>
           <button (click)="activeCategory.set('correction')" [class.active]="activeCategory() === 'correction'"
             class="tab-btn">Ratification</button>
-          <button (click)="activeCategory.set('fund')" [class.active]="activeCategory() === 'fund'"
-            class="tab-btn">Reimbursement</button>
+          <button (click)="activeCategory.set('offboarding')" [class.active]="activeCategory() === 'offboarding'"
+            class="tab-btn">Offboardings</button>
           <button (click)="activeCategory.set('device_change')" [class.active]="activeCategory() === 'device_change'"
             class="tab-btn">Device Changes</button>
+          <button (click)="activeCategory.set('fund')" [class.active]="activeCategory() === 'fund'"
+            class="tab-btn">Reimbursement</button>
         </div>
       </div>
     </div>

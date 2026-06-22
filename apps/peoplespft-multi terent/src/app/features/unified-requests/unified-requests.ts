@@ -227,7 +227,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     } else if (this.isManager() && managerId) {
       // Manager: Fetch team-only pending data
       forkJoin({
-        leaves: this.apiService.getManagerAllLeaves(managerId).pipe(catchError(e => { console.error('Leaves err', e); return of([]); })),
+        leaves: this.apiService.getManagerPendingLeaves(managerId).pipe(catchError(e => { console.error('Leaves err', e); return of([]); })),
         resignations: this.apiService.getAllResignations().pipe(catchError(e => { console.error('Resignations err', e); return of([]); })), // Manager resignations filtered by team
         interns: this.apiService.getAssignedInterns(managerId).pipe(catchError(e => { console.error('Interns err', e); return of([]); })),
         employees: this.apiService.getAssignedEmployees(managerId).pipe(catchError(e => { console.error('Employees err', e); return of([]); })),
@@ -620,7 +620,8 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       });
     } else {
       // Manager sees only their own pending queue
-      requests = requests.filter(r => r.status === 'pending' && r.managerStatus === 'pending');
+      // (leaves already pre-filtered to managerStatus=pending via manager-pending endpoint)
+      requests = requests.filter(r => r.status === 'pending' || r.managerStatus === 'pending');
     }
 
     // 3. Search query

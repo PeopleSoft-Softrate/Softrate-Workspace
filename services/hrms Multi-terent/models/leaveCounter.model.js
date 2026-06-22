@@ -62,17 +62,17 @@ function _getleaveCounterModel() {
   const dbName = store && store.dbName ? store.dbName : 'hrdb';
   const connection = getTenantConnection(dbName);
   const models = getModelsForConnection(connection);
-  return models["leaveCounter"];
+  return models["LeaveCounter"];
 }
 
 module.exports = new Proxy(_leaveCounterProxyTarget, {
   get(target, prop) {
-    if (prop === 'name') return "leaveCounter";
+    if (prop === 'name') return "LeaveCounter";
     if (prop === 'schema') return leaveCounterSchema;
-    if (prop === '_name') return "leaveCounter";
+    if (prop === '_name') return "LeaveCounter";
     if (prop === '_schema') return leaveCounterSchema;
     const actualModel = _getleaveCounterModel();
-    if (!actualModel) throw new Error("Model leaveCounter not found for current tenant");
+    if (!actualModel) throw new Error("Model LeaveCounter not found for current tenant");
     if (typeof actualModel[prop] === 'function') return actualModel[prop].bind(actualModel);
     return actualModel[prop];
   },

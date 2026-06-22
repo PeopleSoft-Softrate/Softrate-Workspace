@@ -20,6 +20,7 @@ import 'package:hrmappfrontend/hr_pages/support/today_attendance_service.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
+import 'package:hrmappfrontend/utils/location_redirect_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:media_store_plus/media_store_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -59,6 +60,7 @@ class _HrdashBoardState extends State<HrdashBoard>
   Map<String, dynamic>? hrData;
   DateTime _currentTime = DateTime.now();
   Timer? _clockTimer;
+  int _requiredHrMinutes = 480; // default 8 hours
 
   bool isTodayHoliday = false;
   String? holidayReason;
@@ -153,7 +155,10 @@ class _HrdashBoardState extends State<HrdashBoard>
       return;
     }
     if (_punchInTime != null) return;
-    if (!await handleLocationPermission()) return;
+    if (!await handleLocationPermission()) {
+      showLocationRedirectDialog(context);
+      return;
+    }
     if (mounted) setState(() => _isPunchLoading = true);
     final inside = await checkDistanceFromOffice();
     if (!inside) {
@@ -194,8 +199,33 @@ class _HrdashBoardState extends State<HrdashBoard>
   Future<void> punchOut() async {
     if (isTodayHoliday) return;
     if (_punchInTime == null || _punchOutTime != null) return;
-    if (!await handleLocationPermission()) return;
+    if (!await handleLocationPermission()) {
+      showLocationRedirectDialog(context);
+      return;
+    }
     if (mounted) setState(() => _isPunchLoading = true);
+
+    try {
+      final punchInDateTime = DateTime.parse(_punchInTime!);
+      final difference = DateTime.now().difference(punchInDateTime);
+      if (difference.inMinutes < _requiredHrMinutes) {
+        if (mounted) setState(() => _isPunchLoading = false);
+        final remaining = _requiredHrMinutes - difference.inMinutes;
+        final h = remaining ~/ 60;
+        final m = remaining % 60;
+        final timeStr = h > 0 ? "${h}h ${m}m" : "${m}m";
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Cannot punch out yet. Required time remaining: $timeStr"),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    } catch (e) {
+      debugPrint("Error parsing punchInTime: $e");
+    }
+
     final inside = await checkDistanceFromOffice();
     if (!inside) {
       if (mounted) setState(() => _isPunchLoading = false);
@@ -350,6 +380,18 @@ class _HrdashBoardState extends State<HrdashBoard>
             hrName = profile['firstName'] ?? "HR Manager";
           });
         }
+
+        try {
+          final res = await http.get(
+            Uri.parse("${getBaseUrl()}/api/settings/company"),
+            headers: {"Content-Type": "application/json"},
+          );
+          if (res.statusCode == 200) {
+            final b = jsonDecode(res.body);
+            final wd = b['workDurationSettings'] ?? {};
+            _requiredHrMinutes = (((wd['hr'] as num?)?.toDouble() ?? 8.0) * 60).toInt();
+          }
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint("Fetch HR profile error: $e");

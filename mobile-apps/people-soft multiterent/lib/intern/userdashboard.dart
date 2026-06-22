@@ -16,9 +16,10 @@ import 'package:hrmappfrontend/intern/form_two.dart';
 import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
 import 'package:hrmappfrontend/intern/intern_process.dart';
 import 'package:hrmappfrontend/intern/intern_profilepage.dart';
-import 'package:hrmappfrontend/intern/HolidayCalendar.dart';
+import 'package:hrmappfrontend/manager/managerholiday.dart';
 import 'package:hrmappfrontend/intern/payroll_page.dart';
 import 'package:hrmappfrontend/port.dart';
+import 'package:hrmappfrontend/utils/location_redirect_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
@@ -26,6 +27,7 @@ import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
+import 'package:hrmappfrontend/notifications/notification_screen.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -55,6 +57,8 @@ class _AttendancePageState extends State<AttendancePage>
   bool resignationLoading = false;
   String? internId;
   bool _isStipendIntern = false; // true when internshipType == "Stipend"
+  int _requiredInternMinutes = 360; // cached from db
+
   DateTime _currentTime = DateTime.now();
   java_timer.Timer? _timer;
   bool _showHolidayBadge = false;
@@ -424,6 +428,18 @@ class _AttendancePageState extends State<AttendancePage>
             () => _isStipendIntern = internshipType.toLowerCase() == 'stipend',
           );
 
+        try {
+          final res = await http.get(
+            Uri.parse("$baseUrl/api/settings/company"),
+            headers: {"Content-Type": "application/json"},
+          );
+          if (res.statusCode == 200) {
+            final b = jsonDecode(res.body);
+            final wd = b['workDurationSettings'] ?? {};
+            _requiredInternMinutes = (((wd['intern'] as num?)?.toDouble() ?? 6.0) * 60).toInt();
+          }
+        } catch (_) {}
+
         // 🔥 DEVICE BINDING AUTO LOGOUT CHECK
         final dbDeviceId = internData?['deviceId'];
         if (dbDeviceId != null) {
@@ -650,30 +666,51 @@ class _AttendancePageState extends State<AttendancePage>
 
     if (punchInTime == null || punchOutTime != null) return;
 
+    if (mounted) setState(() => punchLoading = true);
+
     try {
       final punchInDateTime = DateTime.parse(punchInTime!);
       final difference = DateTime.now().difference(punchInDateTime);
-      if (difference.inMinutes < 5) {
-        final remainingMinutes = 5 - difference.inMinutes;
-        final remainingSeconds = 60 - (difference.inSeconds % 60);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Too early!"),
-            backgroundColor: const Color.fromARGB(255, 239, 0, 0),
-          ),
-        );
-        return;
+      final internshipType = internData?['internshipType']?.toString().toLowerCase() ?? '';
+
+      if (internshipType == 'stipend') {
+        int requiredMinutes = _requiredInternMinutes;
+
+        if (difference.inMinutes < requiredMinutes) {
+          if (mounted) setState(() => punchLoading = false);
+          final remaining = requiredMinutes - difference.inMinutes;
+          final h = remaining ~/ 60;
+          final m = remaining % 60;
+          final timeStr = h > 0 ? "${h}h ${m}m" : "${m}m";
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Cannot punch out yet. Required time remaining: $timeStr"),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+      } else {
+        if (difference.inMinutes < 5) {
+          if (mounted) setState(() => punchLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Too early!"),
+              backgroundColor: Color.fromARGB(255, 239, 0, 0),
+            ),
+          );
+          return;
+        }
       }
     } catch (e) {
       debugPrint("Error parsing punchInTime: $e");
     }
 
     if (!await handleLocationPermission()) {
+      if (mounted) setState(() => punchLoading = false);
       _showLocationWarning();
       return;
     }
-
-    if (mounted) setState(() => punchLoading = true);
 
     final inside = await checkDistanceFromOffice();
     if (!inside) {
@@ -838,6 +875,31 @@ class _AttendancePageState extends State<AttendancePage>
               ],
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 28),
+            onPressed: () {
+              if (internId != null) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    child: NotificationScreen(
+                      role: 'intern',
+                      userId: internId!,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(width: 8),
           InkWell(
             onTap: internData == null
                 ? null
@@ -1148,7 +1210,7 @@ class _AttendancePageState extends State<AttendancePage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const HolidayCalendarScreen(),
+                            builder: (_) => const ManagerHolidayCalendarPage(),
                           ),
                         );
                       },
@@ -1920,74 +1982,7 @@ class _AttendancePageState extends State<AttendancePage>
   }
 
   void _showLocationWarning() {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        duration: const Duration(seconds: 5),
-        content: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.red, width: 2.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.red.withOpacity(0.2),
-                blurRadius: 25,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.location_off_rounded,
-                  color: Colors.red.shade700,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Location Error",
-                      style: TextStyle(
-                        color: Colors.grey.shade900,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Please turn on your location and ensure you are within the office Permited zone.",
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    showLocationRedirectDialog(context);
   }
 
   Widget _buildManagerStyleBox(

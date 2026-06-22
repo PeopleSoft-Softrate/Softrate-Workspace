@@ -50,5 +50,11 @@ router.post("/force-reset-password", verifyTenant, authController.forceResetPass
 router.get("/verify-company/:code", authController.verifyCompany);
 router.post("/device-change-request", authController.requestDeviceChange);
 
+// MFA Routes
+router.post("/mfa/verify-login", authController.verifyMfaLogin);
+router.post("/mfa/setup", verifyTenant, authController.setupMfa);
+router.post("/mfa/enable", verifyTenant, authController.enableMfa);
+router.post("/mfa/disable", verifyTenant, authController.disableMfa);
+
 module.exports = router;
 

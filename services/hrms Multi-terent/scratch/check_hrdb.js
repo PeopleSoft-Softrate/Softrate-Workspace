@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { getTenantConnection, waitForConnection } = require('./db');
+require('dotenv').config({ path: '../.env' });
+const { getTenantConnection, waitForConnection } = require('../db');
 
 async function check() {
   const tenantDb = getTenantConnection('hrdb');

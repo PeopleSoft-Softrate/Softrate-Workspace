@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 const bool useLocalBackend = false;
 
 /// The local network IP of your dev machine (used when useLocalBackend = true).
-const String _localIp = '192.168.29.43';
+const String _localIp = '192.168.29.171';
 const int _localPort = 5001;
 
 String getBaseUrl() {

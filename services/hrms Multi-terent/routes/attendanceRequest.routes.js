@@ -6,6 +6,7 @@ const Intern = require("../models/Intern");
 const Attendance = require("../models/attendancemodel");
 const EmployeeAttendance = require("../models/Employeeattendancemodel");
 const Employee = require("../models/EmployeeModel");
+const Notification = require("../models/Notification");
 
 async function enrichWithActualTimes(requests) {
   return await Promise.all(requests.map(async reqObj => {
@@ -147,6 +148,17 @@ router.put("/manager-review/:id", verifyTenant, async (req, res) => {
     }
 
     await request.save();
+    try {
+      await Notification.create({
+        companyId: req.tenant.companyId,
+        title: `Attendance Ratification ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        description: `Your ratification request was ${status} by your manager.`,
+        targetAudience: 'specific_user',
+        targetUserId: request.internId,
+      });
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
     res.status(200).json({ success: true, message: `Request ${status} by manager`, request });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -220,6 +232,17 @@ router.put("/hr-review/:id", verifyTenant, async (req, res) => {
     }
 
     await request.save();
+    try {
+      await Notification.create({
+        companyId: req.tenant.companyId,
+        title: `Attendance Ratification ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        description: `Your ratification request was ${status} by HR.`,
+        targetAudience: 'specific_user',
+        targetUserId: request.internId,
+      });
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
     res.status(200).json({ success: true, message: `Request ${status} by HR`, request });
   } catch (err) {
     console.error("attendance-requests /hr-review error:", err);

@@ -546,7 +546,7 @@ input[type=number] {
 }
 
 .requests-table th {
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 0.6rem;
   font-size: 0.6875rem;
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
@@ -556,7 +556,7 @@ input[type=number] {
 }
 
 .requests-table td {
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 0.6rem;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   font-size: 0.8125rem;
@@ -620,6 +620,10 @@ input[type=number] {
   font-weight: var(--font-weight-semibold);
   font-size: 0.8125rem;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .tbl-id,
@@ -627,6 +631,10 @@ input[type=number] {
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 /* Type badge */
@@ -879,7 +887,7 @@ input[type=number] {
 /* Inline assign row */
 .tbl-assign-row {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.25rem;
   align-items: center;
   flex-wrap: nowrap;
 }
@@ -890,7 +898,7 @@ input[type=number] {
   border-radius: 8px;
   padding: 4px 8px;
   outline: none;
-  max-width: 160px;
+  max-width: 100px;
   text-overflow: ellipsis;
 }
 

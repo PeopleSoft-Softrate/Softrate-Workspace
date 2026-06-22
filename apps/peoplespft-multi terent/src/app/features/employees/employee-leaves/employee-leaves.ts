@@ -41,6 +41,7 @@ export class EmployeeLeaves implements OnInit, OnDestroy {
   employeeId = signal<string>('');
   employeeName = signal<string>('');
   isIntern = signal<boolean>(false);
+  isSelfPortal = signal<boolean>(true);
   isLoading = signal(true);
   submitLoading = signal(false);
 
@@ -57,19 +58,28 @@ export class EmployeeLeaves implements OnInit, OnDestroy {
   selectedFile: File | null = null;
 
   ngOnInit() {
-    const dataStr = localStorage.getItem('user_data');
-    if (dataStr) {
-      const data = JSON.parse(dataStr);
-      this.employeeId.set(data.EmployeeId || data.internid || '');
-      this.employeeName.set(data.fullName || data.name || 'Employee');
-      this.isIntern.set(!!data.internid);
-    } else {
-      this.router.navigate(['/login']);
-      return;
-    }
+    const isSelf = this.router.url.includes('/employee/leaves');
+    this.isSelfPortal.set(isSelf);
 
-    this.fetchLeaves();
-    this.fetchBalance();
+    let id = this.route.snapshot.paramMap.get('id');
+
+    if (id) {
+      this.employeeId.set(id);
+      this.fetchLeaves();
+      this.fetchBalance();
+    } else {
+      const dataStr = localStorage.getItem('user_data');
+      if (dataStr) {
+        const data = JSON.parse(dataStr);
+        this.employeeId.set(data.EmployeeId || data.internid || '');
+        this.employeeName.set(data.fullName || data.name || 'Employee');
+        this.isIntern.set(!!data.internid);
+        this.fetchLeaves();
+        this.fetchBalance();
+      } else {
+        this.router.navigate(['/login']);
+      }
+    }
   }
 
   fetchLeaves() {

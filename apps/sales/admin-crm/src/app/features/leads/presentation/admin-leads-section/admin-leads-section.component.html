@@ -374,15 +374,35 @@
           ></textarea>
         </div>
 
-        <!-- Assigned Manager -->
+        <!-- Initial Service -->
         <div class="form-group-item">
-          <label class="form-input-label" style="display: block; font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.25rem;">Assign Manager (Created By)</label>
-          <select name="created_by" class="form-control-input" [(ngModel)]="vm.weCrmClientData.created_by" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.875rem;">
-            <option value="" *ngIf="vm.weCrmManagersLoading" disabled>Please wait Manager are get laoding...</option>
-            <option value="" *ngIf="!vm.weCrmManagersLoading">-- Select Manager --</option>
-            <option *ngFor="let emp of vm.weCrmManagers" [value]="emp._id">
-              {{ emp.owner_name }}
-            </option>
+          <label class="form-input-label" style="display: block; font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.25rem;">Initial Service (for WE-CRM bucket routing)</label>
+          <select name="serviceName" class="form-control-input" [(ngModel)]="vm.weCrmClientData.serviceName" style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.875rem;">
+            <option value="">— Select service —</option>
+            <option value="Private Limited Incorporation">Private Limited Incorporation</option>
+            <option value="LLP Incorporation">LLP Incorporation</option>
+            <option value="OPC">OPC</option>
+            <option value="MSME">MSME</option>
+            <option value="Proprietorship">Proprietorship</option>
+            <option value="MCA Compliance">MCA Compliance</option>
+            <option value="TDS">TDS</option>
+            <option value="PF">PF</option>
+            <option value="Copyright">Copyright</option>
+            <option value="GST Compliance">GST Compliance</option>
+            <option value="GST Cancelation">GST Cancelation</option>
+            <option value="GST filing">GST filing</option>
+            <option value="ITR">ITR</option>
+            <option value="DPIIT">DPIIT</option>
+            <option value="Trade Mark">Trade Mark</option>
+            <option value="GST Registration">GST Registration</option>
+            <option value="ISO">ISO</option>
+            <option value="Patent">Patent</option>
+            <option value="FSSAI">FSSAI</option>
+            <option value="DSC">DSC</option>
+            <option value="IE code">IE code</option>
+            <option value="LEI">LEI</option>
+            <option value="BIS">BIS</option>
+            <option value="ROSH & CE">ROSH & CE</option>
           </select>
         </div>
 

@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { WorkflowSquare03Icon, Mail01Icon, Settings01Icon, SmartPhone02Icon } from '@hugeicons/core-free-icons';
 import { finalize } from 'rxjs';
+import { TourService } from '../../services/tour.service';
 
 @Component({
   selector: 'app-org-hierarchy',
@@ -22,6 +23,7 @@ export class OrgHierarchy implements OnInit {
   private apiService = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
+  private tourService = inject(TourService);
 
   readonly WorkflowSquare03Icon = WorkflowSquare03Icon;
   readonly Mail01Icon = Mail01Icon;
@@ -51,6 +53,12 @@ export class OrgHierarchy implements OnInit {
     }
     this.userEmail = userData.email || 'admin@gmail.com';
     this.fetchHierarchy();
+
+    setTimeout(() => {
+      if (!this.isSelfPortal()) {
+        this.tourService.startOrgHierarchyTour();
+      }
+    }, 800);
   }
 
   fetchHierarchy() {

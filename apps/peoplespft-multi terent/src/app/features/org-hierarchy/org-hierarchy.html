@@ -21,7 +21,7 @@
   </div>
 
   <!-- Admin View Page Header -->
-  <div class="page-header" *ngIf="!isSelfPortal()">
+  <div class="page-header" id="tour-org-header" *ngIf="!isSelfPortal()">
     <div class="header-main">
       <h1>Organizational Hierarchy</h1>
       <p>Visualize and manage the company's structural reporting lines.</p>
@@ -69,7 +69,7 @@
       </div>
 
       <div class="form-body">
-        <div class="url-input-group">
+        <div class="url-input-group" id="tour-org-controls">
           <label>Document Public URL</label>
           <div class="input-container">
             <i class="fa-solid fa-link"></i>
@@ -86,7 +86,7 @@
           <p class="input-hint">Pro Tip: Use PDF format for the best cross-device experience.</p>
         </div>
 
-        <div class="actions-container">
+        <div class="actions-container" id="tour-org-actions">
           <button class="btn-save" (click)="saveHierarchy()" [disabled]="isSaving() || !hierarchyUrl || hierarchyUrl === publishedUrl()">
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span>{{ isSaving() ? 'Publishing Changes...' : 'Save & Publish Changes' }}</span>

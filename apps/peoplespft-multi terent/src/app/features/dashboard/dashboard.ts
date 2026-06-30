@@ -1,10 +1,12 @@
 import { Component, signal, OnInit, inject, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
+import { TourService } from '../../services/tour.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
+import { filter } from 'rxjs/operators';
 import { 
   Calendar01Icon,
   CalendarCheckOut01Icon,
@@ -22,7 +24,8 @@ import {
   AnalyticsUpIcon,
   AnalyticsDownIcon,
   UserGroupIcon,
-  Notification01Icon
+  Notification01Icon,
+  Clock01Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -36,13 +39,16 @@ export class Dashboard implements OnInit {
   private apiService = inject(ApiService);
   private socketService = inject(SocketService);
   private router = inject(Router);
+  private tourService = inject(TourService);
+
+  activePath = signal(this.router.url);
 
   navigateTo(path: string[], queryParams?: any) {
     this.router.navigate(path, { queryParams });
   }
   
   selectedModel = signal<'interns' | 'employees'>('interns');
-  chartType = signal<'bar' | 'line' | 'pie'>('line');
+  chartType = signal<'bar' | 'line' | 'pie'>('bar');
   isLoading = signal(true);
 
   showDayFilter = signal(false);
@@ -113,6 +119,7 @@ export class Dashboard implements OnInit {
   readonly AnalyticsDownIcon = AnalyticsDownIcon;
   readonly UserGroupIcon = UserGroupIcon;
   readonly Notification01Icon = Notification01Icon;
+  readonly Clock01Icon = Clock01Icon;
 
   currentTime = signal<Date>(new Date());
   searchQuery = signal('');
@@ -148,8 +155,20 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit() {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.activePath.set(this.router.url);
+    });
+
     this.fetchStats();
     this.setupLiveUpdates();
+    
+    // Start product tour automatically if not seen
+    setTimeout(() => {
+      this.tourService.startDashboardTour();
+    }, 800);
+
     setInterval(() => {
       this.currentTime.set(new Date());
     }, 1000);

@@ -1,5 +1,5 @@
 <div class="settings-container">
-  <div class="page-header">
+  <div class="page-header" id="tour-settings-header">
     <div class="header-main">
       <h1>App Settings</h1>
       <p>Configure office locations, communication preferences, and system behavior.</p>
@@ -19,7 +19,7 @@
   </div>
 
   <div class="settings-grid" *ngIf="!isLoading()">
-    <div class="main-content">
+    <div class="main-content" id="tour-settings-form">
       <!-- Location Settings Section -->
       <section *ngIf="activeTab() === 'locations'" class="config-card">
         <div class="card-header-minimal">
@@ -882,7 +882,7 @@
     </div>
 
     <!-- RIGHT SIDEBAR NAVIGATION -->
-    <div class="settings-sidebar">
+    <div class="settings-sidebar" id="tour-settings-nav">
       <div class="nav-menu">
         
         <button class="nav-link" [class.active]="activeTab() === 'locations'" (click)="activeTab.set('locations')">

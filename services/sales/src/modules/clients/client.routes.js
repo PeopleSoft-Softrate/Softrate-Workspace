@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const result = await createManualClient(req.body || {});
+    const result = await createManualClient({ ...(req.body || {}), serviceName: req.body.serviceName });
     return res.status(result.created ? 201 : 200).json({
       success: true,
       client: mapClient(result.client),

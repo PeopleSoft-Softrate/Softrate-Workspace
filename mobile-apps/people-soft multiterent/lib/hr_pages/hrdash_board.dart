@@ -1758,23 +1758,39 @@ class _HrdashBoardState extends State<HrdashBoard>
             ),
           ),
 
-          // Button with Positioned for overlap
-          Positioned(
-            bottom: 0,
-            child: Center(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap:
-                    _isPunchLoading
-                        ? null
-                        : () async {
+          // Button at the bottom of the stack (overlapping the padding)
+          Center(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap:
+                  _isPunchLoading
+                      ? null
+                      : () async {
+                          if (hasPunchedIn && hasPunchedOut) {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                content: const Text(
+                                  "Attendance locked - you are good 😄",
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("OK"),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return;
+                          }
+
                           if (!hasPunchedIn) {
                             await punchIn();
                           } else if (!hasPunchedOut) {
                             await punchOut();
                           }
                         },
-                child: Material(
+              child: Material(
                   elevation: 8,
                   borderRadius: BorderRadius.circular(32),
                   color: Colors.transparent,
@@ -1806,12 +1822,11 @@ class _HrdashBoardState extends State<HrdashBoard>
                         letterSpacing: 1,
                       ),
                     ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+                  ), // Container
+                ), // Material
+              ), // GestureDetector
+            ), // Center
+          ],
       ),
     );
   }

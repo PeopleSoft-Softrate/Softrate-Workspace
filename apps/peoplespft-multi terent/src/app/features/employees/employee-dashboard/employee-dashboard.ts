@@ -93,7 +93,7 @@ export class EmployeeDashboard implements OnInit {
 
   // Trend Chart signals
   workDuration = signal<number>(8);
-  chartType = signal<'bar' | 'line'>('line');
+  chartType = signal<'bar' | 'line'>('bar');
   showDayFilter = signal<boolean>(false);
   hiddenDays = signal<string[]>([]);
   

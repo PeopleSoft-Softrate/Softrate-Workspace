@@ -1,10 +1,10 @@
 <div class="page-container">
-  <div class="page-header">
+  <div class="page-header" id="tour-goals-header">
     <div class="header-main">
       <h1>Performance Goal Templates</h1>
       <p>Define KPIs and goal definitions for different intern roles.</p>
     </div>
-    <button class="add-btn" (click)="createNew()">
+    <button class="add-btn" id="tour-goals-add" (click)="createNew()">
       <i class="fa-solid fa-plus"></i> Add New Template
     </button>
   </div>
@@ -15,7 +15,7 @@
   </div>
 
   <!-- Template Grid -->
-  <div class="template-grid" *ngIf="!editingTemplate()">
+  <div class="template-grid" id="tour-goals-list" *ngIf="!editingTemplate()">
     <div class="template-card" *ngFor="let t of templates()">
       <div class="card-header">
         <div>

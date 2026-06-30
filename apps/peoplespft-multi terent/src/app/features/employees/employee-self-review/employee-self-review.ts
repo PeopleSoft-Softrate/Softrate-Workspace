@@ -4,14 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { LicenseDraftIcon, UserCircleIcon } from '@hugeicons/core-free-icons';
-import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
+
 import { ApiService } from '../../../services/api.service';
 import { AlertService } from '../../../shared/services/alert';
 
 @Component({
   selector: 'app-employee-self-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, HugeiconsIconComponent, RouterModule, EmployeeSidebar],
+  imports: [CommonModule, FormsModule, HugeiconsIconComponent, RouterModule],
   templateUrl: './employee-self-review.html',
   styleUrl: './employee-self-review.css'
 })

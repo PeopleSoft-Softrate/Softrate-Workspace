@@ -17,6 +17,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
+import { TourService } from '../../services/tour.service';
 
 @Component({
   selector: 'app-holiday-calendar',
@@ -29,6 +30,7 @@ export class HolidayCalendar implements OnInit {
   private alertService = inject(AlertService);
 
   private apiService = inject(ApiService);
+  private tourService = inject(TourService);
 
   // Icons
   readonly CalendarIcon = Calendar01Icon;
@@ -113,6 +115,10 @@ export class HolidayCalendar implements OnInit {
 
   ngOnInit() {
     this.fetchHolidays();
+
+    setTimeout(() => {
+      this.tourService.startHolidayCalendarTour();
+    }, 800);
   }
 
   fetchHolidays() {

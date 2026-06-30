@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../../services/api.service';
+import { TourService } from '../../../services/tour.service';
 
 @Component({
   selector: 'app-manager-assignments',
@@ -14,6 +15,7 @@ import { ApiService } from '../../../services/api.service';
 export class ManagerAssignments implements OnInit {
   private http = inject(HttpClient);
   private apiService = inject(ApiService);
+  private tourService = inject(TourService);
 
   managers = signal<any[]>([]);
   unassignedInterns = signal<any[]>([]);
@@ -73,6 +75,12 @@ export class ManagerAssignments implements OnInit {
       return;
     }
     this.fetchData();
+
+    setTimeout(() => {
+      if (this.isHr()) {
+        this.tourService.startAssignmentsTour();
+      }
+    }, 800);
   }
 
   fetchData(): void {

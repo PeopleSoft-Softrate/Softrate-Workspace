@@ -487,6 +487,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     primaryPhone: '',
     primaryEmail: '',
     address: '',
+    serviceName: '',
   };
   clientOnboardingSaving = false;
   clientOnboardingError = '';

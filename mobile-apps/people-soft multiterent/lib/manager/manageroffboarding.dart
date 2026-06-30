@@ -5,6 +5,7 @@ import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ManagerOffboardingPage extends StatefulWidget {
   const ManagerOffboardingPage({super.key});
@@ -256,6 +257,29 @@ class _ManagerOffboardingPageState extends State<ManagerOffboardingPage> {
                 style: const TextStyle(fontSize: 12.5, color: subtitleColor, height: 1.5, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 24),
+              if (req["projectLinks"] != null && (req["projectLinks"] as List).isNotEmpty) ...[
+                const Text("PROJECT LINKS", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: subtitleColor, letterSpacing: 0.4)),
+                const SizedBox(height: 6),
+                ...List.generate((req["projectLinks"] as List).length, (i) {
+                  final link = req["projectLinks"][i].toString();
+                  return InkWell(
+                    onTap: () async {
+                      final url = Uri.parse(link);
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        link,
+                        style: const TextStyle(fontSize: 12.5, color: primaryColor, decoration: TextDecoration.underline),
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 24),
+              ],
               Row(
                 children: [
                   Expanded(child: _buildActionBtn("Reject", Icons.close_rounded, Colors.red.shade400, () => _updateOffboardingStatus(req["_id"], "rejected"))),

@@ -5,18 +5,17 @@ import { Home01Icon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon,
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { InternSidebar } from '../intern-sidebar/intern-sidebar';
 import { ApiService } from '../../../services/api.service';
+import { TourService } from '../../../services/tour.service';
 
 import { InternRequests } from '../intern-requests/intern-requests';
-import { LeaveManagement } from '../../leaves/leave-management/leave-management';
-import { AttendanceCorrections } from '../attendance-corrections/attendance-corrections';
-import { OffboardingRequests } from '../../offboarding/offboarding-requests/offboarding-requests';
+
 import { InternRejected } from '../intern-rejected/intern-rejected';
 import { UnifiedRequests } from '../../unified-requests/unified-requests';
 
 @Component({
   selector: 'app-intern-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, InternRequests, LeaveManagement, AttendanceCorrections, OffboardingRequests, InternRejected, HugeiconsIconComponent, InternSidebar, UnifiedRequests],
+  imports: [CommonModule, RouterModule, InternRequests, InternRejected, HugeiconsIconComponent, InternSidebar, UnifiedRequests],
   templateUrl: './intern-list.html',
   styleUrl: './intern-list.css'
 })
@@ -24,6 +23,7 @@ export class InternList implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private tourService = inject(TourService);
 
   readonly Home01Icon = Home01Icon;
   readonly FingerAccessIcon = FingerAccessIcon;
@@ -101,6 +101,13 @@ export class InternList implements OnInit {
         this.currentTab.set('list');
       }
     });
+
+    setTimeout(() => {
+      if (this.currentTab() === 'list') {
+        this.tourService.startInternsTour();
+      }
+    }, 800);
+
     this.fetchInterns();
     this.apiService.getCompanySettings().subscribe(res => {
       if (res?.settings?.internRoles) {

@@ -398,11 +398,70 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
   DateTimeRange? _selectedRange;
   String _activeTab = "This Month";
 
+  // ── Dynamic holiday config from backend ────────────────────────────────────
+  List<Map<String, dynamic>> _weeklyHolidays = [];
+  Set<String> _specialHolidayDates = {};
+
   @override
   void initState() {
     super.initState();
     _futureAttendance = fetchAttendance(widget.employeeId);
     _futureLeaves = fetchLeavesForEmployee(widget.employeeId);
+    _loadHolidays();
+  }
+
+  Future<void> _loadHolidays() async {
+    try {
+      final resp = await http.get(
+        Uri.parse("${getBaseUrl()}/api/holidays"),
+        headers: {"Content-Type": "application/json"},
+      );
+      if (resp.statusCode == 200) {
+        final List raw = jsonDecode(resp.body);
+        final List<Map<String, dynamic>> weekly = [];
+        final Set<String> special = {};
+        for (final h in raw) {
+          if (h['type'] == 'weekly' && h['day'] != null) {
+            final List<dynamic> weeks = h['weeks'] ?? [];
+            weekly.add({'day': h['day'].toString(), 'weeks': weeks.map((w) => w as int).toList()});
+          } else if (h['type'] == 'special') {
+            final fromRaw = h['fromDate'];
+            final toRaw   = h['toDate'];
+            if (fromRaw != null && toRaw != null) {
+              try {
+                DateTime from = DateTime.parse(fromRaw.toString().split('T')[0]);
+                final DateTime to = DateTime.parse(toRaw.toString().split('T')[0]);
+                while (!from.isAfter(to)) {
+                  special.add(_normalizeDate(from.toIso8601String()));
+                  from = from.add(const Duration(days: 1));
+                }
+              } catch (_) {}
+            }
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _weeklyHolidays = weekly;
+            _specialHolidayDates = special;
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  bool _isHolidayDate(DateTime date) {
+    final key = _normalizeDate(date.toIso8601String());
+    if (_specialHolidayDates.contains(key)) return true;
+    const dayMap = {1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat',7:'Sun'};
+    final dayName = dayMap[date.weekday] ?? '';
+    final weekOfMonth = ((date.day - 1) ~/ 7) + 1;
+    for (final rule in _weeklyHolidays) {
+      if (rule['day'] == dayName) {
+        final List<int> weeks = List<int>.from(rule['weeks'] ?? []);
+        if (weeks.isEmpty || weeks.contains(weekOfMonth)) return true;
+      }
+    }
+    return false;
   }
 
   List<AttendanceRecord> mergeAttendanceWithFilters(
@@ -445,10 +504,8 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
         date.toIso8601String(),
       ); // Always "2025-11-18"
 
-      // Skip weekends unless they have records
-      if ((date.weekday == DateTime.saturday ||
-              date.weekday == DateTime.sunday) &&
-          !recordMap.containsKey(dateKey)) {
+      // Skip holiday dates (dynamic: weekly rules + special ranges) unless they have records
+      if (_isHolidayDate(date) && !recordMap.containsKey(dateKey)) {
         continue;
       }
 

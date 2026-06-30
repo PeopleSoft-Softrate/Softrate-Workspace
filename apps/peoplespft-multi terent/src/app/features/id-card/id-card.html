@@ -73,7 +73,7 @@
                  [style.textAlign]="para.alignment || 'left'"
                  [style.lineHeight]="para.lineHeight || 1.6"
                  [style.letterSpacing.em]="para.letterSpacing || 0"
-                 [innerHTML]="resolveVidParagraph(para.text)?.replace('\n','<br>')">
+                 [innerHTML]="resolveVidParagraph(para.text).replace('\n','<br>')">
             </div>
           </ng-container>
 

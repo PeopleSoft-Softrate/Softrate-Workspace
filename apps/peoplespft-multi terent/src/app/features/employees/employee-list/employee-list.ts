@@ -4,18 +4,19 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { Home12Icon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, UserCircleIcon, Shield01Icon, Shield02Icon } from '@hugeicons/core-free-icons';
 import { ApiService } from '../../../services/api.service';
+import { TourService } from '../../../services/tour.service';
 
 import { EmployeeRequests } from '../employee-requests/employee-requests';
-import { LeaveManagement } from '../../leaves/leave-management/leave-management';
+
 import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
-import { OffboardingRequests } from '../../offboarding/offboarding-requests/offboarding-requests';
+
 import { EmployeeRejected } from '../employee-rejected/employee-rejected';
 import { UnifiedRequests } from '../../unified-requests/unified-requests';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, EmployeeRequests, LeaveManagement, OffboardingRequests, EmployeeRejected, HugeiconsIconComponent, EmployeeSidebar, UnifiedRequests],
+  imports: [CommonModule, RouterModule, EmployeeRequests, EmployeeRejected, HugeiconsIconComponent, EmployeeSidebar, UnifiedRequests],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.css'
 })
@@ -23,6 +24,7 @@ export class EmployeeList implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private tourService = inject(TourService);
 
   readonly Home12Icon = Home12Icon;
   readonly FingerAccessIcon = FingerAccessIcon;
@@ -75,6 +77,12 @@ export class EmployeeList implements OnInit {
       }
     });
     this.fetchEmployees();
+
+    setTimeout(() => {
+      if (this.currentTab() === 'list') {
+        this.tourService.startEmployeesTour();
+      }
+    }, 800);
   }
 
   fetchEmployees() {

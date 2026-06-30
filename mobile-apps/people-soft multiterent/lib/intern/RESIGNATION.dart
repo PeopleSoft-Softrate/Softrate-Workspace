@@ -44,6 +44,11 @@ class _TerminationFormState extends State<TerminationForm> {
   final TextEditingController otherReasonController = TextEditingController();
   String? otherReasonText;
 
+  // Project Links
+  final List<TextEditingController> projectLinkControllers =
+      List.generate(5, (_) => TextEditingController());
+  int visibleProjectLinks = 1;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,7 +215,54 @@ class _TerminationFormState extends State<TerminationForm> {
               Icons.inventory_2,
               (val) => setState(() => assetReturn = val),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
+
+            // ------------- PROJECT LINKS SECTION -------------
+            _buildSectionHeader("Project Links (Optional)"),
+            const SizedBox(height: 8),
+            const Text(
+              "Add up to 5 project links",
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...List.generate(visibleProjectLinks, (index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildTextField(
+                  "Project Link ${index + 1}",
+                  projectLinkControllers[index],
+                  Icons.link,
+                ),
+              );
+            }),
+            if (visibleProjectLinks < 5)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      visibleProjectLinks++;
+                    });
+                  },
+                  icon: const Icon(Icons.add_circle_outline, color: Color(0xFF00657F), size: 20),
+                  label: const Text(
+                    "Add Another Link",
+                    style: TextStyle(
+                      color: Color(0xFF00657F),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    backgroundColor: const Color(0xFF00657F).withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
 
             // Submit Button
             Container(
@@ -527,6 +579,48 @@ class _TerminationFormState extends State<TerminationForm> {
     );
   }
 
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Container(
+            margin: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00657F).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF00657F)),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        ),
+      ),
+    );
+  }
+
   // ---------------- submit logic ----------------
 
   void submitForm() async {
@@ -557,6 +651,12 @@ class _TerminationFormState extends State<TerminationForm> {
       }
     }
 
+    // Collect project links
+    final List<String> links = projectLinkControllers
+        .map((c) => c.text.trim())
+        .where((text) => text.isNotEmpty)
+        .toList();
+
     final formData = {
       "fullName": widget.internName,
       "userId": widget.internId,
@@ -566,6 +666,7 @@ class _TerminationFormState extends State<TerminationForm> {
       "exitType": exitType,
       "exitReason": exitReason == "Other" ? otherReasonText : exitReason,
       "assetReturnStatus": assetReturn,
+      "projectLinks": links,
     };
 
     final url = Uri.parse("${getBaseUrl()}/api/resignation/submit");

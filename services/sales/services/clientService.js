@@ -193,7 +193,67 @@ async function createManualClient(payload = {}) {
     onboardedByPhone: payload.createdByPhone || payload.onboardedByPhone || payload.employeePhone,
   });
 
+  // ── Notify WE-CRM via intake webhook if configured ───────────
+  if (result.client && payload.serviceName) {
+    notifyWeCrm({
+      companyId: process.env.WE_CRM_COMPANYID,
+      companyName: stringValue(result.client.companyName),
+      ownerName: stringValue(result.client.primaryContactName),
+      phone: stringValue(result.client.primaryPhone),
+      email: stringValue(result.client.primaryEmail),
+      address: stringValue(payload.address),
+      businessType: '',
+      serviceName: payload.serviceName,
+      dealvoiceClientId: String(result.client._id || ''),
+    }).catch(err => console.error('[WE-CRM intake] webhook failed:', err.message));
+  }
+
   return result;
+}
+
+async function notifyWeCrm(data) {
+  const weCrmUrl = process.env.WE_CRM_URL;
+  const weCrmAccess = process.env.WE_CRM_ACCESS;
+  if (!weCrmUrl || !weCrmAccess) return;
+
+  const body = JSON.stringify(data);
+  const urlObj = new URL(`${weCrmUrl}/intake/onboard`);
+  const isHttps = urlObj.protocol === 'https:';
+  const lib = isHttps ? require('https') : require('http');
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: urlObj.hostname,
+      port: urlObj.port || (isHttps ? 443 : 80),
+      path: urlObj.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'authorization': weCrmAccess
+      }
+    };
+
+    const req = lib.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          console.log('[WE-CRM intake] success:', json.message);
+        } catch (e) {}
+        resolve(res.statusCode);
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error('[WE-CRM intake] request error:', err.message);
+      reject(err);
+    });
+
+    req.write(body);
+    req.end();
+  });
 }
 
 async function listClients(query = {}) {

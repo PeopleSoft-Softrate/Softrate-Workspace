@@ -34,6 +34,14 @@
           <span class="label">Reason</span>
           <span class="value">{{ req.exitReason }}</span>
         </div>
+        <div class="info-row" *ngIf="req.projectLinks?.length">
+          <span class="label" style="display: block; margin-bottom: 4px;">Project Links</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <a *ngFor="let link of req.projectLinks" [href]="link" target="_blank" style="color: #4f46e5; font-size: 0.85rem; text-decoration: underline;">
+              <i class="fa-solid fa-link" style="margin-right: 4px;"></i>{{ link }}
+            </a>
+          </div>
+        </div>
       </div>
       <div class="card-footer" *ngIf="req.status === 'pending_manager'">
         <button class="btn btn-primary" (click)="openReview(req, 'approved')">

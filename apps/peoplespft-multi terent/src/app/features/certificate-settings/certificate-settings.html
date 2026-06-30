@@ -1,5 +1,5 @@
 <div class="settings-container">
-  <div class="page-header">
+  <div class="page-header" id="tour-cert-header">
     <h1>Certificate &amp; Documents</h1>
     <p>Manage branding, signatures, and document templates for your organization.</p>
   </div>
@@ -7,7 +7,7 @@
   <div class="settings-grid">
 
     <!-- Sidebar -->
-    <div class="doc-sidebar">
+    <div class="doc-sidebar" id="tour-cert-list">
       <div class="doc-category" *ngFor="let cat of docCategories">
         <h3>{{cat.name}}</h3>
         <div class="doc-list">
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Builder -->
-    <div class="main-content">
+    <div class="main-content" id="tour-cert-add">
       <div class="config-card" style="position: relative;">
 
         <!-- Loading overlay -->

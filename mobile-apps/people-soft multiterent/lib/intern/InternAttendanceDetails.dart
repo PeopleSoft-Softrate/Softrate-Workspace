@@ -265,11 +265,81 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
   DateTimeRange? _selectedRange;
   String _activeTab = "This Month";
 
+  // ── Dynamic holiday config from backend ────────────────────────────────────
+  /// Weekly rules: each entry is {day: "Sat", weeks: [1, 2]}
+  List<Map<String, dynamic>> _weeklyHolidays = [];
+  /// Special holiday dates as "YYYY-MM-DD" strings
+  Set<String> _specialHolidayDates = {};
+
   @override
   void initState() {
     super.initState();
     _futureAttendance = fetchAttendance(widget.internId);
     _futureLeaves = fetchLeavesForIntern(widget.internId);
+    _loadHolidays();
+  }
+
+  Future<void> _loadHolidays() async {
+    try {
+      final resp = await http.get(
+        Uri.parse("${getBaseUrl()}/api/holidays"),
+        headers: {"Content-Type": "application/json"},
+      );
+      if (resp.statusCode == 200) {
+        final List raw = jsonDecode(resp.body);
+        final List<Map<String, dynamic>> weekly = [];
+        final Set<String> special = {};
+        for (final h in raw) {
+          if (h['type'] == 'weekly' && h['day'] != null) {
+            final List<dynamic> weeks = h['weeks'] ?? [];
+            weekly.add({'day': h['day'].toString(), 'weeks': weeks.map((w) => w as int).toList()});
+          } else if (h['type'] == 'special') {
+            // Expand fromDate..toDate into individual YYYY-MM-DD keys
+            final fromRaw = h['fromDate'];
+            final toRaw   = h['toDate'];
+            if (fromRaw != null && toRaw != null) {
+              try {
+                DateTime from = DateTime.parse(fromRaw.toString().split('T')[0]);
+                final DateTime to = DateTime.parse(toRaw.toString().split('T')[0]);
+                while (!from.isAfter(to)) {
+                  special.add(_normalizeDate(from.toIso8601String()));
+                  from = from.add(const Duration(days: 1));
+                }
+              } catch (_) {}
+            }
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _weeklyHolidays = weekly;
+            _specialHolidayDates = special;
+          });
+        }
+      }
+    } catch (_) {
+      // Fallback: if fetch fails, no dates are skipped (safe default)
+    }
+  }
+
+  /// Returns true if [date] is a configured holiday (weekly rule OR special range).
+  /// Days that have actual punch records are NEVER skipped — caller checks that.
+  bool _isHolidayDate(DateTime date) {
+    // 1. Special date ranges
+    final key = _normalizeDate(date.toIso8601String());
+    if (_specialHolidayDates.contains(key)) return true;
+
+    // 2. Weekly rules — e.g. "Sat" on week 1 & 2
+    const dayMap = {1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat',7:'Sun'};
+    final dayName = dayMap[date.weekday] ?? '';
+    final weekOfMonth = ((date.day - 1) ~/ 7) + 1; // 1-based week of month
+    for (final rule in _weeklyHolidays) {
+      if (rule['day'] == dayName) {
+        final List<int> weeks = List<int>.from(rule['weeks'] ?? []);
+        // If weeks list is empty → ALL occurrences of that day are holidays
+        if (weeks.isEmpty || weeks.contains(weekOfMonth)) return true;
+      }
+    }
+    return false;
   }
 
   Future<void> _showRatificationDialog(AttendanceRecord record) async {
@@ -551,10 +621,8 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
         date.toIso8601String(),
       ); // Always "2025-11-18"
 
-      // Skip weekends unless they have records
-      if ((date.weekday == DateTime.saturday ||
-              date.weekday == DateTime.sunday) &&
-          !recordMap.containsKey(dateKey)) {
+      // Skip holiday dates (dynamic: weekly rules + special ranges) unless they have records
+      if (_isHolidayDate(date) && !recordMap.containsKey(dateKey)) {
         continue;
       }
 

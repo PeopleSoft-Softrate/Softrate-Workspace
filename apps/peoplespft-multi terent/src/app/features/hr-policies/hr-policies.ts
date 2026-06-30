@@ -7,6 +7,7 @@ import { ApiService } from '../../services/api.service';
 import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { AddInvoiceIcon, PolicyIcon, CheckmarkCircle01Icon, ViewIcon, Delete02Icon } from '@hugeicons/core-free-icons';
+import { TourService } from '../../services/tour.service';
 
 @Component({
   selector: 'app-hr-policies',
@@ -21,7 +22,8 @@ export class HrPolicies implements OnInit {
   private apiService = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
-  
+  private tourService = inject(TourService);
+
   readonly AddInvoiceIcon = AddInvoiceIcon;
   readonly PolicyIcon = PolicyIcon;
   readonly CheckmarkCircle01Icon = CheckmarkCircle01Icon;
@@ -47,6 +49,12 @@ export class HrPolicies implements OnInit {
     const isSelf = this.router.url.includes('/employee/') || this.router.url.includes('/intern/');
     this.isSelfPortal.set(isSelf);
     this.fetchPolicies();
+
+    setTimeout(() => {
+      if (!this.isSelfPortal()) {
+        this.tourService.startHrPolicyTour();
+      }
+    }, 800);
   }
 
   fetchPolicies(isRefresh = false) {

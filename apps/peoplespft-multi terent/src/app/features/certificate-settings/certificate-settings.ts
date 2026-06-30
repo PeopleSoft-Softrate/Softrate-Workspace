@@ -7,6 +7,7 @@ import { ApiService } from '../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { CheckmarkCircle01Icon, DiplomaIcon, OrientationLandscapeToPotraitIcon, OrientationPotraitToLandscapeIcon, LicenseDraftIcon, Invoice01Icon, Shield01Icon, IdCardLanyardIcon } from '@hugeicons/core-free-icons';
 import { finalize } from 'rxjs';
+import { TourService } from '../../services/tour.service';
 
 @Component({
   selector: 'app-certificate-settings',
@@ -21,6 +22,7 @@ export class CertificateSettings implements OnInit {
   private apiService = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
   private sanitizer = inject(DomSanitizer);
+  private tourService = inject(TourService);
 
   /** Preview URL for the current logged-in user's profile photo (used in canvas preview) */
   currentUserPhotoUrl: string | null = null;
@@ -130,6 +132,10 @@ export class CertificateSettings implements OnInit {
   ngOnInit() {
     this.fetchSettings();
     this.fetchCurrentUserPhoto();
+
+    setTimeout(() => {
+      this.tourService.startCertificateSettingsTour();
+    }, 800);
   }
 
   fetchCurrentUserPhoto() {

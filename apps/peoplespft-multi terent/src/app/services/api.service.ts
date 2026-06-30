@@ -295,6 +295,58 @@ export class ApiService {
         const internSummary = getSummary(fullInternTrend, totalInternsCount, maxIntern);
         const employeeSummary = getSummary(fullEmployeeTrend, totalEmployeesCount, maxEmployee);
 
+        let totalDurationMs = 0;
+        let validRecords = 0;
+        let onTimeCount = 0;
+        const allAttendance = [
+           ...(data.employeeAttendance?.attendance || []),
+           ...(data.internAttendance?.attendance || [])
+        ];
+        allAttendance.forEach((a: any) => {
+           if (a.punchInTime) {
+               const inTime = new Date(a.punchInTime);
+               if (inTime.getHours() < 10 || (inTime.getHours() === 10 && inTime.getMinutes() <= 30)) {
+                   onTimeCount++;
+               }
+               if (a.punchOutTime) {
+                   const outTime = new Date(a.punchOutTime).getTime();
+                   if (outTime > inTime.getTime()) {
+                       totalDurationMs += (outTime - inTime.getTime());
+                       validRecords++;
+                   }
+               }
+           }
+        });
+        const onTimeRate = allAttendance.length > 0 ? Math.round((onTimeCount / allAttendance.length) * 100) : 0;
+        
+        let avgWorkHours = 0;
+        let avgWorkMins = 0;
+        if (validRecords > 0) {
+            const avgMs = totalDurationMs / validRecords;
+            avgWorkHours = Math.floor(avgMs / 3600000);
+            avgWorkMins = Math.floor((avgMs % 3600000) / 60000);
+        }
+
+        let totalTasks = 0;
+        let completedTasks = 0;
+        const projects = data.activeProjects?.projects || [];
+        projects.forEach((p: any) => {
+            if (p.checklist && Array.isArray(p.checklist)) {
+                totalTasks += p.checklist.length;
+                completedTasks += p.checklist.filter((t: any) => t.isCompleted).length;
+            }
+        });
+        const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        
+        const pendingActionCount = (data.pendingLeaves?.length || 0) + (data.initialInterns?.length || 0);
+
+        const hrInsights = {
+          avgWorkingDuration: `${avgWorkHours}h ${avgWorkMins}m`,
+          taskCompletionRate: `${taskCompletionRate}%`,
+          onTimeRate: `${onTimeRate}%`,
+          pendingActions: pendingActionCount.toString()
+        };
+
         return {
           interns: [
             { label: 'Total Interns', value: totalInternsCount.toString(), icon: 'fa-solid fa-users', color: 'teal', link: '/interns', trend: '+4.1%' },
@@ -314,6 +366,7 @@ export class ApiService {
           employeePrevTrend: prevEmployeeTrend.map(t => ({ ...t, height: (t.count / maxEmployee) * 100 })),
           internSummary,
           employeeSummary,
+          hrInsights,
           activities: activities.length > 0 ? activities.sort((a, b) => b.rawTime - a.rawTime).slice(0, 4) : [
             { title: 'No recent activity', description: 'Everything is up to date', time: 'Now', icon: 'fa-solid fa-circle-check', color: 'green' }
           ]

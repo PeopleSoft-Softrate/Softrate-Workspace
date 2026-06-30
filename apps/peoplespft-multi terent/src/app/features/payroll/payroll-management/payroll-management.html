@@ -6,7 +6,7 @@
 
   <div class="data-section">
     <!-- Header Block -->
-    <div class="page-header-embedded">
+    <div class="page-header-embedded" id="tour-payroll-header">
       <div class="header-back-btn" (click)="navigateToDashboard()">
         <hugeicons-icon [icon]="ArrowLeft01Icon" size="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
         <span>Back to Dashboard</span>
@@ -59,7 +59,7 @@
     </div>
 
     <!-- List Filter Tools -->
-    <div class="toolbar-section">
+    <div class="toolbar-section" id="tour-payroll-filters">
       <div class="tab-filters">
         <button
           class="tab-btn"
@@ -90,7 +90,7 @@
     </div>
 
     <!-- Table Container -->
-    <div class="data-container" [class.loading]="isLoading()">
+    <div class="data-container" id="tour-payroll-list" [class.loading]="isLoading()">
 
       <!-- Employees Tab View -->
       <ng-container *ngIf="activeTab() === 'employees'">

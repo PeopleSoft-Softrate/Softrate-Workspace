@@ -70,7 +70,7 @@
           </div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingCorrectionsCount() }}</span>
-            <span class="stat-label">Ratification</span>
+            <span class="stat-label">Regularisation</span>
           </div>
         </div>
 
@@ -119,14 +119,14 @@
 
     <!-- FILTERS BAR -->
     <div class="section-filters">
-      <div class="search-wrapper">
+      <div class="search-wrapper" id="tour-approvals-search">
         <hugeicons-icon [icon]="Search01Icon" size="16" [strokeWidth]="1.5" color="#94A3B8"
           class="search-icon"></hugeicons-icon>
         <input type="text" placeholder="Search by name, ID, department..." [(ngModel)]="searchQuery"
           class="search-input" />
       </div>
 
-      <div class="filter-controls">
+      <div class="filter-controls" id="tour-approvals-tabs">
         <div class="category-tabs" *ngIf="!embeddedCategory()">
           <button (click)="activeCategory.set('all')" [class.active]="activeCategory() === 'all'" class="tab-btn">All
             Requests</button>
@@ -135,7 +135,7 @@
           <button (click)="activeCategory.set('leave')" [class.active]="activeCategory() === 'leave'"
             class="tab-btn">Leaves</button>
           <button (click)="activeCategory.set('correction')" [class.active]="activeCategory() === 'correction'"
-            class="tab-btn">Ratification</button>
+            class="tab-btn">Regularisation</button>
           <button (click)="activeCategory.set('offboarding')" [class.active]="activeCategory() === 'offboarding'"
             class="tab-btn">Offboardings</button>
           <button (click)="activeCategory.set('device_change')" [class.active]="activeCategory() === 'device_change'"
@@ -164,7 +164,7 @@
     </div>
 
     <!-- REQUESTS TABLE -->
-    <div *ngIf="!loading() && filteredRequests().length > 0" class="requests-table-wrapper">
+    <div *ngIf="!loading() && filteredRequests().length > 0" class="requests-table-wrapper" id="tour-approvals-list">
       <table class="requests-table">
         <thead>
           <tr>
@@ -195,7 +195,7 @@
               <span class="tbl-type-badge" [ngClass]="req.type">
                 {{ req.type === 'leave' ? 'Leave' : req.type === 'offboarding' ? 'Offboarding' : req.type ===
                 'onboarding' ? 'Onboarding' : req.type === 'fund' ? 'Reimbursement' : req.type === 'device_change' ?
-                'Device Change' : 'Ratification' }}
+                'Device Change' : 'Regularisation' }}
               </span>
             </td>
             <!-- Details -->
@@ -306,7 +306,7 @@
         <div class="modal-header">
           <h3>
             Reviewing {{ selectedRequest()?.type === 'leave' ? 'Leave' : (selectedRequest()?.type === 'offboarding' ?
-            'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Ratification' : (selectedRequest()?.type ===
+            'Offboarding' : (selectedRequest()?.type === 'correction' ? 'Regularisation' : (selectedRequest()?.type ===
             'fund' ? 'Fund Request' : (selectedRequest()?.type === 'device_change' ? 'Device Change' : 'Onboarding'))))
             }} Decision
           </h3>
@@ -330,7 +330,7 @@
               </div>
             </div>
 
-            <!-- RATIFICATION DETAILS -->
+            <!-- REGULARISATION DETAILS -->
             <ng-container *ngIf="selectedRequest()?.type === 'correction'">
               <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
               
@@ -365,6 +365,19 @@
               <div>
                 <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Reason / Remarks</div>
                 <div style="color: #334155; font-size: 0.95rem; line-height: 1.5;">{{ selectedRequest()?.reason }}</div>
+              </div>
+            </ng-container>
+
+            <!-- PROJECT LINKS (ONBOARDING / OFFBOARDING) -->
+            <ng-container *ngIf="selectedRequest()?.raw?.projectLinks?.length > 0">
+              <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Project Links</div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <a *ngFor="let link of selectedRequest()?.raw?.projectLinks" [href]="link" target="_blank" style="color: #4f46e5; font-size: 0.85rem; text-decoration: underline;">
+                    <i class="fa-solid fa-link" style="margin-right: 4px;"></i>{{ link }}
+                  </a>
+                </div>
               </div>
             </ng-container>
 

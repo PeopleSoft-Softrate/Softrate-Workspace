@@ -21,6 +21,7 @@ import {
   Calendar01Icon
 } from '@hugeicons/core-free-icons';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { TourService } from '../../services/tour.service';
 
 @Component({
   selector: 'app-app-settings',
@@ -33,6 +34,7 @@ export class AppSettings implements OnInit {
   private alertService = inject(AlertService);
 
   private apiService = inject(ApiService);
+  private tourService = inject(TourService);
 
   readonly PlusSignIcon = PlusSignIcon;
   readonly Delete02Icon = Delete02Icon;
@@ -173,6 +175,10 @@ export class AppSettings implements OnInit {
       }
     }
     this.fetchSettings();
+
+    setTimeout(() => {
+      this.tourService.startAppSettingsTour();
+    }, 800);
   }
 
   fetchSettings() {

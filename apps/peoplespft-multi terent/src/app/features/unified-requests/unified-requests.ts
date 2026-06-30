@@ -1,6 +1,7 @@
 import { AlertService } from '../../shared/services/alert';
 import { Component, OnInit, OnDestroy, signal, computed, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TourService } from '../../services/tour.service';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -33,7 +34,7 @@ import {
 })
 export class UnifiedRequests implements OnInit, OnDestroy {
   private alertService = inject(AlertService);
-
+  private tourService = inject(TourService);
   private apiService = inject(ApiService);
   private socketService = inject(SocketService);
 
@@ -135,6 +136,13 @@ export class UnifiedRequests implements OnInit, OnDestroy {
       },
       error: (err) => console.error('Socket connection error:', err)
     });
+
+    setTimeout(() => {
+      // Only show the tour if this is the standalone Hub, not embedded
+      if (!this.embeddedCategory() && !this.embeddedUserType()) {
+        this.tourService.startApprovalsTour();
+      }
+    }, 800);
   }
 
   ngOnDestroy() {
@@ -346,10 +354,10 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         requesterName: c.internName,
         requesterId: c.internId,
         type: 'correction',
-        subType: 'Ratification',
+        subType: 'Regularisation',
         dateText: new Date(c.date).toLocaleDateString('en-IN'),
         days: null,
-        reason: `Miss Punch Ratification Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
+        reason: `Miss Punch Regularisation Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
         status: c.hrApprovalStatus || 'pending',
         managerStatus: c.managerApprovalStatus || 'pending',
         hrStatus: c.hrApprovalStatus || 'pending',
@@ -499,10 +507,10 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         requesterName: c.internName,
         requesterId: c.internId,
         type: 'correction',
-        subType: 'Ratification',
+        subType: 'Regularisation',
         dateText: new Date(c.date).toLocaleDateString('en-IN'),
         days: null,
-        reason: `Miss Punch Ratification Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
+        reason: `Miss Punch Regularisation Request. Punch In: ${this.formatTime(c.requestedPunchIn)} | Punch Out: ${this.formatTime(c.requestedPunchOut)}. Reason: ${c.reason}`,
         status: c.managerApprovalStatus || 'pending',
         managerStatus: c.managerApprovalStatus || 'pending',
         hrStatus: c.hrApprovalStatus || 'pending',
@@ -774,7 +782,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          this.alertService.show(`Ratification ${action}d successfully`);
+          this.alertService.show(`Regularisation ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);
@@ -787,7 +795,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
         next: () => {
           this.fetchRequests();
           this.closeModal();
-          this.alertService.show(`Ratification ${action}d successfully`);
+          this.alertService.show(`Regularisation ${action}d successfully`);
         },
         error: (err) => {
           console.error(err);

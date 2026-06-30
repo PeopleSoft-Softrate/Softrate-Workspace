@@ -7,7 +7,7 @@
           <h1>Manage Employees</h1>
           <p>Complete overview of your organization's human capital.</p>
         </div>
-        <div class="header-tools">
+        <div class="header-tools" id="tour-emp-filters">
           <div class="status-filters">
             <button class="filter-chip" [class.active]="roleFilter() === 'all'" (click)="setRoleFilter('all')">All Staff ({{ allCount }})</button>
             <button class="filter-chip" [class.active]="roleFilter() === 'manager'" (click)="setRoleFilter('manager')">Manager ({{ managerCount }})</button>
@@ -27,7 +27,7 @@
         </div>
       </div>
 
-      <div class="employee-list-container" [class.loading]="isLoading()">
+      <div class="employee-list-container" id="tour-emp-table" [class.loading]="isLoading()">
         <!-- Row Cards -->
         <div class="employee-row-card" *ngFor="let emp of employees()">
           <!-- IDENTITY -->
@@ -137,5 +137,5 @@
   </div>
 
   <!-- RIGHT: VERTICAL ACTION SIDEBAR -->
-  <app-employee-sidebar [activeTab]="currentTab()"></app-employee-sidebar>
+  <app-employee-sidebar id="tour-emp-sidebar" [activeTab]="currentTab()"></app-employee-sidebar>
 </div>

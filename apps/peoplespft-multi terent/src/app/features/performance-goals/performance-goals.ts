@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
+import { TourService } from '../../services/tour.service';
 
 interface Goal {
   perspective: string;
@@ -30,6 +31,7 @@ export class PerformanceGoals implements OnInit {
   private alertService = inject(AlertService);
 
   private apiService = inject(ApiService);
+  private tourService = inject(TourService);
 
   templates = signal<Template[]>([]);
   isLoading = signal(false);
@@ -42,6 +44,10 @@ export class PerformanceGoals implements OnInit {
 
   ngOnInit() {
     this.loadTemplates();
+
+    setTimeout(() => {
+      this.tourService.startPerformanceGoalsTour();
+    }, 800);
   }
 
   loadTemplates() {

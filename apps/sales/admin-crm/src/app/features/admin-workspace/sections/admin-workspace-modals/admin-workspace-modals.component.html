@@ -157,8 +157,8 @@
       <div class="form-group">
         <label for="edit-emp-name">Full Name</label>
         <div class="input-with-icon">
-          <input type="text" id="edit-emp-name" [(ngModel)]="vm.editingEmployee.name" name="name" placeholder="Enter name"
-            required />
+          <input type="text" id="edit-emp-name" [(ngModel)]="vm.editingEmployee.name" name="name"
+            placeholder="Enter name" required />
           <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -190,12 +190,14 @@
             style="padding: 4px 10px; border: 1px solid; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: 600;">
             {{ t }}
           </div>
-          <div *ngIf="vm.tagOptions.length === 0" style="font-size: 0.75rem; color: var(--text-3); font-style: italic;">No
+          <div *ngIf="vm.tagOptions.length === 0" style="font-size: 0.75rem; color: var(--text-3); font-style: italic;">
+            No
             tags available. Manage tags in Company Profile.</div>
         </div>
       </div>
 
-      <button type="submit" class="cta-primary" [disabled]="vm.editEmployeeLoading" style="margin-top: 1rem; width: 100%;">
+      <button type="submit" class="cta-primary" [disabled]="vm.editEmployeeLoading"
+        style="margin-top: 1rem; width: 100%;">
         {{ vm.editEmployeeLoading ? 'Updating...' : 'Save Changes' }}
       </button>
     </form>
@@ -220,31 +222,77 @@
 
       <div class="form-group">
         <label for="admin-create-client-companyName">Company Name</label>
-        <input type="text" id="admin-create-client-companyName" [(ngModel)]="vm.clientOnboardingDraft.companyName" name="adminCreateClientCompanyName" placeholder="Enter company name" required />
+        <input type="text" id="admin-create-client-companyName" [(ngModel)]="vm.clientOnboardingDraft.companyName"
+          name="adminCreateClientCompanyName" placeholder="Enter company name" required />
       </div>
 
       <div class="form-group">
         <label for="admin-create-client-contact">Primary Contact Name</label>
-        <input type="text" id="admin-create-client-contact" [(ngModel)]="vm.clientOnboardingDraft.primaryContactName" name="adminCreateClientPrimaryContactName" placeholder="Enter primary contact name" />
+        <input type="text" id="admin-create-client-contact" [(ngModel)]="vm.clientOnboardingDraft.primaryContactName"
+          name="adminCreateClientPrimaryContactName" placeholder="Enter primary contact name" />
       </div>
 
       <div class="form-group">
         <label for="admin-create-client-phone">Phone Number</label>
-        <input type="text" id="admin-create-client-phone" [(ngModel)]="vm.clientOnboardingDraft.primaryPhone" name="adminCreateClientPrimaryPhone" placeholder="Enter phone number" />
+        <input type="text" id="admin-create-client-phone" [(ngModel)]="vm.clientOnboardingDraft.primaryPhone"
+          name="adminCreateClientPrimaryPhone" placeholder="Enter phone number" />
       </div>
 
       <div class="form-group">
         <label for="admin-create-client-email">Email Address</label>
-        <input type="email" id="admin-create-client-email" [(ngModel)]="vm.clientOnboardingDraft.primaryEmail" name="adminCreateClientPrimaryEmail" placeholder="Enter email address" />
+        <input type="email" id="admin-create-client-email" [(ngModel)]="vm.clientOnboardingDraft.primaryEmail"
+          name="adminCreateClientPrimaryEmail" placeholder="Enter email address" />
       </div>
 
       <div class="form-group">
         <label for="admin-create-client-address">Registered Address</label>
-        <textarea id="admin-create-client-address" [(ngModel)]="vm.clientOnboardingDraft.address" name="adminCreateClientAddress" placeholder="Enter registered address" rows="2"></textarea>
+        <textarea id="admin-create-client-address" [(ngModel)]="vm.clientOnboardingDraft.address"
+          name="adminCreateClientAddress" placeholder="Enter registered address" rows="2"></textarea>
       </div>
 
-      <div class="action-row admin-client-onboarding-actions" style="justify-content:flex-end; gap:.75rem; margin-top:1rem;">
-        <button class="toolbar-button admin-client-onboarding-clear" type="button" (click)="vm.resetClientOnboardingDraft()">Clear</button>
+      <div class="form-group">
+        <label for="admin-create-client-service" style="display:flex; align-items:center; gap:6px;">
+          <span
+            style="background:#6366f1; color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">WE-CRM</span>
+          Initial Service (for WE-CRM bucket routing)
+        </label>
+        <select id="admin-create-client-service" [(ngModel)]="vm.clientOnboardingDraft.serviceName"
+          name="adminCreateClientServiceName"
+          style="width:100%; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:14px;">
+          <option value="">— Select service —</option>
+          <option value="Private Limited Incorporation">Private Limited Incorporation</option>
+          <option value="LLP Incorporation">LLP Incorporation</option>
+          <option value="OPC">OPC</option>
+          <option value="MSME">MSME</option>
+          <option value="Proprietorship">Proprietorship</option>
+          <option value="MCA Compliance">MCA Compliance</option>
+          <option value="TDS">TDS</option>
+          <option value="PF">PF</option>
+          <option value="Copyright">Copyright</option>
+          <option value="GST Compliance">GST Compliance</option>
+          <option value="GST Cancelation">GST Cancelation</option>
+          <option value="GST filing">GST filing</option>
+          <option value="ITR">ITR</option>
+          <option value="DPIIT">DPIIT</option>
+          <option value="Trade Mark">Trade Mark</option>
+          <option value="GST Registration">GST Registration</option>
+          <option value="ISO">ISO</option>
+          <option value="Patent">Patent</option>
+          <option value="FSSAI">FSSAI</option>
+          <option value="DSC">DSC</option>
+          <option value="IE code">IE code</option>
+          <option value="LEI">LEI</option>
+          <option value="BIS">BIS</option>
+          <option value="ROSH & CE">ROSH & CE</option>
+        </select>
+        <p style="font-size:12px; color:#94a3b8; margin:4px 0 0;">This creates a Bucket Request in WE-CRM for client
+          managers to accept.</p>
+      </div>
+
+      <div class="action-row admin-client-onboarding-actions"
+        style="justify-content:flex-end; gap:.75rem; margin-top:1rem;">
+        <button class="toolbar-button admin-client-onboarding-clear" type="button"
+          (click)="vm.resetClientOnboardingDraft()">Clear</button>
         <button type="submit" class="cta-primary admin-client-onboarding-submit" [disabled]="vm.clientOnboardingSaving">
           {{ vm.clientOnboardingSaving ? 'Saving...' : 'Onboard Client' }}
         </button>
@@ -270,35 +318,42 @@
 
       <div class="form-group">
         <label for="edit-client-companyName">Company Name</label>
-        <input type="text" id="edit-client-companyName" [(ngModel)]="vm.editingCrmClient.companyName" name="companyName" placeholder="Enter company name" required />
+        <input type="text" id="edit-client-companyName" [(ngModel)]="vm.editingCrmClient.companyName" name="companyName"
+          placeholder="Enter company name" required />
       </div>
 
       <div class="form-group">
         <label for="edit-client-contact">Primary Contact Name</label>
-        <input type="text" id="edit-client-contact" [(ngModel)]="vm.editingCrmClient.primaryContactName" name="primaryContactName" placeholder="Enter primary contact name" required />
+        <input type="text" id="edit-client-contact" [(ngModel)]="vm.editingCrmClient.primaryContactName"
+          name="primaryContactName" placeholder="Enter primary contact name" required />
       </div>
 
       <div class="form-group">
         <label for="edit-client-phone">Phone Number</label>
-        <input type="text" id="edit-client-phone" [(ngModel)]="vm.editingCrmClient.primaryPhone" name="primaryPhone" placeholder="Enter phone number" />
+        <input type="text" id="edit-client-phone" [(ngModel)]="vm.editingCrmClient.primaryPhone" name="primaryPhone"
+          placeholder="Enter phone number" />
       </div>
 
       <div class="form-group">
         <label for="edit-client-email">Email Address</label>
-        <input type="email" id="edit-client-email" [(ngModel)]="vm.editingCrmClient.primaryEmail" name="primaryEmail" placeholder="Enter email address" />
+        <input type="email" id="edit-client-email" [(ngModel)]="vm.editingCrmClient.primaryEmail" name="primaryEmail"
+          placeholder="Enter email address" />
       </div>
 
       <div class="form-group">
         <label for="edit-client-address">Registered Address</label>
-        <textarea id="edit-client-address" [(ngModel)]="vm.editingCrmClient.address" name="address" placeholder="Enter registered address" rows="2"></textarea>
+        <textarea id="edit-client-address" [(ngModel)]="vm.editingCrmClient.address" name="address"
+          placeholder="Enter registered address" rows="2"></textarea>
       </div>
 
       <div class="form-group">
         <label for="edit-client-description">Description / Notes</label>
-        <textarea id="edit-client-description" [(ngModel)]="vm.editingCrmClient.description" name="description" placeholder="Enter description or notes" rows="2"></textarea>
+        <textarea id="edit-client-description" [(ngModel)]="vm.editingCrmClient.description" name="description"
+          placeholder="Enter description or notes" rows="2"></textarea>
       </div>
 
-      <button type="submit" class="cta-primary" [disabled]="vm.editCrmClientLoading" style="margin-top: 1rem; width: 100%;">
+      <button type="submit" class="cta-primary" [disabled]="vm.editCrmClientLoading"
+        style="margin-top: 1rem; width: 100%;">
         {{ vm.editCrmClientLoading ? 'Saving...' : 'Save Changes' }}
       </button>
     </form>
@@ -335,11 +390,13 @@
       <div class="followup-modal-title">
         <div class="section-kicker">Remark History</div>
         <h3>{{ vm.selectedBookmarkForRemarks?.contactName || 'Primary Contact' }}</h3>
-        <p>{{ vm.selectedBookmarkForRemarks?.companyName || vm.selectedBookmarkForRemarks?.leadCompanyName || 'Unnamed Company' }}</p>
+        <p>{{ vm.selectedBookmarkForRemarks?.companyName || vm.selectedBookmarkForRemarks?.leadCompanyName || 'Unnamed
+          Company' }}</p>
       </div>
       <button class="secondary-action" type="button" (click)="vm.closeAllRemarksModal()">Close</button>
     </div>
-    <div class="company-remarks-list" *ngIf="vm.companyRemarkHistory(vm.selectedBookmarkForRemarks).length; else emptyBookmarkRemarks">
+    <div class="company-remarks-list"
+      *ngIf="vm.companyRemarkHistory(vm.selectedBookmarkForRemarks).length; else emptyBookmarkRemarks">
       <div class="company-remark-row" *ngFor="let remark of vm.companyRemarkHistory(vm.selectedBookmarkForRemarks)">
         {{ remark }}
       </div>
@@ -357,7 +414,8 @@
       <div class="followup-modal-title">
         <div class="section-kicker">Follow-up</div>
         <h3>{{ vm.editingBookmarkId ? 'Update Follow-up' : 'Schedule Follow-up' }}</h3>
-        <p *ngIf="vm.followupLead">{{ vm.followupLead.contactName || 'Primary Contact' }} · {{ vm.followupLead.contactNumber }}</p>
+        <p *ngIf="vm.followupLead">{{ vm.followupLead.contactName || 'Primary Contact' }} · {{
+          vm.followupLead.contactNumber }}</p>
       </div>
       <button class="secondary-action" type="button" (click)="vm.closeFollowupModal()">Close</button>
     </div>
@@ -366,12 +424,18 @@
       <section class="followup-modal-panel">
         <div class="followup-modal-label">Progress flags</div>
         <div class="followup-flag-grid">
-          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.brochuresSent" /> <span>Brochure Sent</span></label>
-          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.techMeet" /> <span>Tech Meet</span></label>
-          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
-          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.quotationSent" /> <span>Quotation Sent</span></label>
-          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.proposalSent" /> <span>Proposal Sent</span></label>
-          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.brochuresSent" />
+            <span>Brochure Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.techMeet" /> <span>Tech
+              Meet</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.meetingRemarks" />
+            <span>Meeting Remarks</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.quotationSent" />
+            <span>Quotation Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.proposalSent" />
+            <span>Proposal Sent</span></label>
+          <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.followupForm.whatsappGrp" />
+            <span>Whatsapp Group</span></label>
         </div>
       </section>
 
@@ -379,7 +443,8 @@
         <div class="followup-modal-label">Context</div>
         <label class="field">
           <span class="field-label">Description</span>
-          <textarea class="field-textarea" rows="4" [(ngModel)]="vm.followupForm.description" placeholder="Describe the current follow-up context"></textarea>
+          <textarea class="field-textarea" rows="4" [(ngModel)]="vm.followupForm.description"
+            placeholder="Describe the current follow-up context"></textarea>
         </label>
 
         <label class="field" *ngIf="vm.followupForm.remarks.length > 0">
@@ -388,7 +453,10 @@
             <div class="remark-item" *ngFor="let r of vm.followupForm.remarks; let i = index; trackBy: vm.trackByFn">
               <input class="field-input" type="text" [(ngModel)]="vm.followupForm.remarks[i]" />
               <button class="icon-button" type="button" (click)="vm.removeRemark(i)" aria-label="Remove remark">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18 6 6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
@@ -397,7 +465,8 @@
         <div class="followup-modal-grid">
           <label class="field">
             <span class="field-label">New Remark</span>
-            <input class="field-input" type="text" [(ngModel)]="vm.followupForm.newRemark" placeholder="Add a new remark" />
+            <input class="field-input" type="text" [(ngModel)]="vm.followupForm.newRemark"
+              placeholder="Add a new remark" />
           </label>
           <label class="field">
             <span class="field-label">Reminder Date</span>
@@ -420,11 +489,13 @@
   <div class="lead-ai-grid ai-summary-popover-full">
     <div class="lead-ai-detail-meta">
       <span class="lead-ai-chip" *ngIf="vm.aiBrief?.industry">{{ vm.aiBrief?.industry }}</span>
-      <a *ngIf="vm.aiBrief?.officialWebsite as officialWebsite" class="lead-ai-chip lead-ai-chip-link" [href]="officialWebsite" target="_blank" rel="noopener noreferrer">
+      <a *ngIf="vm.aiBrief?.officialWebsite as officialWebsite" class="lead-ai-chip lead-ai-chip-link"
+        [href]="officialWebsite" target="_blank" rel="noopener noreferrer">
         {{ vm.hostnameFromUrl(officialWebsite) }}
       </a>
       <span class="lead-ai-chip" *ngIf="vm.aiBrief?.sources?.length">{{ vm.aiBrief?.sources?.length }} sources</span>
-      <span class="lead-ai-chip" *ngIf="vm.aiBrief?.topRecommendations?.length">{{ vm.aiBrief?.topRecommendations?.length }} recommendations</span>
+      <span class="lead-ai-chip" *ngIf="vm.aiBrief?.topRecommendations?.length">{{
+        vm.aiBrief?.topRecommendations?.length }} recommendations</span>
     </div>
 
     <div class="lead-ai-detail-panels">
@@ -464,7 +535,8 @@
     <div class="lead-detail-section" *ngIf="vm.aiBrief?.servicesOrPlatforms?.length">
       <div class="lead-ai-section-label">Company Services / Platforms</div>
       <div class="lead-ai-chip-row">
-        <span class="lead-ai-chip lead-ai-chip-soft" *ngFor="let item of vm.aiBrief?.servicesOrPlatforms">{{ item }}</span>
+        <span class="lead-ai-chip lead-ai-chip-soft" *ngFor="let item of vm.aiBrief?.servicesOrPlatforms">{{ item
+          }}</span>
       </div>
     </div>
 
@@ -482,7 +554,8 @@
       <div class="lead-detail-section" *ngIf="officialSources.length">
         <div class="lead-ai-section-label">Official Company Sources</div>
         <div class="lead-ai-source-list">
-          <a class="lead-ai-source" *ngFor="let source of officialSources" [href]="source.url" target="_blank" rel="noopener noreferrer">
+          <a class="lead-ai-source" *ngFor="let source of officialSources" [href]="source.url" target="_blank"
+            rel="noopener noreferrer">
             <span class="lead-ai-source-title">{{ source.title }}</span>
             <span class="lead-ai-source-meta">{{ vm.aiBriefSourceMetaLabel(source, 'official') }}</span>
           </a>
@@ -494,7 +567,8 @@
       <div class="lead-detail-section" *ngIf="researchSources.length">
         <div class="lead-ai-section-label">Research Sources</div>
         <div class="lead-ai-source-list">
-          <a class="lead-ai-source" *ngFor="let source of researchSources" [href]="source.url" target="_blank" rel="noopener noreferrer">
+          <a class="lead-ai-source" *ngFor="let source of researchSources" [href]="source.url" target="_blank"
+            rel="noopener noreferrer">
             <span class="lead-ai-source-title">{{ source.title }}</span>
             <span class="lead-ai-source-meta">{{ vm.aiBriefSourceMetaLabel(source, 'research') }}</span>
           </a>
@@ -505,7 +579,8 @@
 </ng-template>
 
 <!-- ══ ADMIN COMPANY FULL VIEW ══ -->
-<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.companyFullViewOpen" (click)="vm.closeCompanyFullView()">
+<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.companyFullViewOpen"
+  (click)="vm.closeCompanyFullView()">
   <div class="invoice-modal company-full-modal admin-company-full-modal" (click)="$event.stopPropagation()">
     <section class="company-full-shell lead-detail-workspace admin-company-full-detail">
       <aside class="lead-detail-sidebar company-full-sidebar">
@@ -520,13 +595,8 @@
         </button>
 
         <div class="lead-detail-nav company-full-nav">
-          <button
-            class="toolbar-button"
-            type="button"
-            *ngFor="let section of vm.companyFullSections"
-            [class.active]="vm.companyFullActiveSection===section.id"
-            (click)="vm.scrollCompanyFullSection(section.id)"
-          >
+          <button class="toolbar-button" type="button" *ngFor="let section of vm.companyFullSections"
+            [class.active]="vm.companyFullActiveSection===section.id" (click)="vm.scrollCompanyFullSection(section.id)">
             {{ section.label }}
           </button>
         </div>
@@ -539,14 +609,16 @@
           </div>
         </div>
 
-        <div class="lead-detail-panel company-full-content" #companyFullScrollContent (scroll)="vm.onCompanyFullContentScroll($event)">
+        <div class="lead-detail-panel company-full-content" #companyFullScrollContent
+          (scroll)="vm.onCompanyFullContentScroll($event)">
           <section class="company-full-card" [id]="vm.companyFullSectionId('overview')">
             <div class="company-full-card-head">
               <h4>Overview</h4>
               <span class="company-full-card-meta" *ngIf="vm.companyFullLoading">Loading company details...</span>
             </div>
 
-            <div class="lead-detail-summary company-full-overview-grid" *ngIf="vm.companyFullViewLead() as companyLead; else emptyCompanyFullOverview">
+            <div class="lead-detail-summary company-full-overview-grid"
+              *ngIf="vm.companyFullViewLead() as companyLead; else emptyCompanyFullOverview">
               <div class="lead-detail-column">
                 <div class="lead-detail-field">
                   <span>Primary Contact</span>
@@ -568,7 +640,8 @@
                 <div class="lead-detail-grid company-full-meta-grid">
                   <div class="lead-detail-field">
                     <span>Phone</span>
-                    <strong class="nowrap-value" [title]="vm.companyFullPrimaryPhone()">{{ vm.companyFullPrimaryPhone() }}</strong>
+                    <strong class="nowrap-value" [title]="vm.companyFullPrimaryPhone()">{{ vm.companyFullPrimaryPhone()
+                      }}</strong>
                   </div>
                   <div class="lead-detail-field">
                     <span>Latest Update</span>
@@ -584,7 +657,8 @@
                   </div>
                   <div class="lead-detail-field">
                     <span>Primary Status</span>
-                    <strong [style.color]="vm.leadStatusColor(vm.companyFullPrimaryStatus())">{{ vm.companyFullPrimaryStatus() }}</strong>
+                    <strong [style.color]="vm.leadStatusColor(vm.companyFullPrimaryStatus())">{{
+                      vm.companyFullPrimaryStatus() }}</strong>
                   </div>
                   <div class="lead-detail-field">
                     <span>Company Code</span>
@@ -596,7 +670,8 @@
                   </div>
                   <div class="lead-detail-field lead-detail-field-wide">
                     <span>Alternate Email</span>
-                    <strong [title]="vm.companyFullAlternateEmailValue()">{{ vm.companyFullAlternateEmailValue() }}</strong>
+                    <strong [title]="vm.companyFullAlternateEmailValue()">{{ vm.companyFullAlternateEmailValue()
+                      }}</strong>
                   </div>
                 </div>
               </div>
@@ -604,15 +679,18 @@
 
             <div class="lead-detail-section">
               <div class="lead-detail-section-title">Directors / Contacts</div>
-              <div class="company-full-scroll-card company-full-contact-list" *ngIf="vm.companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
-                <article class="company-full-contact-row" *ngFor="let lead of vm.companyFullOverviewContacts(); trackBy: vm.trackByLeadIdentity">
+              <div class="company-full-scroll-card company-full-contact-list"
+                *ngIf="vm.companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
+                <article class="company-full-contact-row"
+                  *ngFor="let lead of vm.companyFullOverviewContacts(); trackBy: vm.trackByLeadIdentity">
                   <div class="company-full-contact-main">
                     <strong>{{ lead.contactName || 'Primary Contact' }}</strong>
                     <span [title]="vm.companyFullContactEmail(lead)">{{ vm.companyFullContactEmail(lead) }}</span>
                   </div>
                   <div class="company-full-contact-field">
                     <span>Phone</span>
-                    <strong class="nowrap-value" [title]="vm.companyFullContactPhone(lead)">{{ vm.companyFullContactPhone(lead) }}</strong>
+                    <strong class="nowrap-value" [title]="vm.companyFullContactPhone(lead)">{{
+                      vm.companyFullContactPhone(lead) }}</strong>
                   </div>
                   <div class="company-full-contact-field">
                     <span>Status</span>
@@ -623,14 +701,16 @@
             </div>
           </section>
 
-          <section class="company-full-card" [id]="vm.companyFullSectionId('followups')" *ngIf="vm.companyFullHasFollowupSection()">
+          <section class="company-full-card" [id]="vm.companyFullSectionId('followups')"
+            *ngIf="vm.companyFullHasFollowupSection()">
             <div class="company-full-card-head">
               <h4>Followups</h4>
               <span class="company-full-card-meta" *ngIf="vm.companyFullFollowupLead() as followupLead">
                 {{ followupLead.contactName || 'Primary Contact' }}
               </span>
             </div>
-            <div *ngIf="vm.companyFullFollowupError" class="form-error company-full-inline-error">{{ vm.companyFullFollowupError }}</div>
+            <div *ngIf="vm.companyFullFollowupError" class="form-error company-full-inline-error">{{
+              vm.companyFullFollowupError }}</div>
 
             <div class="lead-detail-section">
               <div class="lead-detail-section-title">Current Overview</div>
@@ -671,12 +751,18 @@
             <div class="lead-detail-section">
               <div class="lead-detail-section-title">Edit Follow-up</div>
               <div class="checkbox-grid">
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.companyFullFollowupForm.brochuresSent" /> <span>Brochure Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.companyFullFollowupForm.techMeet" /> <span>Tech Meet</span></label>
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.companyFullFollowupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.companyFullFollowupForm.quotationSent" /> <span>Quotation Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.companyFullFollowupForm.proposalSent" /> <span>Proposal Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="vm.companyFullFollowupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
+                <label class="checkbox-field"><input type="checkbox"
+                    [(ngModel)]="vm.companyFullFollowupForm.brochuresSent" /> <span>Brochure Sent</span></label>
+                <label class="checkbox-field"><input type="checkbox"
+                    [(ngModel)]="vm.companyFullFollowupForm.techMeet" /> <span>Tech Meet</span></label>
+                <label class="checkbox-field"><input type="checkbox"
+                    [(ngModel)]="vm.companyFullFollowupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
+                <label class="checkbox-field"><input type="checkbox"
+                    [(ngModel)]="vm.companyFullFollowupForm.quotationSent" /> <span>Quotation Sent</span></label>
+                <label class="checkbox-field"><input type="checkbox"
+                    [(ngModel)]="vm.companyFullFollowupForm.proposalSent" /> <span>Proposal Sent</span></label>
+                <label class="checkbox-field"><input type="checkbox"
+                    [(ngModel)]="vm.companyFullFollowupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
               </div>
             </div>
 
@@ -684,16 +770,13 @@
               <div class="lead-detail-grid company-full-followup-edit-grid">
                 <label class="lead-detail-field lead-detail-field-wide company-full-followup-description">
                   <span>Description</span>
-                  <textarea
-                    class="field-textarea"
-                    rows="4"
-                    [(ngModel)]="vm.companyFullFollowupForm.description"
-                    placeholder="Describe the current follow-up context"
-                  ></textarea>
+                  <textarea class="field-textarea" rows="4" [(ngModel)]="vm.companyFullFollowupForm.description"
+                    placeholder="Describe the current follow-up context"></textarea>
                 </label>
                 <label class="lead-detail-field">
                   <span>New Remark</span>
-                  <input class="field-input" type="text" [(ngModel)]="vm.companyFullFollowupForm.newRemark" placeholder="Add a new remark to history" />
+                  <input class="field-input" type="text" [(ngModel)]="vm.companyFullFollowupForm.newRemark"
+                    placeholder="Add a new remark to history" />
                 </label>
                 <label class="lead-detail-field">
                   <span>Reminder Date</span>
@@ -703,7 +786,8 @@
               <div class="company-full-followup-meta-row">
                 <div class="lead-detail-field">
                   <span>Saved Description</span>
-                  <strong [title]="vm.companyFullFollowupDescription()">{{ vm.companyFullFollowupDescription() }}</strong>
+                  <strong [title]="vm.companyFullFollowupDescription()">{{ vm.companyFullFollowupDescription()
+                    }}</strong>
                 </div>
                 <div class="lead-detail-field">
                   <span>Reminder</span>
@@ -711,8 +795,10 @@
                 </div>
               </div>
               <div class="company-full-action-row">
-                <button class="primary-action" type="button" (click)="vm.saveCompanyFullFollowup()" [disabled]="vm.companyFullFollowupSaving || vm.companyFullFollowupLoading">
-                  <span *ngIf="!vm.companyFullFollowupSaving">{{ vm.companyFullPrimaryFollowup()?._id ? 'Update Follow-up' : 'Save Follow-up' }}</span>
+                <button class="primary-action" type="button" (click)="vm.saveCompanyFullFollowup()"
+                  [disabled]="vm.companyFullFollowupSaving || vm.companyFullFollowupLoading">
+                  <span *ngIf="!vm.companyFullFollowupSaving">{{ vm.companyFullPrimaryFollowup()?._id ? 'Update
+                    Follow-up' : 'Save Follow-up' }}</span>
                   <span *ngIf="vm.companyFullFollowupSaving" class="button-spinner"></span>
                 </button>
               </div>
@@ -723,9 +809,12 @@
             <div class="lead-detail-section">
               <div class="lead-detail-section-title">Follow-up History</div>
               <div class="company-full-scroll-card company-full-followup-history">
-                <div *ngIf="vm.companyFullFollowupLoading || vm.companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading follow-up history.</div>
-                <ng-container *ngIf="!vm.companyFullFollowupLoading && !vm.companyFullHistoryLoading && vm.companyFullFollowupHistoryEntries().length > 0; else fallbackCompanyFullFollowupHistory">
-                  <article class="company-full-history-row" *ngFor="let log of vm.companyFullFollowupHistoryEntries(); trackBy: vm.trackByHistoryIdentity">
+                <div *ngIf="vm.companyFullFollowupLoading || vm.companyFullHistoryLoading"
+                  class="empty-state-inline empty-state-inline-minimal">Loading follow-up history.</div>
+                <ng-container
+                  *ngIf="!vm.companyFullFollowupLoading && !vm.companyFullHistoryLoading && vm.companyFullFollowupHistoryEntries().length > 0; else fallbackCompanyFullFollowupHistory">
+                  <article class="company-full-history-row"
+                    *ngFor="let log of vm.companyFullFollowupHistoryEntries(); trackBy: vm.trackByHistoryIdentity">
                     <div class="company-full-history-head">
                       <strong>{{ log.action }}</strong>
                       <span>{{ vm.fmtDateTime(log.createdAt || log.timestamp) }}</span>
@@ -735,8 +824,10 @@
                   </article>
                 </ng-container>
                 <ng-template #fallbackCompanyFullFollowupHistory>
-                  <ng-container *ngIf="!vm.companyFullFollowupLoading && !vm.companyFullHistoryLoading && vm.companyFullFollowupFallbackRemarks().length > 0; else emptyCompanyFullFollowupHistory">
-                    <article class="company-full-history-row" *ngFor="let remark of vm.companyFullFollowupFallbackRemarks(); trackBy: vm.trackByAdminRecordIdentity">
+                  <ng-container
+                    *ngIf="!vm.companyFullFollowupLoading && !vm.companyFullHistoryLoading && vm.companyFullFollowupFallbackRemarks().length > 0; else emptyCompanyFullFollowupHistory">
+                    <article class="company-full-history-row"
+                      *ngFor="let remark of vm.companyFullFollowupFallbackRemarks(); trackBy: vm.trackByAdminRecordIdentity">
                       <div class="company-full-history-head">
                         <strong>Follow-up Remark</strong>
                       </div>
@@ -745,7 +836,8 @@
                   </ng-container>
                 </ng-template>
                 <ng-template #emptyCompanyFullFollowupHistory>
-                  <div class="empty-state-inline empty-state-inline-minimal">No follow-up history recorded for this company.</div>
+                  <div class="empty-state-inline empty-state-inline-minimal">No follow-up history recorded for this
+                    company.</div>
                 </ng-template>
               </div>
             </div>
@@ -757,55 +849,44 @@
             </div>
             <div class="company-full-remark-entry">
               <div class="lead-card-remark-combobox company-full-remark-combobox" (click)="$event.stopPropagation()">
-                <input
-                  class="field-input lead-card-remark-input company-full-remark-input"
-                  type="text"
-                  [ngModel]="vm.companyFullRemarkDraft"
-                  (ngModelChange)="vm.handleCompanyFullRemarkInput($event)"
-                  (click)="$event.stopPropagation()"
-                  (focus)="vm.openCompanyFullRemarkMenu()"
+                <input class="field-input lead-card-remark-input company-full-remark-input" type="text"
+                  [ngModel]="vm.companyFullRemarkDraft" (ngModelChange)="vm.handleCompanyFullRemarkInput($event)"
+                  (click)="$event.stopPropagation()" (focus)="vm.openCompanyFullRemarkMenu()"
                   (blur)="vm.queueCloseCompanyFullRemarkMenu()"
-                  (keyup.enter)="$event.stopPropagation(); vm.addCompanyFullRemark()"
-                  autocomplete="off"
-                  autocapitalize="off"
-                  autocorrect="off"
-                  spellcheck="false"
-                  placeholder="Type remark..."
-                  [title]="vm.companyFullRemarkDraft || 'Type remark'"
-                />
-                <button
-                  class="lead-card-remark-toggle"
-                  type="button"
-                  title="Show admin remark options"
-                  aria-label="Show admin remark options"
-                  (mousedown)="$event.preventDefault()"
-                  (click)="vm.toggleCompanyFullRemarkMenu()"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                  (keyup.enter)="$event.stopPropagation(); vm.addCompanyFullRemark()" autocomplete="off"
+                  autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type remark..."
+                  [title]="vm.companyFullRemarkDraft || 'Type remark'" />
+                <button class="lead-card-remark-toggle" type="button" title="Show admin remark options"
+                  aria-label="Show admin remark options" (mousedown)="$event.preventDefault()"
+                  (click)="vm.toggleCompanyFullRemarkMenu()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 </button>
-                <div class="lead-card-remark-options" *ngIf="vm.companyFullRemarkMenuOpen && vm.filteredCompanyFullAdminRemarkOptions().length > 0">
-                  <button
-                    class="lead-card-remark-option"
-                    type="button"
-                    *ngFor="let remark of vm.filteredCompanyFullAdminRemarkOptions()"
-                    [title]="remark"
-                    (mousedown)="$event.preventDefault()"
-                    (click)="vm.selectCompanyFullAdminRemark(remark)"
-                  >
+                <div class="lead-card-remark-options"
+                  *ngIf="vm.companyFullRemarkMenuOpen && vm.filteredCompanyFullAdminRemarkOptions().length > 0">
+                  <button class="lead-card-remark-option" type="button"
+                    *ngFor="let remark of vm.filteredCompanyFullAdminRemarkOptions()" [title]="remark"
+                    (mousedown)="$event.preventDefault()" (click)="vm.selectCompanyFullAdminRemark(remark)">
                     {{ remark }}
                   </button>
                 </div>
               </div>
-              <button class="primary-action company-full-remark-add" type="button" (click)="vm.addCompanyFullRemark()" [disabled]="vm.companyFullRemarkSaving || !vm.companyFullRemarkDraft.trim()">
+              <button class="primary-action company-full-remark-add" type="button" (click)="vm.addCompanyFullRemark()"
+                [disabled]="vm.companyFullRemarkSaving || !vm.companyFullRemarkDraft.trim()">
                 <span *ngIf="!vm.companyFullRemarkSaving">Add Remark</span>
                 <span *ngIf="vm.companyFullRemarkSaving" class="button-spinner"></span>
               </button>
             </div>
-            <div *ngIf="vm.companyFullRemarkError" class="form-error company-full-inline-error">{{ vm.companyFullRemarkError }}</div>
+            <div *ngIf="vm.companyFullRemarkError" class="form-error company-full-inline-error">{{
+              vm.companyFullRemarkError }}</div>
             <div class="company-full-scroll-card">
-              <div *ngIf="vm.companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading remark history.</div>
-              <div *ngIf="!vm.companyFullHistoryLoading && vm.companyFullHistoryError" class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullHistoryError }}</div>
-              <ng-container *ngIf="!vm.companyFullHistoryLoading && !vm.companyFullHistoryError && vm.companyFullRemarkEntries().length > 0; else emptyCompanyFullRemarks">
+              <div *ngIf="vm.companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading
+                remark history.</div>
+              <div *ngIf="!vm.companyFullHistoryLoading && vm.companyFullHistoryError"
+                class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullHistoryError }}</div>
+              <ng-container
+                *ngIf="!vm.companyFullHistoryLoading && !vm.companyFullHistoryError && vm.companyFullRemarkEntries().length > 0; else emptyCompanyFullRemarks">
                 <article class="company-full-history-row" *ngFor="let log of vm.companyFullRemarkEntries()">
                   <div class="company-full-history-head">
                     <strong>{{ log.action }}</strong>
@@ -816,7 +897,9 @@
                 </article>
               </ng-container>
               <ng-template #emptyCompanyFullRemarks>
-                <div *ngIf="!vm.companyFullHistoryLoading && !vm.companyFullHistoryError" class="empty-state-inline empty-state-inline-minimal">No remark history recorded for this company.</div>
+                <div *ngIf="!vm.companyFullHistoryLoading && !vm.companyFullHistoryError"
+                  class="empty-state-inline empty-state-inline-minimal">No remark history recorded for this company.
+                </div>
               </ng-template>
             </div>
           </section>
@@ -824,21 +907,21 @@
           <section class="company-full-card" [id]="vm.companyFullSectionId('invoices')">
             <div class="company-full-card-head">
               <h4>Invoice History</h4>
-              <span class="company-full-card-meta">{{ vm.companyFullInvoiceItems.length }} record{{ vm.companyFullInvoiceItems.length === 1 ? '' : 's' }}</span>
+              <span class="company-full-card-meta">{{ vm.companyFullInvoiceItems.length }} record{{
+                vm.companyFullInvoiceItems.length === 1 ? '' : 's' }}</span>
             </div>
             <div class="company-full-scroll-card">
-              <div *ngIf="vm.companyFullInvoiceLoading" class="empty-state-inline empty-state-inline-minimal">Loading invoice history.</div>
-              <div *ngIf="!vm.companyFullInvoiceLoading && vm.companyFullInvoiceError" class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullInvoiceError }}</div>
-              <ng-container *ngIf="!vm.companyFullInvoiceLoading && !vm.companyFullInvoiceError && vm.companyFullInvoiceItems.length > 0; else emptyCompanyFullInvoices">
-                <article
-                  class="company-full-record-row company-full-record-action"
+              <div *ngIf="vm.companyFullInvoiceLoading" class="empty-state-inline empty-state-inline-minimal">Loading
+                invoice history.</div>
+              <div *ngIf="!vm.companyFullInvoiceLoading && vm.companyFullInvoiceError"
+                class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullInvoiceError }}</div>
+              <ng-container
+                *ngIf="!vm.companyFullInvoiceLoading && !vm.companyFullInvoiceError && vm.companyFullInvoiceItems.length > 0; else emptyCompanyFullInvoices">
+                <article class="company-full-record-row company-full-record-action"
                   *ngFor="let invoice of vm.companyFullInvoiceItems; trackBy: vm.trackByAdminRecordIdentity"
-                  tabindex="0"
-                  role="button"
-                  (click)="vm.openSavedInvoice(invoice)"
+                  tabindex="0" role="button" (click)="vm.openSavedInvoice(invoice)"
                   (keydown.enter)="vm.openSavedInvoice(invoice)"
-                  (keydown.space)="$event.preventDefault(); vm.openSavedInvoice(invoice)"
-                >
+                  (keydown.space)="$event.preventDefault(); vm.openSavedInvoice(invoice)">
                   <div class="company-full-record-main">
                     <strong>{{ invoice.invoiceNumber || 'Invoice' }}</strong>
                     <span>{{ invoice.contactName || vm.companyFullCompanyName() }}</span>
@@ -851,7 +934,8 @@
                 </article>
               </ng-container>
               <ng-template #emptyCompanyFullInvoices>
-                <div *ngIf="!vm.companyFullInvoiceLoading && !vm.companyFullInvoiceError" class="empty-state-inline empty-state-inline-minimal">No invoices recorded for this company.</div>
+                <div *ngIf="!vm.companyFullInvoiceLoading && !vm.companyFullInvoiceError"
+                  class="empty-state-inline empty-state-inline-minimal">No invoices recorded for this company.</div>
               </ng-template>
             </div>
           </section>
@@ -859,21 +943,21 @@
           <section class="company-full-card" [id]="vm.companyFullSectionId('quotations')">
             <div class="company-full-card-head">
               <h4>Quotation History</h4>
-              <span class="company-full-card-meta">{{ vm.companyFullQuotationItems.length }} record{{ vm.companyFullQuotationItems.length === 1 ? '' : 's' }}</span>
+              <span class="company-full-card-meta">{{ vm.companyFullQuotationItems.length }} record{{
+                vm.companyFullQuotationItems.length === 1 ? '' : 's' }}</span>
             </div>
             <div class="company-full-scroll-card">
-              <div *ngIf="vm.companyFullQuotationLoading" class="empty-state-inline empty-state-inline-minimal">Loading quotation history.</div>
-              <div *ngIf="!vm.companyFullQuotationLoading && vm.companyFullQuotationError" class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullQuotationError }}</div>
-              <ng-container *ngIf="!vm.companyFullQuotationLoading && !vm.companyFullQuotationError && vm.companyFullQuotationItems.length > 0; else emptyCompanyFullQuotations">
-                <article
-                  class="company-full-record-row company-full-record-action"
+              <div *ngIf="vm.companyFullQuotationLoading" class="empty-state-inline empty-state-inline-minimal">Loading
+                quotation history.</div>
+              <div *ngIf="!vm.companyFullQuotationLoading && vm.companyFullQuotationError"
+                class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullQuotationError }}</div>
+              <ng-container
+                *ngIf="!vm.companyFullQuotationLoading && !vm.companyFullQuotationError && vm.companyFullQuotationItems.length > 0; else emptyCompanyFullQuotations">
+                <article class="company-full-record-row company-full-record-action"
                   *ngFor="let quotation of vm.companyFullQuotationItems; trackBy: vm.trackByAdminRecordIdentity"
-                  tabindex="0"
-                  role="button"
-                  (click)="vm.openSavedQuotation(quotation)"
+                  tabindex="0" role="button" (click)="vm.openSavedQuotation(quotation)"
                   (keydown.enter)="vm.openSavedQuotation(quotation)"
-                  (keydown.space)="$event.preventDefault(); vm.openSavedQuotation(quotation)"
-                >
+                  (keydown.space)="$event.preventDefault(); vm.openSavedQuotation(quotation)">
                   <div class="company-full-record-main">
                     <strong>{{ quotation.quotationNumber || 'Quotation' }}</strong>
                     <span>{{ quotation.contactName || vm.companyFullCompanyName() }}</span>
@@ -885,7 +969,8 @@
                 </article>
               </ng-container>
               <ng-template #emptyCompanyFullQuotations>
-                <div *ngIf="!vm.companyFullQuotationLoading && !vm.companyFullQuotationError" class="empty-state-inline empty-state-inline-minimal">No quotations recorded for this company.</div>
+                <div *ngIf="!vm.companyFullQuotationLoading && !vm.companyFullQuotationError"
+                  class="empty-state-inline empty-state-inline-minimal">No quotations recorded for this company.</div>
               </ng-template>
             </div>
           </section>
@@ -897,16 +982,20 @@
             <div class="lead-detail-grid company-full-form-grid">
               <label class="lead-detail-field">
                 <span>Alternate Phone</span>
-                <input class="field-input" type="text" [(ngModel)]="vm.companyFullAlternatePhone" placeholder="Add alternate phone number" />
+                <input class="field-input" type="text" [(ngModel)]="vm.companyFullAlternatePhone"
+                  placeholder="Add alternate phone number" />
               </label>
               <label class="lead-detail-field">
                 <span>Alternate Email</span>
-                <input class="field-input" type="email" [(ngModel)]="vm.companyFullAlternateEmail" placeholder="Add alternate email" />
+                <input class="field-input" type="email" [(ngModel)]="vm.companyFullAlternateEmail"
+                  placeholder="Add alternate email" />
               </label>
             </div>
-            <div *ngIf="vm.companyFullProfileError" class="form-error company-full-inline-error">{{ vm.companyFullProfileError }}</div>
+            <div *ngIf="vm.companyFullProfileError" class="form-error company-full-inline-error">{{
+              vm.companyFullProfileError }}</div>
             <div class="company-full-action-row">
-              <button class="primary-action" type="button" (click)="vm.saveCompanyFullAlternateInfo()" [disabled]="vm.companyFullSavingAlternateInfo">
+              <button class="primary-action" type="button" (click)="vm.saveCompanyFullAlternateInfo()"
+                [disabled]="vm.companyFullSavingAlternateInfo">
                 <span *ngIf="!vm.companyFullSavingAlternateInfo">Save Alternate Info</span>
                 <span *ngIf="vm.companyFullSavingAlternateInfo" class="button-spinner"></span>
               </button>
@@ -918,27 +1007,27 @@
               <h4>Notes</h4>
             </div>
             <div class="company-full-note-composer">
-              <textarea
-                class="field-textarea company-full-note-input"
-                rows="3"
-                [(ngModel)]="vm.companyFullNoteDraft"
-                placeholder="Add a dated note for this company"
-              ></textarea>
-              <button class="primary-action company-full-note-button" type="button" (click)="vm.addCompanyFullNote()" [disabled]="vm.companyFullNoteSaving || !vm.companyFullNoteDraft.trim()">
+              <textarea class="field-textarea company-full-note-input" rows="3" [(ngModel)]="vm.companyFullNoteDraft"
+                placeholder="Add a dated note for this company"></textarea>
+              <button class="primary-action company-full-note-button" type="button" (click)="vm.addCompanyFullNote()"
+                [disabled]="vm.companyFullNoteSaving || !vm.companyFullNoteDraft.trim()">
                 <span *ngIf="!vm.companyFullNoteSaving">Add Note</span>
                 <span *ngIf="vm.companyFullNoteSaving" class="button-spinner"></span>
               </button>
             </div>
             <div class="company-full-scroll-card company-full-note-list">
-              <div *ngIf="vm.companyFullProfileLoading" class="empty-state-inline empty-state-inline-minimal">Loading notes.</div>
-              <ng-container *ngIf="!vm.companyFullProfileLoading && vm.companyFullProfile.notes.length > 0; else emptyCompanyFullNotes">
+              <div *ngIf="vm.companyFullProfileLoading" class="empty-state-inline empty-state-inline-minimal">Loading
+                notes.</div>
+              <ng-container
+                *ngIf="!vm.companyFullProfileLoading && vm.companyFullProfile.notes.length > 0; else emptyCompanyFullNotes">
                 <article class="company-full-note-row" *ngFor="let note of vm.companyFullProfile.notes">
                   <div class="company-full-note-date">{{ vm.fmtDateTime(note.createdAt) }}</div>
                   <div class="company-full-note-copy">{{ note.text }}</div>
                 </article>
               </ng-container>
               <ng-template #emptyCompanyFullNotes>
-                <div *ngIf="!vm.companyFullProfileLoading" class="empty-state-inline empty-state-inline-minimal">No notes recorded for this company.</div>
+                <div *ngIf="!vm.companyFullProfileLoading" class="empty-state-inline empty-state-inline-minimal">No
+                  notes recorded for this company.</div>
               </ng-template>
             </div>
           </section>
@@ -957,7 +1046,8 @@
 </ng-template>
 
 <!-- ══ ADMIN REMARK HISTORY ══ -->
-<div class="invoice-overlay company-remarks-overlay" *ngIf="vm.companyRemarkLead" (click)="vm.closeCompanyRemarkHistory()">
+<div class="invoice-overlay company-remarks-overlay" *ngIf="vm.companyRemarkLead"
+  (click)="vm.closeCompanyRemarkHistory()">
   <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
@@ -967,7 +1057,8 @@
       </div>
       <button class="secondary-action" type="button" (click)="vm.closeCompanyRemarkHistory()">Close</button>
     </div>
-    <div class="company-remarks-list" *ngIf="vm.companyRemarkHistory(vm.companyRemarkLead).length; else emptyCompanyLeadRemarks">
+    <div class="company-remarks-list"
+      *ngIf="vm.companyRemarkHistory(vm.companyRemarkLead).length; else emptyCompanyLeadRemarks">
       <div class="company-remark-row" *ngFor="let remark of vm.companyRemarkHistory(vm.companyRemarkLead)">
         {{ remark }}
       </div>
@@ -979,12 +1070,14 @@
 </div>
 
 <!-- ══ ADMIN AI SUMMARY ══ -->
-<div class="invoice-overlay company-remarks-overlay admin-ai-overlay" *ngIf="vm.adminAiSummaryOpen" (click)="vm.closeAdminAiSummary()">
+<div class="invoice-overlay company-remarks-overlay admin-ai-overlay" *ngIf="vm.adminAiSummaryOpen"
+  (click)="vm.closeAdminAiSummary()">
   <div class="invoice-modal followup-modal ai-summary-modal admin-ai-modal" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">AI Summary</div>
-        <h3>{{ vm.aiBriefCompany || vm.selectedLeadCompany || vm.selectedRemarksFilterCompany || 'Company summary' }}</h3>
+        <h3>{{ vm.aiBriefCompany || vm.selectedLeadCompany || vm.selectedRemarksFilterCompany || 'Company summary' }}
+        </h3>
         <p *ngIf="vm.companyFullViewContext()">{{ vm.companyFullViewContext() }}</p>
       </div>
       <button class="secondary-action" type="button" (click)="vm.closeAdminAiSummary()">Close</button>
@@ -1009,13 +1102,15 @@
     <div class="invoice-builder" [class.invoice-builder-readonly]="vm.viewingSavedDocument">
       <div class="section-header invoice-builder-header">
         <div>
-          <div class="section-kicker">{{ vm.viewingSavedDocument ? (vm.quoteMode ? 'Saved Quotation' : 'Saved Invoice') : (vm.quoteMode ? 'Quotation Builder' : 'Invoice Builder') }}</div>
+          <div class="section-kicker">{{ vm.viewingSavedDocument ? (vm.quoteMode ? 'Saved Quotation' : 'Saved Invoice')
+            : (vm.quoteMode ? 'Quotation Builder' : 'Invoice Builder') }}</div>
           <h3>{{ vm.quoteMode ? 'Quote' : 'Invoice' }} {{ vm.invoiceNumber() }}</h3>
         </div>
         <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Close</button>
       </div>
 
-      <div class="invoice-form-grid invoice-control-card" [class.invoice-form-grid-quotation]="vm.quoteMode" *ngIf="!vm.viewingSavedDocument">
+      <div class="invoice-form-grid invoice-control-card" [class.invoice-form-grid-quotation]="vm.quoteMode"
+        *ngIf="!vm.viewingSavedDocument">
         <label class="mini-field">
           <span>Product</span>
           <select class="field-select" [(ngModel)]="vm.selectedInvoiceProduct" (change)="vm.onProductSelect()">
@@ -1038,7 +1133,8 @@
             <option value="paid">Paid</option>
           </select>
         </label>
-        <button class="primary-action" type="button" (click)="vm.addInvoiceItem()" [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
+        <button class="primary-action" type="button" (click)="vm.addInvoiceItem()"
+          [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
       </div>
 
       <div class="table-scroll invoice-items-card" *ngIf="!vm.viewingSavedDocument">
@@ -1069,12 +1165,8 @@
 
       <label class="quotation-note-editor invoice-control-card" *ngIf="vm.quoteMode && !vm.viewingSavedDocument">
         <span>Kind Note</span>
-        <textarea
-          class="field-textarea"
-          rows="3"
-          [(ngModel)]="vm.quotationKindNoteDraft"
-          placeholder="Add the kind note for this quotation"
-        ></textarea>
+        <textarea class="field-textarea" rows="3" [(ngModel)]="vm.quotationKindNoteDraft"
+          placeholder="Add the kind note for this quotation"></textarea>
       </label>
 
       <div id="invoice-preview" class="invoice-preview" [class.quotation-preview]="vm.quoteMode">
@@ -1082,7 +1174,8 @@
           <section class="quotation-page quotation-main-page">
             <header class="quotation-hero">
               <div class="quotation-hero-logo">
-                <img *ngIf="vm.invoiceLogoSrc(); else quotationTextLogo" [src]="vm.invoiceLogoSrc()" alt="Quotation logo" class="quotation-logo">
+                <img *ngIf="vm.invoiceLogoSrc(); else quotationTextLogo" [src]="vm.invoiceLogoSrc()"
+                  alt="Quotation logo" class="quotation-logo">
                 <ng-template #quotationTextLogo>
                   <div class="invoice-text-logo">{{ vm.invoiceCompanyDisplayName() }}</div>
                 </ng-template>
@@ -1111,7 +1204,8 @@
                 <p *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</p>
 
                 <h3 class="quotation-bank-heading">Bank Details</h3>
-                <div class="quotation-bank-list" *ngIf="vm.quotationBankRows().length; else adminQuotationNoBankDetails">
+                <div class="quotation-bank-list"
+                  *ngIf="vm.quotationBankRows().length; else adminQuotationNoBankDetails">
                   <div class="quotation-bank-row" *ngFor="let row of vm.quotationBankRows()">
                     <span>{{ row.label }}</span>
                     <strong>{{ row.value }}</strong>
@@ -1160,7 +1254,8 @@
                 </ng-template>
                 <div class="sender-details">
                   <h2 class="company-title">{{ vm.invoiceCompanyDisplayName() }}</h2>
-                  <p *ngIf="vm.settingsGstNumber" class="company-gst">GSTIN: <strong>{{ vm.settingsGstNumber }}</strong></p>
+                  <p *ngIf="vm.settingsGstNumber" class="company-gst">GSTIN: <strong>{{ vm.settingsGstNumber }}</strong>
+                  </p>
                   <p *ngIf="vm.invoiceCompanyAddress()" class="company-addr">{{ vm.invoiceCompanyAddress() }}</p>
                   <p class="company-contact">
                     <span *ngIf="vm.settingsContactDetails.phone">Mobile: {{ vm.settingsContactDetails.phone }}</span>
@@ -1180,7 +1275,8 @@
                   <ng-template #noClientAddr>
                     <p>—</p>
                   </ng-template>
-                  <p *ngIf="vm.invoiceLead?.contactNumber" class="client-phone">Ph: {{ vm.invoiceLead?.contactNumber }}</p>
+                  <p *ngIf="vm.invoiceLead?.contactNumber" class="client-phone">Ph: {{ vm.invoiceLead?.contactNumber }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1200,7 +1296,8 @@
               <div class="meta-field-full-row invoice-qr-row">
                 <span class="field-label invoice-qr-label">Scan to View E-Invoice</span>
                 <div class="invoice-qr-wrap">
-                  <img *ngIf="vm.currentInvoiceQrDataUrl; else upiQrPlaceholder" class="invoice-qr-image" [src]="vm.currentInvoiceQrDataUrl" alt="Scan to View E-Invoice QR Code">
+                  <img *ngIf="vm.currentInvoiceQrDataUrl; else upiQrPlaceholder" class="invoice-qr-image"
+                    [src]="vm.currentInvoiceQrDataUrl" alt="Scan to View E-Invoice QR Code">
                   <ng-template #upiQrPlaceholder>
                     <div class="invoice-qr-placeholder-box">QR</div>
                   </ng-template>
@@ -1209,8 +1306,9 @@
               <div class="meta-filler-space meta-status-space">
                 <div class="invoice-status-line">
                   <span class="field-label">Invoice Status:</span>
-                  <strong class="invoice-status-value" [class.invoice-status-value-paid]="vm.invoicePaymentStatus === 'paid'">
-                  {{ vm.formatInvoicePaymentStatus(vm.invoicePaymentStatus) }}
+                  <strong class="invoice-status-value"
+                    [class.invoice-status-value-paid]="vm.invoicePaymentStatus === 'paid'">
+                    {{ vm.formatInvoicePaymentStatus(vm.invoicePaymentStatus) }}
                   </strong>
                 </div>
               </div>
@@ -1323,7 +1421,8 @@
                     <td class="text-right"><strong>{{ vm.formatInvoiceMoney(vm.invoiceCgstAmount) }}</strong></td>
                     <td class="text-center">—</td>
                     <td class="text-right"><strong>{{ vm.formatInvoiceMoney(vm.invoiceSgstAmount) }}</strong></td>
-                    <td class="text-right"><strong>{{ vm.formatInvoiceMoney(vm.invoiceCgstAmount + vm.invoiceSgstAmount) }}</strong></td>
+                    <td class="text-right"><strong>{{ vm.formatInvoiceMoney(vm.invoiceCgstAmount + vm.invoiceSgstAmount)
+                        }}</strong></td>
                   </tr>
                 </tbody>
               </table>
@@ -1347,23 +1446,30 @@
               <div class="footer-col-sig">
                 <span class="sig-header">For {{ vm.invoiceCompanyDisplayName() | uppercase }}</span>
                 <div class="sig-stamp-container">
-                  <img *ngIf="vm.invoiceSealSrc(); else defaultSeal" [src]="vm.invoiceSealSrc()" style="width: 95px; height: 95px; object-fit: contain;" class="signature-stamp-img">
+                  <img *ngIf="vm.invoiceSealSrc(); else defaultSeal" [src]="vm.invoiceSealSrc()"
+                    style="width: 95px; height: 95px; object-fit: contain;" class="signature-stamp-img">
                   <ng-template #defaultSeal>
                     <svg viewBox="0 0 120 120" width="95" height="95" class="signature-stamp">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3 3"/>
-                      <circle cx="60" cy="60" r="45" fill="none" stroke="#2563eb" stroke-width="1.2"/>
-                      <path id="stamp-text-path-top" d="M 20 60 A 40 40 0 0 1 100 60" fill="none" stroke="none"/>
-                      <path id="stamp-text-path-bottom" d="M 100 60 A 40 40 0 0 1 20 60" fill="none" stroke="none"/>
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#2563eb" stroke-width="1.5"
+                        stroke-dasharray="3 3" />
+                      <circle cx="60" cy="60" r="45" fill="none" stroke="#2563eb" stroke-width="1.2" />
+                      <path id="stamp-text-path-top" d="M 20 60 A 40 40 0 0 1 100 60" fill="none" stroke="none" />
+                      <path id="stamp-text-path-bottom" d="M 100 60 A 40 40 0 0 1 20 60" fill="none" stroke="none" />
                       <text fill="#2563eb" font-size="7.5" font-family="monospace" letter-spacing="1">
-                        <textPath href="#stamp-text-path-top" startOffset="50%" text-anchor="middle">★ SIGNATURE ★</textPath>
+                        <textPath href="#stamp-text-path-top" startOffset="50%" text-anchor="middle">★ SIGNATURE ★
+                        </textPath>
                       </text>
                       <text fill="#2563eb" font-size="7" font-family="monospace" letter-spacing="1">
-                        <textPath href="#stamp-text-path-bottom" startOffset="50%" text-anchor="middle">OFFICIAL SEAL</textPath>
+                        <textPath href="#stamp-text-path-bottom" startOffset="50%" text-anchor="middle">OFFICIAL SEAL
+                        </textPath>
                       </text>
                       <g transform="rotate(-15 60 60)">
-                        <rect x="20" y="47" width="80" height="26" rx="3" fill="#ffffff" fill-opacity="0.9" stroke="#2563eb" stroke-width="1.2"/>
-                        <text x="60" y="61" fill="#2563eb" font-size="9.5" font-weight="bold" font-family="sans-serif" text-anchor="middle">{{ vm.invoiceCompanyDisplayName() | uppercase }}</text>
-                        <text x="60" y="70" fill="#2563eb" font-size="6.5" font-family="sans-serif" text-anchor="middle">VERIFIED</text>
+                        <rect x="20" y="47" width="80" height="26" rx="3" fill="#ffffff" fill-opacity="0.9"
+                          stroke="#2563eb" stroke-width="1.2" />
+                        <text x="60" y="61" fill="#2563eb" font-size="9.5" font-weight="bold" font-family="sans-serif"
+                          text-anchor="middle">{{ vm.invoiceCompanyDisplayName() | uppercase }}</text>
+                        <text x="60" y="70" fill="#2563eb" font-size="6.5" font-family="sans-serif"
+                          text-anchor="middle">VERIFIED</text>
                       </g>
                     </svg>
                   </ng-template>
@@ -1379,11 +1485,14 @@
               </div>
               <div class="terms-block">
                 <h3 class="terms-kicker">Terms and Conditions:</h3>
-                <div *ngIf="vm.invoiceTermsText(); else defaultTerms" style="white-space: pre-wrap; font-size: 0.8rem; line-height: 1.4; color: #475569;">{{ vm.invoiceTermsText() }}</div>
+                <div *ngIf="vm.invoiceTermsText(); else defaultTerms"
+                  style="white-space: pre-wrap; font-size: 0.8rem; line-height: 1.4; color: #475569;">{{
+                  vm.invoiceTermsText() }}</div>
                 <ng-template #defaultTerms>
                   <ol>
                     <li>Goods once sold cannot be taken back or exchanged.</li>
-                    <li>We are not the manufacturers, company will stand for warranty as per their terms and conditions.</li>
+                    <li>We are not the manufacturers, company will stand for warranty as per their terms and conditions.
+                    </li>
                     <li>Interest &#64;24% p.a. will be charged for uncleared bills beyond 15 days.</li>
                     <li>Subject to local Jurisdiction.</li>
                   </ol>
@@ -1403,7 +1512,8 @@
             <h3>Dear {{ vm.invoiceLead?.contactName || 'Client' }},</h3>
             <strong>{{ vm.invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
             <p>It was a pleasure speaking with you.</p>
-            <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide you with the cost details of our services.</p>
+            <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide
+              you with the cost details of our services.</p>
           </section>
 
           <section class="quotation-service-card">
@@ -1422,7 +1532,8 @@
               </div>
               <div class="quotation-total-panel">
                 <div><span>Sub Total</span><strong>{{ vm.invoiceSubtotal | number:'1.0-0' }}</strong></div>
-                <div><span>GST ({{ vm.invoicePreviewGstPercentage() }}%)</span><strong>{{ vm.invoiceGstAmount | number:'1.0-0' }}</strong></div>
+                <div><span>GST ({{ vm.invoicePreviewGstPercentage() }}%)</span><strong>{{ vm.invoiceGstAmount |
+                    number:'1.0-0' }}</strong></div>
                 <div><span>Grand Total</span><strong>{{ vm.invoiceTotal | number:'1.0-0' }}</strong></div>
               </div>
             </div>
@@ -1437,14 +1548,17 @@
 
       <div class="action-row invoice-builder-actions">
         <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Cancel</button>
-        <button class="primary-action" type="button" (click)="vm.printInvoice()" [disabled]="vm.invoiceItems.length===0 || vm.invoiceSaving || vm.quotationSaving">
-          {{ vm.viewingSavedDocument ? 'Print' : ((vm.invoiceSaving || vm.quotationSaving) ? 'Saving...' : (vm.quoteMode ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
+        <button class="primary-action" type="button" (click)="vm.printInvoice()"
+          [disabled]="vm.invoiceItems.length===0 || vm.invoiceSaving || vm.quotationSaving">
+          {{ vm.viewingSavedDocument ? 'Print' : ((vm.invoiceSaving || vm.quotationSaving) ? 'Saving...' : (vm.quoteMode
+          ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
         </button>
       </div>
     </div>
   </div>
 </div>
-<div class="invoice-overlay gst-selection-overlay" *ngIf="vm.showGstSelectionModal" (click)="vm.cancelDocumentGstSelection()">
+<div class="invoice-overlay gst-selection-overlay" *ngIf="vm.showGstSelectionModal"
+  (click)="vm.cancelDocumentGstSelection()">
   <div class="invoice-modal gst-selection-modal" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
@@ -1457,7 +1571,8 @@
       Choose the GST rate for this {{ vm.quoteMode ? 'quotation' : 'invoice' }} before saving and printing.
     </p>
     <div class="gst-selection-options">
-      <button class="secondary-action gst-selection-option" type="button" (click)="vm.confirmDocumentGstSelection(false)">
+      <button class="secondary-action gst-selection-option" type="button"
+        (click)="vm.confirmDocumentGstSelection(false)">
         Use {{ vm.settingsGstPercentage || 0 }}% GST
       </button>
       <button class="primary-action gst-selection-option" type="button" (click)="vm.confirmDocumentGstSelection(true)">
@@ -1471,9 +1586,12 @@
   <div class="modal history-modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
     <button class="modal-close" (click)="vm.closeHistoryModal()">×</button>
     <div style="margin-bottom: 1.5rem;">
-      <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #6366f1;">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      <h3
+        style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          style="color: #6366f1;">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
         </svg>
         Activity History
       </h3>
@@ -1487,9 +1605,12 @@
       <p style="font-size: 0.9rem; font-weight: 600;">Fetching logs...</p>
     </div>
 
-    <div *ngIf="!vm.historyLoading && vm.historyLogs.length === 0" style="padding: 3rem 1rem; text-align: center; color: #94a3b8; background: #f8fafc; border-radius: 16px;">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 1rem;">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    <div *ngIf="!vm.historyLoading && vm.historyLogs.length === 0"
+      style="padding: 3rem 1rem; text-align: center; color: #94a3b8; background: #f8fafc; border-radius: 16px;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        style="opacity: 0.3; margin-bottom: 1rem;">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
       </svg>
       <p style="font-size: 0.9rem; font-weight: 600;">No history logs found for this lead.</p>
     </div>
@@ -1501,27 +1622,37 @@
           <div class="timeline-header">
             <div style="display: flex; flex-direction: column;">
               <span class="timeline-action">{{ log.action }}</span>
-              <span *ngIf="log.contactName" style="font-size: 0.75rem; color: #6366f1; font-weight: 700;">{{ log.contactName }}</span>
+              <span *ngIf="log.contactName" style="font-size: 0.75rem; color: #6366f1; font-weight: 700;">{{
+                log.contactName }}</span>
             </div>
             <span class="timeline-time">{{ (log.createdAt || log.timestamp) | date:'MMM d, h:mm a' }}</span>
           </div>
           <div class="timeline-details" *ngIf="log.oldValue || log.newValue">
             <span class="old-val" *ngIf="log.oldValue">{{ log.oldValue }}</span>
-            <svg *ngIf="log.oldValue && log.newValue" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color: #94a3b8;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            <svg *ngIf="log.oldValue && log.newValue" width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="3" style="color: #94a3b8;">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
             <span class="new-val" *ngIf="log.newValue">{{ log.newValue }}</span>
           </div>
           <div class="timeline-extra" *ngIf="log.details || log.metadata?.remark">
             {{ log.details || log.metadata?.remark }}
           </div>
           <div class="timeline-actor" *ngIf="log.changedBy">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            {{ log.action === 'Lead Created' && log.changedBy === 'System (Legacy)' ? 'INITIAL DATA' : 'BY: ' + log.changedBy }}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            {{ log.action === 'Lead Created' && log.changedBy === 'System (Legacy)' ? 'INITIAL DATA' : 'BY: ' +
+            log.changedBy }}
           </div>
         </div>
       </div>
     </div>
 
-    <button class="cta-primary" (click)="vm.closeHistoryModal()" style="width: 100%; margin-top: 1.5rem; padding: 0.75rem; border-radius: 12px; justify-content: center;">
+    <button class="cta-primary" (click)="vm.closeHistoryModal()"
+      style="width: 100%; margin-top: 1.5rem; padding: 0.75rem; border-radius: 12px; justify-content: center;">
       Close History
     </button>
   </div>

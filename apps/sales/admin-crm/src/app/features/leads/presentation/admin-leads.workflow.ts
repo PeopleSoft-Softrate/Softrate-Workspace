@@ -80,6 +80,7 @@ export class AdminLeadsWorkflow {
       gstin: '',
       address: (lead as any).address || '',
       created_by: '',
+      serviceName: '',
       _leadId: lead._id
     };
     vm.showWeCrmModal = true;

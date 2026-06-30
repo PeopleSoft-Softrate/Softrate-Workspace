@@ -8,6 +8,7 @@ async function _HrLoginControllerjs_getMasterCompany() {
 }
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { seedDemoData } = require('../utilities/demoSeeder');
 
 // HR Signup
 exports.hrSignup = async (req, res) => {
@@ -38,6 +39,11 @@ exports.hrSignup = async (req, res) => {
 
     const newHR = new hrModel({ name, email, password: hashedPassword, companyId });
     await newHR.save();
+
+    // Seed demo data for the new tenant
+    if (companyId) {
+      seedDemoData(companyId).catch(err => console.error("Demo seeder failed:", err));
+    }
 
     res.status(201).json({
       msg: "HR Registered Successfully",

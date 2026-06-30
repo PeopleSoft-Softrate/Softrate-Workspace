@@ -13,6 +13,7 @@ import {
 import { ApiService } from '../../../services/api.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { TourService } from '../../../services/tour.service';
 
 @Component({
   selector: 'app-payroll-management',
@@ -24,6 +25,7 @@ import { catchError } from 'rxjs/operators';
 export class PayrollManagement implements OnInit {
   private apiService = inject(ApiService);
   private router = inject(Router);
+  private tourService = inject(TourService);
 
   // Icons
   readonly Invoice01Icon = Invoice01Icon;
@@ -156,6 +158,10 @@ export class PayrollManagement implements OnInit {
   ngOnInit() {
     this.loadPayrollDefaults();
     this.fetchData();
+
+    setTimeout(() => {
+      this.tourService.startPayrollTour();
+    }, 800);
   }
 
   loadPayrollDefaults() {

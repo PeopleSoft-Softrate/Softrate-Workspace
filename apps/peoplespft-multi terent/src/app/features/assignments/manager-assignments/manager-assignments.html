@@ -1,7 +1,7 @@
 
 <div class="ta-container" *ngIf="isHr()">
   <!-- PAGE HEAD -->
-  <div class="header-section">
+  <div class="header-section" id="tour-assignments-header">
     <div class="title-group">
       <h1>Team Assignments</h1>
       <p>Select a manager and assign interns or employees to their team.</p>
@@ -65,7 +65,7 @@
 
   <!-- MAIN CONTENT -->
   <div class="content-section">
-    <div class="ta-grid">
+    <div class="ta-grid" id="tour-assignments-list">
       <!-- Managers Panel -->
       <section class="panel">
         <div class="panel-header">
@@ -75,7 +75,7 @@
           </div>
           <p class="panel-desc">Assign lead roles to managers</p>
         </div>
-        <div class="search-box">
+        <div class="search-box" id="tour-assignments-filters">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input placeholder="Search managers..." [ngModel]="managerSearch()" (ngModelChange)="managerSearch.set($event)" type="text">
         </div>

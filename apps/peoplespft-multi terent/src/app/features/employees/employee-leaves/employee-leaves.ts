@@ -6,12 +6,11 @@ import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { CalendarCheckOut01Icon, UserCircleIcon, FingerAccessIcon, LicenseDraftIcon, Money03Icon, FileDownloadIcon, Upload02Icon } from '@hugeicons/core-free-icons';
 import { ApiService } from '../../../services/api.service';
-import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
 
 @Component({
   selector: 'app-employee-leaves',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HugeiconsIconComponent, EmployeeSidebar],
+  imports: [CommonModule, RouterModule, FormsModule, HugeiconsIconComponent],
   templateUrl: './employee-leaves.html',
   styleUrls: ['./employee-leaves.css', '../employee-list/employee-list.css']
 })

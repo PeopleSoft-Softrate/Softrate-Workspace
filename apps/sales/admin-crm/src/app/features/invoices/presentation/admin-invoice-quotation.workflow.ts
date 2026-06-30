@@ -1095,6 +1095,7 @@ export class AdminInvoiceQuotationWorkflow {
       primaryPhone: String(vm.clientOnboardingDraft.primaryPhone || '').trim(),
       primaryEmail: String(vm.clientOnboardingDraft.primaryEmail || '').trim(),
       address: String(vm.clientOnboardingDraft.address || '').trim(),
+      serviceName: String(vm.clientOnboardingDraft.serviceName || '').trim() || undefined,
     }).subscribe({
       next: (res) => {
         vm.clientOnboardingSaving = false;
@@ -1111,6 +1112,7 @@ export class AdminInvoiceQuotationWorkflow {
           primaryPhone: '',
           primaryEmail: '',
           address: '',
+          serviceName: '',
         };
         if (typeof vm.closeClientOnboardingCreateModal === 'function') {
           vm.closeClientOnboardingCreateModal();
@@ -1135,6 +1137,7 @@ export class AdminInvoiceQuotationWorkflow {
       primaryPhone: '',
       primaryEmail: '',
       address: '',
+      serviceName: '',
     };
     vm.clientOnboardingError = '';
     vm.clientOnboardingSuccess = '';

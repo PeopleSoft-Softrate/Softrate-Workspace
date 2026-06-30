@@ -12,6 +12,7 @@ const resignationSchema = new mongoose.Schema(
 
     exitType: { type: String, required: true }, // Resignation
     exitReason: { type: String, required: true }, // Selected / Other reason
+    projectLinks: { type: [String], default: [] }, // NEW FIELD
 
     assetReturnStatus: { type: String, required: true },
     status: { type: String, enum: ["pending_manager", "pending_hr", "accepted", "rejected"], default: "pending_manager" },

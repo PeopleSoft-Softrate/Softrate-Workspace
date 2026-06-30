@@ -1,7 +1,7 @@
 <app-alert></app-alert>
 <div class="app-container" [class.login-mode]="isLoginPage()" [class.sidebar-minimized]="isSidebarMinimized()">
   <!-- Sidebar -->
-  <aside class="sidebar" *ngIf="!isLoginPage()">
+  <aside class="sidebar" id="tour-sidebar" *ngIf="!isLoginPage()">
     <div class="sidebar-header">
       <div class="logo-box">
         <img src="logo/peoplesoft.png" alt="peoplesoft Logo">

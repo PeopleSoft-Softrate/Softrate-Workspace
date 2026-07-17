@@ -51,6 +51,16 @@ const CompanySchema = new mongoose.Schema({
   {signature}
 </div>`
       },
+      offboardingAcceptanceTemplate: { 
+        type: String, 
+        default: `<div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+  <p style="margin: 0 0 10px 0;">Dear {formattedName},</p>
+  <p style="margin: 0 0 10px 0;">We are writing to confirm that your offboarding formalities have been successfully completed and approved.</p>
+  <p style="margin: 0 0 10px 0;">We appreciate your contributions during your time with us and wish you the very best in your future endeavors.</p>
+  <p style="margin: 0 0 15px 0;">If you have any further questions, please contact your HR at <a href="mailto:hr@softrateglobal.com" style="color: #007bb6;">hr@softrateglobal.com</a>.</p>
+  {signature}
+</div>`
+      },
       onboardingTemplateEmployee: {
         type: String,
         default: `<div style="font-family: sans-serif; line-height: 1.6; color: #333;">

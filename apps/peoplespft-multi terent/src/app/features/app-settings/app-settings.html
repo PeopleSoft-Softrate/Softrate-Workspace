@@ -180,6 +180,20 @@
           </div>
 
           <div class="field-group">
+            <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Offboarding Acceptance Email Template</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
+              <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>
+              <select #varOffboardAcc (change)="insertVariable(varOffboardAcc, txtOffboardAcc, 'offboardingAcceptanceTemplate')" [disabled]="!canEditCommunication()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; background: white; cursor: pointer;">
+                <option value="" disabled selected>Insert Variable...</option>
+                <option value="{formattedName}">Applicant Name</option>
+                <option value="{logo}">Company Logo</option>
+                <option value="{signature}">Company Signature</option>
+              </select>
+            </div>
+            <textarea #txtOffboardAcc class="location-input email-template-textarea" [ngModel]="communication().offboardingAcceptanceTemplate" (ngModelChange)="communication.set({...communication(), offboardingAcceptanceTemplate: $event})" [disabled]="!canEditCommunication()" placeholder="Enter HTML template here..."></textarea>
+          </div>
+
+          <div class="field-group">
             <label style="text-transform: none; font-size: 14px; font-weight: 600; color: #1e293b;">Employee Onboarding Email Template</label>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 8px;">
               <p class="field-hint" style="margin: 0;">Variables: <code>{{ '{' }}formattedName{{ '}' }}</code>, <code>{{ '{' }}employeeId{{ '}' }}</code>, <code>{{ '{' }}onboardingDate{{ '}' }}</code>, <code>{{ '{' }}logo{{ '}' }}</code>, <code>{{ '{' }}signature{{ '}' }}</code></p>

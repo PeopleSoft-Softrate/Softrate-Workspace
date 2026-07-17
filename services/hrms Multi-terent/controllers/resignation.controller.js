@@ -214,8 +214,12 @@ exports.hrReview = async (req, res) => {
         fullName: user.fullName,
         title: title || 'Mr.',
         internId: user.internid,
-        onboardingDate: onboardingDate ? new Date(onboardingDate).toLocaleDateString('en-IN') : (user.onboardingDate ? new Date(user.onboardingDate).toLocaleDateString('en-IN') : ''),
-        endDate: endDate ? new Date(endDate).toLocaleDateString('en-IN') : (resignation.lastWorkingDay ? new Date(resignation.lastWorkingDay).toLocaleDateString('en-IN') : ''),
+        onboardingDate: onboardingDate && !isNaN(new Date(onboardingDate).getTime()) 
+          ? new Date(onboardingDate).toISOString()
+          : (user.onboardingDate && !isNaN(new Date(user.onboardingDate).getTime()) ? new Date(user.onboardingDate).toISOString() : ''),
+        endDate: endDate && !isNaN(new Date(endDate).getTime())
+          ? new Date(endDate).toISOString()
+          : (resignation.lastWorkingDay && !isNaN(new Date(resignation.lastWorkingDay).getTime()) ? new Date(resignation.lastWorkingDay).toISOString() : ''),
         todayDate: new Date(),
         role: user.role,
         companyName: olSettings.companyName || 'Softrate Global',
@@ -284,10 +288,28 @@ exports.hrReview = async (req, res) => {
         certificateLine = "Your relieving letter and experience certificate will be issued within 7 working days after the successful completion of all formalities.";
       }
 
-      await sendEmail({
-        to: user.email,
-        subject: `${resignation.userType === 'employee' ? 'Employee' : 'Internship'} Offboarding Confirmed - PeopleSoft`,
-        html: `
+      const Company = await _resignationcontrollerjs_getMasterCompany();
+      const company = await Company.findById(resignation.companyId);
+      const acceptanceTemplate = company?.settings?.communication?.offboardingAcceptanceTemplate;
+      const customSignature = company?.settings?.communication?.emailSignatureUrl;
+      const customLogo = company?.settings?.communication?.emailLogoUrl;
+
+      const signatureHtml = customSignature 
+        ? `<div style="margin-top: 30px;"><img src="${customSignature}" alt="Company Signature" style="max-height: 80px; display: block;" /></div>`
+        : getSignature(LOGO_URL);
+
+      const logoHtml = customLogo
+        ? `<div style="margin-bottom: 20px;"><img src="${customLogo}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`
+        : `<div style="margin-bottom: 20px;"><img src="${LOGO_URL}" alt="Company Logo" style="max-height: 60px; display: block;" /></div>`;
+
+      let htmlContent = "";
+      if (acceptanceTemplate) {
+        htmlContent = acceptanceTemplate
+          .replace(/{formattedName}/g, formattedName)
+          .replace(/{signature}/g, signatureHtml)
+          .replace(/{logo}/g, logoHtml);
+      } else {
+        htmlContent = `
           <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
             <p style="margin: 0 0 10px 0;">Dear ${formattedName},</p>
             <p style="margin: 0 0 10px 0;">Thank you for submitting your offboarding form. We are pleased to confirm that your ${resignation.userType} offboarding process has been successfully initiated and accepted by the HR team.</p>
@@ -300,9 +322,15 @@ exports.hrReview = async (req, res) => {
               <li style="margin-bottom: 4px;">4. Clear any outstanding approvals or submissions</li>
             </ul>
             <p style="margin: 0 0 15px 0;">${certificateLine}</p>
-            ${getSignature(LOGO_URL)}
+            ${signatureHtml}
           </div>
-        `,
+        `;
+      }
+
+      await sendEmail({
+        to: user.email,
+        subject: `${resignation.userType === 'employee' ? 'Employee' : 'Internship'} Offboarding Confirmed - PeopleSoft`,
+        html: htmlContent,
         attachments
       });
 
@@ -365,6 +393,124 @@ exports.hrReview = async (req, res) => {
     }
   } catch (err) {
     console.error("Resignation Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// RESEND Offboarding confirmation email
+exports.resendOffboardingMail = async (req, res) => {
+  try {
+    const resignation = await Resignation.findById(req.params.id);
+    if (!resignation) return res.status(404).json({ message: "Resignation record not found" });
+    if (resignation.status !== "accepted") {
+      return res.status(400).json({ message: "Offboarding has not been accepted yet" });
+    }
+
+    const user = await findUser(resignation.userId, resignation.userType);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const formattedName = resignation.fullName || user.fullName || "Team Member";
+    const lastDate = resignation.lastWorkingDay && !isNaN(new Date(resignation.lastWorkingDay).getTime())
+      ? new Date(resignation.lastWorkingDay).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
+      : "Not Specified";
+
+    let attachments = [];
+    const { internship, project, lor, title, onboardingDate, endDate } = req.body;
+    
+    if (resignation.userType === 'intern' && (internship || project || lor)) {
+      const { generateDynamicPDF } = require("../utilities/certificateGenerator");
+      const Company = await _resignationcontrollerjs_getMasterCompany();
+      
+      const company = await Company.findById(resignation.companyId);
+      const olSettings = company?.settings?.offerLetterSettings || company?.offerLetterSettings || {};
+      
+      const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.softrateglobal.com/hrms';
+      const virtualIdUrl = `${frontendUrl}/id-card/${resignation.companyId}/${user.internid || user.EmployeeId}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(virtualIdUrl);
+
+      const docData = {
+        fullName: user.fullName,
+        title: title || 'Mr.',
+        internId: user.internid,
+        onboardingDate: onboardingDate && !isNaN(new Date(onboardingDate).getTime()) 
+          ? new Date(onboardingDate).toISOString()
+          : (user.onboardingDate && !isNaN(new Date(user.onboardingDate).getTime()) ? new Date(user.onboardingDate).toISOString() : ''),
+        endDate: endDate && !isNaN(new Date(endDate).getTime())
+          ? new Date(endDate).toISOString()
+          : (resignation.lastWorkingDay && !isNaN(new Date(resignation.lastWorkingDay).getTime()) ? new Date(resignation.lastWorkingDay).toISOString() : ''),
+        todayDate: new Date(),
+        role: user.role,
+        companyName: olSettings.companyName || 'Softrate Global',
+        workLocation: olSettings.workLocation || 'Chennai',
+        logo: company?.settings?.communication?.emailLogoUrl || null,
+        signature: company?.settings?.communication?.emailSignatureUrl || null,
+        qrCode: qrCodeDataUrl
+      };
+
+      if (internship && (olSettings.documentTemplates?.internshipCompletion?.pages?.length > 0 || olSettings.documentTemplates?.internshipCompletion?.backgroundUrl)) {
+        try {
+          const buffer = await generateDynamicPDF(docData, olSettings.documentTemplates.internshipCompletion);
+          attachments.push({ filename: 'Internship_Certificate.pdf', content: buffer });
+        } catch (e) { console.error("Failed to generate Internship Certificate:", e); }
+      }
+      if (project && (olSettings.documentTemplates?.projectCompletion?.pages?.length > 0 || olSettings.documentTemplates?.projectCompletion?.backgroundUrl)) {
+        try {
+          const buffer = await generateDynamicPDF(docData, olSettings.documentTemplates.projectCompletion);
+          attachments.push({ filename: 'Project_Certificate.pdf', content: buffer });
+        } catch (e) { console.error("Failed to generate Project Certificate:", e); }
+      }
+      if (lor && (olSettings.documentTemplates?.lor?.pages?.length > 0 || olSettings.documentTemplates?.lor?.backgroundUrl)) {
+        try {
+          const buffer = await generateDynamicPDF(docData, olSettings.documentTemplates.lor);
+          attachments.push({ filename: 'LOR.pdf', content: buffer });
+        } catch (e) { console.error("Failed to generate LOR:", e); }
+      }
+    }
+
+    let certificateLine = "";
+    if (resignation.userType === 'intern') {
+      if (attachments.length > 0) {
+        const nameMap = {
+          "Internship_Certificate.pdf": "Internship Completion Certificate",
+          "Project_Certificate.pdf": "Project Completion Certificate",
+          "LOR.pdf": "Letter of Recommendation"
+        };
+        const professionalNames = attachments
+          .map(a => nameMap[a.filename] || a.filename)
+          .join(", ");
+        certificateLine = `Please find your following documents attached for your records: ${professionalNames}.`;
+      } else {
+        certificateLine = "Your internship completion certificate and experience letter will be issued within 7 working days after the successful completion of all formalities.";
+      }
+    } else {
+      certificateLine = "Your relieving letter and experience certificate will be issued within 7 working days after the successful completion of all formalities.";
+    }
+
+    await sendEmail({
+      to: user.email,
+      subject: `${resignation.userType === "employee" ? "Employee" : "Internship"} Offboarding Confirmed - PeopleSoft (Resent)`,
+      html: `
+        <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+          <p style="margin: 0 0 10px 0;">Dear ${formattedName},</p>
+          <p style="margin: 0 0 10px 0;">This is a resent confirmation of your offboarding. We are pleased to confirm that your ${resignation.userType} offboarding process has been successfully initiated and accepted by the HR team.</p>
+          <p style="margin: 0 0 10px 0;">Your tenure with us officially concludes on <b>${lastDate}</b>. We appreciate the effort and dedication you have brought during your time with us.</p>
+          <p style="margin: 0 0 10px 0;">As part of the offboarding process, please ensure the following are completed before your last day:</p>
+          <ul style="padding-left: 20px; margin: 0 0 15px 0;">
+            <li style="margin-bottom: 4px;">1. Return all company-issued assets (ID card, access badge, equipment, etc.)</li>
+            <li style="margin-bottom: 4px;">2. Complete knowledge transfer and handover of pending tasks to your reporting manager</li>
+            <li style="margin-bottom: 4px;">3. Ensure all project documentation is up to date and shared with the team</li>
+            <li style="margin-bottom: 4px;">4. Clear any outstanding approvals or submissions</li>
+          </ul>
+          <p style="margin: 0 0 15px 0;">${certificateLine}</p>
+          ${getSignature(LOGO_URL)}
+        </div>
+      `,
+      attachments
+    });
+
+    res.json({ success: true, message: "Offboarding email resent successfully" });
+  } catch (err) {
+    console.error("Resend Offboarding Error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

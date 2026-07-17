@@ -1215,3 +1215,27 @@ hugeicons-icon {
   font-weight: 500;
   text-decoration: none;
 }
+
+/* Bulk selection animation for Actions column */
+.actions-col {
+  transition: all 0.3s ease-in-out;
+}
+.actions-wrapper {
+  transition: all 0.3s ease-in-out;
+  max-width: 300px;
+  opacity: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.requests-table.has-selection th.actions-col,
+.requests-table.has-selection td.actions-col {
+  padding-left: 0;
+  padding-right: 0;
+  width: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+}
+.requests-table.has-selection .actions-wrapper {
+  max-width: 0;
+  opacity: 0;
+}

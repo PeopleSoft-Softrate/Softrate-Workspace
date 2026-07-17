@@ -2354,8 +2354,8 @@
                 <p *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</p>
 
                 <h3 class="quotation-bank-heading">Bank Details</h3>
-                <div class="quotation-bank-list" *ngIf="quotationBankRows().length; else quotationNoBankDetails">
-                  <div class="quotation-bank-row" *ngFor="let row of quotationBankRows()">
+                <div class="quotation-bank-list" *ngIf="quotationBankRows.length; else quotationNoBankDetails">
+                  <div class="quotation-bank-row" *ngFor="let row of quotationBankRows">
                     <span>{{ row.label }}</span>
                     <strong>{{ row.value }}</strong>
                   </div>
@@ -2537,7 +2537,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let row of getGstBreakdown()">
+                  <tr *ngFor="let row of gstBreakdown">
                     <td class="text-center">{{ row.hsnSac }}</td>
                     <td class="text-right">{{ formatInvoiceMoney(row.taxableValue) }}</td>
                     <td class="text-center">{{ row.cgstRate }}%</td>

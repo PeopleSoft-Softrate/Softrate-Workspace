@@ -61,6 +61,7 @@ export class AppSettings implements OnInit {
     emailSignatureUrl: null,
     emailLogoUrl: null,
     offboardingRejectionTemplate: '',
+    offboardingAcceptanceTemplate: '',
     onboardingTemplateEmployee: '',
     onboardingTemplateIntern: ''
   });
@@ -200,6 +201,7 @@ export class AppSettings implements OnInit {
             emailSignatureUrl: null,
             emailLogoUrl: null,
             offboardingRejectionTemplate: '',
+            offboardingAcceptanceTemplate: '',
             onboardingTemplateEmployee: '',
             onboardingTemplateIntern: ''
           });

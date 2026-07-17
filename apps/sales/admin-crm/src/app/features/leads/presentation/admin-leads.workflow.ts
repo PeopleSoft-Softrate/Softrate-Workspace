@@ -81,6 +81,7 @@ export class AdminLeadsWorkflow {
       address: (lead as any).address || '',
       created_by: '',
       serviceName: '',
+      isComplianceService: false,
       _leadId: lead._id
     };
     vm.showWeCrmModal = true;
@@ -96,7 +97,8 @@ export class AdminLeadsWorkflow {
       ...vm.weCrmClientData,
       role: 'customer',
       status: 'active',
-      company_id: vm.weCrmCompanyId
+      company_id: vm.weCrmCompanyId,
+      isComplianceService: vm.weCrmClientData.serviceName === 'External Compliance Service' ? 'true' : 'false'
     };
 
     fetch(`${vm.weCrmUrl}/register`, {

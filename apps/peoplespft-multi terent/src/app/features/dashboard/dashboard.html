@@ -45,7 +45,7 @@
   <!-- Statistics Grid -->
   <div class="stats-grid" *ngIf="!isLoading()">
     <div class="stat-card" *ngFor="let stat of stats()[selectedModel()]; let i = index" [ngClass]="stat.color"
-      [routerLink]="stat.link" style="cursor: pointer;">
+      [routerLink]="stat.link" [queryParams]="stat.queryParams" style="cursor: pointer;">
       <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center;">
         <span class="stat-label" style="margin-bottom: 0;">{{ stat.label }}</span>
         <div class="stat-icon-container">

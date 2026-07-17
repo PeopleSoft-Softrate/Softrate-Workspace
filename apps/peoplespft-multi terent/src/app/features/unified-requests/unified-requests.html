@@ -163,11 +163,27 @@
       <p>No pending or filtered approvals match your selection.</p>
     </div>
 
+    <!-- BULK ACTIONS -->
+    <div *ngIf="hasSelection()" class="bulk-actions-bar" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 8px;">
+      <div style="font-weight: 600; color: #334155;">{{ selectedRequestIds().size }} Requests Selected</div>
+      <div style="display: flex; gap: 10px;">
+        <button class="tbl-btn tbl-btn-reject" style="padding: 6px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; background: #ffffff; color: #b91c1c; display: flex; align-items: center; gap: 8px;" (click)="submitBulkReview('reject')">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>
+        <button class="tbl-btn tbl-btn-approve" style="padding: 6px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; background: #ffffff; color: #15803d; display: flex; align-items: center; gap: 8px;" (click)="submitBulkReview('approve')">
+          <i class="fa-solid fa-check"></i> Approve
+        </button>
+      </div>
+    </div>
+
     <!-- REQUESTS TABLE -->
     <div *ngIf="!loading() && filteredRequests().length > 0" class="requests-table-wrapper" id="tour-approvals-list">
-      <table class="requests-table">
+      <table class="requests-table" [class.has-selection]="hasSelection()">
         <thead>
           <tr>
+            <th style="width: 40px; text-align: center;">
+              <input *ngIf="activeCategory() !== 'all'" type="checkbox" [checked]="isAllSelected()" (change)="toggleAllSelection($event)" title="Select All Pending" style="cursor: pointer; width: 16px; height: 16px; accent-color: #4f46e5;" />
+            </th>
             <th>Applicant</th>
             <th>Type</th>
             <th>Details</th>
@@ -175,11 +191,15 @@
             <th>Manager</th>
             <th>HR</th>
             <th>Applied</th>
-            <th>Actions</th>
+            <th class="actions-col"><div class="actions-wrapper">Actions</div></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let req of filteredRequests()" [ngClass]="'row-' + req.type">
+            <!-- Checkbox -->
+            <td style="text-align: center;">
+              <input *ngIf="req.status === 'pending' && activeCategory() !== 'all'" type="checkbox" [checked]="selectedRequestIds().has(req._id)" (change)="toggleSelection(req._id, $event)" style="cursor: pointer; width: 16px; height: 16px; accent-color: #4f46e5;" />
+            </td>
             <!-- Applicant -->
             <td>
               <div class="tbl-person">
@@ -268,32 +288,34 @@
             <!-- Date applied -->
             <td class="tbl-date">{{ req.createdAt | date:'d MMM y' }}</td>
             <!-- Actions -->
-            <td>
-              <div class="tbl-actions" *ngIf="req.status === 'pending'">
-                <button class="tbl-btn tbl-btn-reject" (click)="openReview(req, 'reject')" title="Reject">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-                <ng-container *ngIf="req.type !== 'onboarding'">
-                  <button class="tbl-btn tbl-btn-approve" (click)="openReview(req, 'approve')" title="Accept">
-                    <i class="fa-solid fa-check"></i>
+            <td class="actions-col">
+              <div class="actions-wrapper">
+                <div class="tbl-actions" *ngIf="req.status === 'pending'">
+                  <button class="tbl-btn tbl-btn-reject" (click)="openReview(req, 'reject')" title="Reject">
+                    <i class="fa-solid fa-xmark"></i>
                   </button>
-                </ng-container>
-                <ng-container *ngIf="req.type === 'onboarding' && isHr()">
-                  <a class="tbl-btn tbl-btn-approve"
-                    [routerLink]="req.subType === 'Intern' ? ['/interns/approve', req._id] : ['/employees/approve', req._id]"
-                    title="Onboard">
-                    <i class="fa-solid fa-user-plus"></i>
-                  </a>
-                </ng-container>
-                <ng-container *ngIf="req.type === 'onboarding' && !isHr()">
-                  <button class="tbl-btn tbl-btn-approve" (click)="openReview(req, 'approve')" title="Approve">
-                    <i class="fa-solid fa-check"></i>
-                  </button>
-                </ng-container>
-              </div>
-              <div class="tbl-status-done" *ngIf="req.status !== 'pending'" [ngClass]="req.status">
-                {{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Approved' :
-                'Rejected' }}
+                  <ng-container *ngIf="req.type !== 'onboarding'">
+                    <button class="tbl-btn tbl-btn-approve" (click)="openReview(req, 'approve')" title="Accept">
+                      <i class="fa-solid fa-check"></i>
+                    </button>
+                  </ng-container>
+                  <ng-container *ngIf="req.type === 'onboarding' && isHr()">
+                    <a class="tbl-btn tbl-btn-approve"
+                      [routerLink]="req.subType === 'Intern' ? ['/interns/approve', req._id] : ['/employees/approve', req._id]"
+                      title="Onboard">
+                      <i class="fa-solid fa-user-plus"></i>
+                    </a>
+                  </ng-container>
+                  <ng-container *ngIf="req.type === 'onboarding' && !isHr()">
+                    <button class="tbl-btn tbl-btn-approve" (click)="openReview(req, 'approve')" title="Approve">
+                      <i class="fa-solid fa-check"></i>
+                    </button>
+                  </ng-container>
+                </div>
+                <div class="tbl-status-done" *ngIf="req.status !== 'pending'" [ngClass]="req.status">
+                  {{ req.status === 'accepted' || req.status === 'approved' || req.status === 'accept' ? 'Approved' :
+                  'Rejected' }}
+                </div>
               </div>
             </td>
           </tr>
@@ -478,8 +500,10 @@
         <div class="modal-footer">
           <button (click)="closeModal()" class="btn-secondary" [disabled]="loading()">Cancel</button>
           <button (click)="submitReview()"
-            [disabled]="(reviewAction() === 'reject' && !reviewRemarks().trim()) || loading()" class="btn-primary"
-            [ngClass]="reviewAction() === 'approve' ? 'approve' : 'reject'">
+            [disabled]="isReviewFormInvalid() || loading()" class="btn-primary"
+            [ngClass]="reviewAction() === 'approve' ? 'approve' : 'reject'"
+            [style.opacity]="(isReviewFormInvalid() || loading()) ? '0.5' : '1'"
+            [style.cursor]="(isReviewFormInvalid() || loading()) ? 'not-allowed' : 'pointer'">
             <ng-container *ngIf="!loading()">
               Confirm Decision
             </ng-container>

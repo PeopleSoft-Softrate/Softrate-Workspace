@@ -28,5 +28,7 @@ router.put("/manager-review/:id", verifyTenant, resignationController.managerRev
 // HR Review (Accept or reject resignation)
 router.put("/hr-review/:action/:id", verifyTenant, upload.array("files"), resignationController.hrReview);
 
+router.post("/resend-offboarding/:id", verifyTenant, resignationController.resendOffboardingMail);
+
 // router.get("/pending", verifyTenant, resignationController.getPendingResignations);
 module.exports = router;

@@ -9,8 +9,8 @@ export class ApiService {
   private useLocalBackend = false;
   private baseUrl = this.useLocalBackend
     ? 'http://localhost:5001'
-    : window.location.hostname === '192.168.29.43'
-        ? 'http://192.168.29.43:5001'
+    : window.location.hostname === '192.168.29.222'
+        ? 'http://192.168.29.222:5001'
         : 'https://peoplesoft.softrateglobal.com/hrms-api';
 
 
@@ -351,8 +351,8 @@ export class ApiService {
           interns: [
             { label: 'Total Interns', value: totalInternsCount.toString(), icon: 'fa-solid fa-users', color: 'teal', link: '/interns', trend: '+4.1%' },
             { label: 'Active Interns', value: data.internAttendance.count.toString(), icon: 'fa-solid fa-fingerprint', color: 'green', link: '/attendance/today', trend: internAttTrend },
-            { label: 'Pending Leaves', value: data.pendingLeaves.length.toString(), icon: 'fa-solid fa-clock', color: 'orange', link: '/leaves', trend: '-2.5%' },
-            { label: 'New Applications', value: data.initialInterns.length.toString(), icon: 'fa-solid fa-user-plus', color: 'blue', link: '/interns/requests', trend: '+12%' }
+            { label: 'Pending Leaves', value: data.pendingLeaves.length.toString(), icon: 'fa-solid fa-clock', color: 'orange', link: '/interns', queryParams: { tab: 'leaves' }, trend: '-2.5%' },
+            { label: 'New Applications', value: data.initialInterns.length.toString(), icon: 'fa-solid fa-user-plus', color: 'blue', link: '/interns', queryParams: { tab: 'requests' }, trend: '+12%' }
           ],
           employees: [
             { label: 'Today Attendance', value: data.employeeAttendance.count.toString(), icon: 'fa-solid fa-circle-check', color: 'green', link: '/attendance/today', trend: empAttTrend },
@@ -637,6 +637,10 @@ export class ApiService {
     return this.getAllResignations();
   }
 
+  getResignationByUserId(userId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/resignation/${userId}`);
+  }
+
   managerReviewOffboarding(id: string, status: 'approved' | 'rejected', remarks: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/resignation/manager-review/${id}`, { status, remarks });
   }
@@ -650,6 +654,10 @@ export class ApiService {
       onboardingDate: flags.onboardingDate,
       endDate: flags.endDate
     });
+  }
+
+  resendOffboardingMail(id: string, flags: { internship: boolean, project: boolean, lor: boolean, onboardingDate?: string, endDate?: string } = { internship: false, project: false, lor: false }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/resignation/resend-offboarding/${id}`, flags);
   }
 
   // Performance Templates

@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
-import { forkJoin, Subscription, of } from 'rxjs';
+import { forkJoin, Subscription, of, Observable } from 'rxjs';
 import { finalize, catchError } from 'rxjs/operators';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { 
@@ -74,9 +74,13 @@ export class UnifiedRequests implements OnInit, OnDestroy {
 
   // Modal Action States
   showReviewModal = signal<boolean>(false);
+  bulkReviewMode = signal<boolean>(false);
+  bulkReviewAction = signal<'approve' | 'reject' | null>(null);
   reviewAction = signal<'approve' | 'reject' | null>(null);
   selectedRequest = signal<any | null>(null);
   reviewRemarks = signal<string>('');
+
+  selectedRequestIds = signal<Set<string>>(new Set());
 
   // Special Offboarding flags for HR approval
   certInternship = signal<boolean>(false);
@@ -699,6 +703,8 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   closeModal() {
     this.showReviewModal.set(false);
     this.selectedRequest.set(null);
+    this.bulkReviewMode.set(false);
+    this.bulkReviewAction.set(null);
     this.reviewAction.set(null);
     this.reviewRemarks.set('');
   }
@@ -713,6 +719,21 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   }
 
   submitReview() {
+    if (this.bulkReviewMode()) {
+      if (this.activeCategory() === 'offboarding' && this.bulkReviewAction() === 'approve' && this.isHr()) {
+        if (!this.onboardingDate()) {
+          this.alertService.show('Please select an onboarding date.');
+          return;
+        }
+        if (!this.endDate()) {
+          this.alertService.show('Please select an end date (last working day).');
+          return;
+        }
+      }
+      this.executeBulkReview();
+      return;
+    }
+
     const request = this.selectedRequest();
     const action = this.reviewAction();
     if (!request || !action) return;
@@ -852,8 +873,36 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     }
   }
 
+  isReviewFormInvalid(): boolean {
+    if (this.reviewAction() === 'reject' && !this.reviewRemarks().trim()) return true;
+    
+    if (this.reviewAction() === 'approve' && this.isHr()) {
+      const type = this.selectedRequest()?.type;
+      const subType = this.selectedRequest()?.subType;
+      
+      if (type === 'offboarding') {
+        if (!this.onboardingDate() || !this.endDate()) return true;
+      } else if (type === 'onboarding') {
+        if (!this.onboardingDate()) return true;
+        if (subType === 'Intern' && !this.endDate()) return true;
+      }
+    }
+    return false;
+  }
+
   handleOffboardingReview(request: any, action: 'approve' | 'reject', remarks: string) {
     if (this.isHr()) {
+      if (action === 'approve') {
+        if (!this.onboardingDate()) {
+          this.alertService.show('Please select an onboarding date.');
+          return;
+        }
+        if (!this.endDate()) {
+          this.alertService.show('Please select an end date (last working day).');
+          return;
+        }
+      }
+
       const apiAction = action === 'approve' ? 'accept' : 'reject';
       const flags = {
         internship: this.certInternship(),
@@ -1021,5 +1070,153 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  // --- BULK ACTION METHODS ---
+
+  toggleSelection(requestId: string, event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    const current = new Set(this.selectedRequestIds());
+    if (checked) {
+      current.add(requestId);
+    } else {
+      current.delete(requestId);
+    }
+    this.selectedRequestIds.set(current);
+  }
+
+  toggleAllSelection(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      const allIds = this.filteredRequests().filter((r: any) => r.status === 'pending').map((r: any) => r._id);
+      this.selectedRequestIds.set(new Set(allIds));
+    } else {
+      this.selectedRequestIds.set(new Set());
+    }
+  }
+
+  isAllSelected(): boolean {
+    const pending = this.filteredRequests().filter((r: any) => r.status === 'pending');
+    if (pending.length === 0) return false;
+    return pending.every((r: any) => this.selectedRequestIds().has(r._id));
+  }
+
+  hasSelection(): boolean {
+    return this.selectedRequestIds().size > 0;
+  }
+
+  submitBulkReview(action: 'approve' | 'reject') {
+    this.bulkReviewMode.set(true);
+    this.bulkReviewAction.set(action);
+    this.reviewAction.set(action);
+    this.selectedRequest.set({ type: this.activeCategory() });
+    
+    // Reset form fields
+    this.reviewRemarks.set('');
+    this.certInternship.set(true);
+    this.certProject.set(true);
+    this.certLor.set(false);
+    this.onboardingDate.set('');
+    this.endDate.set('');
+    
+    this.showReviewModal.set(true);
+  }
+
+  executeBulkReview() {
+    const action = this.bulkReviewAction();
+    if (!action) return;
+    const requestIds = Array.from(this.selectedRequestIds());
+    if (requestIds.length === 0) return;
+    
+    this.loading.set(true);
+    const remarks = this.reviewRemarks();
+    const flags = {
+      internship: this.certInternship(),
+      project: this.certProject(),
+      lor: this.certLor(),
+      onboardingDate: this.onboardingDate(),
+      endDate: this.endDate()
+    };
+
+    const obsList = requestIds.map(id => {
+      const request = this.requestsList().find(r => r._id === id);
+      if (!request) return of(null);
+      return this.getReviewObservable(request, action, remarks || 'Bulk ' + action, flags);
+    });
+
+    forkJoin(obsList).pipe(
+      finalize(() => {
+        this.loading.set(false);
+        this.selectedRequestIds.set(new Set());
+        this.closeModal();
+        this.fetchRequests();
+      })
+    ).subscribe({
+      next: () => {
+        this.alertService.show(`Bulk ${action} completed successfully`);
+      },
+      error: (err) => {
+        console.error(err);
+        this.alertService.show(`Some bulk actions failed. Error: ` + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  private getReviewObservable(request: any, action: 'approve' | 'reject', remarks: string, overrideFlags?: any): Observable<any> {
+    const isIntern = request.subType === 'Intern';
+    let obs: Observable<any> | null = null;
+
+    if (request.type === 'leave') {
+      if (this.isHr()) {
+        const status = action === 'approve' ? 'approved' : 'rejected';
+        obs = this.apiService.hrReviewLeave(request._id, status, remarks);
+      } else if (this.isManager()) {
+        const status = action === 'approve' ? 'accepted' : 'rejected';
+        obs = this.apiService.managerReviewLeave(request._id, status, remarks);
+      }
+    } else if (request.type === 'offboarding') {
+      if (this.isHr()) {
+        const apiAction = action === 'approve' ? 'accept' : 'reject';
+        const flags = overrideFlags || { internship: false, project: false, lor: false, onboardingDate: '', endDate: '' };
+        obs = this.apiService.hrReviewOffboarding(request._id, apiAction, remarks, flags);
+      } else if (this.isManager()) {
+        const status = action === 'approve' ? 'approved' : 'rejected';
+        obs = this.apiService.managerReviewOffboarding(request._id, status, remarks);
+      }
+    } else if (request.type === 'onboarding') {
+      if (this.isHr()) {
+        if (action === 'approve') {
+          // HR Onboarding usually requires detailed manual inputs and redirects to a dedicated page
+          obs = of(null); 
+        } else {
+          obs = isIntern 
+            ? this.apiService.deleteIntern(request._id)
+            : this.apiService.deleteEmployee(request._id);
+        }
+      } else if (this.isManager()) {
+        const status = action === 'approve' ? 'approved' : 'rejected';
+        obs = isIntern
+          ? this.apiService.managerReviewIntern(request._id, status, remarks)
+          : this.apiService.managerReviewEmployee(request._id, status, remarks);
+      }
+    } else if (request.type === 'correction') {
+      const status = action === 'approve' ? 'approved' : 'rejected';
+      obs = this.isHr() 
+        ? this.apiService.hrReviewAttendanceRequest(request._id, status, remarks)
+        : this.apiService.managerReviewAttendanceRequest(request._id, status, remarks);
+    } else if (request.type === 'fund') {
+      const status = action === 'approve' ? 'accepted' : 'rejected';
+      obs = this.isHr()
+        ? this.apiService.hrReviewFundRequest(request._id, status, remarks)
+        : this.apiService.managerReviewFundRequest(request._id, status, remarks);
+    } else if (request.type === 'device_change') {
+      const status = action === 'approve' ? 'accepted' : 'rejected';
+      obs = this.isHr()
+        ? this.apiService.hrReviewDeviceRequest(request._id, status, remarks)
+        : this.apiService.managerReviewDeviceRequest(request._id, status, remarks);
+    }
+
+    if (!obs) return of(null);
+    return obs.pipe(catchError(e => of(e)));
   }
 }

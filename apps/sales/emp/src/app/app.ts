@@ -1234,6 +1234,13 @@ export class App implements OnInit, OnDestroy {
   invoiceLead: Lead | null = null;
   invoiceSaving = false;
   currentInvoiceNumber = '';
+
+  quotationTerms = [
+    'All rates quoted are valid for 14 days.',
+    '40% payment should be done in advance.',
+    'The remaining amount should be paid within 7 days of invoice.',
+  ];
+  currentYear = new Date().getFullYear();
   invoiceRecords: InvoiceRecord[] = [];
   invoiceRecordsLoading = false;
   invoiceSearch = '';
@@ -1367,6 +1374,25 @@ export class App implements OnInit, OnDestroy {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  }
+
+  private _cachedBankDetails: any = null;
+  private _cachedBankRows: { label: string; value: string }[] = [];
+
+  get quotationBankRows(): { label: string; value: string }[] {
+    if (this._cachedBankDetails === this.bankDetails) {
+      return this._cachedBankRows;
+    }
+    const rows: { label: string; value: string }[] = [];
+    if (this.bankDetails) {
+      if (this.bankDetails.bankName) rows.push({ label: 'Bank Name', value: this.bankDetails.bankName });
+      if (this.bankDetails.accountNumber) rows.push({ label: 'Account No', value: this.bankDetails.accountNumber });
+      if (this.bankDetails.ifscCode) rows.push({ label: 'IFSC Code', value: this.bankDetails.ifscCode });
+      if (this.bankDetails.branchName) rows.push({ label: 'Branch', value: this.bankDetails.branchName });
+    }
+    this._cachedBankRows = rows;
+    this._cachedBankDetails = this.bankDetails;
+    return rows;
   }
 
   invoiceCompanyDisplayName(): string {
@@ -1512,10 +1538,18 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
+  private _cachedInvoiceConvertedLeads: Lead[] = [];
+  private _lastInvoiceSearch: string | null = null;
+  private _lastAllLeadsLengthForInvoice: number | null = null;
+
   get invoiceConvertedLeads(): Lead[] {
-    const convertedStatuses = this.CONVERTED_PAGE_STATUSES.map((status) => status.toLowerCase());
     const query = this.invoiceSearch.trim().toLowerCase();
-    return this.allLeads
+    if (this._lastInvoiceSearch === query && this._lastAllLeadsLengthForInvoice === this.allLeads.length) {
+      return this._cachedInvoiceConvertedLeads;
+    }
+
+    const convertedStatuses = this.CONVERTED_PAGE_STATUSES.map((status) => status.toLowerCase());
+    this._cachedInvoiceConvertedLeads = this.allLeads
       .filter((lead) => convertedStatuses.includes((lead.status || '').toLowerCase()))
       .filter((lead) => {
         if (!query) return true;
@@ -1527,6 +1561,10 @@ export class App implements OnInit, OnDestroy {
           lead.setLabel,
         ].some((value) => String(value || '').toLowerCase().includes(query));
       });
+      
+    this._lastInvoiceSearch = query;
+    this._lastAllLeadsLengthForInvoice = this.allLeads.length;
+    return this._cachedInvoiceConvertedLeads;
   }
 
   get currentInvoiceLeadPage(): number {
@@ -1542,10 +1580,17 @@ export class App implements OnInit, OnDestroy {
     return this.invoiceConvertedLeads.slice(start, start + this.documentLeadPageSize);
   }
 
+  private _cachedQuotationLeadCompanies: QuotationLeadCompanyOption[] = [];
+  private _lastQuotationSearch: string | null = null;
+  private _lastAllLeadsLengthForQuotation: number | null = null;
+
   get quotationLeadCompanies(): QuotationLeadCompanyOption[] {
     const query = this.quotationSearch.trim().toLowerCase();
-    const companies = new Map<string, QuotationLeadCompanyOption>();
+    if (this._lastQuotationSearch === query && this._lastAllLeadsLengthForQuotation === this.allLeads.length) {
+      return this._cachedQuotationLeadCompanies;
+    }
 
+    const companies = new Map<string, QuotationLeadCompanyOption>();
     for (const lead of this.allLeads) {
       const companyName = String(lead.leadCompanyName || '').trim();
       if (!companyName) continue;
@@ -1569,7 +1614,10 @@ export class App implements OnInit, OnDestroy {
       }
     }
 
-    return Array.from(companies.values());
+    this._cachedQuotationLeadCompanies = Array.from(companies.values());
+    this._lastQuotationSearch = query;
+    this._lastAllLeadsLengthForQuotation = this.allLeads.length;
+    return this._cachedQuotationLeadCompanies;
   }
 
   get currentQuotationLeadPage(): number {

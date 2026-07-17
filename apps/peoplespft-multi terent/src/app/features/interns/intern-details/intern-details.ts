@@ -1,5 +1,5 @@
 import { AlertService } from '../../../shared/services/alert';
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, isDevMode } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
@@ -36,7 +36,18 @@ export class InternDetails implements OnInit {
   showTerminateForm = signal(false);
   terminationReason = signal('');
   isResendingMail = signal(false);
+  isResendingOffboardingMail = signal(false);
+  
+  // Offboarding Modal State
+  showOffboardingModal = signal(false);
+  onboardingDate = signal<string>('');
+  endDate = signal<string>('');
+  certInternship = signal<boolean>(false);
+  certProject = signal<boolean>(false);
+  certLor = signal<boolean>(false);
+
   userRole = signal<string | null>(localStorage.getItem('user_role'));
+  readonly isDevMode = isDevMode();
 
   navigateTo(path: string[]) {
     this.router.navigate(path).then(() => {
@@ -203,6 +214,84 @@ export class InternDetails implements OnInit {
       error: (err: any) => {
         this.alertService.show('Failed to resend email: ' + (err.error?.message || err.message));
         this.isResendingMail.set(false);
+      }
+    });
+  }
+
+  openResendOffboardingModal() {
+    // Set defaults from intern data if available
+    const internData = this.intern();
+    if (internData) {
+      if (internData.onboardingDate) {
+        this.onboardingDate.set(new Date(internData.onboardingDate).toISOString().split('T')[0]);
+      } else if (internData.joiningDate) {
+        this.onboardingDate.set(new Date(internData.joiningDate).toISOString().split('T')[0]);
+      }
+      
+      // We don't have a direct last working day in intern usually, but let's clear it
+      this.endDate.set('');
+    }
+    this.certInternship.set(true);
+    this.certProject.set(true);
+    this.certLor.set(true);
+    this.showOffboardingModal.set(true);
+  }
+
+  closeOffboardingModal() {
+    this.showOffboardingModal.set(false);
+  }
+
+  async resendOffboardingMail() {
+    if (!this.onboardingDate()) {
+      this.alertService.show('Please select an onboarding date.');
+      return;
+    }
+    if (!this.endDate()) {
+      this.alertService.show('Please select an end date (last working day).');
+      return;
+    }
+
+    const internId = this.intern()?.internid || this.intern()?.internId;
+    if (!internId) {
+      this.alertService.show('Intern ID not found.');
+      return;
+    }
+
+    this.isResendingOffboardingMail.set(true);
+    // Fetch the resignation record by intern ID first, then resend using the resignation _id
+    this.apiService.getResignationByUserId(internId).subscribe({
+      next: (response: any) => {
+        const resignation = response?.data || response;
+        if (!resignation?._id) {
+          this.alertService.show('No accepted offboarding record found for this intern.');
+          this.isResendingOffboardingMail.set(false);
+          this.closeOffboardingModal();
+          return;
+        }
+
+        const flags = {
+          internship: this.certInternship(),
+          project: this.certProject(),
+          lor: this.certLor(),
+          onboardingDate: this.onboardingDate(),
+          endDate: this.endDate()
+        };
+
+        this.apiService.resendOffboardingMail(resignation._id, flags).subscribe({
+          next: () => {
+            this.alertService.show('Offboarding email resent successfully!');
+            this.isResendingOffboardingMail.set(false);
+            this.closeOffboardingModal();
+          },
+          error: (err: any) => {
+            this.alertService.show('Failed to resend email: ' + (err.error?.message || err.message));
+            this.isResendingOffboardingMail.set(false);
+          }
+        });
+      },
+      error: (err: any) => {
+        this.alertService.show('No offboarding record found: ' + (err.error?.message || err.message));
+        this.isResendingOffboardingMail.set(false);
       }
     });
   }

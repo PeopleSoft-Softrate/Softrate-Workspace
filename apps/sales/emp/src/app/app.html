@@ -1238,27 +1238,29 @@
                       <span>{{ bookmark.contactNumber || '—' }}</span>
                     </div>
 
-                    <button class="lead-card-invoice-action" type="button" *ngIf="getMatchedLeadForBookmark(bookmark) as matchedLead" (click)="openInvoiceModal(matchedLead)">
-                      <span aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
-                      </span>
-                      <span>Generate Invoice</span>
-                    </button>
+                    <ng-container *ngIf="getMatchedLeadForBookmark(bookmark) as matchedLead">
+                      <button class="lead-card-invoice-action" type="button" (click)="openQuotationModal(matchedLead)">
+                        <span aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
+                        </span>
+                        <span>Generate Quote</span>
+                      </button>
 
-                    <div class="followup-card-inline-meta" *ngIf="getMatchedLeadForBookmark(bookmark) as matchedLead">
-                      <span class="lead-record-line">
-                        <span class="lead-record-line-icon" aria-hidden="true">
-                          <svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg>
+                      <div class="followup-card-inline-meta">
+                        <span class="lead-record-line">
+                          <span class="lead-record-line-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg>
+                          </span>
+                          <span>{{ matchedLead.setLabel || '—' }}</span>
                         </span>
-                        <span>{{ matchedLead.setLabel || '—' }}</span>
-                      </span>
-                      <span class="lead-record-line lead-record-email" [title]="matchedLead.directorEmailAddress || ''">
-                        <span class="lead-record-line-icon" aria-hidden="true">
-                          <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
+                        <span class="lead-record-line lead-record-email" [title]="matchedLead.directorEmailAddress || ''">
+                          <span class="lead-record-line-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
+                          </span>
+                          <span>{{ matchedLead.directorEmailAddress || '—' }}</span>
                         </span>
-                        <span>{{ matchedLead.directorEmailAddress || '—' }}</span>
-                      </span>
-                    </div>
+                      </div>
+                    </ng-container>
 
                     <div class="lead-card-remarks">
                       <div class="lead-card-remarks-title">
@@ -1748,19 +1750,66 @@
       </div>
 
       <div id="invoice-preview" class="invoice-preview" [class.quotation-preview]="quoteMode">
-        <header class="quotation-hero" *ngIf="quoteMode; else invoicePrintHeader">
-          <div class="quotation-hero-logo">
-            <img *ngIf="invoiceLogo; else quotationTextLogo" [src]="invoiceLogo" alt="Quotation logo" class="quotation-logo">
-            <ng-template #quotationTextLogo>
-              <div class="invoice-text-logo">{{ invoiceCompanyDisplayName() }}</div>
-            </ng-template>
-          </div>
-          <div class="quotation-hero-title">
-            <h2>Quotation</h2>
-            <span>Quote Number</span>
-            <strong>{{ invoiceNumber() }}</strong>
-          </div>
-        </header>
+        <ng-container *ngIf="quoteMode; else invoicePrintHeader">
+          <section class="quotation-page quotation-main-page">
+            <header class="quotation-hero">
+              <div class="quotation-hero-logo">
+                <img *ngIf="invoiceLogo; else quotationTextLogo" [src]="invoiceLogo" alt="Quotation logo" class="quotation-logo">
+                <ng-template #quotationTextLogo>
+                  <div class="invoice-text-logo">{{ invoiceCompanyDisplayName() }}</div>
+                </ng-template>
+              </div>
+              <div class="quotation-hero-title">
+                <h2>Quotation</h2>
+                <span>Quote Number</span>
+                <strong>{{ invoiceNumber() }}</strong>
+                <span>Date of issue</span>
+                <strong>{{ invoiceIssuedAt | date:'dd/MM/yyyy' }}</strong>
+              </div>
+            </header>
+            <ng-container [ngTemplateOutlet]="quotationPrintBody"></ng-container>
+          </section>
+
+          <section class="quotation-page quotation-terms-page">
+            <div class="quotation-partner-panel">
+              <h2>Your Trusted Tech Partner</h2>
+            </div>
+
+            <div class="quotation-terms-grid">
+              <section class="quotation-terms-box quotation-payable-box">
+                <h3>Payable To</h3>
+                <strong>{{ invoiceCompanyDisplayName() }}</strong>
+                <p *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</p>
+
+                <h3 class="quotation-bank-heading">Bank Details</h3>
+                <div class="quotation-bank-list"
+                  *ngIf="quotationBankRows.length; else quotationNoBankDetails">
+                  <div class="quotation-bank-row" *ngFor="let row of quotationBankRows">
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.value }}</strong>
+                  </div>
+                </div>
+                <ng-template #quotationNoBankDetails>
+                  <p class="quotation-muted-line">Bank details not configured.</p>
+                </ng-template>
+              </section>
+
+              <section class="quotation-terms-box quotation-conditions-box">
+                <h3>Terms and conditions:</h3>
+                <ul>
+                  <li *ngFor="let term of quotationTerms">{{ term }}</li>
+                </ul>
+              </section>
+            </div>
+
+            <footer class="quotation-terms-footer">
+              <strong>{{ invoiceCompanyDisplayName() }}</strong>
+              <span *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</span>
+              <span *ngIf="contactDetails?.phone">Mob: {{ contactDetails.phone }}</span>
+              <span>Copyright © {{ currentYear }} All Rights Reserved</span>
+            </footer>
+          </section>
+        </ng-container>
 
         <ng-template #invoicePrintHeader>
         <header class="invoice-print-header">
@@ -1788,7 +1837,7 @@
         </header>
         </ng-template>
 
-        <ng-container *ngIf="!quoteMode; else quotationPrintBody">
+        <ng-container *ngIf="!quoteMode">
         <section class="invoice-print-section invoice-details-section">
           <div class="invoice-print-kicker">{{ quoteMode ? 'Quotation Details' : 'Invoice Details' }}</div>
           <div class="invoice-detail-grid">
@@ -1807,12 +1856,6 @@
           <div>{{ invoiceLead?.contactName || 'Primary Contact' }}</div>
           <div *ngIf="invoiceLead?.contactNumber">Mobile: {{ invoiceLead?.contactNumber }}</div>
           <div *ngIf="invoiceLead?.directorEmailAddress">Email: {{ invoiceLead?.directorEmailAddress }}</div>
-        </section>
-
-        <section class="invoice-print-section invoice-bill-section" *ngIf="quoteMode">
-          <div class="invoice-print-kicker">Dear {{ invoiceLead?.contactName || 'Client' }},</div>
-          <strong>{{ invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
-          <p>Please find the cost details of our services below.</p>
         </section>
 
         <section class="invoice-service-section">

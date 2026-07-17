@@ -2187,9 +2187,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return String(this.activeInvoiceCompanySnapshot()?.gstNumber || this.gstNumber || '').trim();
   }
 
-  quotationBankRows(): QuotationBankRow[] {
+  private _cachedWsBankDetails: any = null;
+  private _cachedWsBankRows: QuotationBankRow[] = [];
+
+  get quotationBankRows(): QuotationBankRow[] {
     const bankDetails = this.activeCompanyBankDetails();
-    return [
+    if (this._cachedWsBankDetails === bankDetails) {
+      return this._cachedWsBankRows;
+    }
+    this._cachedWsBankRows = [
       { label: 'Bank', value: bankDetails.bankName },
       { label: 'Acc', value: bankDetails.accountNumber },
       { label: 'IFSC', value: bankDetails.ifscCode },
@@ -2197,6 +2203,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     ]
       .map((row) => ({ ...row, value: String(row.value || '').trim() }))
       .filter((row) => row.value);
+    this._cachedWsBankDetails = bankDetails;
+    return this._cachedWsBankRows;
   }
 
   private activeCompanyBankDetails(): any {
@@ -3087,9 +3095,20 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return numberToWords(value);
   }
 
-  getGstBreakdown(): any[] {
+  private _cachedGstBreakdown: any[] = [];
+  private _lastGstBreakdownKey: string = '';
+
+  get gstBreakdown(): any[] {
+    const gstPct = this.documentGstPercentageOverride ?? this.gstPercentage;
+    const cacheKey = this.invoiceItems.length + ':' + gstPct + ':' +
+      this.invoiceItems.map((i: any) => `${i.price}x${i.quantity}x${i.product?.sacHsn || i.product?.hsn || ''}`).join(',');
+
+    if (this._lastGstBreakdownKey === cacheKey) {
+      return this._cachedGstBreakdown;
+    }
+
     const breakdownMap = new Map<string, any>();
-    const gstPct = this.invoicePreviewGstPercentage();
+    const gstPctFinal = this.invoicePreviewGstPercentage();
 
     this.invoiceItems.forEach((item: any) => {
       const hsn = item.product?.sacHsn || item.product?.hsn || '—';
@@ -3107,16 +3126,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         breakdownMap.set(hsn, {
           hsnSac: hsn,
           taxableValue: taxable,
-          cgstRate: gstPct / 2,
+          cgstRate: gstPctFinal / 2,
           cgstAmount: cgst,
-          sgstRate: gstPct / 2,
+          sgstRate: gstPctFinal / 2,
           sgstAmount: sgst,
           totalTax: cgst + sgst,
         });
       }
     });
 
-    return Array.from(breakdownMap.values());
+    this._cachedGstBreakdown = Array.from(breakdownMap.values());
+    this._lastGstBreakdownKey = cacheKey;
+    return this._cachedGstBreakdown;
   }
 
   get filteredQuotationRecords(): QuotationRecord[] {

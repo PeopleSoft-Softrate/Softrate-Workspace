@@ -1,0 +1,18 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh root@193.203.161.48 "rm -rf /opt/softrate-workspace/deploy/certbot/conf/live/wecrm.wealthempires.in /opt/softrate-workspace/deploy/certbot/conf/archive/wecrm.wealthempires.in /opt/softrate-workspace/deploy/certbot/conf/renewal/wecrm.wealthempires.in.conf"
+expect {
+    "Enter passphrase for key" {
+        send "Psrs710\r"
+        exp_continue
+    }
+    "password:" {
+        send "\r"
+        exp_continue
+    }
+    "Password:" {
+        send "\r"
+        exp_continue
+    }
+    eof
+}

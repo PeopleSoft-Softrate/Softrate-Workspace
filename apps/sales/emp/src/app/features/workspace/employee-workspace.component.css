@@ -5954,6 +5954,17 @@ body.column-resizing * {
   font-weight: var(--font-weight-bold);
 }
 
+.quotation-total-panel .gst-exempt-footnote {
+  grid-column: 1 / -1;
+  text-align: right;
+  font-size: 10px;
+  font-style: italic;
+  color: #919191;
+  opacity: 0.85;
+  margin: 4px 0 0;
+  letter-spacing: 0.01em;
+}
+
 .quotation-kind-note {
   display: grid;
   grid-template-columns: 108px minmax(0, 1fr);
@@ -6609,6 +6620,136 @@ body.column-resizing * {
   min-height: 42px;
 }
 
+/* ── Inline GST Rate Selector (Quotation Builder) ── */
+.quotation-gst-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--surface, #f8fafc);
+  border-radius: 8px;
+  border: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 0;
+}
+
+.quotation-gst-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.quotation-gst-selector-label i {
+  font-size: 12px;
+  color: var(--primary, #3b82f6);
+}
+
+.quotation-gst-selector-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted, #64748b);
+  margin-left: 4px;
+}
+
+.quotation-gst-selector-options {
+  display: flex;
+  gap: 6px;
+  background: var(--bg, #e8edf4);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.quotation-gst-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 5px 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  line-height: 1.2;
+}
+
+.quotation-gst-opt-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary, #475569);
+}
+
+.quotation-gst-opt-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.quotation-gst-opt--active {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.quotation-gst-opt--active .quotation-gst-opt-pct {
+  color: var(--primary, #2563eb);
+}
+
+.quotation-gst-opt--active .quotation-gst-opt-label {
+  color: var(--primary, #3b82f6);
+}
+
+/* Exempt variant — distinct amber/neutral tint when active */
+.quotation-gst-opt--exempt.quotation-gst-opt--active {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+}
+
+.quotation-gst-opt--exempt.quotation-gst-opt--active .quotation-gst-opt-pct {
+  color: #3b82f6;
+}
+
+.quotation-gst-opt--exempt.quotation-gst-opt--active .quotation-gst-opt-label {
+  color: #3b82f6;
+}
+
+/* Exempt badge on item rows */
+.gst-exempt-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b45309;
+  background: #fef3c7;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+/* "Not Applicable" label in summary */
+.gst-exempt-summary-line .gst-exempt-label {
+  font-style: italic;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Footnote below Grand Total when GST Exempt is chosen */
+.gst-exempt-footnote {
+  margin: 6px 0 0;
+  text-align: right;
+  font-size: 10px;
+  font-style: italic;
+  color: #92400e;
+  opacity: 0.8;
+  letter-spacing: 0.01em;
+}
+
 .feed-scroll {
   max-height: 220px;
   margin-top: 16px;
@@ -6640,6 +6781,82 @@ body.column-resizing * {
 .invoice-modal-billing {
   position: relative;
   background: #ffffff;
+}
+
+/* ── Quotation Builder: Side-by-Side Layout ── */
+.quotation-builder-layout {
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  gap: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.quotation-builder-controls {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 20px;
+  overflow-y: auto;
+  border-right: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.quotation-builder-preview {
+  overflow-y: auto;
+  background: #e8ecf1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.quotation-builder-preview .invoice-preview {
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.quotation-builder-preview .quotation-page {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  border-radius: 4px;
+}
+
+/* Widen the modal in quotation mode to accommodate side-by-side */
+.invoice-modal-billing:has(.quotation-builder-layout) {
+  width: min(98vw, 1340px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.invoice-modal-billing:has(.quotation-builder-layout) .invoice-builder {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+}
+
+.invoice-modal-billing:has(.quotation-builder-layout) .invoice-builder-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.invoice-modal-billing:has(.quotation-builder-layout) .action-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .invoice-builder {

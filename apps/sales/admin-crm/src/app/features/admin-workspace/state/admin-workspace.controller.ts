@@ -4944,6 +4944,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   printInvoice(): void { return this.invoiceQuotationWorkflow.printInvoice(this); }
 
+  refreshInvoiceItemGstFromSelection(): void { return this.invoiceQuotationWorkflow.refreshInvoiceItemGstFromSelection(this); }
   saveAndPrintQuotation(): void { return this.invoiceQuotationWorkflow.saveAndPrintQuotation(this); }
 
   openCompanyFullView(event?: Event): void {

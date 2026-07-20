@@ -1,0 +1,18 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ./deploy/scripts/deploy-to-vps.sh
+expect {
+    "Enter passphrase for key" {
+        send "Psrs710\r"
+        exp_continue
+    }
+    "password:" {
+        send "\r"
+        exp_continue
+    }
+    "Password:" {
+        send "\r"
+        exp_continue
+    }
+    eof
+}

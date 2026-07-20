@@ -1552,6 +1552,20 @@ export class AdminInvoiceQuotationWorkflow {
     vm.showGstSelectionModal = false;
   }
 
+
+  refreshInvoiceItemGstFromSelection(vm: any): void {
+    if (vm.viewingSavedDocument) return;
+    vm.invoiceItems.forEach((item: any) => {
+      if (item?.taxable === undefined && item?.gst === undefined && item?.total === undefined) return;
+      const quantity = Math.max(1, Number(item.quantity || 1));
+      const taxable = Number(item.price || 0) * quantity;
+      const gst = taxable * (this.invoicePreviewGstPercentage(vm) / 100);
+      item.taxable = taxable;
+      item.gst = gst;
+      item.total = taxable + gst;
+    });
+    this.refreshInvoicePreviewCaches(vm);
+  }
   printInvoice(vm: any): void {
     if (vm.invoiceItems.length === 0) {
       alert(`Please add at least one product to the ${vm.quoteMode ? 'quotation' : 'invoice'}.`);
@@ -1561,10 +1575,7 @@ export class AdminInvoiceQuotationWorkflow {
       this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument());
       return;
     }
-    if (!vm.gstSelectionConfirmed) {
-      vm.showGstSelectionModal = true;
-      return;
-    }
+
     if (vm.quoteMode) {
       vm.saveAndPrintQuotation();
       return;

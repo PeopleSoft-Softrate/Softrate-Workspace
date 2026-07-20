@@ -2239,88 +2239,111 @@
         <button class="secondary-action" (click)="closeInvoiceModal()">Close</button>
       </div>
 
-      <div class="invoice-form-grid invoice-control-card" [class.invoice-form-grid-quotation]="quoteMode" *ngIf="!viewingSavedDocument">
-        <label class="mini-field">
-          <span>Product</span>
-          <select class="field-select" [(ngModel)]="selectedInvoiceProduct" (change)="onProductSelect()">
-            <option [ngValue]="null">Select product</option>
-            <option *ngFor="let product of visibleProducts" [ngValue]="product">{{ product.name }}</option>
-          </select>
-        </label>
-        <label class="mini-field">
-          <span>Price</span>
-          <input class="field-input" type="number" [(ngModel)]="invoicePrice" />
-        </label>
-        <label class="mini-field">
-          <span>Quantity</span>
-          <input class="field-input" type="number" [(ngModel)]="invoiceQuantity" />
-        </label>
-        <label class="mini-field" *ngIf="!quoteMode">
-          <span>Status</span>
-          <select class="field-select" [(ngModel)]="invoicePaymentStatus">
-            <option value="unpaid">Unpaid</option>
-            <option value="paid">Paid</option>
-          </select>
-        </label>
-        <button class="primary-action" (click)="addInvoiceItem()" [disabled]="!selectedInvoiceProduct">Add Item</button>
-        <div class="invoice-builder-transfer" *ngIf="!quoteMode">
-          <button class="secondary-action" type="button" (click)="transferLatestQuotationToInvoice()" [disabled]="quotationTransferLoading">
-            {{ quotationTransferLoading ? 'Loading latest quotation...' : (invoiceTransferredFromQuotation ? 'Refresh from Latest Quotation' : 'Transfer Latest Quotation') }}
-          </button>
-          <p class="invoice-transfer-note" *ngIf="transferredQuotationRecord">
-            Loaded {{ transferredQuotationRecord.quotationNumber }}. Imported item prices can be edited below before saving the invoice.
-          </p>
-        </div>
-      </div>
+      <!-- Quotation: side-by-side layout (controls left, preview right) -->
+      <ng-container *ngIf="quoteMode && !viewingSavedDocument; else invoiceStackLayout">
+        <div class="quotation-builder-layout">
 
-      <div class="table-scroll invoice-items-card" *ngIf="!viewingSavedDocument">
-        <table class="data-table compact-table">
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Qty</th>
-              <th>Price</th>
-              <th>Sum</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of invoiceItems; let i = index">
-              <td>{{ item.name }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>
-                <ng-container *ngIf="invoiceTransferredFromQuotation && !quoteMode; else invoiceItemStaticPrice">
-                  <input
-                    class="field-input invoice-inline-price-input"
-                    type="number"
-                    [ngModel]="item.price"
-                    (ngModelChange)="updateTransferredInvoiceItemPrice(i, $event)"
-                    min="0"
-                  />
-                </ng-container>
-                <ng-template #invoiceItemStaticPrice>{{ formatInvoiceMoney(item.price) }}</ng-template>
-              </td>
-              <td>{{ formatInvoiceMoney(item.price * item.quantity) }}</td>
-              <td><button class="text-action" (click)="removeInvoiceItem(i)">Remove</button></td>
-            </tr>
-            <tr *ngIf="invoiceItems.length===0">
-              <td colspan="5" class="empty-cell">No {{ quoteMode ? 'quotation' : 'invoice' }} items added yet.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <!-- LEFT: Controls -->
+          <div class="quotation-builder-controls">
+            <div class="invoice-form-grid invoice-control-card invoice-form-grid-quotation">
+              <label class="mini-field">
+                <span>Product</span>
+                <select class="field-select" [(ngModel)]="selectedInvoiceProduct" (change)="onProductSelect()">
+                  <option [ngValue]="null">Select product</option>
+                  <option *ngFor="let product of visibleProducts" [ngValue]="product">{{ product.name }}</option>
+                </select>
+              </label>
+              <label class="mini-field">
+                <span>Price</span>
+                <input class="field-input" type="number" [(ngModel)]="invoicePrice" />
+              </label>
+              <label class="mini-field">
+                <span>Quantity</span>
+                <input class="field-input" type="number" [(ngModel)]="invoiceQuantity" />
+              </label>
+              <button class="primary-action" (click)="addInvoiceItem()" [disabled]="!selectedInvoiceProduct">Add Item</button>
+            </div>
 
-      <label class="quotation-note-editor invoice-control-card" *ngIf="quoteMode && !viewingSavedDocument">
-        <span>Kind Note</span>
-        <textarea
-          class="field-textarea"
-          rows="3"
-          [(ngModel)]="quotationKindNoteDraft"
-          placeholder="Add the kind note for this quotation"
-        ></textarea>
-      </label>
+            
 
-      <div id="invoice-preview" class="invoice-preview" [class.quotation-preview]="quoteMode">
+            <div class="table-scroll invoice-items-card">
+              <table class="data-table compact-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Sum</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of invoiceItems; let i = index">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ formatInvoiceMoney(item.price) }}</td>
+                    <td>{{ formatInvoiceMoney(item.price * item.quantity) }}</td>
+                    <td><button class="text-action" (click)="removeInvoiceItem(i)">Remove</button></td>
+                  </tr>
+                  <tr *ngIf="invoiceItems.length===0">
+                    <td colspan="5" class="empty-cell">No quotation items added yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Inline GST Rate Selector -->
+            <div class="quotation-gst-selector invoice-control-card">
+              <div class="quotation-gst-selector-label">
+                <i class="fa-solid fa-percent"></i>
+                <span>GST Rate</span>
+              </div>
+              <div class="quotation-gst-selector-options">
+                <button
+                  class="quotation-gst-opt"
+                  [class.quotation-gst-opt--active]="documentGstPercentageOverride === null"
+                  type="button"
+                  (click)="documentGstPercentageOverride = null; refreshInvoiceItemGstFromSelection()"
+                >
+                  <span class="quotation-gst-opt-pct">{{ gstPercentage || 18 }}%</span>
+                  <span class="quotation-gst-opt-label">GST</span>
+                </button>
+                <button
+                  class="quotation-gst-opt"
+                  [class.quotation-gst-opt--active]="documentGstPercentageOverride === 0"
+                  type="button"
+                  (click)="documentGstPercentageOverride = 0; refreshInvoiceItemGstFromSelection()"
+                >
+                  <span class="quotation-gst-opt-pct">0%</span>
+                  <span class="quotation-gst-opt-label">GST</span>
+                </button>
+                <button
+                  class="quotation-gst-opt quotation-gst-opt--exempt"
+                  [class.quotation-gst-opt--active]="documentGstPercentageOverride === -1"
+                  type="button"
+                  (click)="documentGstPercentageOverride = -1; refreshInvoiceItemGstFromSelection()"
+                >
+                  <span class="quotation-gst-opt-pct">Excl.</span>
+                  <span class="quotation-gst-opt-label">GST Exempt</span>
+                </button>
+              </div>
+            </div>
+
+            <label class="quotation-note-editor invoice-control-card">
+              <span>Kind Note</span>
+              <textarea
+                class="field-textarea"
+                rows="4"
+                [(ngModel)]="quotationKindNoteDraft"
+                placeholder="Add the kind note for this quotation"
+              ></textarea>
+            </label>
+          </div>
+
+          <!-- RIGHT: Live Preview -->
+          <div class="quotation-builder-preview">
+            <div id="invoice-preview" class="invoice-preview quotation-preview">
+
+
         <ng-container *ngIf="quoteMode; else invoicePreviewDocument">
           <section class="quotation-page quotation-main-page">
             <header class="quotation-hero">
@@ -2479,8 +2502,13 @@
                   <td class="text-center">{{ item.quantity || 1 }}</td>
                   <td class="text-right">{{ formatInvoiceMoney(invoiceItemTaxable(item)) }}</td>
                   <td class="text-right">
-                    {{ formatInvoiceMoney(invoiceItemGst(item)) }}
-                    <div class="item-tax-pct">({{ invoicePreviewGstPercentage() }}%)</div>
+                     <ng-container *ngIf="documentGstPercentageOverride !== -1; else gstExemptCell">
+                       {{ formatInvoiceMoney(invoiceItemGst(item)) }}
+                       <div class="item-tax-pct">({{ invoicePreviewGstPercentage() }}%)</div>
+                     </ng-container>
+                     <ng-template #gstExemptCell>
+                       <span class="gst-exempt-badge">Exempt</span>
+                     </ng-template>
                   </td>
                   <td class="text-right"><strong>{{ formatInvoiceMoney(invoiceItemTotal(item)) }}</strong></td>
                 </tr>
@@ -2496,18 +2524,29 @@
                       <span>Taxable Amount</span>
                       <strong>{{ formatInvoiceMoney(invoiceSubtotal) }}</strong>
                     </div>
-                    <div class="summary-line" *ngIf="invoiceCgstAmount > 0">
-                      <span>CGST ({{ invoicePreviewGstPercentage() / 2 }}%)</span>
-                      <strong>{{ formatInvoiceMoney(invoiceCgstAmount) }}</strong>
-                    </div>
-                    <div class="summary-line" *ngIf="invoiceSgstAmount > 0">
-                      <span>SGST ({{ invoicePreviewGstPercentage() / 2 }}%)</span>
-                      <strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong>
-                    </div>
+                     <ng-container *ngIf="documentGstPercentageOverride !== -1; else gstExemptSummary">
+                       <div class="summary-line" *ngIf="invoiceCgstAmount > 0">
+                         <span>CGST ({{ invoicePreviewGstPercentage() / 2 }}%)</span>
+                         <strong>{{ formatInvoiceMoney(invoiceCgstAmount) }}</strong>
+                       </div>
+                       <div class="summary-line" *ngIf="invoiceSgstAmount > 0">
+                         <span>SGST ({{ invoicePreviewGstPercentage() / 2 }}%)</span>
+                         <strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong>
+                       </div>
+                     </ng-container>
+                     <ng-template #gstExemptSummary>
+                       <div class="summary-line gst-exempt-summary-line">
+                         <span>GST</span>
+                         <strong class="gst-exempt-label">Not Applicable</strong>
+                       </div>
+                     </ng-template>
                     <div class="summary-line grand-total-line">
                       <span>Total</span>
                       <strong class="grand-total-val">{{ formatInvoiceMoney(invoiceTotal) }}</strong>
                     </div>
+                    <p class="gst-exempt-footnote" *ngIf="documentGstPercentageOverride === -1">
+                      * GST will be excluded
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -2651,9 +2690,12 @@
                 <span>{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
               </div>
               <div class="quotation-total-panel">
-                <div><span>Sub Total</span><strong>{{ invoiceSubtotal | number:'1.0-0' }}</strong></div>
-                <div><span>GST ({{ invoicePreviewGstPercentage() }}%)</span><strong>{{ invoiceGstAmount | number:'1.0-0' }}</strong></div>
-                <div><span>Grand Total</span><strong>{{ invoiceTotal | number:'1.0-0' }}</strong></div>
+                <p class="gst-exempt-footnote" *ngIf="documentGstPercentageOverride === null">
+                  * {{ gstPercentage || 18 }}% GST will be excluded
+                </p>
+                <p class="gst-exempt-footnote" *ngIf="documentGstPercentageOverride === 0 || documentGstPercentageOverride === -1">
+                  * GST will be excluded
+                </p>
               </div>
             </div>
           </section>
@@ -2664,6 +2706,83 @@
           </section>
         </ng-template>
       </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Invoice (stacked) fallback template -->
+      <ng-template #invoiceStackLayout>
+        <div class="invoice-form-grid invoice-control-card">
+          <label class="mini-field">
+            <span>Product</span>
+            <select class="field-select" [(ngModel)]="selectedInvoiceProduct" (change)="onProductSelect()">
+              <option [ngValue]="null">Select product</option>
+              <option *ngFor="let product of visibleProducts" [ngValue]="product">{{ product.name }}</option>
+            </select>
+          </label>
+          <label class="mini-field">
+            <span>Price</span>
+            <input class="field-input" type="number" [(ngModel)]="invoicePrice" />
+          </label>
+          <label class="mini-field">
+            <span>Quantity</span>
+            <input class="field-input" type="number" [(ngModel)]="invoiceQuantity" />
+          </label>
+          <label class="mini-field" *ngIf="!viewingSavedDocument">
+            <span>Status</span>
+            <select class="field-select" [(ngModel)]="invoicePaymentStatus">
+              <option value="unpaid">Unpaid</option>
+              <option value="paid">Paid</option>
+            </select>
+          </label>
+          <button class="primary-action" (click)="addInvoiceItem()" [disabled]="!selectedInvoiceProduct" *ngIf="!viewingSavedDocument">Add Item</button>
+          <div class="invoice-builder-transfer" *ngIf="!viewingSavedDocument">
+            <button class="secondary-action" type="button" (click)="transferLatestQuotationToInvoice()" [disabled]="quotationTransferLoading">
+              {{ quotationTransferLoading ? 'Loading latest quotation...' : (invoiceTransferredFromQuotation ? 'Refresh from Latest Quotation' : 'Transfer Latest Quotation') }}
+            </button>
+            <p class="invoice-transfer-note" *ngIf="transferredQuotationRecord">
+              Loaded {{ transferredQuotationRecord.quotationNumber }}. Imported item prices can be edited below before saving the invoice.
+            </p>
+          </div>
+        </div>
+
+        <div class="table-scroll invoice-items-card" *ngIf="!viewingSavedDocument">
+          <table class="data-table compact-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Sum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of invoiceItems; let i = index">
+                <td>{{ item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>
+                  <ng-container *ngIf="invoiceTransferredFromQuotation; else invoiceItemStaticPrice">
+                    <input
+                      class="field-input invoice-inline-price-input"
+                      type="number"
+                      [ngModel]="item.price"
+                      (ngModelChange)="updateTransferredInvoiceItemPrice(i, $event)"
+                      min="0"
+                    />
+                  </ng-container>
+                  <ng-template #invoiceItemStaticPrice>{{ formatInvoiceMoney(item.price) }}</ng-template>
+                </td>
+                <td>{{ formatInvoiceMoney(item.price * item.quantity) }}</td>
+                <td><button class="text-action" (click)="removeInvoiceItem(i)">Remove</button></td>
+              </tr>
+              <tr *ngIf="invoiceItems.length===0">
+                <td colspan="5" class="empty-cell">No invoice items added yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
 
       <div class="action-row">
         <button class="secondary-action" (click)="closeInvoiceModal()">Cancel</button>
@@ -2671,29 +2790,6 @@
           {{ viewingSavedDocument ? 'Print' : ((invoiceSaving || quotationSaving) ? 'Saving...' : (quoteMode ? 'Save & Print Quote' : 'Save & Print Invoice')) }}
         </button>
       </div>
-    </div>
-  </div>
-</div>
-
-<div class="invoice-overlay gst-selection-overlay" *ngIf="showGstSelectionModal" (click)="cancelDocumentGstSelection()">
-  <div class="invoice-modal gst-selection-modal" (click)="$event.stopPropagation()">
-    <div class="followup-modal-head">
-      <div class="followup-modal-title">
-        <div class="section-kicker">GST Selection</div>
-        <h3>{{ quoteMode ? 'Quotation' : 'Invoice' }} GST Rate</h3>
-      </div>
-      <button class="secondary-action" type="button" (click)="cancelDocumentGstSelection()">Close</button>
-    </div>
-    <p class="gst-selection-copy">
-      Choose the GST rate for this {{ quoteMode ? 'quotation' : 'invoice' }} before saving and printing.
-    </p>
-    <div class="gst-selection-options">
-      <button class="secondary-action gst-selection-option" type="button" (click)="confirmDocumentGstSelection(false)">
-        Use {{ gstPercentage || 0 }}% GST
-      </button>
-      <button class="primary-action gst-selection-option" type="button" (click)="confirmDocumentGstSelection(true)">
-        Use 0% GST
-      </button>
     </div>
   </div>
 </div>

@@ -3807,3 +3807,57 @@
 
 
 
+
+/* Force side-by-side layout rules for Quotation Builder (highest priority) */
+.admin-employee-modal-overlay .admin-quote-modal:has(.quotation-builder-layout) {
+  width: min(98vw, 1340px) !important;
+  max-width: min(98vw, 1340px) !important;
+  max-height: 92vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-quote-modal:has(.quotation-builder-layout) .invoice-builder {
+  flex: 1 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  max-height: 92vh !important;
+}
+
+.admin-quote-modal:has(.quotation-builder-layout) .invoice-builder-header {
+  padding: 20px 24px 16px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  flex-shrink: 0 !important;
+  background: #ffffff !important;
+  margin: 0 !important;
+}
+
+.quotation-builder-layout {
+  display: grid !important;
+  grid-template-columns: 500px 1fr !important;
+  gap: 0 !important;
+  min-height: 0 !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+.quotation-builder-controls {
+  display: grid !important;
+  align-content: start !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  overflow-y: hidden !important;
+  border-right: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+
+/* Ensure controls form grid uses 4 columns in quotation mode */
+.admin-quote-modal:has(.quotation-builder-layout) .invoice-form-grid-quotation {
+  display: grid !important;
+  grid-template-columns: 2fr 1fr 1fr auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}

@@ -2280,6 +2280,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       );
       return savedPercentage;
     }
+    // -1 = GST Exempt (excluded) — treat as 0 for all calculations
+    if (this.documentGstPercentageOverride === -1) return 0;
     if (this.documentGstPercentageOverride !== null) return this.documentGstPercentageOverride;
     return Number(this.gstPercentage || 0);
   }
@@ -2509,7 +2511,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.showGstSelectionModal = false;
   }
 
-  private refreshInvoiceItemGstFromSelection(): void {
+  refreshInvoiceItemGstFromSelection(): void {
     if (this.viewingSavedDocument) return;
     this.invoiceItems.forEach((item) => {
       if (item?.taxable === undefined && item?.gst === undefined && item?.total === undefined) return;
@@ -2609,10 +2611,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       void this.ensureInvoiceQr().finally(() => this.printCurrentDocument());
       return;
     }
-    if (!this.gstSelectionConfirmed) {
-      this.requestDocumentGstSelection();
-      return;
-    }
+
     if (this.quoteMode) {
       this.saveAndPrintQuotation();
       return;

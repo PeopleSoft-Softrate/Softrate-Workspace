@@ -39,6 +39,11 @@
       <span class="count-badge" *ngIf="jobCount() > 0">{{ jobCount() }}</span>
       <span class="search-match-dot" *ngIf="hasSearchMatch('Job')"></span>
     </button>
+    <button [class.active]="currentCategory() === 'Walkin'" (click)="setCategory('Walkin')">
+      Walkins
+      <span class="count-badge" *ngIf="walkinCount() > 0">{{ walkinCount() }}</span>
+      <span class="search-match-dot" *ngIf="hasSearchMatch('Walkin')"></span>
+    </button>
     <button [class.active]="currentCategory() === 'Assigned'" (click)="setCategory('Assigned')">
       Assigned
       <span class="count-badge" *ngIf="assignedCount() > 0">{{ assignedCount() }}</span>
@@ -67,8 +72,8 @@
           <th>Role</th>
           <th>Info</th>
           <th>Manager</th>
-          <th *ngIf="currentCategory() !== 'Internship' && currentCategory() !== 'Job'">Status</th>
-          <th>Actions</th>
+          <th *ngIf="currentCategory() !== 'Internship' && currentCategory() !== 'Job' && currentCategory() !== 'Walkin'">Status</th>
+          <th style="width: 150px; text-align: left;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -114,7 +119,7 @@
             </ng-template>
           </td>
           <!-- Status -->
-          <td *ngIf="currentCategory() !== 'Internship' && currentCategory() !== 'Job'">
+          <td *ngIf="currentCategory() !== 'Internship' && currentCategory() !== 'Job' && currentCategory() !== 'Walkin'">
             <span class="tbl-status-chip" [ngClass]="req.managerApprovalStatus || 'pending'">{{ req.managerApprovalStatus || 'pending' }}</span>
           </td>
           <!-- Actions -->
@@ -126,6 +131,11 @@
               <button class="tbl-btn tbl-btn-approve" [routerLink]="['/interns/approve', req._id]" title="Onboard">
                 <i class="fa-solid fa-user-plus"></i>
               </button>
+              
+              <!-- Walkin specific actions -->
+              <a class="tbl-btn tbl-btn-approve" *ngIf="currentCategory() === 'Walkin' && req.resume" [href]="'data:application/pdf;base64,' + req.resume" download="resume.pdf" title="Download Resume">
+                <i class="fa-solid fa-file-pdf"></i>
+              </a>
             </div>
           </td>
         </tr>

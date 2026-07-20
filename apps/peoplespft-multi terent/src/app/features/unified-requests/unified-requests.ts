@@ -65,6 +65,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   activeCategory = signal<string>('all'); // 'all', 'leave', 'offboarding', 'onboarding'
   activeStatus = signal<string>('pending'); // 'pending', 'approved', 'rejected'
   searchQuery = signal<string>('');
+  onboardingFilter = signal<'all' | 'regular' | 'walkin'>('all');
 
   managers = signal<any[]>([]);
   isAssigning = signal<string | null>(null);
@@ -615,6 +616,17 @@ export class UnifiedRequests implements OnInit, OnDestroy {
     // 1. Filter by Request Type
     if (cat !== 'all') {
       requests = requests.filter(r => r.type === cat);
+    }
+
+    // Onboarding specific filter
+    if (cat === 'onboarding' && this.onboardingFilter() !== 'all') {
+      const filter = this.onboardingFilter();
+      requests = requests.filter(r => {
+        const isWalkin = r.raw?.isWalkinDrive === true || r.raw?.isWalkinDrive === 'true';
+        if (filter === 'walkin') return isWalkin;
+        if (filter === 'regular') return !isWalkin;
+        return true;
+      });
     }
 
     // 2. Two-stage approval pipeline filter:

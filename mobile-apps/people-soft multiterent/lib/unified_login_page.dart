@@ -204,7 +204,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           break;
 
         case 'employee':
-          final empId = user['EmployeeId'] ?? user['_id'] ?? '';
+          final empIdRaw = user['EmployeeId'];
+          final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty) ? empIdRaw.toString() : (user['_id'] ?? '').toString();
           final empMongoId = (user['_id'] ?? '').toString();
           await prefs.setString('employeeId', empId);
           await prefs.setString('employeeMongoId', empMongoId);
@@ -242,7 +243,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           break;
 
         case 'manager':
-          final empId = (user['EmployeeId'] ?? user['_id'] ?? '').toString();
+          final empIdRaw = user['EmployeeId'];
+          final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty) ? empIdRaw.toString() : (user['_id'] ?? '').toString();
           final fullName = (user['fullName'] ?? 'Manager').toString();
           final email = (user['email'] ?? '').toString();
           final dept = (user['department'] ?? '').toString();
@@ -294,7 +296,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
         case 'hr_admin':
         case 'admin':
           debugPrint("Login success: Identified as HR. User data: $user");
-          final empId = (user['employeeId'] ?? user['EmployeeId'] ?? user['_id'] ?? '').toString();
+          final empIdRaw = user['employeeId'] ?? user['EmployeeId'];
+          final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty) ? empIdRaw.toString() : (user['_id'] ?? '').toString();
           final firstName = user['profile']?['firstName'] ?? '';
           final lastName = user['profile']?['lastName'] ?? '';
           final fullName = user['fullName'] ?? 

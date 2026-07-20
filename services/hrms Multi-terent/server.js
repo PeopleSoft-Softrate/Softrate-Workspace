@@ -99,6 +99,7 @@ app.use('/api/fund-requests', require('./routes/fundRequest.routes'));
 app.use('/api/device-change-requests', require('./routes/deviceChangeRequest.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api/public', require('./routes/public.routes'));
+app.use('/api/walkin-drives', require('./routes/walkinDrive.routes'));
 
 // ============================
 // Test Route

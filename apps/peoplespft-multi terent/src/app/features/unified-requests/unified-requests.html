@@ -130,8 +130,19 @@
         <div class="category-tabs" *ngIf="!embeddedCategory()">
           <button (click)="activeCategory.set('all')" [class.active]="activeCategory() === 'all'" class="tab-btn">All
             Requests</button>
-          <button (click)="activeCategory.set('onboarding')" [class.active]="activeCategory() === 'onboarding'"
-            class="tab-btn">Onboarding</button>
+          <div (click)="activeCategory.set('onboarding')" [class.active]="activeCategory() === 'onboarding'"
+            class="tab-btn" style="display: inline-flex; align-items: center; cursor: pointer;">
+            <span *ngIf="activeCategory() !== 'onboarding'">Onboarding</span>
+            <select *ngIf="activeCategory() === 'onboarding'" 
+                    [ngModel]="onboardingFilter()" 
+                    (ngModelChange)="onboardingFilter.set($event)" 
+                    (click)="$event.stopPropagation()"
+                    style="border: none; background: transparent; color: inherit; font-family: inherit; font-size: 13px; font-weight: inherit; cursor: pointer; outline: none; padding: 0;">
+              <option value="all" style="color: black;">All</option>
+              <option value="regular" style="color: black;">Regular</option>
+              <option value="walkin" style="color: black;">Walkin</option>
+            </select>
+          </div>
           <button (click)="activeCategory.set('leave')" [class.active]="activeCategory() === 'leave'"
             class="tab-btn">Leaves</button>
           <button (click)="activeCategory.set('correction')" [class.active]="activeCategory() === 'correction'"
@@ -181,8 +192,8 @@
       <table class="requests-table" [class.has-selection]="hasSelection()">
         <thead>
           <tr>
-            <th style="width: 40px; text-align: center;">
-              <input *ngIf="activeCategory() !== 'all'" type="checkbox" [checked]="isAllSelected()" (change)="toggleAllSelection($event)" title="Select All Pending" style="cursor: pointer; width: 16px; height: 16px; accent-color: #4f46e5;" />
+            <th *ngIf="activeCategory() !== 'all'" style="width: 40px; text-align: center;">
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAllSelection($event)" title="Select All Pending" style="cursor: pointer; width: 16px; height: 16px; accent-color: #4f46e5;" />
             </th>
             <th>Applicant</th>
             <th>Type</th>
@@ -197,8 +208,8 @@
         <tbody>
           <tr *ngFor="let req of filteredRequests()" [ngClass]="'row-' + req.type">
             <!-- Checkbox -->
-            <td style="text-align: center;">
-              <input *ngIf="req.status === 'pending' && activeCategory() !== 'all'" type="checkbox" [checked]="selectedRequestIds().has(req._id)" (change)="toggleSelection(req._id, $event)" style="cursor: pointer; width: 16px; height: 16px; accent-color: #4f46e5;" />
+            <td *ngIf="activeCategory() !== 'all'" style="text-align: center;">
+              <input *ngIf="req.status === 'pending'" type="checkbox" [checked]="selectedRequestIds().has(req._id)" (change)="toggleSelection(req._id, $event)" style="cursor: pointer; width: 16px; height: 16px; accent-color: #4f46e5;" />
             </td>
             <!-- Applicant -->
             <td>

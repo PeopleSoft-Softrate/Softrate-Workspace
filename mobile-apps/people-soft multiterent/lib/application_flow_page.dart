@@ -26,10 +26,33 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
   String? _errorText;
 
   // Step 2: Role Selection
-  String? _selectedRole; // 'Intern' or 'Job'
+  String? _selectedRole; // 'Intern', 'Job', or 'walkin_<driveId>'
+  String? _selectedWalkinDriveId; // the MongoDB _id of the selected walk-in drive
+
+  List<dynamic> _walkinDrives = [];
+  bool _isLoadingDrives = false;
 
   final Color _primaryColor = const Color(0xFF00657F);
   final String _baseUrl = getBaseUrl();
+
+  Future<void> _fetchWalkinDrives(String code) async {
+    setState(() => _isLoadingDrives = true);
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/public/walkin-drives?companyCode=$code'),
+        bypassCache: true,
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          _walkinDrives = jsonDecode(response.body);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching walkin drives: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingDrives = false);
+    }
+  }
 
   Future<void> _verifyCompany() async {
     final code = _codeController.text.trim();
@@ -60,6 +83,8 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
             _isVerified = true;
             _companyName = data['company']['name'];
           });
+          // Fetch walkin drives in the background
+          _fetchWalkinDrives(code);
         }
       } else {
         if (!mounted) return;
@@ -76,6 +101,8 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
 
   void _nextPage() {
     if (_currentStep < 1) {
+      // Dismiss keyboard before transitioning to step 2
+      FocusManager.instance.primaryFocus?.unfocus();
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
@@ -93,7 +120,20 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
             ),
           ),
         );
+      } else if (_selectedWalkinDriveId != null) {
+        // Walk-in Drive: use the intern form but submit to the walkin endpoint
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FormOne(
+              companyCode: _codeController.text.trim(),
+              companyName: _companyName,
+              walkinDriveId: _selectedWalkinDriveId,
+            ),
+          ),
+        );
       } else {
+        // Full-Time Job
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -300,7 +340,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                         child: _buildIcon(
                           HugeIcons.strokeRoundedPasswordValidation,
                           color: _primaryColor,
-                          size: 24, // Resetting to a more balanced 24px
+                          size: 24,
                         ),
                       ),
                       prefixIconConstraints: const BoxConstraints(
@@ -312,6 +352,25 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                         vertical: 18,
                         horizontal: 16,
                       ),
+                    ),
+                  ),
+                  // Quick-pick company code suggestions
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Quick pick: ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildCodeChip('Softrate'),
+                        const SizedBox(width: 8),
+                        _buildCodeChip('Curiouswings'),
+                      ],
                     ),
                   ),
                   if (_errorText != null) ...[
@@ -494,6 +553,35 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
     );
   }
 
+  Widget _buildCodeChip(String code) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _codeController.text = code;
+          _errorText = null;
+          _isVerified = false;
+          _companyName = null;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: _primaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _primaryColor.withOpacity(0.25)),
+        ),
+        child: Text(
+          code,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: _primaryColor,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStep2() {
     return SingleChildScrollView(
       child: Padding(
@@ -532,6 +620,27 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
               style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
             ),
             const SizedBox(height: 32),
+            if (_isLoadingDrives)
+              const Center(child: CircularProgressIndicator())
+            else if (_walkinDrives.isNotEmpty)
+              ..._walkinDrives.map((drive) {
+                final endDate = drive['endDate'] != null ? drive['endDate'].toString().substring(0, 10) : '';
+                final endTime = drive['endTime'] ?? '';
+                final driveId = drive['_id'] ?? 'walkin';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildRoleCard(
+                    title: "Walk-in Drive",
+                    subtitle: "Ends: $endDate at $endTime",
+                    role: "walkin_$driveId",
+                    icon: Icons.event_available_rounded,
+                    onTapOverride: () => setState(() {
+                      _selectedRole = 'walkin_$driveId';
+                      _selectedWalkinDriveId = driveId;
+                    }),
+                  ),
+                );
+              }).toList(),
             _buildRoleCard(
               title: "Internship",
               subtitle: "For students seeking learning opportunities.",
@@ -556,10 +665,11 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
     required String subtitle,
     required String role,
     required dynamic icon,
+    VoidCallback? onTapOverride,
   }) {
     bool isSelected = _selectedRole == role;
     return GestureDetector(
-      onTap: () => setState(() => _selectedRole = role),
+      onTap: onTapOverride ?? () => setState(() => _selectedRole = role),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(20),

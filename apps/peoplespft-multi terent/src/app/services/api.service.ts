@@ -9,6 +9,8 @@ export class ApiService {
   private useLocalBackend = false;
   private baseUrl = this.useLocalBackend
     ? 'http://localhost:5001'
+    : window.location.hostname === 'localhost'
+        ? 'http://localhost:5001'
     : window.location.hostname === '192.168.29.222'
         ? 'http://192.168.29.222:5001'
         : 'https://peoplesoft.softrateglobal.com/hrms-api';
@@ -845,5 +847,22 @@ export class ApiService {
 
   getGeneralNotifications(role: string): Observable<any> {
     return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/notifications?role=${role}`), { headers: this.getHeaders() });
+  }
+
+  // Walkin Drives
+  getWalkinDrives(): Observable<any> {
+    return this.http.get(this.addCacheBuster(`${this.baseUrl}/api/walkin-drives`), { headers: this.getHeaders() });
+  }
+
+  createWalkinDrive(formData: FormData): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/walkin-drives`, formData, { headers: this.getHeaders() });
+  }
+
+  getWalkinApplications(): Observable<any[]> {
+    return this.http.get<any[]>(this.addCacheBuster(`${this.baseUrl}/api/walkin-drives/applications`), { headers: this.getHeaders() });
+  }
+
+  updateWalkinApplicationStatus(applicationId: string, status: string): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/api/walkin-drives/applications/${applicationId}/status`, { status }, { headers: this.getHeaders() });
   }
 }

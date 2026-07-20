@@ -383,3 +383,14 @@
   line-height: 1.5;
   font-weight: var(--font-weight-medium);
 }
+
+/* Edge-to-edge alignment for the table contents */
+.requests-table th:first-child,
+.requests-table td:first-child {
+  padding-left: 2rem !important;
+}
+
+.requests-table th:last-child,
+.requests-table td:last-child {
+  padding-right: 2rem !important;
+}

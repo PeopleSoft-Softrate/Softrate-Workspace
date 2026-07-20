@@ -80,6 +80,7 @@ export const routes: Routes = [
   { path: 'offboarding', component: OffboardingRequests },
   { path: 'approvals', component: UnifiedRequests },
   { path: 'profile', component: ProfileComponent },
+  { path: 'walkin-drives', loadComponent: () => import('./features/walkin-drives/walkin-drives.component').then(m => m.WalkinDrivesComponent) },
   { path: 'id-card/:companyId/:id', loadComponent: () => import('./features/id-card/id-card').then(m => m.IdCardComponent) },
   { path: 'interns/attendance/corrections', loadComponent: () => import('./features/interns/attendance-corrections/attendance-corrections').then(m => m.AttendanceCorrections) },
 ];

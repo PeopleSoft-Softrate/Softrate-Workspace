@@ -2816,6 +2816,7 @@
   overflow-wrap: anywhere !important;
   display: -webkit-box !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   -webkit-box-orient: vertical !important;
 }
 
@@ -3317,6 +3318,7 @@
 .dashboard-wrapper .admin-employee-style-card .lead-card-remark-item {
   display: -webkit-box !important;
   -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
   -webkit-box-orient: vertical !important;
 }
 

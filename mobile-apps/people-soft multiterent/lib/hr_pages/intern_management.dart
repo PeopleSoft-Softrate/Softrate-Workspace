@@ -183,9 +183,9 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.09),
+        color: color.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         status,
@@ -269,7 +269,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -320,7 +320,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.person_search_rounded,
-                          size: 80, color: Colors.grey.withOpacity(0.3)),
+                          size: 80, color: Colors.grey.withValues(alpha: 0.3)),
                       const SizedBox(height: 16),
                       Text(
                         'No interns found for this filter',
@@ -350,7 +350,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),
@@ -562,7 +562,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                           colors: [
-                            Colors.white.withOpacity(0.0),
+                            Colors.white.withValues(alpha: 0.0),
                             Colors.white,
                           ],
                         ),
@@ -581,7 +581,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xFF459DB2).withOpacity(0.5),
+                  color: const Color(0xFF459DB2).withValues(alpha: 0.5),
                 ),
               ),
               child: DropdownButton<String>(
@@ -638,12 +638,12 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
       backgroundColor: Colors.white,
       elevation: selected ? 4 : 0,
       pressElevation: 2,
-      shadowColor: const Color(0xFF00657F).withOpacity(0.4),
+      shadowColor: const Color(0xFF00657F).withValues(alpha: 0.4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       side: BorderSide(
         color: selected
             ? Colors.transparent
-            : const Color(0xFF00657F).withOpacity(0.15),
+            : const Color(0xFF00657F).withValues(alpha: 0.15),
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -783,7 +783,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF459DB2).withOpacity(0.5),
+                color: const Color(0xFF459DB2).withValues(alpha: 0.5),
               ),
             ),
             child: DropdownButtonHideUnderline(
@@ -829,7 +829,7 @@ Future<String> _createTempFile(List<int> bytes, String fileName) async {
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF459DB2).withOpacity(0.5),
+                color: const Color(0xFF459DB2).withValues(alpha: 0.5),
               ),
             ),
             child: DropdownButtonHideUnderline(
@@ -1018,9 +1018,9 @@ class _ActionPillButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

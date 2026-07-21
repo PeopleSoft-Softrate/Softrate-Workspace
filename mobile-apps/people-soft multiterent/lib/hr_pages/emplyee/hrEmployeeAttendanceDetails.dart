@@ -233,7 +233,7 @@ Widget _buildSummaryBox({
             label,
             style: TextStyle(
               fontSize: 12,
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -353,10 +353,10 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isAbsent ? Colors.orange.withOpacity(0.1) : const Color(0xFF00657F).withOpacity(0.05),
+          color: isAbsent ? Colors.orange.withValues(alpha: 0.1) : const Color(0xFF00657F).withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isAbsent ? Colors.orange.withOpacity(0.3) : const Color(0xFF00657F).withOpacity(0.2),
+            color: isAbsent ? Colors.orange.withValues(alpha: 0.3) : const Color(0xFF00657F).withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -736,7 +736,7 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -848,7 +848,7 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -933,7 +933,7 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: bg.withOpacity(0.5),
+                            color: bg.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: bg),
                           ),
@@ -1075,7 +1075,7 @@ class _HrEmployeeAttendanceDetailsState extends State<HrEmployeeAttendanceDetail
               fontWeight: FontWeight.w700,
               color: isSelected
                   ? Colors.white
-                  : const Color(0xFF146374).withOpacity(0.6),
+                  : const Color(0xFF146374).withValues(alpha: 0.6),
             ),
           ),
         ),

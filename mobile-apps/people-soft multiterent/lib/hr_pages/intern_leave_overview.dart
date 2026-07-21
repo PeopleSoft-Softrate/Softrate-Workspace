@@ -316,7 +316,7 @@ class _InternLeaveOverviewState extends State<InternLeaveOverview> {
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -358,9 +358,9 @@ class _InternLeaveOverviewState extends State<InternLeaveOverview> {
                                       horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(20),
-                                    color: statusColor.withOpacity(0.12),
+                                    color: statusColor.withValues(alpha: 0.12),
                                     border: Border.all(
-                                      color: statusColor.withOpacity(0.6),
+                                      color: statusColor.withValues(alpha: 0.6),
                                     ),
                                   ),
                                   child: Text(
@@ -569,7 +569,7 @@ class _InternLeaveOverviewState extends State<InternLeaveOverview> {
           ChoiceChip(
             label: const Text('All'),
             selected: _statusFilter == 'all',
-            selectedColor: const Color(0xFF8ED1DC).withOpacity(0.6),
+            selectedColor: const Color(0xFF8ED1DC).withValues(alpha: 0.6),
             backgroundColor: Colors.grey.shade100,
             labelStyle: TextStyle(
               fontSize: 11,

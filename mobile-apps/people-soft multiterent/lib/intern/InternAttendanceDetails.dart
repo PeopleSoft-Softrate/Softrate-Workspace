@@ -212,9 +212,9 @@ Widget _buildSummaryBox({
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: bgColor.withOpacity(0.15),
+        color: bgColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: bgColor.withOpacity(0.25), width: 1),
+        border: Border.all(color: bgColor.withValues(alpha: 0.25), width: 1),
       ),
       child: Column(
         children: [
@@ -232,7 +232,7 @@ Widget _buildSummaryBox({
             label,
             style: TextStyle(
               fontSize: 11,
-              color: textColor.withOpacity(0.9),
+              color: textColor.withValues(alpha: 0.9),
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
             ),
@@ -790,7 +790,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFFB336).withOpacity(0.25),
+                        color: const Color(0xFFFFB336).withValues(alpha: 0.25),
                         blurRadius: 15,
                         offset: const Offset(0, 6),
                       ),
@@ -803,7 +803,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                         child: Text(
                           "Day / Date",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
                             letterSpacing: 0.5,
@@ -815,7 +815,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                         child: Text(
                           "Work Hours",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
                             letterSpacing: 0.5,
@@ -828,7 +828,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                         child: Text(
                           "Status",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
                             letterSpacing: 0.5,
@@ -910,7 +910,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
+                                    color: Colors.black.withValues(alpha: 0.04),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -1165,15 +1165,15 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: bg.withOpacity(0.1),
+                              color: bg.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: bg.withOpacity(0.2),
+                                color: bg.withValues(alpha: 0.2),
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: bg.withOpacity(0.05),
+                                  color: bg.withValues(alpha: 0.05),
                                   blurRadius: 15,
                                   offset: const Offset(0, 8),
                                 ),
@@ -1191,7 +1191,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: bg.withOpacity(0.1),
+                                            color: bg.withValues(alpha: 0.1),
                                             blurRadius: 8,
                                           ),
                                         ],
@@ -1251,7 +1251,7 @@ class _InternAttendanceDetailsState extends State<InternAttendanceDetails> {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 25,
                         offset: const Offset(0, -5),
                       ),

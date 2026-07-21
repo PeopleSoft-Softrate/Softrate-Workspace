@@ -226,7 +226,7 @@ Widget _buildSummaryBox({
             label,
             style: TextStyle(
               fontSize: 12,
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -770,7 +770,7 @@ class _HrInternAttendanceDetailsState extends State<HrInternAttendanceDetails> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -943,7 +943,7 @@ class _HrInternAttendanceDetailsState extends State<HrInternAttendanceDetails> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -1002,7 +1002,7 @@ class _HrInternAttendanceDetailsState extends State<HrInternAttendanceDetails> {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 8,
                         offset: const Offset(0, -2),
                       ),
@@ -1135,7 +1135,7 @@ class _HrInternAttendanceDetailsState extends State<HrInternAttendanceDetails> {
               fontWeight: FontWeight.w700,
               color: isSelected
                   ? Colors.white
-                  : const Color(0xFF146374).withOpacity(0.6),
+                  : const Color(0xFF146374).withValues(alpha: 0.6),
             ),
           ),
         ),

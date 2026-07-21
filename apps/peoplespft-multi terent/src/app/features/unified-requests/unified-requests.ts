@@ -1,5 +1,5 @@
 import { AlertService } from '../../shared/services/alert';
-import { Component, OnInit, OnDestroy, signal, computed, inject, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, Input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TourService } from '../../services/tour.service';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +22,8 @@ import {
   FingerAccessIcon,
   WalletDone02Icon,
   SmartPhone01Icon,
-  Link01Icon
+  Link01Icon,
+  ArrowDown01Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -52,6 +53,7 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   readonly WalletDone02Icon = WalletDone02Icon;
   readonly SmartPhone01Icon = SmartPhone01Icon;
   readonly Link01Icon = Link01Icon;
+  readonly ArrowDown01Icon = ArrowDown01Icon;
 
   // Role and Profile Info
   userRole = signal<string | null>(null);
@@ -66,6 +68,11 @@ export class UnifiedRequests implements OnInit, OnDestroy {
   activeStatus = signal<string>('pending'); // 'pending', 'approved', 'rejected'
   searchQuery = signal<string>('');
   onboardingFilter = signal<'all' | 'regular' | 'walkin'>('all');
+  onboardingDropdownOpen = signal<boolean>(false);
+
+  hasWalkin = computed(() => {
+    return this.requestsList().some(r => r.type === 'onboarding' && (r.raw?.isWalkinDrive === true || r.raw?.isWalkinDrive === 'true'));
+  });
 
   managers = signal<any[]>([]);
   isAssigning = signal<string | null>(null);
@@ -118,6 +125,14 @@ export class UnifiedRequests implements OnInit, OnDestroy {
 
   @Input('embeddedSubtitle') set _subtitle(val: string) {
     if (val) this.embeddedSubtitle.set(val);
+  }
+
+  constructor() {
+    effect(() => {
+      if (!this.hasWalkin() && this.onboardingFilter() === 'walkin') {
+        this.onboardingFilter.set('all');
+      }
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit() {

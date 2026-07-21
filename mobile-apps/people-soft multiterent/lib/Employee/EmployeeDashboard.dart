@@ -11,7 +11,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hrmappfrontend/Employee/EmployeeAttendanceDetails.dart';
 import 'package:hrmappfrontend/Employee/Employee_policy.dart';
 import 'package:hrmappfrontend/Employee/Employee_profile_page.dart';
-import 'package:hrmappfrontend/Employee/Employee_progress.dart';
 import 'package:hrmappfrontend/Employee/employee_leave_request.dart';
 import 'package:hrmappfrontend/Employee/employeepayroll.dart';
 import 'package:hrmappfrontend/fund_requests/fund_request_page.dart';
@@ -918,7 +917,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         if (punchLoading)
                           Positioned.fill(
                             child: Container(
-                              color: Colors.black.withOpacity(0.5),
+                              color: Colors.black.withValues(alpha: 0.5),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: const [
@@ -1044,7 +1043,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                 Text(
                   isManager ? "Manager Dashboard" : "Employee Dashboard",
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.2,
@@ -1102,12 +1101,12 @@ class _EmployeedashboardState extends State<Employeedashboard>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1349,10 +1348,10 @@ class _EmployeedashboardState extends State<Employeedashboard>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -1374,11 +1373,11 @@ class _EmployeedashboardState extends State<Employeedashboard>
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.95),
+              color: Colors.orange.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.3),
+                  color: Colors.orange.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1404,7 +1403,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -1476,7 +1475,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 25,
                           offset: const Offset(0, 12),
                         ),
@@ -1489,7 +1488,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                       ),
                     ),
                   ),
@@ -1557,7 +1556,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: startColor.withOpacity(0.25),
+                        color: startColor.withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -1591,17 +1590,17 @@ class _EmployeedashboardState extends State<Employeedashboard>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 22),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
@@ -1651,7 +1650,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: finalColor.withOpacity(0.1),
+                color: finalColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: icon is IconData
@@ -1743,7 +1742,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                 border: Border.all(color: const Color(0xFFE2E8F0)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1754,7 +1753,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
+                      color: iconColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(icon, color: iconColor, size: 20),
@@ -1803,7 +1802,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
                     border: Border.all(color: Colors.white, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.red.withOpacity(0.4),
+                        color: Colors.red.withValues(alpha: 0.4),
                         blurRadius: 4,
                         spreadRadius: 1,
                       ),
@@ -1840,9 +1839,9 @@ class _EmployeedashboardState extends State<Employeedashboard>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.05),
+        color: statusColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.4)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1851,7 +1850,7 @@ class _EmployeedashboardState extends State<Employeedashboard>
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: statusColor.withOpacity(0.12),
+              color: statusColor.withValues(alpha: 0.12),
             ),
             child: Icon(
               Icons.assignment_turned_in_rounded,
@@ -1881,11 +1880,11 @@ class _EmployeedashboardState extends State<Employeedashboard>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.15),
+                        color: statusColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -1970,14 +1969,14 @@ class _ActionButtonState extends State<_ActionButton> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [widget.color, widget.color.withOpacity(0.85)],
+                colors: [widget.color, widget.color.withValues(alpha: 0.85)],
               ),
               shape: ContinuousRectangleBorder(
                 borderRadius: BorderRadius.circular(48),
               ),
               shadows: [
                 BoxShadow(
-                  color: widget.color.withOpacity(0.3),
+                  color: widget.color.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 8),
                 ),

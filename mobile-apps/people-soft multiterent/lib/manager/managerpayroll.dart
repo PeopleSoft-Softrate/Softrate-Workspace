@@ -507,7 +507,7 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withOpacity(0.3),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -542,12 +542,12 @@ class _ManagerPayrollPageState extends State<ManagerPayrollPage>
                 _summarySmallItem(
                   "Earnings",
                   currencyFormatter.format(grossEarnings),
-                  Colors.white.withOpacity(0.2),
+                  Colors.white.withValues(alpha: 0.2),
                 ),
                 _summarySmallItem(
                   "Deductions",
                   currencyFormatter.format(totalDeductions),
-                  Colors.black.withOpacity(0.1),
+                  Colors.black.withValues(alpha: 0.1),
                 ),
               ],
             ),

@@ -196,7 +196,7 @@ class _HrPayrollManagementState extends State<HrPayrollManagement> {
         color: surfaceColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Material(
         color: Colors.transparent,
@@ -210,7 +210,7 @@ class _HrPayrollManagementState extends State<HrPayrollManagement> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: primaryColor.withOpacity(0.1),
+                  backgroundColor: primaryColor.withValues(alpha: 0.1),
                   child: Text(name[0], style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 20)),
                 ),
                 const SizedBox(width: 16),

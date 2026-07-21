@@ -169,7 +169,7 @@ class _OrganizationalHierarchyState extends State<OrganizationalHierarchy> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -183,7 +183,7 @@ class _OrganizationalHierarchyState extends State<OrganizationalHierarchy> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00657F).withOpacity(0.08),
+                              color: const Color(0xFF00657F).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(

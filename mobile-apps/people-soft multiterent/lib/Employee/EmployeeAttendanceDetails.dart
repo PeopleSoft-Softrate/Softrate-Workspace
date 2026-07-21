@@ -295,7 +295,7 @@ Widget _buildSummaryBox({
             label,
             style: TextStyle(
               fontSize: 12,
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -570,12 +570,14 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
 
                   if (response.statusCode == 200 || response.statusCode == 201) {
                     if (mounted) Navigator.pop(context);
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("Correction request sent!"),
                         backgroundColor: Colors.green,
                       ),
                     );
+                    }
                   } else {
                     String errMsg;
                     try {
@@ -584,22 +586,26 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                     } catch (_) {
                       errMsg = response.body;
                     }
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text("Error ${response.statusCode}: $errMsg"),
                         backgroundColor: Colors.red,
                         duration: const Duration(seconds: 6),
                       ),
                     );
+                    }
                   }
                 } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text("Network error: $e"),
                       backgroundColor: Colors.red,
                       duration: const Duration(seconds: 6),
                     ),
                   );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -952,7 +958,7 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
+                                    color: Colors.black.withValues(alpha: 0.04),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -1263,7 +1269,7 @@ class _EmployeeattendancedetailsState extends State<Employeeattendancedetails> {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 8,
                         offset: const Offset(0, -2),
                       ),

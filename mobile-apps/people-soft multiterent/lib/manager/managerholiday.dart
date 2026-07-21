@@ -174,7 +174,7 @@ class _ManagerHolidayCalendarPageState
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -210,7 +210,7 @@ class _ManagerHolidayCalendarPageState
                               border: Border.all(color: borderColor),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
+                                  color: Colors.black.withValues(alpha: 0.02),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -222,7 +222,7 @@ class _ManagerHolidayCalendarPageState
                                   width: 50,
                                   height: 50,
                                   decoration: BoxDecoration(
-                                    color: primaryColor.withOpacity(0.05),
+                                    color: primaryColor.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: const Center(
@@ -280,7 +280,7 @@ class _ManagerHolidayCalendarPageState
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -335,7 +335,7 @@ class _ManagerHolidayCalendarPageState
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -366,9 +366,9 @@ class _ManagerHolidayCalendarPageState
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.03),
+          color: Colors.black.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor.withOpacity(0.5)),
+          border: Border.all(color: borderColor.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
@@ -473,7 +473,7 @@ class _ManagerHolidayCalendarPageState
               padding: const EdgeInsets.only(bottom: 32),
               itemCount: items.length,
               separatorBuilder: (_, __) =>
-                  Divider(height: 1, color: borderColor.withOpacity(0.5)),
+                  Divider(height: 1, color: borderColor.withValues(alpha: 0.5)),
               itemBuilder: (context, index) {
                 bool isSelected = index == currentIndex;
                 return ListTile(
@@ -515,13 +515,13 @@ class _ManagerHolidayCalendarPageState
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.event_note_outlined,
               size: 48,
-              color: subtitleColor.withOpacity(0.5),
+              color: subtitleColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 16),
@@ -538,7 +538,7 @@ class _ManagerHolidayCalendarPageState
             "Try changing your filter settings",
             style: TextStyle(
               fontSize: 13,
-              color: subtitleColor.withOpacity(0.8),
+              color: subtitleColor.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -554,7 +554,7 @@ class _ManagerHolidayCalendarPageState
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

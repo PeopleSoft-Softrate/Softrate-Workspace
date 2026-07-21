@@ -123,7 +123,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withOpacity(0)]),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
@@ -337,19 +337,19 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
               size.width * 0.8,
               size.height * 0.1,
               300,
-              const Color(0xFF8ED1DC).withOpacity(0.3),
+              const Color(0xFF8ED1DC).withValues(alpha: 0.3),
             ),
             _buildBackgroundOrb(
               _orb1Left,
               _orb1Top,
               250,
-              const Color(0xFFFFA726).withOpacity(0.2),
+              const Color(0xFFFFA726).withValues(alpha: 0.2),
             ),
             _buildBackgroundOrb(
               _orb2Left,
               _orb2Top,
               350,
-              const Color(0xFF00657F).withOpacity(0.15),
+              const Color(0xFF00657F).withValues(alpha: 0.15),
             ),
 
             TweenAnimationBuilder<double>(
@@ -382,18 +382,18 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 15,
                               offset: const Offset(0, 10),
                             ),
                             BoxShadow(
-                              color: const Color(0xFF8ED1DC).withOpacity(0.1),
+                              color: const Color(0xFF8ED1DC).withValues(alpha: 0.1),
                               blurRadius: 1,
                               spreadRadius: 1,
                             ),
                           ],
                           border: Border.all(
-                            color: const Color(0xFF8ED1DC).withOpacity(0.2),
+                            color: const Color(0xFF8ED1DC).withValues(alpha: 0.2),
                             width: 0.8,
                           ),
                         ),
@@ -441,7 +441,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
                             Text(
                               "Apply For A Job And Get Your Profile Reviewed By Our HR Team.",
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 13,
                                 height: 1.5,
                                 fontWeight: FontWeight.w400,
@@ -576,9 +576,9 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.05),
+                  color: Colors.green.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withOpacity(0.2)),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -997,7 +997,7 @@ class _EmployeeFormOneState extends State<EmployeeFormOne> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),

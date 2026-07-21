@@ -303,7 +303,7 @@ class _InternLeaveApprovalState extends State<InternLeaveApproval> {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),
@@ -361,9 +361,9 @@ class _InternLeaveApprovalState extends State<InternLeaveApproval> {
                             ),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
-                              color: statusColor.withOpacity(0.12),
+                              color: statusColor.withValues(alpha: 0.12),
                               border: Border.all(
-                                color: statusColor.withOpacity(0.6),
+                                color: statusColor.withValues(alpha: 0.6),
                               ),
                             ),
                             child: Text(

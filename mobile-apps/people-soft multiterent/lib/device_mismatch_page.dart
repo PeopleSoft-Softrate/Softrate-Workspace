@@ -321,7 +321,7 @@ class _DeviceMismatchPageState extends State<DeviceMismatchPage>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00657F).withOpacity(0.06),
+            color: const Color(0xFF00657F).withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -444,7 +444,7 @@ class _DeviceMismatchPageState extends State<DeviceMismatchPage>
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00657F).withOpacity(0.08),
+            color: const Color(0xFF00657F).withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -455,7 +455,7 @@ class _DeviceMismatchPageState extends State<DeviceMismatchPage>
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.05),
+              color: const Color(0xFF00657F).withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: const HugeIcon(

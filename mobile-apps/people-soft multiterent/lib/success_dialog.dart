@@ -5,7 +5,7 @@ void showSuccessPopup(BuildContext context, String message, {Widget? targetPage}
   showDialog(
     context: context,
     barrierDismissible: false,
-    barrierColor: Colors.black.withOpacity(0.3),
+    barrierColor: Colors.black.withValues(alpha: 0.3),
     builder: (dialogContext) => _SuccessDialogContent(message: message, targetPage: targetPage),
   );
 }
@@ -72,7 +72,7 @@ class _SuccessDialogContentState extends State<_SuccessDialogContent>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -84,7 +84,7 @@ class _SuccessDialogContentState extends State<_SuccessDialogContent>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00657F).withOpacity(0.1),
+                  color: const Color(0xFF00657F).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

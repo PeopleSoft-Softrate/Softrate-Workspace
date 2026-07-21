@@ -44,6 +44,9 @@ dependencies:
 
 
 
+  http_parser: any
+  path: any
+  syncfusion_flutter_core: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

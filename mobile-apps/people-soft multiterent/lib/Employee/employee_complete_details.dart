@@ -267,13 +267,13 @@ class _EmployeeCompleteDetailsState extends State<EmployeeCompleteDetails> {
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 8),
                       ),
                     ],
                     border: Border.all(
-                      color: const Color(0xFF8ED1DC).withOpacity(0.2),
+                      color: const Color(0xFF8ED1DC).withValues(alpha: 0.2),
                       width: 0.8,
                     ),
                   ),
@@ -311,7 +311,7 @@ class _EmployeeCompleteDetailsState extends State<EmployeeCompleteDetails> {
                             onPressed: () => widget.onDone(context),
                             style: TextButton.styleFrom(
                               backgroundColor:
-                                  Colors.white.withOpacity(0.15),
+                                  Colors.white.withValues(alpha: 0.15),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
@@ -348,7 +348,7 @@ class _EmployeeCompleteDetailsState extends State<EmployeeCompleteDetails> {
                       Text(
                         "Help us know you better. These details can be submitted now or later, but are required before HR can fully review your profile.",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 12,
                           height: 1.5,
                         ),
@@ -720,7 +720,7 @@ class _EmployeeCompleteDetailsState extends State<EmployeeCompleteDetails> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: DropdownButtonFormField<String>(
         isExpanded: true,
-        value: value,
+        initialValue: value,
         items: options
             .map((e) => DropdownMenuItem(value: e, child: Text(e)))
             .toList(),
@@ -750,7 +750,7 @@ class _EmployeeCompleteDetailsState extends State<EmployeeCompleteDetails> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: file != null
-                ? const Color(0xFF008C9E).withOpacity(0.4)
+                ? const Color(0xFF008C9E).withValues(alpha: 0.4)
                 : const Color(0xFFE1E6F0),
           ),
         ),

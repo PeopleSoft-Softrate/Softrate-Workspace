@@ -9,10 +9,10 @@ class NotificationScreen extends StatefulWidget {
   final String userId;
 
   const NotificationScreen({
-    Key? key,
+    super.key,
     required this.role,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _NotificationScreenState createState() => _NotificationScreenState();
@@ -178,13 +178,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                             border: Border.all(
-                              color: isRead ? Colors.transparent : const Color(0xFF0284C7).withOpacity(0.3),
+                              color: isRead ? Colors.transparent : const Color(0xFF0284C7).withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -194,7 +194,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF00657F).withOpacity(0.1),
+                                  color: const Color(0xFF00657F).withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(

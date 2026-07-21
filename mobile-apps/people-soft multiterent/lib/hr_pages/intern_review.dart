@@ -255,7 +255,7 @@ class _InternReviewState extends State<InternReview> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.08),
+              color: const Color(0xFF00657F).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -300,7 +300,7 @@ class _InternReviewState extends State<InternReview> {
       decoration: BoxDecoration(
         color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.4)),
+        border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -346,7 +346,7 @@ class _InternReviewState extends State<InternReview> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00657F).withOpacity(0.08),
+                    color: const Color(0xFF00657F).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -528,7 +528,7 @@ class _InternReviewState extends State<InternReview> {
       decoration: BoxDecoration(
         color: const Color(0xFFF5F7FA),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF459DB2).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFF459DB2).withValues(alpha: 0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(

@@ -250,7 +250,7 @@ class _EmployeeTerminationPageState extends State<EmployeeTerminationPage> {
                     children: [
                       CircleAvatar(
                         radius: 35,
-                        backgroundColor: const Color(0xFFB00020).withOpacity(0.1),
+                        backgroundColor: const Color(0xFFB00020).withValues(alpha: 0.1),
                         child: Text(
                           widget.fullName.isNotEmpty ? widget.fullName[0].toUpperCase() : 'E',
                           style: const TextStyle(
@@ -436,7 +436,7 @@ class _SectionContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),

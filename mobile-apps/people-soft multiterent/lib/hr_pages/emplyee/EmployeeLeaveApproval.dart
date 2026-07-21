@@ -337,7 +337,7 @@ class _EmployeeLeaveApprovalState extends State<EmployeeLeaveApproval> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -358,7 +358,7 @@ class _EmployeeLeaveApprovalState extends State<EmployeeLeaveApproval> {
                                 color: const Color(0xFFE3F2FD),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withValues(alpha: 0.1),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -400,9 +400,9 @@ class _EmployeeLeaveApprovalState extends State<EmployeeLeaveApproval> {
                                   horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(24),
-                                color: statusColor.withOpacity(0.12),
+                                color: statusColor.withValues(alpha: 0.12),
                                 border: Border.all(
-                                  color: statusColor.withOpacity(0.4),
+                                  color: statusColor.withValues(alpha: 0.4),
                                 ),
                               ),
                               child: Text(

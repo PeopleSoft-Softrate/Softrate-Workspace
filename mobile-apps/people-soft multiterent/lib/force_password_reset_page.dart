@@ -129,7 +129,7 @@ class _ForcePasswordResetPageState extends State<ForcePasswordResetPage> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.05),
+                      color: primaryColor.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -155,10 +155,10 @@ class _ForcePasswordResetPageState extends State<ForcePasswordResetPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.06),
+                    color: primaryColor.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: primaryColor.withOpacity(0.2),
+                      color: primaryColor.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
@@ -175,7 +175,7 @@ class _ForcePasswordResetPageState extends State<ForcePasswordResetPage> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: primaryColor.withOpacity(0.9),
+                                color: primaryColor.withValues(alpha: 0.9),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -183,7 +183,7 @@ class _ForcePasswordResetPageState extends State<ForcePasswordResetPage> {
                               "For your security, you must change your default password before accessing your account.",
                               style: TextStyle(
                                 fontSize: 13,
-                                color: primaryColor.withOpacity(0.85),
+                                color: primaryColor.withValues(alpha: 0.85),
                                 height: 1.4,
                               ),
                             ),

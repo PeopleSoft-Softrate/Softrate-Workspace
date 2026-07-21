@@ -127,7 +127,7 @@ class _ManagerLeavePageState extends State<ManagerLeavePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.event_busy_rounded, size: 48, color: subtitleColor.withOpacity(0.3)),
+            Icon(Icons.event_busy_rounded, size: 48, color: subtitleColor.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text(
               isPendingOnly ? "No pending requests" : "No request history",
@@ -151,9 +151,9 @@ class _ManagerLeavePageState extends State<ManagerLeavePage> {
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor.withOpacity(0.8)),
+            border: Border.all(color: borderColor.withValues(alpha: 0.8)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 8)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 8)),
             ],
           ),
           child: Column(
@@ -165,7 +165,7 @@ class _ManagerLeavePageState extends State<ManagerLeavePage> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -242,7 +242,7 @@ class _ManagerLeavePageState extends State<ManagerLeavePage> {
         color: surfaceColor,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
@@ -325,7 +325,7 @@ class _ManagerLeavePageState extends State<ManagerLeavePage> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.1))),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withValues(alpha: 0.1))),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -341,7 +341,7 @@ class _ManagerLeavePageState extends State<ManagerLeavePage> {
   Widget _statusBadge(String status, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
       child: Text(status.toUpperCase(), style: TextStyle(color: color, fontSize: 8.5, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
     );
   }

@@ -130,18 +130,60 @@
         <div class="category-tabs" *ngIf="!embeddedCategory()">
           <button (click)="activeCategory.set('all')" [class.active]="activeCategory() === 'all'" class="tab-btn">All
             Requests</button>
-          <div (click)="activeCategory.set('onboarding')" [class.active]="activeCategory() === 'onboarding'"
-            class="tab-btn" style="display: inline-flex; align-items: center; cursor: pointer;">
-            <span *ngIf="activeCategory() !== 'onboarding'">Onboarding</span>
-            <select *ngIf="activeCategory() === 'onboarding'" 
-                    [ngModel]="onboardingFilter()" 
-                    (ngModelChange)="onboardingFilter.set($event)" 
-                    (click)="$event.stopPropagation()"
-                    style="border: none; background: transparent; color: inherit; font-family: inherit; font-size: 13px; font-weight: inherit; cursor: pointer; outline: none; padding: 0;">
-              <option value="all" style="color: black;">All</option>
-              <option value="regular" style="color: black;">Regular</option>
-              <option value="walkin" style="color: black;">Walkin</option>
-            </select>
+          <!-- Dropdown Backdrop -->
+          <div *ngIf="onboardingDropdownOpen()" (click)="onboardingDropdownOpen.set(false); $event.stopPropagation()"
+               style="position: fixed; inset: 0; z-index: 40; cursor: default;"></div>
+
+          <div (click)="activeCategory() === 'onboarding' && hasWalkin() ? onboardingDropdownOpen.set(!onboardingDropdownOpen()) : activeCategory.set('onboarding')" 
+               [class.active]="activeCategory() === 'onboarding'"
+               class="tab-btn" style="display: inline-flex; align-items: center; cursor: pointer; position: relative; z-index: 41;">
+            
+            <span style="transition: all 0.3s ease;">
+              <ng-container *ngIf="activeCategory() === 'onboarding' && hasWalkin()">
+                {{ onboardingFilter() === 'walkin' ? 'Walkin' : (onboardingFilter() === 'regular' ? 'Regular' : 'Onboarding') }}
+              </ng-container>
+              <ng-container *ngIf="activeCategory() !== 'onboarding' || !hasWalkin()">
+                Onboarding
+              </ng-container>
+            </span>
+            
+            <div *ngIf="hasWalkin()" 
+                 [style.max-width]="activeCategory() === 'onboarding' ? '20px' : '0'"
+                 [style.opacity]="activeCategory() === 'onboarding' ? '1' : '0'"
+                 [style.margin-left]="activeCategory() === 'onboarding' ? '16px' : '0'"
+                 style="overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center;">
+              <hugeicons-icon [icon]="ArrowDown01Icon" size="16" [strokeWidth]="1.5" color="currentColor" 
+                style="min-width: 16px; transition: transform 0.3s ease;"
+                [style.transform]="onboardingDropdownOpen() ? 'rotate(180deg)' : 'rotate(0deg)'"></hugeicons-icon>
+            </div>
+            
+            <!-- Custom animated dropdown menu -->
+            <div *ngIf="activeCategory() === 'onboarding' && hasWalkin()" 
+                 [style.opacity]="onboardingDropdownOpen() ? '1' : '0'"
+                 [style.transform]="onboardingDropdownOpen() ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)'"
+                 [style.pointer-events]="onboardingDropdownOpen() ? 'auto' : 'none'"
+                 style="position: absolute; top: calc(100% + 8px); left: 0; background: var(--bg-surface, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); min-width: 160px; z-index: 50; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: top left; display: flex; flex-direction: column; overflow: hidden; padding: 6px;">
+                 
+              <div (click)="onboardingFilter.set('all'); onboardingDropdownOpen.set(false); $event.stopPropagation()" 
+                   style="padding: 8px 12px; font-size: 14px; font-family: var(--font-body); font-weight: var(--font-weight-medium); color: var(--text-primary); transition: all 0.2s ease; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
+                   onmouseover="this.style.backgroundColor='var(--bg-secondary, #f1f5f9)'" onmouseout="this.style.backgroundColor='transparent'">
+                Onboarding
+                <hugeicons-icon *ngIf="onboardingFilter() === 'all'" [icon]="WalletDone02Icon" size="16" color="var(--primary-color)"></hugeicons-icon>
+              </div>
+              <div (click)="onboardingFilter.set('regular'); onboardingDropdownOpen.set(false); $event.stopPropagation()" 
+                   style="padding: 8px 12px; font-size: 14px; font-family: var(--font-body); font-weight: var(--font-weight-medium); color: var(--text-primary); transition: all 0.2s ease; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
+                   onmouseover="this.style.backgroundColor='var(--bg-secondary, #f1f5f9)'" onmouseout="this.style.backgroundColor='transparent'">
+                Regular
+                <hugeicons-icon *ngIf="onboardingFilter() === 'regular'" [icon]="WalletDone02Icon" size="16" color="var(--primary-color)"></hugeicons-icon>
+              </div>
+              <div (click)="onboardingFilter.set('walkin'); onboardingDropdownOpen.set(false); $event.stopPropagation()" 
+                   style="padding: 8px 12px; font-size: 14px; font-family: var(--font-body); font-weight: var(--font-weight-medium); color: var(--text-primary); transition: all 0.2s ease; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
+                   onmouseover="this.style.backgroundColor='var(--bg-secondary, #f1f5f9)'" onmouseout="this.style.backgroundColor='transparent'">
+                Walkin
+                <hugeicons-icon *ngIf="onboardingFilter() === 'walkin'" [icon]="WalletDone02Icon" size="16" color="var(--primary-color)"></hugeicons-icon>
+              </div>
+            </div>
+            
           </div>
           <button (click)="activeCategory.set('leave')" [class.active]="activeCategory() === 'leave'"
             class="tab-btn">Leaves</button>

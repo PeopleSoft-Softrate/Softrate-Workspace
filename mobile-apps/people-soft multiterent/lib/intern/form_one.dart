@@ -6,7 +6,6 @@ import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/success_dialog.dart';
 import 'package:hrmappfrontend/utils/pdf_downloader.dart';
-import 'package:hrmappfrontend/holiday_pdf_viewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FormOne extends StatefulWidget {
@@ -112,7 +111,7 @@ class _FormOneState extends State<FormOne> {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withOpacity(0)]),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
@@ -399,7 +398,7 @@ class _FormOneState extends State<FormOne> {
           showDialog(
             context: context,
             barrierDismissible: false,
-            barrierColor: Colors.black.withOpacity(0.3),
+            barrierColor: Colors.black.withValues(alpha: 0.3),
             builder: (_) => Dialog(
               elevation: 0,
               backgroundColor: Colors.transparent,
@@ -411,7 +410,7 @@ class _FormOneState extends State<FormOne> {
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -423,7 +422,7 @@ class _FormOneState extends State<FormOne> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00657F).withOpacity(0.1),
+                        color: const Color(0xFF00657F).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -603,19 +602,19 @@ class _FormOneState extends State<FormOne> {
               w * 0.8,
               h * 0.1,
               300,
-              Color(0xFF8ED1DC).withOpacity(0.3),
+              Color(0xFF8ED1DC).withValues(alpha: 0.3),
             ),
             _buildBackgroundOrb(
               _orb1Left,
               _orb1Top,
               250,
-              Color(0xFFFFA726).withOpacity(0.2),
+              Color(0xFFFFA726).withValues(alpha: 0.2),
             ),
             _buildBackgroundOrb(
               _orb2Left,
               _orb2Top,
               350,
-              Color(0xFF00657F).withOpacity(0.15),
+              Color(0xFF00657F).withValues(alpha: 0.15),
             ),
 
             SafeArea(
@@ -651,18 +650,18 @@ class _FormOneState extends State<FormOne> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 10),
                           ),
                           BoxShadow(
-                            color: const Color(0xFF8ED1DC).withOpacity(0.1),
+                            color: const Color(0xFF8ED1DC).withValues(alpha: 0.1),
                             blurRadius: 1,
                             spreadRadius: 1,
                           ),
                         ],
                         border: Border.all(
-                          color: const Color(0xFF8ED1DC).withOpacity(0.2),
+                          color: const Color(0xFF8ED1DC).withValues(alpha: 0.2),
                           width: 0.8,
                         ),
                       ),
@@ -851,13 +850,13 @@ class _FormOneState extends State<FormOne> {
                                       child: Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: Colors.green.withOpacity(0.1),
+                                          color: Colors.green.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
                                           border: Border.all(
-                                            color: Colors.green.withOpacity(
-                                              0.3,
+                                            color: Colors.green.withValues(
+                                              alpha: 0.3,
                                             ),
                                           ),
                                         ),
@@ -950,7 +949,7 @@ class _FormOneState extends State<FormOne> {
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: Colors.black
-                                                        .withOpacity(0.12),
+                                                        .withValues(alpha: 0.12),
                                                     blurRadius: 16,
                                                     offset: const Offset(0, 6),
                                                   ),
@@ -1038,7 +1037,7 @@ class _FormOneState extends State<FormOne> {
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: Colors.black
-                                                        .withOpacity(0.12),
+                                                        .withValues(alpha: 0.12),
                                                     blurRadius: 16,
                                                     offset: const Offset(0, 6),
                                                   ),
@@ -1215,7 +1214,7 @@ class _FormOneState extends State<FormOne> {
                                                 color: resumeFile != null
                                                     ? const Color(
                                                         0xFF00657F,
-                                                      ).withOpacity(0.05)
+                                                      ).withValues(alpha: 0.05)
                                                     : Colors.grey.shade50,
                                                 borderRadius:
                                                     BorderRadius.circular(14),
@@ -1223,7 +1222,7 @@ class _FormOneState extends State<FormOne> {
                                                   color: resumeFile != null
                                                       ? const Color(
                                                           0xFF00657F,
-                                                        ).withOpacity(0.5)
+                                                        ).withValues(alpha: 0.5)
                                                       : Colors.grey.shade200,
                                                   width: 1.5,
                                                 ),
@@ -1479,7 +1478,7 @@ class _FormOneState extends State<FormOne> {
                                                 ),
                                                 elevation: 4,
                                                 shadowColor: Colors.black
-                                                    .withOpacity(0.25),
+                                                    .withValues(alpha: 0.25),
                                               ),
                                               child: const Text(
                                                 "Submit Application",
@@ -1525,7 +1524,7 @@ InputDecoration dropdownDecoration() => InputDecoration(
   focusedBorder: OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(14)),
     borderSide: BorderSide(
-      color: const Color(0xFF00657F).withOpacity(0.8),
+      color: const Color(0xFF00657F).withValues(alpha: 0.8),
       width: 1.8,
     ),
   ),
@@ -1590,7 +1589,7 @@ Widget inputField({
           focusedBorder: OutlineInputBorder(
             borderRadius: const BorderRadius.all(Radius.circular(14)),
             borderSide: BorderSide(
-              color: const Color(0xFF00657F).withOpacity(0.8),
+              color: const Color(0xFF00657F).withValues(alpha: 0.8),
               width: 1.8,
             ),
           ),

@@ -266,7 +266,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -287,7 +287,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
                         return ChoiceChip(
                           label: Text(day),
                           selected: selectedDayIndex == i || hasHoliday,
-                          selectedColor: primaryColor.withOpacity(0.1),
+                          selectedColor: primaryColor.withValues(alpha: 0.1),
                           backgroundColor: Colors.grey[100],
                           onSelected: (_) {
                             if (mounted) {
@@ -314,7 +314,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -408,7 +408,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -499,7 +499,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -806,7 +806,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1002,7 +1002,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withOpacity(0.2),
+              color: primaryColor.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -1013,7 +1013,7 @@ class _HrHolidayScreenState extends State<HrHolidayScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(

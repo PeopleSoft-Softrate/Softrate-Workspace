@@ -130,7 +130,7 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -193,10 +193,10 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor.withOpacity(0.8)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.8)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -208,7 +208,7 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.08),
+            color: primaryColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(15),
           ),
           child: Center(
@@ -422,7 +422,7 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(color: primaryColor.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: primaryColor.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Center(
@@ -455,7 +455,7 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline_rounded, size: 64, color: borderColor.withOpacity(0.5)),
+          Icon(Icons.people_outline_rounded, size: 64, color: borderColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           const Text("No team members found", style: TextStyle(color: subtitleColor, fontWeight: FontWeight.w500)),
         ],

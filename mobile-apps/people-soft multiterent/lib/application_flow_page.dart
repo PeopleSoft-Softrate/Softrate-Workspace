@@ -234,7 +234,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                       ? 'Verify your organization code to continue.'
                       : 'Choose your desired role to proceed.',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                     letterSpacing: 0.2,
                   ),
@@ -331,7 +331,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                     decoration: InputDecoration(
                       hintText: "Enter Company Code",
                       hintStyle: TextStyle(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -566,9 +566,9 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: _primaryColor.withOpacity(0.08),
+          color: _primaryColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _primaryColor.withOpacity(0.25)),
+          border: Border.all(color: _primaryColor.withValues(alpha: 0.25)),
         ),
         child: Text(
           code,
@@ -640,7 +640,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                     }),
                   ),
                 );
-              }).toList(),
+              }),
             _buildRoleCard(
               title: "Internship",
               subtitle: "For students seeking learning opportunities.",
@@ -674,7 +674,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? _primaryColor : Colors.grey.shade200,
@@ -683,7 +683,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: _primaryColor.withOpacity(0.1),
+                    color: _primaryColor.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

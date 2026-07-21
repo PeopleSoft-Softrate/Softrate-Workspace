@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 
@@ -593,7 +592,7 @@ class _InternProcessState extends State<InternProcess> {
           ),
           if (_isTemplatesLoading)
             Container(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               child: const Center(
                 child: CircularProgressIndicator(color: Color(0xFF00657F)),
               ),
@@ -611,7 +610,7 @@ class _InternProcessState extends State<InternProcess> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -631,7 +630,7 @@ class _InternProcessState extends State<InternProcess> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
+                        color: Colors.black.withValues(alpha: 0.12),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -670,7 +669,7 @@ class _InternProcessState extends State<InternProcess> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
+                        color: Colors.black.withValues(alpha: 0.12),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -716,7 +715,7 @@ class _InternProcessState extends State<InternProcess> {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -727,7 +726,7 @@ class _InternProcessState extends State<InternProcess> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00657F).withOpacity(0.08),
+                  color: const Color(0xFF00657F).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -771,7 +770,7 @@ class _InternProcessState extends State<InternProcess> {
           decoration: BoxDecoration(
             color: const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.5)),
+            border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.5)),
           ),
           child: Row(
             children: [
@@ -1016,7 +1015,7 @@ class _InternProcessState extends State<InternProcess> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

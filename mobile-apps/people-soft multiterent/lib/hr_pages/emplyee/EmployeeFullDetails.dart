@@ -117,7 +117,7 @@ class _ProfileContent extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -127,7 +127,7 @@ class _ProfileContent extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundColor: const Color(0xFF00657F).withOpacity(0.1),
+                backgroundColor: const Color(0xFF00657F).withValues(alpha: 0.1),
                 child: Text(
                   employee.fullName.isNotEmpty ? employee.fullName[0].toUpperCase() : '?',
                   style: const TextStyle(
@@ -345,7 +345,7 @@ class _ContactButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
             color: isEnabled
-                ? const Color(0xFF00657F).withOpacity(0.2)
+                ? const Color(0xFF00657F).withValues(alpha: 0.2)
                 : Colors.grey[300]!,
           ),
         ),
@@ -402,9 +402,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         status.toUpperCase(),
@@ -433,7 +433,7 @@ class _SectionContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

@@ -6,7 +6,6 @@ import 'package:hrmappfrontend/homeScreen.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/intern/userdashboard.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
-import 'package:hrmappfrontend/manager/manager_dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool hrLoggedIn;

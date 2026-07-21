@@ -7,13 +7,14 @@ import { Observable, forkJoin, map } from 'rxjs';
 })
 export class ApiService {
   private useLocalBackend = false;
-  private baseUrl = this.useLocalBackend
-    ? 'http://localhost:5001'
-    : window.location.hostname === 'localhost'
-        ? 'http://localhost:5001'
-    : window.location.hostname === '192.168.29.222'
-        ? 'http://192.168.29.222:5001'
-        : 'https://peoplesoft.softrateglobal.com/hrms-api';
+  // private baseUrl = this.useLocalBackend
+  //   ? 'http://localhost:5001'
+  //   : window.location.hostname === 'localhost'
+  //       ? 'http://localhost:5001'
+  //   : window.location.hostname === '192.168.29.222'
+  //       ? 'http://192.168.29.222:5001'
+  //       : 'https://peoplesoft.softrateglobal.com/hrms-api';
+  private baseUrl = 'https://peoplesoft.softrateglobal.com/hrms-api';
 
 
   constructor(private http: HttpClient) { }

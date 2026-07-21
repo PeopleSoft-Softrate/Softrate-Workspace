@@ -11,10 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hrmappfrontend/utils/device_info_helper.dart';
 import 'package:hrmappfrontend/device_mismatch_page.dart';
-import 'package:hrmappfrontend/device_mismatch_page.dart';
 import 'package:hrmappfrontend/force_password_reset_page.dart';
 import 'package:hrmappfrontend/Employee/employee_complete_details.dart';
-import 'package:hrmappfrontend/manager/manager_dashboard.dart';
 
 class UnifiedLoginPage extends StatefulWidget {
   const UnifiedLoginPage({super.key});
@@ -647,7 +645,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                     Text(
                       'Use your registered email address to sign in.',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
                         letterSpacing: 0.2,
                       ),
@@ -690,7 +688,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                     'Enter your ID or email and password to continue.',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black.withOpacity(0.6),
+                                      color: Colors.black.withValues(alpha: 0.6),
                                       height: 1.4,
                                     ),
                                   ),

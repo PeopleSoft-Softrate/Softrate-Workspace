@@ -131,7 +131,7 @@ class _InternPolicyPageState extends State<InternPolicyPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF00657F).withOpacity(0.08),
+                color: const Color(0xFF00657F).withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -197,7 +197,7 @@ class _InternPolicyPageState extends State<InternPolicyPage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -215,7 +215,7 @@ class _InternPolicyPageState extends State<InternPolicyPage> {
                     gradient: LinearGradient(
                       colors: [
                         const Color(0xFF00657F),
-                        const Color(0xFF00657F).withOpacity(0.8),
+                        const Color(0xFF00657F).withValues(alpha: 0.8),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -248,7 +248,7 @@ class _InternPolicyPageState extends State<InternPolicyPage> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00657F).withOpacity(0.1),
+                          color: const Color(0xFF00657F).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(

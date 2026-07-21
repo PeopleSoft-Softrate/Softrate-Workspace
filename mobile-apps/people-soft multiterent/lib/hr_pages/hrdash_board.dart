@@ -35,7 +35,6 @@ import 'package:hrmappfrontend/fund_requests/fund_request_approval_page.dart';
 
 import 'package:hrmappfrontend/hr_pages/intern_leave_approval.dart';
 import 'package:hrmappfrontend/hr_pages/intern_management.dart';
-import 'package:hrmappfrontend/hr_pages/hr_payroll_management.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -749,7 +748,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                       ? Colors.white
                       : const Color(
                         0xFF00657F,
-                      ).withOpacity(0.8), // Improved contrast
+                      ).withValues(alpha: 0.8), // Improved contrast
               letterSpacing: 0.1,
             ),
           ),
@@ -764,7 +763,7 @@ class _HrdashBoardState extends State<HrdashBoard>
       height: 48,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF00657F).withOpacity(0.08),
+        color: const Color(0xFF00657F).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Stack(
@@ -783,7 +782,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF00657F).withOpacity(0.3),
+                    color: const Color(0xFF00657F).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(
                       0,
@@ -1055,7 +1054,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                 Text(
                   "HR Dashboard",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.2,
@@ -1073,12 +1072,12 @@ class _HrdashBoardState extends State<HrdashBoard>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1134,9 +1133,9 @@ class _HrdashBoardState extends State<HrdashBoard>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
           ),
           child: Text(
             DateFormat("h:mm a").format(now),
@@ -1170,7 +1169,7 @@ class _HrdashBoardState extends State<HrdashBoard>
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1181,7 +1180,7 @@ class _HrdashBoardState extends State<HrdashBoard>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 20),
@@ -1228,7 +1227,7 @@ class _HrdashBoardState extends State<HrdashBoard>
           width: 4,
           height: 18,
           decoration: BoxDecoration(
-            color: const Color(0xFF00657F).withOpacity(0.3),
+            color: const Color(0xFF00657F).withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -1252,21 +1251,21 @@ class _HrdashBoardState extends State<HrdashBoard>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 1,
             offset: const Offset(0, 1),
           ),
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -1278,7 +1277,7 @@ class _HrdashBoardState extends State<HrdashBoard>
               child: Icon(
                 Icons.event_note_outlined,
                 size: 80,
-                color: const Color(0xFF475569).withOpacity(0.05),
+                color: const Color(0xFF475569).withValues(alpha: 0.05),
               ),
             ),
             Material(
@@ -1298,12 +1297,12 @@ class _HrdashBoardState extends State<HrdashBoard>
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF475569).withOpacity(0.12),
+                          color: const Color(0xFF475569).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           Icons.event_note_outlined,
-                          color: const Color(0xFF475569).withOpacity(0.8),
+                          color: const Color(0xFF475569).withValues(alpha: 0.8),
                           size: 20,
                         ),
                       ),
@@ -1361,7 +1360,7 @@ class _HrdashBoardState extends State<HrdashBoard>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00657F).withOpacity(0.2),
+            color: const Color(0xFF00657F).withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -1745,7 +1744,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 25,
                           offset: const Offset(0, 12),
                         ),
@@ -1806,7 +1805,7 @@ class _HrdashBoardState extends State<HrdashBoard>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: startColor.withOpacity(0.25),
+                          color: startColor.withValues(alpha: 0.25),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -1840,17 +1839,17 @@ class _HrdashBoardState extends State<HrdashBoard>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 22),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
@@ -1900,7 +1899,7 @@ class _HrdashBoardState extends State<HrdashBoard>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: finalColor.withOpacity(0.1),
+                color: finalColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, size: 16, color: finalColor),
@@ -2028,21 +2027,21 @@ class _TodayAttendanceCardState extends State<TodayAttendanceCard> {
 
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 1,
                 offset: const Offset(0, 1),
               ),
             ],
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -2054,7 +2053,7 @@ class _TodayAttendanceCardState extends State<TodayAttendanceCard> {
                   child: Icon(
                     Icons.how_to_reg_outlined,
                     size: 80,
-                    color: const Color(0xFF3B82F6).withOpacity(0.06),
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.06),
                   ),
                 ),
                 Material(
@@ -2068,12 +2067,12 @@ class _TodayAttendanceCardState extends State<TodayAttendanceCard> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6).withOpacity(0.12),
+                              color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.how_to_reg_outlined,
-                              color: const Color(0xFF3B82F6).withOpacity(0.8),
+                              color: const Color(0xFF3B82F6).withValues(alpha: 0.8),
                               size: 20,
                             ),
                           ),
@@ -2172,21 +2171,21 @@ class _EmployeeTodayAttendanceCardState
 
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 1,
                 offset: const Offset(0, 1),
               ),
             ],
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -2198,7 +2197,7 @@ class _EmployeeTodayAttendanceCardState
                   child: Icon(
                     Icons.badge_outlined,
                     size: 80,
-                    color: const Color(0xFF3B82F6).withOpacity(0.06),
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.06),
                   ),
                 ),
                 Material(
@@ -2212,12 +2211,12 @@ class _EmployeeTodayAttendanceCardState
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6).withOpacity(0.12),
+                              color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.badge_outlined,
-                              color: const Color(0xFF3B82F6).withOpacity(0.8),
+                              color: const Color(0xFF3B82F6).withValues(alpha: 0.8),
                               size: 20,
                             ),
                           ),

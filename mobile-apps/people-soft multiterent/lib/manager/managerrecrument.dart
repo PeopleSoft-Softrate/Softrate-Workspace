@@ -101,7 +101,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
             Positioned(
               top: -100,
               right: -100,
-              child: _buildBlurCircle(primaryColor.withOpacity(0.05), 400),
+              child: _buildBlurCircle(primaryColor.withValues(alpha: 0.05), 400),
             ),
             SafeArea(
               child: Column(
@@ -135,7 +135,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -226,7 +226,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
                   color: isSelected ? primaryColor : surfaceColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: isSelected ? primaryColor : borderColor, width: 1.5),
-                  boxShadow: isSelected ? [BoxShadow(color: primaryColor.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
+                  boxShadow: isSelected ? [BoxShadow(color: primaryColor.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
                 ),
                 child: Text(
                   filter,
@@ -281,8 +281,8 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor.withOpacity(0.8)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 8))],
+        border: Border.all(color: borderColor.withValues(alpha: 0.8)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: ExpansionTile(
         shape: const RoundedRectangleBorder(side: BorderSide.none),
@@ -291,7 +291,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
         leading: Container(
           width: 50,
           height: 50,
-          decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
           child: Center(child: Text(c['name'][0], style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w700, fontSize: 22))),
         ),
         title: Text(c['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: primaryColor, letterSpacing: -0.3)),
@@ -392,9 +392,9 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF0077B5).withOpacity(0.1),
+          color: const Color(0xFF0077B5).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF0077B5).withOpacity(0.2)),
+          border: Border.all(color: const Color(0xFF0077B5).withValues(alpha: 0.2)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -436,7 +436,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
     final Color color = c['dotColor'];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
       child: Text(c['status'].toUpperCase(), style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.5)),
     );
   }
@@ -480,7 +480,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: _getStatusColor(c['status']).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: _getStatusColor(c['status']).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
             child: Text("Decision: ${c['status'].toUpperCase()}", textAlign: TextAlign.center, style: TextStyle(color: _getStatusColor(c['status']), fontWeight: FontWeight.bold, fontSize: 13)),
           )
       ],
@@ -504,7 +504,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: actionColor.withOpacity(0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: actionColor.withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: Icon(isApprove ? Icons.check_circle_rounded : Icons.cancel_rounded, color: actionColor, size: 32),
               ),
               const SizedBox(height: 20),
@@ -595,7 +595,7 @@ class _ManagerRecruitmentPageState extends State<ManagerRecruitmentPage> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.1))),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withValues(alpha: 0.1))),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

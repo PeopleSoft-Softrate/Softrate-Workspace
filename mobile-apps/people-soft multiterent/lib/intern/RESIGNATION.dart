@@ -79,15 +79,15 @@ class _TerminationFormState extends State<TerminationForm> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF00657F).withOpacity(0.08),
-                    const Color(0xFF00ACC1).withOpacity(0.05),
+                    const Color(0xFF00657F).withValues(alpha: 0.08),
+                    const Color(0xFF00ACC1).withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: const Color(0xFF00657F).withOpacity(0.25),
+                  color: const Color(0xFF00657F).withValues(alpha: 0.25),
                 ),
               ),
               child: Row(
@@ -273,7 +273,7 @@ class _TerminationFormState extends State<TerminationForm> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF00657F).withOpacity(0.35),
+                    color: const Color(0xFF00657F).withValues(alpha: 0.35),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -322,7 +322,7 @@ class _TerminationFormState extends State<TerminationForm> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -334,7 +334,7 @@ class _TerminationFormState extends State<TerminationForm> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 20),
@@ -408,7 +408,7 @@ class _TerminationFormState extends State<TerminationForm> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -420,7 +420,7 @@ class _TerminationFormState extends State<TerminationForm> {
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.1),
+              color: const Color(0xFF00657F).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: const Color(0xFF00ACC1) ),
@@ -468,7 +468,7 @@ class _TerminationFormState extends State<TerminationForm> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -486,7 +486,7 @@ class _TerminationFormState extends State<TerminationForm> {
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.1),
+              color: const Color(0xFF00657F).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: const Color(0xFF00ACC1)),
@@ -511,7 +511,7 @@ class _TerminationFormState extends State<TerminationForm> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -539,7 +539,7 @@ class _TerminationFormState extends State<TerminationForm> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -559,7 +559,7 @@ class _TerminationFormState extends State<TerminationForm> {
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.1),
+              color: const Color(0xFF00657F).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: const Color(0xFF00657F)),
@@ -591,7 +591,7 @@ class _TerminationFormState extends State<TerminationForm> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -609,7 +609,7 @@ class _TerminationFormState extends State<TerminationForm> {
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.1),
+              color: const Color(0xFF00657F).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: const Color(0xFF00657F)),

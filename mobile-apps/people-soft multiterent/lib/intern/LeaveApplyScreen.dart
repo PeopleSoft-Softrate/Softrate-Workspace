@@ -861,7 +861,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
                   color: cardColor,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: accentColor.withOpacity(0.12),
+                    color: accentColor.withValues(alpha: 0.12),
                     width: 1.2,
                   ),
                 ),
@@ -873,7 +873,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: accentColor.withOpacity(0.8),
+                        color: accentColor.withValues(alpha: 0.8),
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -883,7 +883,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: accentColor.withOpacity(0.9),
+                        color: accentColor.withValues(alpha: 0.9),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -891,7 +891,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
                       "Leaves Taken",
                       style: TextStyle(
                         fontSize: 11,
-                        color: accentColor.withOpacity(0.6),
+                        color: accentColor.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -912,7 +912,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1051,7 +1051,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1228,7 +1228,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.08),
+                        color: statusColor.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(statusIcon, color: statusColor, size: 20),
@@ -1255,7 +1255,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.1),
+                                  color: statusColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -1383,7 +1383,7 @@ class _LeaveApplyScreenState extends State<LeaveApplyScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
+                  color: Colors.black.withValues(alpha: 0.12),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),

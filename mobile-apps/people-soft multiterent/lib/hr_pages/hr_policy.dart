@@ -232,7 +232,7 @@ class _HrPolicyState extends State<HrPolicy> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -246,7 +246,7 @@ class _HrPolicyState extends State<HrPolicy> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00657F).withOpacity(0.08),
+                  color: const Color(0xFF00657F).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -351,7 +351,7 @@ class _HrPolicyState extends State<HrPolicy> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: p.employee ? const Color(0xFF00657F).withOpacity(0.08) : Colors.grey.shade50,
+                      color: p.employee ? const Color(0xFF00657F).withValues(alpha: 0.08) : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: p.employee ? const Color(0xFF00657F) : Colors.grey.shade200,
@@ -407,7 +407,7 @@ class _HrPolicyState extends State<HrPolicy> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: p.intern ? const Color(0xFF00657F).withOpacity(0.08) : Colors.grey.shade50,
+                      color: p.intern ? const Color(0xFF00657F).withValues(alpha: 0.08) : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: p.intern ? const Color(0xFF00657F) : Colors.grey.shade200,

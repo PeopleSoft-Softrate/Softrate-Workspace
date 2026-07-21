@@ -198,7 +198,7 @@ class _EmployeeResignationPageState extends State<EmployeeResignationPage> {
                               shape: BoxShape.circle,
                               color: Color(0xFF00657F),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
                               ],
                             ),
                             child: Center(
@@ -280,7 +280,7 @@ class _EmployeeResignationPageState extends State<EmployeeResignationPage> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.12),
+                                color: Colors.black.withValues(alpha: 0.12),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),

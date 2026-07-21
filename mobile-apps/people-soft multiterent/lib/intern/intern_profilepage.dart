@@ -366,7 +366,7 @@ class _InternProfilepageState extends State<InternProfilepage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00657F).withOpacity(0.1),
+                  color: const Color(0xFF00657F).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -527,7 +527,7 @@ class _InternProfilepageState extends State<InternProfilepage> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF00657F).withOpacity(0.08),
+                            color: const Color(0xFF00657F).withValues(alpha: 0.08),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -575,7 +575,7 @@ class _InternProfilepageState extends State<InternProfilepage> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFF0EA5E9).withOpacity(0.2),
+                                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
                                     width: 4,
                                   ),
                                 ),
@@ -621,7 +621,7 @@ class _InternProfilepageState extends State<InternProfilepage> {
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
+                                          color: Colors.black.withValues(alpha: 0.1),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
@@ -739,7 +739,7 @@ class _InternProfilepageState extends State<InternProfilepage> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, -4),
                   ),
@@ -822,9 +822,9 @@ class _InternProfilepageState extends State<InternProfilepage> {
                         foregroundColor: const Color(0xFF00657F),
                         backgroundColor: const Color(
                           0xFF00657F,
-                        ).withOpacity(0.05),
+                        ).withValues(alpha: 0.05),
                         side: BorderSide(
-                          color: const Color(0xFF00657F).withOpacity(0.3),
+                          color: const Color(0xFF00657F).withValues(alpha: 0.3),
                           width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
@@ -953,9 +953,9 @@ class _InternshipTypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -990,11 +990,11 @@ class _SectionContainer extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFF00657F).withOpacity(0.08),
+          color: const Color(0xFF00657F).withValues(alpha: 0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -1059,7 +1059,7 @@ class _LinkedInRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.06),
+              color: const Color(0xFF00657F).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -1142,7 +1142,7 @@ class _InfoRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00657F).withOpacity(0.06),
+              color: const Color(0xFF00657F).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: const Color(0xFF00657F)),
@@ -1212,9 +1212,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1260,13 +1260,13 @@ class _ContactButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isEnabled
-                ? const Color(0xFF00657F).withOpacity(0.12)
+                ? const Color(0xFF00657F).withValues(alpha: 0.12)
                 : Colors.grey[200]!,
           ),
           boxShadow: isEnabled
               ? [
                   BoxShadow(
-                    color: const Color(0xFF00657F).withOpacity(0.06),
+                    color: const Color(0xFF00657F).withValues(alpha: 0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1419,10 +1419,10 @@ class _ImageSourceOption extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: themeColor.withOpacity(0.1),
+              color: themeColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
               border: Border.all(
-                color: themeColor.withOpacity(0.2),
+                color: themeColor.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),

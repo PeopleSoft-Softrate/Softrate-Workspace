@@ -11,8 +11,9 @@ const int _localPort = 5001;
 String getBaseUrl() {
   if (useLocalBackend) {
     if (kIsWeb) return 'http://localhost:$_localPort';
-    if (Platform.isAndroid || Platform.isIOS)
+    if (Platform.isAndroid || Platform.isIOS) {
       return 'http://$_localIp:$_localPort';
+    }
     return 'http://localhost:$_localPort';
   }
   return 'https://peoplesoft.softrateglobal.com/hrms-api';

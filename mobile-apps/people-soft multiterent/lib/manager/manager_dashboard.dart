@@ -11,16 +11,11 @@ import 'package:hrmappfrontend/intern/intern_Organizational_Hierarchy.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hrmappfrontend/homeScreen.dart';
-import 'package:hrmappfrontend/manager/managerrecrument.dart';
 import 'package:hrmappfrontend/manager/managerattendance.dart';
 import 'package:hrmappfrontend/manager/managerleave.dart';
-import 'package:hrmappfrontend/manager/managershift.dart';
 import 'package:hrmappfrontend/manager/managerpayroll.dart';
-import 'package:hrmappfrontend/manager/managerappraisal.dart';
-import 'package:hrmappfrontend/manager/managerdocuments.dart';
 import 'package:hrmappfrontend/manager/managerteam.dart';
 import 'package:hrmappfrontend/manager/managerholiday.dart';
-import 'package:hrmappfrontend/manager/manageroffboarding.dart';
 import 'package:hrmappfrontend/network_aware_mixin.dart';
 import 'package:hrmappfrontend/hr_pages/hrdash_board.dart';
 import 'package:hrmappfrontend/Employee/EmployeeDashboard.dart';
@@ -430,7 +425,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                                 100,
                                 116,
                                 139,
-                              ).withOpacity(0.9),
+                              ).withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -725,15 +720,15 @@ class _ManagerDashboardState extends State<ManagerDashboard>
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor.withOpacity(0.8)),
+            border: Border.all(color: borderColor.withValues(alpha: 0.8)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.07),
+                color: Colors.black.withValues(alpha: 0.07),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 1,
                 offset: const Offset(0, 1),
               ),
@@ -744,7 +739,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.07),
+                  color: iconColor.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),
@@ -815,10 +810,10 @@ class _ManagerDashboardState extends State<ManagerDashboard>
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor.withOpacity(0.8)),
+            border: Border.all(color: borderColor.withValues(alpha: 0.8)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -830,7 +825,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.05),
+                  color: accentColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -917,15 +912,15 @@ class _ManagerDashboardState extends State<ManagerDashboard>
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor.withOpacity(0.8)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.8)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 1,
             offset: const Offset(0, 1),
           ),
@@ -1030,10 +1025,10 @@ class _ManagerDashboardState extends State<ManagerDashboard>
           decoration: BoxDecoration(
             color: surfaceColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor.withOpacity(0.8)),
+            border: Border.all(color: borderColor.withValues(alpha: 0.8)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1045,7 +1040,7 @@ class _ManagerDashboardState extends State<ManagerDashboard>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.05),
+                  color: primaryColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(

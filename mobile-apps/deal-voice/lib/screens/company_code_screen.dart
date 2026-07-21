@@ -30,6 +30,7 @@ class _CompanyCodeScreenState extends State<CompanyCodeScreen> {
     if (res['success'] == true) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('companyCode', code);
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/sim-selection');
     } else {
       setState(() => _isLoading = false);
@@ -61,7 +62,7 @@ class _CompanyCodeScreenState extends State<CompanyCodeScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.08),
+                    color: primaryBlue.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -161,13 +162,13 @@ class _CompanyCodeScreenState extends State<CompanyCodeScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryBlue,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: primaryBlue.withOpacity(0.6),
+                  disabledBackgroundColor: primaryBlue.withValues(alpha: 0.6),
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   elevation: 8,
-                  shadowColor: primaryBlue.withOpacity(0.4),
+                  shadowColor: primaryBlue.withValues(alpha: 0.4),
                 ),
                 child: _isLoading
                     ? const SizedBox(

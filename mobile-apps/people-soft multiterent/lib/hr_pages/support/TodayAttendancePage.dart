@@ -147,7 +147,7 @@ class _TodayAttendancePageState extends State<TodayAttendancePage> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 6,
           ),
         ],
@@ -281,7 +281,7 @@ class _TodayAttendancePageState extends State<TodayAttendancePage> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 6,
                       ),
                     ],
@@ -371,7 +371,7 @@ class _TodayAttendancePageState extends State<TodayAttendancePage> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.2),
+                          color: Colors.orange.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(

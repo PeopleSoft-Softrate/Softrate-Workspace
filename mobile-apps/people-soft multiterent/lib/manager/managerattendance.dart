@@ -78,7 +78,7 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: actionColor.withOpacity(0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: actionColor.withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: Icon(isApprove ? Icons.check_circle_rounded : Icons.cancel_rounded, color: actionColor, size: 32),
               ),
               const SizedBox(height: 20),
@@ -237,7 +237,7 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -387,9 +387,9 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
                   decoration: BoxDecoration(
                     color: surfaceColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: borderColor.withOpacity(0.8)),
+                    border: Border.all(color: borderColor.withValues(alpha: 0.8)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: Row(
@@ -398,7 +398,7 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(
@@ -479,9 +479,9 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
                   decoration: BoxDecoration(
                     color: surfaceColor,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: borderColor.withOpacity(0.8)),
+                    border: Border.all(color: borderColor.withValues(alpha: 0.8)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 8)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 8)),
                     ],
                   ),
                   child: Column(
@@ -491,7 +491,7 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                             child: const Icon(Icons.history_toggle_off_rounded, color: Colors.orange, size: 18),
                           ),
                           const SizedBox(width: 12),
@@ -553,9 +553,9 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.1)),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -584,7 +584,7 @@ class _ManagerAttendancePageState extends State<ManagerAttendancePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(

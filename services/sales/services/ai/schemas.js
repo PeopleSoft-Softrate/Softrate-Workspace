@@ -34,7 +34,7 @@ function rankedRecommendationsSchema(minLength, maxLength = minLength) {
 }
 
 const companyInsightOutputSchema = z.object({
-  officialWebsite: z.string().trim().url().or(z.literal('')),
+  officialWebsite: z.string().trim().describe('The official website URL if known, else empty string'),
   industry: z.string().trim().min(1).max(160),
   businessSummary: z.string().trim().min(1).max(1400),
   servicesOrPlatforms: z.array(z.string().trim().min(1).max(160)).min(3).max(8),

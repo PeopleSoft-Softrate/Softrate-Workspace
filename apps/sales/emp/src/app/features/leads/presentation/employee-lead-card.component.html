@@ -17,11 +17,15 @@
     </div>
   </div>
 
-  <div class="lead-record-line" [title]="lead.contactNumber || '-'">
+  <div class="lead-record-line" style="position: relative;" [title]="lead.contactNumber || '-'" (mouseenter)="hoveredField='contact_'+lead._id" (mouseleave)="hoveredField=null">
     <span class="lead-record-line-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
     </span>
     <span class="lead-record-line-value">{{ lead.contactNumber || '-' }}</span>
+    <button *ngIf="lead.contactNumber && hoveredField === 'contact_'+lead._id" class="copy-icon-btn" style="right: 0; background: #fff;" [class.copied]="copiedField === lead.contactNumber" (click)="$event.stopPropagation(); copyText(lead.contactNumber)" title="Copy">
+      <svg *ngIf="copiedField === lead.contactNumber" viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      <svg *ngIf="copiedField !== lead.contactNumber" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+    </button>
   </div>
 
   <button class="lead-card-invoice-action" type="button" title="Generate quote" (click)="$event.stopPropagation(); quotationOpen.emit(lead)" *ngIf="showQuotationAction; else invoiceLeadAction">
@@ -46,11 +50,15 @@
     <span class="lead-record-line-value" [title]="lead.setLabel || '-'">{{ lead.setLabel || '-' }}</span>
   </div>
 
-  <div class="lead-record-line lead-record-email" [title]="lead.directorEmailAddress || '-'">
+  <div class="lead-record-line lead-record-email" style="position: relative;" [title]="lead.directorEmailAddress || '-'" (mouseenter)="hoveredField='email_'+lead._id" (mouseleave)="hoveredField=null">
     <span class="lead-record-line-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg>
     </span>
     <span class="lead-record-line-value" [title]="lead.directorEmailAddress || '-'">{{ lead.directorEmailAddress || '-' }}</span>
+    <button *ngIf="lead.directorEmailAddress && hoveredField === 'email_'+lead._id" class="copy-icon-btn" style="right: 0; background: #fff;" [class.copied]="copiedField === lead.directorEmailAddress" (click)="$event.stopPropagation(); copyText(lead.directorEmailAddress)" title="Copy">
+      <svg *ngIf="copiedField === lead.directorEmailAddress" viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      <svg *ngIf="copiedField !== lead.directorEmailAddress" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+    </button>
   </div>
 
   <div class="lead-card-remarks">

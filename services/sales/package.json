@@ -19,6 +19,7 @@
   "description": "",
   "dependencies": {
     "@langchain/core": "^1.0.6",
+    "@langchain/google-genai": "^2.2.0",
     "@langchain/openai": "^1.0.6",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.6",

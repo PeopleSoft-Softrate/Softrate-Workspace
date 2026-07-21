@@ -375,6 +375,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private activeOverviewColumnResize: OverviewColumnResizeState | null = null;
 
   // ── Leads ─────────────────────────────────────────────────────
+  leadViewMode: 'grid' | 'table' = 'table';
   allLeads: Lead[] = [];
   leads: Lead[] = [];
   leadsLoading = false;
@@ -1227,6 +1228,10 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.toggleAiBriefPopup(event, this.currentAiSummaryTargetKey(), this.getSelectedLeadForAiBrief(), company);
   }
 
+  openAiBriefForLead(event: Event, lead: Lead): void {
+    this.toggleAiBriefPopup(event, `lead-table-summary-${lead._id}`, lead, lead.leadCompanyName || '');
+  }
+
   openAiBriefFullView(event: Event): void {
     event.stopPropagation();
     const company = this.dashTab === 'followups' ? this.activeFollowupCompany : this.selectedLeadCompany;
@@ -1651,35 +1656,44 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     );
   }
 
+  private cachedAiBrief: AiBrief | null = null;
+  private cachedOfficialSources: Array<AiBrief['sources'][number]> = [];
+  private cachedResearchSources: Array<AiBrief['sources'][number]> = [];
+
   aiBriefOfficialSources(): Array<AiBrief['sources'][number]> {
     if (!this.aiBrief) return [];
-
+    if (this.cachedAiBrief === this.aiBrief) return this.cachedOfficialSources;
+    
+    this.cachedAiBrief = this.aiBrief;
     const officialSources = this.aiBrief.sources.filter((source) =>
       this.isOfficialHostnameMatch(source.url)
     );
 
     if (officialSources.length > 0) {
-      return officialSources;
+      this.cachedOfficialSources = officialSources;
+    } else if (this.aiBrief.officialWebsite) {
+      this.cachedOfficialSources = [
+        {
+          title: this.aiBrief.leadCompanyName || this.hostnameFromUrl(this.aiBrief.officialWebsite),
+          url: this.aiBrief.officialWebsite,
+          sourceType: 'official_website',
+          snippet: '',
+        },
+      ];
+    } else {
+      this.cachedOfficialSources = [];
     }
 
-    if (!this.aiBrief.officialWebsite) {
-      return [];
-    }
-
-    return [
-      {
-        title: this.aiBrief.leadCompanyName || this.hostnameFromUrl(this.aiBrief.officialWebsite),
-        url: this.aiBrief.officialWebsite,
-        sourceType: 'official_website',
-        snippet: '',
-      },
-    ];
+    this.cachedResearchSources = this.aiBrief.sources.filter((source) => !this.isOfficialHostnameMatch(source.url));
+    return this.cachedOfficialSources;
   }
 
   aiBriefResearchSources(): Array<AiBrief['sources'][number]> {
     if (!this.aiBrief) return [];
-
-    return this.aiBrief.sources.filter((source) => !this.isOfficialHostnameMatch(source.url));
+    if (this.cachedAiBrief === this.aiBrief) return this.cachedResearchSources;
+    
+    this.aiBriefOfficialSources();
+    return this.cachedResearchSources;
   }
 
   aiBriefSourceMetaLabel(source: AiBrief['sources'][number], category: 'official' | 'research'): string {
@@ -7519,5 +7533,20 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   getLeadByPhone(phone: string): Lead | undefined {
     return this.allLeads.find(l => l.contactNumber === phone);
+  }
+
+  hoveredField: string | null = null;
+  copiedField: string | null = null;
+
+  copyText(text: string | undefined): void {
+    if (text) {
+      navigator.clipboard.writeText(text);
+      this.copiedField = text;
+      setTimeout(() => {
+        if (this.copiedField === text) {
+          this.copiedField = null;
+        }
+      }, 2000);
+    }
   }
 }

@@ -62,6 +62,17 @@ import { AdminWorkspaceController } from './state/admin-workspace.controller';
   encapsulation: ViewEncapsulation.None
 })
 export class AdminWorkspaceComponent extends AdminWorkspaceController {
+  adminLeadViewMode: 'grid' | 'table' = 'grid';
+  adminFollowupViewMode: 'grid' | 'table' = 'grid';
+  hoveredField: string | null = null;
+  copiedField: string | null = null;
+  copyText(text: string): void {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedField = text;
+      setTimeout(() => this.copiedField = null, 2000);
+    });
+  }
   constructor(
     callLogService: CallLogService,
     leadService: LeadService,

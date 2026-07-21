@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Client = require('../models/Client');
+const Counter = require('../models/Counter');
 const Lead = require('../models/Lead');
 const User = require('../models/User');
 const { normalizeText } = require('./leadNormalization');
@@ -79,16 +80,18 @@ function clientPayloadFromLead(lead) {
   };
 }
 
-async function nextClientId(companyCode, date = new Date()) {
-  const yy = String(date.getFullYear()).slice(-2);
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const prefix = `CL-${yy}${mm}-`;
-  const latest = await Client.findOne({
-    companyCode,
-    clientId: new RegExp(`^${escapeRegex(prefix)}\\d{4}$`),
-  }).sort({ clientId: -1 }).select('clientId').lean();
-  const nextSequence = Number(String(latest?.clientId || '').slice(-4) || 0) + 1;
-  return `${prefix}${String(nextSequence).padStart(4, '0')}`;
+async function getNextSequence(companyCode, entity) {
+  const counter = await Counter.findOneAndUpdate(
+    { companyCode, entity },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+  return counter.seq;
+}
+
+async function nextClientId(companyCode) {
+  const seq = await getNextSequence(companyCode, 'client');
+  return `CL${999 + seq}`;
 }
 
 async function createClientPayload(payload, options = {}) {
@@ -205,6 +208,7 @@ async function createManualClient(payload = {}) {
       businessType: '',
       serviceName: payload.serviceName,
       dealvoiceClientId: String(result.client._id || ''),
+      softrateClientId: String(result.client.clientId || ''),
     }).catch(err => console.error('[WE-CRM intake] webhook failed:', err.message));
   }
 

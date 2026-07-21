@@ -27,6 +27,21 @@
                 <input id="adminFollowupSearch" class="topbar-input" type="text" placeholder="Search all follow-ups..." [(ngModel)]="followupSearch" (ngModelChange)="onFollowupFiltersChange()">
               </label>
             </div>
+            
+            <div class="view-mode-toggle lead-workspace-view-toggle">
+              <button class="view-mode-btn" [class.active]="adminFollowupViewMode === 'table'"
+                (click)="adminFollowupViewMode = 'table'" title="Table View" aria-label="Table View">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M4 4h16v6H4V4zm0 10h16v6H4v-6z" />
+                </svg>
+              </button>
+              <button class="view-mode-btn" [class.active]="adminFollowupViewMode === 'grid'"
+                (click)="adminFollowupViewMode = 'grid'" title="Card View" aria-label="Card View">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="record-frame lead-record-frame followup-record-frame admin-followups-record-frame">
@@ -86,8 +101,93 @@
                 <p>Select a company from the list to view leads</p>
               </div>
 
+              <div class="lead-table-wrapper" *ngIf="adminFollowupViewMode === 'table' && filteredBookmarksByGlobalCompany.length > 0">
+                <table class="lead-premium-table">
+                  <thead>
+                    <tr>
+                      <th>Follow-up Name</th>
+                      <th>Contact</th>
+                      <th>Email</th>
+                      <th style="min-width: 140px;">Status</th>
+                      <th style="min-width: 220px;">Remarks</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ng-container *ngFor="let b of filteredBookmarksByGlobalCompany">
+                      <tr *ngIf="getMatchedLeadForAdminBookmark(b) as matchedLead" class="lead-table-row">
+                        <td>
+                          <div class="lead-table-name">
+                            <span>{{ b.contactName || matchedLead.contactName || 'Primary Contact' }}</span>
+                          </div>
+                        </td>
+                        <td (mouseenter)="hoveredField='contact_'+matchedLead._id" (mouseleave)="hoveredField=null">
+                          <div class="text-secondary copyable-cell">
+                            <span class="copyable-text">{{ b.contactNumber || matchedLead.contactNumber || '-' }}</span>
+                            <button *ngIf="(b.contactNumber || matchedLead.contactNumber) && hoveredField === 'contact_'+matchedLead._id" class="copy-icon-btn" [class.copied]="copiedField === (b.contactNumber || matchedLead.contactNumber)" (click)="$event.stopPropagation(); copyText(b.contactNumber || matchedLead.contactNumber)" title="Copy">
+                              <svg *ngIf="copiedField === (b.contactNumber || matchedLead.contactNumber)" viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                              <svg *ngIf="copiedField !== (b.contactNumber || matchedLead.contactNumber)" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                            </button>
+                          </div>
+                        </td>
+                        <td [title]="matchedLead.directorEmailAddress || '-'" (mouseenter)="hoveredField='email_'+matchedLead._id" (mouseleave)="hoveredField=null">
+                          <div class="text-secondary copyable-cell">
+                            <span class="truncate-email copyable-text">{{ matchedLead.directorEmailAddress || '-' }}</span>
+                            <button *ngIf="matchedLead.directorEmailAddress && hoveredField === 'email_'+matchedLead._id" class="copy-icon-btn" [class.copied]="copiedField === matchedLead.directorEmailAddress" (click)="$event.stopPropagation(); copyText(matchedLead.directorEmailAddress)" title="Copy">
+                              <svg *ngIf="copiedField === matchedLead.directorEmailAddress" viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                              <svg *ngIf="copiedField !== matchedLead.directorEmailAddress" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                            </button>
+                          </div>
+                        </td>
+                        <td>
+                          <select class="field-select table-status-select" [ngModel]="normalizedLeadStatus(matchedLead.status)"
+                            (ngModelChange)="updateLeadStatus(matchedLead, $event)" (click)="$event.stopPropagation()"
+                            [style.color]="leadStatusColor(normalizedLeadStatus(matchedLead.status))"
+                            [disabled]="!matchedLead._id || updatingLeadId===matchedLead._id" aria-label="Lead status">
+                            <option *ngFor="let st of LEAD_STATUSES" [value]="st" [style.color]="leadStatusColor(st)">{{ st }}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <div class="table-remark-cell">
+                            <div class="table-remark-input-wrap" (click)="$event.stopPropagation()">
+                              <input type="text" class="field-input table-remark-input"
+                                [ngModel]="leadRemarksInputs[matchedLead._id || b._id || ''] || ''"
+                                (ngModelChange)="leadRemarksInputs[matchedLead._id || b._id || ''] = $event"
+                                (keyup.enter)="$event.stopPropagation(); matchedLead._id && addLeadRemark(matchedLead)"
+                                placeholder="Type remark..." [disabled]="!matchedLead._id || remarkPostingIds.has(matchedLead._id || '')">
+                              <button type="button" class="table-remark-add-btn"
+                                (click)="$event.stopPropagation(); matchedLead._id && addLeadRemark(matchedLead)"
+                                [disabled]="!matchedLead._id || !leadRemarksInputs[matchedLead._id || b._id || ''] || remarkPostingIds.has(matchedLead._id || '')"
+                                title="Add remark">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
+                                  <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                                </svg>
+                              </button>
+                            </div>
+                            <button type="button" class="text-action" [disabled]="!matchedLead._id"
+                              (click)="$event.stopPropagation(); matchedLead._id && openCompanyRemarkHistory(matchedLead)"
+                              title="View history" style="font-size: 11px; white-space: nowrap;">History</button>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="table-actions-cell">
+                            <button class="lead-card-icon-action" type="button" (click)="openEditFollowupModal(b)" aria-label="Edit follow-up" title="Edit follow-up">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>
+                            </button>
+                            <button class="lead-card-icon-action" type="button" [class.active]="matchedLead.isFavourite" [disabled]="!matchedLead._id" (click)="matchedLead._id && toggleFavourite(matchedLead)" [attr.aria-label]="matchedLead.isFavourite ? 'Remove from Favourite' : 'Add to Favourite'" [title]="matchedLead.isFavourite ? 'Remove from Favourite' : 'Add to Favourite'">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </ng-container>
+                  </tbody>
+                </table>
+              </div>
+
               <!-- Lead Cards Grid -->
-              <div *ngIf="selectedGlobalFollowupCompany" class="lead-card-grid admin-leads-card-grid admin-followup-card-grid admin-employee-style-grid">
+              <div *ngIf="selectedGlobalFollowupCompany && adminFollowupViewMode === 'grid'" class="lead-card-grid admin-leads-card-grid admin-followup-card-grid admin-employee-style-grid">
                 <article *ngFor="let b of filteredBookmarksByGlobalCompany" class="lead-record-card admin-lead-record-card followup-record-card admin-followup-contact-card admin-employee-style-card">
                   <ng-container *ngIf="getMatchedLeadForAdminBookmark(b) as matchedLead">
                     <div class="lead-record-card-head admin-lead-card-head">

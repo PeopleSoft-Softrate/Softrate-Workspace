@@ -5173,34 +5173,43 @@ export abstract class AdminWorkspaceController implements OnInit {
     );
   }
 
+  private cachedAiBrief: AiBrief | null = null;
+  private cachedOfficialSources: Array<AiBrief['sources'][number]> = [];
+  private cachedResearchSources: Array<AiBrief['sources'][number]> = [];
+
   aiBriefOfficialSources(): Array<AiBrief['sources'][number]> {
     if (!this.aiBrief) return [];
-
+    if (this.cachedAiBrief === this.aiBrief) return this.cachedOfficialSources;
+    
+    this.cachedAiBrief = this.aiBrief;
     const sources = this.aiBrief.sources || [];
     const officialSources = sources.filter((source) => this.isOfficialHostnameMatch(source.url));
 
     if (officialSources.length > 0) {
-      return officialSources;
+      this.cachedOfficialSources = officialSources;
+    } else if (this.aiBrief.officialWebsite) {
+      this.cachedOfficialSources = [
+        {
+          title: this.aiBrief.leadCompanyName || this.hostnameFromUrl(this.aiBrief.officialWebsite),
+          url: this.aiBrief.officialWebsite,
+          sourceType: 'official_website',
+          snippet: '',
+        },
+      ];
+    } else {
+      this.cachedOfficialSources = [];
     }
 
-    if (!this.aiBrief.officialWebsite) {
-      return [];
-    }
-
-    return [
-      {
-        title: this.aiBrief.leadCompanyName || this.hostnameFromUrl(this.aiBrief.officialWebsite),
-        url: this.aiBrief.officialWebsite,
-        sourceType: 'official_website',
-        snippet: '',
-      },
-    ];
+    this.cachedResearchSources = (this.aiBrief.sources || []).filter((source) => !this.isOfficialHostnameMatch(source.url));
+    return this.cachedOfficialSources;
   }
 
   aiBriefResearchSources(): Array<AiBrief['sources'][number]> {
     if (!this.aiBrief) return [];
-
-    return (this.aiBrief.sources || []).filter((source) => !this.isOfficialHostnameMatch(source.url));
+    if (this.cachedAiBrief === this.aiBrief) return this.cachedResearchSources;
+    
+    this.aiBriefOfficialSources();
+    return this.cachedResearchSources;
   }
 
   aiBriefSourceMetaLabel(source: AiBrief['sources'][number], category: 'official' | 'research'): string {

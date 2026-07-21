@@ -547,8 +547,9 @@
 
 .admin-quote-modal .invoice-builder-header {
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: space-between !important;
+  text-align: left !important;
   gap: 16px !important;
 }
 
@@ -587,13 +588,13 @@
 
 .admin-quote-modal .invoice-builder-actions {
   position: sticky !important;
-  bottom: -24px !important;
+  bottom: 0 !important;
   z-index: 4 !important;
   display: flex !important;
   flex-wrap: wrap !important;
   justify-content: flex-end !important;
   gap: 10px !important;
-  margin: 0 -24px -24px !important;
+  margin: 0 !important;
   padding: 16px 24px !important;
   border-top: 1px solid #e4e7ec !important;
   background: #ffffff !important;
@@ -3708,23 +3709,22 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 6px 14px !important;
-  background: #fff5f5 !important;
-  color: #e53e3e !important;
-  border: 1px solid #fed7d7 !important;
-  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  background: transparent !important;
+  color: #245fe0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   font-family: var(--font-body, Inter, system-ui, sans-serif) !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: var(--font-weight-bold) !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: color 0.2s ease !important;
   box-shadow: none !important;
 }
 
 .admin-quote-modal .invoice-items-card .remove-btn:hover {
-  background: #e53e3e !important;
-  color: #ffffff !important;
-  border-color: #e53e3e !important;
+  background: transparent !important;
+  color: rgb(179, 74, 58) !important;
 }
 
 /* --- GST Selection Modal Custom Action Buttons --- */
@@ -3809,26 +3809,42 @@
 
 
 /* Force side-by-side layout rules for Quotation Builder (highest priority) */
-.admin-employee-modal-overlay .admin-quote-modal:has(.quotation-builder-layout) {
+.admin-employee-modal-overlay .admin-quote-modal.admin-quote-modal--side-by-side {
   width: min(98vw, 1340px) !important;
   max-width: min(98vw, 1340px) !important;
   max-height: 92vh !important;
   display: flex !important;
   flex-direction: column !important;
+  padding: 0 !important;
 }
 
-.admin-quote-modal:has(.quotation-builder-layout) .invoice-builder {
+/* Remove padding from invoice-builder in standard (stack) mode so header covers scrolling content fully */
+.admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-builder {
+  padding: 0 !important;
+}
+.admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-builder-header {
+  padding: 20px 24px 16px !important;
+  top: 0 !important;
+}
+/* Add padding specifically to the form controls and table */
+.admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-control-card,
+.admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-items-card {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+.admin-quote-modal.admin-quote-modal--side-by-side .invoice-builder {
   flex: 1 !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   padding: 0 !important;
   gap: 0 !important;
-  max-height: 92vh !important;
+  min-height: 0 !important;
 }
 
-.admin-quote-modal:has(.quotation-builder-layout) .invoice-builder-header {
-  padding: 20px 24px 16px !important;
+.admin-quote-modal.admin-quote-modal--side-by-side .invoice-builder-header {
+  padding: 24px 30px !important;
   border-bottom: 1px solid #e2e8f0 !important;
   flex-shrink: 0 !important;
   background: #ffffff !important;
@@ -3852,12 +3868,48 @@
   overflow-y: hidden !important;
   border-right: 1px solid #e2e8f0 !important;
   background: #f8fafc !important;
+  height: 100% !important;
+  align-self: stretch !important;
 }
 
 /* Ensure controls form grid uses 4 columns in quotation mode */
-.admin-quote-modal:has(.quotation-builder-layout) .invoice-form-grid-quotation {
+.admin-quote-modal.admin-quote-modal--side-by-side .invoice-form-grid-quotation {
   display: grid !important;
+  gap: 12px !important;
   grid-template-columns: 2fr 1fr 1fr auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
+}
+
+/* Reset action bar positioning in side-by-side mode */
+.admin-quote-modal--side-by-side .invoice-builder-actions {
+  position: static !important;
+  bottom: auto !important;
+  margin: 0 !important;
+}
+
+/* Make unpaid invoice status cell have a slight red background */
+.admin-quote-modal .meta-status-space.meta-status-space-unpaid,
+.invoice-modal-billing .meta-status-space.meta-status-space-unpaid {
+  background: #fff5f5 !important;
+}
+
+/* Make paid invoice status cell have a slight green background */
+.admin-quote-modal .meta-status-space.meta-status-space-paid,
+.invoice-modal-billing .meta-status-space.meta-status-space-paid {
+  background: #f0fdf4 !important;
+}
+
+/* Remove bottom border from quotation service row */
+.admin-quote-modal .quotation-service-row {
+  border-bottom: none !important;
+}
+
+/* Force 36px height and 0px border radius for select, input fields, and add item button in quotation modal */
+.admin-quote-modal .field-select,
+.admin-quote-modal .field-input,
+.admin-quote-modal .invoice-form-grid .primary-action {
+  height: 36px !important;
+  min-height: 36px !important;
+  border-radius: 0px !important;
 }

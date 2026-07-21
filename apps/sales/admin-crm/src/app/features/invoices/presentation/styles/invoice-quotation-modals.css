@@ -1450,7 +1450,7 @@
   overflow: hidden !important;
   background:
     linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
-    url('/admin/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+    url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
   print-color-adjust: exact !important;
   -webkit-print-color-adjust: exact !important;
 }
@@ -1509,10 +1509,11 @@
 }
 
 .admin-quote-modal .quotation-logo {
-  width: 228px !important;
-  max-width: 100% !important;
+  width: auto !important;
+  max-width: 228px !important;
   max-height: 72px !important;
   object-fit: contain !important;
+  object-position: left center !important;
 }
 
 .admin-quote-modal .quotation-hero-title {
@@ -1812,7 +1813,7 @@
   overflow: hidden !important;
   background:
     linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
-    url('/admin/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+    url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
   print-color-adjust: exact !important;
   -webkit-print-color-adjust: exact !important;
 }
@@ -1827,10 +1828,11 @@
 }
 
 .admin-quote-modal .quotation-logo {
-  width: 228px !important;
-  max-width: 100% !important;
+  width: auto !important;
+  max-width: 228px !important;
   max-height: 72px !important;
   object-fit: contain !important;
+  object-position: left center !important;
 }
 
 .admin-quote-modal .quotation-hero-title {
@@ -2416,7 +2418,7 @@
     grid-template-columns: minmax(72mm, 1fr) 56mm !important;
     background:
       linear-gradient(90deg, rgba(226, 238, 235, 0.08), rgba(17, 24, 39, 0.18) 54%, rgba(17, 24, 39, 0.74)),
-      url('/admin/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
+      url('/assets/quotation/softrate-building-hero.jpg') center center / cover no-repeat !important;
   }
 
   .admin-quote-modal .quotation-preview .quotation-hero-logo {
@@ -2427,8 +2429,10 @@
   }
 
   .admin-quote-modal .quotation-preview .quotation-logo {
-    width: 52mm !important;
+    width: auto !important;
+    max-width: 52mm !important;
     max-height: 18mm !important;
+    object-position: left center !important;
   }
 
   .admin-quote-modal .quotation-preview .quotation-hero-title {

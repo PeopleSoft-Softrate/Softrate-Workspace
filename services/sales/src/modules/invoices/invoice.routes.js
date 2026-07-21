@@ -271,63 +271,85 @@ router.post('/', async (req, res) => {
     const subtotal = items.reduce((sum, item) => sum + item.taxable, 0);
     const gstAmount = items.reduce((sum, item) => sum + item.cgst + item.sgst, 0);
     const invoiceDate = req.body.invoiceDate ? new Date(req.body.invoiceDate) : new Date();
-    const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate, client);
-    const clientDto = mapClient(client);
-    const clientCompanyName = clientDto.companyName || lead?.leadCompanyName || 'Client Company';
+    
+    let invoice;
+    let retries = 3;
+    let lastError;
 
-    const invoice = await Invoice.create({
-      companyCode,
-      clientId: client.clientId,
-      employeePhone: normalize(req.body.employeePhone || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]),
-      employeeName: normalize(req.body.employeeName),
-      leadId: lead?._id || null,
-      leadCompanyName: clientCompanyName,
-      contactName: clientDto.primaryContactName || lead?.contactName || '',
-      contactNumber: clientDto.primaryPhone || lead?.contactNumber || '',
-      directorEmailAddress: clientDto.primaryEmail || lead?.directorEmailAddress || '',
-      invoiceNumber,
-      versionNo,
-      publicToken: generatePublicToken(),
-      items,
-      subtotal,
-      gstPercentage,
-      cgst: gstAmount / 2,
-      sgst: gstAmount / 2,
-      gstAmount,
-      total: subtotal + gstAmount,
-      invoiceDate,
-      dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
-      paymentStatus: normalizePaymentStatus(req.body.paymentStatus),
-      createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
-      createdByName: normalize(req.body.createdByName || req.body.employeeName),
-      createdByPhone: normalize(req.body.createdByPhone || req.body.employeePhone),
-      companySnapshot: {
-        name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
-        logo: user.invoiceLogo || '',
-        seal: user.invoiceSeal || '',
-        terms: user.invoiceTerms || '',
-        gstNumber: user.gstNumber || '',
-        registeredAddress: user.invoiceRegisteredAddress || user.companyAddress || '',
-        phone: user.contactDetails?.phone || '',
-        email: user.contactDetails?.email || '',
-        website: user.contactDetails?.website || '',
-        footer: user.invoiceFooter || '',
-        bankDetails: {
-          bankName: user.bankDetails?.bankName || '',
-          accountNumber: user.bankDetails?.accountNumber || '',
-          ifscCode: user.bankDetails?.ifscCode || '',
-          branchName: user.bankDetails?.branchName || '',
-        },
-      },
-      clientSnapshot: {
-        clientId: client.clientId,
-        companyName: clientCompanyName,
-        contactName: clientDto.primaryContactName || lead?.contactName || '',
-        phone: clientDto.primaryPhone || lead?.contactNumber || '',
-        email: clientDto.primaryEmail || lead?.directorEmailAddress || '',
-        address: clientDto.address || '',
-      },
-    });
+    while (retries > 0) {
+      try {
+        const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate, client);
+        const clientDto = mapClient(client);
+        const clientCompanyName = clientDto.companyName || lead?.leadCompanyName || 'Client Company';
+
+        invoice = await Invoice.create({
+          companyCode,
+          clientId: client.clientId,
+          employeePhone: normalize(req.body.employeePhone || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]),
+          employeeName: normalize(req.body.employeeName),
+          leadId: lead?._id || null,
+          leadCompanyName: clientCompanyName,
+          contactName: clientDto.primaryContactName || lead?.contactName || '',
+          contactNumber: clientDto.primaryPhone || lead?.contactNumber || '',
+          directorEmailAddress: clientDto.primaryEmail || lead?.directorEmailAddress || '',
+          invoiceNumber,
+          versionNo,
+          publicToken: generatePublicToken(),
+          items,
+          subtotal,
+          gstPercentage,
+          cgst: gstAmount / 2,
+          sgst: gstAmount / 2,
+          gstAmount,
+          total: subtotal + gstAmount,
+          invoiceDate,
+          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+          paymentStatus: normalizePaymentStatus(req.body.paymentStatus),
+          createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
+          createdByName: normalize(req.body.createdByName || req.body.employeeName),
+          createdByPhone: normalize(req.body.createdByPhone || req.body.employeePhone),
+          companySnapshot: {
+            name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
+            logo: user.invoiceLogo || '',
+            seal: user.invoiceSeal || '',
+            terms: user.invoiceTerms || '',
+            gstNumber: user.gstNumber || '',
+            registeredAddress: user.invoiceRegisteredAddress || user.companyAddress || '',
+            phone: user.contactDetails?.phone || '',
+            email: user.contactDetails?.email || '',
+            website: user.contactDetails?.website || '',
+            footer: user.invoiceFooter || '',
+            bankDetails: {
+              bankName: user.bankDetails?.bankName || '',
+              accountNumber: user.bankDetails?.accountNumber || '',
+              ifscCode: user.bankDetails?.ifscCode || '',
+              branchName: user.bankDetails?.branchName || '',
+            },
+          },
+          clientSnapshot: {
+            clientId: client.clientId,
+            companyName: clientCompanyName,
+            contactName: clientDto.primaryContactName || lead?.contactName || '',
+            phone: clientDto.primaryPhone || lead?.contactNumber || '',
+            email: clientDto.primaryEmail || lead?.directorEmailAddress || '',
+            address: clientDto.address || '',
+          },
+        });
+        
+        break; // Successfully created
+      } catch (err) {
+        lastError = err;
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.invoiceNumber) {
+          retries -= 1;
+          continue; // Retry generating a new invoice number
+        }
+        throw err; // Not a duplicate key on invoiceNumber, throw immediately
+      }
+    }
+
+    if (!invoice) {
+      throw lastError; // Exhausted retries
+    }
 
     return res.status(201).json({ success: true, invoice: serializeInvoice(invoice, req) });
   } catch (err) {

@@ -42,7 +42,6 @@
 }
 
 .admin-leads-refresh svg,
-.admin-leads-delete-set svg,
 .admin-ai-summary-button svg,
 .admin-lead-record-card svg {
   width: 18px;
@@ -55,8 +54,8 @@
 }
 
 .admin-leads-delete-set {
-  width: 44px !important;
-  min-width: 44px !important;
+  width: 40px !important; height: 40px !important;
+  min-width: 40px !important; height: 40px !important;
   padding: 0 !important;
   color: var(--admin-danger) !important;
 }
@@ -293,8 +292,8 @@
 
 .admin-lead-record-card .lead-card-icon-action,
 .admin-lead-record-card .lead-card-star {
-  width: 44px !important;
-  min-width: 44px !important;
+  width: 40px !important; height: 40px !important;
+  min-width: 40px !important; height: 40px !important;
   height: 44px !important;
   min-height: 44px !important;
   display: inline-flex !important;
@@ -963,9 +962,11 @@
 }
 
 .quotation-logo {
+  width: auto;
   max-width: 150px;
   max-height: 80px;
   object-fit: contain;
+  object-position: left center;
 }
 
 .quotation-hero-company h2,

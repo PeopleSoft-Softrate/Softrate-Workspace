@@ -1173,7 +1173,7 @@
                 </ng-template>
               </div>
             </div>
-            <div class="meta-filler-space meta-status-space">
+            <div class="meta-filler-space meta-status-space" [class.meta-status-space-unpaid]="vm.invoicePaymentStatus === 'unpaid'" [class.meta-status-space-paid]="vm.invoicePaymentStatus === 'paid'">
               <div class="invoice-status-line">
                 <span class="field-label">Invoice Status:</span>
                 <strong class="invoice-status-value"
@@ -1214,7 +1214,10 @@
               <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === null">
                 * {{ vm.settingsGstPercentage || 18 }}% GST will be excluded
               </p>
-              <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === 0 || vm.documentGstPercentageOverride === -1">
+              <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === 0">
+                * 0% GST
+              </p>
+              <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === -1">
                 * GST will be excluded
               </p>
             </div>

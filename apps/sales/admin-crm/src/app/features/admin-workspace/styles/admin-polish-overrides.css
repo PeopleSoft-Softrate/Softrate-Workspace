@@ -1270,3 +1270,210 @@
 }
 
 
+
+.quotation-hero-title h2 { margin-bottom: 12px !important; }
+.quotation-hero-title span:not(:first-of-type) { margin-top: 12px !important; }
+
+
+.lead-table-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.lead-premium-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.lead-premium-table th {
+  background: #f8fafc;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  white-space: nowrap;
+}
+
+.lead-premium-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  vertical-align: middle;
+}
+
+.lead-premium-table tr:last-child td {
+  border-bottom: none;
+}
+
+.lead-premium-table tbody tr {
+  transition: background-color 0.15s;
+}
+
+.lead-premium-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+.lead-table-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.text-secondary {
+  color: #475569;
+}
+
+.copyable-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.copyable-text {
+  flex-shrink: 1;
+}
+
+.copy-icon-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: -26px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: color 0.15s;
+  margin-left: 0;
+  white-space: nowrap;
+}
+
+.copy-icon-btn:hover:not(.copied) {
+  color: var(--accent-primary, #3b82f6);
+}
+
+.truncate-email {
+  display: inline-block;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.table-status-select {
+  padding: 6px 30px 6px 12px !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  height: 32px !important;
+  background-position: right 8px center !important;
+}
+
+.table-remark-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-remark-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+}
+
+.table-remark-input {
+  width: 100%;
+  padding: 6px 32px 6px 12px !important;
+  font-size: 0.8125rem !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+}
+
+.table-remark-add-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.table-remark-add-btn:hover:not(:disabled) {
+  color: var(--accent-primary, #3b82f6);
+  background: #f1f5f9;
+}
+
+.table-actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+
+.lead-table-wrapper {
+  background: #ffffff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  overflow-x: auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+
+
+.admin-leads-delete-set-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #ef4444 !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  margin-left: 8px !important;
+}
+
+.admin-leads-delete-set-btn:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+.admin-leads-delete-set-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+
+.admin-leads-delete-set svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+  fill: currentColor !important;
+  stroke: none !important;
+}
+

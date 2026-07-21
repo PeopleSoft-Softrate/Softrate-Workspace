@@ -113,4 +113,19 @@ export class EmployeeLeadCardComponent {
     clearTimeout(this.remarkMenuCloseRef);
     this.remarkMenuCloseRef = null;
   }
+
+  hoveredField: string | null = null;
+  copiedField: string | null = null;
+
+  copyText(text: string | undefined): void {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedField = text;
+      setTimeout(() => {
+        if (this.copiedField === text) {
+          this.copiedField = null;
+        }
+      }, 2000);
+    });
+  }
 }

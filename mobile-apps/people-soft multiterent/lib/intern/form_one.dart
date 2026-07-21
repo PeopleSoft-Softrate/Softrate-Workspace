@@ -5,11 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
 import 'package:hrmappfrontend/success_dialog.dart';
+import 'package:hrmappfrontend/utils/pdf_downloader.dart';
+import 'package:hrmappfrontend/holiday_pdf_viewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FormOne extends StatefulWidget {
   final String? companyCode;
   final String? companyName;
-  const FormOne({super.key, this.companyCode, this.companyName});
+  final String? walkinDriveId; // if set, this is a walk-in drive application
+  const FormOne({super.key, this.companyCode, this.companyName, this.walkinDriveId});
 
   @override
   State<FormOne> createState() => _FormOneState();
@@ -343,7 +347,15 @@ class _FormOneState extends State<FormOne> {
       ),
     };
 
-    final url = Uri.parse('$baseUrl/api/intern/add');
+    // If this is a walk-in drive application, add the walkinDriveId
+    final isWalkin = widget.walkinDriveId != null;
+    if (isWalkin) {
+      body['walkinDriveId'] = widget.walkinDriveId!;
+    }
+
+    final url = isWalkin
+        ? Uri.parse('$baseUrl/api/public/walkin-apply')
+        : Uri.parse('$baseUrl/api/intern/add');
 
     // Show loading dialog
     showDialog(
@@ -379,21 +391,147 @@ class _FormOneState extends State<FormOne> {
           _submitted = false;
         });
 
-        // Capitalize each word of the name for the success message
-        final capitalizedName = submittedName
-            .split(' ')
-            .map(
-              (word) => word.isNotEmpty
-                  ? word[0].toUpperCase() + word.substring(1).toLowerCase()
-                  : '',
-            )
-            .join(' ');
+        if (isWalkin) {
+          final responseData = jsonDecode(response.body);
+          final whatsappLink = responseData['whatsappGroupLink'] ?? '';
+          final jdPdfUrl = responseData['jdPdfUrl'] ?? '';
 
-        // Show success popup
-        showSuccessPopup(
-          context,
-          "Your application is submitted and thank you for applying!",
-        );
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            barrierColor: Colors.black.withOpacity(0.3),
+            builder: (_) => Dialog(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00657F).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF00657F),
+                        size: 60,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Application Successful!",
+                      style: TextStyle(
+                        color: Color(0xFF00657F),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Your Walk-in application has been submitted successfully!\n\nPlease download the Job Description and join our WhatsApp group.",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    if (jdPdfUrl.isNotEmpty)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            final fullUrl = jdPdfUrl.startsWith('http') ? jdPdfUrl : '$baseUrl$jdPdfUrl';
+                            
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Downloading Job Description..."),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+
+                            PdfDownloader.downloadPdf(fullUrl, "JobDescription.pdf");
+                          },
+                          icon: const Icon(Icons.download, color: Color(0xFF00657F)),
+                          label: const Text(
+                            "Download Job Description",
+                            style: TextStyle(color: Color(0xFF00657F), fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF00657F), width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    if (jdPdfUrl.isNotEmpty) const SizedBox(height: 12),
+                    if (whatsappLink.isNotEmpty)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.tryParse(whatsappLink);
+                            if (uri != null) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          icon: const Icon(Icons.chat, color: Colors.white, size: 20),
+                          label: const Text(
+                            "Join WhatsApp Group",
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00657F),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close dialog
+                        },
+                        child: const Text(
+                          "Close",
+                          style: TextStyle(fontSize: 15, color: Colors.grey, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else {
+          // Regular intern application
+          showSuccessPopup(
+            context,
+            "Your application is submitted and thank you for applying!",
+          );
+        }
       } else {
         final data = jsonDecode(response.body);
         showDialog(
@@ -570,7 +708,7 @@ class _FormOneState extends State<FormOne> {
                           ),
                           const SizedBox(height: 14),
                           const Text(
-                            "Apply For An Internship / Job And Get Your Profile Reviewed By Our HR Team.",
+                            "Apply For An Internship And Get Your Profile Reviewed By Our HR Team.",
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12,

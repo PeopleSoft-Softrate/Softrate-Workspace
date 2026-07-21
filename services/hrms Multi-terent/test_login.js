@@ -1,32 +1,33 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const Intern = require('./models/Intern');
-const Employee = require('./models/EmployeeModel');
-const AuthController = require('./controllers/AuthController');
+const http = require('http');
 
-mongoose.connect(process.env.MONGO_URI).then(async () => {
-  const req = {
-    body: {
-      identifier: 'yovel4002@gmail.com',
-      password: 'password123' // Fake password to trigger the hash check and potentially fail, but we just want to see the role assignment before password check.
-    }
-  };
-  
-  const res = {
-    status: (code) => {
-      console.log("Status:", code);
-      return {
-        json: (data) => {
-          console.log("JSON:", data);
-          process.exit(0);
-        }
-      };
-    },
-    json: (data) => {
-      console.log("JSON:", data);
-      process.exit(0);
-    }
-  };
-  
-  await AuthController.login(req, res);
+const data = JSON.stringify({
+  companyCode: 'SOFTRATE',
+  identifier: 'test@peoplesoft',
+  password: '123456',
+  deviceId: 'test_device_123'
 });
+
+const options = {
+  hostname: 'localhost',
+  port: 5001,
+  path: '/api/auth/unified-login',
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Content-Length': data.length
+  }
+};
+
+const req = http.request(options, res => {
+  console.log(`STATUS: ${res.statusCode}`);
+  res.on('data', d => {
+    process.stdout.write(d);
+  });
+});
+
+req.on('error', error => {
+  console.error(error);
+});
+
+req.write(data);
+req.end();

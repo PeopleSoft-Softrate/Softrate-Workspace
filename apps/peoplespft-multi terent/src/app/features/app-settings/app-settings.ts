@@ -22,11 +22,12 @@ import {
 } from '@hugeicons/core-free-icons';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { TourService } from '../../services/tour.service';
+import { WalkinDrivesComponent } from '../walkin-drives/walkin-drives.component';
 
 @Component({
   selector: 'app-app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, HugeiconsIconComponent],
+  imports: [CommonModule, FormsModule, HugeiconsIconComponent, WalkinDrivesComponent],
   templateUrl: './app-settings.html',
   styleUrl: './app-settings.css'
 })
@@ -136,7 +137,7 @@ export class AppSettings implements OnInit {
   workDurationEmployee = signal<number>(8);
   workDurationIntern   = signal<number>(6);
 
-  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings' | 'system_settings' | 'leave_policies'>('locations');
+  activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings' | 'system_settings' | 'leave_policies' | 'walkin_drives'>('locations');
 
   isSaving = signal(false);
   isLoading = signal(true);
@@ -184,14 +185,12 @@ export class AppSettings implements OnInit {
 
   fetchSettings() {
     this.isLoading.set(true);
-    forkJoin({
-      settings: this.apiService.getCompanySettings(),
-      employees: this.apiService.getAllEmployees('all', 'approved'),
-      interns: this.apiService.getAllActiveInterns('all', 'approved')
-    }).subscribe({
+    
+    // 1. Fetch lightweight settings immediately
+    this.apiService.getCompanySettings().subscribe({
       next: (res: any) => {
-        if (res.settings && res.settings.success && res.settings.settings) {
-          const s = res.settings.settings;
+        if (res && res.success && res.settings) {
+          const s = res.settings;
           this.defaultPassword.set(s.defaultPassword || '');
           this.receivingEmail.set(s.receivingEmail || '');
           this.locations.set(s.locations || []);
@@ -247,15 +246,30 @@ export class AppSettings implements OnInit {
           }
 
           // Load Work Duration Settings
-          if (res.settings.workDurationSettings) {
-            const wd = res.settings.workDurationSettings;
+          if (s.workDurationSettings) {
+            const wd = s.workDurationSettings;
             this.workDurationHr.set(wd.hr ?? 8);
             this.workDurationManager.set(wd.manager ?? 8);
             this.workDurationEmployee.set(wd.employee ?? 8);
             this.workDurationIntern.set(wd.intern ?? 6);
           }
         }
+        
+        // Settings loaded, unblock the UI!
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to fetch settings', err);
+        this.isLoading.set(false);
+      }
+    });
 
+    // 2. Fetch heavy data (employees/interns) in the background asynchronously
+    forkJoin({
+      employees: this.apiService.getAllEmployees('all', 'approved'),
+      interns: this.apiService.getAllActiveInterns('all', 'approved')
+    }).subscribe({
+      next: (res: any) => {
         const emps = (res.employees || []).map((emp: any) => {
           const payroll = this.getIndividualPayroll(emp, 'employee');
           return { ...emp, payroll };
@@ -267,11 +281,9 @@ export class AppSettings implements OnInit {
 
         this.allEmployees.set(emps);
         this.allInterns.set(ints);
-        this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to fetch settings, employees, and interns', err);
-        this.isLoading.set(false);
+        console.error('Failed to fetch employees and interns in background', err);
       }
     });
   }

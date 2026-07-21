@@ -4,6 +4,15 @@ const mongoose = require('mongoose');
 const verifyPublicTenant = require('../middleware/publicTenant.middleware');
 
 // We use the tenant context to fetch from the correct DB
+const walkinDriveController = require('../controllers/walkinDriveController');
+const walkinApplicationController = require('../controllers/walkinApplicationController');
+
+router.get('/walkin-drives', verifyPublicTenant, (req, res, next) => {
+  req.query.activeOnly = 'true';
+  next();
+}, walkinDriveController.getWalkinDrives);
+router.post('/walkin-apply', verifyPublicTenant, walkinApplicationController.applyToWalkinDrive);
+
 router.get("/id-card/:id", verifyPublicTenant, async (req, res) => {
   try {
     const { id } = req.params;

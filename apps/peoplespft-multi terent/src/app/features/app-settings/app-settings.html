@@ -893,6 +893,22 @@
           </div>
         </div>
       </section>
+
+      <!-- Walkin Drives Section -->
+      <section *ngIf="activeTab() === 'walkin_drives'" class="config-card walkin-drives-config">
+        <div class="card-header-minimal">
+          <div class="hero-visual">
+            <div class="icon-wrapper" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+              <hugeicons-icon [icon]="UserGroupIcon" [size]="32" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <div class="hero-content">
+              <h2>Walkin Drives</h2>
+              <p>Manage walkin interview schedules and PDF JDs.</p>
+            </div>
+          </div>
+        </div>
+        <app-walkin-drives></app-walkin-drives>
+      </section>
     </div>
 
     <!-- RIGHT SIDEBAR NAVIGATION -->
@@ -946,6 +962,13 @@
             <hugeicons-icon [icon]="Calendar01Icon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
           </div>
           <span class="action-label">Leave Policies</span>
+        </button>
+
+        <button class="nav-link" [class.active]="activeTab() === 'walkin_drives'" (click)="activeTab.set('walkin_drives')">
+          <div class="action-icon-circle" style="color: #10b981; background: rgba(16, 185, 129, 0.1);">
+            <hugeicons-icon [icon]="UserGroupIcon" [size]="22" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+          </div>
+          <span class="action-label">Walkin Drives</span>
         </button>
       </div>
 

@@ -18,7 +18,7 @@ export class InternRequests implements OnInit {
   
   allRequests = signal<any[]>([]);
   managers = signal<any[]>([]);
-  currentCategory = signal<'Internship' | 'Job' | 'Assigned' | 'Approved' | 'Rejected'>('Internship');
+  currentCategory = signal<'Internship' | 'Job' | 'Walkin' | 'Assigned' | 'Approved' | 'Rejected'>('Internship');
   isLoading = signal(true);
   isAssigning = signal<string | null>(null);
   searchQuery = signal('');
@@ -89,6 +89,7 @@ export class InternRequests implements OnInit {
     const query = this.searchQuery().toLowerCase();
     const category = this.currentCategory();
     const all = this.allRequests();
+    
     const result = all.filter(r => {
       // 1. Search Logic
       const matchesSearch = !query || 
@@ -98,13 +99,23 @@ export class InternRequests implements OnInit {
         r.contact?.toLowerCase().includes(query) ||
         r.email?.toLowerCase().includes(query) ||
         (r.internid && r.internid.toLowerCase().includes(query));
-
+      
       if (!matchesSearch) return false;
 
-      // 2. Category filter logic
+      // 2. Tab Filter Logic
+      const isAssigned = r.assignedToManager != null;
       const type = r.applicationType || 'Internship';
-      const isAssigned = !!r.assignedManager;
       const managerStatus = r.managerApprovalStatus || 'pending';
+      const isWalkin = r.isWalkinDrive === true;
+
+      if (category === 'Walkin') {
+        return isWalkin && r.status === 'initial';
+      }
+      
+      // If we are looking at standard tabs (Internship/Job), exclude Walkins
+      if (category === 'Internship' || category === 'Job') {
+        if (isWalkin) return false;
+      }
 
       if (category === 'Assigned') {
         return isAssigned && managerStatus === 'pending';
@@ -143,12 +154,15 @@ export class InternRequests implements OnInit {
     return result;
   });
 
-  setCategory(category: 'Internship' | 'Job' | 'Assigned' | 'Approved' | 'Rejected') {
+  setCategory(category: 'Internship' | 'Job' | 'Walkin' | 'Assigned' | 'Approved' | 'Rejected') {
     this.currentCategory.set(category);
   }
 
   internshipCount = computed(() => this.getFilteredCountForCategory('Internship'));
   jobCount = computed(() => this.getFilteredCountForCategory('Job'));
+  walkinCount = computed(() => {
+    return this.allRequests().filter(r => r.isWalkinDrive === true && r.status === 'initial').length;
+  });
   assignedCount = computed(() => this.getFilteredCountForCategory('Assigned'));
   approvedCount = computed(() => this.getFilteredCountForCategory('Approved'));
   rejectedCount = computed(() => this.getFilteredCountForCategory('Rejected'));
@@ -164,10 +178,11 @@ export class InternRequests implements OnInit {
       const managerStatus = r.managerApprovalStatus || 'pending';
 
       let inCategory = false;
-      if (category === 'Assigned') inCategory = isAssigned && managerStatus === 'pending';
+      if (category === 'Walkin') inCategory = r.isWalkinDrive === true && r.status === 'initial';
+      else if (category === 'Assigned') inCategory = isAssigned && managerStatus === 'pending';
       else if (category === 'Approved') inCategory = managerStatus === 'approved';
       else if (category === 'Rejected') inCategory = managerStatus === 'rejected';
-      else inCategory = !isAssigned && type === category;
+      else inCategory = !isAssigned && type === category && r.isWalkinDrive !== true;
 
       if (!inCategory) return false;
 

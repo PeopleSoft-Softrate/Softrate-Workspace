@@ -526,14 +526,26 @@ input[type=number] {
 }
 
 /* ============================================================
+   HIDE SCROLLBAR GLOBALLY
+   ============================================================ */
+::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge, Opera */
+}
+
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* ============================================================
    SHARED REQUESTS TABLE STYLES
    Used by: Approvals Hub & Intern Requests
    ============================================================ */
 .requests-table-wrapper {
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  width: 100%;
+  overflow-x: auto;
+  border-top: 1px solid var(--border-color);
 }
 
 .requests-table {

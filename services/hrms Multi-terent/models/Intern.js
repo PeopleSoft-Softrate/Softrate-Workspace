@@ -26,10 +26,9 @@ const InternSchema = new mongoose.Schema({
   projectLinks: { type: [String], default: [] },
   isRemote: { type: Boolean, default: false },
   askMeAboutExpertise: { type: [String], default: [] },
-
-
-
-  // New backend auto-field
+  isWalkinDrive: { type: Boolean, default: false },
+  walkinDriveId: { type: mongoose.Schema.Types.ObjectId, ref: "WalkinDrive", default: null },
+  resume: { type: String, default: "" },  // New backend auto-field
   // Manager Assignment Logic
   assignedManager: { type: mongoose.Schema.Types.ObjectId, ref: "Employee", default: null },
   managerApprovalStatus: { type: String, enum: ["initial", "pending", "approved", "rejected"], default: "initial" },

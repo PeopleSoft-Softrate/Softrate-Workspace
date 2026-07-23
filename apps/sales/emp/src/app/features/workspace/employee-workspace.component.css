@@ -5876,6 +5876,9 @@ body.column-resizing * {
   width: calc(100% - 96px);
   max-width: calc(100% - 96px);
   margin: 0 auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .quotation-service-header {
@@ -5916,7 +5919,8 @@ body.column-resizing * {
 }
 
 .quotation-service-body {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
   margin-top: 18px;
   padding: 28px 30px 24px;
@@ -5924,6 +5928,7 @@ body.column-resizing * {
   background-color: #eefaf1;
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
+  flex-grow: 1;
 }
 
 .quotation-service-row {
@@ -5950,10 +5955,12 @@ body.column-resizing * {
 .quotation-total-panel {
   display: grid;
   gap: 4px;
-  justify-self: end;
+  align-self: flex-start;
   width: min(100%, 340px);
   min-width: 0;
-  margin-top: 12px;
+  margin-top: auto;
+  margin-left: 0;
+  margin-right: auto;
   padding-top: 14px;
   border-top: 1px solid #6aa283;
 }
@@ -5987,7 +5994,7 @@ body.column-resizing * {
 
 .quotation-total-panel .gst-exempt-footnote {
   grid-column: 1 / -1;
-  text-align: right;
+  text-align: left;
   font-size: 10px;
   font-style: italic;
   color: #919191;
@@ -6013,7 +6020,7 @@ body.column-resizing * {
 }
 
 .quotation-main-page .quotation-kind-note {
-  margin: auto 48px 32px;
+  margin: 20px 48px 32px;
 }
 
 .quotation-kind-note strong {
@@ -6950,6 +6957,7 @@ body.column-resizing * {
   margin-top: 24px;
   border-radius: 8px;
 }
+
 .invoice-modal-billing:not(.invoice-modal-billing--side-by-side) .invoice-preview {
   max-width: 800px !important;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06) !important;
@@ -7321,6 +7329,7 @@ body.column-resizing * {
   font-size: 12px;
   font-weight: var(--font-weight-bold);
   line-height: 1;
+  white-space: nowrap;
 }
 
 .invoice-status-chip.invoice-status-chip-paid {
@@ -8289,6 +8298,7 @@ body.column-resizing * {
 .icon-action-btn.active-star:hover {
   background: #fde68a;
 }
+
 /* Admin border parity */
 .invoice-preview,
 .invoice-preview * {
@@ -8297,9 +8307,17 @@ body.column-resizing * {
 
 
 .invoice-stack-action-row {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 4 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
   justify-content: flex-end !important;
-  margin: 14px !important;
-  margin-top: 0px !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 16px 24px !important;
+  border-top: 1px solid #e4e7ec !important;
+  background: #ffffff !important;
 }
 
 
@@ -8312,7 +8330,29 @@ body.column-resizing * {
 }
 
 
-.quotation-hero-title h2 { margin-bottom: 12px !important; }
-.quotation-hero-title span:not(:first-of-type) { margin-top: 12px !important; }
+.quotation-hero-title h2 {
+  margin-bottom: 12px !important;
+}
 
+.quotation-hero-title span:not(:first-of-type) {
+  margin-top: 12px !important;
+}
 
+/* Prevent ONLY Price and Sum columns from wrapping so "INR 10,000.00" stays on one line */
+/* Description column can still wrap to prevent horizontal scrolling */
+.invoice-items-card .data-table td:nth-child(3),
+.invoice-items-card .data-table th:nth-child(3),
+.invoice-items-card .data-table td:nth-child(4),
+.invoice-items-card .data-table th:nth-child(4) {
+  white-space: nowrap;
+}
+
+/* Force the table container to grow to fit the table vertically, preventing vertical scroll and clipping */
+/* But keep horizontal scroll inside the card if needed, to prevent the entire left section from scrolling horizontally */
+.invoice-modal-billing .table-scroll.invoice-items-card,
+.quotation-builder-controls .table-scroll.invoice-items-card {
+  min-height: auto !important;
+  height: max-content !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}

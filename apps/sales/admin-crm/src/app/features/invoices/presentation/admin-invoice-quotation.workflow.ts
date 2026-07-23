@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import QRCode from 'qrcode';
+import * as qrcodeModule from 'qrcode';
+const QRCode = (qrcodeModule as any).default || qrcodeModule;
 import { firstValueFrom } from 'rxjs';
 import { DashboardCacheService } from '../../../core/cache/dashboard-cache.service';
 import { HISTORY_PAGE_SIZE, OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../../core/config/pagination.config';
@@ -30,12 +31,28 @@ export class AdminInvoiceQuotationWorkflow {
     private dashboardCache: DashboardCacheService,
   ) {}
 
-  private async setInvoiceQrFromUrl(vm: any, publicUrl: string): Promise<void> {
-    vm.currentInvoicePublicUrl = publicUrl || '';
-    vm.currentInvoiceQrDataUrl = '';
-    if (!publicUrl) return;
+  private resolvePublicUrl(publicUrl: string): string {
+    if (!publicUrl) return '';
     try {
-      vm.currentInvoiceQrDataUrl = await QRCode.toDataURL(publicUrl, {
+      const parsed = new URL(publicUrl);
+      const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+      if (isLocalhost && typeof window !== 'undefined') {
+        const browserOrigin = window.location.origin;
+        return publicUrl.replace(parsed.origin, browserOrigin);
+      }
+    } catch {
+      // Not a valid URL, return as-is
+    }
+    return publicUrl;
+  }
+
+  private async setInvoiceQrFromUrl(vm: any, publicUrl: string): Promise<void> {
+    const resolvedUrl = this.resolvePublicUrl(publicUrl);
+    vm.currentInvoicePublicUrl = resolvedUrl || '';
+    vm.currentInvoiceQrDataUrl = '';
+    if (!resolvedUrl) return;
+    try {
+      vm.currentInvoiceQrDataUrl = await QRCode.toDataURL(resolvedUrl, {
         width: 136,
         margin: 1,
         errorCorrectionLevel: 'M',
@@ -44,7 +61,8 @@ export class AdminInvoiceQuotationWorkflow {
           light: '#ffffff',
         },
       });
-    } catch {
+    } catch (err) {
+      console.error('Failed to generate QR Code for URL:', resolvedUrl, err);
       vm.currentInvoiceQrDataUrl = '';
     }
   }
@@ -253,7 +271,14 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   private activeCompanyBankDetails(vm: any): any {
-    return this.activeInvoiceCompanySnapshot(vm)?.bankDetails || vm.settingsBankDetails || {};
+    const snapshotBank = this.activeInvoiceCompanySnapshot(vm)?.bankDetails;
+    if (snapshotBank) return snapshotBank;
+
+    const hasGst = !!(vm.invoiceLead?.gstNumber?.trim());
+    if (!hasGst && vm.settingsBankDetails2 && vm.settingsBankDetails2.bankName) {
+      return vm.settingsBankDetails2;
+    }
+    return vm.settingsBankDetails || {};
   }
 
   private normalizeAppAssetUrl(value: any): string {
@@ -268,7 +293,7 @@ export class AdminInvoiceQuotationWorkflow {
     const yyyy = String(issued.getFullYear());
     const mm = String(issued.getMonth() + 1).padStart(2, '0');
     const sequence = String(vm.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `${vm.quoteMode ? 'Quote' : 'Invoice'}_${yyyy}${mm}${sequence}_v1.pdf`;
+    return `${vm.quoteMode ? 'Quote' : 'Invoice'}_${yyyy}${mm}${sequence}`;
   }
 
   private resolveInvoicePreviewGstPercentage(vm: any): number {
@@ -397,6 +422,7 @@ export class AdminInvoiceQuotationWorkflow {
       primaryPhone: String(raw?.primaryPhone || raw?.contactNumber || ''),
       primaryEmail: String(raw?.primaryEmail || raw?.directorEmailAddress || ''),
       address: String(raw?.address || ''),
+      gstNumber: String(raw?.gstNumber || ''),
       description: String(raw?.description || ''),
       source: String(raw?.source || ''),
       status: String(raw?.status || 'Onboarded'),
@@ -417,6 +443,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactNumber: client.primaryPhone || '',
       directorEmailAddress: client.primaryEmail || '',
       address: client.address || '',
+      gstNumber: client.gstNumber || '',
       status: 'Onboarded',
     };
   }
@@ -1137,6 +1164,7 @@ export class AdminInvoiceQuotationWorkflow {
       primaryPhone: '',
       primaryEmail: '',
       address: '',
+      gstNumber: '',
       serviceName: '',
     };
     vm.clientOnboardingError = '';
@@ -1271,6 +1299,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactNumber: record.clientSnapshot?.phone || record.contactNumber || '',
       directorEmailAddress: record.clientSnapshot?.email || record.directorEmailAddress || '',
       address: record.clientSnapshot?.address || record.address || '',
+      gstNumber: record.clientSnapshot?.gstNumber || record.gstNumber || '',
       status: '',
     };
     vm.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
@@ -1283,6 +1312,12 @@ export class AdminInvoiceQuotationWorkflow {
     }));
     this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
+  }
+
+  editSavedInvoice(vm: any): void {
+    if (!vm.currentInvoiceRecord || !vm.currentInvoiceRecord._id) return;
+    vm.viewingSavedDocument = false;
+    vm.invoiceEditMode = true;
   }
 
   openSavedQuotation(vm: any, record: any): void {
@@ -1302,6 +1337,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactNumber: record.contactNumber || '',
       directorEmailAddress: record.directorEmailAddress || '',
       address: record.clientSnapshot?.address || record.address || '',
+      gstNumber: record.clientSnapshot?.gstNumber || record.gstNumber || '',
       status: '',
     };
     vm.invoiceIssuedAt = record.quotationDate ? new Date(record.quotationDate) : new Date(record.createdAt || Date.now());
@@ -1417,6 +1453,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.showInvoiceModal = false;
     vm.quoteMode = false;
     vm.viewingSavedDocument = false;
+    vm.invoiceEditMode = false;
     vm.currentInvoiceRecord = null;
     vm.selectedInvoiceClient = null;
     this.resetInvoicePublicLink(vm);
@@ -1521,7 +1558,7 @@ export class AdminInvoiceQuotationWorkflow {
   }
 
   formatInvoicePaymentStatus(vm: any, status?: string): string {
-    return this.normalizeInvoicePaymentStatus(status || vm.invoicePaymentStatus) === 'paid' ? 'Paid' : 'Unpaid';
+    return this.normalizeInvoicePaymentStatus(status || vm.invoicePaymentStatus) === 'paid' ? 'Paid' : 'Partially Paid';
   }
 
   invoiceBankDetails(vm: any): any {
@@ -1571,7 +1608,7 @@ export class AdminInvoiceQuotationWorkflow {
       alert(`Please add at least one product to the ${vm.quoteMode ? 'quotation' : 'invoice'}.`);
       return;
     }
-    if (vm.viewingSavedDocument) {
+    if (vm.viewingSavedDocument && !vm.invoiceEditMode) {
       this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument());
       return;
     }
@@ -1585,7 +1622,7 @@ export class AdminInvoiceQuotationWorkflow {
     const invoiceClient = vm.selectedInvoiceClient;
     const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || vm.invoiceLead._id;
     vm.invoiceSaving = true;
-    this.api.post<any>('/api/invoices', {
+    const payload = {
       companyCode: vm.dashboardCode,
       employeePhone: vm.invoiceLead.assignedEmployeePhone,
       employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeePhone),
@@ -1604,22 +1641,53 @@ export class AdminInvoiceQuotationWorkflow {
         quantity: item.quantity,
         sacHsn: item.product?.sacHsn || '',
       })),
-    }).subscribe({
-      next: (res) => {
-        vm.invoiceSaving = false;
-        if (!res?.success || !res.invoice) {
-          alert(res?.message || 'Failed to save invoice.');
-          return;
-        }
-        vm.currentInvoiceNumber = res.invoice.invoiceNumber;
-        vm.fetchInvoiceRecords(true);
-        void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
-      },
-      error: (err) => {
-        vm.invoiceSaving = false;
-        alert(err?.error?.message || 'Failed to save invoice.');
-      },
-    });
+    };
+
+    if (vm.invoiceEditMode && vm.currentInvoiceRecord?._id) {
+      const updatePayload = {
+        items: payload.items,
+        total: vm.invoiceTotal,
+        subTotal: vm.invoiceSubtotal,
+        taxTotal: vm.invoiceGstAmount,
+        invoiceDate: payload.invoiceDate,
+        paymentStatus: payload.paymentStatus,
+      };
+      this.api.put<any>(`/api/invoices/${vm.currentInvoiceRecord._id}`, updatePayload).subscribe({
+        next: (res) => {
+          vm.invoiceSaving = false;
+          if (!res?.success || !res.invoice) {
+            alert(res?.message || 'Failed to update invoice.');
+            return;
+          }
+          vm.invoiceEditMode = false;
+          vm.viewingSavedDocument = true;
+          vm.currentInvoiceRecord = res.invoice;
+          vm.fetchInvoiceRecords(true);
+          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+        },
+        error: (err) => {
+          vm.invoiceSaving = false;
+          alert(err?.error?.message || 'Failed to update invoice.');
+        },
+      });
+    } else {
+      this.api.post<any>('/api/invoices', payload).subscribe({
+        next: (res) => {
+          vm.invoiceSaving = false;
+          if (!res?.success || !res.invoice) {
+            alert(res?.message || 'Failed to save invoice.');
+            return;
+          }
+          vm.currentInvoiceNumber = res.invoice.invoiceNumber;
+          vm.fetchInvoiceRecords(true);
+          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+        },
+        error: (err) => {
+          vm.invoiceSaving = false;
+          alert(err?.error?.message || 'Failed to save invoice.');
+        },
+      });
+    }
   }
 
   saveAndPrintQuotation(vm: any): void {

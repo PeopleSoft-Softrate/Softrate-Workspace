@@ -28,9 +28,22 @@ function generatePublicToken() {
 
 function frontendBaseUrl(req) {
   const configuredUrl = normalize(process.env.FRONTEND_URL);
-  if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
+  const isLocalhost = /localhost|127\.0\.0\.1/.test(configuredUrl);
+  if (configuredUrl && !isLocalhost) return configuredUrl.replace(/\/+$/, '');
+
+  // Derive from request: use X-Forwarded-Proto + Host for reverse-proxied requests
+  const forwardedProto = normalize(req.get('x-forwarded-proto')).split(',')[0].trim();
+  const forwardedHost = normalize(req.get('x-forwarded-host') || req.get('host'));
+  if (forwardedProto && forwardedHost && !forwardedHost.includes('localhost') && !forwardedHost.includes('127.0.0.1')) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
   const requestOrigin = normalize(req.get('origin'));
-  if (requestOrigin) return requestOrigin.replace(/\/+$/, '');
+  if (requestOrigin && !requestOrigin.includes('localhost') && !requestOrigin.includes('127.0.0.1')) {
+    return requestOrigin.replace(/\/+$/, '');
+  }
+
+  // Last resort
   return `${req.protocol}://${req.get('host')}`;
 }
 
@@ -161,7 +174,6 @@ async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = nu
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const prefix = `Invoice_${yy}${mm}`;
   const existingMonthInvoices = await Invoice.find({
-    companyCode,
     invoiceNumber: new RegExp(`^${prefix}\\d{3}_v\\d+$`),
   }).select('invoiceNumber').lean();
   const maxSequence = existingMonthInvoices.reduce((max, record) => {
@@ -319,12 +331,17 @@ router.post('/', async (req, res) => {
             email: user.contactDetails?.email || '',
             website: user.contactDetails?.website || '',
             footer: user.invoiceFooter || '',
-            bankDetails: {
-              bankName: user.bankDetails?.bankName || '',
-              accountNumber: user.bankDetails?.accountNumber || '',
-              ifscCode: user.bankDetails?.ifscCode || '',
-              branchName: user.bankDetails?.branchName || '',
-            },
+            bankDetails: (() => {
+              const clientGst = clientDto.gstNumber || '';
+              const hasGst = !!clientGst.trim();
+              const selectedBank = (!hasGst && user.bankDetails2 && user.bankDetails2.bankName) ? user.bankDetails2 : user.bankDetails;
+              return {
+                bankName: selectedBank?.bankName || '',
+                accountNumber: selectedBank?.accountNumber || '',
+                ifscCode: selectedBank?.ifscCode || '',
+                branchName: selectedBank?.branchName || '',
+              };
+            })(),
           },
           clientSnapshot: {
             clientId: client.clientId,
@@ -333,6 +350,7 @@ router.post('/', async (req, res) => {
             phone: clientDto.primaryPhone || lead?.contactNumber || '',
             email: clientDto.primaryEmail || lead?.directorEmailAddress || '',
             address: clientDto.address || '',
+            gstNumber: clientDto.gstNumber || '',
           },
         });
         
@@ -355,6 +373,43 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Create invoice error:', err);
     return res.status(500).json({ success: false, message: 'Failed to save invoice.' });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    if (!invoiceId) {
+      return res.status(400).json({ success: false, message: 'Invoice ID is required.' });
+    }
+
+    const { items, total, subTotal, taxTotal, invoiceDate, paymentStatus } = req.body;
+    const updateData = {};
+    
+    if (items !== undefined) updateData.items = items;
+    if (total !== undefined) updateData.total = Number(total);
+    if (subTotal !== undefined) updateData.subTotal = Number(subTotal);
+    if (taxTotal !== undefined) updateData.taxTotal = Number(taxTotal);
+    if (invoiceDate !== undefined) updateData.invoiceDate = new Date(invoiceDate);
+    if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
+    
+    updateData.updatedAt = new Date();
+
+    const invoice = await Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { new: true });
+    
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found.' });
+    }
+
+    if (!invoice.publicToken) {
+      invoice.publicToken = crypto.randomBytes(24).toString('base64url');
+      await invoice.save();
+    }
+
+    return res.json({ success: true, invoice: serializeInvoice(invoice, req) });
+  } catch (err) {
+    console.error('Update invoice error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update invoice.' });
   }
 });
 

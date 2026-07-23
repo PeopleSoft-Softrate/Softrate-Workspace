@@ -324,28 +324,57 @@
               <h3 class="settings-section-title">Banking Details</h3>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-              <div>
-                <label class="input-label">Bank Name</label>
-                <input type="text" [(ngModel)]="settingsBankDetails.bankName" class="glass-input" placeholder="e.g. HDFC Bank">
-              </div>
-              <div>
-                <label class="input-label">Account Number</label>
-                <input type="text" [(ngModel)]="settingsBankDetails.accountNumber" class="glass-input" placeholder="e.g. 50100XXXXXXXX">
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+              
+              <!-- Bank Account 1 -->
+              <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #334155; margin: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Bank Account 1 (For GST Clients)</h4>
                 <div>
-                  <label class="input-label">IFSC Code</label>
-                  <input type="text" [(ngModel)]="settingsBankDetails.ifscCode" class="glass-input" placeholder="e.g. HDFC0001234">
+                  <label class="input-label">Bank Name</label>
+                  <input type="text" [(ngModel)]="settingsBankDetails.bankName" class="glass-input" placeholder="e.g. HDFC Bank">
                 </div>
                 <div>
-                  <label class="input-label">Branch Name</label>
-                  <input type="text" [(ngModel)]="settingsBankDetails.branchName" class="glass-input" placeholder="e.g. Koramangala, Bangalore">
+                  <label class="input-label">Account Number</label>
+                  <input type="text" [(ngModel)]="settingsBankDetails.accountNumber" class="glass-input" placeholder="e.g. 50100XXXXXXXX">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div>
+                    <label class="input-label">IFSC Code</label>
+                    <input type="text" [(ngModel)]="settingsBankDetails.ifscCode" class="glass-input" placeholder="e.g. HDFC0001234">
+                  </div>
+                  <div>
+                    <label class="input-label">Branch Name</label>
+                    <input type="text" [(ngModel)]="settingsBankDetails.branchName" class="glass-input" placeholder="e.g. Koramangala, Bangalore">
+                  </div>
                 </div>
               </div>
+
+              <!-- Bank Account 2 -->
+              <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #334155; margin: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Bank Account 2 (For Non-GST Clients)</h4>
+                <div>
+                  <label class="input-label">Bank Name</label>
+                  <input type="text" [(ngModel)]="settingsBankDetails2.bankName" class="glass-input" placeholder="e.g. HDFC Bank">
+                </div>
+                <div>
+                  <label class="input-label">Account Number</label>
+                  <input type="text" [(ngModel)]="settingsBankDetails2.accountNumber" class="glass-input" placeholder="e.g. 50100XXXXXXXX">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div>
+                    <label class="input-label">IFSC Code</label>
+                    <input type="text" [(ngModel)]="settingsBankDetails2.ifscCode" class="glass-input" placeholder="e.g. HDFC0001234">
+                  </div>
+                  <div>
+                    <label class="input-label">Branch Name</label>
+                    <input type="text" [(ngModel)]="settingsBankDetails2.branchName" class="glass-input" placeholder="e.g. Koramangala, Bangalore">
+                  </div>
+                </div>
+              </div>
+
               <div style="padding: 1rem; background: #fffbeb; border-radius: 12px; border: 1px solid #fde68a;">
                 <p style="font-size: 0.75rem; color: #92400e; line-height: 1.4;">
-                  <strong>Note:</strong> These banking details will be used on invoices and quotation payment pages. Please double-check for accuracy.
+                  <strong>Note:</strong> Bank Account 1 will be used if the client has a GST number. Bank Account 2 will be used if the client does NOT have a GST number. If Bank Account 2 is empty, it will fall back to Bank Account 1.
                 </p>
               </div>
             </div>

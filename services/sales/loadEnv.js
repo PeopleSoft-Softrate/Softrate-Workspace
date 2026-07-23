@@ -12,7 +12,7 @@ if (envPaths.length === 0) {
   dotenv.config();
 } else {
   envPaths.forEach((envPath) => {
-    dotenv.config({ path: envPath });
+    dotenv.config({ path: envPath, override: true });
   });
 }
 

@@ -182,6 +182,7 @@ export class AdminSettingsWorkflow {
           vm.settingsInvoiceRegisteredAddress = res.settings.invoiceRegisteredAddress || '';
           vm.settingsInvoiceFooter = res.settings.invoiceFooter || '';
           vm.settingsBankDetails = res.settings.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+          vm.settingsBankDetails2 = res.settings.bankDetails2 || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
           vm.settingsContactDetails = res.settings.contactDetails || { website: '', email: '', phone: '' };
           vm.settingsProducts = res.settings.products || [];
           vm.settingsProductRemarks = res.settings.productRemarks || [];
@@ -288,6 +289,7 @@ export class AdminSettingsWorkflow {
       invoiceRegisteredAddress: vm.settingsInvoiceRegisteredAddress,
       invoiceFooter: vm.settingsInvoiceFooter,
       bankDetails: vm.settingsBankDetails,
+      bankDetails2: vm.settingsBankDetails2,
       contactDetails: vm.settingsContactDetails,
       products: vm.settingsProducts,
       productRemarks: vm.settingsProductRemarks,

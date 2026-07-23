@@ -63,6 +63,7 @@ const invoiceSchema = new mongoose.Schema({
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
     address: { type: String, default: '' },
+    gstNumber: { type: String, default: '' },
   },
 }, { timestamps: true });
 

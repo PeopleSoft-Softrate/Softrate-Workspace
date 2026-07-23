@@ -54,8 +54,8 @@ async function generateQuotationNumber(companyCode, lead, quotationDate) {
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const prefix = `QT-${yy}${mm}`;
+  // NOTE: quotationNumber is unique across the entire database collection, so search globally
   const existingQuotations = await Quotation.find({
-    companyCode,
     quotationNumber: new RegExp(`^${prefix}\\d{3}(?:_v\\d+)?$`, 'i'),
   }).select('quotationNumber').lean();
   const maxSequence = existingQuotations.reduce((max, quotation) => {
@@ -108,47 +108,73 @@ router.post('/', async (req, res) => {
 
     const subtotal = items.reduce((sum, item) => sum + item.taxable, 0);
     const gstAmount = items.reduce((sum, item) => sum + item.gst, 0);
-    const quotationDate = req.body.quotationDate ? new Date(req.body.quotationDate) : new Date();
-    const { quotationNumber, versionNo } = await generateQuotationNumber(companyCode, lead, quotationDate);
 
-    const quotation = await Quotation.create({
-      companyCode,
-      employeePhone: normalize(req.body.employeePhone || lead.assignedEmployeePhone),
-      employeeName: normalize(req.body.employeeName),
-      leadId: lead._id,
-      leadCompanyName: lead.leadCompanyName,
-      contactName: lead.contactName,
-      contactNumber: lead.contactNumber,
-      directorEmailAddress: lead.directorEmailAddress,
-      quotationNumber,
-      versionNo,
-      kindNote: normalize(req.body.kindNote || user.invoiceFooter || 'We aim to provide the best software to automate your business with high quality at affordable cost.'),
-      items,
-      subtotal,
-      gstPercentage,
-      gstAmount,
-      total: subtotal + gstAmount,
-      quotationDate,
-      createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
-      createdByName: normalize(req.body.createdByName || req.body.employeeName),
-      createdByPhone: normalize(req.body.createdByPhone || req.body.employeePhone),
-      companySnapshot: {
-        name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
-        logo: user.invoiceLogo || '',
-        registeredAddress: user.invoiceRegisteredAddress || user.companyAddress || '',
-        phone: user.contactDetails?.phone || '',
-        email: user.contactDetails?.email || '',
-        website: user.contactDetails?.website || '',
-        gstNumber: user.gstNumber || '',
-        footer: user.invoiceFooter || '',
-        bankDetails: {
-          bankName: user.bankDetails?.bankName || '',
-          accountNumber: user.bankDetails?.accountNumber || '',
-          ifscCode: user.bankDetails?.ifscCode || '',
-          branchName: user.bankDetails?.branchName || '',
-        },
-      },
-    });
+    let quotation = null;
+    let lastError = null;
+    let retries = 5;
+
+    while (retries > 0) {
+      try {
+        const quotationDate = req.body.quotationDate ? new Date(req.body.quotationDate) : new Date();
+        const { quotationNumber, versionNo } = await generateQuotationNumber(companyCode, lead, quotationDate);
+
+        quotation = await Quotation.create({
+          companyCode,
+          employeePhone: normalize(req.body.employeePhone || lead.assignedEmployeePhone),
+          employeeName: normalize(req.body.employeeName),
+          leadId: lead._id,
+          leadCompanyName: lead.leadCompanyName,
+          contactName: lead.contactName,
+          contactNumber: lead.contactNumber,
+          directorEmailAddress: lead.directorEmailAddress,
+          quotationNumber,
+          versionNo,
+          kindNote: normalize(req.body.kindNote || user.invoiceFooter || 'We aim to provide the best software to automate your business with high quality at affordable cost.'),
+          items,
+          subtotal,
+          gstPercentage,
+          gstAmount,
+          total: subtotal + gstAmount,
+          quotationDate,
+          createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
+          createdByName: normalize(req.body.createdByName || req.body.employeeName),
+          createdByPhone: normalize(req.body.createdByPhone || req.body.employeePhone),
+          companySnapshot: {
+            name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
+            logo: user.invoiceLogo || '',
+            registeredAddress: user.invoiceRegisteredAddress || user.companyAddress || '',
+            phone: user.contactDetails?.phone || '',
+            email: user.contactDetails?.email || '',
+            website: user.contactDetails?.website || '',
+            gstNumber: user.gstNumber || '',
+            footer: user.invoiceFooter || '',
+            bankDetails: (() => {
+              const clientGst = clientDto.gstNumber || '';
+              const hasGst = !!clientGst.trim();
+              const selectedBank = (!hasGst && user.bankDetails2 && user.bankDetails2.bankName) ? user.bankDetails2 : user.bankDetails;
+              return {
+                bankName: selectedBank?.bankName || '',
+                accountNumber: selectedBank?.accountNumber || '',
+                ifscCode: selectedBank?.ifscCode || '',
+                branchName: selectedBank?.branchName || '',
+              };
+            })(),
+          },
+        });
+        break;
+      } catch (err) {
+        lastError = err;
+        if (err.code === 11000 && (err.keyPattern?.quotationNumber || err.errmsg?.includes('quotationNumber'))) {
+          retries -= 1;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!quotation) {
+      throw lastError;
+    }
 
     return res.status(201).json({ success: true, quotation });
   } catch (err) {

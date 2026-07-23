@@ -23,13 +23,17 @@ export interface CrmLoginResponse {
 
 export interface CrmClient {
   id: string;
+  _id?: string;
   clientId?: string;
   companyCode: string;
   companyName: string;
   leadCompanyName: string;
   primaryContact: string;
+  primaryContactName?: string;
   primaryPhone: string;
   primaryEmail: string;
+  address?: string;
+  gstNumber?: string;
   description: string;
   status: string;
   contacts: any[];
@@ -37,6 +41,7 @@ export interface CrmClient {
   managers: string[];
   remarks: string[];
   latestUpdate: string;
+  onboardedAt?: string;
   slaStatus: string;
   ndaStatus: string;
   amcStatus: string;

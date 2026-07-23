@@ -82,7 +82,7 @@
 
 /* Redesigned grid-box invoice sheet */
 .invoice-sheet {
-  width: 100%;
+  width: 860px;
   background: #ffffff;
   border: 1.5px solid #000000;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
@@ -635,39 +635,8 @@
   font-weight: var(--font-weight-medium);
 }
 
-@media (max-width: 768px) {
-  .invoice-sheet {
-    border-width: 1px;
-  }
-
-  .invoice-grid-header {
-    grid-template-columns: 1fr;
-  }
-
-  .invoice-grid-col-left {
-    border-right: none;
-    border-bottom: 1.5px solid #000000;
-  }
-
-  .invoice-grid-footer {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-col-bank,
-  .footer-col-upi {
-    border-right: none;
-    border-bottom: 1.5px solid #000000;
-  }
-
-  .invoice-notes-terms-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .notes-block {
-    border-right: none;
-    border-bottom: 1.5px solid #000000;
-  }
-}
+/* Mobile layout intentionally disabled — invoice always renders in desktop layout.
+   On narrow screens the page is zoomed to fit without horizontal scrolling. */
 
 @media print {
   :host {
@@ -688,15 +657,18 @@
   .invoice-sheet {
     border-width: 1.5px;
     box-shadow: none;
-    width: 100%;
+    width: 100% !important;
+    min-width: unset !important;
+    /* Reset any screen zoom so print uses its own layout */
+    zoom: 1 !important;
   }
 
   .filler-row {
-    height: 100px; /* give more print space */
+    height: 20px; /* minimal filler — avoid pushing to page 2 */
   }
 
   @page {
-    size: A4;
-    margin: 1.2cm 1cm;
+    size: A4 portrait;
+    margin: 0.8cm 0.8cm;
   }
 }

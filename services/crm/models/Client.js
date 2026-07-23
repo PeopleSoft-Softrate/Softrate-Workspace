@@ -10,6 +10,7 @@ const clientSchema = new mongoose.Schema(
     primaryPhone: { type: String, trim: true, default: '' },
     primaryEmail: { type: String, trim: true, default: '' },
     address: { type: String, trim: true, default: '' },
+    gstNumber: { type: String, trim: true, uppercase: true, default: '' },
     description: { type: String, trim: true, default: '' },
     status: { type: String, trim: true, default: 'Onboarded' },
     source: { type: String, trim: true, default: 'manual' },

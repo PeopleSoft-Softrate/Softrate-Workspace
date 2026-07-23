@@ -98,6 +98,7 @@ async function getConvertedClients({ companyCode = '', search = '' } = {}) {
       primaryPhone: client.primaryPhone || '',
       primaryEmail: client.primaryEmail || '',
       address: client.address || '',
+      gstNumber: client.gstNumber || '',
       description: client.description || '',
       status: client.status || 'Onboarded',
       source: client.source || 'manual',

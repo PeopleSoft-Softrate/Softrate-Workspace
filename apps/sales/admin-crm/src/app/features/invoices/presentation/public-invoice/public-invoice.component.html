@@ -16,7 +16,8 @@
       <button type="button" (click)="printPage()">Print</button>
     </header>
 
-    <article class="invoice-sheet" aria-label="Invoice document">
+    <article #invoiceSheetRef class="invoice-sheet" aria-label="Invoice document"
+      [style.zoom]="invoiceScale < 1 ? invoiceScale : 1">
       <!-- TAX INVOICE TOP TITLE BAR -->
       <div class="tax-invoice-bar">
         <span class="invoice-title-main">TAX INVOICE</span>
@@ -57,6 +58,7 @@
               <ng-template #noClientAddr>
                 <p>—</p>
               </ng-template>
+              <p *ngIf="current.clientSnapshot?.gstNumber"><strong>GSTIN:</strong> {{ current.clientSnapshot?.gstNumber }}</p>
               <p *ngIf="clientPhone(current)" class="client-phone">Ph: {{ clientPhone(current) }}</p>
             </div>
           </div>

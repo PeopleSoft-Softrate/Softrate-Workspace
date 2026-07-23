@@ -77,7 +77,7 @@ export class AdminLeadsWorkflow {
       password: '',
       business_type: '',
       pan: '',
-      gstin: '',
+      gstin: (lead as any).gstNumber || '',
       address: (lead as any).address || '',
       created_by: '',
       serviceName: '',

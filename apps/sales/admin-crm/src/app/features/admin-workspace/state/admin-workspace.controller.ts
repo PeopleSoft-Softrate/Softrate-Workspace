@@ -487,6 +487,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     primaryPhone: '',
     primaryEmail: '',
     address: '',
+    gstNumber: '',
     serviceName: '',
   };
   clientOnboardingSaving = false;
@@ -502,11 +503,24 @@ export abstract class AdminWorkspaceController implements OnInit {
   showInvoiceModal = false;
   quoteMode = false;
   viewingSavedDocument = false;
+  invoiceEditMode = false;
   invoiceItems: Array<{ product: any; price: number; quantity: number; name: string }> = [];
   selectedInvoiceProduct: any = null;
   invoicePrice = 0;
   invoiceQuantity = 1;
   invoiceIssuedAt = new Date();
+  setInvoiceDate(val: string) {
+    if (val) this.invoiceIssuedAt = new Date(val);
+  }
+  fmtDateInput(d: Date | string | number | undefined | null): string {
+    if (!d) return '';
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '';
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
   quoteNumber = Math.floor(100000 + Math.random() * 900000);
   currentInvoiceNumber = '';
   currentInvoicePublicUrl = '';
@@ -803,6 +817,12 @@ export abstract class AdminWorkspaceController implements OnInit {
     ifscCode: '',
     branchName: '',
   };
+  settingsBankDetails2 = {
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    branchName: '',
+  };
   settingsContactDetails = {
     website: '',
     email: '',
@@ -922,7 +942,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   isEditCrmClientOpen = false;
   editCrmClientLoading = false;
   editCrmClientError = '';
-  editingCrmClient: any = { _id: '', companyName: '', primaryContactName: '', primaryPhone: '', primaryEmail: '', address: '', description: '' };
+  editingCrmClient: any = { _id: '', clientId: '', companyCode: '', companyName: '', primaryContactName: '', primaryPhone: '', primaryEmail: '', address: '', gstNumber: '', description: '' };
   selectedCrmClientCompany = '';
   crmContractView: 'generate' | 'history' = 'generate';
   crmContractsLoading = false;
@@ -1824,10 +1844,81 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   fetchCrmClients(): void {
     this.crmClientsLoading = true;
+    const hasCrmToken = !!localStorage.getItem('tracecall_crm_token');
+
+    if (!hasCrmToken && this.userRole !== 'crm_admin') {
+      const params = new URLSearchParams();
+      if (this.dashboardCode) params.set('companyCode', this.dashboardCode);
+      if (this.crmClientSearch) params.set('search', this.crmClientSearch);
+
+      this.api.get<any>(`/api/clients?${params.toString()}`).subscribe({
+        next: (res) => {
+          this.crmClientsLoading = false;
+          const items = res?.clients || res?.items || (Array.isArray(res) ? res : []);
+          this.crmClients = items.map((c: any) => ({
+            id: c.clientId || c._id || '',
+            _id: c._id || '',
+            clientId: c.clientId || '',
+            companyCode: c.companyCode || '',
+            companyName: c.companyName || c.leadCompanyName || '',
+            leadCompanyName: c.companyName || c.leadCompanyName || '',
+            primaryContact: c.primaryContactName || c.contactName || 'Primary Contact',
+            primaryContactName: c.primaryContactName || c.contactName || '',
+            primaryPhone: c.primaryPhone || c.phone || '',
+            primaryEmail: c.primaryEmail || c.email || '',
+            address: c.address || '',
+            gstNumber: c.gstNumber || '',
+            description: c.description || '',
+            status: c.status || 'Onboarded',
+            contacts: c.contacts || [],
+            contactCount: c.contactCount || 0,
+            managers: c.managers || [],
+            remarks: c.remarks || [],
+            latestUpdate: c.latestUpdate || c.updatedAt || '',
+            onboardedAt: c.onboardedAt || c.createdAt || '',
+          }));
+          this.hydrateCrmContactsIntoLeadStore();
+          if (!this.selectedCrmClientCompany || !this.crmClients.some((client) => client.companyName === this.selectedCrmClientCompany)) {
+            this.selectCrmClient(this.crmClients[0]?.companyName || '');
+          }
+        },
+        error: (err) => {
+          this.crmClientsLoading = false;
+          this.crmActionMessage = err?.error?.message || 'Unable to load clients.';
+        },
+      });
+      return;
+    }
+
     this.crmService.getClients({ search: this.crmClientSearch, companyCode: this.dashboardCode }).subscribe({
       next: (res) => {
         this.crmClientsLoading = false;
-        this.crmClients = res?.clients || [];
+        const raw = res?.clients || [];
+        this.crmClients = raw.map((c: any) => ({
+          id: c.clientId || c.id || c._id || '',
+          _id: c._id || '',
+          clientId: c.clientId || '',
+          companyCode: c.companyCode || '',
+          companyName: c.companyName || c.leadCompanyName || '',
+          leadCompanyName: c.companyName || c.leadCompanyName || '',
+          primaryContact: c.primaryContactName || c.primaryContact || 'Primary Contact',
+          primaryContactName: c.primaryContactName || c.primaryContact || '',
+          primaryPhone: c.primaryPhone || '',
+          primaryEmail: c.primaryEmail || '',
+          address: c.address || '',
+          gstNumber: c.gstNumber || '',
+          description: c.description || '',
+          status: c.status || 'Onboarded',
+          contacts: c.contacts || [],
+          contactCount: c.contactCount || 0,
+          managers: c.managers || [],
+          remarks: c.remarks || [],
+          latestUpdate: c.latestUpdate || c.updatedAt || '',
+          onboardedAt: c.onboardedAt || c.createdAt || '',
+          slaStatus: c.slaStatus || '',
+          ndaStatus: c.ndaStatus || '',
+          amcStatus: c.amcStatus || '',
+        }));
         this.hydrateCrmContactsIntoLeadStore();
         if (!this.selectedCrmClientCompany || !this.crmClients.some((client) => client.companyName === this.selectedCrmClientCompany)) {
           this.selectCrmClient(this.crmClients[0]?.companyName || '');
@@ -1855,12 +1946,15 @@ export abstract class AdminWorkspaceController implements OnInit {
   openEditCrmClientModal(client: any): void {
     this.editCrmClientError = '';
     this.editingCrmClient = {
-      _id: client._id || client.id || '',
+      _id: client._id || '',
+      clientId: client.clientId || client.id || '',
+      companyCode: client.companyCode || '',
       companyName: client.companyName || '',
       primaryContactName: client.primaryContactName || client.primaryContact || '',
       primaryPhone: client.primaryPhone || '',
       primaryEmail: client.primaryEmail || '',
       address: client.address || '',
+      gstNumber: client.gstNumber || '',
       description: client.description || ''
     };
     this.isEditCrmClientOpen = true;
@@ -1872,13 +1966,26 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   onEditCrmClientSubmit(event: Event): void {
     event.preventDefault();
-    if (!this.editingCrmClient._id) {
+    const clientId = this.editingCrmClient.clientId;
+    const salesId = this.editingCrmClient._id;
+    if (!clientId && !salesId) {
       this.editCrmClientError = 'Client ID is missing.';
       return;
     }
     this.editCrmClientLoading = true;
     this.editCrmClientError = '';
-    this.crmService.updateClient(this.editingCrmClient._id, this.editingCrmClient).subscribe({
+
+    // CRM admins have a CRM token — use the CRM API.
+    // Sales admins have no CRM token — use the Sales API instead.
+    const isCrmAdminSession = !!localStorage.getItem('tracecall_crm_token') && this.userRole === 'crm_admin';
+    const update$ = isCrmAdminSession
+      ? this.crmService.updateClient(clientId, this.editingCrmClient)
+      : this.api.put<any>(`/api/clients/${encodeURIComponent(salesId || clientId)}`, {
+          ...this.editingCrmClient,
+          companyCode: this.editingCrmClient.companyCode || this.dashboardCode,
+        });
+
+    update$.subscribe({
       next: (res) => {
         this.editCrmClientLoading = false;
         this.isEditCrmClientOpen = false;
@@ -4817,6 +4924,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   submitClientOnboarding(): void { return this.invoiceQuotationWorkflow.submitClientOnboarding(this); }
 
   resetClientOnboardingDraft(): void { return this.invoiceQuotationWorkflow.resetClientOnboardingDraft(this); }
+
+  editSavedInvoice(): void { return this.invoiceQuotationWorkflow.editSavedInvoice(this); }
 
   openClientOnboardingCreateModal(): void {
     this.resetClientOnboardingDraft();

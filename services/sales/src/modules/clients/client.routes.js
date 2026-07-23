@@ -39,6 +39,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
+    console.log('[Sales Update Client] req.body:', req.body);
     const client = await updateClient(req.params.id, req.body || {});
     return res.json({
       success: true,

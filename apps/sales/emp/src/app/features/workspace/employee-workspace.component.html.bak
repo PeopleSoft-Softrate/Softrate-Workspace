@@ -2430,7 +2430,12 @@
             (quoteMode ? 'Quotation Builder' : 'Invoice Builder') }}</div>
           <div style="display: flex; align-items: center; gap: 16px;">
             <h3 style="margin: 0;">{{ quoteMode ? 'Quote' : 'Invoice' }} {{ invoiceNumber() }}</h3>
-
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <select *ngIf="!quoteMode" class="glass-input" style="padding: 4px 8px; font-size: 0.85rem; width: auto; height: 32px; min-width: 110px;" [(ngModel)]="invoicePaymentStatus">
+                <option value="paid">Paid</option>
+                <option value="unpaid">Partially Paid</option>
+              </select>
+            </div>
           </div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
@@ -2625,7 +2630,7 @@
           <label class="mini-field" *ngIf="!viewingSavedDocument">
             <span>Status</span>
             <select class="field-select" [(ngModel)]="invoicePaymentStatus">
-              <option value="unpaid">Partially Paid</option>
+              <option value="unpaid">Unpaid</option>
               <option value="paid">Paid</option>
             </select>
           </label>

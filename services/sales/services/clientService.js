@@ -31,6 +31,7 @@ function mapClient(client = {}) {
     primaryPhone: source.primaryPhone || '',
     primaryEmail: source.primaryEmail || '',
     address: source.address || '',
+    gstNumber: source.gstNumber || '',
     description: source.description || '',
     status: source.status || 'Onboarded',
     source: source.source || 'manual',
@@ -187,6 +188,7 @@ async function createManualClient(payload = {}) {
     primaryPhone: payload.primaryPhone || payload.contactNumber || sourceLead?.contactNumber,
     primaryEmail: email,
     address: payload.address,
+    gstNumber: payload.gstNumber,
     description: payload.description || sourceLead?.mainDivisionDescription || sourceLead?.companyDescription,
     source: sourceLead ? 'converted_lead' : 'manual',
     sourceLeadIds: sourceLead ? [sourceLead._id] : [],
@@ -197,7 +199,8 @@ async function createManualClient(payload = {}) {
   });
 
   // ── Notify WE-CRM via intake webhook if configured ───────────
-  if (result.client && payload.serviceName) {
+  const targetCompanyCode = process.env.WE_CRM_ACCESS;
+  if (result.client && payload.serviceName && targetCompanyCode && payload.companyCode === targetCompanyCode) {
     notifyWeCrm({
       companyId: process.env.WE_CRM_COMPANYID,
       companyName: stringValue(result.client.companyName),
@@ -321,11 +324,14 @@ async function updateClient(clientId, payload = {}) {
     throw error;
   }
 
-  const filter = { _id: id, companyCode, status: { $ne: 'Inactive' } };
-  const employeePhone = stringValue(payload.employeePhone || payload.phone);
-  if (employeePhone) filter.assignedEmployeePhones = employeePhone;
+  const filter = { _id: id, status: { $ne: 'Inactive' } };
+  if (companyCode) filter.companyCode = companyCode;
 
-  const client = await Client.findOne(filter);
+  let client = await Client.findOne(filter);
+  if (!client && companyCode) {
+    delete filter.companyCode;
+    client = await Client.findOne(filter);
+  }
   if (!client) {
     const error = new Error('Client not found.');
     error.statusCode = 404;
@@ -357,6 +363,7 @@ async function updateClient(clientId, payload = {}) {
   if (payload.primaryPhone !== undefined) client.primaryPhone = stringValue(payload.primaryPhone);
   if (payload.primaryEmail !== undefined) client.primaryEmail = stringValue(payload.primaryEmail).toLowerCase();
   if (payload.address !== undefined) client.address = stringValue(payload.address);
+  if (payload.gstNumber !== undefined) client.gstNumber = stringValue(payload.gstNumber).toUpperCase();
   if (payload.description !== undefined) client.description = stringValue(payload.description);
 
   await client.save();

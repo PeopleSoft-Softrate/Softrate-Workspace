@@ -1,0 +1,56 @@
+/* Prevent the whole table container from scrolling */
+.invoice-modal-billing .table-scroll.invoice-items-card,
+.admin-quote-modal .table-scroll.invoice-items-card {
+  overflow-x: hidden !important;
+}
+
+/* Fix table layout so columns respect widths */
+.invoice-modal-billing .invoice-items-card table.data-table,
+.admin-quote-modal .invoice-items-card table.data-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Apply scrolling ONLY to the Description data cells, NOT the header */
+.invoice-modal-billing .invoice-items-card table.data-table td:first-child,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child {
+  overflow-x: auto;
+  white-space: nowrap;
+  width: 40%;
+}
+
+/* Ensure the header respects the 40% width but doesn't scroll */
+.invoice-modal-billing .invoice-items-card table.data-table th:first-child,
+.admin-quote-modal .invoice-items-card table.data-table th:first-child {
+  width: 40%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Remaining columns get the rest of the space */
+.invoice-modal-billing .invoice-items-card table.data-table th:nth-child(n+2),
+.invoice-modal-billing .invoice-items-card table.data-table td:nth-child(n+2),
+.admin-quote-modal .invoice-items-card table.data-table th:nth-child(n+2),
+.admin-quote-modal .invoice-items-card table.data-table td:nth-child(n+2) {
+  width: 15%;
+}
+
+/* Make the scrollbar invisible until hovered to avoid ugly grey lines on Mac/Windows */
+.invoice-modal-billing .invoice-items-card table.data-table td:first-child::-webkit-scrollbar,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child::-webkit-scrollbar {
+  height: 4px;
+}
+.invoice-modal-billing .invoice-items-card table.data-table td:first-child::-webkit-scrollbar-track,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child::-webkit-scrollbar-track {
+  background: transparent;
+}
+.invoice-modal-billing .invoice-items-card table.data-table td:first-child::-webkit-scrollbar-thumb,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+.invoice-modal-billing .invoice-items-card table.data-table td:first-child:hover::-webkit-scrollbar-thumb,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child:hover::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}

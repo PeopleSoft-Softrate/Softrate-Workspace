@@ -1,0 +1,13 @@
+.admin-quote-modal .invoice-items-card table.data-table th:first-child::-webkit-scrollbar,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child::-webkit-scrollbar {
+  height: 4px;
+}
+.admin-quote-modal .invoice-items-card table.data-table th:first-child::-webkit-scrollbar-track,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-quote-modal .invoice-items-card table.data-table th:first-child::-webkit-scrollbar-thumb,
+.admin-quote-modal .invoice-items-card table.data-table td:first-child::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}

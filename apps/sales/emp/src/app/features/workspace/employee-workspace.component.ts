@@ -5,6 +5,8 @@ import { Chart, registerables } from 'chart.js';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { RealtimeService, SSEEvent } from '../../realtime.service';
 import { ApiService } from '../../api.service';
+import * as qrcodeModule from 'qrcode';
+const QRCode = (qrcodeModule as any).default || qrcodeModule;
 import { DashboardCacheService } from '../../core/cache/dashboard-cache.service';
 import { OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../core/config/pagination.config';
 import { AiBrief, AiBriefService } from '../../ai-brief.service';
@@ -1741,6 +1743,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceSeal: string = '';
   invoiceTerms: string = '';
   bankDetails: any = null;
+  bankDetails2: any = null;
   contactDetails: any = null;
   companyAddress: string = '';
   products: any[] = [];
@@ -1750,9 +1753,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   invoiceItems: any[] = [];
   invoiceDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   invoiceIssuedAt = new Date();
+  setInvoiceDate(val: string) {
+    if (val) this.invoiceIssuedAt = new Date(val);
+  }
+  fmtDateInput(d: Date | string | number | undefined | null): string {
+    if (!d) return '';
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? '' : date.toISOString().substring(0, 10);
+  }
   dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   quoteNumber = Math.floor(100000 + Math.random() * 900000);
   showInvoiceModal = false;
+  invoiceEditMode = false;
   invoiceLead: Lead | null = null;
   selectedInvoiceClient: ClientRecord | null = null;
   showGstSelectionModal = false;
@@ -2222,7 +2234,13 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   private activeCompanyBankDetails(): any {
-    return this.activeInvoiceCompanySnapshot()?.bankDetails || this.bankDetails || {};
+    const lead: any = this.invoiceLead;
+    const hasGst = Boolean(lead?.gstNumber);
+    const snapshot = this.activeInvoiceCompanySnapshot();
+    if (snapshot) {
+      return (hasGst ? snapshot.bankDetails : snapshot.bankDetails2) || snapshot.bankDetails || {};
+    }
+    return (hasGst ? this.bankDetails : this.bankDetails2) || this.bankDetails || {};
   }
 
   invoiceBankDetails(): any {
@@ -2306,13 +2324,29 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.gstSelectionConfirmed = false;
   }
 
-  private async setInvoiceQrFromUrl(publicUrl: string): Promise<void> {
-    this.currentInvoicePublicUrl = publicUrl || '';
-    this.currentInvoiceQrDataUrl = '';
-    if (!publicUrl) return;
+  private resolvePublicUrl(publicUrl: string): string {
+    if (!publicUrl) return '';
     try {
-      const QRCode = await import('qrcode');
-      this.currentInvoiceQrDataUrl = await QRCode.toDataURL(publicUrl, {
+      const parsed = new URL(publicUrl);
+      const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+      if (isLocalhost && typeof window !== 'undefined') {
+        // Replace localhost with the actual browser origin so VPS deployments work
+        const browserOrigin = window.location.origin;
+        return publicUrl.replace(parsed.origin, browserOrigin);
+      }
+    } catch {
+      // Not a valid URL, return as-is
+    }
+    return publicUrl;
+  }
+
+  private async setInvoiceQrFromUrl(publicUrl: string): Promise<void> {
+    const resolvedUrl = this.resolvePublicUrl(publicUrl);
+    this.currentInvoicePublicUrl = resolvedUrl || '';
+    this.currentInvoiceQrDataUrl = '';
+    if (!resolvedUrl) return;
+    try {
+      this.currentInvoiceQrDataUrl = await QRCode.toDataURL(resolvedUrl, {
         width: 136,
         margin: 1,
         errorCorrectionLevel: 'M',
@@ -2604,7 +2638,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const yy = String(issued.getFullYear()).slice(-2);
     const mm = String(issued.getMonth() + 1).padStart(2, '0');
     const sequence = String(this.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `Invoice_${yy}${mm}${sequence}_v1`;
+    return `Invoice_${yy}${mm}${sequence}`;
   }
 
   quotationNumber(): string {
@@ -2613,7 +2647,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const yy = String(issued.getFullYear()).slice(-2);
     const mm = String(issued.getMonth() + 1).padStart(2, '0');
     const sequence = String(this.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `QT-${yy}${mm}${sequence}_v1`;
+    return `QT-${yy}${mm}${sequence}`;
   }
 
   printInvoice(): void {
@@ -2634,8 +2668,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const invoiceClient = this.selectedInvoiceClient;
     const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id;
-    this.invoiceSaving = true;
-    this.api.post<any>('/api/invoices', {
+
+    const payload = {
       companyCode: this.employee.companyCode,
       employeePhone: this.employee.mobile,
       employeeName: this.employee.name,
@@ -2656,26 +2690,76 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         quantity: item.quantity,
         sacHsn: item.product?.sacHsn || '',
       })),
-    }).subscribe({
-      next: (res) => {
-        this.invoiceSaving = false;
-        if (!res?.success || !res.invoice) {
-          alert(res?.message || 'Failed to save invoice.');
-          return;
-        }
-        this.currentInvoiceNumber = res.invoice.invoiceNumber;
-        this.currentInvoicePublicUrl = String(res.invoice.publicUrl || '');
-        this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(res.invoice.paymentStatus);
-        this.invalidateInvoiceCaches();
-        this.fetchInvoiceRecords(true);
-        void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
-      },
-      error: (err) => {
-        this.invoiceSaving = false;
-        alert(err?.error?.message || 'Failed to save invoice.');
-      },
-    });
+    };
+
+    this.invoiceSaving = true;
+
+    if (this.invoiceEditMode && this.openedInvoiceRecord?._id) {
+      const updatePayload = {
+        items: payload.items,
+        total: this.invoiceTotal,
+        subTotal: this.invoiceSubtotal,
+        taxTotal: this.invoiceGstAmount,
+        invoiceDate: payload.invoiceDate,
+        paymentStatus: payload.paymentStatus,
+      };
+      this.api.put<any>(`/api/invoices/${this.openedInvoiceRecord._id}`, updatePayload).subscribe({
+        next: (res) => {
+          this.invoiceSaving = false;
+          if (!res?.success || !res.invoice) {
+            alert(res?.message || 'Failed to update invoice.');
+            return;
+          }
+          this.invoiceEditMode = false;
+          this.viewingSavedDocument = true;
+          this.openedInvoiceRecord = res.invoice;
+          this.invalidateInvoiceCaches();
+          this.fetchInvoiceRecords(true);
+          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+        },
+        error: (err) => {
+          this.invoiceSaving = false;
+          alert(err?.error?.message || 'Failed to update invoice.');
+        },
+      });
+    } else {
+      this.api.post<any>('/api/invoices', payload).subscribe({
+        next: (res) => {
+          this.invoiceSaving = false;
+          if (!res?.success || !res.invoice) {
+            alert(res?.message || 'Failed to save invoice.');
+            return;
+          }
+          this.currentInvoiceNumber = res.invoice.invoiceNumber;
+          this.currentInvoicePublicUrl = String(res.invoice.publicUrl || '');
+          this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(res.invoice.paymentStatus);
+          this.invalidateInvoiceCaches();
+          this.fetchInvoiceRecords(true);
+          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+        },
+        error: (err) => {
+          this.invoiceSaving = false;
+          alert(err?.error?.message || 'Failed to save invoice.');
+        },
+      });
+    }
   }
+
+  editSavedInvoice(): void {
+    if (!this.openedInvoiceRecord) return;
+    this.viewingSavedDocument = false;
+    this.invoiceEditMode = true;
+    this.invoiceItems = (this.openedInvoiceRecord.items || []).map((item: any) => ({
+      product: { _id: item.productId, sacHsn: item.sacHsn },
+      name: item.name,
+      price: item.rate,
+      quantity: item.quantity,
+    }));
+    this.invoiceIssuedAt = new Date(this.openedInvoiceRecord.invoiceDate || new Date());
+    this.invoiceDate = this.invoiceIssuedAt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(this.openedInvoiceRecord.paymentStatus);
+  }
+
 
   saveAndPrintQuotation(): void {
     if (!this.invoiceLead || !this.employee || this.quotationSaving) return;
@@ -3101,7 +3185,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   formatInvoicePaymentStatus(status?: string): string {
-    return this.normalizeInvoicePaymentStatus(status) === 'paid' ? 'Paid' : 'Unpaid';
+    return this.normalizeInvoicePaymentStatus(status) === 'paid' ? 'Paid' : 'Partially Paid';
   }
 
   numberToWords(value: number): string {
@@ -5909,6 +5993,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.invoiceSeal = settings.invoiceSeal || '';
     this.invoiceTerms = settings.invoiceTerms || '';
     this.bankDetails = settings.bankDetails;
+    this.bankDetails2 = settings.bankDetails2;
     this.contactDetails = settings.contactDetails;
     this.products = settings.products || [];
     this.productRemarks = settings.productRemarks || [];

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import QRCode from 'qrcode';
 import { ApiService } from '../../../../services/api.service';
@@ -41,6 +41,7 @@ interface InvoiceClientSnapshot {
   phone?: string;
   email?: string;
   address?: string;
+  gstNumber?: string;
 }
 
 interface PublicInvoice {
@@ -73,16 +74,40 @@ interface PublicInvoice {
   templateUrl: './public-invoice.component.html',
   styleUrl: './public-invoice.component.css',
 })
-export class PublicInvoiceComponent implements OnInit {
+export class PublicInvoiceComponent implements OnInit, AfterViewInit {
+  @ViewChild('invoiceSheetRef') invoiceSheetRef!: ElementRef<HTMLElement>;
   invoice: PublicInvoice | null = null;
   loading = true;
   error = '';
   qrDataUrl = '';
+  invoiceScale = 1;
+
+  /** Desktop width the invoice is designed for */
+  private readonly DESIGN_WIDTH = 860;
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.scaleInvoice();
+  }
 
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
   ) {}
+
+  ngAfterViewInit(): void {
+    this.scaleInvoice();
+  }
+
+  private scaleInvoice(): void {
+    if (!this.invoiceSheetRef) return;
+    const container = this.invoiceSheetRef.nativeElement.parentElement;
+    if (!container) return;
+    const availableWidth = container.clientWidth;
+    this.invoiceScale = availableWidth < this.DESIGN_WIDTH
+      ? availableWidth / this.DESIGN_WIDTH
+      : 1;
+  }
 
   ngOnInit(): void {
     const publicToken = this.route.snapshot.paramMap.get('publicToken') || '';

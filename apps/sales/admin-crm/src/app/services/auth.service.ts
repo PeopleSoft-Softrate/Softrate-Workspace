@@ -110,6 +110,12 @@ export class AuthService {
       ifscCode?: string;
       branchName?: string;
     };
+    bankDetails2?: {
+      bankName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      branchName?: string;
+    };
     contactDetails?: {
       website?: string;
       email?: string;

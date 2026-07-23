@@ -4637,10 +4637,12 @@
 .invoice-modal {
   width: min(1180px, 100%);
   max-height: calc(100vh - 48px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid var(--border-strong);
   background: var(--surface-primary);
   box-shadow: 0 24px 48px rgba(21, 27, 35, 0.16);
+  align-self: center; /* prevent grid from stretching it vertically */
 }
 
 .invoice-modal-billing {
@@ -4649,6 +4651,7 @@
 
 .invoice-builder {
   display: grid;
+  grid-auto-rows: auto; /* ensure each row sizes to content */
   gap: 20px;
   padding: 24px;
   background: #ffffff;
@@ -4977,4 +4980,22 @@
   .followup-detail-workspace .followup-drawer-actions .secondary-action {
     width: 100%;
   }
+}
+
+/* Prevent ONLY Price and Sum columns from wrapping so "INR 10,000.00" stays on one line */
+/* Description column can still wrap to prevent horizontal scrolling */
+.invoice-items-card .data-table td:nth-child(3),
+.invoice-items-card .data-table th:nth-child(3),
+.invoice-items-card .data-table td:nth-child(4),
+.invoice-items-card .data-table th:nth-child(4) {
+  white-space: nowrap;
+}
+
+/* Force the table container to grow to fit the table vertically, preventing vertical scroll and clipping */
+/* But keep horizontal scroll inside the card if needed, to prevent the entire left section from scrolling horizontally */
+.invoice-modal-billing .table-scroll.invoice-items-card {
+  min-height: auto !important;
+  height: max-content !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }

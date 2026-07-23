@@ -1213,7 +1213,13 @@
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
           <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Close</button>
           <div *ngIf="!vm.viewingSavedDocument" style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-
+            <div *ngIf="!vm.quoteMode" style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">Status</label>
+              <select class="glass-input" style="padding: 4px 8px; font-size: 0.85rem; width: auto; height: 32px;" [(ngModel)]="vm.invoicePaymentStatus">
+                <option value="unpaid">Unpaid</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">{{ vm.quoteMode ? 'Quote' : 'Invoice' }} Date</label>
               <input type="date" class="glass-input" style="padding: 4px 8px; font-size: 0.85rem; width: auto; height: 32px;" 
@@ -1248,7 +1254,7 @@
               <label class="mini-field" *ngIf="!vm.quoteMode">
                 <span>Status</span>
                 <select class="field-select" [(ngModel)]="vm.invoicePaymentStatus">
-                  <option value="unpaid">Partially Paid</option>
+                  <option value="unpaid">Unpaid</option>
                   <option value="paid">Paid</option>
                 </select>
               </label>
@@ -1411,7 +1417,7 @@
           <label class="mini-field" *ngIf="!vm.quoteMode">
             <span>Status</span>
             <select class="field-select" [(ngModel)]="vm.invoicePaymentStatus">
-              <option value="unpaid">Partially Paid</option>
+              <option value="unpaid">Unpaid</option>
               <option value="paid">Paid</option>
             </select>
           </label>

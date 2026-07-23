@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const { getConvertedClients } = require('../services/clientService');
 const CrmContract = require('../models/CrmContract');
 const Client = require('../models/Client');
@@ -286,16 +287,27 @@ router.put('/clients/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const companyCode = scopedCompany(req);
-    const client = await Client.findOne({ _id: id, companyCode });
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
+    const searchFilter = isObjectId
+      ? { $or: [{ clientId: id }, { _id: id }] }
+      : { clientId: id };
+
+    let client = await Client.findOne(companyCode ? { ...searchFilter, companyCode } : searchFilter);
+    if (!client && companyCode) {
+      client = await Client.findOne(searchFilter);
+    }
     if (!client) {
       return res.status(404).json({ success: false, message: 'Client not found.' });
     }
+
+    console.log('[CRM Update Client] req.body:', req.body);
 
     if (req.body.companyName !== undefined) client.companyName = String(req.body.companyName).trim();
     if (req.body.primaryContactName !== undefined) client.primaryContactName = String(req.body.primaryContactName).trim();
     if (req.body.primaryPhone !== undefined) client.primaryPhone = String(req.body.primaryPhone).trim();
     if (req.body.primaryEmail !== undefined) client.primaryEmail = String(req.body.primaryEmail).trim().toLowerCase();
     if (req.body.address !== undefined) client.address = String(req.body.address).trim();
+    if (req.body.gstNumber !== undefined) client.gstNumber = String(req.body.gstNumber).trim().toUpperCase();
     if (req.body.description !== undefined) client.description = String(req.body.description).trim();
     if (req.body.status !== undefined) client.status = String(req.body.status).trim();
 

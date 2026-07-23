@@ -11,6 +11,7 @@ const clientSchema = new mongoose.Schema({
   primaryPhoneNormalized: { type: String, trim: true, default: '' },
   primaryEmail: { type: String, trim: true, lowercase: true, default: '' },
   address: { type: String, trim: true, default: '' },
+  gstNumber: { type: String, trim: true, uppercase: true, default: '' },
   description: { type: String, trim: true, default: '' },
   status: { type: String, enum: ['Onboarded', 'Inactive'], default: 'Onboarded' },
   source: { type: String, enum: ['converted_lead', 'manual'], default: 'manual' },
@@ -32,6 +33,7 @@ clientSchema.pre('validate', function normalizeClient() {
   this.primaryPhoneNormalized = normalizePhone(this.primaryPhone);
   this.primaryEmail = String(this.primaryEmail || '').trim().toLowerCase();
   this.address = String(this.address || '').trim();
+  this.gstNumber = String(this.gstNumber || '').trim().toUpperCase();
   this.description = String(this.description || '').trim();
   this.assignedEmployeePhones = Array.from(new Set((this.assignedEmployeePhones || []).map((phone) => String(phone || '').trim()).filter(Boolean)));
 });

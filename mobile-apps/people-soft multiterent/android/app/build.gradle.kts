@@ -3,7 +3,6 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -47,9 +46,9 @@ android {
     defaultConfig {
         applicationId = "com.softrate.peoplesoft"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
-        versionCode = 22
-        versionName = "4.2.0"
+        targetSdk = 36
+        versionCode = 25
+        versionName = "5.2.0"
     }
 
     buildTypes {

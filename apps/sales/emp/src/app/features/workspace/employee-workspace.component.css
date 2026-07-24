@@ -7383,7 +7383,7 @@ body.column-resizing * {
 
 .invoice-grid-header {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 57fr 43fr;
   border-bottom: 1.5px solid #000000;
 }
 
@@ -7465,6 +7465,7 @@ body.column-resizing * {
   margin: 0;
   font-size: 10.5px;
   color: #4b5563;
+  white-space: nowrap !important;
 }
 
 .client-info-block {
@@ -7627,21 +7628,25 @@ body.column-resizing * {
 
 .invoice-main-table,
 .gst-breakdown-table {
-  width: 100%;
-  border-collapse: collapse;
+  width: 100% !important;
+  border-collapse: collapse !important;
 }
 
 .invoice-main-table th,
 .invoice-main-table td {
   border: 1px solid #000000;
-  padding: 8px;
+  padding: 8px !important;
   vertical-align: top;
   font-size: 11px;
 }
 
+.invoice-main-table td.summary-right-cell[colspan="3"] {
+  padding: 0 !important;
+}
+
 .invoice-main-table th,
 .gst-breakdown-table th {
-  background-color: #f8fafc;
+  background-color: #f8fafc !important;
   color: #1e293b;
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
@@ -7801,7 +7806,7 @@ body.column-resizing * {
 .gst-breakdown-table th,
 .gst-breakdown-table td {
   border: 1px solid #000000;
-  padding: 6px 8px;
+  padding: 6px 8px !important;
   font-size: 10px;
 }
 
@@ -7816,7 +7821,7 @@ body.column-resizing * {
 
 .invoice-grid-footer {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.17fr 1fr !important;
   border-bottom: 1.5px solid #000000;
 }
 
@@ -7885,7 +7890,7 @@ body.column-resizing * {
 
 .invoice-notes-terms-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.17fr 1fr !important;
   border-bottom: 1.5px solid #000000;
 }
 

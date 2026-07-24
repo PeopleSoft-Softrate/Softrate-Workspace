@@ -23,7 +23,8 @@ export type AdminPageId =
   | 'crm_amc'
   | 'crm_payments'
   | 'crm_tickets'
-  | 'crm_projects';
+  | 'crm_projects'
+  | 'crm_client_onboard_requests';
 
 export const ADMIN_PAGES: readonly AdminPageId[] = [
   'overview',
@@ -48,6 +49,7 @@ export const ADMIN_PAGES: readonly AdminPageId[] = [
   'crm_payments',
   'crm_tickets',
   'crm_projects',
+  'crm_client_onboard_requests',
 ];
 
 export const ADMIN_ROUTES: Routes = [

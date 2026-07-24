@@ -986,9 +986,13 @@ exports.setupMfa = async (req, res) => {
     const qrcode = require('qrcode');
 
     // Generate a new secret
-    const secret = speakeasy.generateSecret({
-      name: `Softrate (${user.email})`
-    });
+    const userName = user.fullName || user.profile?.firstName || 'User';
+    const secret = speakeasy.generateSecret({ length: 20 });
+    
+    // Construct explicit otpauth URL matching the standard format: otpauth://totp/Issuer:Name
+    const issuerName = encodeURIComponent('Peoplesoft');
+    const accountName = encodeURIComponent(`${userName} (${user.email})`);
+    const customOtpauthUrl = `otpauth://totp/${issuerName}:${accountName}?secret=${secret.base32}&issuer=${issuerName}`;
 
     // Save secret to user but don't enable it yet
     await Model.findByIdAndUpdate(user._id, {
@@ -996,7 +1000,7 @@ exports.setupMfa = async (req, res) => {
     });
 
     // Generate QR code data URI
-    const dataUrl = await qrcode.toDataURL(secret.otpauth_url);
+    const dataUrl = await qrcode.toDataURL(customOtpauthUrl);
 
     res.json({
       success: true,
@@ -1055,27 +1059,12 @@ exports.enableMfa = async (req, res) => {
  */
 exports.disableMfa = async (req, res) => {
   try {
-    const { code } = req.body;
-    if (!code) return res.status(400).json({ success: false, message: "MFA code is required to disable" });
-
     const { user, role, Model } = await findCurrentUser(req);
     if (!user || !Model) return res.status(404).json({ success: false, message: "User not found" });
 
     const dbUser = await Model.findById(user._id).select('+mfaSecret +mfaEnabled');
     if (!dbUser || !dbUser.mfaEnabled) {
       return res.status(400).json({ success: false, message: "MFA is not enabled" });
-    }
-
-    const speakeasy = require('speakeasy');
-    const verified = speakeasy.totp.verify({
-      secret: dbUser.mfaSecret,
-      encoding: 'base32',
-      token: code,
-      window: 1
-    });
-
-    if (!verified) {
-      return res.status(400).json({ success: false, message: "Invalid MFA code" });
     }
 
     dbUser.mfaEnabled = false;

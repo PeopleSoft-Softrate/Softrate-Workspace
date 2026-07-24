@@ -52,7 +52,13 @@ class CallLogService {
     debugPrint(
         'CallLogSync: ${relevant.length} entries remain after SIM filtering');
 
-    if (relevant.isEmpty) return {'success': true, 'hasNew': false};
+    // Safe buffer of 4 hours to catch calls that started before last sync but ended after.
+    final nextSyncTimestamp = queryTo - (4 * 60 * 60 * 1000);
+
+    if (relevant.isEmpty) {
+      await prefs.setInt(_lastSyncKey, nextSyncTimestamp);
+      return {'success': true, 'hasNew': false};
+    }
 
     final groupedCalls = <String, List<CallLogEntry>>{};
 
@@ -144,7 +150,7 @@ class CallLogService {
     }
 
     if (allSuccess) {
-      await prefs.setInt(_lastSyncKey, queryTo);
+      await prefs.setInt(_lastSyncKey, nextSyncTimestamp);
       return {'success': true, 'hasNew': true};
     }
     return {'success': false, 'message': lastErrorMsg, 'hasNew': true};

@@ -137,23 +137,42 @@ export class AdminEmployeesWorkflow {
 
   syncAll(vm: any): void {
     vm.syncAllLoading = true;
-
-    if (vm.selectedPeriod === 'custom') {
-      vm.fetchSummary();
-      vm.fetchEmployeeCallRows();
-    } else {
-      vm.fetchSummary(true);
-      vm.fetchEmployeeCallRows(true);
-    }
-    vm.fetchEmployees();
-    setTimeout(() => vm.syncAllLoading = false, 1500);
+    this.employeeService.triggerSyncAll(vm.dashboardCode).subscribe({
+      next: () => {
+        // Wait 3 seconds to let mobile apps upload their logs before refreshing the UI
+        setTimeout(() => {
+          if (vm.selectedPeriod === 'custom') {
+            vm.fetchSummary();
+            vm.fetchEmployeeCallRows();
+          } else {
+            vm.fetchSummary(true);
+            vm.fetchEmployeeCallRows(true);
+          }
+          vm.fetchEmployees();
+          vm.syncAllLoading = false;
+        }, 3000);
+      },
+      error: () => {
+        vm.syncAllLoading = false;
+      }
+    });
   }
 
   syncEmployee(vm: any): void {
     if (!vm.selectedEmployee) return;
     vm.syncEmpLoading = true;
-    vm.openEmployee(vm.selectedEmployee);
-    setTimeout(() => vm.syncEmpLoading = false, 1500);
+    this.employeeService.triggerSync(vm.selectedEmployee._id).subscribe({
+      next: () => {
+        // Wait 3 seconds to let mobile app upload logs before refreshing
+        setTimeout(() => {
+          vm.openEmployee(vm.selectedEmployee);
+          vm.syncEmpLoading = false;
+        }, 3000);
+      },
+      error: () => {
+        vm.syncEmpLoading = false;
+      }
+    });
   }
 
   openEmployee(vm: any, emp: Employee): void {

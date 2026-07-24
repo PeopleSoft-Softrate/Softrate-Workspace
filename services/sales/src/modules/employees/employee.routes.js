@@ -134,4 +134,49 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Admin: Trigger sync for a specific employee
+router.post('/:id/trigger-sync', async (req, res) => {
+  try {
+    const employee = await Employee.findByIdAndUpdate(req.params.id, { $set: { forceSync: true } });
+    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found.' });
+    return res.status(200).json({ success: true, message: 'Sync triggered.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// Admin: Trigger sync for all employees in a company
+router.post('/trigger-sync-all', async (req, res) => {
+  try {
+    const { companyCode } = req.body;
+    if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
+    await Employee.updateMany({ companyCode }, { $set: { forceSync: true } });
+    return res.status(200).json({ success: true, message: 'Sync triggered for all employees.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// Mobile App: Poll for sync trigger
+router.get('/sync-status', async (req, res) => {
+  try {
+    const { companyCode, mobile } = req.query;
+    if (!companyCode || !mobile) return res.status(400).json({ success: false, message: 'companyCode and mobile required.' });
+    
+    // Find employee and if forceSync is true, return it and reset it to false atomically
+    const employee = await Employee.findOneAndUpdate(
+      { companyCode, mobile, forceSync: true },
+      { $set: { forceSync: false } }
+    );
+
+    if (employee) {
+      return res.status(200).json({ success: true, triggerSync: true });
+    } else {
+      return res.status(200).json({ success: true, triggerSync: false });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
 module.exports = router;

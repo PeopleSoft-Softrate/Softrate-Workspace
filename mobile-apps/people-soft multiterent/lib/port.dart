@@ -2,7 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Set to true during local development to hit your local server.
-const bool useLocalBackend = true;
+const bool useLocalBackend = false;
 
 /// The local network IP of your dev machine (used when useLocalBackend = true).
 const String _localIp = '192.168.29.105';

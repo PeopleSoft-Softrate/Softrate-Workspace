@@ -233,7 +233,8 @@ export class AdminSettingsWorkflow {
       ...vm.newProductInput,
       tags: Array.isArray(vm.newProductInput.tags) ? [...vm.newProductInput.tags] : [],
     });
-    vm.newProductInput = { name: '', minPrice: 0, maxPrice: 0, tags: [] };
+    vm.newProductInput = { name: '', minPrice: 0, maxPrice: 0, tags: [], sacHsn: '' };
+    this.saveSettings(vm);
   }
 
   toggleNewProductTag(vm: any, tag: string): void {
@@ -248,6 +249,7 @@ export class AdminSettingsWorkflow {
     const index = product.tags.indexOf(tag);
     if (index >= 0) product.tags.splice(index, 1);
     else product.tags.push(tag);
+    this.saveSettings(vm);
   }
 
   addProductRemark(vm: any): void {
@@ -264,6 +266,7 @@ export class AdminSettingsWorkflow {
 
   removeProduct(vm: any, index: number): void {
     vm.settingsProducts.splice(index, 1);
+    this.saveSettings(vm);
   }
 
   saveSettings(vm: any): void {

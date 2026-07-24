@@ -109,6 +109,20 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
   /// to avoid re-pushing the full day's log (including other SIM calls) on every open.
   Future<void> _fetchAllAndSync() async {
     setState(() => _isLoadingLogs = true);
+    
+    // Auto-sync missing calls to the backend immediately when app/UI opens
+    if (_companyCode.isNotEmpty && _mobileNumber.isNotEmpty) {
+      try {
+        await CallLogService.syncNewEntries(
+          companyCode: _companyCode,
+          phone: _mobileNumber,
+        );
+        if (mounted) setState(() => _lastSyncTime = DateTime.now());
+      } catch (e) {
+        debugPrint('Auto-sync on load failed: $e');
+      }
+    }
+
     try {
       final logs = await CallLogService.fetchTodayLogs();
       if (mounted) {

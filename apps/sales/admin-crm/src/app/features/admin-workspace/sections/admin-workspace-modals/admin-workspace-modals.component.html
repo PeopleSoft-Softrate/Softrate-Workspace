@@ -1803,3 +1803,191 @@
     </button>
   </div>
 </div>
+
+<!-- ══ CLIENT PROFILE MODAL ══ -->
+<!-- ══ CLIENT PROFILE FULL VIEW ══ -->
+<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.clientProfileModalOpen" (click)="vm.closeClientProfile()">
+  <div class="invoice-modal company-full-modal admin-company-full-modal" (click)="$event.stopPropagation()">
+    <section class="company-full-shell lead-detail-workspace admin-company-full-detail">
+      <!-- SIDEBAR -->
+      <aside class="lead-detail-sidebar company-full-sidebar">
+        <button class="lead-detail-back" type="button" (click)="vm.closeClientProfile()">
+          <span class="back-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="m15 18-6-6 6-6" />
+              <path d="M21 12H9" />
+            </svg>
+          </span>
+          <span>Close</span>
+        </button>
+
+        <div class="lead-detail-nav company-full-nav">
+          <button class="toolbar-button" type="button" [class.active]="vm.clientProfileActiveSection==='overview'" (click)="vm.setClientProfileSection('overview')">Overview</button>
+          <button class="toolbar-button" type="button" [class.active]="vm.clientProfileActiveSection==='quotations'" (click)="vm.setClientProfileSection('quotations')">Quotations</button>
+          <button class="toolbar-button" type="button" [class.active]="vm.clientProfileActiveSection==='invoices'" (click)="vm.setClientProfileSection('invoices')">Invoices</button>
+          <button class="toolbar-button" type="button" [class.active]="vm.clientProfileActiveSection==='activity'" (click)="vm.setClientProfileSection('activity')">Remarks History</button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <div class="lead-detail-main company-full-main" id="client-profile-scroll-root">
+        <div class="lead-detail-header company-full-header">
+          <div class="lead-detail-title-row">
+            <h3>{{ vm.selectedClientProfile?.client?.companyName || 'Loading...' }}</h3>
+            <span *ngIf="vm.selectedClientProfile?.leadDetails?.isStarred" class="crm-status-pill status-starred" style="margin-left: 1rem; color: #eab308; background: #fef9c3; border-color: #fef08a;">★ Starred</span>
+          </div>
+        </div>
+
+        <div class="lead-detail-panel company-full-content">
+          <div *ngIf="vm.clientProfileLoading" class="loading-state" style="padding: 2rem;">
+            <p>Loading profile...</p>
+          </div>
+
+          <ng-container *ngIf="!vm.clientProfileLoading && vm.selectedClientProfile">
+            <!-- OVERVIEW SECTION -->
+            <section class="company-full-card" *ngIf="vm.clientProfileActiveSection === 'overview'">
+              <div class="company-full-card-head">
+                <h4>Company Overview</h4>
+              </div>
+              <div class="lead-detail-summary company-full-overview-grid">
+                <div class="lead-detail-column">
+                  <div class="lead-detail-field">
+                    <span>Client ID</span>
+                    <strong>{{ vm.selectedClientProfile.client.clientId || '-' }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Primary Contact</span>
+                    <strong>{{ vm.selectedClientProfile.client.primaryContactName || vm.selectedClientProfile.client.primaryContact || '-' }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Phone</span>
+                    <strong>{{ vm.selectedClientProfile.client.primaryPhone || '-' }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Director Email</span>
+                    <strong>{{ vm.selectedClientProfile.leadDetails.directorEmailAddress || '-' }}</strong>
+                  </div>
+                </div>
+                <div class="lead-detail-column">
+                  <div class="lead-detail-field">
+                    <span>Email</span>
+                    <strong>{{ vm.selectedClientProfile.client.primaryEmail || '-' }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>GST Number</span>
+                    <strong>{{ vm.selectedClientProfile.client.gstNumber || '-' }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Address</span>
+                    <strong>{{ vm.selectedClientProfile.client.address || '-' }}</strong>
+                  </div>
+                  <div class="lead-detail-field">
+                    <span>Total Calls</span>
+                    <strong>{{ vm.selectedClientProfile.callCount || 0 }} calls</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- QUOTATIONS SECTION -->
+            <section class="company-full-card" *ngIf="vm.clientProfileActiveSection === 'quotations'">
+              <div class="company-full-card-head">
+                <h4>Quotations ({{ vm.selectedClientProfile.quotations.length }})</h4>
+              </div>
+              <div class="crm-table-container">
+                <table class="crm-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Quotation No</th>
+                      <th>Total Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let q of vm.selectedClientProfile.quotations">
+                      <td>{{ vm.fmtDateInput(q.quotationDate) }}</td>
+                      <td>{{ q.quotationNumber }}</td>
+                      <td>₹{{ q.total | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr *ngIf="vm.selectedClientProfile.quotations.length === 0">
+                      <td colspan="3" class="empty-cell" style="text-align: center; padding: 1rem;">No quotations found for this client.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- INVOICES SECTION -->
+            <section class="company-full-card" *ngIf="vm.clientProfileActiveSection === 'invoices'">
+              <div class="company-full-card-head">
+                <h4>Invoices ({{ vm.selectedClientProfile.invoices.length }})</h4>
+              </div>
+              <div class="crm-table-container">
+                <table class="crm-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Invoice No</th>
+                      <th>Total Amount</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let inv of vm.selectedClientProfile.invoices">
+                      <td>{{ vm.fmtDateInput(inv.invoiceDate) }}</td>
+                      <td>{{ inv.invoiceNumber }}</td>
+                      <td>₹{{ inv.total | number:'1.2-2' }}</td>
+                      <td><span class="crm-status-pill" [class.status-paid]="inv.paymentStatus === 'paid'">{{ inv.paymentStatus | titlecase }}</span></td>
+                    </tr>
+                    <tr *ngIf="vm.selectedClientProfile.invoices.length === 0">
+                      <td colspan="4" class="empty-cell" style="text-align: center; padding: 1rem;">No invoices found for this client.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- ACTIVITY/REMARKS SECTION -->
+            <section class="company-full-card" *ngIf="vm.clientProfileActiveSection === 'activity'">
+              <div class="company-full-card-head">
+                <h4>Activity & Remarks ({{ vm.selectedClientProfile.activityLog.length }})</h4>
+              </div>
+              <div class="company-full-timeline" *ngIf="vm.selectedClientProfile.activityLog.length > 0">
+                <div class="timeline-item" *ngFor="let log of vm.selectedClientProfile.activityLog">
+                  <div class="timeline-date">{{ vm.fmtDateInput(log.date) }} {{ log.date | date:'shortTime' }}</div>
+                  
+                  <!-- Call Log -->
+                  <div class="timeline-content" *ngIf="log.type === 'call'">
+                    <div class="timeline-title">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                      Call ({{ log.data.callType | titlecase }})
+                    </div>
+                    <div class="timeline-extra">Duration: {{ log.data.duration }}s</div>
+                    <div class="timeline-actor" *ngIf="log.data.phone">Employee: {{ log.data.phone }}</div>
+                  </div>
+                  
+                  <!-- History/Remark -->
+                  <div class="timeline-content" *ngIf="log.type === 'history'">
+                    <div class="timeline-title">
+                      {{ log.data.action }}
+                    </div>
+                    <div class="timeline-extra" *ngIf="log.data.details || (log.data.oldValue && log.data.newValue)">
+                      {{ log.data.details }}
+                      <span *ngIf="log.data.oldValue && log.data.newValue">({{ log.data.oldValue }} &rarr; {{ log.data.newValue }})</span>
+                    </div>
+                    <div class="timeline-actor" *ngIf="log.data.changedBy">By: {{ log.data.changedBy }}</div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="vm.selectedClientProfile.activityLog.length === 0" class="empty-cell" style="text-align: center; padding: 1rem; border: 1px solid var(--crm-border); border-radius: 8px;">
+                No activity or remarks found.
+              </div>
+            </section>
+          </ng-container>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

@@ -2390,13 +2390,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return Promise.all([imageReady, fontsReady]).then(() => undefined);
   }
 
-  private buildPrintDocument(previewHtml: string): string {
+  private buildPrintDocument(previewHtml: string, docTitle = 'Invoice'): string {
     const headMarkup = this.collectPrintHeadMarkup();
     const baseHref = String(document.baseURI || window.location.href).replace(/"/g, '&quot;');
     return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <title>${docTitle}</title>
     <base href="${baseHref}">
     ${headMarkup}
     <style>
@@ -2488,7 +2489,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 </html>`;
   }
 
-  private printCurrentDocument(): void {
+  private printCurrentDocument(invoiceNumber = 'Invoice'): void {
     window.setTimeout(() => {
       const preview = document.getElementById('invoice-preview');
       if (!preview) {
@@ -2496,43 +2497,27 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const iframe = document.createElement('iframe');
-      iframe.setAttribute('aria-hidden', 'true');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.style.opacity = '0';
-      document.body.appendChild(iframe);
-
-      const frameDoc = iframe.contentDocument;
-      const frameWindow = iframe.contentWindow;
-      if (!frameDoc || !frameWindow) {
-        iframe.remove();
+      // Open a blank popup window for printing.
+      // window.open() popups do NOT show the browser's URL/Page header & footer,
+      // unlike iframes which do. This removes "http://localhost:4200/" and "Page 1 of 1".
+      const printWindow = window.open('', '_blank', 'width=900,height=700,toolbar=0,menubar=0,location=0,status=0,scrollbars=1');
+      if (!printWindow) {
         this.printFallback();
         return;
       }
 
-      frameDoc.open();
-      frameDoc.write(this.buildPrintDocument(preview.outerHTML));
-      frameDoc.close();
+      const doc = printWindow.document;
+      doc.open();
+      doc.write(this.buildPrintDocument(preview.outerHTML, invoiceNumber));
+      doc.close();
 
-      const cleanup = () => window.setTimeout(() => iframe.remove(), 0);
-
-      this.waitForPrintAssets(frameDoc).finally(() => {
+      this.waitForPrintAssets(doc).finally(() => {
         window.setTimeout(() => {
-          const activeWindow = iframe.contentWindow;
-          if (!activeWindow) {
-            cleanup();
-            this.printFallback();
-            return;
-          }
-          activeWindow.addEventListener('afterprint', cleanup, { once: true });
-          activeWindow.focus();
-          activeWindow.print();
-          window.setTimeout(cleanup, 2000);
+          printWindow.focus();
+          printWindow.print();
+          // Close the popup after printing/cancel
+          printWindow.addEventListener('afterprint', () => printWindow.close(), { once: true });
+          window.setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 3000);
         }, 120);
       });
     }, 50);
@@ -2638,7 +2623,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const yy = String(issued.getFullYear()).slice(-2);
     const mm = String(issued.getMonth() + 1).padStart(2, '0');
     const sequence = String(this.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `Invoice_${yy}${mm}${sequence}`;
+    return `${yy}${mm}${sequence}`;
   }
 
   quotationNumber(): string {
@@ -2656,7 +2641,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.viewingSavedDocument) {
-      void this.ensureInvoiceQr().finally(() => this.printCurrentDocument());
+      const invNum = String(this.currentInvoiceNumber || 'Invoice');
+      void this.ensureInvoiceQr().finally(() => this.printCurrentDocument(invNum));
       return;
     }
 
@@ -2715,7 +2701,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           this.openedInvoiceRecord = res.invoice;
           this.invalidateInvoiceCaches();
           this.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
         },
         error: (err) => {
           this.invoiceSaving = false;
@@ -2735,7 +2721,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(res.invoice.paymentStatus);
           this.invalidateInvoiceCaches();
           this.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
         },
         error: (err) => {
           this.invoiceSaving = false;
@@ -2793,7 +2779,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText());
         this.invalidateQuotationCaches();
         this.fetchQuotationRecords(true);
-        this.printCurrentDocument();
+        this.printCurrentDocument(String(res.quotation.quotationNumber || 'Quotation'));
       },
       error: (err) => {
         this.quotationSaving = false;

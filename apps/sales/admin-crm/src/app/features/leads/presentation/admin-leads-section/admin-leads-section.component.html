@@ -357,7 +357,8 @@
       <!-- ══ REMARKS FILTER TAB ══ -->
 
 <!-- Create Client Dialog Modal Overlay -->
-<div *ngIf="vm.showWeCrmModal" style="position: fixed; inset: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7);" (click)="vm.closeWeCrmModal()">
+<!-- WE CRM Modal -->
+<div class="crm-modal-backdrop" *ngIf="vm.showWeCrmModal" style="position: fixed; inset: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7);" (click)="vm.closeWeCrmModal()">
   <div class="modal-card-box" (click)="$event.stopPropagation()" style="max-width: 600px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; margin: auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
     
     <div class="modal-header" style="padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
@@ -529,7 +530,8 @@
             <option value="IE code">IE code</option>
             <option value="LEI">LEI</option>
             <option value="BIS">BIS</option>
-            <option value="ROSH & CE">ROSH & CE</option>
+            <option value="ROSH">ROSH</option>
+            <option value="CH">CH</option>
           </select>
           <div *ngIf="vm.weCrmClientData.serviceName === 'External Compliance Service'" style="margin-top: 8px; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; display: flex; flex-direction: column; gap: 2px;">
             <span style="font-size: 0.875rem; font-weight: 600; color: #065f46;">Compliance Radar Activated</span>

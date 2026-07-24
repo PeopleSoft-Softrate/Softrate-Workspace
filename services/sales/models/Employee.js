@@ -12,6 +12,7 @@ const employeeSchema = new mongoose.Schema({
   appVersion:   { type: String, default: '' },
   lastCallTime: { type: Date, default: null },
   lastSyncTime: { type: Date, default: null },
+  forceSync:    { type: Boolean, default: false },
   createdAt:    { type: Date, default: Date.now },
 });
 

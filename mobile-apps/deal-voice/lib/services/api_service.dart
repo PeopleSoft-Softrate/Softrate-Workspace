@@ -72,8 +72,21 @@ class ApiService {
       return {'success': false, 'message': 'Failed to update code: $e'};
     }
   }
-
-  // ── Sync today's call log to backend ─────────────────────
+  // ── Sync Status (Polling) ───────────────────────────────────
+  static Future<Map<String, dynamic>> checkSyncStatus(String companyCode, String mobile) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/employees/sync-status?companyCode=$companyCode&mobile=$mobile'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(response.body);
+      }
+      return {'success': false, 'triggerSync': false};
+    } catch (e) {
+      return {'success': false, 'triggerSync': false};
+    }
+  }
   static Future<Map<String, dynamic>> syncCallLogs({
     required String companyCode,
     required String phone,

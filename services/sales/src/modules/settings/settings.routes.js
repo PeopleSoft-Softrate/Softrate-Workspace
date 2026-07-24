@@ -22,6 +22,7 @@ function normalizeProducts(products) {
       tags: Array.isArray(product?.tags)
         ? product.tags.map((tag) => String(tag || '').trim()).filter(Boolean)
         : [],
+      sacHsn: product?.sacHsn ? String(product.sacHsn).trim() : '',
     }))
     .filter((product) => product.name);
 }

@@ -5102,3 +5102,26 @@ body,
     overflow: auto !important;
   }
 }
+
+/* Client Profile Link */
+.client-id-link {
+  background: none;
+  border: none;
+  color: var(--crm-primary);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-weight: 500;
+}
+.client-id-link:hover {
+  color: var(--crm-primary-dark);
+}
+
+
+/* Client Profile Modal Fix */
+.client-profile-modal {
+  background: var(--crm-surface, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}

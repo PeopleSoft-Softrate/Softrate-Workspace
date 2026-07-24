@@ -1,0 +1,96 @@
+<ng-container *ngIf="vm.dashTab==='crm_client_onboard_requests'">
+  <div class="workspace-header workspace-header-filters-only crm-filter-bar">
+    <div class="workspace-controls crm-filter-controls">
+      <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">Client On Board Requests</h2>
+      <button class="toolbar-button crm-icon-refresh" type="button" (click)="vm.fetchCrmOnboardRequests()" [disabled]="vm.crmOnboardRequestsLoading" aria-label="Refresh requests" title="Refresh" style="margin-left: auto;">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="record-frame crm-client-frame" style="display: flex; flex-direction: column; width: 100%; flex: 1;">
+    <section class="record-table-pane lead-table-pane lead-table-pane-full" style="width: 100%; max-width: 100%; flex: 1; padding: 16px;">
+      <div class="lead-table-wrapper" style="width: 100%; overflow: auto;">
+        <table class="lead-premium-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Company Name</th>
+            <th>Name</th>
+            <th>Contact</th>
+            <th>Email</th>
+            <th>Company Type</th>
+            <th>Directors</th>
+            <th>State</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="vm.crmOnboardRequestsLoading">
+            <td colspan="8" style="text-align: center; padding: 2rem;">Loading requests...</td>
+          </tr>
+          <tr *ngIf="!vm.crmOnboardRequestsLoading && vm.crmOnboardRequests.length === 0">
+            <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">No client onboard requests found.</td>
+          </tr>
+          <tr *ngFor="let request of vm.crmOnboardRequests" class="lead-table-row">
+            <td>
+              <div class="lead-table-name">
+                <span style="font-weight: 500; color: #0f172a;">{{ request.company_name || '-' }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="color: #334155;">{{ request.owner_name || '-' }}</span>
+            </td>
+            <td (mouseenter)="hoveredField='contact_'+request._id" (mouseleave)="hoveredField=null">
+              <div class="text-secondary copyable-cell">
+                <span class="copyable-text">{{ request.phone || '-' }}</span>
+                <button *ngIf="request.phone && hoveredField === 'contact_'+request._id" class="copy-icon-btn" [class.copied]="copiedField === request.phone" (click)="$event.stopPropagation(); copyText(request.phone)" title="Copy">
+                  <svg *ngIf="copiedField === request.phone" viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  <svg *ngIf="copiedField !== request.phone" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                </button>
+              </div>
+            </td>
+            <td [title]="request.email || '-'" (mouseenter)="hoveredField='email_'+request._id" (mouseleave)="hoveredField=null">
+              <div class="text-secondary copyable-cell">
+                <span class="truncate-email copyable-text">{{ request.email || '-' }}</span>
+                <button *ngIf="request.email && hoveredField === 'email_'+request._id" class="copy-icon-btn" [class.copied]="copiedField === request.email" (click)="$event.stopPropagation(); copyText(request.email)" title="Copy">
+                  <svg *ngIf="copiedField === request.email" viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  <svg *ngIf="copiedField !== request.email" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                </button>
+              </div>
+            </td>
+            <td>
+              <span class="crm-status-pill" style="background-color: #f1f5f9; color: #475569;">{{ request.business_type || '-' }}</span>
+            </td>
+            <td>
+              <span style="color: #64748b;">{{ request.director_count || '0' }}</span>
+            </td>
+            <td>
+              <span style="color: #64748b;">{{ request.state || '-' }}</span>
+            </td>
+            <td>
+              <div class="table-actions-cell" style="display: flex; gap: 8px;">
+                <button *ngIf="!request.isEntityRequest" class="lead-card-invoice-action" type="button" (click)="vm.openWeCrmModal(request)" [disabled]="vm.updatingLeadId===request._id" style="margin-top: 0; min-width: 120px;" title="Add to WE CRM">
+                  <span aria-hidden="true" *ngIf="vm.updatingLeadId!==request._id">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  </span>
+                  <span>{{ vm.updatingLeadId===request._id ? 'Processing...' : 'Add to WE CRM' }}</span>
+                </button>
+
+                <button *ngIf="request.isEntityRequest" class="lead-card-invoice-action" type="button" (click)="vm.approveEntityRequest(request)" [disabled]="vm.updatingLeadId===request._id" style="margin-top: 0; min-width: 120px; background-color: #10b981; color: white; border-color: #10b981;" title="Approve Entity">
+                  <span aria-hidden="true" *ngIf="vm.updatingLeadId!==request._id">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </span>
+                  <span>{{ vm.updatingLeadId===request._id ? 'Approving...' : 'Approve Entity' }}</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    </section>
+  </div>
+</ng-container>

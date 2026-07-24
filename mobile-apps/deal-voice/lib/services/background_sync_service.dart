@@ -8,6 +8,7 @@ import 'package:phone_state/phone_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'call_log_service.dart';
+import 'api_service.dart';
 
 const backgroundSyncTaskName = 'tracecall_bg_sync';
 const backgroundSyncTaskTag = 'tracecall_sync_tag';
@@ -54,6 +55,27 @@ void onStart(ServiceInstance service) async {
               "Last synced: ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}",
         );
       }
+    }
+  });
+
+  // Polling: Admin Trigger Check (every 60 seconds)
+  Timer.periodic(const Duration(seconds: 60), (timer) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final companyCode = prefs.getString('companyCode') ?? '';
+      final phone = prefs.getString('mobileNumber') ?? '';
+      
+      if (companyCode.isNotEmpty && phone.isNotEmpty) {
+        final res = await ApiService.checkSyncStatus(companyCode, phone);
+        if (res['success'] == true && res['triggerSync'] == true) {
+          debugPrint('Admin requested forced sync via polling!');
+          final hasNew = await BackgroundSyncService.performSync();
+          service.invoke('update', {'hasNew': hasNew});
+        }
+      }
+    } catch (e) {
+      debugPrint('Error polling admin sync status: $e');
     }
   });
 

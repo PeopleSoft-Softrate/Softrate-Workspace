@@ -145,6 +145,13 @@ export class CrmService {
     });
   }
 
+  getClientOnboardRequests(weCrmUrl: string, params: { search?: string; companyCode?: string; company_id?: string } = {}): Observable<any> {
+    const baseUrlToUse = weCrmUrl ? weCrmUrl.replace(/\/api\/?$/, '') : this.baseUrl;
+    return this.http.get<any>(`${baseUrlToUse}/api/users/client-onboard-requests${this.query(params)}`, {
+      headers: this.headers(),
+    });
+  }
+
   updateClient(id: string, payload: Partial<CrmClient>): Observable<any> {
     return this.http.put<any>(`${this.baseUrl}/api/crm/clients/${encodeURIComponent(id)}`, payload, {
       headers: this.headers(),

@@ -97,7 +97,7 @@ export class AdminInvoiceQuotationWorkflow {
     return Promise.all([imageReady, fontsReady]).then(() => undefined);
   }
 
-  private buildPrintDocument(previewHtml: string): string {
+  private buildPrintDocument(previewHtml: string, docTitle = 'Invoice'): string {
     const headMarkup = this.collectPrintHeadMarkup();
     const baseHref = String(document.baseURI || window.location.href).replace(/"/g, '&quot;');
     const isQuotation = previewHtml.includes('quotation-preview');
@@ -106,6 +106,7 @@ export class AdminInvoiceQuotationWorkflow {
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <title>${docTitle}</title>
     <base href="${baseHref}">
     ${headMarkup}
     <style>
@@ -178,6 +179,7 @@ export class AdminInvoiceQuotationWorkflow {
       }
 
       .admin-print-root .quotation-page {
+        margin: 5mm auto !important;
         page-break-after: always !important;
         break-after: page !important;
       }
@@ -193,7 +195,7 @@ export class AdminInvoiceQuotationWorkflow {
 
       @page {
         size: A4 portrait;
-        margin: 8mm;
+        margin: 0;
       }
     </style>
   </head>
@@ -209,7 +211,7 @@ export class AdminInvoiceQuotationWorkflow {
 </html>`;
   }
 
-  private printCurrentDocument(): void {
+  private printCurrentDocument(invoiceNumber = 'Invoice'): void {
     window.setTimeout(() => {
       const preview = document.getElementById('invoice-preview');
       if (!preview) {
@@ -217,44 +219,27 @@ export class AdminInvoiceQuotationWorkflow {
         return;
       }
 
-      const iframe = document.createElement('iframe');
-      iframe.setAttribute('aria-hidden', 'true');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.style.opacity = '0';
-      document.body.appendChild(iframe);
-
-      const frameDoc = iframe.contentDocument;
-      const frameWindow = iframe.contentWindow;
-      if (!frameDoc || !frameWindow) {
-        iframe.remove();
+      // Open a blank popup window for printing.
+      // window.open() popups do NOT show the browser's URL/Page header & footer,
+      // unlike iframes which do. This is the key to removing "http://localhost:4200/" and "Page 1 of 1".
+      const printWindow = window.open('', '_blank', 'width=900,height=700,toolbar=0,menubar=0,location=0,status=0,scrollbars=1');
+      if (!printWindow) {
         this.printFallback();
         return;
       }
 
-      frameDoc.open();
-      frameDoc.write(this.buildPrintDocument(preview.outerHTML));
-      frameDoc.close();
+      const doc = printWindow.document;
+      doc.open();
+      doc.write(this.buildPrintDocument(preview.outerHTML, invoiceNumber));
+      doc.close();
 
-      const cleanup = () => window.setTimeout(() => iframe.remove(), 0);
-
-      this.waitForPrintAssets(frameDoc).finally(() => {
+      this.waitForPrintAssets(doc).finally(() => {
         window.setTimeout(() => {
-          const activeWindow = iframe.contentWindow;
-          if (!activeWindow) {
-            cleanup();
-            this.printFallback();
-            return;
-          }
-          const onAfterPrint = () => cleanup();
-          activeWindow.addEventListener('afterprint', onAfterPrint, { once: true });
-          activeWindow.focus();
-          activeWindow.print();
-          window.setTimeout(cleanup, 2000);
+          printWindow.focus();
+          printWindow.print();
+          // Close the popup after printing/cancel
+          printWindow.addEventListener('afterprint', () => printWindow.close(), { once: true });
+          window.setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 3000);
         }, 120);
       });
     }, 50);
@@ -293,7 +278,7 @@ export class AdminInvoiceQuotationWorkflow {
     const yyyy = String(issued.getFullYear());
     const mm = String(issued.getMonth() + 1).padStart(2, '0');
     const sequence = String(vm.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `${vm.quoteMode ? 'Quote' : 'Invoice'}_${yyyy}${mm}${sequence}`;
+    return vm.quoteMode ? `Quote_${yyyy}${mm}${sequence}` : `${yyyy}${mm}${sequence}`;
   }
 
   private resolveInvoicePreviewGstPercentage(vm: any): number {
@@ -660,6 +645,41 @@ export class AdminInvoiceQuotationWorkflow {
 
   fetchClientOnboardingRecords(vm: any, force = false): void {
     void this.loadClientOnboardingPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  openClientProfile(vm: any, client: any): void {
+    vm.clientProfileModalOpen = true;
+    vm.selectedClientProfile = null;
+    vm.clientProfileLoading = true;
+    this.fetchClientProfile(vm, client.clientId);
+  }
+
+  closeClientProfile(vm: any): void {
+    vm.clientProfileModalOpen = false;
+    vm.selectedClientProfile = null;
+  }
+
+  private fetchClientProfile(vm: any, clientId: string): void {
+    const code = encodeURIComponent(vm.dashboardCode);
+    this.api.get(`/api/clients/${code}/profile/${encodeURIComponent(clientId)}`).subscribe({
+      next: (res: any) => {
+        vm.clientProfileLoading = false;
+        if (res.success) {
+          vm.selectedClientProfile = {
+            client: res.client,
+            quotations: res.quotations || [],
+            invoices: res.invoices || [],
+            activityLog: res.activityLog || [],
+            leadDetails: res.leadDetails || {},
+            callCount: res.callCount || 0
+          };
+        }
+      },
+      error: () => {
+        vm.clientProfileLoading = false;
+        alert('Failed to load client profile details.');
+      }
+    });
   }
 
   onAdminInvoiceSearchChange(vm: any): void {
@@ -1609,7 +1629,8 @@ export class AdminInvoiceQuotationWorkflow {
       return;
     }
     if (vm.viewingSavedDocument && !vm.invoiceEditMode) {
-      this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument());
+      const invNum = String(vm.invoiceNumberCache || this.resolveInvoiceNumber(vm) || 'Invoice');
+      this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument(invNum));
       return;
     }
 
@@ -1663,7 +1684,7 @@ export class AdminInvoiceQuotationWorkflow {
           vm.viewingSavedDocument = true;
           vm.currentInvoiceRecord = res.invoice;
           vm.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
         },
         error: (err) => {
           vm.invoiceSaving = false;
@@ -1680,7 +1701,7 @@ export class AdminInvoiceQuotationWorkflow {
           }
           vm.currentInvoiceNumber = res.invoice.invoiceNumber;
           vm.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument());
+          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
         },
         error: (err) => {
           vm.invoiceSaving = false;
@@ -1720,7 +1741,7 @@ export class AdminInvoiceQuotationWorkflow {
         vm.currentQuotationNumber = res.quotation.quotationNumber;
         vm.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText(vm));
         vm.fetchQuotationRecords(true);
-        this.printCurrentDocument();
+        this.printCurrentDocument(String(res.quotation.quotationNumber || 'Quotation'));
       },
       error: (err) => {
         vm.quotationSaving = false;

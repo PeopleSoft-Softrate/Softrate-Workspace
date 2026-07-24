@@ -130,6 +130,9 @@ textarea {
   #invoice-preview,
   #invoice-preview * {
     visibility: visible;
+    -webkit-text-stroke: 0.15px currentColor !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   .invoice-overlay,

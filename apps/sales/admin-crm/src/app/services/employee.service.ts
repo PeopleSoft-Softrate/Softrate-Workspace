@@ -43,4 +43,12 @@ export class EmployeeService {
   updateEmployee(employeeId: string, payload: { name: string; mobile: string; countryCode?: string; tags: string[] }): Observable<EmployeeResponse> {
     return this.api.put<EmployeeResponse>(`/api/employees/${employeeId}`, payload);
   }
+
+  triggerSync(employeeId: string): Observable<EmployeeResponse> {
+    return this.api.post<EmployeeResponse>(`/api/employees/${employeeId}/trigger-sync`, {});
+  }
+
+  triggerSyncAll(companyCode: string): Observable<EmployeeResponse> {
+    return this.api.post<EmployeeResponse>('/api/employees/trigger-sync-all', { companyCode });
+  }
 }

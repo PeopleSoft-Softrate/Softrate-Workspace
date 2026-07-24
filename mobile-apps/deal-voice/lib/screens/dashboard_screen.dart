@@ -8,6 +8,7 @@ import 'dashboard_tabs/profile_tab.dart';
 import 'dashboard_tabs/bookmark_tab.dart';
 import 'dashboard_tabs/lead_tab.dart';
 
+import '../services/background_sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,7 +17,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   String _name = '';
   String _phone = '';
@@ -25,7 +26,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSync();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('DashboardScreen: App resumed. Triggering background sync.');
+      BackgroundSyncService.performSync();
+    }
   }
 
   Future<void> _loadSync() async {

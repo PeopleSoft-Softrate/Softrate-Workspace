@@ -25,7 +25,7 @@ const leadSchema = new mongoose.Schema({
   importBatchId: { type: mongoose.Schema.Types.ObjectId, ref: 'LeadImportBatch', default: null },
 }, { timestamps: true });
 
-leadSchema.pre('save', function normalizeLead(next) {
+leadSchema.pre('save', async function normalizeLead() {
   this.companyCode = String(this.companyCode ?? '').trim();
   this.assignedEmployeePhone = String(this.assignedEmployeePhone ?? '').trim();
   this.leadCompanyName = String(this.leadCompanyName ?? '').trim();
@@ -42,8 +42,8 @@ leadSchema.pre('save', function normalizeLead(next) {
   this.contactNameLower = normalizeText(this.contactName);
   this.directorEmailLower = normalizeText(this.directorEmailAddress);
   this.setLabelLower = normalizeText(this.setLabel);
-  next();
 });
+
 
 leadSchema.index({ companyCode: 1, assignedEmployeePhone: 1, isArchived: 1, setLabelLower: 1, status: 1, sheetOrder: 1, _id: 1 });
 leadSchema.index({ companyCode: 1, isArchived: 1, setLabelLower: 1, status: 1, sheetOrder: 1, _id: 1 });

@@ -1417,7 +1417,7 @@ export class App implements OnInit, OnDestroy {
     const yyyy = String(issued.getFullYear());
     const mm = String(issued.getMonth() + 1).padStart(2, '0');
     const sequence = String(this.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `Invoice_${yyyy}${mm}${sequence}_v1.pdf`;
+    return `${yyyy}${mm}${sequence}_v1.pdf`;
   }
 
   quotationNumber(): string {

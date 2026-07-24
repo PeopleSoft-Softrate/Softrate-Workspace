@@ -493,6 +493,18 @@ export abstract class AdminWorkspaceController implements OnInit {
   clientOnboardingSaving = false;
   clientOnboardingError = '';
   clientOnboardingSuccess = '';
+  clientProfileModalOpen = false;
+  selectedClientProfile: any = null;
+  clientProfileLoading = false;
+  clientProfileActiveSection: string = 'overview';
+  
+  openClientProfile(client: any): void { 
+    this.clientProfileActiveSection = 'overview';
+    return this.invoiceQuotationWorkflow.openClientProfile(this, client); 
+  }
+  closeClientProfile(): void { return this.invoiceQuotationWorkflow.closeClientProfile(this); }
+  setClientProfileSection(section: string): void { this.clientProfileActiveSection = section; }
+
   invoiceHistorySearch = '';
   invoiceDateFilter: 'all' | 'today' | '7d' | '30d' = 'all';
   invoiceDateFilterOpen = false;
@@ -828,9 +840,10 @@ export abstract class AdminWorkspaceController implements OnInit {
     email: '',
     phone: '',
   };
-  settingsProducts: Array<{ name: string, minPrice: number, maxPrice: number, tags?: string[] }> = [];
-  newProductInput = { name: '', minPrice: 0, maxPrice: 0, tags: [] as string[] };
+  settingsProducts: Array<{ name: string, minPrice: number, maxPrice: number, tags?: string[], sacHsn?: string }> = [];
+  newProductInput = { name: '', minPrice: 0 as any, maxPrice: 0 as any, tags: [] as string[], sacHsn: '' };
   productTagDropdownOpenKey = '';
+  productActionDropdownOpenKey = '';
   settingsProductRemarks: string[] = [];
   newProductRemarkInput: string = '';
 
@@ -1815,7 +1828,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   isCrmPage(tab: AdminPageId): boolean {
-    return ['crm_clients', 'crm_sla', 'crm_nda', 'crm_amc', 'crm_payments', 'crm_tickets', 'crm_projects'].includes(tab);
+    return ['crm_clients', 'crm_sla', 'crm_nda', 'crm_amc', 'crm_payments', 'crm_tickets', 'crm_projects', 'crm_client_onboard_requests'].includes(tab);
   }
 
   loadCrmDashboard(): void {
@@ -1827,9 +1840,11 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.fetchCrmPayments();
     this.fetchCrmTickets();
     this.fetchCrmProjects();
+    this.fetchCrmOnboardRequests();
   }
 
   loadCrmTab(tab: AdminPageId): void {
+    if (tab === 'crm_client_onboard_requests') this.fetchCrmOnboardRequests();
     if (tab === 'crm_clients') this.fetchCrmClients();
     if (tab === 'crm_sla') this.fetchCrmContracts('SLA');
     if (tab === 'crm_nda') {
@@ -1840,6 +1855,28 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (tab === 'crm_payments') this.fetchCrmPayments();
     if (tab === 'crm_tickets') this.fetchCrmTickets();
     if (tab === 'crm_projects') this.fetchCrmProjects();
+  }
+
+  crmGlobalSearch = '';
+
+  crmOnboardRequests: any[] = [];
+  crmOnboardRequestsLoading = false;
+
+  fetchCrmOnboardRequests(): void {
+    this.crmOnboardRequestsLoading = true;
+    this.crmService.getClientOnboardRequests(this.weCrmUrl, {
+      company_id: this.weCrmCompanyId || undefined,
+      companyCode: this.weCrmAccessEnabled ? undefined : this.dashboardCode,
+    }).subscribe({
+      next: (res) => {
+        this.crmOnboardRequests = res || [];
+        this.crmOnboardRequestsLoading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching CRM onboard requests', err);
+        this.crmOnboardRequestsLoading = false;
+      }
+    });
   }
 
   fetchCrmClients(): void {
@@ -4585,6 +4622,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (this.productTagDropdownOpenKey && (!target || !target.closest('.product-tag-dropdown'))) {
       this.productTagDropdownOpenKey = '';
     }
+    if (this.productActionDropdownOpenKey && (!target || !target.closest('.product-action-dropdown'))) {
+      this.productActionDropdownOpenKey = '';
+    }
   }
 
   handleGlobalEscape(): void {
@@ -4594,6 +4634,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.clientOnboardingOpenMenuKey = '';
     this.closeClientOnboardingCreateModal();
     this.productTagDropdownOpenKey = '';
+    this.productActionDropdownOpenKey = '';
   }
 
   private adminProfilePhotoStorageKey(): string {
@@ -4733,6 +4774,28 @@ export abstract class AdminWorkspaceController implements OnInit {
   removeProductRemark(remark: string): void { return this.adminSettingsWorkflow.removeProductRemark(this, remark); }
 
   removeProduct(index: number): void { return this.adminSettingsWorkflow.removeProduct(this, index); }
+
+  toggleProductActionDropdown(key: string, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.productActionDropdownOpenKey = this.productActionDropdownOpenKey === key ? '' : key;
+  }
+
+  isProductActionDropdownOpen(key: string): boolean {
+    return !!key && this.productActionDropdownOpenKey === key;
+  }
+
+  editProduct(index: number): void {
+    const p = this.settingsProducts[index];
+    this.newProductInput = {
+      name: p.name,
+      minPrice: p.minPrice,
+      maxPrice: p.maxPrice,
+      tags: Array.isArray(p.tags) ? [...p.tags] : [],
+      sacHsn: p.sacHsn || ''
+    };
+    this.removeProduct(index);
+    this.productActionDropdownOpenKey = '';
+  }
 
   saveSettings(): void { return this.adminSettingsWorkflow.saveSettings(this); }
 
@@ -4943,6 +5006,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   openWeCrmModal(lead: Lead): void { return this.adminLeadsWorkflow.openWeCrmModal(this, lead); }
   closeWeCrmModal(): void { return this.adminLeadsWorkflow.closeWeCrmModal(this); }
   submitWeCrmClient(): void { return this.adminLeadsWorkflow.submitWeCrmClient(this); }
+  approveEntityRequest(request: any): void { return this.adminLeadsWorkflow.approveEntityRequest(this, request); }
 
   clientOnboardingRowKey(client: any): string {
     return String(client?._id || client?.id || client?.clientId || client?.companyName || '');
@@ -4984,6 +5048,11 @@ export abstract class AdminWorkspaceController implements OnInit {
   openSavedQuotation(record: any): void { return this.invoiceQuotationWorkflow.openSavedQuotation(this, record); }
 
   formatInvoiceMoney(value: number): string { return this.invoiceQuotationWorkflow.formatInvoiceMoney(this, value); }
+  
+  parseMoneyInput(value: string | number): number {
+    if (typeof value === 'number') return value;
+    return Number(value.replace(/,/g, '')) || 0;
+  }
 
   openQuotationModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openQuotationModal(this, lead); }
 

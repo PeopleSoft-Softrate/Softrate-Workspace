@@ -188,10 +188,9 @@
         <!-- MFA Disable Flow -->
         <div *ngIf="mfaDisableActive()" style="margin-top: 20px; padding: 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;">
           <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #991b1b;">Disable Two-Factor Authentication</h4>
-          <p style="margin: 0 0 12px 0; font-size: 13px; color: #7f1d1d;">Please enter your current 6-digit authenticator code to confirm.</p>
+          <p style="margin: 0 0 12px 0; font-size: 13px; color: #7f1d1d;">Are you sure you want to disable two-factor authentication?</p>
           <div style="display: flex; gap: 8px;">
-            <input type="text" [(ngModel)]="mfaDisableCode" class="edit-input" placeholder="000000" maxlength="6" style="flex: 1; letter-spacing: 2px; text-align: center; font-weight: bold; border-color: #fca5a5;">
-            <button class="save-btn" style="background: #ef4444;" (click)="confirmDisableMfa()" [disabled]="mfaDisableCode().length < 6">Confirm</button>
+            <button class="save-btn" style="background: #ef4444;" (click)="confirmDisableMfa()">Confirm Disable</button>
             <button class="cancel-btn" (click)="mfaDisableActive.set(false)">Cancel</button>
           </div>
         </div>

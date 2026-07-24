@@ -379,9 +379,8 @@ export class ProfileComponent implements OnInit {
   }
 
   confirmDisableMfa() {
-    if (this.mfaDisableCode().length < 6) return;
     this.isLoading.set(true);
-    this.apiService.disableMfa(this.mfaDisableCode()).subscribe({
+    this.apiService.disableMfa('').subscribe({
       next: (res) => {
         this.mfaEnabled.set(false);
         this.mfaDisableActive.set(false);
@@ -390,7 +389,7 @@ export class ProfileComponent implements OnInit {
         this.fetchProfile();
       },
       error: (err) => {
-        this.error.set('Invalid MFA code');
+        this.error.set('Failed to disable MFA');
         this.isLoading.set(false);
       }
     });

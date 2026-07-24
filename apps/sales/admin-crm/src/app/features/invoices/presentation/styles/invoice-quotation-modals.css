@@ -875,7 +875,7 @@
 
 .admin-quote-modal .invoice-grid-header {
   display: grid !important;
-  grid-template-columns: 1.15fr 0.85fr !important;
+  grid-template-columns: 57.2fr 43fr !important;
   border-bottom: 1.5px solid #000000 !important;
 }
 
@@ -957,6 +957,7 @@
   margin: 0 !important;
   font-size: 10.5px !important;
   color: #4b5563 !important;
+  white-space: nowrap !important;
 }
 
 .admin-quote-modal .client-info-block {
@@ -1115,6 +1116,10 @@
   padding: 8px !important;
   vertical-align: top !important;
   font-size: 11px !important;
+}
+
+.admin-quote-modal .invoice-main-table td.summary-right-cell[colspan="3"] {
+  padding: 0 !important;
 }
 
 .admin-quote-modal .invoice-main-table th {
@@ -1325,7 +1330,7 @@
 
 .admin-quote-modal .invoice-grid-footer {
   display: grid !important;
-  grid-template-columns: 1.2fr 1fr !important;
+  grid-template-columns: 1.17fr 1fr !important;
   border-bottom: 1px solid #d6dde7 !important;
 }
 
@@ -1430,7 +1435,7 @@
 
 .admin-quote-modal .invoice-notes-terms-grid {
   display: grid !important;
-  grid-template-columns: 1.2fr 1fr !important;
+  grid-template-columns: 1.17fr 1fr !important;
   border-bottom: 1px solid #d6dde7 !important;
 }
 
@@ -2397,7 +2402,7 @@
 @media print {
   @page {
     size: A4;
-    margin: 8mm;
+    margin: 0;
   }
 
   html,
@@ -2427,6 +2432,7 @@
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
     box-sizing: border-box !important;
+    -webkit-text-stroke: 0.15px currentColor !important;
   }
 
   .admin-quote-modal .quotation-preview {
@@ -2447,7 +2453,7 @@
     width: 194mm !important;
     height: 281mm !important;
     min-height: 281mm !important;
-    margin: 0 !important;
+    margin: 5mm auto !important;
     border: 1.5px solid #8fa1bb !important;
     box-sizing: border-box !important;
     display: block !important;

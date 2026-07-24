@@ -161,6 +161,26 @@ async function ensureClientForLead(leadOrId) {
     : leadOrId;
   if (!lead || !(await isConvertedStatus(lead.companyCode, lead.status))) return null;
   const result = await createClientPayload(clientPayloadFromLead(lead), { mergeIfExists: true });
+
+  // Notify WE-CRM so it can add the entity to the client's account
+  const targetCompanyCode = process.env.WE_CRM_ACCESS;
+  if (result.client && targetCompanyCode && lead.companyCode === targetCompanyCode) {
+    notifyWeCrm({
+      companyId: process.env.WE_CRM_COMPANYID,
+      companyName: stringValue(result.client.companyName),
+      ownerName: stringValue(result.client.primaryContactName),
+      phone: stringValue(result.client.primaryPhone),
+      email: stringValue(result.client.primaryEmail),
+      address: stringValue(result.client.address),
+      businessType: '',
+      serviceName: 'Entity Onboarding',
+      dealvoiceClientId: String(result.client._id || ''),
+      softrateClientId: String(result.client.clientId || ''),
+      // Pass the new entity company name so WE-CRM can add it to client_entities
+      entityName: stringValue(lead.leadCompanyName),
+    }).catch(err => console.error('[WE-CRM intake ensureClientForLead] webhook failed:', err.message));
+  }
+
   return result.client;
 }
 

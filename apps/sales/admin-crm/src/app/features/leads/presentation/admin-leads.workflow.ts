@@ -70,10 +70,10 @@ export class AdminLeadsWorkflow {
     }
 
     vm.weCrmClientData = {
-      owner_name: lead.contactName || 'Client',
-      company_name: lead.leadCompanyName || (lead as any).companyName || '',
-      email: lead.directorEmailAddress || (lead as any).email || `client_${lead.contactNumber}@example.com`,
-      phone: String(lead.contactNumber || ''),
+      owner_name: lead.contactName || (lead as any).owner_name || 'Client',
+      company_name: lead.leadCompanyName || (lead as any).companyName || (lead as any).company_name || '',
+      email: lead.directorEmailAddress || (lead as any).email || `client_${lead.contactNumber || (lead as any).phone}@example.com`,
+      phone: String(lead.contactNumber || (lead as any).phone || ''),
       password: '',
       business_type: '',
       pan: '',
@@ -113,6 +113,44 @@ export class AdminLeadsWorkflow {
       if (res.ok) {
         alert('Successfully added to WE CRM!');
         vm.showWeCrmModal = false;
+      } else {
+        alert('Failed: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch((err) => {
+      alert('Failed: ' + err.message);
+    })
+    .finally(() => {
+      vm.updatingLeadId = null;
+    });
+  }
+
+  approveEntityRequest(vm: any, request: any): void {
+    if (!vm.weCrmUrl) {
+      alert('WE CRM URL is not configured.');
+      return;
+    }
+
+    vm.updatingLeadId = request._id; // Use updatingLeadId to show loading state on button
+    const payload = {
+      userId: request._id,
+      requestId: request.entityRequestId
+    };
+
+    fetch(`${vm.weCrmUrl}/auth/approve-entity`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        alert('Entity approved successfully!');
+        if (vm.fetchCrmOnboardRequests) {
+          vm.fetchCrmOnboardRequests();
+        }
       } else {
         alert('Failed: ' + (data.message || 'Unknown error'));
       }

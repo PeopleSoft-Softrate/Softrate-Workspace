@@ -7,6 +7,7 @@ import { CrmDocumentsSectionComponent } from './crm-documents-section.component'
 import { CrmPaymentsSectionComponent } from './crm-payments-section.component';
 import { CrmProjectsSectionComponent } from './crm-projects-section.component';
 import { CrmTicketsSectionComponent } from './crm-tickets-section.component';
+import { CrmClientOnboardRequestsSectionComponent } from './crm-client-onboard-requests-section.component';
 
 @Component({
   selector: 'app-crm-admin-section',
@@ -18,6 +19,7 @@ import { CrmTicketsSectionComponent } from './crm-tickets-section.component';
     CrmPaymentsSectionComponent,
     CrmTicketsSectionComponent,
     CrmProjectsSectionComponent,
+    CrmClientOnboardRequestsSectionComponent,
   ],
   templateUrl: './crm-admin-section.component.html',
 })

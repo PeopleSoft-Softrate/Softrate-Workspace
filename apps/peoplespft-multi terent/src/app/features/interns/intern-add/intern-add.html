@@ -103,6 +103,17 @@
             </label>
           </div>
         </div>
+
+        <!-- Web Access -->
+        <div class="form-section full-width flex-row">
+          <label class="section-label">Web Portal Access</label>
+          <div class="simple-radio-group">
+            <label class="simple-radio" style="display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" [(ngModel)]="intern.webAccess" name="webAccess" style="width: 16px; height: 16px;">
+              <span>Grant Web Login Access</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="form-actions">

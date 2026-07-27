@@ -144,7 +144,7 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    const isSelf = this.router.url.includes('/employee/attendance');
+    const isSelf = this.router.url.includes('/employee/attendance') || this.router.url.includes('/intern/attendance');
     this.isSelfPortal.set(isSelf);
 
     let id = this.route.snapshot.paramMap.get('id');

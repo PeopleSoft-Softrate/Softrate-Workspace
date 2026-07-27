@@ -37,10 +37,12 @@ export class OrgHierarchy implements OnInit {
   isLoading = signal(true);
   isSaving = signal(false);
   isSelfPortal = signal<boolean>(false);
+  isInternRoute = signal<boolean>(false);
 
   ngOnInit() {
-    const isSelf = this.router.url.includes('/employee/');
+    const isSelf = this.router.url.includes('/employee/') || this.router.url.includes('/intern/');
     this.isSelfPortal.set(isSelf);
+    this.isInternRoute.set(this.router.url.includes('/intern/'));
 
     const rawData = localStorage.getItem('user_data');
     let userData: any = {};

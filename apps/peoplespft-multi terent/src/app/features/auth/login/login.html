@@ -77,6 +77,9 @@
               <hugeicons-icon [icon]="showPassword() ? ViewIcon : ViewOffIcon" size="20" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
             </button>
           </div>
+          <div style="text-align: right; margin-top: 5px;">
+             <a href="#" (click)="$event.preventDefault(); toggleForgotPasswordMode()" style="font-size: 0.9rem; color: #3b82f6; text-decoration: none;">Forgot Password?</a>
+          </div>
         </div>
 
         <button type="submit" class="submit-btn" [disabled]="isLoading() || !loginForm.valid">
@@ -86,7 +89,7 @@
 
         <div class="form-footer">
           <a routerLink="/register">Register Company</a>
-          <a href="#" (click)="$event.preventDefault(); toggleForgotPasswordMode()">Forgot Password?</a>
+          <a routerLink="/user-register">Register User</a>
         </div>
       </form>
 

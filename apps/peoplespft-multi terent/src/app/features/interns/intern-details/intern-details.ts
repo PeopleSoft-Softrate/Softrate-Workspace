@@ -166,15 +166,38 @@ export class InternDetails implements OnInit {
 
   toggleRemoteAccess() {
     const isNowRemote = !this.intern().isRemote;
+    // Optimistic update
+    this.intern.update(curr => ({ ...curr, isRemote: isNowRemote }));
+
     this.apiService.updateIntern(this.internId(), { isRemote: isNowRemote }).subscribe({
       next: () => {
         this.alertService.show(`Remote access ${isNowRemote ? 'enabled' : 'disabled'}`);
-        this.fetchDetails();
       },
       error: (err: any) => {
         console.error('Failed to update remote status', err);
+        // Revert on error
+        this.intern.update(curr => ({ ...curr, isRemote: !isNowRemote }));
         const errMsg = err?.error?.message || err?.message || 'Unknown error';
         this.alertService.show(`Failed to update remote status: ${errMsg}`);
+      }
+    });
+  }
+
+  toggleWebAccess() {
+    const isNowWebAccess = !this.intern().webAccess;
+    // Optimistic update
+    this.intern.update(curr => ({ ...curr, webAccess: isNowWebAccess }));
+
+    this.apiService.updateIntern(this.internId(), { webAccess: isNowWebAccess }).subscribe({
+      next: () => {
+        this.alertService.show(`Web access ${isNowWebAccess ? 'enabled' : 'disabled'}`);
+      },
+      error: (err: any) => {
+        console.error('Failed to update web access', err);
+        // Revert on error
+        this.intern.update(curr => ({ ...curr, webAccess: !isNowWebAccess }));
+        const errMsg = err?.error?.message || err?.message || 'Unknown error';
+        this.alertService.show(`Failed to update web access: ${errMsg}`);
       }
     });
   }

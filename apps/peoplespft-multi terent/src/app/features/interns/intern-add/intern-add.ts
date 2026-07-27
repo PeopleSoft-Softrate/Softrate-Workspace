@@ -41,7 +41,8 @@ export class InternAdd implements OnInit {
     durationType: 'month' as 'day' | 'month',
     internshipType: 'Stipend',
     applicationType: 'Internship',
-    isRemote: false
+    isRemote: false,
+    webAccess: false
   };
 
   internRoles = signal<string[]>([]);
@@ -88,6 +89,7 @@ export class InternAdd implements OnInit {
         this.intern.department = data.department || '';
         this.intern.role = data.role || '';
         this.intern.isRemote = data.isRemote || false;
+        this.intern.webAccess = data.webAccess || false;
         
         // Ensure the role exists in the dropdown options if it came from the DB
         if (this.intern.role) {

@@ -1,0 +1,560 @@
+<div class="dashboard-wrapper">
+
+
+  <div class="dashboard-main">
+
+    <ng-container *ngIf="isLoading()">
+      <!-- Desktop Skeleton Layout -->
+      <div class="desktop-only">
+        <!-- Premium Greeting Skeleton -->
+        <div class="overview-greeting-wrap">
+          <section class="overview-greeting-card skeleton-card"
+            style="min-height: 140px; display: flex; flex-direction: column; justify-content: center; gap: 0.5rem; border-radius: 16px;">
+            <div class="skeleton-text" style="width: 280px; height: 2.2rem; margin-bottom: 0.5rem;"></div>
+            <div class="skeleton-text" style="width: 450px; height: 1.2rem; max-width: 80%;"></div>
+          </section>
+        </div>
+
+        <!-- Stats Grid Skeleton -->
+        <div class="stats-grid" style="margin-top: 1.5rem;">
+          <div class="stat-card skeleton-card" *ngFor="let i of [1,2,3]">
+            <div class="stat-top">
+              <div class="stat-value-group" style="flex: 1;">
+                <div class="skeleton-text" style="width: 60px; height: 2.5rem; margin-bottom: 0.75rem;"></div>
+                <div class="skeleton-text" style="width: 110px; height: 1rem;"></div>
+              </div>
+              <div class="stat-icon-container skeleton" style="width: 44px; height: 44px; border-radius: 12px;"></div>
+            </div>
+            <div class="stat-bottom"
+              style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+              <div class="skeleton-text" style="width: 140px; height: 1.2rem; border-radius: 6px; margin: 0;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Grid Skeleton -->
+        <div class="dashboard-content-layout" style="margin-top: 2.5rem;">
+          <div class="analytics-card skeleton-card" style="height: 400px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
+              <div class="skeleton-text" style="width: 180px; height: 1.5rem;"></div>
+              <div class="skeleton-text" style="width: 120px; height: 2rem; border-radius: 99px;"></div>
+            </div>
+            <div style="display: flex; gap: 1.5rem; height: 260px; align-items: flex-end; padding: 0 1rem;">
+              <div class="skeleton" *ngFor="let j of [1,2,3,4,5,6,7]"
+                style="flex: 1; height: {{ 30 + (j * 10) }}%; border-radius: 8px 8px 0 0;"></div>
+            </div>
+          </div>
+          <div class="profile-premium-card skeleton-card" style="height: 400px; padding: 0; overflow: hidden;">
+            <div class="skeleton" style="height: 100%; width: 100%; border-radius: 12px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Skeleton Layout (Flutter-Style) -->
+      <div class="mobile-flutter-ui skeleton-mobile">
+        <div class="flutter-app-bar" style="margin-bottom: 2rem;">
+          <div class="flutter-app-bar-left">
+            <div class="skeleton-text" style="width: 120px; height: 2rem; background: rgba(255,255,255,0.3); border-radius: 8px;"></div>
+            <div class="skeleton-text" style="width: 150px; height: 1rem; background: rgba(255,255,255,0.3); border-radius: 4px; margin-top: 8px;"></div>
+          </div>
+          <div class="flutter-app-bar-right">
+            <div class="skeleton" style="width: 60px; height: 60px; background: rgba(255,255,255,0.3); border-radius: 12px;"></div>
+          </div>
+        </div>
+
+        <div class="flutter-status-card skeleton-card" style="height: 150px; border-radius: 24px; margin-bottom: 1.5rem; background: rgba(255,255,255,0.7);">
+          <div class="skeleton" style="width: 100%; height: 100%; border-radius: 24px; background: rgba(0,0,0,0.05);"></div>
+        </div>
+
+        <div class="flutter-punch-action" style="margin-bottom: 2rem;">
+          <div class="skeleton" style="width: 100%; height: 56px; border-radius: 32px; background: rgba(255,255,255,0.5);"></div>
+        </div>
+
+        <div class="flutter-grid-menu" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="skeleton" *ngFor="let m of [1,2,3,4]" style="height: 100px; border-radius: 16px; background: rgba(255,255,255,0.5);"></div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!isLoading()">
+      <!-- Premium Greeting Header (Flutter Style) -->
+      <!-- Mobile Flutter-Style UI (Shows only on mobile) -->
+      <div class="mobile-flutter-ui">
+        <!-- Top App Bar equivalent -->
+        <!-- App Header (Greeting & Date) -->
+        <div class="flutter-app-bar">
+           <div class="flutter-app-bar-left">
+              <h1>Hi, {{ internData()?.fullName?.split(' ')[0] || 'Intern' }}</h1>
+              <p>Intern Dashboard</p>
+           </div>
+           <div class="flutter-app-bar-right">
+              <button class="icon-btn">
+                 <hugeicons-icon [icon]="Notification03Icon" size="24" color="white" [strokeWidth]="2"></hugeicons-icon>
+              </button>
+              <div class="profile-avatar-circle">
+                 <img *ngIf="getInternPhotoUrl(internData()?._id) as photoUrl" [src]="photoUrl" (error)="onImageError($event)">
+                 <span style="display: none;">{{ internData()?.fullName?.charAt(0) || 'U' }}</span>
+              </div>
+           </div>
+        </div>
+
+        <div class="flutter-date-header" style="flex-wrap: wrap;">
+           <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+             <div class="flutter-date">{{ currentTime() | date:'EEE, d MMM y' }}</div>
+             <div class="flutter-time">{{ currentTime() | date:'h:mm a' }}</div>
+           </div>
+           
+           <!-- Holiday Banner -->
+           <div *ngIf="isTodayHoliday()" class="flutter-holiday-banner">
+              <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="20" color="white"></hugeicons-icon>
+              <span class="holiday-title">Today is Holiday</span>
+              <span class="holiday-reason">{{ holidayReason() || 'Holiday' }}</span>
+           </div>
+        </div>
+
+        <!-- Image Banner with Punch Button -->
+        <div class="flutter-image-card">
+           <img src="images/mobile-user/image.png" alt="Working Interns">
+           <div class="flutter-punch-action">
+             <button *ngIf="!todayPunchInTime()" class="punch-btn punch-in" (click)="punchIn()" [disabled]="punchLoading()">
+               <span *ngIf="punchLoading()" class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+               Punch In
+             </button>
+             <button *ngIf="todayPunchInTime() && !todayPunchOutTime()" class="punch-btn punch-out" (click)="punchOut()" [disabled]="punchLoading()">
+               <span *ngIf="punchLoading()" class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+               Punch Out
+             </button>
+             <button *ngIf="todayPunchInTime() && todayPunchOutTime()" class="punch-btn punch-completed" disabled>
+               Completed
+             </button>
+           </div>
+        </div>
+
+        <!-- Punch Status Card -->
+        <div class="flutter-status-card">
+           <div class="status-row">
+             <div class="status-icon green">
+                <hugeicons-icon [icon]="Login03Icon" size="18" [strokeWidth]="2"></hugeicons-icon>
+             </div>
+             <span class="status-label">Punch In</span>
+             <span class="status-value">{{ todayPunchInTime() ? (todayPunchInTime() | date:'h:mm a') : '--' }}</span>
+           </div>
+           <div class="status-row">
+             <div class="status-icon red">
+                <hugeicons-icon [icon]="Logout03Icon" size="18" [strokeWidth]="2"></hugeicons-icon>
+             </div>
+             <span class="status-label">Punch Out</span>
+             <span class="status-value">{{ todayPunchOutTime() ? (todayPunchOutTime() | date:'h:mm a') : '--' }}</span>
+           </div>
+           <hr class="status-divider">
+           <div class="status-row duration-row">
+             <span class="status-label">Duration</span>
+             <span class="status-value">{{ (todayPunchInTime() && todayPunchOutTime()) ? timerDisplay() : '--' }}</span>
+           </div>
+        </div>
+
+        <!-- Action Grid -->
+        <div class="flutter-action-grid">
+           <div class="flutter-action-btn" routerLink="/intern/attendance">
+              <div class="action-icon c-cyan"><hugeicons-icon [icon]="ChartHistogramIcon" size="20" color="#00B4D8" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Attendance</strong>
+                 <span>Analytics</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/intern/leaves">
+              <div class="action-icon c-teal"><hugeicons-icon [icon]="Calendar01Icon" size="20" color="#00657F" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Leave</strong>
+                 <span>Management</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/intern/review" style="cursor: pointer;">
+              <div class="action-icon c-orange"><hugeicons-icon [icon]="Comment01Icon" size="20" color="#F59E0B" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Review</strong>
+                 <span>Appraisal</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/intern/holiday-calendar" style="cursor: pointer;">
+              <div class="action-icon c-lblue"><hugeicons-icon [icon]="CalendarCheckOut01Icon" size="20" color="#0EA5E9" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Holiday</strong>
+                 <span>Calendar</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/intern/hr-policies" style="cursor: pointer;">
+              <div class="action-icon c-blue"><hugeicons-icon [icon]="Shield02Icon" size="20" color="#0284C7" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>HR Policies</strong>
+                 <span>Guidelines</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/intern/org-hierarchy" style="cursor: pointer;">
+              <div class="action-icon c-dteal"><hugeicons-icon [icon]="Building03Icon" size="20" color="#004E61" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Hierarchy</strong>
+                 <span>Organization</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/intern/payroll" style="cursor: pointer;">
+              <div class="action-icon c-green"><hugeicons-icon [icon]="Wallet01Icon" size="20" color="#0D9488" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Stipend</strong>
+                 <span>Self Service</span>
+              </div>
+           </div>
+        </div>
+
+        <!-- Offboarding Banner -->
+        <div *ngIf="resignationLoading()" class="flutter-offboarding-card loading">
+          <div class="spinner"></div>
+        </div>
+        <div *ngIf="!resignationLoading() && myResignation()" class="flutter-offboarding-card" [ngClass]="myResignation().status?.toLowerCase() || 'pending'">
+          <div class="offboarding-icon">
+            <hugeicons-icon [icon]="TaskDone01Icon" size="20"></hugeicons-icon>
+          </div>
+          <div class="offboarding-content">
+            <div class="offboarding-header">
+              <span class="offboarding-title">Offboarding</span>
+              <span class="offboarding-badge">{{ myResignation().status || 'Pending' | titlecase }}</span>
+            </div>
+            <p class="offboarding-desc">
+              <ng-container *ngIf="myResignation().status?.toLowerCase() === 'accepted'">
+                Your Offboarding has been accepted. Please follow the exit process shared by HR.
+              </ng-container>
+              <ng-container *ngIf="myResignation().status?.toLowerCase() === 'rejected'">
+                Your Offboarding request was rejected. Contact HR for more information.
+              </ng-container>
+              <ng-container *ngIf="myResignation().status?.toLowerCase() !== 'accepted' && myResignation().status?.toLowerCase() !== 'rejected'">
+                Your Offboarding request is under review. You will be notified once it is processed.
+              </ng-container>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Greeting Header (Shows only on desktop) -->
+      <div class="overview-greeting-wrap desktop-only">
+        <section class="overview-greeting-card" aria-label="Intern greeting">
+          <div class="overview-greeting-content">
+            <div class="overview-greeting-copy">
+              <h2 class="overview-greeting-title">
+                <span class="overview-greeting-line">{{ greeting }},</span>
+                <span class="overview-greeting-name">{{ internData()?.fullName?.split(' ')[0] }}</span>
+              </h2>
+              <p class="overview-greeting-desc">Track your attendance, manage leaves, and stay updated on active tasks from one place.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Statistics Grid (Shows only on desktop) -->
+      <div class="stats-grid desktop-only">
+        <!-- Monthly Attendance -->
+        <div class="stat-card green" routerLink="/intern/attendance" style="cursor: pointer;">
+          <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span class="stat-label" style="margin-bottom: 0;">Monthly Attendance</span>
+            <div class="stat-icon-container">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                <path d="M16 3l0 4" />
+                <path d="M8 3l0 4" />
+                <path d="M4 11l16 0" />
+                <path d="M8 15h2v2h-2z" />
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value-group">
+            <h3 class="stat-value">{{ monthlyAttendance() }}</h3>
+          </div>
+          <div class="stat-bottom" style="border-top: none; padding-top: 0.5rem; gap: 0.4rem;">
+            <div class="trend-badge"
+              style="background: transparent; color: #475569; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500;">
+              <span>On Track</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 4l8 16H4z" />
+              </svg>
+            </div>
+            <span class="trend-text" style="color: #64748b; font-size: 0.75rem; font-weight: 500;">{{
+              attendanceSubtitle() }}</span>
+          </div>
+        </div>
+
+        <!-- Performance Review -->
+        <div class="stat-card orange">
+          <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span class="stat-label" style="margin-bottom: 0;">Performance Review</span>
+            <div class="stat-icon-container">
+              <hugeicons-icon [icon]="LicenseDraftIcon" size="20" [strokeWidth]="1.5"
+                color="currentColor"></hugeicons-icon>
+            </div>
+          </div>
+          <div class="stat-value-group">
+            <h3 class="stat-value">{{ performanceScore() }}</h3>
+          </div>
+          <div class="stat-bottom" style="border-top: none; padding-top: 0.5rem; gap: 0.4rem;">
+            <div class="trend-badge"
+              style="background: transparent; color: #475569; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500;">
+              <span>Score</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 4l8 16H4z" />
+              </svg>
+            </div>
+            <span class="trend-text" style="color: #64748b; font-size: 0.75rem; font-weight: 500;">{{
+              performanceSubtitle() }}</span>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="stat-card blue">
+          <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span class="stat-label" style="margin-bottom: 0;">Timer</span>
+            <div class="stat-icon-container">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 13a7 7 0 1 0 14 0a7 7 0 0 0 -14 0" />
+                <path d="M7 4l-2.75 2" />
+                <path d="M17 4l2.75 2" />
+                <path d="M8 13h1l2 3l2 -6l2 3h1" />
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value-group">
+            <h3 class="stat-value" style="font-variant-numeric: tabular-nums;">{{ timerDisplay() }}</h3>
+          </div>
+          <div class="stat-bottom" style="border-top: none; padding-top: 0.5rem; gap: 0.4rem;">
+            <div class="trend-badge"
+              style="background: transparent; color: #475569; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.15rem 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500;">
+              <span>Status</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 4l8 16H4z" />
+              </svg>
+            </div>
+            <span class="trend-text" style="color: #64748b; font-size: 0.75rem; font-weight: 500;"
+              [ngStyle]="{'color': timerStatus() === 'Please Punch In' ? '#dc2626' : '#64748b'}">{{ timerStatus()
+              }}</span>
+          </div>
+        </div>
+      </div>
+
+
+
+
+
+      <!-- Content Grid (Shows only on desktop) -->
+      <div class="dashboard-content-layout desktop-only">
+
+        <!-- Attendance Trend Chart -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <div class="header-titles">
+              <h3>Trend Analytics</h3>
+              <p class="subtitle" style="font-size: var(--text-sm); color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                Weekly participation analysis</p>
+            </div>
+            <div class="header-meta" style="display: flex; gap: 10px; align-items: center;">
+              <!-- Chart Toggle -->
+              <div class="chart-toggle-group">
+                <button class="chart-toggle-btn" [class.active]="chartType() === 'bar'"
+                  (click)="setChartType('bar')">Bar</button>
+                <button class="chart-toggle-btn" [class.active]="chartType() === 'line'"
+                  (click)="setChartType('line')">Line</button>
+              </div>
+              <!-- Filter toggle -->
+              <div class="chart-filter-toggle" style="position: relative;">
+                <button (click)="showDayFilter.set(!showDayFilter())" class="icon-btn"
+                  style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" />
+                    <line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" />
+                    <line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                    <line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                </button>
+                <div class="filter-dropdown-overlay" *ngIf="showDayFilter()" (click)="showDayFilter.set(false)"
+                  style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99;"></div>
+                <div class="filter-dropdown" *ngIf="showDayFilter()"
+                  style="position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; padding: 12px; width: 160px; display: flex; flex-direction: column; gap: 8px;">
+                  <label *ngFor="let day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']"
+                    style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: var(--text-primary);">
+                    <input type="checkbox" [checked]="!hiddenDays().includes(day)" (change)="toggleDay(day)"> {{
+                    getFullWeekday({day: day}) }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BAR CHART VIEW -->
+          <div class="chart-container custom-bar-chart" *ngIf="chartType() === 'bar'">
+            <div class="chart-bar-group" *ngFor="let day of getFilteredTrend(internTrend()); let i = index">
+              <div class="bar-wrapper">
+                <!-- Previous week bar overlay (striped) -->
+                <div class="bar striped-green" [style.height.%]="getFilteredTrend(internPrevTrend())[i]?.height || 0"
+                  [style.animation-delay]="(i * 80) + 'ms'"
+                  *ngIf="(getFilteredTrend(internPrevTrend())[i]?.height || 0) > 0">
+                </div>
+                <!-- Current week bar -->
+                <div class="bar solid-green" [style.height.%]="day.height || 5"
+                  [style.animation-delay]="(i * 80) + 'ms'" [class.has-data]="day.count > 0">
+                  <div class="bar-value-circle" *ngIf="day.count > 0" [style.animation-delay]="(i * 80 + 400) + 'ms'">{{
+                    day.count }}%</div>
+                  <!-- Hover tooltip -->
+                  <div class="chart-tooltip">
+                    <span class="tt-date">{{ day.day }}</span>
+                    <div class="tt-data">
+                      <div class="tt-row">Present: <b>{{ day.count }}</b></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <span class="bar-label" style="text-transform: capitalize;">{{ getFullWeekday(day) | slice:0:3 }}</span>
+            </div>
+          </div>
+          <div class="chart-legend-bottom" *ngIf="chartType() === 'bar'"
+            style="display: flex; gap: 2rem; justify-content: center; width: 100%; margin-top: 0.5rem; padding-bottom: 1rem; font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: #14532d;"></span> This Week
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span
+                style="width: 14px; height: 14px; border-radius: 4px; background: repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 4px, #f0fdf4 4px, #f0fdf4 8px);"></span>
+              Last Week
+            </div>
+          </div>
+
+          <!-- LINE CHART VIEW -->
+          <div class="chart-container custom-line-chart" *ngIf="chartType() === 'line'">
+            <svg class="trend-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="lineFillGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#4ade80" stop-opacity="0.4" />
+                  <stop offset="100%" stop-color="#4ade80" stop-opacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Area fill -->
+              <path [attr.d]="getAreaPath(getFilteredTrend(internTrend()))" fill="url(#lineFillGradient)" />
+
+              <!-- Previous Week Smooth Line -->
+              <path [attr.d]="getSmoothLinePath(getFilteredTrend(internPrevTrend()))" fill="none" stroke="#94a3b8"
+                stroke-width="2" stroke-dasharray="6, 6" stroke-linecap="round" stroke-linejoin="round"
+                vector-effect="non-scaling-stroke" />
+
+              <!-- Current Week Smooth Line -->
+              <path [attr.d]="getSmoothLinePath(getFilteredTrend(internTrend()))" fill="none" stroke="#22c55e"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+            </svg>
+
+            <div class="line-x-axis"
+              style="display: flex; justify-content: space-between; position: absolute; bottom: -25px; width: 100%; padding: 0;">
+              <span class="bar-label" *ngFor="let day of getFilteredTrend(internTrend())"
+                style="text-transform: capitalize;">{{ getFullWeekday(day) | slice:0:3 }}</span>
+            </div>
+          </div>
+          <div class="chart-legend-bottom" *ngIf="chartType() === 'line'"
+            style="display: flex; gap: 2rem; justify-content: center; width: 100%; margin-top: 1.5rem; padding-bottom: 1rem; font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 14px; height: 3px; border-radius: 2px; background: #22c55e;"></span> This Week
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 14px; height: 0px; border-bottom: 2px dashed #94a3b8;"></span> Last Week
+            </div>
+          </div>
+        </div>
+
+        <!-- Virtual ID Card Wrapper -->
+        <div class="virtual-id-card-wrapper"
+          style="margin-top: 0; display: flex; align-items: center; justify-content: center; height: 100%;">
+
+          <!-- ── CUSTOM VID TEMPLATE ── -->
+          <ng-container *ngIf="vidPage(); else defaultVid">
+            <div class="custom-vid-wrapper" [style.width.px]="VID_CARD_W" [style.height.px]="vidCardH">
+              <div class="custom-vid-canvas" [style.backgroundImage]="vidBgStyle(vidPage())"
+                [style.width.px]="VID_CANVAS_W" [style.height]="'842px'" [style.transform]="'scale(' + vidScale + ')'"
+                [style.transformOrigin]="'top left'">
+
+                <ng-container *ngFor="let p of vidPage()?.placeholders">
+                  <img *ngIf="isVidImageKey(p.key) && resolveVidValue(p.key)" [src]="resolveVidValue(p.key)"
+                    [style.position]="'absolute'" [style.left.px]="p.x" [style.top.px]="p.y"
+                    [style.width.px]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)"
+                    [style.height.px]="p.imgSize || (p.key === 'profilePhoto' ? 80 : 120)" [style.objectFit]="'cover'"
+                    [style.borderRadius]="p.key === 'profilePhoto' ? '50%' : '4px'" alt="">
+                  <span *ngIf="!isVidImageKey(p.key)" [style.position]="'absolute'" [style.left.px]="p.x"
+                    [style.top.px]="p.y" [style.fontSize.px]="p.fontSize || 14"
+                    [style.fontWeight]="p.isBold ? '700' : '400'" [style.color]="p.color || '#000'"
+                    style="white-space: nowrap;">
+                    {{ resolveVidValue(p.key) }}
+                  </span>
+                </ng-container>
+
+                <ng-container *ngFor="let para of vidPage()?.paragraphs">
+                  <img
+                    *ngIf="resolveVidParagraph(para.text) !== para.text && isVidImageKey(para.text?.trim()?.replace(/[{}]/g,'')) && resolveVidValue(para.text?.trim()?.replace(/[{}]/g,''))"
+                    [src]="resolveVidValue(para.text?.trim()?.replace(/[{}]/g,''))" [style.position]="'absolute'"
+                    [style.left.px]="(para.x || 0) + 10" [style.top.px]="(para.y || 0) + 24"
+                    [style.width.px]="para.width || 120" style="object-fit: cover; border-radius: 4px;" alt="">
+                  <div *ngIf="!isVidImageKey(para.text?.trim()?.replace(/\{\{|\}\}/g,''))" [style.position]="'absolute'"
+                    [style.left.px]="(para.x || 0) + 10" [style.top.px]="(para.y || 0) + 24"
+                    [style.width.px]="para.width || 400" [style.fontSize.px]="para.fontSize || 14"
+                    [style.fontWeight]="para.isBold ? '700' : '400'"
+                    [style.fontStyle]="para.isItalic ? 'italic' : 'normal'" [style.color]="para.color || '#000'"
+                    [style.textAlign]="para.alignment || 'left'" [style.lineHeight]="para.lineHeight || 1.6"
+                    [style.letterSpacing.em]="para.letterSpacing || 0"
+                    [innerHTML]="resolveVidParagraph(para.text).replace('\n','<br>')">
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ── DEFAULT VID CARD (fallback) ── -->
+          <ng-template #defaultVid>
+            <div class="virtual-id-card">
+              <div class="id-card-header">
+                <img *ngIf="companyLogo()" [src]="companyLogo()" alt="Company Logo" class="id-company-logo">
+                <span *ngIf="!companyLogo()" class="id-company-name">Softrate Global</span>
+              </div>
+
+              <div class="id-card-body">
+                <div class="id-avatar-wrapper">
+                  <img *ngIf="!internData()?.imgError"
+                    [src]="getPhotoUrl(internData()?._id || internData()?.internid)"
+                    (error)="onImageError($event); internData().imgError = true" alt="Profile" class="id-avatar">
+                  <div *ngIf="internData()?.imgError || (!internData()?._id && !internData()?.internid)"
+                    class="id-avatar-placeholder">{{ internData()?.fullName?.charAt(0) || 'E' }}</div>
+                </div>
+                <h2 class="id-name">{{ internData()?.fullName }}</h2>
+                <p class="id-role">{{ internData()?.role || 'Employee' }}</p>
+                <div class="id-divider"></div>
+                <p class="id-number">ID: <strong>{{ internData()?.EmployeeId || internData()?.internid }}</strong>
+                </p>
+              </div>
+
+              <div class="id-card-footer">
+                <div class="qr-code-wrapper">
+                  <img *ngIf="qrCodeUrl()" [src]="qrCodeUrl()!" alt="QR Code" class="qr-code-img">
+                  <div *ngIf="!qrCodeUrl()" class="qr-code-placeholder">
+                    <hugeicons-icon [icon]="FingerAccessIcon" size="40" [strokeWidth]="1.5"></hugeicons-icon>
+                  </div>
+                </div>
+                <p class="qr-label">SCAN TO VERIFY</p>
+              </div>
+            </div>
+          </ng-template>
+
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

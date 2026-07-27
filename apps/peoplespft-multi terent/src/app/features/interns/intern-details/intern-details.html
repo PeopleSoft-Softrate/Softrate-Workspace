@@ -90,14 +90,23 @@
       <!-- Access Control -->
       <div class="card promotion-card">
         <h4>Access Control</h4>
-        <p class="stat-desc">Manage geofence bypassing for this intern.</p>
+        <p class="stat-desc">Manage login permissions and geofence bypassing.</p>
         
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none;">
           <span style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">Remote Access</span>
           <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
             <input type="checkbox" [ngModel]="intern().isRemote" (click)="toggleRemoteAccess()" style="opacity: 0; width: 0; height: 0; position: absolute;">
             <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {{ intern().isRemote ? '#10b981' : '#cbd5e1' }}; transition: .4s; border-radius: 24px;">
               <span [style.transform]="intern().isRemote ? 'translateX(20px)' : 'translateX(4px)'" style="position: absolute; height: 16px; width: 16px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+            </span>
+          </label>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; border-top-left-radius: 0; border-top-right-radius: 0;">
+          <span style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">Web Access</span>
+          <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+            <input type="checkbox" [ngModel]="intern().webAccess" (click)="toggleWebAccess()" style="opacity: 0; width: 0; height: 0; position: absolute;">
+            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {{ intern().webAccess ? '#3b82f6' : '#cbd5e1' }}; transition: .4s; border-radius: 24px;">
+              <span [style.transform]="intern().webAccess ? 'translateX(20px)' : 'translateX(4px)'" style="position: absolute; height: 16px; width: 16px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
             </span>
           </label>
         </div>

@@ -95,29 +95,39 @@ router.post("/submit-review", verifyTenant, async (req, res) => {
 router.get("/self/:internId", verifyTenant, async (req, res) => {
   try {
     const { internId } = req.params;
+    const { month } = req.query;
 
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-    const parts = dateStr.split("-");
-    let year = parseInt(parts[0]);
-    let month = parseInt(parts[1]);
-    const day = parseInt(parts[2]);
+    let monthStr = month;
+    if (!monthStr) {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+      const parts = dateStr.split("-");
+      let year = parseInt(parts[0]);
+      let m = parseInt(parts[1]);
+      const day = parseInt(parts[2]);
 
-    if (day <= 5) {
-      month--;
-      if (month === 0) {
-        month = 12;
-        year--;
+      if (day <= 5) {
+        m--;
+        if (m === 0) {
+          m = 12;
+          year--;
+        }
       }
+      monthStr = `${year}-${String(m).padStart(2, "0")}`;
     }
-    const monthStr = `${year}-${String(month).padStart(2, "0")}`;
 
-    const review = await Review.findOne({
+    let review = await Review.findOne({
       internId,
       date: { $regex: `^${monthStr}` }
     })
       .sort({ date: -1 })
       .lean();
+
+    if (!review) {
+      review = await Review.findOne({ internId })
+        .sort({ date: -1 })
+        .lean();
+    }
 
     if (!review) {
       return res.status(404).json({
@@ -150,9 +160,15 @@ router.get("/:internId", verifyTenant, async (req, res) => {
     const query = { internId };
     if (month) query.date = { $regex: `^${month}` };
 
-    const review = await Review.findOne(query)
+    let review = await Review.findOne(query)
       .sort({ date: -1 })
       .lean();
+
+    if (!review && month) {
+      review = await Review.findOne({ internId })
+        .sort({ date: -1 })
+        .lean();
+    }
 
     if (!review) {
       return res.status(404).json({
@@ -163,6 +179,16 @@ router.get("/:internId", verifyTenant, async (req, res) => {
 
     return res.json({
       success: true,
+      data: review
+    });
+  } catch (err) {
+    console.error("Fetch Review Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch review"
+    });
+  }
+});
       data: review
     });
   } catch (err) {

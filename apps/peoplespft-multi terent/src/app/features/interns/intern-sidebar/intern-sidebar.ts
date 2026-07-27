@@ -10,7 +10,7 @@ import { ApiService } from '../../../services/api.service';
   standalone: true,
   imports: [CommonModule, RouterModule, HugeiconsIconComponent],
   template: `
-  <aside class="action-sidebar">
+  <aside class="action-sidebar" *ngIf="!isIntern()">
     <!-- MANAGE LIST (Home) -->
     <button routerLink="/interns" [queryParams]="{tab: 'list'}" class="sidebar-action-item" [class.active]="activeTab === 'list'" title="Intern List">
       <div class="action-icon-circle">
@@ -114,5 +114,10 @@ export class InternSidebar {
       },
       error: (err) => console.error('Export failed', err)
     });
+  }
+
+  isIntern(): boolean {
+    const role = localStorage.getItem('user_role');
+    return role?.toLowerCase().replace(/[\s_-]/g, '') === 'intern';
   }
 }

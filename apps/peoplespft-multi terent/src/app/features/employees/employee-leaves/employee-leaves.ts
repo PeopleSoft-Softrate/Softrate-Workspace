@@ -57,7 +57,7 @@ export class EmployeeLeaves implements OnInit, OnDestroy {
   selectedFile: File | null = null;
 
   ngOnInit() {
-    const isSelf = this.router.url.includes('/employee/leaves');
+    const isSelf = this.router.url.includes('/employee/leaves') || this.router.url.includes('/intern/leaves');
     this.isSelfPortal.set(isSelf);
 
     let id = this.route.snapshot.paramMap.get('id');

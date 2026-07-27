@@ -200,6 +200,9 @@ exports.login = async (req, res) => {
       status: { $nin: ['completed', 'drop'] }
     }).select(PROFILE_PHOTO_SELECT);
     if (user) {
+      if (req.body.source === 'web' && user.webAccess === false && !user.isHr) {
+        return res.status(403).json({ success: false, message: "Web access is disabled for your intern account. Please use the mobile app or contact HR." });
+      }
       role = user.isHr ? "hr" : "intern";
     }
 

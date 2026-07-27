@@ -47,6 +47,10 @@
   --border-color: #E2E8F0;
   --success-color: #16A34A;
   --success-strong: #15803D;
+  --brand-primary: #3b82f6;
+  --brand-primary-hover: #2563eb;
+  --brand-primary-light: rgba(59, 130, 246, 0.1);
+  --brand-primary-border: rgba(59, 130, 246, 0.2);
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
 
   /* Transitions */

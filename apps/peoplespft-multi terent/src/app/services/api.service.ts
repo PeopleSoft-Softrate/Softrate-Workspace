@@ -6,7 +6,7 @@ import { Observable, forkJoin, map } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private useLocalBackend = false;
+  // private useLocalBackend = false;
   // private baseUrl = this.useLocalBackend
   //   ? 'http://localhost:5001'
   //   : window.location.hostname === 'localhost'
@@ -38,7 +38,8 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/api/auth/unified-login`, {
       companyCode: companyCode,
       identifier: identifier,
-      password
+      password,
+      source: 'web'
     });
   }
 
@@ -104,6 +105,18 @@ export class ApiService {
 
   registerCompany(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/onboarding/register`, data);
+  }
+
+  verifyCompany(code: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/onboarding/verify/${code}`);
+  }
+
+  getPublicWalkinDrives(code: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/public/walkin-drives?companyCode=${code}`);
+  }
+
+  walkinApply(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/public/walkin-apply`, data);
   }
 
   toggleManager(id: string): Observable<any> {
@@ -436,6 +449,26 @@ export class ApiService {
   // Attendance
   getInternAttendance(internId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/attendance/intern/${internId}`);
+  }
+
+  internPunchIn(internId: string, location: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/attendance/punch-in`, { internId, location });
+  }
+
+  internPunchOut(internId: string, location: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/attendance/punch-out`, { internId, location });
+  }
+
+  getInternTodayAttendance(internId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/attendance/today/${internId}`);
+  }
+
+  getInternResignation(internId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/resignation/${internId}`);
+  }
+
+  checkTodayHoliday(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/holidays/is-today-holiday`);
   }
 
   getEmployeeAttendance(employeeId: string): Observable<any[]> {

@@ -40,9 +40,21 @@ export class InternReview implements OnInit {
   isLoading = signal(true);
   months = signal<string[]>([]);
   grades = signal<{ [goalId: string]: string }>({});
+  isSelfPortal = signal<boolean>(false);
 
   ngOnInit() {
-    this.internId.set(this.route.snapshot.paramMap.get('id') || '');
+    const isSelf = this.router.url.includes('/intern/review') || this.router.url.includes('intern/review');
+    this.isSelfPortal.set(isSelf);
+
+    let id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      const data = localStorage.getItem('user_data');
+      if (data) {
+        const parsedData = JSON.parse(data);
+        id = parsedData.internid || parsedData._id || parsedData.id;
+      }
+    }
+    this.internId.set(id || '');
     this.initMonths();
     this.fetchReviews();
   }

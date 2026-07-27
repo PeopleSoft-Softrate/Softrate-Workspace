@@ -135,6 +135,16 @@ export class Login implements OnInit {
       this.router.navigate(['/dashboard']);
     } else if (actualRole === 'employee' || actualRole === 'manager') {
       this.router.navigate(['/employee/dashboard']);
+    } else if (actualRole === 'intern') {
+      if (userData.webAccess === true) {
+        this.router.navigate(['/intern/dashboard']);
+      } else {
+        this.errorMessage.set('Web access is not enabled for this intern account.');
+        this.isLoading.set(false);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_data');
+      }
     } else {
       this.errorMessage.set('Unauthorized role for this portal');
       this.isLoading.set(false);

@@ -1,6 +1,7 @@
 import { AlertService } from '../../shared/services/alert';
 import { Component, signal, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import {
@@ -65,6 +66,7 @@ export class HolidayCalendar implements OnInit {
 
   isLoading = signal(true);
   isSaving  = signal(false);
+  isSelfPortal = signal<boolean>(false);
 
   months = [
     { value: 0,  label: 'All Months' },
@@ -113,7 +115,12 @@ export class HolidayCalendar implements OnInit {
 
   newHoliday = { type: 'special', fromDate: '', toDate: '', reason: '' };
 
+  private router = inject(Router);
+
   ngOnInit() {
+    const isSelf = this.router.url.includes('/employee/') || this.router.url.includes('/intern/');
+    this.isSelfPortal.set(isSelf);
+    
     this.fetchHolidays();
 
     setTimeout(() => {

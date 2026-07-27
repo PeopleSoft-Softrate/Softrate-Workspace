@@ -11,10 +11,10 @@
 
   </div>
 
-  <div class="hc-layout">
+  <div class="hc-layout" [class.full-width]="isSelfPortal()">
 
     <!-- ── SIDEBAR ─────────────────────────────── -->
-    <aside class="hc-sidebar">
+    <aside class="hc-sidebar" *ngIf="!isSelfPortal()">
 
       <!-- Bulk Upload Card -->
       <div class="hc-card">
@@ -180,7 +180,7 @@
               {{ holiday.fromDate | date:'dd MMM yyyy' }} — {{ holiday.toDate | date:'dd MMM yyyy' }}
             </span>
           </div>
-          <button class="hc-del-btn" (click)="deleteHoliday(holiday._id)" title="Delete">
+          <button class="hc-del-btn" *ngIf="!isSelfPortal()" (click)="deleteHoliday(holiday._id)" title="Delete">
             <hugeicons-icon [icon]="DeleteIcon" size="18" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
           </button>
         </div>

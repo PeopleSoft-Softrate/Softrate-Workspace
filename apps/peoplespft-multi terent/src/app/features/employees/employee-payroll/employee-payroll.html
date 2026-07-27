@@ -1,4 +1,4 @@
-<div class="main-content-layout">
+<div class="main-content-layout" [class.self-portal]="isSelfPortal()">
 <div class="data-section">
 <div class="page-header">
   <div class="header-main">
@@ -7,7 +7,7 @@
       <a (click)="goBack()" *ngIf="!isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Employees</a>
       <span style="color: #94a3b8;"> / Payroll</span>
     </div>
-    <h1>{{ isSelfPortal() ? 'My Payslips' : 'Payroll & Salary' }}</h1>
+    <h1>{{ isSelfPortal() ? (isIntern() ? 'My Stipend Details' : 'My Payslips') : (isIntern() ? 'Intern Stipend' : 'Payroll & Salary') }}</h1>
     <p>{{ isSelfPortal() ? 'Track salary details, gross/net breakdown, and download monthly payslips' : 'Salary breakdown and payslip history for ' + (employee()?.fullName || 'Employee') }}</p>
   </div>
 </div>
@@ -59,50 +59,27 @@
       <!-- Earnings & Deductions Breakdown -->
       <div class="card breakdown-card">
         <div class="card-header">
-          <h3>Monthly Breakdown</h3>
+          <h3>Salary Breakdown</h3>
+          <span class="badge">Monthly</span>
         </div>
-        <div class="breakdown-content">
-          <div class="breakdown-section">
-            <h4 class="section-title earnings">Earnings</h4>
-            <div class="breakdown-item">
-              <span>Basic Salary</span>
-              <span class="amount">₹ 25,000</span>
-            </div>
-            <div class="breakdown-item">
-              <span>HRA</span>
-              <span class="amount">₹ 10,000</span>
-            </div>
-            <div class="breakdown-item">
-              <span>Special Allowance</span>
-              <span class="amount">₹ 10,000</span>
-            </div>
-            <div class="breakdown-divider"></div>
-            <div class="breakdown-total">
-              <span>Total Earnings</span>
-              <span class="amount">₹ 45,000</span>
-            </div>
+        <div class="breakdown-columns">
+          <div class="column earnings">
+            <h4>Earnings</h4>
+            <div class="row"><span>Basic Salary</span><span>₹ 25,000</span></div>
+            <div class="row"><span>HRA</span><span>₹ 12,000</span></div>
+            <div class="row"><span>Special Allowance</span><span>₹ 8,000</span></div>
+            <div class="row total"><span>Total Earnings</span><span>₹ 45,000</span></div>
           </div>
-
-          <div class="breakdown-section">
-            <h4 class="section-title deductions">Deductions</h4>
-            <div class="breakdown-item">
-              <span>Provident Fund (PF)</span>
-              <span class="amount">- ₹ 1,800</span>
-            </div>
-            <div class="breakdown-item">
-              <span>Professional Tax</span>
-              <span class="amount">- ₹ 1,200</span>
-            </div>
-            <div class="breakdown-item">
-              <span>ESI</span>
-              <span class="amount">- ₹ 800</span>
-            </div>
-            <div class="breakdown-divider"></div>
-            <div class="breakdown-total">
-              <span>Total Deductions</span>
-              <span class="amount">- ₹ 3,800</span>
-            </div>
+          <div class="column deductions">
+            <h4>Deductions</h4>
+            <div class="row"><span>Provident Fund (PF)</span><span>₹ 2,600</span></div>
+            <div class="row"><span>Professional Tax</span><span>₹ 1,200</span></div>
+            <div class="row total"><span>Total Deductions</span><span>₹ 3,800</span></div>
           </div>
+        </div>
+        <div class="net-payable-banner">
+          <span>Net Salary Payable</span>
+          <h2>₹ 41,200</h2>
         </div>
       </div>
 
@@ -110,23 +87,32 @@
       <div class="card history-card">
         <div class="card-header">
           <h3>Payslip History</h3>
+          <span class="badge" *ngIf="salaryHistory.length > 0">{{ salaryHistory.length }} Records</span>
         </div>
+
         <div class="history-list" *ngIf="salaryHistory.length > 0">
-          <div class="history-item" *ngFor="let item of salaryHistory">
-            <div class="item-info">
-              <span class="month">{{ item.month }}</span>
-              <span class="date">Paid on {{ item.date }}</span>
+          <div class="history-item" *ngFor="let slip of salaryHistory">
+            <div class="slip-info">
+              <div class="slip-icon">
+                <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="18" [strokeWidth]="1.5"></hugeicons-icon>
+              </div>
+              <div>
+                <h4>{{ slip.month }}</h4>
+                <span>Issued on {{ slip.date }}</span>
+              </div>
             </div>
-            <div class="item-amount">
-              <span class="amount">{{ item.amount }}</span>
-              <span class="status-badge status-green">{{ item.status }}</span>
+            <div class="slip-action">
+              <span class="amount">{{ slip.amount }}</span>
+              <span class="status-pill">{{ slip.status }}</span>
+              <button class="btn-download" title="Download Payslip" (click)="downloadPayslip(slip.month)">
+                <hugeicons-icon [icon]="Download02Icon" size="16" [strokeWidth]="1.5"></hugeicons-icon>
+                <span>PDF</span>
+              </button>
             </div>
-            <button class="icon-btn" (click)="downloadPayslip(item.month)" title="Download Payslip">
-              <hugeicons-icon [icon]="Download02Icon" size="18" [strokeWidth]="1.5"></hugeicons-icon>
-            </button>
           </div>
         </div>
-        <div *ngIf="salaryHistory.length === 0" style="padding: 2rem; text-align: center; color: #94a3b8;">
+
+        <div class="empty-history" *ngIf="salaryHistory.length === 0">
           <p style="font-size: 14px;">No pay slips available yet.</p>
           <p style="font-size: 12px; margin-top: 4px;">Payslips will appear here after the first completed month.</p>
         </div>
@@ -141,5 +127,6 @@
   </div>
 </div>
 </div>
-<app-employee-sidebar *ngIf="!isSelfPortal()"></app-employee-sidebar>
+<app-employee-sidebar *ngIf="!isSelfPortal() && !isIntern()"></app-employee-sidebar>
+<app-intern-sidebar *ngIf="!isSelfPortal() && isIntern()"></app-intern-sidebar>
 </div>

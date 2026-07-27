@@ -1,13 +1,14 @@
-<div class="main-content-layout">
+<div class="main-content-layout" [class.self-portal]="isSelfPortal()">
 <div class="data-section">
 <div class="page-header">
   <div class="header-main">
     <div class="breadcrumb" style="font-size: 14px; margin-bottom: 8px;">
-      <a (click)="goBack()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Interns</a>
+      <a (click)="goBack()" *ngIf="isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Dashboard</a>
+      <a (click)="goBack()" *ngIf="!isSelfPortal()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Interns</a>
       <span style="color: #94a3b8;"> / Performance</span>
     </div>
-    <h1>Performance Reviews</h1>
-    <p>Viewing performance goals for Intern ID: {{ internId() }}</p>
+    <h1>{{ isSelfPortal() ? 'My Performance Review' : 'Performance Reviews' }}</h1>
+    <p>{{ isSelfPortal() ? 'View your monthly performance evaluations, KPI goals, and ratings' : 'Viewing performance goals for Intern ID: ' + internId() }}</p>
   </div>
   <div class="header-actions">
     <div class="month-selector-wrapper">
@@ -58,41 +59,31 @@
         <p class="goal-desc-premium">{{ goal.description }}</p>
         
         <div class="kpi-container-premium">
-          <span class="kpi-label-premium">
-            <i class="fa-solid fa-bullseye"></i> Key Performance Indicator (KPI)
-          </span>
-          <p class="kpi-text-premium">{{ goal.kpi }}</p>
+          <span class="kpi-label">Associated KPI:</span>
+          <span class="kpi-name">{{ goal.kpi || 'General KPI' }}</span>
         </div>
-        
-        <div class="comment-container-premium" *ngIf="goal.comment">
-          <span class="comment-label-premium">
-            <i class="fa-solid fa-comment-dots"></i> Intern's Remarks / Status Update
-          </span>
-          <p class="comment-text-premium">"{{ goal.comment }}"</p>
+
+        <div class="comment-box-premium" *ngIf="goal.comment">
+          <h4><i class="fa-solid fa-comment-dots"></i> Intern Self-Evaluation Comment:</h4>
+          <p>{{ goal.comment }}</p>
         </div>
-      </div>
-      
-      <div class="card-footer-premium">
-        <div class="grade-action-section">
-          <span class="grade-action-title">
-            <i class="fa-solid fa-award"></i> Evaluation Grade
-          </span>
-          
-          <div class="grade-display-premium" *ngIf="reviewData().isGraded">
-            <span class="final-grade-badge-premium" [ngClass]="getGradeColor(goal.grade)">
-              Grade {{ goal.grade }}
-            </span>
+
+        <div class="grading-section-premium">
+          <div class="grade-status-badge" *ngIf="reviewData().isGraded">
+            <span class="grade-label">Assigned Rating:</span>
+            <span class="grade-val grade-{{ goal.grade }}">{{ goal.grade || 'Not Graded' }}</span>
           </div>
-          
-          <div class="grade-selector-premium" *ngIf="!reviewData().isGraded">
-            <div class="grade-chips-premium">
+
+          <div class="grade-selector-premium" *ngIf="!reviewData().isGraded && !isSelfPortal()">
+            <span class="select-label">Assign Grade:</span>
+            <div class="grade-chips">
               <button 
                 type="button"
                 class="grade-chip-premium chip-a" 
                 [class.active]="grades()[goal._id] === 'A'" 
                 (click)="setGrade(goal._id, 'A')">
                 <span class="chip-letter">A</span>
-                <span class="chip-name">Exceptional</span>
+                <span class="chip-name">Exceeds</span>
               </button>
               <button 
                 type="button"
@@ -125,7 +116,7 @@
     </div>
   </div>
 
-  <div class="submit-action-premium-container" *ngIf="!isLoading() && reviewData() && !reviewData().isGraded">
+  <div class="submit-action-premium-container" *ngIf="!isLoading() && reviewData() && !reviewData().isGraded && !isSelfPortal()">
     <button class="btn-submit-premium" (click)="submitGrades()">
       <i class="fa-solid fa-cloud-arrow-up"></i> Submit Evaluation Ratings
     </button>
@@ -147,5 +138,5 @@
   </div>
 </div>
 </div>
-<app-intern-sidebar></app-intern-sidebar>
+<app-intern-sidebar *ngIf="!isSelfPortal()"></app-intern-sidebar>
 </div>

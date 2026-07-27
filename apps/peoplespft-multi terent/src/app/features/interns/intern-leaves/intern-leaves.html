@@ -6,48 +6,119 @@
       <a (click)="goBack()" style="cursor: pointer; color: #0f172a; font-weight: 500; text-decoration: none;">Interns</a>
       <span style="color: #94a3b8;"> / Leaves</span>
     </div>
-    <h1>Leave History</h1>
-    <p>Viewing leave applications for Intern ID: {{ internId() }}</p>
-  </div>
-  <div class="header-actions">
-    <button class="btn-primary" (click)="fetchLeaves()">
-      <i class="fa-solid fa-arrows-rotate"></i> Refresh
-    </button>
+    <h1>{{ isSelfPortal() ? 'Leave Applications' : 'Intern Leave Overview' }}</h1>
+    <p *ngIf="isSelfPortal()">Track your leave balance, request time off, and monitor manager/HR approvals</p>
+    <p *ngIf="!isSelfPortal()">View leave balances and history for this intern.</p>
   </div>
 </div>
 
 <div class="data-container" [class.loading]="isLoading()">
-  <div class="table-responsive" *ngIf="!isLoading() && leaves().length > 0">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Leave Type</th>
-          <th>From Date</th>
-          <th>To Date</th>
-          <th>Reason</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let leave of leaves()">
-          <td><strong>{{ leave.leaveType }}</strong></td>
-          <td>{{ leave.fromDate | date:'mediumDate' }}</td>
-          <td>{{ leave.toDate | date:'mediumDate' }}</td>
-          <td>{{ leave.reason || 'No reason provided' }}</td>
-          <td>
-            <span class="status-badge" [ngClass]="getStatusColor(leave.hrStatus, leave.managerStatus)">
-              {{ getStatusLabel(leave.hrStatus, leave.managerStatus) }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  
+  <!-- Balances row -->
+  <div class="balances-row" *ngIf="!isLoading()">
+    <div class="balance-card" *ngFor="let bal of balances()">
+      <div class="balance-icon">
+        <hugeicons-icon [icon]="CalendarCheckOut01Icon" size="20" [strokeWidth]="1.5" color="#00657f"></hugeicons-icon>
+      </div>
+      <div class="balance-info">
+        <span class="label">{{ bal.leaveType }}</span>
+        <h3 class="value">{{ bal.totalAllowed - bal.balance }} <span class="total">/ {{ bal.totalAllowed }}</span></h3>
+      </div>
+    </div>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading() && leaves().length === 0">
-    <i class="fa-solid fa-clock empty-icon"></i>
-    <h3>No leaves found</h3>
-    <p>This intern hasn't applied for any leaves yet.</p>
+  <div class="leaves-content-grid" *ngIf="!isLoading()" [class.single-column]="!isSelfPortal()">
+    <!-- Apply for Leave Form -->
+    <div class="card form-card" *ngIf="isSelfPortal()">
+      <div class="card-header">
+        <h3>Request Time Off</h3>
+      </div>
+      <form (submit)="onSubmitLeave()" class="leave-form-element">
+        <div class="form-group">
+          <label for="leaveType">Leave Type <span class="required">*</span></label>
+          <select id="leaveType" [(ngModel)]="leaveForm.leaveType" name="leaveType" required class="form-input">
+            <option value="" disabled selected>Select Leave Type</option>
+            <option *ngFor="let bal of balances()" [value]="bal.leaveType">{{ bal.leaveType }}</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fromDate">Start Date <span class="required">*</span></label>
+            <input type="date" id="fromDate" [(ngModel)]="leaveForm.fromDate" name="fromDate" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="toDate">End Date <span class="required">*</span></label>
+            <input type="date" id="toDate" [(ngModel)]="leaveForm.toDate" name="toDate" required class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reason">Reason <span class="required">*</span></label>
+          <textarea id="reason" [(ngModel)]="leaveForm.reason" name="reason" rows="3" required placeholder="Explain your reason..." class="form-input textarea"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Supporting Document (Optional)</label>
+          <div class="upload-btn-wrapper">
+            <button class="btn-upload" type="button">
+              <hugeicons-icon [icon]="Upload02Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+              <span>{{ selectedFile ? selectedFile.name : 'Choose File' }}</span>
+            </button>
+            <input type="file" id="document-upload" (change)="onFileSelected($event)" name="document" accept=".pdf,.png,.jpg,.jpeg" />
+          </div>
+          <span class="file-hint">Accepted formats: PDF, PNG, JPG (Max 5MB)</span>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="submitLoading()">
+          <span *ngIf="submitLoading()">Submitting...</span>
+          <span *ngIf="!submitLoading()">Submit Request</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- History Logs -->
+    <div class="card logs-card">
+      <div class="card-header">
+        <h3>Time Off History</h3>
+      </div>
+      <div class="table-responsive" *ngIf="leaves().length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Leave Type</th>
+              <th>Period</th>
+              <th>Days</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let leave of leaves()">
+              <td><strong>{{ leave.leaveType }}</strong></td>
+              <td class="period-cell">
+                <span class="date">{{ leave.fromDate | date:'MMM d' }}</span>
+                <span class="to">to</span>
+                <span class="date">{{ leave.toDate | date:'MMM d, y' }}</span>
+              </td>
+              <td>{{ leave.numberOfDays }}</td>
+              <td>{{ leave.reason || 'No reason provided' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusColor(leave.hrStatus, leave.managerStatus)">
+                  {{ getStatusLabel(leave.hrStatus, leave.managerStatus) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="empty-state" *ngIf="leaves().length === 0">
+        <hugeicons-icon [icon]="LicenseDraftIcon" size="48" [strokeWidth]="1.5" color="#94a3b8"></hugeicons-icon>
+        <h3>No leaves found</h3>
+        <p>This intern hasn't applied for any leaves yet.</p>
+      </div>
+    </div>
   </div>
 
   <div class="loading-overlay" *ngIf="isLoading()">
@@ -57,5 +128,5 @@
 
 </div>
 </div>
-<app-intern-sidebar></app-intern-sidebar>
+<app-intern-sidebar *ngIf="!isSelfPortal()"></app-intern-sidebar>
 </div>

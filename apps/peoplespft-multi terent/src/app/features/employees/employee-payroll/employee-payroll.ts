@@ -5,12 +5,13 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
 import { UserCircleIcon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, Money03Icon, Download02Icon } from '@hugeicons/core-free-icons';
 import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
+import { InternSidebar } from '../../interns/intern-sidebar/intern-sidebar';
 import { ApiService } from '../../../services/api.service';
 
 @Component({
   selector: 'app-employee-payroll',
   standalone: true,
-  imports: [CommonModule, HugeiconsIconComponent, RouterModule, EmployeeSidebar],
+  imports: [CommonModule, HugeiconsIconComponent, RouterModule, EmployeeSidebar, InternSidebar],
   templateUrl: './employee-payroll.html',
   styleUrl: './employee-payroll.css'
 })
@@ -89,16 +90,24 @@ export class EmployeePayroll implements OnInit {
     return results;
   }
 
+  isIntern = signal<boolean>(false);
+
   ngOnInit() {
-    const isSelf = this.router.url.includes('/employee/payroll');
+    const url = this.router.url.toLowerCase();
+    const isSelf = url.includes('/employee/payroll') || url.includes('/intern/payroll') || url.includes('payroll');
     this.isSelfPortal.set(isSelf);
+
+    const isInternUrl = url.includes('/intern') || url.includes('intern');
+    this.isIntern.set(isInternUrl);
 
     let id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       const data = localStorage.getItem('user_data');
       if (data) {
         const parsedData = JSON.parse(data);
-        id = parsedData.EmployeeId || parsedData.internid || '';
+        id = isInternUrl
+          ? (parsedData.internid || parsedData._id || parsedData.id || '')
+          : (parsedData.EmployeeId || parsedData._id || parsedData.id || '');
       }
     }
     this.employeeId.set(id || '');
@@ -107,7 +116,11 @@ export class EmployeePayroll implements OnInit {
 
   fetchEmployee() {
     this.isLoading.set(true);
-    this.apiService.getEmployeeById(this.employeeId()).subscribe({
+    const fetchObs = this.isIntern() 
+      ? this.apiService.getInternById(this.employeeId())
+      : this.apiService.getEmployeeById(this.employeeId());
+
+    fetchObs.subscribe({
       next: (data) => {
         this.employee.set(data);
         this.isLoading.set(false);

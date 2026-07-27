@@ -5,7 +5,7 @@
   <div class="page-header" *ngIf="isSelfPortal()">
     <div class="header-main">
       <div class="breadcrumb">
-        <a routerLink="/employee/dashboard" class="back-link">
+        <a [routerLink]="isInternRoute() ? '/intern/dashboard' : '/employee/dashboard'" class="back-link">
           <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
         </a>
       </div>

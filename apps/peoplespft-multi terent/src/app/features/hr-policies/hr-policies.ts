@@ -1,6 +1,6 @@
 import { AlertService } from '../../shared/services/alert';
 import { Component, signal, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService } from '../../services/api.service';
@@ -23,6 +23,11 @@ export class HrPolicies implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
   private tourService = inject(TourService);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
 
   readonly AddInvoiceIcon = AddInvoiceIcon;
   readonly PolicyIcon = PolicyIcon;
@@ -46,7 +51,7 @@ export class HrPolicies implements OnInit {
   };
 
   ngOnInit() {
-    const isSelf = this.router.url.includes('/employee/') || this.router.url.includes('/intern/');
+    const isSelf = this.router.url.includes('/employee/') || this.router.url.includes('/intern/') || this.router.url.includes('intern');
     this.isSelfPortal.set(isSelf);
     this.fetchPolicies();
 
@@ -62,11 +67,11 @@ export class HrPolicies implements OnInit {
     this.apiService.getPolicies().subscribe({
       next: (data: any[]) => {
         let displayData = data;
-        const url = this.router.url;
-        if (url.includes('/employee/')) {
-          displayData = data.filter(p => p.policy_view_by && p.policy_view_by.map((r: string) => r.toLowerCase()).includes('employee'));
-        } else if (url.includes('/intern/')) {
-          displayData = data.filter(p => p.policy_view_by && p.policy_view_by.map((r: string) => r.toLowerCase()).includes('intern'));
+        const url = this.router.url.toLowerCase();
+        if (url.includes('employee')) {
+          displayData = data.filter(p => !p.policy_view_by || p.policy_view_by.length === 0 || p.policy_view_by.map((r: string) => r.toLowerCase()).includes('employee'));
+        } else if (url.includes('intern')) {
+          displayData = data.filter(p => !p.policy_view_by || p.policy_view_by.length === 0 || p.policy_view_by.map((r: string) => r.toLowerCase()).includes('intern'));
         }
         
         this.policies.set(displayData);

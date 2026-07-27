@@ -1,5 +1,5 @@
 <app-alert></app-alert>
-<div class="app-container" [class.login-mode]="isLoginPage()" [class.sidebar-minimized]="isSidebarMinimized()">
+<div class="app-container" [class.login-mode]="isLoginPage()" [class.sidebar-minimized]="isSidebarMinimized()" [class.is-intern]="isIntern()">
   <!-- Sidebar -->
   <aside class="sidebar" id="tour-sidebar" *ngIf="!isLoginPage()">
     <div class="sidebar-header">
@@ -273,6 +273,65 @@
           <button class="mobile-app-btn">Download</button>
         </div>
       </ng-container>
+
+      <!-- INTERN MENU -->
+      <ng-container *ngIf="isIntern()">
+        <div class="nav-section">
+          <p class="nav-label">Self Portal</p>
+          <a routerLink="/intern/dashboard" routerLinkActive="active" class="nav-item">
+            <div class="icon-box blue">
+              <hugeicons-icon [icon]="DashboardSquareRemoveIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>My Dashboard</span>
+          </a>
+          <a routerLink="/intern/attendance" routerLinkActive="active" class="nav-item">
+            <div class="icon-box green">
+              <hugeicons-icon [icon]="CalendarCheckIn01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>My Attendance</span>
+          </a>
+          <a routerLink="/intern/leaves" routerLinkActive="active" class="nav-item">
+            <div class="icon-box orange">
+              <hugeicons-icon [icon]="SentIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Leave Applications</span>
+          </a>
+          <a routerLink="/intern/payroll" routerLinkActive="active" class="nav-item">
+            <div class="icon-box purple">
+              <hugeicons-icon [icon]="Invoice01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>My Payslips</span>
+          </a>
+          <a routerLink="/intern/review" routerLinkActive="active" class="nav-item">
+            <div class="icon-box teal">
+              <hugeicons-icon [icon]="LicenseDraftIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Performance Review</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-label">Company Resources</p>
+          <a routerLink="/intern/holiday-calendar" routerLinkActive="active" class="nav-item">
+            <div class="icon-box red">
+              <hugeicons-icon [icon]="Calendar01Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Holidays</span>
+          </a>
+          <a routerLink="/intern/org-hierarchy" routerLinkActive="active" class="nav-item">
+            <div class="icon-box blue">
+              <hugeicons-icon [icon]="WorkflowSquare03Icon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>Org Hierarchy</span>
+          </a>
+          <a routerLink="/intern/hr-policies" routerLinkActive="active" class="nav-item">
+            <div class="icon-box pink">
+              <hugeicons-icon [icon]="PolicyIcon" size="18" [strokeWidth]="1.5" color="currentColor"></hugeicons-icon>
+            </div>
+            <span>HR Policies</span>
+          </a>
+        </div>
+      </ng-container>
     </nav>
 
   </aside>
@@ -424,4 +483,7 @@
       </div>
     </div>
   </div>
+
+
+
 </div>

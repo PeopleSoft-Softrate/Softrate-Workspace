@@ -1,0 +1,437 @@
+<div class="login-container">
+  <!-- Left Branding Panel -->
+  <div class="branding-panel">
+    <div class="branding-content">
+      <div class="logo-container">
+        <img src="logo/peoplesoft.png" alt="peoplesoft Logo" class="brand-logo-img">
+        <div class="logo-text">PeopleSoft</div>
+      </div>
+      <span class="crm-tag">Workforce Management</span>
+      <h1>Empowering your team with smart automation.</h1>
+      <p class="branding-desc">Manage attendance, leave, and performance in one unified workspace.</p>
+    </div>
+    <div class="branding-bg-circles">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+    </div>
+  </div>
+
+  <!-- Right Form Panel -->
+  <div class="form-panel">
+    <div class="login-card user-register-card">
+      <div class="form-header">
+        <h2>Applicant Registration</h2>
+        <p>Apply for a position in the verified company.</p>
+      </div>
+
+      <div class="error-banner" *ngIf="errorMessage()">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ errorMessage() }}
+      </div>
+
+      <div class="success-banner" *ngIf="successMessage()">
+        <i class="fa-solid fa-check-circle"></i>
+        {{ successMessage() }}
+      </div>
+
+      <form (ngSubmit)="submitForm()" #registerForm="ngForm" autocomplete="off" *ngIf="!successMessage()">
+        
+        <!-- Progress Stepper -->
+        <div class="stepper-wrapper">
+          <div class="stepper-item" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
+            <div class="step-counter">
+               <i class="fa-solid fa-check" *ngIf="currentStep > 1"></i>
+               <span *ngIf="currentStep <= 1">1</span>
+            </div>
+            <div class="step-name">Verification</div>
+          </div>
+          <div class="stepper-item" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
+            <div class="step-counter">
+               <i class="fa-solid fa-check" *ngIf="currentStep > 2"></i>
+               <span *ngIf="currentStep <= 2">2</span>
+            </div>
+            <div class="step-name">Role</div>
+          </div>
+          <div class="stepper-item" [class.completed]="currentStep > 3" [class.active]="currentStep === 3">
+            <div class="step-counter">
+               <i class="fa-solid fa-check" *ngIf="currentStep > 3"></i>
+               <span *ngIf="currentStep <= 3">3</span>
+            </div>
+            <div class="step-name">Form</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Verification -->
+        <div *ngIf="currentStep === 1">
+          <div class="form-group verification-group">
+            <label for="companyCode">Company Code *</label>
+            <div class="input-wrapper">
+              <input 
+                id="companyCode"
+                type="text" 
+                [(ngModel)]="companyCode" 
+                name="companyCode" 
+                required>
+              <button type="button" class="verify-btn" (click)="verifyCompany()" [disabled]="isVerifying()">
+                 {{ isVerifying() ? 'Verifying...' : 'Verify' }}
+              </button>
+            </div>
+            <div class="quick-pick">
+               <span class="quick-pick-label">Quick pick:</span>
+               <button type="button" class="quick-pick-chip" (click)="companyCode = 'Softrate'; verifyCompany()">Softrate</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verified Indicator (Shows in Step 2 and 3) -->
+        <div class="verified-badge" *ngIf="isVerified()">
+           <i class="fa-solid fa-check-circle"></i> Applying to: {{ verifiedCompanyName() }}
+        </div>
+
+        <!-- Step 2: Role Selection -->
+        <div *ngIf="currentStep === 2" class="form-scrollable-area">
+           <!-- Application Type Cards -->
+           <div class="form-group">
+             <label>Select Role Type</label>
+             <p class="role-desc">Which application type best describes you?</p>
+              <div class="role-cards-container">
+                 
+                 <!-- Walk-in Drive Cards (only shown if company has active walkin drives, matching Flutter mobile logic) -->
+                 <div *ngIf="isLoadingDrives()" style="text-align: center; padding: 10px; color: var(--text-muted, #94A3B8); font-size: 0.85rem;">
+                    Checking walk-in opportunities...
+                 </div>
+
+                 <ng-container *ngIf="!isLoadingDrives() && walkinDrives().length > 0">
+                   <div *ngFor="let drive of walkinDrives()" 
+                        class="role-card" 
+                        [class.selected]="applicationType === 'Walkin' && selectedWalkinDriveId === (drive._id || drive.id)" 
+                        (click)="selectWalkinDrive(drive)">
+                      <div class="role-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                      <div class="role-content">
+                         <h4>Walk-in Drive</h4>
+                         <p *ngIf="drive.endDate || drive.endTime">Ends: {{ formatWalkinEndDate(drive.endDate) }} at {{ drive.endTime || '' }}</p>
+                         <p *ngIf="!drive.endDate && !drive.endTime">Apply for current walk-in opportunities.</p>
+                      </div>
+                      <div class="role-check" *ngIf="applicationType === 'Walkin' && selectedWalkinDriveId === (drive._id || drive.id)"><i class="fa-solid fa-check-circle"></i></div>
+                   </div>
+                 </ng-container>
+
+                 <div class="role-card" [class.selected]="applicationType === 'Internship'" (click)="selectRoleType('Internship')">
+                    <div class="role-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div class="role-content">
+                       <h4>Internship</h4>
+                       <p>For students seeking learning opportunities.</p>
+                    </div>
+                    <div class="role-check" *ngIf="applicationType === 'Internship'"><i class="fa-solid fa-check-circle"></i></div>
+                 </div>
+
+                 <div class="role-card" [class.selected]="applicationType === 'Employee'" (click)="selectRoleType('Employee')">
+                    <div class="role-icon"><i class="fa-solid fa-briefcase"></i></div>
+                    <div class="role-content">
+                       <h4>Full-Time Job</h4>
+                       <p>For professionals seeking career growth.</p>
+                    </div>
+                    <div class="role-check" *ngIf="applicationType === 'Employee'"><i class="fa-solid fa-check-circle"></i></div>
+                 </div>
+
+              </div>
+           </div>
+           
+           <div class="step-actions">
+              <button type="button" class="btn btn-secondary" (click)="prevStep()">Back</button>
+              <button type="button" class="submit-btn step-next-btn" (click)="nextStep()" [disabled]="!applicationType">
+                 Continue
+              </button>
+           </div>
+        </div>
+
+        <!-- Step 3: Form fields -->
+        <div *ngIf="currentStep === 3" class="form-scrollable-area">
+
+           <!-- ===== INTERN / WALKIN FORM (matches form_one.dart) ===== -->
+           <ng-container *ngIf="applicationType === 'Internship' || applicationType === 'Walkin'">
+             <div class="form-group">
+               <label for="fullName">Full Name (with initials) in CAPITAL LETTERS *</label>
+               <div class="input-wrapper">
+                 <input id="fullName" type="text" [(ngModel)]="fullName" name="fullName" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="college">College / University (full name) *</label>
+               <div class="input-wrapper">
+                 <input id="college" type="text" [(ngModel)]="college" name="college" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="year">Year of Studying *</label>
+               <div class="input-wrapper">
+                 <select id="year" [(ngModel)]="year" name="year" required>
+                    <option value="" disabled>Select Year</option>
+                    <option *ngFor="let y of years" [value]="y">{{y}}</option>
+                 </select>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="department">Department (full form) *</label>
+               <div class="input-wrapper">
+                 <input id="department" type="text" [(ngModel)]="department" name="department" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="role">Internship role applied for *</label>
+               <div class="input-wrapper">
+                 <select id="role" [(ngModel)]="role" name="role" required>
+                    <option value="" disabled>Select Role</option>
+                    <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+                 </select>
+               </div>
+             </div>
+
+             <div class="form-group" *ngIf="role === 'Other'">
+               <label for="otherRole">Specify Internship Role *</label>
+               <div class="input-wrapper">
+                 <input id="otherRole" type="text" [(ngModel)]="otherRole" name="otherRole" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="email">Mail ID (official) *</label>
+               <div class="input-wrapper">
+                 <input id="email" type="email" [(ngModel)]="email" name="email" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="phone">Contact Number (WhatsApp) *</label>
+               <div class="input-wrapper">
+                 <input id="phone" type="tel" [(ngModel)]="phone" name="phone" maxlength="10" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="emergencyContact">Emergency Contact (Parent / Guardian) *</label>
+               <div class="input-wrapper">
+                 <input id="emergencyContact" type="tel" [(ngModel)]="emergencyContact" name="emergencyContact" maxlength="10" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="linkedin">LinkedIn Profile (URL) *</label>
+               <div class="input-wrapper">
+                 <input id="linkedin" type="url" [(ngModel)]="linkedin" name="linkedin" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label>Resume / CV (PDF, Max 2MB) *</label>
+               <div class="file-upload-wrapper">
+                 <input type="file" id="resume" (change)="onFileChange($event)" accept="application/pdf">
+                 <label for="resume" class="file-upload-btn">
+                    <i class="fa-solid fa-upload"></i> {{ resumeFileName || 'Click to upload PDF' }}
+                 </label>
+               </div>
+             </div>
+
+             <div class="form-group project-links-group">
+               <label>Project Links <span class="optional-label">(optional, max 5)</span></label>
+               <div *ngFor="let link of projectLinks; let i = index; trackBy: trackByIndex" class="project-link-row">
+                  <div class="input-wrapper">
+                    <input type="url" [(ngModel)]="projectLinks[i]" name="projectLink{{i}}">
+                  </div>
+                  <button type="button" class="remove-btn" (click)="removeProjectLink(i)" *ngIf="projectLinks.length > 1">
+                     <i class="fa-solid fa-trash"></i>
+                  </button>
+               </div>
+               <button type="button" class="add-link-btn" (click)="addProjectLink()" *ngIf="projectLinks.length < 5">
+                  + Add project
+               </button>
+             </div>
+           </ng-container>
+
+           <!-- ===== EMPLOYEE FORM (matches employee_formone.dart) ===== -->
+           <ng-container *ngIf="applicationType === 'Employee'">
+             <!-- Personal Details Section -->
+             <div class="form-section-header">
+               <i class="fa-solid fa-user"></i> Personal Details
+             </div>
+
+             <div class="form-group">
+               <label for="fullName">Full Name (As per Aadhaar/PAN) *</label>
+               <div class="input-wrapper">
+                 <input id="fullName" type="text" [(ngModel)]="fullName" name="fullName" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="email">Email Address *</label>
+               <div class="input-wrapper">
+                 <input id="email" type="email" [(ngModel)]="email" name="email" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="phone">Phone Number (WhatsApp) *</label>
+               <div class="input-wrapper">
+                 <input id="phone" type="tel" [(ngModel)]="phone" name="phone" maxlength="10" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="emergencyName">Emergency Contact Name *</label>
+               <div class="input-wrapper">
+                 <input id="emergencyName" type="text" [(ngModel)]="emergencyName" name="emergencyName" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="emergencyContact">Emergency Contact Number *</label>
+               <div class="input-wrapper">
+                 <input id="emergencyContact" type="tel" [(ngModel)]="emergencyContact" name="emergencyContact" maxlength="10" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="dob">Date of Birth *</label>
+               <div class="input-wrapper">
+                 <input id="dob" type="date" [(ngModel)]="dob" name="dob" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="address">Residential Address *</label>
+               <div class="input-wrapper">
+                 <textarea id="address" [(ngModel)]="address" name="address" rows="3" required></textarea>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="role">Role applying for *</label>
+               <div class="input-wrapper">
+                 <select id="role" [(ngModel)]="role" name="role" required>
+                    <option value="" disabled>Select Role</option>
+                    <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+                 </select>
+               </div>
+             </div>
+
+             <div class="form-group" *ngIf="role === 'Other'">
+               <label for="otherRole">Specify Role *</label>
+               <div class="input-wrapper">
+                 <input id="otherRole" type="text" [(ngModel)]="otherRole" name="otherRole" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="linkedin">LinkedIn Profile URL *</label>
+               <div class="input-wrapper">
+                 <input id="linkedin" type="url" [(ngModel)]="linkedin" name="linkedin" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="gender">Gender *</label>
+               <div class="input-wrapper">
+                 <select id="gender" [(ngModel)]="gender" name="gender" required>
+                    <option value="" disabled>Select Gender</option>
+                    <option *ngFor="let g of genders" [value]="g">{{g}}</option>
+                 </select>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="nationality">Nationality *</label>
+               <div class="input-wrapper">
+                 <input id="nationality" type="text" [(ngModel)]="nationality" name="nationality" required>
+               </div>
+             </div>
+
+             <div class="form-group">
+               <label for="maritalStatus">Marital Status *</label>
+               <div class="input-wrapper">
+                 <select id="maritalStatus" [(ngModel)]="maritalStatus" name="maritalStatus" required>
+                    <option value="" disabled>Select Status</option>
+                    <option *ngFor="let s of maritalOptions" [value]="s">{{s}}</option>
+                 </select>
+               </div>
+             </div>
+
+             <!-- Project Links Section -->
+             <div class="form-section-header">
+               <i class="fa-solid fa-link"></i> Project Links
+             </div>
+             <div class="form-group project-links-group">
+               <p class="optional-hint">Add up to 5 project links (GitHub, portfolio, etc.) — optional</p>
+               <div *ngFor="let link of projectLinks; let i = index; trackBy: trackByIndex" class="project-link-row">
+                  <div class="input-wrapper">
+                    <input type="url" [(ngModel)]="projectLinks[i]" name="projectLink{{i}}">
+                  </div>
+                  <button type="button" class="remove-btn" (click)="removeProjectLink(i)" *ngIf="projectLinks.length > 1">
+                     <i class="fa-solid fa-trash"></i>
+                  </button>
+               </div>
+               <button type="button" class="add-link-btn" (click)="addProjectLink()" *ngIf="projectLinks.length < 5">
+                  + Add another project
+               </button>
+             </div>
+           </ng-container>
+
+           <!-- ===== DECLARATIONS (both types) ===== -->
+           <div class="declarations-section">
+              <label class="checkbox-label">
+                 <input type="checkbox" [(ngModel)]="declareAccuracy" name="declareAccuracy">
+                 I declare that all information provided is accurate.
+              </label>
+              <label class="checkbox-label">
+                 <input type="checkbox" [(ngModel)]="bgConsent" name="bgConsent">
+                 I consent to background verification.
+              </label>
+              <label class="checkbox-label checkbox-label-last">
+                 <input type="checkbox" [(ngModel)]="whatsappConsent" name="whatsappConsent">
+                 I agree to receive communications via WhatsApp and Email.
+              </label>
+            </div>
+
+            <div class="step-actions">
+               <button type="button" class="btn btn-secondary" (click)="prevStep()">Back</button>
+               <button type="button" class="submit-btn step-next-btn" (click)="openDeclaration()" [disabled]="!registerForm.form.valid || ( (applicationType === 'Internship' || applicationType === 'Walkin') && !resumeBase64)">
+                  Submit Application
+               </button>
+            </div>
+        </div>
+
+        <div class="form-footer">
+          <a routerLink="/login">Back to Sign In</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Declaration Modal -->
+  <div class="modal-overlay" *ngIf="showDeclarationModal">
+     <div class="modal-content">
+        <div class="modal-header">
+           <h3><i class="fa-solid fa-info-circle"></i> Declaration</h3>
+        </div>
+        <div class="modal-body">
+           <p>Please read the instructions carefully before submitting your application.</p>
+           <p><strong>Important:</strong></p>
+           <ul>
+              <li>Further communication will be sent to your official email.</li>
+              <li>After approval you will receive your ID.</li>
+              <li>Use that ID to log in and set your password on first login.</li>
+           </ul>
+        </div>
+        <div class="modal-footer">
+           <button class="btn btn-secondary" (click)="closeDeclaration()">Cancel</button>
+           <button class="btn btn-primary" (click)="submitForm()" [disabled]="isLoading()">
+              <span *ngIf="!isLoading()">Submit Application</span>
+              <div class="spinner" *ngIf="isLoading()"></div>
+           </button>
+        </div>
+     </div>
+  </div>
+</div>

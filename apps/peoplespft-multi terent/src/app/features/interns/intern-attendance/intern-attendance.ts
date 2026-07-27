@@ -15,7 +15,7 @@ import { InternSidebar } from '../intern-sidebar/intern-sidebar';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, HugeiconsIconComponent, InternSidebar],
   templateUrl: './intern-attendance.html',
-  styleUrls: ['./intern-attendance.css', '../intern-list/intern-list.css']
+  styleUrls: ['../intern-list/intern-list.css', './intern-attendance.css']
 })
 export class InternAttendance implements OnInit {
   private alertService = inject(AlertService);
@@ -144,7 +144,15 @@ export class InternAttendance implements OnInit {
   isLoading = signal(true);
 
   ngOnInit() {
-    this.internId.set(this.route.snapshot.paramMap.get('id') || '');
+    let id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      const data = localStorage.getItem('user_data');
+      if (data) {
+        const parsedData = JSON.parse(data);
+        id = parsedData.internid || parsedData._id;
+      }
+    }
+    this.internId.set(id || '');
     this.fetchAttendance();
   }
 

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Login } from './features/auth/login/login';
 import { Register } from './features/auth/register/register';
+import { UserRegister } from './features/auth/user-register/user-register';
 import { Dashboard } from './features/dashboard/dashboard';
 import { InternList } from './features/interns/intern-list/intern-list';
 import { InternAdd } from './features/interns/intern-add/intern-add';
@@ -21,6 +22,7 @@ import { HolidayCalendar } from './features/holiday-calendar/holiday-calendar';
 import { InternRequests } from './features/interns/intern-requests/intern-requests';
 import { EmployeeRequests } from './features/employees/employee-requests/employee-requests';
 import { EmployeeDashboard } from './features/employees/employee-dashboard/employee-dashboard';
+import { InternDashboard } from './features/interns/intern-dashboard/intern-dashboard';
 import { EmployeeAdd } from './features/employees/employee-add/employee-add';
 import { AppSettings } from './features/app-settings/app-settings';
 import { CertificateSettings } from './features/certificate-settings/certificate-settings';
@@ -37,10 +39,19 @@ export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'register', component: Register },
+  { path: 'user-register', component: UserRegister },
   { path: 'dashboard', component: Dashboard },
   { path: 'payroll', component: PayrollManagement },
   { path: 'attendance/today', component: TodayAttendance },
   { path: 'employee/dashboard', component: EmployeeDashboard },
+  { path: 'intern/dashboard', component: InternDashboard },
+  { path: 'intern/attendance', component: InternAttendance },
+  { path: 'intern/leaves', component: InternLeaves },
+  { path: 'intern/review', component: InternReview },
+  { path: 'intern/holiday-calendar', component: HolidayCalendar },
+  { path: 'intern/hr-policies', component: HrPolicies },
+  { path: 'intern/org-hierarchy', component: OrgHierarchy },
+  { path: 'intern/payroll', component: EmployeePayroll },
   { path: 'performance-goals', component: PerformanceGoals },
   { path: 'org-hierarchy', component: OrgHierarchy },
   { path: 'app-settings', component: AppSettings },

@@ -2,7 +2,7 @@ import { Component, inject, signal, HostListener, ViewChild, ElementRef } from '
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon, UserAccountIcon, Logout02Icon, LicenseDraftIcon, Delete01Icon } from '@hugeicons/core-free-icons';
+import { Home01Icon, StudentsIcon, WorkflowSquare03Icon, DashboardSquareRemoveIcon, Settings01Icon, DiplomaIcon, DashboardSquare02Icon, DashboardSpeed01Icon, UserGroupIcon, WorkIcon, Calendar03Icon, PolicyIcon, FingerAccessIcon, CalendarCheckIn01Icon, SentIcon, Invoice01Icon, Notification01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon, UserAccountIcon, Logout02Icon, LicenseDraftIcon, Delete01Icon, Calendar01Icon } from '@hugeicons/core-free-icons';
 import { forkJoin } from 'rxjs';
 import { Alert } from './shared/components/alert/alert';
 import { AlertService } from './shared/services/alert';
@@ -33,6 +33,7 @@ export class App {
   title = 'admin-page';
   router = inject(Router);
   readonly StudentsIcon = StudentsIcon;
+  readonly Home01Icon = Home01Icon;
   readonly WorkflowSquare03Icon = WorkflowSquare03Icon;
   readonly DashboardSquareRemoveIcon = DashboardSquareRemoveIcon;
   readonly Settings01Icon = Settings01Icon;
@@ -45,6 +46,7 @@ export class App {
   readonly PolicyIcon = PolicyIcon;
   readonly LicenseDraftIcon = LicenseDraftIcon;
   readonly FingerAccessIcon = FingerAccessIcon;
+  readonly Calendar01Icon = Calendar01Icon;
   readonly CalendarCheckIn01Icon = CalendarCheckIn01Icon;
   readonly SentIcon = SentIcon;
   readonly Invoice01Icon = Invoice01Icon;
@@ -123,6 +125,10 @@ export class App {
 
   isEmployee(): boolean {
     return this.isRole('employee');
+  }
+
+  isIntern(): boolean {
+    return this.isRole('intern');
   }
 
   isRole(roleName: string): boolean {
@@ -536,7 +542,7 @@ export class App {
 
   isLoginPage(): boolean {
     const url = this.currentUrl().split('?')[0]; // Use signal for reactivity
-    return url === '/login' || url === '/register' || url === '/' || url.startsWith('/id-card');
+    return url === '/login' || url === '/register' || url === '/user-register' || url === '/' || url.startsWith('/id-card');
   }
 
   getGreeting(): string {

@@ -314,3 +314,27 @@
   position: relative;
   min-height: 400px;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .main-content-layout {
+    padding: 1rem !important;
+    padding-right: 1rem !important;
+    flex-direction: column;
+  }
+  .data-container {
+    padding: 1rem;
+  }
+  .action-sidebar {
+    display: none;
+  }
+}
+
+body.mobile-device .main-content-layout {
+  padding: 1rem !important;
+  padding-right: 1rem !important;
+  flex-direction: column;
+}
+body.mobile-device .action-sidebar {
+  display: none;
+}

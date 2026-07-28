@@ -962,3 +962,17 @@ textarea {
   overflow: hidden;
   min-height: 56px;
 }
+
+/* ── Global iOS Safari & Mobile Web Optimizations ── */
+html.ios-device,
+body.ios-device,
+html.mobile-device,
+body.mobile-device {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}

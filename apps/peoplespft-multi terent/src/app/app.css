@@ -1007,20 +1007,40 @@
   display: none;
 }
 
-@media (max-width: 768px) {
-
-  /* Hide the desktop sidebar completely on mobile for interns */
-  .app-container.is-intern .sidebar {
+@media (max-width: 1024px) {
+  /* Hide the desktop sidebar completely on mobile for everyone */
+  .sidebar {
     display: none !important;
   }
 
-  /* Remove bottom padding since we removed the mobile bottom nav */
-  .app-container.is-intern .main-content {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* Hide the top-bar for interns if we want a pure app feel */
-  .app-container.is-intern .top-bar {
+  /* Hide the top-bar for mobile */
+  .top-bar {
     display: none !important;
   }
+
+  /* Adjust main-content padding */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  .app-container {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+body.mobile-device .sidebar {
+  display: none !important;
+}
+body.mobile-device .top-bar {
+  display: none !important;
+}
+body.mobile-device .main-content {
+  margin-left: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+body.mobile-device .app-container {
+  grid-template-columns: 1fr !important;
 }

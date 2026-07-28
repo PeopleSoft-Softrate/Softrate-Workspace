@@ -64,8 +64,114 @@
     </ng-container>
 
     <ng-container *ngIf="!isLoading()">
+      <!-- Mobile Flutter-Style UI (Shows only on mobile & iOS) -->
+      <div class="mobile-flutter-ui">
+        <!-- Top App Bar -->
+        <div class="flutter-app-bar">
+           <div class="flutter-app-bar-left">
+              <h1>Hi, {{ employeeData()?.fullName?.split(' ')[0] || 'Employee' }}</h1>
+              <p>Employee Dashboard</p>
+           </div>
+           <div class="flutter-app-bar-right">
+              <button class="icon-btn">
+                 <hugeicons-icon [icon]="Notification01Icon" size="24" color="white" [strokeWidth]="2"></hugeicons-icon>
+              </button>
+              <div class="profile-avatar-circle" routerLink="/profile" style="cursor: pointer;">
+                 <img *ngIf="getPhotoUrl(employeeData()?._id) as photoUrl" [src]="photoUrl" (error)="onImageError($event)">
+                 <span style="display: none;">{{ employeeData()?.fullName?.charAt(0) || 'E' }}</span>
+              </div>
+           </div>
+        </div>
+
+        <div class="flutter-date-header" style="flex-wrap: wrap;">
+           <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+             <div class="flutter-date">{{ currentTime() | date:'EEE, d MMM y' }}</div>
+             <div class="flutter-time">{{ currentTime() | date:'h:mm a' }}</div>
+           </div>
+        </div>
+
+        <!-- Image Banner with Punch In/Out button -->
+        <div class="flutter-image-card">
+           <img src="images/mobile-user/image.png" alt="Working Employees">
+           <div class="flutter-punch-action">
+             <button class="punch-btn punch-in" routerLink="/employee/attendance">
+               Open Attendance
+             </button>
+           </div>
+        </div>
+
+        <!-- Punch Status Card -->
+        <div class="flutter-status-card">
+           <div class="status-row">
+             <div class="status-icon green">
+                <hugeicons-icon [icon]="CalendarCheckIn01Icon" size="18" [strokeWidth]="2"></hugeicons-icon>
+             </div>
+             <span class="status-label">Punch In</span>
+             <span class="status-value">{{ todayPunchInTime() ? (todayPunchInTime() | date:'h:mm a') : '--' }}</span>
+           </div>
+           <div class="status-row">
+             <div class="status-icon red">
+                <hugeicons-icon [icon]="SentIcon" size="18" [strokeWidth]="2"></hugeicons-icon>
+             </div>
+             <span class="status-label">Punch Out</span>
+             <span class="status-value">{{ todayPunchOutTime() ? (todayPunchOutTime() | date:'h:mm a') : '--' }}</span>
+           </div>
+           <hr class="status-divider">
+           <div class="status-row duration-row">
+             <span class="status-label">Duration</span>
+             <span class="status-value">{{ timerDisplay() }}</span>
+           </div>
+        </div>
+
+        <!-- Action Grid -->
+        <div class="flutter-action-grid">
+           <div class="flutter-action-btn" routerLink="/employee/attendance">
+              <div class="action-icon c-cyan"><hugeicons-icon [icon]="CalendarCheckIn01Icon" size="20" color="#00B4D8" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Attendance</strong>
+                 <span>My Records</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/hrms/employee-leaves">
+              <div class="action-icon c-teal"><hugeicons-icon [icon]="SentIcon" size="20" color="#00657F" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Leave</strong>
+                 <span>Management</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/employee/payroll" style="cursor: pointer;">
+              <div class="action-icon c-green"><hugeicons-icon [icon]="Invoice01Icon" size="20" color="#0D9488" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Payslips</strong>
+                 <span>Self Service</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/employee/holiday-calendar" style="cursor: pointer;">
+              <div class="action-icon c-lblue"><hugeicons-icon [icon]="Calendar03Icon" size="20" color="#0EA5E9" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Holiday</strong>
+                 <span>Calendar</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/employee/hr-policies" style="cursor: pointer;">
+              <div class="action-icon c-blue"><hugeicons-icon [icon]="PolicyIcon" size="20" color="#0284C7" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>HR Policies</strong>
+                 <span>Guidelines</span>
+              </div>
+           </div>
+           <div class="flutter-action-btn" routerLink="/employee/org-hierarchy" style="cursor: pointer;">
+              <div class="action-icon c-dteal"><hugeicons-icon [icon]="UserGroupIcon" size="20" color="#004E61" [strokeWidth]="2"></hugeicons-icon></div>
+              <div class="action-text">
+                 <strong>Hierarchy</strong>
+                 <span>Organization</span>
+              </div>
+           </div>
+        </div>
+      </div>
+
       <!-- Premium Greeting Header -->
-      <div class="overview-greeting-wrap">
+      <div class="overview-greeting-wrap desktop-only">
         <section class="overview-greeting-card" aria-label="Employee greeting">
           <div class="overview-greeting-content">
             <div class="overview-greeting-copy">
@@ -81,7 +187,7 @@
       </div>
 
       <!-- Statistics Grid -->
-      <div class="stats-grid">
+      <div class="stats-grid desktop-only">
         <!-- Monthly Attendance -->
         <div class="stat-card green" routerLink="/employee/attendance" style="cursor: pointer;">
           <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
@@ -171,7 +277,7 @@
       </div>
 
       <!-- Manager Assignment Section -->
-      <section class="actions-section" *ngIf="isManager() && pendingTeamRequests().length > 0">
+      <section class="actions-section desktop-only" *ngIf="isManager() && pendingTeamRequests().length > 0">
         <h3 class="section-title" style="display: flex; justify-content: space-between;">
           <span>
             <hugeicons-icon [icon]="UserCircleIcon" size="20" [strokeWidth]="2"
@@ -226,7 +332,7 @@
       </section>
 
       <!-- Quick Actions Section -->
-      <section class="actions-section">
+      <section class="actions-section desktop-only">
         <h3 class="section-title">
           Quick Actions
         </h3>
@@ -306,7 +412,7 @@
       </section>
 
       <!-- Content Grid -->
-      <div class="dashboard-content-layout">
+      <div class="dashboard-content-layout desktop-only">
 
         <!-- Attendance Trend Chart -->
         <div class="analytics-card">

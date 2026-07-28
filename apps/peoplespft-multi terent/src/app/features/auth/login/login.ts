@@ -27,6 +27,12 @@ export class Login implements OnInit {
     const token = localStorage.getItem('auth_token');
     const role = localStorage.getItem('user_role');
     
+    const cachedCode = localStorage.getItem('cached_company_code');
+    if (cachedCode) {
+      this.credentials.companyCode = cachedCode;
+      this.forgotPasswordData.companyCode = cachedCode;
+    }
+    
     if (token && role) {
       if (role === 'hr' || role === 'hr_admin') {
         this.router.navigate(['/dashboard']);
@@ -126,6 +132,7 @@ export class Login implements OnInit {
 
     localStorage.setItem('user_role', actualRole);
     localStorage.setItem('user_data', JSON.stringify(userData));
+    localStorage.setItem('cached_company_code', this.credentials.companyCode);
     if (res.token) localStorage.setItem('auth_token', res.token);
     
     this.app.userRole.set(actualRole);

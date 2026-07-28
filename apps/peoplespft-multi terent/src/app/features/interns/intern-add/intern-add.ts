@@ -1,6 +1,6 @@
 import { AlertService } from '../../../shared/services/alert';
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -20,6 +20,11 @@ export class InternAdd implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
+  private location = inject(Location);
+
+  goBack() {
+    this.location.back();
+  }
   
   isSaving = signal(false);
   submitted = signal(false);
@@ -42,7 +47,8 @@ export class InternAdd implements OnInit {
     internshipType: 'Stipend',
     applicationType: 'Internship',
     isRemote: false,
-    webAccess: false
+    webAccess: false,
+    remoteAccess: false
   };
 
   internRoles = signal<string[]>([]);

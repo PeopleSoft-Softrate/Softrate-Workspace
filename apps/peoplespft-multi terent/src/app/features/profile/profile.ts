@@ -3,17 +3,27 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { ApiService } from '../../services/api.service';
+import { MobileProfileComponent } from './mobile-profile/mobile-profile';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MobileProfileComponent],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
 export class ProfileComponent implements OnInit {
   private apiService = inject(ApiService);
   private sanitizer  = inject(DomSanitizer);
+  private router     = inject(Router);
+
+  logout() {
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('auth_token');
+    this.router.navigate(['/login']);
+  }
 
   user   = signal<any>(null);
   role   = signal<string>('');

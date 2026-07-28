@@ -6,7 +6,7 @@ import 'package:hrmappfrontend/intern/form_one.dart';
 import 'package:hrmappfrontend/Employee/employee_formone.dart';
 import 'package:hrmappfrontend/port.dart';
 import 'package:hrmappfrontend/auth_client.dart' as http;
-
+import 'package:shared_preferences/shared_preferences.dart';
 class ApplicationFlowPage extends StatefulWidget {
   const ApplicationFlowPage({super.key});
 
@@ -34,6 +34,45 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
 
   final Color _primaryColor = const Color(0xFF00657F);
   final String _baseUrl = getBaseUrl();
+
+  List<dynamic> _publicCompanies = [];
+  bool _showCompanyDropdown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPublicCompanies();
+  }
+
+  Future<void> _fetchPublicCompanies() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/public/companies'),
+        bypassCache: true,
+      );
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _publicCompanies = jsonDecode(response.body);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching public companies: $e');
+    }
+  }
+
+  List<dynamic> get _filteredCompanies {
+    final query = _codeController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      return _publicCompanies;
+    }
+    return _publicCompanies.where((comp) {
+      final name = (comp['name'] ?? '').toString().toLowerCase();
+      final code = (comp['companyCode'] ?? '').toString().toLowerCase();
+      return name.contains(query) || code.contains(query);
+    }).toList();
+  }
 
   Future<void> _fetchWalkinDrives(String code) async {
     setState(() => _isLoadingDrives = true);
@@ -64,6 +103,7 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
     }
 
     setState(() {
+      _showCompanyDropdown = false;
       _isVerifying = true;
       _isVerified = false;
       _companyName = null;
@@ -77,6 +117,11 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
+        // Cache the company code locally
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('cached_company_code', code);
+        
         if (mounted) {
           HapticFeedback.lightImpact();
           setState(() {
@@ -322,14 +367,18 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                 children: [
                   TextField(
                     controller: _codeController,
+                    onTap: () {
+                      setState(() => _showCompanyDropdown = true);
+                    },
                     onChanged: (v) {
                       if (_errorText != null) {
                         setState(() => _errorText = null);
                       }
+                      setState(() => _showCompanyDropdown = true);
                     },
                     style: const TextStyle(fontWeight: FontWeight.w600),
                     decoration: InputDecoration(
-                      hintText: "Enter Company Code",
+                      hintText: "Type or select company code",
                       hintStyle: TextStyle(
                         color: Colors.black.withValues(alpha: 0.3),
                         fontSize: 15,
@@ -354,25 +403,65 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
                       ),
                     ),
                   ),
-                  // Quick-pick company code suggestions
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Quick pick: ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
+                  // Clean, minimalist searchable company dropdown list
+                  if (_showCompanyDropdown && _filteredCompanies.isNotEmpty)
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 220),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: Colors.grey.shade200),
                         ),
-                        const SizedBox(width: 4),
-                        _buildCodeChip('Softrate'),
-                        const SizedBox(width: 8),
-                        _buildCodeChip('Curiouswings'),
-                      ],
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: _filteredCompanies.length,
+                        separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          color: Colors.grey.shade100,
+                        ),
+                        itemBuilder: (context, index) {
+                          final comp = _filteredCompanies[index];
+                          final name = comp['name'] ?? 'Company';
+                          final code = comp['companyCode'] ?? '';
+                          return InkWell(
+                            onTap: () {
+                              _codeController.text = code;
+                              setState(() {
+                                _showCompanyDropdown = false;
+                              });
+                              _verifyCompany();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  Text(
+                                    "($code)",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
                   if (_errorText != null) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -548,35 +637,6 @@ class _ApplicationFlowPageState extends State<ApplicationFlowPage> {
               ? Color.fromARGB(255, 49, 110, 51)
               : Colors.grey.shade200,
           borderRadius: BorderRadius.circular(1),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCodeChip(String code) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _codeController.text = code;
-          _errorText = null;
-          _isVerified = false;
-          _companyName = null;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: _primaryColor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _primaryColor.withValues(alpha: 0.25)),
-        ),
-        child: Text(
-          code,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: _primaryColor,
-          ),
         ),
       ),
     );

@@ -189,16 +189,6 @@ router.get("/:internId", verifyTenant, async (req, res) => {
     });
   }
 });
-      data: review
-    });
-  } catch (err) {
-    console.error("Fetch Review Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch review"
-    });
-  }
-});
 
 /* ---------------- GRADE REVIEW (HR) ---------------- */
 // PUT /api/reviews/:internId/grade?month=2025-12

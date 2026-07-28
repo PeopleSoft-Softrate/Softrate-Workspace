@@ -91,7 +91,7 @@
               <button class="icon-btn">
                  <hugeicons-icon [icon]="Notification03Icon" size="24" color="white" [strokeWidth]="2"></hugeicons-icon>
               </button>
-              <div class="profile-avatar-circle">
+              <div class="profile-avatar-circle" routerLink="/profile" style="cursor: pointer;">
                  <img *ngIf="getInternPhotoUrl(internData()?._id) as photoUrl" [src]="photoUrl" (error)="onImageError($event)">
                  <span style="display: none;">{{ internData()?.fullName?.charAt(0) || 'U' }}</span>
               </div>

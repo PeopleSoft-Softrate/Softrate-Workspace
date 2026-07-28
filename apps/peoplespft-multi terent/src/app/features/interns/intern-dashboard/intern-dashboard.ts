@@ -255,15 +255,22 @@ export class InternDashboard implements OnInit {
       this.currentTime.set(new Date());
     }, 1000);
 
-    const data = localStorage.getItem('user_data');
-    if (data) {
-      const parsedData = JSON.parse(data);
-      this.internData.set(parsedData);
-      
-      this.fetchTodayAttendance(parsedData._id);
+    if (typeof localStorage !== 'undefined') {
+      const data = localStorage.getItem('user_data');
+      if (data && data !== 'undefined' && data !== 'null') {
+        try {
+          const parsedData = JSON.parse(data);
+          this.internData.set(parsedData);
+          
+          this.fetchTodayAttendance(parsedData._id);
       
       const empId = parsedData.internid || parsedData.EmployeeId;
       const mongoId = parsedData._id;
+
+      const loaded = this.loadFromCache(empId || mongoId);
+      if (loaded) {
+        this.isLoading.set(false);
+      }
 
       this._buildQrCode(parsedData);
 
@@ -298,6 +305,10 @@ export class InternDashboard implements OnInit {
 
       this.fetchPerformanceStats(empId);
       this.fetchProjectStats(mongoId);
+        } catch (e) {
+          console.warn('Error reading user_data in ngOnInit:', e);
+        }
+      }
     }
 
     // Update clock and timer
@@ -307,12 +318,72 @@ export class InternDashboard implements OnInit {
     }, 1000);
   }
 
+  saveToCache(empId: string) {
+    if (!empId || typeof localStorage === 'undefined') return;
+    try {
+      const cacheData = {
+        monthlyAttendance: this.monthlyAttendance(),
+        attendanceSubtitle: this.attendanceSubtitle(),
+        performanceScore: this.performanceScore(),
+        performanceSubtitle: this.performanceSubtitle(),
+        workDuration: this.workDuration(),
+        companyLogo: this.companyLogo(),
+        myResignation: this.myResignation(),
+        todayPunchInTime: this.todayPunchInTime() ? this.todayPunchInTime()!.toISOString() : null,
+        todayPunchOutTime: this.todayPunchOutTime() ? this.todayPunchOutTime()!.toISOString() : null,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('intern_dashboard_cache_' + empId, JSON.stringify(cacheData));
+    } catch (e) {
+      console.warn('Could not save dashboard cache:', e);
+    }
+  }
+
+  loadFromCache(empId: string): boolean {
+    if (!empId || typeof localStorage === 'undefined') return false;
+    try {
+      const cachedStr = localStorage.getItem('intern_dashboard_cache_' + empId);
+      if (!cachedStr || cachedStr === 'undefined' || cachedStr === 'null') return false;
+      const cache = JSON.parse(cachedStr);
+      if (cache.monthlyAttendance !== undefined) this.monthlyAttendance.set(cache.monthlyAttendance);
+      if (cache.attendanceSubtitle !== undefined) this.attendanceSubtitle.set(cache.attendanceSubtitle);
+      if (cache.performanceScore !== undefined) this.performanceScore.set(cache.performanceScore);
+      if (cache.performanceSubtitle !== undefined) this.performanceSubtitle.set(cache.performanceSubtitle);
+      if (cache.workDuration !== undefined) this.workDuration.set(cache.workDuration);
+      if (cache.companyLogo !== undefined) this.companyLogo.set(cache.companyLogo);
+      if (cache.myResignation !== undefined) this.myResignation.set(cache.myResignation);
+      if (cache.todayPunchInTime) this.todayPunchInTime.set(new Date(cache.todayPunchInTime));
+      if (cache.todayPunchOutTime) this.todayPunchOutTime.set(new Date(cache.todayPunchOutTime));
+      
+      this.isLoading.set(false);
+      this.updateTimer();
+      return true;
+    } catch (e) {
+      console.warn('Could not load dashboard cache:', e);
+      return false;
+    }
+  }
+
   private pendingRequests = 0;
   
   private requestFinished() {
     this.pendingRequests--;
     if (this.pendingRequests <= 0) {
       this.isLoading.set(false);
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const data = localStorage.getItem('user_data');
+        if (data && data !== 'undefined' && data !== 'null') {
+          const parsedData = JSON.parse(data);
+          const empId = parsedData.internid || parsedData.EmployeeId || parsedData._id;
+          if (empId) {
+            this.saveToCache(empId);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error saving dashboard cache in requestFinished:', e);
     }
   }
 

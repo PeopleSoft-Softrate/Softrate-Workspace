@@ -1,0 +1,216 @@
+<div class="mobile-profile-wrapper">
+  <!-- App Bar (Flutter style) -->
+  <div class="profile-app-bar">
+    <button class="back-btn" (click)="goBack()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <h2>Personal Profile</h2>
+    <div style="width: 24px;"></div>
+  </div>
+
+  <div class="scroll-content">
+    <!-- Profile Header Card (Flutter style) -->
+    <div class="flutter-card summary-card">
+      <div class="summary-left">
+        <h3>{{ user?.fullName || 'User' }}</h3>
+        <div class="summary-sub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sub-icon"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <span>{{ user?.email || '-' }}</span>
+        </div>
+        <div class="summary-sub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sub-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 9.92z"/></svg>
+          <span>{{ user?.phone || user?.contact || user?.phoneNumber || '-' }}</span>
+        </div>
+      </div>
+      <div class="summary-right">
+        <div class="profile-avatar-circle">
+          <img *ngIf="profilePhoto" [src]="profilePhoto" alt="Profile">
+          <span *ngIf="!profilePhoto">{{ initials }}</span>
+          <div class="camera-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="flutter-card">
+      <div class="section-title">
+        <div class="indicator"></div>
+        <h4>Basic Information</h4>
+      </div>
+      
+      <div class="info-list">
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Intern ID</span>
+            <span class="value">{{ displayId }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Department</span>
+            <span class="value">{{ displayDepartment }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Role</span>
+            <span class="value">{{ displayRoleName }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">College</span>
+            <span class="value">{{ user?.college || '-' }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Year</span>
+            <span class="value">{{ user?.year || '-' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional Timeline -->
+    <div class="flutter-card">
+      <div class="section-title">
+        <div class="indicator"></div>
+        <h4>Professional Timeline</h4>
+      </div>
+
+      <div class="info-list">
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Onboarding Date</span>
+            <span class="value">{{ formatDate(user?.onboardingDate) }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 14 6 6M15 14l-6 6"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">End Date</span>
+            <span class="value">{{ formatDate(user?.endDate) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Details -->
+    <div class="flutter-card">
+      <div class="section-title">
+        <div class="indicator"></div>
+        <h4>Contact Details</h4>
+      </div>
+
+      <div class="info-list">
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Contact</span>
+            <span class="value">{{ user?.phone || user?.contact || user?.phoneNumber || '-' }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 9.92z"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">Emergency Contact</span>
+            <span class="value">{{ user?.emergencyPhone || '-' }}</span>
+          </div>
+        </div>
+
+        <div class="info-row" *ngIf="user?.linkedin" (click)="openLinkedIn(user?.linkedin)">
+          <div class="info-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div class="info-details">
+            <span class="label">LinkedIn URL</span>
+            <span class="value link">View Profile <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 2px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Bottom Actions -->
+  <div class="bottom-actions-container">
+    <button class="action-btn offboard-btn" 
+            [disabled]="user?.status?.toLowerCase() !== 'ongoing'"
+            [style.pointer-events]="user?.status?.toLowerCase() !== 'ongoing' ? 'none' : 'auto'"
+            routerLink="/profile/offboarding">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="22" y1="19" x2="16" y2="19"/></svg>
+      Request Offboarding
+    </button>
+    
+    <button class="action-btn logout-btn" (click)="confirmLogout()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout Securely
+    </button>
+  </div>
+
+  <!-- Request Offboarding Modal (Flutter style) -->
+  <div class="modal-backdrop" *ngIf="showOffboardModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>Request Offboarding</h4>
+        <button class="close-modal" (click)="closeOffboardDialog()">
+          <hugeicons-icon [icon]="Cancel01Icon" size="20" color="#64748B"></hugeicons-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">Please submit your offboarding request details below. Your manager and HR will review it.</p>
+        
+        <div class="form-group">
+          <label>Last Working Day</label>
+          <input type="date" [(ngModel)]="offboardDate" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label>Reason for Offboarding</label>
+          <textarea [(ngModel)]="offboardReason" rows="4" placeholder="Enter your reason here..." class="form-input textarea"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" (click)="closeOffboardDialog()" [disabled]="offboardLoading()">Cancel</button>
+        <button class="modal-btn primary" (click)="submitOffboarding()" [disabled]="offboardLoading() || !offboardReason() || !offboardDate()">
+          <span *ngIf="offboardLoading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 6px;"></span>
+          Submit Request
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

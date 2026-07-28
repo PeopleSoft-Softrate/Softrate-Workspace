@@ -136,6 +136,7 @@ export class AppSettings implements OnInit {
   workDurationManager  = signal<number>(8);
   workDurationEmployee = signal<number>(8);
   workDurationIntern   = signal<number>(6);
+  showInRegistrationDropdown = signal<boolean>(true);
 
   activeTab = signal<'locations' | 'communication' | 'employee_roles' | 'intern_roles' | 'payroll_settings' | 'system_settings' | 'leave_policies' | 'walkin_drives'>('locations');
 
@@ -219,6 +220,7 @@ export class AppSettings implements OnInit {
             'HR Analyst',
             'Other'
           ]);
+          this.showInRegistrationDropdown.set(s.showInRegistrationDropdown ?? true);
           this.leavePolicies.set((s.leavePolicies && s.leavePolicies.length > 0) ? s.leavePolicies : [
             { name: 'Casual Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' },
             { name: 'Sick Leave', allowance: 12, frequency: 'annual', appliesTo: 'both' }
@@ -358,6 +360,7 @@ export class AppSettings implements OnInit {
     this.isSaving.set(true);
     const payload = {
       defaultPassword: this.defaultPassword(),
+      showInRegistrationDropdown: this.showInRegistrationDropdown(),
       receivingEmail: this.receivingEmail(),
       locations: this.locations(),
       communication: this.communication(),

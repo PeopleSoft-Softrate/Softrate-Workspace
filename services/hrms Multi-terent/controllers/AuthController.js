@@ -216,6 +216,9 @@ exports.login = async (req, res) => {
         status: { $nin: ['resigned', 'terminated'] }
       }).select(PROFILE_PHOTO_SELECT);
       if (user) {
+        if (req.body.source === 'web' && user.webAccess === false && !user.isHr && !user.isManager) {
+          return res.status(403).json({ success: false, message: "Web access is disabled for your employee account. Please use the mobile app or contact HR." });
+        }
         role = user.isHr ? "hr" : (user.isManager ? "manager" : "employee");
       }
     }
@@ -695,6 +698,35 @@ exports.verifyCompany = async (req, res) => {
   } catch (err) {
     console.error("Verify Company Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * Publicly fetch all companies enabled for applicant registration dropdown
+ */
+exports.getPublicCompanies = async (req, res) => {
+  try {
+    const Company = await _AuthControllerjs_getMasterCompany();
+    const allCompanies = await Company.find({}, "name companyCode logo settings.showInRegistrationDropdown");
+    
+    const publicList = allCompanies
+      .filter(c => {
+        if (!c.companyCode) return false;
+        const show = c.settings?.showInRegistrationDropdown;
+        // Default to true if undefined, so companies like SOFTRATE appear by default
+        return show !== false;
+      })
+      .map(c => ({
+        id: c._id,
+        name: c.name,
+        companyCode: c.companyCode,
+        logo: c.logo
+      }));
+
+    res.json({ success: true, companies: publicList });
+  } catch (err) {
+    console.error("Get Public Companies Error:", err);
+    res.status(500).json({ success: false, message: "Server error fetching companies" });
   }
 };
 

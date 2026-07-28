@@ -95,8 +95,33 @@
             <input type="date" [(ngModel)]="employee.onboardingDate" name="onboardingDate" required>
           </div>
         </div>
-      </div>
 
+        <!-- Access Control -->
+        <div class="form-section access-control-wrapper">
+          <div class="access-control-header">
+            <h4>Access Control</h4>
+            <p>Manage login permissions and geofence bypassing.</p>
+          </div>
+          
+          <div class="access-control-card">
+            <div class="access-row">
+              <span class="access-label">Remote Access</span>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="employee.remoteAccess" name="remoteAccess">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="access-divider"></div>
+            <div class="access-row">
+              <span class="access-label">Web Access</span>
+              <label class="toggle-switch">
+                <input type="checkbox" [(ngModel)]="employee.webAccess" name="webAccess">
+                <span class="toggle-slider blue"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="form-actions">
         <button type="button" class="btn-secondary" routerLink="/employees/requests">Cancel</button>
         <button type="submit" class="btn-primary" [disabled]="isSaving() || !empForm.valid">

@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -11,7 +11,7 @@ import { ApiService } from '../../../services/api.service';
   templateUrl: './user-register.html',
   styleUrl: './user-register.css'
 })
-export class UserRegister {
+export class UserRegister implements OnInit {
   private apiService = inject(ApiService);
   private router = inject(Router);
 
@@ -19,13 +19,67 @@ export class UserRegister {
   errorMessage = signal('');
   successMessage = signal('');
 
-  // Step 1: Verification
+  // Step 1: Verification & Searchable Dropdown
   currentStep = 1; // 1: Verify, 2: Role, 3: Form
   isVerifying = signal(false);
   isVerified = signal(false);
   verifiedCompanyName = signal('');
   companyCode = '';
   companySettings: any = null;
+
+  allPublicCompanies = signal<any[]>([]);
+  showCompanyDropdown = signal(false);
+
+  filteredCompanies = computed(() => {
+    const list = this.allPublicCompanies();
+    const query = (this.companyCode || '').toLowerCase().trim();
+    if (!query) return list;
+    return list.filter(c => 
+      (c.name || '').toLowerCase().includes(query) ||
+      (c.companyCode || '').toLowerCase().includes(query)
+    );
+  });
+
+  ngOnInit() {
+    this.fetchPublicCompanies();
+    const cachedCode = localStorage.getItem('cached_company_code');
+    if (cachedCode) {
+      this.companyCode = cachedCode;
+    }
+  }
+
+  fetchPublicCompanies() {
+    this.apiService.getPublicCompanies().subscribe({
+      next: (res: any) => {
+         if (res && res.companies) {
+           this.allPublicCompanies.set(res.companies);
+         }
+      },
+      error: (err) => console.error('Failed to load public companies:', err)
+    });
+  }
+
+  selectCompanyFromDropdown(comp: any) {
+    this.companyCode = comp.companyCode;
+    this.showCompanyDropdown.set(false);
+    this.verifyCompany();
+  }
+
+  onCompanyInputFocus() {
+    this.showCompanyDropdown.set(true);
+  }
+
+  onCompanyInputChange() {
+    this.showCompanyDropdown.set(true);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.verification-group')) {
+      this.showCompanyDropdown.set(false);
+    }
+  }
 
   // Walk-in Drives
   isLoadingDrives = signal(false);
@@ -173,6 +227,7 @@ export class UserRegister {
         if (res && res.company) {
           this.isVerified.set(true);
           this.verifiedCompanyName.set(res.company.name);
+          localStorage.setItem('cached_company_code', this.companyCode);
           this.companySettings = res.company.settings || null;
           this.currentStep = 2; // Go to step 2
 

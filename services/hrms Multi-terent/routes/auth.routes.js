@@ -48,6 +48,7 @@ router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/force-reset-password", verifyTenant, authController.forceResetPassword);
 router.get("/verify-company/:code", authController.verifyCompany);
+router.get("/public-companies", authController.getPublicCompanies);
 router.post("/device-change-request", authController.requestDeviceChange);
 
 // MFA Routes

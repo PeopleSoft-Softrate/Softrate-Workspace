@@ -27,7 +27,11 @@ import {
   AssignmentsIcon,
   Linkedin01Icon,
   Mail01Icon,
-  CallIcon
+  CallIcon,
+  Notification01Icon,
+  Calendar03Icon,
+  PolicyIcon,
+  UserGroupIcon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -66,6 +70,10 @@ export class EmployeeDashboard implements OnInit {
   readonly Linkedin01Icon = Linkedin01Icon;
   readonly Mail01Icon = Mail01Icon;
   readonly CallIcon = CallIcon;
+  readonly Notification01Icon = Notification01Icon;
+  readonly Calendar03Icon = Calendar03Icon;
+  readonly PolicyIcon = PolicyIcon;
+  readonly UserGroupIcon = UserGroupIcon;
 
   isLoading = signal<boolean>(true);
   employeeData = signal<any>(null);
@@ -224,52 +232,63 @@ export class EmployeeDashboard implements OnInit {
   }
 
   ngOnInit() {
-    const data = localStorage.getItem('user_data');
-    if (data) {
-      const parsedData = JSON.parse(data);
-      this.employeeData.set(parsedData);
-      
-      const empId = parsedData.EmployeeId || parsedData.internid;
-      const mongoId = parsedData._id;
+    if (typeof localStorage !== 'undefined') {
+      const data = localStorage.getItem('user_data');
+      if (data && data !== 'undefined' && data !== 'null') {
+        try {
+          const parsedData = JSON.parse(data);
+          this.employeeData.set(parsedData);
+          
+          const empId = parsedData.EmployeeId || parsedData.internid;
+          const mongoId = parsedData._id;
 
-      this._buildQrCode(parsedData);
-
-      this.pendingRequests = 3 + (parsedData.isManager ? 1 : 0);
-
-      this.apiService.getCompanySettings().subscribe({
-        next: (res: any) => {
-          if (res?.success) {
-            if (res.settings?.communication?.emailLogoUrl) {
-              this.companyLogo.set(res.settings.communication.emailLogoUrl);
-            }
-            const tmpl = res.offerLetterSettings?.documentTemplates?.virtualIdCard;
-            if (tmpl?.pages?.some((p: any) => p.backgroundUrl || p.placeholders?.length || p.paragraphs?.length)) {
-              this.virtualIdTemplate.set(tmpl);
-            }
+          const loaded = this.loadFromCache(empId || mongoId);
+          if (loaded) {
+            this.isLoading.set(false);
           }
 
-          if (res && res.settings && res.settings.workDurationSettings) {
-             const wds = res.settings.workDurationSettings;
-             const role = parsedData.role?.toLowerCase() || '';
-             let duration = 8;
-             if (parsedData.isHr) duration = wds.hr || 8;
-             else if (parsedData.isManager) duration = wds.manager || 8;
-             else if (parsedData.internid || role.includes('intern')) duration = wds.intern || 6;
-             else duration = wds.employee || 8;
-             this.workDuration.set(duration);
+          this._buildQrCode(parsedData);
+
+          this.pendingRequests = 3 + (parsedData.isManager ? 1 : 0);
+
+          this.apiService.getCompanySettings().subscribe({
+            next: (res: any) => {
+              if (res?.success) {
+                if (res.settings?.communication?.emailLogoUrl) {
+                  this.companyLogo.set(res.settings.communication.emailLogoUrl);
+                }
+                const tmpl = res.offerLetterSettings?.documentTemplates?.virtualIdCard;
+                if (tmpl?.pages?.some((p: any) => p.backgroundUrl || p.placeholders?.length || p.paragraphs?.length)) {
+                  this.virtualIdTemplate.set(tmpl);
+                }
+              }
+
+              if (res && res.settings && res.settings.workDurationSettings) {
+                 const wds = res.settings.workDurationSettings;
+                 const role = parsedData.role?.toLowerCase() || '';
+                 let duration = 8;
+                 if (parsedData.isHr) duration = wds.hr || 8;
+                 else if (parsedData.isManager) duration = wds.manager || 8;
+                 else if (parsedData.internid || role.includes('intern')) duration = wds.intern || 6;
+                 else duration = wds.employee || 8;
+                 this.workDuration.set(duration);
+              }
+              this.fetchAttendanceStats(empId);
+            },
+            error: () => {
+              this.fetchAttendanceStats(empId);
+            }
+          });
+
+          this.fetchPerformanceStats(empId);
+          this.fetchProjectStats(mongoId);
+
+          if (parsedData.isManager) {
+            this.fetchTeamRequests();
           }
-          this.fetchAttendanceStats(empId);
-        },
-        error: () => {
-          this.fetchAttendanceStats(empId);
+        } catch (e) {
+          console.warn('Error reading user_data in ngOnInit:', e);
         }
-      });
-
-      this.fetchPerformanceStats(empId);
-      this.fetchProjectStats(mongoId);
-
-      if (parsedData.isManager) {
-        this.fetchTeamRequests();
       }
     }
 
@@ -280,12 +299,70 @@ export class EmployeeDashboard implements OnInit {
     }, 1000);
   }
 
+  saveToCache(empId: string) {
+    if (!empId || typeof localStorage === 'undefined') return;
+    try {
+      const cacheData = {
+        monthlyAttendance: this.monthlyAttendance(),
+        attendanceSubtitle: this.attendanceSubtitle(),
+        performanceScore: this.performanceScore(),
+        performanceSubtitle: this.performanceSubtitle(),
+        workDuration: this.workDuration(),
+        companyLogo: this.companyLogo(),
+        todayPunchInTime: this.todayPunchInTime() ? this.todayPunchInTime()!.toISOString() : null,
+        todayPunchOutTime: this.todayPunchOutTime() ? this.todayPunchOutTime()!.toISOString() : null,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('employee_dashboard_cache_' + empId, JSON.stringify(cacheData));
+    } catch (e) {
+      console.warn('Could not save dashboard cache:', e);
+    }
+  }
+
+  loadFromCache(empId: string): boolean {
+    if (!empId || typeof localStorage === 'undefined') return false;
+    try {
+      const cachedStr = localStorage.getItem('employee_dashboard_cache_' + empId);
+      if (!cachedStr || cachedStr === 'undefined' || cachedStr === 'null') return false;
+      const cache = JSON.parse(cachedStr);
+      if (cache.monthlyAttendance !== undefined) this.monthlyAttendance.set(cache.monthlyAttendance);
+      if (cache.attendanceSubtitle !== undefined) this.attendanceSubtitle.set(cache.attendanceSubtitle);
+      if (cache.performanceScore !== undefined) this.performanceScore.set(cache.performanceScore);
+      if (cache.performanceSubtitle !== undefined) this.performanceSubtitle.set(cache.performanceSubtitle);
+      if (cache.workDuration !== undefined) this.workDuration.set(cache.workDuration);
+      if (cache.companyLogo !== undefined) this.companyLogo.set(cache.companyLogo);
+      if (cache.todayPunchInTime) this.todayPunchInTime.set(new Date(cache.todayPunchInTime));
+      if (cache.todayPunchOutTime) this.todayPunchOutTime.set(new Date(cache.todayPunchOutTime));
+      
+      this.isLoading.set(false);
+      this.updateTimer();
+      return true;
+    } catch (e) {
+      console.warn('Could not load dashboard cache:', e);
+      return false;
+    }
+  }
+
   private pendingRequests = 0;
   
   private requestFinished() {
     this.pendingRequests--;
     if (this.pendingRequests <= 0) {
       this.isLoading.set(false);
+    }
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const data = localStorage.getItem('user_data');
+        if (data && data !== 'undefined' && data !== 'null') {
+          const parsedData = JSON.parse(data);
+          const empId = parsedData.EmployeeId || parsedData.internid || parsedData._id;
+          if (empId) {
+            this.saveToCache(empId);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error saving dashboard cache in requestFinished:', e);
     }
   }
 

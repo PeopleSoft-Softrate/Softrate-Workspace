@@ -34,6 +34,22 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
 
   final String _baseUrl = getBaseUrl();
 
+  @override
+  void initState() {
+    super.initState();
+    _loadCachedCompanyCode();
+  }
+
+  Future<void> _loadCachedCompanyCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedCode = prefs.getString('cached_company_code');
+    if (cachedCode != null && cachedCode.isNotEmpty) {
+      setState(() {
+        _companyCtrl.text = cachedCode;
+      });
+    }
+  }
+
   // ── Login ──────────────────────────────────────────────────────────────────
   Future<void> _login() async {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -47,7 +63,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
     final String enteredPass = _passCtrl.text.trim();
 
     // ── Test/Review Accounts Bypass ──────────────────────────────────────────
-    if ((enteredId == 'testintern@softrate.com' && enteredPass == 'Test@1234') ||
+    if ((enteredId == 'testintern@softrate.com' &&
+            enteredPass == 'Test@1234') ||
         (enteredId == 'test@peoplesoft' && enteredPass == '123456')) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', 'mock_token_123');
@@ -63,7 +80,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       return;
     }
 
-    if (enteredId == 'testemployee@softrate.com' && enteredPass == 'Test@1234') {
+    if (enteredId == 'testemployee@softrate.com' &&
+        enteredPass == 'Test@1234') {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', 'mock_token_123');
       await prefs.setString('user_role', 'employee');
@@ -75,7 +93,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const Employeedashboard(employeeId: 'test_employee_id'),
+          builder: (_) =>
+              const Employeedashboard(employeeId: 'test_employee_id'),
         ),
       );
       return;
@@ -83,8 +102,10 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
 
     try {
       final url = Uri.parse('$_baseUrl/api/auth/unified-login');
-      debugPrint("Attempting login to $url with identifier: ${_idCtrl.text.trim()}");
-      
+      debugPrint(
+        "Attempting login to $url with identifier: ${_idCtrl.text.trim()}",
+      );
+
       final String deviceId = await DeviceInfoHelper.getDeviceId();
 
       final response = await http.post(
@@ -104,8 +125,11 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode != 200) {
-        if (data['code'] == 'DEVICE_MISMATCH' || data['message'] == 'DEVICE_MISMATCH') {
-          setState(() { _loading = false; });
+        if (data['code'] == 'DEVICE_MISMATCH' ||
+            data['message'] == 'DEVICE_MISMATCH') {
+          setState(() {
+            _loading = false;
+          });
           if (!mounted) return;
           Navigator.push(
             context,
@@ -150,175 +174,183 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
   }
 
   Future<void> _processSuccessfulLogin(Map<String, dynamic> data) async {
-      // ── Persist session ────────────────────────────────────────────────────
-      final prefs = await SharedPreferences.getInstance();
-      final role = data['role'] as String? ?? '';
-      debugPrint("Logged in role: $role");
-      final token = (data['token'] ?? data['auth_token'] ?? '') as String;
-      final user = data['user'] as Map<String, dynamic>? ?? {};
+    // ── Persist session ────────────────────────────────────────────────────
+    final prefs = await SharedPreferences.getInstance();
+    final role = data['role'] as String? ?? '';
+    debugPrint("Logged in role: $role");
+    final token = (data['token'] ?? data['auth_token'] ?? '') as String;
+    final user = data['user'] as Map<String, dynamic>? ?? {};
 
-      if (token.isNotEmpty) {
-        await prefs.setString('auth_token', token);
-      }
-      await prefs.setString('user_role', role);
+    if (token.isNotEmpty) {
+      await prefs.setString('auth_token', token);
+    }
+    await prefs.setString('user_role', role);
+    await prefs.setString('cached_company_code', _companyCtrl.text.trim());
 
-      TextInput.finishAutofillContext();
-      setState(() => _loading = false);
+    TextInput.finishAutofillContext();
+    setState(() => _loading = false);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (data['forcePasswordReset'] == true) {
+    if (data['forcePasswordReset'] == true) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ForcePasswordResetPage(
+            userId: (user['_id'] ?? '').toString(),
+            onSuccess: (BuildContext resetContext) {
+              // Return to login page so they can login with new password
+              Navigator.pushReplacement(
+                resetContext,
+                MaterialPageRoute(builder: (_) => const UnifiedLoginPage()),
+              );
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    // ── Route by role ──────────────────────────────────────────────────────
+    debugPrint("Routing for role: $role");
+    switch (role) {
+      case 'intern':
+        // 'internid' is lowercase in the Intern model
+        final internId = (user['internid'] ?? user['email'] ?? '').toString();
+        await prefs.setString('internId', internId);
+        await prefs.setString('internMongoId', (user['_id'] ?? '').toString());
+        await prefs.setBool('internLoggedIn', true);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => ForcePasswordResetPage(
-              userId: (user['_id'] ?? '').toString(),
-              onSuccess: (BuildContext resetContext) {
-                // Return to login page so they can login with new password
-                Navigator.pushReplacement(
-                  resetContext,
-                  MaterialPageRoute(builder: (_) => const UnifiedLoginPage()),
-                );
-              },
-            ),
-          ),
+          MaterialPageRoute(builder: (_) => const AttendancePage()),
         );
-        return;
-      }
+        break;
 
-      // ── Route by role ──────────────────────────────────────────────────────
-      debugPrint("Routing for role: $role");
-      switch (role) {
-        case 'intern':
-          // 'internid' is lowercase in the Intern model
-          final internId = (user['internid'] ?? user['email'] ?? '').toString();
-          await prefs.setString('internId', internId);
-          await prefs.setString('internMongoId', (user['_id'] ?? '').toString());
-          await prefs.setBool('internLoggedIn', true);
+      case 'employee':
+        final empIdRaw = user['EmployeeId'];
+        final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty)
+            ? empIdRaw.toString()
+            : (user['_id'] ?? '').toString();
+        final empMongoId = (user['_id'] ?? '').toString();
+        await prefs.setString('employeeId', empId);
+        await prefs.setString('employeeMongoId', empMongoId);
+        await prefs.setBool('employeeLoggedIn', true);
+
+        // Check if employee still needs to complete their profile details
+        final bool completeDetails = data['completeDetails'] == true;
+
+        if (!completeDetails) {
+          // Show the Complete Details screen, then go to dashboard
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const AttendancePage()),
+            MaterialPageRoute(
+              builder: (_) => EmployeeCompleteDetails(
+                employeeMongoId: empMongoId,
+                onDone: (BuildContext detailsContext) {
+                  Navigator.pushReplacement(
+                    detailsContext,
+                    MaterialPageRoute(
+                      builder: (_) => Employeedashboard(employeeId: empId),
+                    ),
+                  );
+                },
+              ),
+            ),
           );
-          break;
-
-        case 'employee':
-          final empIdRaw = user['EmployeeId'];
-          final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty) ? empIdRaw.toString() : (user['_id'] ?? '').toString();
-          final empMongoId = (user['_id'] ?? '').toString();
-          await prefs.setString('employeeId', empId);
-          await prefs.setString('employeeMongoId', empMongoId);
-          await prefs.setBool('employeeLoggedIn', true);
-
-          // Check if employee still needs to complete their profile details
-          final bool completeDetails = data['completeDetails'] == true;
-
-          if (!completeDetails) {
-            // Show the Complete Details screen, then go to dashboard
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => EmployeeCompleteDetails(
-                  employeeMongoId: empMongoId,
-                  onDone: (BuildContext detailsContext) {
-                    Navigator.pushReplacement(
-                      detailsContext,
-                      MaterialPageRoute(
-                        builder: (_) => Employeedashboard(employeeId: empId),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => Employeedashboard(employeeId: empId),
-              ),
-            );
-          }
-          break;
-
-        case 'manager':
-          final empIdRaw = user['EmployeeId'];
-          final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty) ? empIdRaw.toString() : (user['_id'] ?? '').toString();
-          final fullName = (user['fullName'] ?? 'Manager').toString();
-          final email = (user['email'] ?? '').toString();
-          final dept = (user['department'] ?? '').toString();
-          final mongoId = (user['_id'] ?? '').toString();
-
-          await prefs.setString('employeeId', empId);
-          await prefs.setBool('employeeLoggedIn', true);
-          await prefs.setBool('manager_logged_in', true);
-
-          // These are required by ManagerDashboard
-          await prefs.setString('manager_email', email);
-          await prefs.setString('manager_name', fullName);
-          await prefs.setString('manager_id', empId);
-          await prefs.setString('manager_dept', dept);
-          await prefs.setString('manager_mongo_id', mongoId);
-
-          // Check if manager still needs to complete their profile details
-          final bool completeDetails = data['completeDetails'] == true;
-
-          if (!completeDetails) {
-            // Show the Complete Details screen, then go to dashboard
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => EmployeeCompleteDetails(
-                  employeeMongoId: mongoId,
-                  onDone: (BuildContext detailsContext) {
-                    Navigator.pushReplacement(
-                      detailsContext,
-                      MaterialPageRoute(
-                        builder: (_) => Employeedashboard(employeeId: empId),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => Employeedashboard(employeeId: empId),
-              ),
-            );
-          }
-          break;
-
-        case 'hr':
-        case 'hr_admin':
-        case 'admin':
-          debugPrint("Login success: Identified as HR. User data: $user");
-          final empIdRaw = user['employeeId'] ?? user['EmployeeId'];
-          final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty) ? empIdRaw.toString() : (user['_id'] ?? '').toString();
-          final firstName = user['profile']?['firstName'] ?? '';
-          final lastName = user['profile']?['lastName'] ?? '';
-          final fullName = user['fullName'] ?? 
-                         (firstName.isNotEmpty ? "$firstName $lastName" : "HR Manager");
-
-          debugPrint("HR Session: ID=$empId, Name=$fullName");
-          await prefs.setBool('hr_logged_in', true);
-          await prefs.setString('hr_id', empId);
-          await prefs.setString('hr_name', fullName);
-          await prefs.setString('auth_token', token);
-          await prefs.setString('hr_auth_token', token);
-          
-          if (!mounted) return;
+        } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HrdashBoard()),
+            MaterialPageRoute(
+              builder: (_) => Employeedashboard(employeeId: empId),
+            ),
           );
-          break;
+        }
+        break;
 
-        default:
-          debugPrint("Unknown role encountered: $role");
-          setState(() => _errorMsg = 'Unknown role ($role). Contact HR.');
-      }
+      case 'manager':
+        final empIdRaw = user['EmployeeId'];
+        final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty)
+            ? empIdRaw.toString()
+            : (user['_id'] ?? '').toString();
+        final fullName = (user['fullName'] ?? 'Manager').toString();
+        final email = (user['email'] ?? '').toString();
+        final dept = (user['department'] ?? '').toString();
+        final mongoId = (user['_id'] ?? '').toString();
+
+        await prefs.setString('employeeId', empId);
+        await prefs.setBool('employeeLoggedIn', true);
+        await prefs.setBool('manager_logged_in', true);
+
+        // These are required by ManagerDashboard
+        await prefs.setString('manager_email', email);
+        await prefs.setString('manager_name', fullName);
+        await prefs.setString('manager_id', empId);
+        await prefs.setString('manager_dept', dept);
+        await prefs.setString('manager_mongo_id', mongoId);
+
+        // Check if manager still needs to complete their profile details
+        final bool completeDetails = data['completeDetails'] == true;
+
+        if (!completeDetails) {
+          // Show the Complete Details screen, then go to dashboard
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EmployeeCompleteDetails(
+                employeeMongoId: mongoId,
+                onDone: (BuildContext detailsContext) {
+                  Navigator.pushReplacement(
+                    detailsContext,
+                    MaterialPageRoute(
+                      builder: (_) => Employeedashboard(employeeId: empId),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => Employeedashboard(employeeId: empId),
+            ),
+          );
+        }
+        break;
+
+      case 'hr':
+      case 'hr_admin':
+      case 'admin':
+        debugPrint("Login success: Identified as HR. User data: $user");
+        final empIdRaw = user['employeeId'] ?? user['EmployeeId'];
+        final empId = (empIdRaw != null && empIdRaw.toString().isNotEmpty)
+            ? empIdRaw.toString()
+            : (user['_id'] ?? '').toString();
+        final firstName = user['profile']?['firstName'] ?? '';
+        final lastName = user['profile']?['lastName'] ?? '';
+        final fullName =
+            user['fullName'] ??
+            (firstName.isNotEmpty ? "$firstName $lastName" : "HR Manager");
+
+        debugPrint("HR Session: ID=$empId, Name=$fullName");
+        await prefs.setBool('hr_logged_in', true);
+        await prefs.setString('hr_id', empId);
+        await prefs.setString('hr_name', fullName);
+        await prefs.setString('auth_token', token);
+        await prefs.setString('hr_auth_token', token);
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HrdashBoard()),
+        );
+        break;
+
+      default:
+        debugPrint("Unknown role encountered: $role");
+        setState(() => _errorMsg = 'Unknown role ($role). Contact HR.');
+    }
   }
 
   // ── MFA Verification ───────────────────────────────────────────────────────
@@ -333,10 +365,15 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
           String localError = '';
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text(
               'Two-Factor Authentication',
-              style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF00657F)),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF00657F),
+              ),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -351,7 +388,11 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                   keyboardType: TextInputType.number,
                   maxLength: 6,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(letterSpacing: 8, fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    letterSpacing: 8,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: _inputDecoration(
                     hint: '000000',
                     icon: HugeIcons.strokeRoundedShield01,
@@ -359,27 +400,37 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                 ),
                 if (localError.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(localError, style: const TextStyle(color: Colors.red, fontSize: 12)),
-                ]
+                  Text(
+                    localError,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00657F),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: verifying
                     ? null
                     : () async {
                         final code = mfaCtrl.text.trim();
                         if (code.length < 6) {
-                          setS(() => localError = 'Please enter a 6-digit code');
+                          setS(
+                            () => localError = 'Please enter a 6-digit code',
+                          );
                           return;
                         }
                         setS(() {
@@ -396,12 +447,14 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                             }),
                           );
                           final mfaData = jsonDecode(r.body);
-                          if (r.statusCode == 200 && mfaData['success'] == true) {
+                          if (r.statusCode == 200 &&
+                              mfaData['success'] == true) {
                             if (!mounted) return;
                             Navigator.pop(ctx);
                             _processSuccessfulLogin(mfaData);
                           } else {
-                            final errorText = mfaData['message'] ?? 'Invalid code';
+                            final errorText =
+                                mfaData['message'] ?? 'Invalid code';
                             setS(() {
                               verifying = false;
                               localError = errorText;
@@ -424,7 +477,9 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Network error during verification'),
+                                content: Text(
+                                  'Network error during verification',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -435,7 +490,10 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Verify'),
               ),
@@ -450,7 +508,7 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
   Future<void> _forgotPassword() async {
     final emailCtrl = TextEditingController();
     final forgotCompanyCtrl = TextEditingController(text: _companyCtrl.text);
-    
+
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -688,7 +746,9 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                     'Enter your ID or email and password to continue.',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black.withValues(alpha: 0.6),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       height: 1.4,
                                     ),
                                   ),
@@ -711,7 +771,8 @@ class _UnifiedLoginPageState extends State<UnifiedLoginPage>
                                       icon: HugeIcons.strokeRoundedBuilding03,
                                     ),
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
                                         return 'Company code is required';
                                       }
                                       return null;

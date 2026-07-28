@@ -26,6 +26,7 @@ const InternSchema = new mongoose.Schema({
   projectLinks: { type: [String], default: [] },
   isRemote: { type: Boolean, default: false },
   webAccess: { type: Boolean, default: false },
+  remoteAccess: { type: Boolean, default: false },
   askMeAboutExpertise: { type: [String], default: [] },
   isWalkinDrive: { type: Boolean, default: false },
   walkinDriveId: { type: mongoose.Schema.Types.ObjectId, ref: "WalkinDrive", default: null },

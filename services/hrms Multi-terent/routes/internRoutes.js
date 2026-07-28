@@ -49,7 +49,8 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
       internshipType,
       resume, // Base64 PDF
       projectLinks: projectLinksRaw,
-      webAccess
+      webAccess,
+      remoteAccess
     } = req.body;
 
     // Parse projectLinks (sent as JSON string from Flutter)
@@ -133,6 +134,7 @@ router.post("/add", verifyPublicTenant, async (req, res) => {
       projectLinks,
       status: 'initial',
       webAccess: webAccess === true || webAccess === 'true',
+      remoteAccess: remoteAccess === true || remoteAccess === 'true',
       password: req.tenant.defaultPassword // Backward compatibility
     });
 
@@ -229,7 +231,7 @@ router.get("/all/active", verifyTenant, async (req, res) => {
 router.put("/accept/:id", verifyTenant,
   async (req, res) => {
     try {
-      const { onboardingDate, endDate, internshipType, role, webAccess } = req.body;
+      const { onboardingDate, endDate, internshipType, role, webAccess, remoteAccess } = req.body;
 
       const intern = await Intern.findById(req.params.id).select('+profilePhoto.data');
       if (!intern) {
@@ -330,6 +332,7 @@ router.put("/accept/:id", verifyTenant,
       if (internshipType) intern.internshipType = internshipType;
       if (role) intern.role = role;
       if (webAccess !== undefined) intern.webAccess = webAccess === true || webAccess === 'true';
+      if (remoteAccess !== undefined) intern.remoteAccess = remoteAccess === true || remoteAccess === 'true';
 
       await intern.save();
 

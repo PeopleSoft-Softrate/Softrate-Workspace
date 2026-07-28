@@ -83,6 +83,10 @@ router.put('/company', verifyTenant, async (req, res) => {
     if (employeeRoles !== undefined) company.settings.employeeRoles = employeeRoles;
     if (internRoles !== undefined) company.settings.internRoles = internRoles;
     if (defaultPassword !== undefined) company.settings.defaultPassword = defaultPassword;
+    if (req.body.showInRegistrationDropdown !== undefined) {
+      company.settings.showInRegistrationDropdown = Boolean(req.body.showInRegistrationDropdown);
+      company.markModified('settings.showInRegistrationDropdown');
+    }
     
     if (leavePolicies !== undefined) {
       company.leavePolicies = leavePolicies;

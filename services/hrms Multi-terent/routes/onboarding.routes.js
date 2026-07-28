@@ -230,4 +230,37 @@ router.get('/verify/:code', async (req, res) => {
   }
 });
 
+/**
+ * @route GET /api/onboarding/public-companies
+ * @desc Get all public companies available for registration dropdown
+ * @access Public
+ */
+router.get('/public-companies', async (req, res) => {
+  try {
+    const masterDb = getMasterConnection();
+    await waitForConnection(masterDb);
+    const MasterCompany = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
+
+    const allCompanies = await MasterCompany.find({}, 'name companyCode logo settings.showInRegistrationDropdown');
+    const publicList = allCompanies
+      .filter(c => {
+        if (!c.companyCode) return false;
+        const show = c.settings?.showInRegistrationDropdown;
+        // Default to true if undefined, so companies like SOFTRATE appear by default
+        return show !== false;
+      })
+      .map(c => ({
+        id: c._id,
+        name: c.name,
+        companyCode: c.companyCode,
+        logo: c.logo
+      }));
+
+    res.json({ success: true, companies: publicList });
+  } catch (err) {
+    console.error('Get Public Companies Error:', err);
+    res.status(500).json({ success: false, msg: 'Server error fetching companies.' });
+  }
+});
+
 module.exports = router;

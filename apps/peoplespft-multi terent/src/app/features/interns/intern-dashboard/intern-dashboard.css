@@ -1358,14 +1358,15 @@
 }
 
 /* hide on desktop */
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
   .mobile-flutter-ui { display: none !important; }
 }
 
 .desktop-only {
   display: none !important;
 }
-@media (min-width: 769px) {
+
+@media (min-width: 1025px) {
   .desktop-only { display: block !important; }
   .stats-grid.desktop-only { display: grid !important; }
   .dashboard-content-layout.desktop-only { display: grid !important; }

@@ -63,22 +63,32 @@
 
         <!-- Step 1: Verification -->
         <div *ngIf="currentStep === 1">
-          <div class="form-group verification-group">
+          <div class="form-group verification-group" style="position: relative;">
             <label for="companyCode">Company Code *</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" style="position: relative;">
               <input 
                 id="companyCode"
                 type="text" 
                 [(ngModel)]="companyCode" 
+                (focus)="onCompanyInputFocus()"
+                (ngModelChange)="onCompanyInputChange()"
+                placeholder="Type or select company code..."
                 name="companyCode" 
+                autocomplete="off"
                 required>
               <button type="button" class="verify-btn" (click)="verifyCompany()" [disabled]="isVerifying()">
                  {{ isVerifying() ? 'Verifying...' : 'Verify' }}
               </button>
-            </div>
-            <div class="quick-pick">
-               <span class="quick-pick-label">Quick pick:</span>
-               <button type="button" class="quick-pick-chip" (click)="companyCode = 'Softrate'; verifyCompany()">Softrate</button>
+
+              <!-- Simple Clean Autocomplete Dropdown List -->
+              <div class="company-dropdown-list" *ngIf="showCompanyDropdown() && filteredCompanies().length > 0">
+                <div 
+                  class="company-dropdown-item" 
+                  *ngFor="let comp of filteredCompanies()" 
+                  (click)="selectCompanyFromDropdown(comp)">
+                  <span class="company-item-name">{{ comp.name }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

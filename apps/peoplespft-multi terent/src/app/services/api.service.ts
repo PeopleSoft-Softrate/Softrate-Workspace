@@ -6,15 +6,22 @@ import { Observable, forkJoin, map } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  // private useLocalBackend = false;
-  // private baseUrl = this.useLocalBackend
-  //   ? 'http://localhost:5001'
-  //   : window.location.hostname === 'localhost'
-  //       ? 'http://localhost:5001'
-  //   : window.location.hostname === '192.168.29.222'
-  //       ? 'http://192.168.29.222:5001'
-  //       : 'https://peoplesoft.softrateglobal.com/hrms-api';
-  private baseUrl = 'https://peoplesoft.softrateglobal.com/hrms-api';
+  private useLocalBackend = true;
+  private resolveBaseUrl(): string {
+    if (typeof window === 'undefined') return 'https://peoplesoft.softrateglobal.com/hrms-api';
+    const hostname = window.location.hostname;
+    
+    if (this.useLocalBackend) {
+      return `http://${hostname}:5001`;
+    }
+    
+    if (hostname === 'peoplesoft.softrateglobal.com') {
+      return 'https://peoplesoft.softrateglobal.com/hrms-api';
+    }
+    
+    return `http://${hostname}:5001`;
+  }
+  private baseUrl = this.resolveBaseUrl();
 
 
   constructor(private http: HttpClient) { }
@@ -109,6 +116,10 @@ export class ApiService {
 
   verifyCompany(code: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/api/onboarding/verify/${code}`);
+  }
+
+  getPublicCompanies(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/onboarding/public-companies`);
   }
 
   getPublicWalkinDrives(code: string): Observable<any> {
@@ -650,6 +661,10 @@ export class ApiService {
 
   updateCompanySettings(settings: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/api/settings/company`, settings);
+  }
+
+  submitResignation(payload: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/resignation/submit`, payload);
   }
 
   // Offboarding / Resignations

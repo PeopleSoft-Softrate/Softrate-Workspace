@@ -98,6 +98,22 @@ export class App {
   }
 
   constructor() {
+    // Force detect iOS and Mobile devices (including iPads with desktop MacIntel user-agent)
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                       isIOS || (window.innerWidth <= 1024 && 'ontouchstart' in window);
+      if (isIOS) {
+        document.documentElement.classList.add('ios-device');
+        document.body.classList.add('ios-device');
+      }
+      if (isMobile) {
+        document.documentElement.classList.add('mobile-device');
+        document.body.classList.add('mobile-device');
+      }
+    }
+
     this.currentUrl.set(this.router.url);
     this.router.events.subscribe(() => {
       this.currentUrl.set(this.router.url);
@@ -372,6 +388,7 @@ export class App {
   }
 
   loadUserData() {
+    const token = localStorage.getItem('auth_token');
     const role = localStorage.getItem('user_role');
     this.userRole.set(role);
 
@@ -387,6 +404,10 @@ export class App {
     } else {
       this.currentUser.set(null);
       this.userName.set('User');
+    }
+
+    if (!token && !this.isLoginPage()) {
+      this.logout();
     }
   }
 
@@ -535,6 +556,13 @@ export class App {
             localStorage.setItem('user_role', res.role);
             this.userRole.set(res.role);
           }
+        }
+      },
+      error: (err: any) => {
+        console.error('getMe failed, logging out:', err);
+        // Only force logout on invalid session/token (401 / 403 status codes)
+        if (err.status === 401 || err.status === 403 || !localStorage.getItem('auth_token')) {
+          this.logout();
         }
       }
     });

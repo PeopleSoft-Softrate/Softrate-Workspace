@@ -53,6 +53,8 @@ const EmployeeSchema = new mongoose.Schema({
 
   // Remote Worker Flag
   isRemote: { type: Boolean, default: false },
+  webAccess: { type: Boolean, default: false },
+  remoteAccess: { type: Boolean, default: false },
 
   // Section 6 – Declarations
   declaration: { type: Boolean, default: false },

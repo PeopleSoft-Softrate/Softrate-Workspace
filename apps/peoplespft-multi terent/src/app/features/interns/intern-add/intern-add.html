@@ -1,7 +1,7 @@
 <div class="page-header">
   <div class="header-main">
     <div class="breadcrumb">
-      <a routerLink="/interns/requests" class="back-link">
+      <a (click)="goBack()" class="back-link" style="cursor: pointer;">
         <i class="fa-solid fa-arrow-left"></i> Back to Requests
       </a>
     </div>
@@ -89,29 +89,47 @@
           </div>
         </div>
 
-        <!-- Stipend Type -->
-        <div class="form-section full-width flex-row">
-          <label class="section-label">Stipend Type</label>
-          <div class="simple-radio-group">
-            <label class="simple-radio">
-              <input type="radio" [(ngModel)]="intern.internshipType" name="internshipType" value="Stipend">
-              <span>Stipend</span>
-            </label>
-            <label class="simple-radio">
-              <input type="radio" [(ngModel)]="intern.internshipType" name="internshipType" value="Paid">
-              <span>Paid</span>
-            </label>
+        <!-- Bottom Row (Access Control & Stipend Type) -->
+        <div class="form-section full-width split-row">
+          <!-- Access Control -->
+          <div class="access-control-wrapper">
+            <div class="access-control-header">
+              <h4>Access Control</h4>
+              <p>Manage login permissions and geofence bypassing.</p>
+            </div>
+            
+            <div class="access-control-card">
+              <div class="access-row">
+                <span class="access-label">Remote Access</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" [(ngModel)]="intern.remoteAccess" name="remoteAccess">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="access-divider"></div>
+              <div class="access-row">
+                <span class="access-label">Web Access</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" [(ngModel)]="intern.webAccess" name="webAccess">
+                  <span class="toggle-slider blue"></span>
+                </label>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Web Access -->
-        <div class="form-section full-width flex-row">
-          <label class="section-label">Web Portal Access</label>
-          <div class="simple-radio-group">
-            <label class="simple-radio" style="display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" [(ngModel)]="intern.webAccess" name="webAccess" style="width: 16px; height: 16px;">
-              <span>Grant Web Login Access</span>
-            </label>
+          <!-- Stipend Type -->
+          <div class="flex-row stipend-wrapper">
+            <label class="section-label">Stipend Type</label>
+            <div class="simple-radio-group">
+              <label class="simple-radio">
+                <input type="radio" [(ngModel)]="intern.internshipType" name="internshipType" value="Stipend">
+                <span>Stipend</span>
+              </label>
+              <label class="simple-radio">
+                <input type="radio" [(ngModel)]="intern.internshipType" name="internshipType" value="Paid">
+                <span>Paid</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>

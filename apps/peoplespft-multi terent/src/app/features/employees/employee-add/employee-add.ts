@@ -51,7 +51,9 @@ export class EmployeeAdd implements OnInit {
     linkedin: '',
     emergencyName: '',
     emergencyPhone: '',
-    isRemote: false
+    isRemote: false,
+    webAccess: false,
+    remoteAccess: false
   };
 
   employeeRoles = signal<string[]>([]);

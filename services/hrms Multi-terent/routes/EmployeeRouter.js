@@ -407,7 +407,7 @@ router.get("/profile-photo/:id", async (req, res, next) => {
 ============================ */
 router.put("/accept/:id", verifyTenant, async (req, res) => {
   try {
-    const { onboardingDate } = req.body;
+    const { onboardingDate, webAccess, remoteAccess } = req.body;
     const employee = await Employee.findOne({ _id: req.params.id, companyId: req.tenant.companyId });
     if (!employee) return res.status(404).json({ message: "Employee not found" });
 
@@ -416,6 +416,8 @@ router.put("/accept/:id", verifyTenant, async (req, res) => {
     employee.EmployeeId = newEmployeeId;
     employee.status = "approved";
     employee.onboardingDate = onboardingDate;
+    if (webAccess !== undefined) employee.webAccess = webAccess === true || webAccess === 'true';
+    if (remoteAccess !== undefined) employee.remoteAccess = remoteAccess === true || remoteAccess === 'true';
 
     await employee.save();
 

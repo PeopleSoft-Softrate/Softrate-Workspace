@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { formatSeconds } from '../../reports/domain/call-formatters';
+import { environment } from '../../../../environments/environment';
 
 const DEFAULT_INVOICE_LOGO = 'assets/icon/softrate-transparent-logo.png';
 
@@ -22,6 +23,7 @@ export class AdminSettingsWorkflow {
 
   fetchCompanyProfile(vm: any): void {
     if (!vm.dashboardCode) return;
+    this.loadEmailTemplates(vm);
     vm.companyProfileLoading = true;
     this.authService.getCompanyProfile(vm.dashboardCode).subscribe({
       next: (res: any) => {
@@ -544,5 +546,83 @@ Thank You.`;
         vm.changePwdError = err?.error?.message || 'Server error.';
       },
     });
+  }
+
+  async loadEmailTemplates(vm: any) {
+    if (!vm.dashboardCode) return;
+    vm.emailTemplateLoading = true;
+    try {
+      const response = await fetch(`${environment.apiBaseUrl}/api/templates/${vm.dashboardCode}`);
+      const data = await response.json();
+      if (data.success) {
+        vm.emailTemplates = data.data;
+      }
+    } catch (err) {
+      console.error('Error fetching templates:', err);
+    }
+    vm.emailTemplateLoading = false;
+  }
+
+  async saveEmailTemplate(vm: any) {
+    if (!vm.dashboardCode || !vm.emailTemplateForm.name || !vm.emailTemplateForm.subject || !vm.emailTemplateForm.description) {
+      alert('Please fill all fields');
+      return;
+    }
+    vm.emailTemplateLoading = true;
+    try {
+      const payload = {
+        companyCode: vm.dashboardCode,
+        name: vm.emailTemplateForm.name,
+        subject: vm.emailTemplateForm.subject,
+        description: vm.emailTemplateForm.description
+      };
+      
+      let response;
+      if (vm.emailTemplateEditId) {
+        response = await fetch(`${environment.apiBaseUrl}/api/templates/${vm.emailTemplateEditId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        response = await fetch(`${environment.apiBaseUrl}/api/templates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        if (vm.emailTemplateEditId) {
+          const index = vm.emailTemplates.findIndex((t: any) => t._id === vm.emailTemplateEditId);
+          if (index !== -1) vm.emailTemplates[index] = data.data;
+        } else {
+          vm.emailTemplates.unshift(data.data);
+        }
+        vm.emailTemplateForm = { name: '', subject: '', description: '' };
+        vm.emailTemplateEditId = null;
+        vm.showEmailTemplateModal = false;
+      } else {
+        alert(data.message || 'Error saving template');
+      }
+    } catch (err) {
+      console.error('Error saving template:', err);
+      alert('Error saving template');
+    }
+    vm.emailTemplateLoading = false;
+  }
+
+  async deleteEmailTemplate(vm: any, id: string) {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    try {
+      const response = await fetch(`${environment.apiBaseUrl}/api/templates/${id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (data.success) {
+        vm.emailTemplates = vm.emailTemplates.filter((t: any) => t._id !== id);
+      }
+    } catch (err) {
+      console.error('Error deleting template:', err);
+    }
   }
 }

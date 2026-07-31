@@ -10,21 +10,16 @@
     <div class="alert-header">
       <div class="alert-icon-wrapper">
         <!-- Success Icon -->
-        <svg *ngIf="alertService.state().type === 'success'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-        </svg>
+        <hugeicons-icon *ngIf="alertService.state().type === 'success'" [icon]="TaskDone01Icon" size="24" class="alert-icon" color="currentColor" [strokeWidth]="2.5"></hugeicons-icon>
+        
         <!-- Error Icon -->
-        <svg *ngIf="alertService.state().type === 'error'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <hugeicons-icon *ngIf="alertService.state().type === 'error'" [icon]="Alert01Icon" size="24" class="alert-icon" color="currentColor" [strokeWidth]="2.5"></hugeicons-icon>
+        
         <!-- Info Icon -->
-        <svg *ngIf="alertService.state().type === 'info'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <hugeicons-icon *ngIf="alertService.state().type === 'info'" [icon]="InformationCircleIcon" size="24" class="alert-icon" color="currentColor" [strokeWidth]="2.5"></hugeicons-icon>
+        
         <!-- Confirm Icon -->
-        <svg *ngIf="alertService.state().type === 'confirm'" xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <hugeicons-icon *ngIf="alertService.state().type === 'confirm'" [icon]="HelpCircleIcon" size="24" class="alert-icon" color="currentColor" [strokeWidth]="2.5"></hugeicons-icon>
       </div>
       
       <div class="alert-content">

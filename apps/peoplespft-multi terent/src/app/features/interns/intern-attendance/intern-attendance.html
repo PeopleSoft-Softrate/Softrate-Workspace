@@ -71,8 +71,46 @@
         </div>
       </div>
 
-      <!-- Table View -->
-      <div class="table-responsive" *ngIf="!isLoading() && filteredAttendance() && filteredAttendance().length > 0">
+      <!-- Mobile Cards View -->
+      <div class="mobile-view" *ngIf="!isLoading() && filteredAttendance() && filteredAttendance().length > 0">
+        <div class="mobile-header">
+          <span>Day / Date</span>
+          <span style="text-align: center;">Work Hours</span>
+          <span style="text-align: right;">Status</span>
+        </div>
+        <div class="attendance-card" *ngFor="let record of filteredAttendance()" [class.is-expanded]="expandedRecordDate() === record.date">
+          <div class="card-summary" (click)="toggleExpand(record.date)">
+            <span class="card-date">{{ record.date | date:'EEE, dd MMM' }}</span>
+            <span class="card-duration">{{ record.duration || 'NA' }}</span>
+            <div class="card-status-wrapper">
+              <span class="status-indicator" [ngClass]="record.punchOutTime ? 'status-green' : 'status-orange'">
+                {{ record.punchOutTime ? 'P' : 'A' }}
+              </span>
+              <span class="chevron"></span>
+            </div>
+          </div>
+          
+          <div class="card-details" *ngIf="expandedRecordDate() === record.date">
+            <div class="punch-times">
+              <div class="punch-time-box">
+                <span class="punch-label">Punch In</span>
+                <span class="punch-value">{{ record.punchInTime ? (record.punchInTime | date:'shortTime') : '--' }}</span>
+              </div>
+              <div class="punch-time-box">
+                <span class="punch-label">Punch Out</span>
+                <span class="punch-value">{{ record.punchOutTime ? (record.punchOutTime | date:'shortTime') : '--' }}</span>
+              </div>
+              <button class="btn-action btn-edit-mobile" (click)="openRatification(record)">
+                <hugeicons-icon [icon]="Edit02Icon" size="16" [strokeWidth]="2" color="currentColor"></hugeicons-icon>
+                <span>Edit</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table View (Desktop) -->
+      <div class="table-responsive desktop-view" *ngIf="!isLoading() && filteredAttendance() && filteredAttendance().length > 0">
         <table class="data-table">
           <thead>
             <tr>
@@ -82,6 +120,7 @@
               <th>Out Time</th>
               <th>Duration</th>
               <th>Location</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -117,6 +156,12 @@
                     style="color: #94a3b8; font-size: 12px;">--</span>
                 </div>
               </td>
+              <td>
+                <button class="btn-action" (click)="openRatification(record)" title="Request Correction">
+                  <hugeicons-icon [icon]="Edit02Icon" size="18" [strokeWidth]="1.5" color="#00657f"></hugeicons-icon>
+                  <span>Edit</span>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -149,6 +194,37 @@
       <div class="loading-overlay" *ngIf="isLoading()">
         <div class="spinner"></div>
         <p>Loading records...</p>
+      </div>
+      
+      <!-- Ratification Modal -->
+      <div class="modal-overlay" *ngIf="showRatificationModal()">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3>Request Attendance Correction</h3>
+            <p>Date: {{ selectedRatificationRecord()?.date | date:'mediumDate' }}</p>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>New Punch-In Time <span class="optional">(Optional)</span></label>
+              <input type="time" class="form-input" [ngModel]="newPunchIn()" (ngModelChange)="newPunchIn.set($event)" />
+            </div>
+            <div class="form-group">
+              <label>New Punch-Out Time <span class="optional">(Optional)</span></label>
+              <input type="time" class="form-input" [ngModel]="newPunchOut()" (ngModelChange)="newPunchOut.set($event)" />
+            </div>
+            <div class="form-group">
+              <label>Reason for correction <span class="required">*</span></label>
+              <textarea class="form-input" rows="3" placeholder="Why was it marked wrongly?"
+                [ngModel]="correctionReason()" (ngModelChange)="correctionReason.set($event)"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" (click)="closeRatification()">Cancel</button>
+            <button class="btn-submit" (click)="submitRatification()" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Submitting...' : 'Submit to Manager' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

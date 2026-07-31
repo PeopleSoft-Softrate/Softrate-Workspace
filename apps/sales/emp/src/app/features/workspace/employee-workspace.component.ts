@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgIf, NgFor, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -28,6 +28,15 @@ import { EmployeeLeadDetailComponent } from '../leads/presentation/employee-lead
 import { Lead as EmployeeLeadModel, LeadDrawerSection, LeadHistoryLog } from '../leads/domain/lead.model';
 
 type EmployeeLeadScope = Partial<Pick<EmployeeLeadsState, 'search' | 'status' | 'statuses' | 'isFavourite' | 'updatedFrom' | 'updatedTo' | 'setLabel' | 'division'>>;
+
+
+export interface ActivityItem {
+  id: string;
+  type: 'task' | 'meeting' | 'call';
+  title: string;
+  date: Date;
+  status: 'pending' | 'completed';
+}
 
 interface Employee {
   _id: string;
@@ -298,7 +307,7 @@ interface PagedResponse<T> {
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent],
+  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -4454,6 +4463,371 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ── Mail Modal State ──────────────────────────────────────────
+  showMailModal = false;
+  isMailModalFullScreen = false;
+  mailLead: Lead | null = null;
+  mailSubject: string = '';
+  mailBody: string = '';
+  mailAttachments: File[] = [];
+
+  openMailModal(lead: Lead) {
+    this.mailLead = lead;
+    this.mailSubject = '';
+    this.mailBody = '';
+    this.mailAttachments = [];
+    this.isMailModalFullScreen = false;
+    this.showMailModal = true;
+    this.fetchEmailTemplates();
+  }
+
+  toggleMailModalFullScreen() {
+    this.isMailModalFullScreen = !this.isMailModalFullScreen;
+  }
+
+  emailTemplates: any[] = [];
+  showTemplateDropdown: boolean = false;
+
+  async fetchEmailTemplates() {
+    if (!this.employee?.companyCode) return;
+    try {
+      const response = await fetch(`http://localhost:4000/api/templates/${this.employee.companyCode}`);
+      const data = await response.json();
+      if (data.success) {
+        this.emailTemplates = data.data;
+      }
+    } catch (err) {
+      console.error('Error fetching templates:', err);
+    }
+  }
+
+  insertMailTemplate(template?: any) {
+    if (template) {
+      this.mailSubject = template.subject;
+      this.mailBody = template.description;
+      this.showTemplateDropdown = false;
+      const editor = document.getElementById('mailBodyEditor');
+      if (editor) {
+        editor.innerHTML = template.description;
+      }
+    } else {
+      if (!this.showTemplateDropdown) {
+        this.fetchEmailTemplates();
+      }
+      this.showTemplateDropdown = !this.showTemplateDropdown;
+    }
+  }
+
+  closeMailModal() {
+    this.showMailModal = false;
+    this.mailLead = null;
+  }
+
+  savedSelection: Range | null = null;
+
+  saveSelection() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      this.savedSelection = sel.getRangeAt(0);
+    }
+  }
+
+  restoreSelection() {
+    if (this.savedSelection) {
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(this.savedSelection);
+      }
+    }
+  }
+
+  execMailCommand(command: string, value: string = '') {
+    this.restoreSelection();
+    document.execCommand(command, false, value);
+    document.getElementById('mailBodyEditor')?.focus();
+  }
+
+
+
+  triggerFileInput() {
+    document.getElementById('hiddenMailAttachmentInput')?.click();
+  }
+
+  onMailAttachment(event: any) {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        this.mailAttachments.push(files[i]);
+      }
+    }
+    event.target.value = '';
+  }
+
+  removeMailAttachment(index: number) {
+    this.mailAttachments.splice(index, 1);
+  }
+
+  async sendMail() {
+    if (!this.mailLead) return;
+    const editor = document.getElementById('mailBodyEditor');
+    const finalBody = editor ? editor.innerHTML : this.mailBody;
+    
+    try {
+      const formData = new FormData();
+      formData.append('to', this.mailLead.directorEmailAddress || 'test@example.com');
+      formData.append('subject', this.mailSubject);
+      formData.append('html', finalBody);
+      
+      this.mailAttachments.forEach(file => {
+        formData.append('attachments', file);
+      });
+
+      const response = await fetch('http://localhost:4000/api/mail/send', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert('Email sent successfully!');
+      } else {
+        alert('Failed to send email: ' + result.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send email. Check console for details.');
+    }
+
+    this.closeMailModal();
+  }
+
+  // ── Activities Module ──────────────────────────────────────────
+  activitiesSubTab: 'calendar' | 'tasks' | 'meetings' | 'calls' = 'calendar';
+  currentCalendarDate = new Date();
+  activitiesFilter = {
+    tasks: true,
+    meetings: true,
+    calls: true
+  };
+  
+  mockActivities: ActivityItem[] = [];
+  
+  showActivityModal = false;
+  selectedActivityDate: Date = new Date();
+  activityForm = {
+    type: 'task' as 'task' | 'meeting' | 'call',
+    title: '',
+    description: '',
+    time: '10:00',
+    leadId: ''
+  };
+  
+  activityClientSearchQuery = '';
+  showActivityClientDropdown = false;
+
+  get filteredModalClients() {
+    if (!this.activityClientSearchQuery) return this.allLeads;
+    const lowerQuery = this.activityClientSearchQuery.toLowerCase();
+    return this.allLeads.filter(l => 
+      l.leadCompanyName?.toLowerCase().includes(lowerQuery) || 
+      l.contactName?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  selectActivityClient(lead: any) {
+    this.activityForm.leadId = lead._id;
+    this.activityClientSearchQuery = `${lead.leadCompanyName} (${lead.contactName})`;
+    this.showActivityClientDropdown = false;
+  }
+
+  calendarDays: Array<{ 
+    date: Date; 
+    isCurrentMonth: boolean; 
+    isToday: boolean;
+    events: any[];
+    taskCount: number; 
+    meetingCount: number; 
+    callCount: number; 
+  }> = [];
+
+  get activitiesForCurrentTab(): any[] {
+    if (this.activitiesSubTab === 'calendar') return [];
+    
+    // Convert 'tasks' -> 'task', 'meetings' -> 'meeting', 'calls' -> 'call'
+    const typeMapping: Record<string, string> = {
+      'tasks': 'task',
+      'meetings': 'meeting',
+      'calls': 'call'
+    };
+    const filterType = typeMapping[this.activitiesSubTab];
+    
+    return this.mockActivities
+      .filter(a => a.type === filterType)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  async generateCalendarDays() {
+    // Fetch activities from backend
+    if (this.employee?._id) {
+      try {
+        const firstDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth(), 1);
+        const lastDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 0);
+        
+        const response = await fetch(`http://localhost:4000/api/activities/employee/${this.employee._id}?start=${firstDayOfMonth.toISOString()}&end=${lastDayOfMonth.toISOString()}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          // Convert string dates to Date objects
+          this.mockActivities = result.data.map((a: any) => ({
+            ...a,
+            date: new Date(a.activityDate)
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching activities', err);
+      }
+    }
+
+    const year = this.currentCalendarDate.getFullYear();
+    const month = this.currentCalendarDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Start on Monday
+    
+    this.calendarDays = [];
+    
+    // Previous month padding
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      this.calendarDays.push({
+        date: new Date(year, month - 1, prevMonthLastDay - i),
+        isCurrentMonth: false,
+        isToday: false,
+        events: [],
+        taskCount: 0,
+        meetingCount: 0,
+        callCount: 0
+      });
+    }
+
+    // Current month
+    const today = new Date();
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const d = new Date(year, month, i);
+      
+      const dayActivities = this.mockActivities.filter(a => 
+        a.date.getFullYear() === d.getFullYear() &&
+        a.date.getMonth() === d.getMonth() &&
+        a.date.getDate() === d.getDate()
+      );
+
+      this.calendarDays.push({
+        date: d,
+        isCurrentMonth: true,
+        isToday: d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(),
+        events: dayActivities,
+        taskCount: dayActivities.filter(a => a.type === 'task').length,
+        meetingCount: dayActivities.filter(a => a.type === 'meeting').length,
+        callCount: dayActivities.filter(a => a.type === 'call').length
+      });
+    }
+
+    // Next month padding (to fill grid)
+    const remainingSlots = 42 - this.calendarDays.length; // 6 rows of 7 days
+    for (let i = 1; i <= remainingSlots; i++) {
+      this.calendarDays.push({
+        date: new Date(year, month + 1, i),
+        isCurrentMonth: false,
+        isToday: false,
+        events: [],
+        taskCount: 0,
+        meetingCount: 0,
+        callCount: 0
+      });
+    }
+  }
+
+  prevCalendarMonth() {
+    this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() - 1, 1);
+    this.generateCalendarDays();
+  }
+
+  nextCalendarMonth() {
+    this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 1);
+    this.generateCalendarDays();
+  }
+
+  setActivitiesSubTab(tab: 'calendar' | 'tasks' | 'meetings' | 'calls') {
+    this.activitiesSubTab = tab;
+  }
+  
+  openActivityModal(date?: Date) {
+    this.selectedActivityDate = date ? new Date(date) : new Date();
+    this.activityForm = { type: 'task', title: '', description: '', time: '10:00', leadId: '' };
+    this.activityClientSearchQuery = '';
+    this.showActivityClientDropdown = false;
+    this.showActivityModal = true;
+  }
+  
+  closeActivityModal() {
+    this.showActivityModal = false;
+  }
+  
+  async saveActivity() {
+    try {
+      if (!this.employee?._id) {
+        alert('Error: Employee ID is missing. Please try refreshing the page.');
+        return;
+      }
+      
+      if (!this.activityForm.title?.trim()) {
+        alert('Please enter a title for the activity.');
+        return;
+      }
+      
+      if (!this.activityForm.time) {
+        alert('Please select a valid time.');
+        return;
+      }
+      
+      // Parse time safely
+      const [hours, minutes] = this.activityForm.time.split(':').map(Number);
+      const activityDate = new Date(this.selectedActivityDate);
+      activityDate.setHours(hours, minutes, 0, 0);
+      
+      const response = await fetch('http://localhost:4000/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: this.employee._id,
+          leadId: this.activityForm.leadId || undefined,
+          type: this.activityForm.type,
+          title: this.activityForm.title,
+          description: this.activityForm.description,
+          activityDate: activityDate
+        })
+      });
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        throw new Error('Server returned invalid JSON. It might be down or crashing.');
+      }
+      
+      if (result.success) {
+        this.closeActivityModal();
+        await this.generateCalendarDays();
+      } else {
+        alert('Failed to save activity: ' + result.message);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving activity: ' + (err.message || String(err)));
+    }
+  }
+
   // ── Util ──────────────────────────────────────────────────────
   sidebarOpen = false;
   sidebarMinimized = false;
@@ -4487,6 +4861,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.generateCalendarDays();
     Chart.register(...registerables);
     this.leadVmSub = this.employeeLeadsVm.state$.subscribe((state) => this.applyEmployeeLeadViewModelState(state));
     const raw = localStorage.getItem('dv_employee');

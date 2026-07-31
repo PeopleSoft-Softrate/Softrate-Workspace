@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { Home01Icon, FileDownloadIcon, Location01Icon, LicenseDraftIcon, FingerAccessIcon } from '@hugeicons/core-free-icons';
+import { Home01Icon, FileDownloadIcon, Location01Icon, LicenseDraftIcon, FingerAccessIcon, Edit02Icon } from '@hugeicons/core-free-icons';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
@@ -33,6 +33,26 @@ export class InternAttendance implements OnInit {
   readonly FileDownloadIcon = FileDownloadIcon;
   readonly LicenseDraftIcon = LicenseDraftIcon;
   readonly FingerAccessIcon = FingerAccessIcon;
+  readonly Edit02Icon = Edit02Icon;
+
+  // Ratification Modal State
+  showRatificationModal = signal(false);
+  selectedRatificationRecord = signal<any>(null);
+  newPunchIn = signal('');
+  newPunchOut = signal('');
+  correctionReason = signal('');
+  isSubmitting = signal(false);
+
+  // Mobile Accordion State
+  expandedRecordDate = signal<string | null>(null);
+
+  toggleExpand(date: string) {
+    if (this.expandedRecordDate() === date) {
+      this.expandedRecordDate.set(null);
+    } else {
+      this.expandedRecordDate.set(date);
+    }
+  }
 
   // Filter Variables
   filterType = signal<string>('all');
@@ -179,5 +199,63 @@ export class InternAttendance implements OnInit {
       case 'half-day': return 'status-orange';
       default: return 'status-gray';
     }
+  }
+
+  // --- Ratification Methods ---
+  openRatification(record: any) {
+    this.selectedRatificationRecord.set(record);
+    this.newPunchIn.set('');
+    this.newPunchOut.set('');
+    this.correctionReason.set('');
+    this.showRatificationModal.set(true);
+  }
+
+  closeRatification() {
+    this.showRatificationModal.set(false);
+    this.selectedRatificationRecord.set(null);
+  }
+
+  formatTimeForApi(timeStr: string, baseDate: string): string {
+    if (!timeStr) return '';
+    const dateObj = new Date(baseDate);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    dateObj.setHours(hours, minutes, 0, 0);
+    return dateObj.toISOString();
+  }
+
+  submitRatification() {
+    if (!this.correctionReason().trim()) {
+      this.alertService.show('Please provide a reason');
+      return;
+    }
+
+    if (!this.newPunchIn() && !this.newPunchOut()) {
+      this.alertService.show('Please select at least one new time');
+      return;
+    }
+
+    const record = this.selectedRatificationRecord();
+    if (!record) return;
+
+    this.isSubmitting.set(true);
+    const payload = {
+      internMongoId: this.internId(),
+      date: record.date,
+      requestedPunchIn: this.newPunchIn() ? this.formatTimeForApi(this.newPunchIn(), record.date) : null,
+      requestedPunchOut: this.newPunchOut() ? this.formatTimeForApi(this.newPunchOut(), record.date) : null,
+      reason: this.correctionReason().trim()
+    };
+
+    this.apiService.applyAttendanceCorrection(payload).subscribe({
+      next: () => {
+        this.alertService.show('Correction request sent to your Manager');
+        this.closeRatification();
+        this.isSubmitting.set(false);
+      },
+      error: (err) => {
+        this.alertService.show(err.error?.message || 'Failed to send request');
+        this.isSubmitting.set(false);
+      }
+    });
   }
 }

@@ -228,6 +228,11 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   // ── Dashboard tabs ─────────────────────────────────────────
   dashTab: AdminPageId = 'overview';
+  emailTemplates: any[] = [];
+  emailTemplateLoading: boolean = false;
+  emailTemplateForm: { name: string, subject: string, description: string } = { name: '', subject: '', description: '' };
+  emailTemplateEditId: string | null = null;
+  showEmailTemplateModal: boolean = false;
   sidebarFeatureSearch = '';
   showShareModal = false;
   shareMessage = '';
@@ -4735,6 +4740,29 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   // ── Tag Management logic ──
   addTag(): void { return this.adminSettingsWorkflow.addTag(this); }
+  
+  // Email Template management
+  openEmailTemplateModal(template?: any): void {
+    if (template) {
+      this.emailTemplateEditId = template._id;
+      this.emailTemplateForm = {
+        name: template.name,
+        subject: template.subject,
+        description: template.description
+      };
+    } else {
+      this.emailTemplateEditId = null;
+      this.emailTemplateForm = { name: '', subject: '', description: '' };
+    }
+    this.showEmailTemplateModal = true; 
+  }
+  closeEmailTemplateModal(): void { 
+    this.showEmailTemplateModal = false;
+    this.emailTemplateEditId = null;
+    this.emailTemplateForm = { name: '', subject: '', description: '' };
+  }
+  saveEmailTemplate(): Promise<void> { return this.adminSettingsWorkflow.saveEmailTemplate(this); }
+  deleteEmailTemplate(id: string): Promise<void> { return this.adminSettingsWorkflow.deleteEmailTemplate(this, id); }
 
   removeTag(tag: string): void { return this.adminSettingsWorkflow.removeTag(this, tag); }
 

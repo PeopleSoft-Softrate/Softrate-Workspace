@@ -161,7 +161,6 @@ class _FormTwoState extends State<FormTwo> {
       'college': collegeIdFile,
       'annexure': annexureFile,
       'nda': ndaFile,
-      'passbook': passbookFile,
     };
 
     bool hasMissingRequired = false;
@@ -383,6 +382,23 @@ class _FormTwoState extends State<FormTwo> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    "Optional",
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -563,7 +579,7 @@ class _FormTwoState extends State<FormTwo> {
               type: 'passbook',
               file: passbookFile,
               icon: Icons.account_balance_wallet_outlined,
-              requiredDoc: true,
+              requiredDoc: false,
             ),
 
             const SizedBox(height: 8),

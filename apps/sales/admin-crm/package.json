@@ -7,10 +7,10 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "NG_CLI_ANALYTICS=false ng serve",
-    "build": "NG_CLI_ANALYTICS=false ng build",
-    "watch": "NG_CLI_ANALYTICS=false ng build --watch --configuration development",
-    "test": "NG_CLI_ANALYTICS=false ng test"
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
   },
   "private": true,
   "dependencies": {

@@ -4,7 +4,7 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HugeiconsIconComponent } from '@hugeicons/angular';
-import { UserCircleIcon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, Money03Icon, Location01Icon, FileDownloadIcon, SmartPhone02Icon } from '@hugeicons/core-free-icons';
+import { UserCircleIcon, FingerAccessIcon, CalendarCheckOut01Icon, LicenseDraftIcon, Money03Icon, Location01Icon, FileDownloadIcon, SmartPhone02Icon, Edit02Icon } from '@hugeicons/core-free-icons';
 import { EmployeeSidebar } from '../employee-sidebar/employee-sidebar';
 import { ApiService } from '../../../services/api.service';
 
@@ -35,6 +35,26 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
   readonly Location01Icon = Location01Icon;
   readonly FileDownloadIcon = FileDownloadIcon;
   readonly SmartPhone02Icon = SmartPhone02Icon;
+  readonly Edit02Icon = Edit02Icon;
+
+  // Ratification Modal State
+  showRatificationModal = signal(false);
+  selectedRatificationRecord = signal<any>(null);
+  newPunchIn = signal('');
+  newPunchOut = signal('');
+  correctionReason = signal('');
+  isSubmitting = signal(false);
+
+  // Mobile Accordion State
+  expandedRecordDate = signal<string | null>(null);
+
+  toggleExpand(date: string) {
+    if (this.expandedRecordDate() === date) {
+      this.expandedRecordDate.set(null);
+    } else {
+      this.expandedRecordDate.set(date);
+    }
+  }
 
   employeeId = signal<string>('');
   attendance = signal<any[]>([]);
@@ -267,5 +287,63 @@ export class EmployeeAttendance implements OnInit, OnDestroy {
       case 'active': return 'status-teal';
       default: return 'status-gray';
     }
+  }
+
+  // --- Ratification Methods ---
+  openRatification(record: any) {
+    this.selectedRatificationRecord.set(record);
+    this.newPunchIn.set('');
+    this.newPunchOut.set('');
+    this.correctionReason.set('');
+    this.showRatificationModal.set(true);
+  }
+
+  closeRatification() {
+    this.showRatificationModal.set(false);
+    this.selectedRatificationRecord.set(null);
+  }
+
+  formatTimeForApi(timeStr: string, baseDate: string): string {
+    if (!timeStr) return '';
+    const dateObj = new Date(baseDate);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    dateObj.setHours(hours, minutes, 0, 0);
+    return dateObj.toISOString();
+  }
+
+  submitRatification() {
+    if (!this.correctionReason().trim()) {
+      this.alertService.show('Please provide a reason');
+      return;
+    }
+
+    if (!this.newPunchIn() && !this.newPunchOut()) {
+      this.alertService.show('Please select at least one new time');
+      return;
+    }
+
+    const record = this.selectedRatificationRecord();
+    if (!record) return;
+
+    this.isSubmitting.set(true);
+    const payload = {
+      employeeMongoId: this.employeeId(),
+      date: record.date,
+      requestedPunchIn: this.newPunchIn() ? this.formatTimeForApi(this.newPunchIn(), record.date) : null,
+      requestedPunchOut: this.newPunchOut() ? this.formatTimeForApi(this.newPunchOut(), record.date) : null,
+      reason: this.correctionReason().trim()
+    };
+
+    this.apiService.applyAttendanceCorrection(payload).subscribe({
+      next: () => {
+        this.alertService.show('Correction request sent to your Manager');
+        this.closeRatification();
+        this.isSubmitting.set(false);
+      },
+      error: (err) => {
+        this.alertService.show(err.error?.message || 'Failed to send request');
+        this.isSubmitting.set(false);
+      }
+    });
   }
 }

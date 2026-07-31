@@ -1,0 +1,130 @@
+<div class="form-two-page">
+
+  <!-- Header -->
+  <div class="form-header">
+    <button class="back-btn" routerLink="/intern/dashboard">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <div class="header-text">
+      <h1>Complete Profile</h1>
+    </div>
+  </div>
+
+  <!-- Greeting Banner -->
+  <div class="greeting-banner">
+    Hi {{ internName() }}, please upload the following documents in PDF format.
+  </div>
+
+  <!-- Upload Progress Bar -->
+  <div class="progress-bar-wrap" *ngIf="isUploading()">
+    <div class="progress-label">Uploading documents...</div>
+    <div class="progress-track">
+      <div class="progress-fill animate-pulse"></div>
+    </div>
+  </div>
+
+  <!-- Document Cards -->
+  <div class="docs-section">
+    <div class="doc-list">
+      <div
+        *ngFor="let doc of docs()"
+        class="doc-card"
+        [class.has-error]="doc.error"
+        [class.has-file]="doc.file"
+        [class.status-success]="doc.status === 'success'"
+        [class.status-error]="doc.status === 'error'">
+
+        <div class="doc-info-row">
+          <div class="doc-icon">
+            <hugeicons-icon [icon]="doc.icon" size="24" color="white" [strokeWidth]="2"></hugeicons-icon>
+          </div>
+          <div class="doc-meta">
+            <div class="doc-title">{{ doc.title }}</div>
+            <div class="doc-subtitle">{{ doc.subtitle }}</div>
+          </div>
+          <div class="required-badge" *ngIf="doc.required">Required</div>
+          <div class="optional-badge" *ngIf="!doc.required">Optional</div>
+        </div>
+
+        <div class="doc-file-area">
+          <ng-container *ngIf="!doc.file">
+            <button class="select-pdf-btn" (click)="pickFile(doc.key)" [disabled]="isUploading()">
+              <hugeicons-icon [icon]="Upload04Icon" size="18" color="currentColor" [strokeWidth]="2"></hugeicons-icon> 
+              <span>Select PDF file</span>
+            </button>
+          </ng-container>
+
+          <ng-container *ngIf="doc.file">
+            <div class="file-selected" (click)="pickFile(doc.key)">
+              <div class="file-info-group">
+                <hugeicons-icon [icon]="File02Icon" size="18" color="#00838f" [strokeWidth]="2"></hugeicons-icon>
+                <span class="file-name">{{ doc.file.name }}</span>
+              </div>
+              <button class="remove-btn" (click)="removeFile(doc.key); $event.stopPropagation()" [disabled]="isUploading()" title="Remove">✕</button>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="doc-feedback" *ngIf="doc.error && !doc.file">
+          <hugeicons-icon [icon]="Notification03Icon" size="14" color="currentColor" [strokeWidth]="2" style="vertical-align: middle; margin-right: 4px;"></hugeicons-icon> Please upload this document.
+        </div>
+        <div class="doc-feedback success" *ngIf="doc.status === 'success'">
+          <hugeicons-icon [icon]="TaskDone01Icon" size="14" color="currentColor" [strokeWidth]="2" style="vertical-align: middle; margin-right: 4px;"></hugeicons-icon> Uploaded successfully
+        </div>
+        <div class="doc-feedback error" *ngIf="doc.status === 'error'">
+          <hugeicons-icon [icon]="Delete01Icon" size="14" color="currentColor" [strokeWidth]="2" style="vertical-align: middle; margin-right: 4px;"></hugeicons-icon> Upload failed — please try again
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Declarations Section -->
+  <div class="declarations-section">
+    <div class="consent-list">
+      <label class="consent-item" [class.checked]="consentGiven()">
+        <input type="checkbox" [checked]="consentGiven()" (change)="toggleConsent('consentGiven')" [disabled]="isUploading()">
+        <span class="checkmark"></span>
+        <span class="consent-text">I consent to upload my documents for verification.</span>
+      </label>
+
+      <label class="consent-item" [class.checked]="infoAccurate()">
+        <input type="checkbox" [checked]="infoAccurate()" (change)="toggleConsent('infoAccurate')" [disabled]="isUploading()">
+        <span class="checkmark"></span>
+        <span class="consent-text">I declare that the information provided is accurate.</span>
+      </label>
+
+      <label class="consent-item" [class.checked]="consentBgVerification()">
+        <input type="checkbox" [checked]="consentBgVerification()" (change)="toggleConsent('consentBgVerification')" [disabled]="isUploading()">
+        <span class="checkmark"></span>
+        <span class="consent-text">I consent to background verification by the company.</span>
+      </label>
+
+      <label class="consent-item" [class.checked]="agreeCommunication()">
+        <input type="checkbox" [checked]="agreeCommunication()" (change)="toggleConsent('agreeCommunication')" [disabled]="isUploading()">
+        <span class="checkmark"></span>
+        <span class="consent-text">I agree to receive communication through WhatsApp and email.</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Submit Button -->
+  <div class="submit-section">
+    <button
+      class="submit-btn"
+      (click)="uploadAll()"
+      [disabled]="isUploading()"
+      [class.uploading]="isUploading()">
+      <span *ngIf="!isUploading()" style="display: flex; align-items: center; gap: 8px;">
+        <hugeicons-icon [icon]="TaskDone01Icon" size="20" color="white" [strokeWidth]="2"></hugeicons-icon>
+        Upload All Documents
+      </span>
+      <span *ngIf="isUploading()" class="uploading-label">
+        <span class="spinner"></span> Uploading...
+      </span>
+    </button>
+  </div>
+
+</div>

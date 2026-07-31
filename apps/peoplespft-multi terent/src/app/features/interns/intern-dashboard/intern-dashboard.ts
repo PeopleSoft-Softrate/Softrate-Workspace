@@ -36,7 +36,7 @@ import {
   Building03Icon,
   Wallet01Icon,
   TaskDone01Icon,
-  Notification03Icon
+  Notification01Icon
 } from '@hugeicons/core-free-icons';
 
 @Component({
@@ -83,7 +83,7 @@ export class InternDashboard implements OnInit {
   readonly Building03Icon = Building03Icon;
   readonly Wallet01Icon = Wallet01Icon;
   readonly TaskDone01Icon = TaskDone01Icon;
-  readonly Notification03Icon = Notification03Icon;
+  readonly Notification01Icon = Notification01Icon;
 
   isLoading = signal<boolean>(true);
   internData = signal<any>(null);
@@ -321,6 +321,9 @@ export class InternDashboard implements OnInit {
   saveToCache(empId: string) {
     if (!empId || typeof localStorage === 'undefined') return;
     try {
+      // Store today's IST date string alongside punch times so we can
+      // detect stale cache (previous day) on next load.
+      const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       const cacheData = {
         monthlyAttendance: this.monthlyAttendance(),
         attendanceSubtitle: this.attendanceSubtitle(),
@@ -331,6 +334,7 @@ export class InternDashboard implements OnInit {
         myResignation: this.myResignation(),
         todayPunchInTime: this.todayPunchInTime() ? this.todayPunchInTime()!.toISOString() : null,
         todayPunchOutTime: this.todayPunchOutTime() ? this.todayPunchOutTime()!.toISOString() : null,
+        cachedDate: todayIST,
         timestamp: Date.now()
       };
       localStorage.setItem('intern_dashboard_cache_' + empId, JSON.stringify(cacheData));
@@ -352,8 +356,18 @@ export class InternDashboard implements OnInit {
       if (cache.workDuration !== undefined) this.workDuration.set(cache.workDuration);
       if (cache.companyLogo !== undefined) this.companyLogo.set(cache.companyLogo);
       if (cache.myResignation !== undefined) this.myResignation.set(cache.myResignation);
-      if (cache.todayPunchInTime) this.todayPunchInTime.set(new Date(cache.todayPunchInTime));
-      if (cache.todayPunchOutTime) this.todayPunchOutTime.set(new Date(cache.todayPunchOutTime));
+
+      // Only restore punch times if the cache was saved on today's date (IST).
+      // If it's from a previous day, leave signals as null so the UI shows
+      // "Punch In" correctly — even if the user forgot to punch out yesterday.
+      const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const isCacheFromToday = cache.cachedDate === todayIST;
+      if (isCacheFromToday) {
+        if (cache.todayPunchInTime) this.todayPunchInTime.set(new Date(cache.todayPunchInTime));
+        if (cache.todayPunchOutTime) this.todayPunchOutTime.set(new Date(cache.todayPunchOutTime));
+      }
+      // If not from today, todayPunchInTime/todayPunchOutTime stay null (default),
+      // which correctly shows "Punch In" until the fresh API response arrives.
       
       this.isLoading.set(false);
       this.updateTimer();

@@ -72,7 +72,7 @@ export class AdminFollowupsWorkflow {
     if (!vm.selectedEmployee) return [];
     const depsStr = vm.selectedEmployee.mobile;
     if (vm.lastAllBookmarksRefForEmp !== vm.allBookmarks || vm.selectedEmpBookmarksDepsStr !== depsStr) {
-      vm.selectedEmpBookmarksCache = vm.allBookmarks.filter((bookmark: Bookmark) => bookmark.employeePhone === vm.selectedEmployee!.mobile);
+      vm.selectedEmpBookmarksCache = vm.allBookmarks.filter((bookmark: Bookmark) => bookmark.employeeId === vm.selectedEmployee!._id);
       vm.lastAllBookmarksRefForEmp = vm.allBookmarks;
       vm.selectedEmpBookmarksDepsStr = depsStr;
     }
@@ -169,7 +169,7 @@ export class AdminFollowupsWorkflow {
     return {
       _id: '',
       companyCode: bookmark.companyCode,
-      assignedEmployeePhone: bookmark.employeePhone,
+      assignedEmployeeId: bookmark.employeeId,
       leadCompanyName: companyName,
       contactName: bookmark.contactName,
       contactNumber: bookmark.contactNumber,
@@ -209,7 +209,7 @@ export class AdminFollowupsWorkflow {
     const depsStr = JSON.stringify([vm.followupSelectedCompanyTags, vm.followupSelectedEmps, vm.followupSearchQuery]);
     if (vm.lastAllBookmarksRefForFiltered !== vm.allBookmarks || vm.filteredBookmarksDepsStr !== depsStr) {
       vm.filteredBookmarksCache = vm.allBookmarks.filter((bookmark: Bookmark) => {
-        const employee = vm.employees.find((item: Employee) => item.mobile === bookmark.employeePhone);
+        const employee = vm.employees.find((item: Employee) => item.mobile === bookmark.employeeId);
 
         if (vm.followupSelectedCompanyTags.length > 0) {
           if (!employee || !employee.tags) return false;
@@ -217,7 +217,7 @@ export class AdminFollowupsWorkflow {
           if (!matchesCompanyTag) return false;
         }
 
-        if (vm.followupSelectedEmps.length > 0 && !vm.followupSelectedEmps.includes(bookmark.employeePhone)) {
+        if (vm.followupSelectedEmps.length > 0 && !vm.followupSelectedEmps.includes(bookmark.employeeId)) {
           return false;
         }
         if (vm.followupSearchQuery) {
@@ -469,7 +469,7 @@ export class AdminFollowupsWorkflow {
         await this.bookmarkService.addBulkBookmarks([{
           ...payload,
           companyCode: lead.companyCode || vm.dashboardCode,
-          employeePhone: lead.assignedEmployeePhone || vm.selectedEmployee?.mobile || '',
+          employeeId: lead.assignedEmployeeId || vm.selectedEmployee?._id || '',
           contactNumber: lead.contactNumber || '',
           contactName: lead.contactName || 'Primary Contact',
           companyName,
@@ -648,7 +648,7 @@ export class AdminFollowupsWorkflow {
     [...existing, ...incoming].forEach((bookmark: Bookmark) => {
       const companyName = this.companyNameForBookmark(vm, bookmark);
       if (!companyName) return;
-      const key = bookmark._id || `${bookmark.companyName || ''}:${bookmark.employeePhone || ''}:${bookmark.contactNumber || ''}`;
+      const key = bookmark._id || `${bookmark.companyName || ''}:${bookmark.employeeId || ''}:${bookmark.contactNumber || ''}`;
       byKey.set(key, { ...bookmark, companyName });
     });
     return Array.from(byKey.values());
@@ -779,7 +779,7 @@ export class AdminFollowupsWorkflow {
 
       return {
         companyCode: vm.dashboardCode,
-        employeePhone: vm.selectedEmployee!.mobile,
+        employeeId: vm.selectedEmployee!._id,
         contactNumber,
         contactName,
         companyName,

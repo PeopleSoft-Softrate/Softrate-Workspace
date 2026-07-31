@@ -458,7 +458,7 @@ export class AdminEmployeesWorkflow {
       vm.empLeadsLoading = true;
     }
 
-    this.leadService.getEmployeeLeadSets(vm.dashboardCode, vm.selectedEmployee.mobile).subscribe({
+    this.leadService.getEmployeeLeadSets(vm.dashboardCode, vm.selectedEmployee._id).subscribe({
       next: (res: any) => {
         if (res?.success) {
           vm.leadSets = res.sets || [];
@@ -496,7 +496,7 @@ export class AdminEmployeesWorkflow {
     return [
       vm.empLeadSetCachePrefix,
       vm.dashboardCode,
-      vm.selectedEmployee?.mobile || 'all',
+      vm.selectedEmployee?._id || 'all',
     ].join('|');
   }
 
@@ -504,7 +504,7 @@ export class AdminEmployeesWorkflow {
     return [
       vm.empLeadCompanyCachePrefix,
       vm.dashboardCode,
-      vm.selectedEmployee?.mobile || 'all',
+      vm.selectedEmployee?._id || 'all',
       vm.selectedLeadSet || 'all',
       vm.empLeadSearchQuery.trim().toLowerCase() || 'all',
       `page:${page}`,
@@ -515,7 +515,7 @@ export class AdminEmployeesWorkflow {
     return [
       vm.empLeadContactCachePrefix,
       vm.dashboardCode,
-      vm.selectedEmployee?.mobile || 'all',
+      vm.selectedEmployee?._id || 'all',
       company || 'all',
       vm.selectedLeadSet || 'all',
       vm.empLeadSearchQuery.trim().toLowerCase() || 'all',
@@ -583,7 +583,7 @@ export class AdminEmployeesWorkflow {
 
     vm.empLeadCompaniesLoading = true;
 
-    this.leadService.getEmployeeLeadCompanies(vm.dashboardCode, vm.selectedEmployee.mobile, {
+    this.leadService.getEmployeeLeadCompanies(vm.dashboardCode, vm.selectedEmployee._id, {
       setLabel: vm.selectedLeadSet || undefined,
       search: vm.empLeadSearchQuery || undefined,
       page,
@@ -641,7 +641,7 @@ export class AdminEmployeesWorkflow {
     if (append) vm.empLeadContactsLoadingMore = true;
     else vm.empLeadsLoading = true;
 
-    this.leadService.getEmployeeLeadPage(vm.dashboardCode, vm.selectedEmployee.mobile, {
+    this.leadService.getEmployeeLeadPage(vm.dashboardCode, vm.selectedEmployee._id, {
       setLabel: vm.selectedLeadSet || undefined,
       search: vm.empLeadSearchQuery || undefined,
       company: vm.selectedEmpLeadCompany,
@@ -718,7 +718,7 @@ export class AdminEmployeesWorkflow {
   deleteLeadSet(vm: any, setLabel: string): void {
     if (!confirm(`Delete ALL leads in set "${setLabel}"? This cannot be undone.`)) return;
     vm.deleteSetLoading = true;
-    this.leadService.deleteLeadSet(vm.dashboardCode, vm.selectedEmployee!.mobile, setLabel).subscribe({
+    this.leadService.deleteLeadSet(vm.dashboardCode, vm.selectedEmployee!._id, setLabel).subscribe({
       next: (res: any) => {
         vm.deleteSetLoading = false;
         if (res.success) {
@@ -848,7 +848,7 @@ export class AdminEmployeesWorkflow {
     return [
       vm.empFollowupCachePrefix,
       vm.dashboardCode,
-      vm.selectedEmployee?.mobile || 'all',
+      vm.selectedEmployee?._id || 'all',
       vm.followupFilter || 'all',
       vm.selectedFollowupDate || 'all',
       vm.followupSearch.trim().toLowerCase() || 'all',
@@ -890,7 +890,7 @@ export class AdminEmployeesWorkflow {
     if (options.append) vm.empFollowupLoadingMore = true;
     else vm.empFollowupsLoading = !vm.empFollowupBookmarks.length || !!options.reset;
 
-    this.bookmarkService.getEmployeeBookmarkPage(vm.dashboardCode, vm.selectedEmployee.mobile, {
+    this.bookmarkService.getEmployeeBookmarkPage(vm.dashboardCode, vm.selectedEmployee._id, {
       page,
       pageSize: OPERATIONAL_PAGE_SIZE,
       paginated: true,
@@ -924,7 +924,7 @@ export class AdminEmployeesWorkflow {
 
   private mergeEmployeeHydratedLeads(existing: Lead[], incoming: Lead[]): Lead[] {
     const byKey = new Map<string, Lead>();
-    const pickKey = (lead: Lead) => lead._id || `${lead.assignedEmployeePhone || ''}:${lead.leadCompanyName || ''}:${lead.contactNumber || ''}`;
+    const pickKey = (lead: Lead) => lead._id || `${lead.assignedEmployeeId || ''}:${lead.leadCompanyName || ''}:${lead.contactNumber || ''}`;
     [...existing, ...incoming].forEach((lead) => {
       if (!lead) return;
       byKey.set(pickKey(lead), lead);
@@ -948,7 +948,7 @@ export class AdminEmployeesWorkflow {
     const byKey = new Map<string, Bookmark>();
     [...existing, ...incoming].forEach((bookmark) => {
       if (!bookmark) return;
-      const key = bookmark._id || `${bookmark.companyName || ''}:${bookmark.contactNumber || ''}:${bookmark.employeePhone || ''}`;
+      const key = bookmark._id || `${bookmark.companyName || ''}:${bookmark.contactNumber || ''}:${bookmark.employeeId || ''}`;
       byKey.set(key, bookmark);
     });
     return Array.from(byKey.values());

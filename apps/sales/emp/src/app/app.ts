@@ -26,7 +26,7 @@ interface Employee {
 interface Lead {
   _id: string;
   companyCode: string;
-  assignedEmployeePhone: string;
+  assignedEmployeeId: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;
@@ -46,7 +46,7 @@ interface Lead {
 interface Bookmark {
   _id: string;
   companyCode: string;
-  employeePhone: string;
+  employeeId: string;
   contactNumber: string;
   contactName: string;
   companyName: string;
@@ -69,7 +69,7 @@ interface InvoiceRecord {
   contactName: string;
   contactNumber: string;
   directorEmailAddress?: string;
-  employeePhone?: string;
+  employeeId?: string;
   employeeName?: string;
   total: number;
   invoiceDate: string;
@@ -575,7 +575,7 @@ export class App implements OnInit, OnDestroy {
     return {
       _id: matchingLead?._id || '',
       companyCode: bookmark.companyCode,
-      assignedEmployeePhone: bookmark.employeePhone,
+      assignedEmployeeId: bookmark.employeeId,
       leadCompanyName: bookmark.companyName,
       contactName: bookmark.contactName,
       contactNumber: bookmark.contactNumber,
@@ -1447,7 +1447,7 @@ export class App implements OnInit, OnDestroy {
     this.invoiceSaving = true;
     this.api.post<any>('/api/invoices', {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
       createdByName: this.employee.name,
@@ -1487,7 +1487,7 @@ export class App implements OnInit, OnDestroy {
     this.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
       createdByName: this.employee.name,
@@ -1525,7 +1525,7 @@ export class App implements OnInit, OnDestroy {
     this.invoiceRecordsLoading = true;
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
     });
     this.api.get<any>(`/api/invoices?${params.toString()}`).subscribe({
       next: (res) => {
@@ -1668,7 +1668,7 @@ export class App implements OnInit, OnDestroy {
     this.quotationRecordsLoading = true;
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
     });
     this.api.get<any>(`/api/quotations?${params.toString()}`).subscribe({
       next: (res) => {
@@ -1690,7 +1690,7 @@ export class App implements OnInit, OnDestroy {
     this.invoiceLead = {
       _id: record._id,
       companyCode: this.employee?.companyCode || '',
-      assignedEmployeePhone: this.employee?.mobile || '',
+      assignedEmployeeId: this.employee?._id || '',
       leadCompanyName: record.leadCompanyName,
       contactName: record.contactName,
       contactNumber: record.contactNumber,
@@ -1711,7 +1711,7 @@ export class App implements OnInit, OnDestroy {
     this.invoiceLead = {
       _id: record._id,
       companyCode: this.employee?.companyCode || '',
-      assignedEmployeePhone: this.employee?.mobile || '',
+      assignedEmployeeId: this.employee?._id || '',
       leadCompanyName: record.leadCompanyName,
       contactName: record.contactName,
       contactNumber: record.contactNumber,
@@ -2083,7 +2083,7 @@ export class App implements OnInit, OnDestroy {
 
     const body = {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       contactNumber: this.followupLead.contactNumber,
       contactName: this.followupLead.contactName,
       companyName: this.followupLead.leadCompanyName,
@@ -2262,7 +2262,7 @@ export class App implements OnInit, OnDestroy {
   // ── Dashboard Loader ──────────────────────────────────────────
   initRealtime(): void {
     if (!this.employee) return;
-    this.sse.connect(this.employee.companyCode, this.employee.mobile);
+    this.sse.connect(this.employee.companyCode, this.employee._id);
     this.sseSub = this.sse.events$.subscribe((ev: SSEEvent) => {
       this.handleRealtimeEvent(ev);
     });
@@ -2475,7 +2475,7 @@ export class App implements OnInit, OnDestroy {
   // ── Break Button Logic ──
   fetchBreakStatus(): void {
     if (!this.employee) return;
-    this.api.get<any>(`/api/breaklog/employee-today?companyCode=${this.employee.companyCode}&employeePhone=${this.employee.mobile}`).subscribe({
+    this.api.get<any>(`/api/breaklog/employee-today?companyCode=${this.employee.companyCode}&employeeId=${this.employee._id}`).subscribe({
       next: res => {
         if (res.success) {
           this.breakTotalSecondsToday = res.totalSeconds ?? 0;
@@ -2500,7 +2500,7 @@ export class App implements OnInit, OnDestroy {
       // Post to backend
       this.api.post<any>('/api/breaklog/mark', {
         companyCode: this.employee!.companyCode,
-        employeePhone: this.employee!.mobile,
+        employeeId: this.employee!._id,
         employeeName: this.employee!.name,
         durationSeconds: elapsedSec,
       }).subscribe({
@@ -2568,7 +2568,7 @@ export class App implements OnInit, OnDestroy {
     this.statsLoading = true;
     const { companyCode, mobile } = this.employee;
     this.api.get<any>(
-      `/api/calllogs/employee?companyCode=${companyCode}&phone=${mobile}&period=${this.selectedPeriod}`
+      `/api/calllogs/employee?companyCode=${companyCode}&employeeId=${this.employee._id}&period=${this.selectedPeriod}`
     ).subscribe({
       next: res => {
         this.statsLoading = false;
@@ -2588,7 +2588,7 @@ export class App implements OnInit, OnDestroy {
     if (!this.employee) return;
     const { companyCode, mobile } = this.employee;
     this.api.get<any>(
-      `/api/calllogs/timeline?companyCode=${companyCode}&phone=${mobile}&period=${this.selectedPeriod}`
+      `/api/calllogs/timeline?companyCode=${companyCode}&employeeId=${this.employee._id}&period=${this.selectedPeriod}`
     ).subscribe({
       next: res => {
         if (res.success) {
@@ -2849,7 +2849,7 @@ export class App implements OnInit, OnDestroy {
     const { companyCode, mobile } = this.employee;
     const dateToUse = date || this.historyFilterDate;
     console.log('[TodayCalls] Fetching for:', mobile, 'Date:', dateToUse);
-    const params = `companyCode=${companyCode}&phone=${mobile}&from=${dateToUse}&to=${dateToUse}`;
+    const params = `companyCode=${companyCode}&employeeId=${this.employee._id}&from=${dateToUse}&to=${dateToUse}`;
     this.api.get<any>(`/api/calllogs/details?${params}`)
       .subscribe({
         next: res => {
@@ -3251,8 +3251,8 @@ export class App implements OnInit, OnDestroy {
   fetchFollowups(): void {
     if (!this.employee) return;
     this.followupsLoading = true;
-    const { companyCode, phone } = { companyCode: this.employee.companyCode, phone: this.employee.mobile };
-    this.api.get<any>(`/api/bookmarks?companyCode=${companyCode}&phone=${phone}`)
+    const { companyCode, employeeId } = { companyCode: this.employee.companyCode, employeeId: this.employee._id };
+    this.api.get<any>(`/api/bookmarks?companyCode=${companyCode}&employeeId=${employeeId}`)
       .subscribe({
         next: res => {
           this.followupsLoading = false;
@@ -3391,7 +3391,7 @@ export class App implements OnInit, OnDestroy {
         ) || {
           _id: '',
           companyCode: bookmark.companyCode,
-          assignedEmployeePhone: bookmark.employeePhone,
+          assignedEmployeeId: bookmark.employeeId,
           leadCompanyName: bookmark.companyName,
           contactName: bookmark.contactName,
           contactNumber: bookmark.contactNumber,

@@ -7,7 +7,7 @@ export function mapFollowUpDto(dto: FollowUpDto): FollowUp {
     companyName: String(dto.companyName || ''),
     contactName: String(dto.contactName || ''),
     contactNumber: String(dto.contactNumber || ''),
-    employeePhone: String(dto.employeePhone || ''),
+    employeeId: String(dto.employeeId || ''),
     reminderDate: String(dto.reminderDate || ''),
     remarks: dto.remarks || [],
     lastInteraction: String(dto.updatedAt || dto.createdAt || ''),

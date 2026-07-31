@@ -15,7 +15,7 @@ const invoiceItemSchema = new mongoose.Schema({
 const invoiceSchema = new mongoose.Schema({
   companyCode: { type: String, required: true, index: true },
   clientId: { type: String, default: '', index: true },
-  employeePhone: { type: String, default: '', index: true },
+  employeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', index: true },
   employeeName: { type: String, default: '' },
   leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', default: null, index: true },
   leadCompanyName: { type: String, required: true },
@@ -32,12 +32,15 @@ const invoiceSchema = new mongoose.Schema({
   sgst: { type: Number, default: 0 },
   gstAmount: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
+  amountPaid: { type: Number, default: 0 },
+  balanceDue: { type: Number, default: 0 },
+  isInclusiveGst: { type: Boolean, default: false },
   invoiceDate: { type: Date, default: Date.now, index: true },
   dueDate: { type: Date, default: null },
   paymentStatus: { type: String, enum: ['paid', 'unpaid'], default: 'unpaid' },
   createdByRole: { type: String, enum: ['employee', 'admin'], default: 'employee' },
   createdByName: { type: String, default: '' },
-  createdByPhone: { type: String, default: '' },
+  createdById:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', default: null },
   companySnapshot: {
     name: { type: String, default: '' },
     logo: { type: String, default: '' },
@@ -67,7 +70,7 @@ const invoiceSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-invoiceSchema.index({ companyCode: 1, employeePhone: 1, invoiceDate: -1 });
+invoiceSchema.index({ companyCode: 1, employeeId: 1, invoiceDate: -1 });
 invoiceSchema.index({ companyCode: 1, invoiceDate: -1 });
 invoiceSchema.index({ companyCode: 1, leadCompanyName: 1 });
 invoiceSchema.index({ companyCode: 1, clientId: 1, invoiceDate: -1 });

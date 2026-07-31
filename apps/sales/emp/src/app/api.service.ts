@@ -7,7 +7,16 @@ import { environment } from '../environments/environment';
 export class ApiService {
   readonly baseUrl = this.resolveBaseUrl(environment.apiBaseUrl);
 
-  private jsonHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
+  private get headers(): HttpHeaders {
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    if (typeof localStorage !== 'undefined') {
+      const token = localStorage.getItem('tracecall_emp_token');
+      if (token) {
+        headers = headers.set('Authorization', `Bearer ${token}`);
+      }
+    }
+    return headers;
+  }
 
   constructor(private http: HttpClient) {}
 
@@ -32,31 +41,31 @@ export class ApiService {
 
   get<T>(path: string): Observable<T> {
     return this.http.get<T>(`${this.baseUrl}${path}`, {
-      headers: this.jsonHeaders,
+      headers: this.headers,
     });
   }
 
   post<T>(path: string, body: unknown): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}${path}`, body, {
-      headers: this.jsonHeaders,
+      headers: this.headers,
     });
   }
 
   patch<T>(path: string, body: unknown): Observable<T> {
     return this.http.patch<T>(`${this.baseUrl}${path}`, body, {
-      headers: this.jsonHeaders,
+      headers: this.headers,
     });
   }
 
   put<T>(path: string, body: unknown): Observable<T> {
     return this.http.put<T>(`${this.baseUrl}${path}`, body, {
-      headers: this.jsonHeaders,
+      headers: this.headers,
     });
   }
 
   delete<T>(path: string): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}${path}`, {
-      headers: this.jsonHeaders,
+      headers: this.headers,
     });
   }
 }

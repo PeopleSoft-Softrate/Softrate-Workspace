@@ -81,8 +81,8 @@ function clientPayloadFromLead(lead) {
   };
 }
 
-async function getNextSequence(companyCode, entity) {
-  const counter = await Counter.findOneAndUpdate(
+async function getNextSequence({ CounterModel }, companyCode, entity) {
+  const counter = await CounterModel.findOneAndUpdate(
     { companyCode, entity },
     { $inc: { seq: 1 } },
     { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -90,12 +90,12 @@ async function getNextSequence(companyCode, entity) {
   return counter.seq;
 }
 
-async function nextClientId(companyCode) {
-  const seq = await getNextSequence(companyCode, 'client');
+async function nextClientId({ CounterModel }, companyCode) {
+  const seq = await getNextSequence({ CounterModel }, companyCode, 'client');
   return `CL${999 + seq}`;
 }
 
-async function createClientPayload(payload, options = {}) {
+async function createClientPayload({ ClientModel, CounterModel }, payload, options = {}) {
   const companyCode = stringValue(payload.companyCode);
   const companyName = stringValue(payload.companyName || payload.leadCompanyName);
   if (!companyCode || !companyName) {
@@ -105,7 +105,7 @@ async function createClientPayload(payload, options = {}) {
   }
 
   const normalizedCompanyName = normalizeText(companyName);
-  const existing = await Client.findOne({ companyCode, normalizedCompanyName });
+  const existing = await ClientModel.findOne({ companyCode, normalizedCompanyName });
   if (existing) {
     if (options.mergeIfExists) {
       const addToSet = {};
@@ -125,7 +125,7 @@ async function createClientPayload(payload, options = {}) {
         },
       };
       if (Object.keys(addToSet).length) update.$addToSet = addToSet;
-      const merged = await Client.findByIdAndUpdate(existing._id, update, { new: true });
+      const merged = await ClientModel.findByIdAndUpdate(existing._id, update, { new: true });
       return { client: merged, created: false, duplicate: true };
     }
 
@@ -135,32 +135,45 @@ async function createClientPayload(payload, options = {}) {
     throw error;
   }
 
-  const client = await Client.create({
-    companyCode,
-    clientId: await nextClientId(companyCode),
-    companyName,
-    primaryContactName: stringValue(payload.primaryContactName || payload.contactName),
-    primaryPhone: stringValue(payload.primaryPhone || payload.contactNumber || payload.phone),
-    primaryEmail: stringValue(payload.primaryEmail || payload.email),
-    address: stringValue(payload.address),
-    description: stringValue(payload.description),
-    source: payload.source === 'converted_lead' ? 'converted_lead' : 'manual',
-    sourceLeadIds: (payload.sourceLeadIds || []).filter(Boolean),
-    assignedEmployeePhones: compact(payload.assignedEmployeePhones || [payload.employeePhone]),
-    onboardedByRole: ['employee', 'admin', 'system'].includes(payload.onboardedByRole) ? payload.onboardedByRole : 'system',
-    onboardedByName: stringValue(payload.onboardedByName),
-    onboardedByPhone: stringValue(payload.onboardedByPhone || payload.employeePhone),
-  });
+  let client;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      client = await ClientModel.create({
+        companyCode,
+        clientId: await nextClientId({ CounterModel }, companyCode),
+        companyName,
+        primaryContactName: stringValue(payload.primaryContactName || payload.contactName),
+        primaryPhone: stringValue(payload.primaryPhone || payload.contactNumber || payload.phone),
+        primaryEmail: stringValue(payload.primaryEmail || payload.email),
+        address: stringValue(payload.address),
+        description: stringValue(payload.description),
+        gstNumber: stringValue(payload.gstNumber).toUpperCase(),
+        source: payload.source === 'converted_lead' ? 'converted_lead' : 'manual',
+        sourceLeadIds: (payload.sourceLeadIds || []).filter(Boolean),
+        assignedEmployeePhones: compact(payload.assignedEmployeePhones || [payload.employeePhone]),
+        onboardedByRole: ['employee', 'admin', 'system'].includes(payload.onboardedByRole) ? payload.onboardedByRole : 'system',
+        onboardedByName: stringValue(payload.onboardedByName),
+        onboardedByPhone: stringValue(payload.onboardedByPhone || payload.employeePhone),
+      });
+      break;
+    } catch (err) {
+      if (err.code === 11000 && err.message.includes('clientId')) {
+        if (attempt === 9) throw err;
+        continue;
+      }
+      throw err;
+    }
+  }
 
   return { client, created: true, duplicate: false };
 }
 
-async function ensureClientForLead(leadOrId) {
+async function ensureClientForLead({ ClientModel, LeadModel, CounterModel }, leadOrId) {
   const lead = typeof leadOrId === 'string' || leadOrId instanceof mongoose.Types.ObjectId
-    ? await Lead.findById(leadOrId)
+    ? await LeadModel.findById(leadOrId)
     : leadOrId;
   if (!lead || !(await isConvertedStatus(lead.companyCode, lead.status))) return null;
-  const result = await createClientPayload(clientPayloadFromLead(lead), { mergeIfExists: true });
+  const result = await createClientPayload({ ClientModel, CounterModel }, clientPayloadFromLead(lead), { mergeIfExists: true });
 
   // Notify WE-CRM so it can add the entity to the client's account
   const targetCompanyCode = process.env.WE_CRM_ACCESS;
@@ -184,11 +197,11 @@ async function ensureClientForLead(leadOrId) {
   return result.client;
 }
 
-async function createManualClient(payload = {}) {
+async function createManualClient({ ClientModel, LeadModel, CounterModel }, payload = {}) {
   let sourceLead = null;
   const sourceLeadId = stringValue(payload.sourceLeadId || payload.leadId);
   if (sourceLeadId && mongoose.Types.ObjectId.isValid(sourceLeadId)) {
-    sourceLead = await Lead.findOne({
+    sourceLead = await LeadModel.findOne({
       _id: sourceLeadId,
       companyCode: stringValue(payload.companyCode),
       isArchived: { $ne: true },
@@ -201,7 +214,7 @@ async function createManualClient(payload = {}) {
     email = parts.find(p => p.includes('@')) || parts[0] || '';
   }
 
-  const result = await createClientPayload({
+  const result = await createClientPayload({ ClientModel, CounterModel }, {
     companyCode: payload.companyCode,
     companyName: payload.companyName || sourceLead?.leadCompanyName,
     primaryContactName: payload.primaryContactName || payload.contactName || sourceLead?.contactName,
@@ -283,7 +296,7 @@ async function notifyWeCrm(data) {
   });
 }
 
-async function listClients(query = {}) {
+async function listClients({ ClientModel }, query = {}) {
   const companyCode = stringValue(query.companyCode);
   if (!companyCode) {
     const error = new Error('companyCode is required.');
@@ -310,8 +323,8 @@ async function listClients(query = {}) {
   }
 
   const [total, clients] = await Promise.all([
-    Client.countDocuments(filter),
-    Client.find(filter)
+    ClientModel.countDocuments(filter),
+    ClientModel.find(filter)
       .sort({ updatedAt: -1, createdAt: -1, clientId: -1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
@@ -330,7 +343,7 @@ async function listClients(query = {}) {
   };
 }
 
-async function updateClient(clientId, payload = {}) {
+async function updateClient({ ClientModel }, clientId, payload = {}) {
   const id = stringValue(clientId);
   const companyCode = stringValue(payload.companyCode);
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
@@ -347,10 +360,10 @@ async function updateClient(clientId, payload = {}) {
   const filter = { _id: id, status: { $ne: 'Inactive' } };
   if (companyCode) filter.companyCode = companyCode;
 
-  let client = await Client.findOne(filter);
+  let client = await ClientModel.findOne(filter);
   if (!client && companyCode) {
     delete filter.companyCode;
-    client = await Client.findOne(filter);
+    client = await ClientModel.findOne(filter);
   }
   if (!client) {
     const error = new Error('Client not found.');
@@ -366,7 +379,7 @@ async function updateClient(clientId, payload = {}) {
       throw error;
     }
     const normalizedCompanyName = normalizeText(companyName);
-    const duplicate = await Client.findOne({
+    const duplicate = await ClientModel.findOne({
       _id: { $ne: client._id },
       companyCode,
       normalizedCompanyName,
@@ -390,9 +403,9 @@ async function updateClient(clientId, payload = {}) {
   return client;
 }
 
-async function getClientByClientId(companyCode, clientId) {
+async function getClientByClientId({ ClientModel }, companyCode, clientId) {
   if (!companyCode || !clientId) return null;
-  return Client.findOne({ companyCode: stringValue(companyCode), clientId: stringValue(clientId) });
+  return ClientModel.findOne({ companyCode: stringValue(companyCode), clientId: stringValue(clientId) });
 }
 
 module.exports = {

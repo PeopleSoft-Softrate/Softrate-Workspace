@@ -7,7 +7,7 @@ const FinancePayrollRun = require('../models/FinancePayrollRun');
 const FinanceTaxRecord = require('../models/FinanceTaxRecord');
 const FinanceBankEntry = require('../models/FinanceBankEntry');
 const FinanceSettings = require('../models/FinanceSettings');
-const { lifecycleStatusFor } = require('../../crm/services/amcService');
+const { lifecycleStatusFor } = require('../../crm/src/modules/amc/amcService');
 const { listEmployeeClaims } = require('./hrmsClaims.service');
 
 const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';

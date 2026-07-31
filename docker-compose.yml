@@ -17,6 +17,14 @@ services:
       - /opt/softrate-workspace/deploy/certbot/www:/var/www/certbot:ro
     command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     restart: unless-stopped
+    networks:
+      - default
+      - aistartupdoctor_default
+      - wealthempires_default
+      - hirepro_default
+      - inthack_default
+      - inthack_frontend_net
+      - authsoft_default
 
   certbot:
     image: certbot/certbot:latest
@@ -100,3 +108,18 @@ services:
 
 volumes:
   tickets_uploads:
+
+networks:
+  default: {}
+  aistartupdoctor_default:
+    external: true
+  wealthempires_default:
+    external: true
+  hirepro_default:
+    external: true
+  inthack_default:
+    external: true
+  inthack_frontend_net:
+    external: true
+  authsoft_default:
+    external: true

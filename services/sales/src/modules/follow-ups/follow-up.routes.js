@@ -1,9 +1,12 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Bookmark = require('../../../models/Bookmark');
 const eventBus = require('../../../services/eventBus');
 const { logChange } = require('../../../services/historyService');
 const { buildPageResponse, parsePageQuery } = require('../../common/pagination/pagination');
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
+router.use(companyMiddleware);
 
 function escapeRegex(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -43,9 +46,13 @@ function employeeBookmarkSort(reqQuery) {
 }
 
 function buildEmployeeBookmarkQuery(reqQuery) {
+  const rawId = String(reqQuery.employeeId || '').trim();
+  const employeeIdVal = (() => {
+    try { return mongoose.Types.ObjectId.isValid(rawId) ? new mongoose.Types.ObjectId(rawId) : rawId; } catch { return rawId; }
+  })();
   const query = {
     companyCode: String(reqQuery.companyCode || '').trim(),
-    employeePhone: String(reqQuery.phone || reqQuery.employeePhone || '').trim(),
+    employeeId: employeeIdVal,
   };
 
   const companyName = String(reqQuery.companyName || '').trim();
@@ -82,20 +89,21 @@ function buildEmployeeBookmarkQuery(reqQuery) {
 
 // POST — create or update a bookmark (Follow-up)
 router.post('/', async (req, res) => {
+  
   try {
     const { 
-      companyCode, employeePhone, contactNumber, contactName, companyName,
+      companyCode, employeeId, contactNumber, contactName, companyName,
       description, remark, newRemark, brochuresSent, techMeet, meetingRemarks, 
       quotationSent, proposalSent, whatsappGrp, 
       reminderDate 
     } = req.body;
 
-    if (!companyCode || !employeePhone || !contactNumber) {
-      return res.status(400).json({ success: false, message: 'companyCode, employeePhone and contactNumber are required.' });
+    if (!companyCode || !employeeId || !contactNumber) {
+      return res.status(400).json({ success: false, message: 'companyCode, employeeId and contactNumber are required.' });
     }
 
     // Check if a bookmark already exists for this contact and employee
-    let bookmark = await Bookmark.findOne({ companyCode, contactNumber });
+    let bookmark = await req.models.Bookmark.findOne({ companyCode, contactNumber });
 
     const activeRemark = newRemark || remark;
 
@@ -116,25 +124,25 @@ router.post('/', async (req, res) => {
         updateData.remarks = [...(bookmark.remarks || []), activeRemark];
       }
 
-      bookmark = await Bookmark.findByIdAndUpdate(bookmark._id, { $set: updateData }, { returnDocument: 'after' });
-      eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeePhone, { type: 'BOOKMARK_UPDATED', bookmark });
+      bookmark = await req.models.Bookmark.findByIdAndUpdate(bookmark._id, { $set: updateData }, { returnDocument: 'after' });
+      eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_UPDATED', bookmark });
 
       // Log History
-      await logChange({
+      await logChange({ HistoryModel: History,
         companyCode: bookmark.companyCode,
         contactNumber: bookmark.contactNumber,
         companyName: bookmark.companyName,
         action: 'Follow-up Updated',
         details: activeRemark ? `New Remark: ${activeRemark}` : 'Follow-up details changed',
-        changedBy: bookmark.employeePhone
+        changedBy: bookmark.employeeId
       });
     } else {
       // Create new
       const initialRemarks = [];
       if (activeRemark) initialRemarks.push(activeRemark);
 
-      bookmark = await Bookmark.create({
-        companyCode, employeePhone, contactNumber,
+      bookmark = await req.models.Bookmark.create({
+        companyCode, employeeId, contactNumber,
         contactName: contactName || '',
         companyName: companyName || '',
         description: description || activeRemark || '',
@@ -147,17 +155,17 @@ router.post('/', async (req, res) => {
         whatsappGrp: !!whatsappGrp,
         reminderDate: reminderDate || null,
       });
-      eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeePhone, { type: 'BOOKMARK_CREATED', bookmark });
+      eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_CREATED', bookmark });
 
       // Log History
-      await logChange({
+      await logChange({ HistoryModel: History,
         companyCode: bookmark.companyCode,
         contactNumber: bookmark.contactNumber,
         contactName: bookmark.contactName,
         companyName: bookmark.companyName,
         action: 'Bookmarked',
         details: activeRemark ? `Initial Remark: ${activeRemark}` : 'Added to follow-ups',
-        changedBy: bookmark.employeePhone
+        changedBy: bookmark.employeeId
       });
     }
 
@@ -170,6 +178,7 @@ router.post('/', async (req, res) => {
 
 // GET — fetch all bookmarks for a company (Admin view)
 router.get('/admin', async (req, res) => {
+  
   try {
     const { companyCode, paginated, search, filter, reminderDate } = req.query;
     if (!companyCode) {
@@ -199,7 +208,7 @@ router.get('/admin', async (req, res) => {
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
       const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 40, 1), 100);
 
-      const companies = await Bookmark.aggregate([
+      const companies = await req.models.Bookmark.aggregate([
         { $match: query },
         { $group: { _id: { $ifNull: ['$companyName', 'Unnamed Company'] }, count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
@@ -240,7 +249,7 @@ router.get('/admin', async (req, res) => {
       }
 
       const bookmarks = companyFilters.length
-        ? await Bookmark.find(bookmarkQuery).sort({ companyName: 1, reminderDate: 1 }).lean()
+        ? await req.models.Bookmark.find(bookmarkQuery).sort({ companyName: 1, reminderDate: 1 }).lean()
         : [];
 
       return res.status(200).json({
@@ -254,7 +263,7 @@ router.get('/admin', async (req, res) => {
       });
     }
 
-    const bookmarks = await Bookmark.find(query).sort({ reminderDate: 1 });
+    const bookmarks = await req.models.Bookmark.find(query).sort({ reminderDate: 1 });
     return res.status(200).json({ success: true, bookmarks });
   } catch (err) {
     console.error('[get admin bookmarks]', err);
@@ -264,11 +273,12 @@ router.get('/admin', async (req, res) => {
 
 // GET — fetch all bookmarks for an employee
 router.get('/', async (req, res) => {
+  
   try {
     const { companyCode } = req.query;
-    const phone = req.query.phone || req.query.employeePhone;
-    if (!companyCode || !phone) {
-      return res.status(400).json({ success: false, message: 'companyCode and phone are required.' });
+    const employeeId = req.query.employeeId;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
     const query = buildEmployeeBookmarkQuery(req.query);
@@ -276,13 +286,13 @@ router.get('/', async (req, res) => {
     const sort = employeeBookmarkSort(req.query);
 
     if (!pagination.isPaginated) {
-      const bookmarks = await Bookmark.find(query).sort(sort).lean();
+      const bookmarks = await req.models.Bookmark.find(query).sort(sort).lean();
       return res.status(200).json({ success: true, bookmarks, items: bookmarks });
     }
 
     const [total, bookmarks] = await Promise.all([
-      Bookmark.countDocuments(query),
-      Bookmark.find(query)
+      req.models.Bookmark.countDocuments(query),
+      req.models.Bookmark.find(query)
         .sort(sort)
         .skip(pagination.skip)
         .limit(pagination.pageSize)
@@ -308,10 +318,11 @@ router.get('/', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
+  
   try {
-    const bookmark = await Bookmark.findByIdAndDelete(req.params.id);
+    const bookmark = await req.models.Bookmark.findByIdAndDelete(req.params.id);
     if (bookmark) {
-      eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeePhone, { type: 'BOOKMARK_DELETED', id: req.params.id });
+      eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_DELETED', id: req.params.id });
     }
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -322,6 +333,7 @@ router.delete('/:id', async (req, res) => {
 
 // PATCH — update a bookmark by ID
 router.patch('/:id', async (req, res) => {
+  
   try {
     const { 
       description, remark, newRemark, reminderDate, remarks,
@@ -347,7 +359,7 @@ router.patch('/:id', async (req, res) => {
       if (finalRemarks) {
         finalRemarks.push(activeNewRemark);
       } else {
-        const existing = await Bookmark.findById(req.params.id);
+        const existing = await req.models.Bookmark.findById(req.params.id);
         if (existing) {
           finalRemarks = [...(existing.remarks || []), activeNewRemark];
         }
@@ -358,24 +370,24 @@ router.patch('/:id', async (req, res) => {
       updateData.remarks = finalRemarks;
     }
 
-    const bookmark = await Bookmark.findByIdAndUpdate(
+    const bookmark = await req.models.Bookmark.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
       { returnDocument: 'after' }
     );
 
     if (!bookmark) return res.status(404).json({ success: false, message: 'Bookmark not found.' });
-    eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeePhone, { type: 'BOOKMARK_UPDATED', bookmark });
+    eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_UPDATED', bookmark });
 
     // Log History
-    await logChange({
+    await logChange({ HistoryModel: History,
       companyCode: bookmark.companyCode,
       contactNumber: bookmark.contactNumber,
       contactName: bookmark.contactName,
       companyName: bookmark.companyName,
       action: 'Follow-up Updated',
       details: activeNewRemark ? `New Remark: ${activeNewRemark}` : 'Follow-up details patched',
-      changedBy: bookmark.employeePhone
+      changedBy: bookmark.employeeId
     });
 
     return res.status(200).json({ success: true, bookmark });
@@ -387,6 +399,7 @@ router.patch('/:id', async (req, res) => {
 
 // POST — bulk create or update bookmarks
 router.post('/bulk', async (req, res) => {
+  
   try {
     const { bookmarks } = req.body;
     if (!bookmarks || !Array.isArray(bookmarks)) {
@@ -395,8 +408,8 @@ router.post('/bulk', async (req, res) => {
 
     const results = [];
     for (const b of bookmarks) {
-      const { companyCode, contactNumber, employeePhone } = b;
-      if (!companyCode || !contactNumber || !employeePhone) continue;
+      const { companyCode, contactNumber, employeeId } = b;
+      if (!companyCode || !contactNumber || !employeeId) continue;
 
       if (b.reminderDate) {
         const parsedDate = new Date(b.reminderDate);
@@ -407,7 +420,7 @@ router.post('/bulk', async (req, res) => {
         }
       }
 
-      let existing = await Bookmark.findOne({ companyCode, contactNumber });
+      let existing = await req.models.Bookmark.findOne({ companyCode, contactNumber });
       if (existing) {
         // Merge remarks and update other fields
         const newRemarks = [...(existing.remarks || []), ...(b.remarks || [])];
@@ -415,22 +428,22 @@ router.post('/bulk', async (req, res) => {
           ...b,
           remarks: Array.from(new Set(newRemarks)) // dedupe if needed
         };
-        const updated = await Bookmark.findByIdAndUpdate(existing._id, { $set: updateData }, { returnDocument: 'after' });
+        const updated = await req.models.Bookmark.findByIdAndUpdate(existing._id, { $set: updateData }, { returnDocument: 'after' });
         results.push(updated);
-        eventBus.emitToEmployee(updated.companyCode, updated.employeePhone, { type: 'BOOKMARK_UPDATED', bookmark: updated });
+        eventBus.emitToEmployee(updated.companyCode, updated.employeeId, { type: 'BOOKMARK_UPDATED', bookmark: updated });
       } else {
-        const created = await Bookmark.create(b);
+        const created = await req.models.Bookmark.create(b);
         results.push(created);
-        eventBus.emitToEmployee(created.companyCode, created.employeePhone, { type: 'BOOKMARK_CREATED', bookmark: created });
+        eventBus.emitToEmployee(created.companyCode, created.employeeId, { type: 'BOOKMARK_CREATED', bookmark: created });
 
         // Log History
-        logChange({
+        logChange({ HistoryModel: History,
           companyCode: created.companyCode,
           contactNumber: created.contactNumber,
           contactName: created.contactName,
           companyName: created.companyName,
           action: 'Bookmarked (Bulk)',
-          changedBy: created.employeePhone
+          changedBy: created.employeeId
         }).catch(err => console.error('[history bookmark bulk error]:', err));
       }
     }

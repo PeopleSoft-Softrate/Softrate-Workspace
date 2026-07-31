@@ -146,8 +146,16 @@
                   <strong>{{ formatMoney(current.sgst) }}</strong>
                 </div>
                 <div class="summary-line grand-total-line">
-                  <span>Total</span>
+                  <span>Total <small *ngIf="current.isInclusiveGst" style="font-weight: normal; color: #64748b;">(Inclusive of GST)</small></span>
                   <strong class="grand-total-val">{{ formatMoney(current.total) }}</strong>
+                </div>
+                <div class="summary-line" *ngIf="(current.amountPaid || 0) > 0">
+                  <span>Amount Paid</span>
+                  <strong>{{ formatMoney(current.amountPaid) }}</strong>
+                </div>
+                <div class="summary-line" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #e2e8f0;" *ngIf="(current.balanceDue || ((current.total || 0) - (current.amountPaid || 0))) > 0">
+                  <span>Balance Due</span>
+                  <strong style="color: #ef4444;">{{ formatMoney(current.balanceDue || ((current.total || 0) - (current.amountPaid || 0))) }}</strong>
                 </div>
               </td>
             </tr>
@@ -161,7 +169,7 @@
       </div>
 
       <!-- HSN SECONDARY BREAKDOWN TABLE -->
-      <div class="gst-breakdown-section">
+      <div class="gst-breakdown-section" *ngIf="statusLabel(current) === 'Paid' && (current.gstPercentage || 0) > 0 && clientGstNumber(current)">
         <table class="gst-breakdown-table">
           <thead>
             <tr>

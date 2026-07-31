@@ -538,6 +538,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
   invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
+  invoiceAmountPaid = 0;
+  invoiceIsInclusiveGst = false;
   currentQuotationNumber = '';
   quotationKindNoteDraft = DEFAULT_QUOTATION_KIND_NOTE;
   showGstSelectionModal = false;
@@ -848,7 +850,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   newProductRemarkInput: string = '';
 
   // ── Break Notifications (admin) ───────────────────────────────
-  breakOverLimitEmps: { employeePhone: string; employeeName: string; totalSeconds: number; limitSeconds: number }[] = [];
+  breakOverLimitEmps: { employeeId: string; employeeName: string; totalSeconds: number; limitSeconds: number }[] = [];
   breakNotifCount = 0;
   showBreakNotifPanel = false;
   private breakPollInterval: any;
@@ -1071,7 +1073,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     clientId: '',
     clientCompanyName: '',
     projectManagerName: '',
-    projectManagerPhone: '',
+    projectManagerId: '',
     projectManagerEmail: '',
     status: 'Assigned',
     notes: '',
@@ -1767,7 +1769,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   empMapCache: { [phone: string]: string } | null = null;
   lastEmployeesRef: any[] | null = null;
 
-  getEmployeeName(phone: string): string {
+  getEmployeeName(employeeId: string): string {
     if (this.lastEmployeesRef !== this.employees) {
       this.empMapCache = {};
       for (const e of this.employees) {
@@ -1777,7 +1779,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       }
       this.lastEmployeesRef = this.employees;
     }
-    return this.empMapCache![phone] || phone;
+    return this.empMapCache![employeeId] || employeeId;
   }
 
   fmtDate(d: string | undefined | null): string {
@@ -3514,7 +3516,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     };
   }
 
-  get crmProjectManagerOptions(): Array<{ name: string; mobile: string; email?: string }> {
+  get crmProjectManagerOptions(): Array<{ name: string; mobile: string; email?: string; _id?: string }> {
     const employeeManagers = this.employees
       .map((employee) => ({
         name: String(employee.name || this.crmManagerName(employee.mobile) || '').trim(),
@@ -3563,7 +3565,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         project.clientId,
         project.clientStatus,
         project.projectManagerName,
-        project.projectManagerPhone,
+        project.projectManagerId,
         project.projectManagerEmail,
         project.status,
         project.notes,
@@ -3584,7 +3586,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     return clients.slice(0, 80);
   }
 
-  get filteredCrmProjectManagers(): Array<{ name: string; mobile: string; email?: string }> {
+  get filteredCrmProjectManagers(): Array<{ name: string; mobile: string; email?: string; _id?: string }> {
     const query = this.crmProjectManagerSearch.trim().toLowerCase();
     const managers = query
       ? this.crmProjectManagerOptions.filter((manager) => [
@@ -3600,7 +3602,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this.crmClients.find((client) => client.clientId === this.selectedCrmProjectClientId) || null;
   }
 
-  get selectedCrmProjectManager(): { name: string; mobile: string; email?: string } | null {
+  get selectedCrmProjectManager(): { name: string; mobile: string; email?: string; _id?: string } | null {
     return this.crmProjectManagerOptions.find((manager) => this.crmProjectManagerKey(manager) === this.selectedCrmProjectManagerKey) || null;
   }
 
@@ -3619,7 +3621,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       clientId: '',
       clientCompanyName: '',
       projectManagerName: '',
-      projectManagerPhone: '',
+      projectManagerId: '',
       projectManagerEmail: '',
       status: 'Assigned',
       notes: '',
@@ -3646,10 +3648,10 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.crmProjectDraft.clientCompanyName = client.companyName;
   }
 
-  selectCrmProjectManagerForMapping(manager: { name: string; mobile: string; email?: string }): void {
+  selectCrmProjectManagerForMapping(manager: { name: string; mobile: string; email?: string; _id?: string }): void {
     this.selectedCrmProjectManagerKey = this.crmProjectManagerKey(manager);
     this.crmProjectDraft.projectManagerName = manager.name;
-    this.crmProjectDraft.projectManagerPhone = manager.mobile;
+    this.crmProjectDraft.projectManagerId = manager._id || '';
     this.crmProjectDraft.projectManagerEmail = manager.email || '';
   }
 
@@ -3657,7 +3659,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const manager = this.crmProjectManagerOptions.find((item) => item.mobile === phone);
     if (!manager) return;
     this.crmProjectDraft.projectManagerName = manager.name;
-    this.crmProjectDraft.projectManagerPhone = manager.mobile;
+    this.crmProjectDraft.projectManagerId = manager._id || '';
     this.crmProjectDraft.projectManagerEmail = manager.email || '';
   }
 
@@ -3672,7 +3674,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       clientCompanyName: this.crmProjectDraft.clientCompanyName,
       clientStatus: client?.status || 'Onboarded',
       projectManagerName: this.crmProjectDraft.projectManagerName,
-      projectManagerPhone: this.crmProjectDraft.projectManagerPhone,
+      projectManagerId: this.crmProjectDraft.projectManagerId,
       projectManagerEmail: this.crmProjectDraft.projectManagerEmail,
       status: this.crmProjectDraft.status,
       notes: this.crmProjectDraft.notes,
@@ -3686,7 +3688,7 @@ export abstract class AdminWorkspaceController implements OnInit {
           clientId: '',
           clientCompanyName: '',
           projectManagerName: '',
-          projectManagerPhone: '',
+          projectManagerId: '',
           projectManagerEmail: '',
           status: 'Assigned',
           notes: '',
@@ -5079,6 +5081,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   get invoiceSgstAmount(): number { return this.invoiceQuotationWorkflow.invoiceSgstAmount(this); }
 
   get invoiceTotal(): number { return this.invoiceQuotationWorkflow.invoiceTotal(this); }
+  get invoiceAmountReceived(): number { return this.invoiceQuotationWorkflow.invoiceAmountReceived(this); }
+  get invoiceBalanceDue(): number { return this.invoiceQuotationWorkflow.invoiceBalanceDue(this); }
 
   invoiceItemTaxable(item: { price: number; quantity: number }): number { return this.invoiceQuotationWorkflow.invoiceItemTaxable(this, item); }
 
@@ -5087,6 +5091,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceItemTotal(item: { price: number; quantity: number }): number { return this.invoiceQuotationWorkflow.invoiceItemTotal(this, item); }
 
   invoiceNumber(): string { return this.invoiceQuotationWorkflow.invoiceNumber(this); }
+
+  invoiceClientGstNumber(): string { return this.invoiceQuotationWorkflow.invoiceClientGstNumber(this); }
 
   invoiceCompanyDisplayName(): string { return this.invoiceQuotationWorkflow.invoiceCompanyDisplayName(this); }
 
@@ -5809,7 +5815,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const sourceLead = this.companyFullFollowupLead() || this.companyFullViewLead();
     const currentBookmark = this.companyFullPrimaryFollowup();
     const companyCode = String(sourceLead?.companyCode || this.dashboardCode || '').trim();
-    const employeePhone = String(currentBookmark?.employeePhone || sourceLead?.assignedEmployeePhone || '').trim();
+    const employeeId = String(currentBookmark?.employeeId || sourceLead?.assignedEmployeeId || '').trim();
     const companyName = this.companyFullCompanyName();
 
     if (!sourceLead || !companyCode || !companyName || this.companyFullFollowupSaving) return;
@@ -5841,7 +5847,7 @@ export abstract class AdminWorkspaceController implements OnInit {
           bookmarks: [{
             ...payload,
             companyCode,
-            employeePhone,
+            employeeId,
             contactNumber: sourceLead.contactNumber || '',
             contactName: sourceLead.contactName || 'Primary Contact',
             companyName,
@@ -6151,7 +6157,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       .map((item) => ({
         _id: String(item?._id || ''),
         companyCode: String(item?.companyCode || this.dashboardCode || '').trim(),
-        employeePhone: String(item?.employeePhone || '').trim(),
+        employeeId: String(item?.employeeId || '').trim(),
         contactNumber: this.cleanPhoneDisplay(String(item?.contactNumber || '').trim()),
         contactName: String(item?.contactName || '').trim(),
         companyName: String(item?.companyName || companyName || '').trim(),
@@ -6450,7 +6456,7 @@ export abstract class AdminWorkspaceController implements OnInit {
           (lead.directorEmailAddress?.toLowerCase().includes(q)) ||
           (remarks.some(r => r.toLowerCase().includes(q)));
         const matchesEmployee = !this.leadEmployeeFilter ||
-          lead.assignedEmployeePhone === this.leadEmployeeFilter;
+          lead.assignedEmployeeId === this.leadEmployeeFilter;
         const matchesStatus = !this.adminLeadStatusFilter ||
           (lead.status || 'New') === this.adminLeadStatusFilter;
         return matchesSearch && matchesEmployee && matchesStatus;
@@ -6470,7 +6476,7 @@ export abstract class AdminWorkspaceController implements OnInit {
           (remarks.some(r => r.toLowerCase().includes(q)));
 
         const matchesEmployee = !this.leadEmployeeFilter ||
-          lead.assignedEmployeePhone === this.leadEmployeeFilter;
+          lead.assignedEmployeeId === this.leadEmployeeFilter;
 
         return matchesSearch && matchesEmployee;
       });
@@ -6847,7 +6853,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       .filter(l => {
         const companyMatches = l.leadCompanyName === this.selectedLeadCompany;
         const statusMatches = !this.adminLeadStatusFilter || (l.status || 'New') === this.adminLeadStatusFilter;
-        const employeeMatches = !this.leadEmployeeFilter || l.assignedEmployeePhone === this.leadEmployeeFilter;
+        const employeeMatches = !this.leadEmployeeFilter || l.assignedEmployeeId === this.leadEmployeeFilter;
         const q = this.leadSearchQuery.toLowerCase();
         const remarks: string[] = Array.isArray(l.remarks) ? l.remarks : [];
         const searchMatches = !this.leadSearchQuery ||
@@ -6993,11 +6999,11 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   deleteBookmark(id: string): void { return this.adminFollowupsWorkflow.deleteBookmark(this, id); }
 
-  getEmployeeInteractionCount(mobile: string): number {
+  getEmployeeInteractionCount(employeeId: string): number {
     // For employees, we'll still show the manually logged interactions for now
     // as their call stats are already shown in other columns.
     return this.allBookmarks
-      .filter(bm => bm.employeePhone === mobile)
+      .filter(bm => bm.employeeId === employeeId)
       .reduce((sum, bm) => sum + (bm.remarks?.length || 0), 0);
   }
 
@@ -7028,7 +7034,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
     const payload: Partial<Lead> = {
       companyCode: this.dashboardCode,
-      assignedEmployeePhone: this.selectedEmployee!.mobile,
+      assignedEmployeeId: this.selectedEmployee!._id!,
       leadCompanyName: this.newSingleLead.leadCompanyName.trim(),
       contactName: contactName,
       contactNumber: this.newSingleLead.contactNumber.trim(),
@@ -7176,7 +7182,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
         mappedLeads.push({
           companyCode: this.dashboardCode,
-          assignedEmployeePhone: this.selectedEmployee!.mobile,
+          assignedEmployeeId: this.selectedEmployee!._id!,
           contactNumber,
           leadCompanyName,
           contactName,
@@ -7243,7 +7249,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   deleteCurrentLeadSet(): void {
     if (!this.selectedLeadSet) return;
     if (confirm(`Are you sure you want to delete ALL leads in the set "${this.selectedLeadSet}" for this employee?`)) {
-      this.leadService.deleteLeadSet(this.dashboardCode, this.selectedEmployee!.mobile, this.selectedLeadSet).subscribe({
+      this.leadService.deleteLeadSet(this.dashboardCode, this.selectedEmployee!._id!, this.selectedLeadSet).subscribe({
         next: (res: any) => {
           if (res.success) {
             this.selectedLeadSet = '';

@@ -1,7 +1,10 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const BreakLog = require('../../../models/BreakLog');
 const User = require('../../../models/User');
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
+router.use(companyMiddleware);
 
 // Helper — today's date string in IST (YYYY-MM-DD)
 function todayIST() {
@@ -10,16 +13,23 @@ function todayIST() {
   return ist.toISOString().slice(0, 10);
 }
 
+function toObjectId(id) {
+  if (!id) return id;
+  try {
+    return mongoose.Types.ObjectId.isValid(String(id)) ? new mongoose.Types.ObjectId(String(id)) : id;
+  } catch { return id; }
+}
+
 /* ─────────────────────────────────────────────
    POST /api/breaklog/mark
    Employee hits "Break" button — adds a break entry for today.
-   Body: { companyCode, employeePhone, employeeName, durationSeconds }
-───────────────────────────────────────────── */
+   Body: { companyCode, employeeId, employeeName, durationSeconds }
+─────────────────────────────────────────────── */
 router.post('/mark', async (req, res) => {
   try {
-    const { companyCode, employeePhone, employeeName, durationSeconds } = req.body;
-    if (!companyCode || !employeePhone || durationSeconds === undefined) {
-      return res.status(400).json({ success: false, message: 'companyCode, employeePhone, durationSeconds required.' });
+    const { companyCode, employeeId, employeeName, durationSeconds } = req.body;
+    if (!companyCode || !employeeId || durationSeconds === undefined) {
+      return res.status(400).json({ success: false, message: 'companyCode, employeeId, durationSeconds required.' });
     }
 
     const dur = Number(durationSeconds);
@@ -28,14 +38,15 @@ router.post('/mark', async (req, res) => {
     }
 
     const date = todayIST();
+    const empId = toObjectId(employeeId);
 
     // Upsert: find today's record or create it; push new break entry and update total
-    const log = await BreakLog.findOneAndUpdate(
-      { companyCode, employeePhone, date },
+    const log = await req.models.BreakLog.findOneAndUpdate(
+      { companyCode, employeeId: empId, date },
       {
         $push: { breaks: { startedAt: new Date(), durationSeconds: dur } },
         $inc:  { totalSeconds: dur },
-        $setOnInsert: { employeeName: employeeName || employeePhone },
+        $setOnInsert: { employeeName: employeeName || String(employeeId) },
       },
       { upsert: true, returnDocument: 'after' }
     );
@@ -64,21 +75,21 @@ router.post('/mark', async (req, res) => {
 /* ─────────────────────────────────────────────
    GET /api/breaklog/today?companyCode=XXX
    Admin: get today's break summary for all employees.
-───────────────────────────────────────────── */
+─────────────────────────────────────────────── */
 router.get('/today', async (req, res) => {
   try {
     const { companyCode } = req.query;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
 
     const date = todayIST();
-    const logs = await BreakLog.find({ companyCode, date }).sort({ totalSeconds: -1 });
+    const logs = await req.models.BreakLog.find({ companyCode, date }).sort({ totalSeconds: -1 });
 
     const company = await User.findOne({ companyCode }, 'breakHourLimit');
     const limitMin = company?.breakHourLimit ?? 60;
     const limitSec = limitMin * 60;
 
     const overLimit = logs.filter(l => l.totalSeconds > limitSec).map(l => ({
-      employeePhone: l.employeePhone,
+      employeeId: l.employeeId,
       employeeName: l.employeeName,
       totalSeconds: l.totalSeconds,
       limitSeconds: limitSec,
@@ -92,17 +103,18 @@ router.get('/today', async (req, res) => {
 });
 
 /* ─────────────────────────────────────────────
-   GET /api/breaklog/employee-today?companyCode=XXX&employeePhone=YYY
+   GET /api/breaklog/employee-today?companyCode=XXX&employeeId=YYY
    Employee: get own today's break total.
-───────────────────────────────────────────── */
+─────────────────────────────────────────────── */
 router.get('/employee-today', async (req, res) => {
   try {
-    const { companyCode, employeePhone } = req.query;
-    if (!companyCode || !employeePhone) {
-      return res.status(400).json({ success: false, message: 'companyCode and employeePhone required.' });
+    const { companyCode, employeeId } = req.query;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId required.' });
     }
     const date = todayIST();
-    const log = await BreakLog.findOne({ companyCode, employeePhone, date });
+    const empId = toObjectId(employeeId);
+    const log = await req.models.BreakLog.findOne({ companyCode, employeeId: empId, date });
     const company = await User.findOne({ companyCode }, 'breakHourLimit');
     const limitMin = company?.breakHourLimit ?? 60;
     const limitSec = limitMin * 60;

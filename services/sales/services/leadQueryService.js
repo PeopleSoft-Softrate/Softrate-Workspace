@@ -1,4 +1,5 @@
-const Lead = require('../models/Lead');
+// Removed global Lead require
+const mongoose = require('mongoose');
 const { normalizePhone, normalizeText } = require('./leadNormalization');
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -30,14 +31,20 @@ function parsePagination(query) {
   };
 }
 
-function buildBaseLeadQuery({ companyCode, phone, query = {} }) {
+function buildBaseLeadQuery({ companyCode, employeeId, query = {} }) {
   const mongoQuery = {
     companyCode,
     isArchived: { $ne: true },
   };
 
-  if (phone) {
-    mongoQuery.assignedEmployeePhone = phone;
+  if (employeeId) {
+    try {
+      mongoQuery.assignedEmployeeId = mongoose.Types.ObjectId.isValid(String(employeeId))
+        ? new mongoose.Types.ObjectId(String(employeeId))
+        : employeeId;
+    } catch {
+      mongoQuery.assignedEmployeeId = employeeId;
+    }
   }
 
   const setLabel = normalizeText(query.setLabel);
@@ -93,8 +100,8 @@ function buildBaseLeadQuery({ companyCode, phone, query = {} }) {
   return mongoQuery;
 }
 
-function buildLeadSearchQuery({ companyCode, phone, query = {} }) {
-  const mongoQuery = buildBaseLeadQuery({ companyCode, phone, query });
+function buildLeadSearchQuery({ companyCode, employeeId, query = {} }) {
+  const mongoQuery = buildBaseLeadQuery({ companyCode, employeeId, query });
   const search = String(query.search ?? query.remark ?? '').trim();
   const searchMode = String(query.searchMode ?? '').trim().toLowerCase();
   const normalizedSearch = normalizeText(search);
@@ -194,9 +201,9 @@ function buildLeadSort(sortKey) {
   return sortMap[sortKey] || sortMap.sheetOrder_asc;
 }
 
-async function getLeadDivisions({ companyCode, phone, query = {} }) {
-  const mongoQuery = buildBaseLeadQuery({ companyCode, phone, query });
-  const rows = await Lead.aggregate([
+async function getLeadDivisions({ LeadModel, companyCode, employeeId, query = {} }) {
+  const mongoQuery = buildBaseLeadQuery({ companyCode, employeeId, query });
+  const rows = await LeadModel.aggregate([
     { $match: mongoQuery },
     { $match: { mainDivisionDescription: { $nin: ['', null] } } },
     { $group: { _id: '$mainDivisionDescription', count: { $sum: 1 } } },
@@ -209,9 +216,9 @@ async function getLeadDivisions({ companyCode, phone, query = {} }) {
   };
 }
 
-async function getLeadSets({ companyCode, phone, query = {} }) {
-  const mongoQuery = buildBaseLeadQuery({ companyCode, phone, query });
-  const rows = await Lead.aggregate([
+async function getLeadSets({ LeadModel, companyCode, employeeId, query = {} }) {
+  const mongoQuery = buildBaseLeadQuery({ companyCode, employeeId, query });
+  const rows = await LeadModel.aggregate([
     { $match: mongoQuery },
     { $match: { setLabelLower: { $ne: '' } } },
     { $group: { _id: '$setLabel', count: { $sum: 1 } } },
@@ -224,8 +231,8 @@ async function getLeadSets({ companyCode, phone, query = {} }) {
   };
 }
 
-async function getLeadCompanies({ companyCode, phone, query = {} }) {
-  const { mongoQuery } = buildLeadSearchQuery({ companyCode, phone, query });
+async function getLeadCompanies({ LeadModel, companyCode, employeeId, query = {} }) {
+  const { mongoQuery } = buildLeadSearchQuery({ companyCode, employeeId, query });
   const pagination = parsePagination(query);
   const pipeline = [
     { $match: mongoQuery },
@@ -241,8 +248,8 @@ async function getLeadCompanies({ companyCode, phone, query = {} }) {
   ];
 
   const [totalRows, rows] = await Promise.all([
-    Lead.aggregate([...pipeline, { $count: 'total' }]),
-    Lead.aggregate([
+    LeadModel.aggregate([...pipeline, { $count: 'total' }]),
+    LeadModel.aggregate([
       ...pipeline,
       ...(pagination.isPaginated ? [{ $skip: pagination.skip }, { $limit: pagination.pageSize }] : []),
     ]),
@@ -255,7 +262,7 @@ async function getLeadCompanies({ companyCode, phone, query = {} }) {
 
   if (query.includeContacts === 'true' && names.length) {
     const contactPageSize = Math.min(parsePositiveInt(query.contactPageSize, pagination.pageSize), MAX_PAGE_SIZE);
-    const contacts = await Lead.find({
+    const contacts = await LeadModel.find({
       ...mongoQuery,
       leadCompanyName: { $in: names },
     })

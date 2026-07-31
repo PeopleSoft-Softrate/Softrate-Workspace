@@ -8,7 +8,9 @@ const { getClientByClientId, ensureClientForLead, mapClient } = require('../../.
 const { normalizeText } = require('../../../services/leadNormalization');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
 
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
+router.use(companyMiddleware);
 
 function normalize(value) {
   return String(value || '').trim();
@@ -76,6 +78,9 @@ function serializeInvoice(invoice, req, publicOnly = false) {
     sgst: Number(serialized.sgst || 0),
     gstAmount: Number(serialized.gstAmount || 0),
     total: Number(serialized.total || 0),
+    amountPaid: Number(serialized.amountPaid || 0),
+    balanceDue: Number(serialized.balanceDue || 0),
+    isInclusiveGst: Boolean(serialized.isInclusiveGst),
     invoiceDate: serialized.invoiceDate || serialized.createdAt || null,
     dueDate: serialized.dueDate || null,
     paymentStatus: serialized.paymentStatus || 'unpaid',
@@ -113,8 +118,8 @@ async function ensurePublicTokens(invoices) {
     };
   });
 
-  await Invoice.bulkWrite(operations, { ordered: false });
-  const refreshed = await Invoice.find({ _id: { $in: missingRecords.map((invoice) => invoice._id) } })
+  await req.models.Invoice.bulkWrite(operations, { ordered: false });
+  const refreshed = await req.models.Invoice.find({ _id: { $in: missingRecords.map((invoice) => invoice._id) } })
     .select('_id publicToken')
     .lean();
   const tokenById = new Map(refreshed.map((invoice) => [String(invoice._id), invoice.publicToken]));
@@ -156,7 +161,7 @@ function buildCompanyInvoiceFilter(companyCode, lead, client) {
 }
 
 async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = null) {
-  const existingInvoice = await Invoice.findOne(buildCompanyInvoiceFilter(companyCode, lead, client))
+  const existingInvoice = await req.models.Invoice.findOne(buildCompanyInvoiceFilter(companyCode, lead, client))
     .sort({ versionNo: -1, createdAt: -1 })
     .select('invoiceNumber versionNo')
     .lean();
@@ -173,7 +178,7 @@ async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = nu
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const prefix = `Invoice_${yy}${mm}`;
-  const existingMonthInvoices = await Invoice.find({
+  const existingMonthInvoices = await req.models.Invoice.find({
     invoiceNumber: new RegExp(`^${prefix}\\d{3}_v\\d+$`),
   }).select('invoiceNumber').lean();
   const maxSequence = existingMonthInvoices.reduce((max, record) => {
@@ -186,13 +191,23 @@ async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = nu
   };
 }
 
-function buildLineItems(rawItems, gstPercentage) {
+function buildLineItems(rawItems, gstPercentage, isInclusiveGst = false) {
   return (Array.isArray(rawItems) ? rawItems : [])
     .map((item) => {
       const quantity = Math.max(1, Number(item.quantity || 1));
       const rate = Math.max(0, Number(item.rate ?? item.price ?? 0));
-      const taxable = rate * quantity;
-      const gst = taxable * (Number(gstPercentage || 0) / 100);
+      let taxable, gst, total;
+      
+      if (isInclusiveGst) {
+        total = rate * quantity;
+        taxable = total / (1 + (Number(gstPercentage || 0) / 100));
+        gst = total - taxable;
+      } else {
+        taxable = rate * quantity;
+        gst = taxable * (Number(gstPercentage || 0) / 100);
+        total = taxable + gst;
+      }
+
       return {
         productId: mongoose.Types.ObjectId.isValid(item.productId || item.product?._id)
           ? item.productId || item.product?._id
@@ -204,7 +219,7 @@ function buildLineItems(rawItems, gstPercentage) {
         taxable,
         cgst: gst / 2,
         sgst: gst / 2,
-        total: taxable + gst,
+        total,
       };
     })
     .filter((item) => item.name && item.rate > 0);
@@ -214,13 +229,13 @@ async function findInvoiceLead(body) {
   const companyCode = normalize(body.companyCode);
   const leadId = normalize(body.leadId);
   if (leadId && mongoose.Types.ObjectId.isValid(leadId)) {
-    const lead = await Lead.findOne({ _id: leadId, companyCode, isArchived: { $ne: true } });
+    const lead = await req.models.Lead.findOne({ _id: leadId, companyCode, isArchived: { $ne: true } });
     if (lead) return lead;
   }
 
   const contactNumber = normalize(body.contactNumber);
   if (contactNumber) {
-    return Lead.findOne({ companyCode, contactNumber, isArchived: { $ne: true } });
+    return req.models.Lead.findOne({ companyCode, contactNumber, isArchived: { $ne: true } });
   }
 
   return null;
@@ -230,11 +245,11 @@ async function findClientPrimaryLead(client) {
   const sourceLeadIds = Array.isArray(client?.sourceLeadIds) ? client.sourceLeadIds : [];
   const firstLeadId = sourceLeadIds.find((id) => mongoose.Types.ObjectId.isValid(id));
   if (firstLeadId) {
-    const lead = await Lead.findOne({ _id: firstLeadId, companyCode: client.companyCode, isArchived: { $ne: true } });
+    const lead = await req.models.Lead.findOne({ _id: firstLeadId, companyCode: client.companyCode, isArchived: { $ne: true } });
     if (lead) return lead;
   }
 
-  return Lead.findOne({
+  return req.models.Lead.findOne({
     companyCode: client.companyCode,
     leadCompanyNameLower: normalizeText(client.companyName),
     isArchived: { $ne: true },
@@ -242,6 +257,7 @@ async function findClientPrimaryLead(client) {
 }
 
 router.post('/', async (req, res) => {
+  
   try {
     const companyCode = normalize(req.body.companyCode);
     if (!companyCode) {
@@ -275,7 +291,8 @@ router.post('/', async (req, res) => {
     }
 
     const gstPercentage = Number(req.body.gstPercentage ?? user.gstPercentage ?? 18);
-    const items = buildLineItems(req.body.items, gstPercentage);
+    const isInclusiveGst = Boolean(req.body.isInclusiveGst);
+    const items = buildLineItems(req.body.items, gstPercentage, isInclusiveGst);
     if (!items.length) {
       return res.status(400).json({ success: false, message: 'At least one invoice item is required.' });
     }
@@ -294,10 +311,10 @@ router.post('/', async (req, res) => {
         const clientDto = mapClient(client);
         const clientCompanyName = clientDto.companyName || lead?.leadCompanyName || 'Client Company';
 
-        invoice = await Invoice.create({
+        invoice = await req.models.Invoice.create({
           companyCode,
           clientId: client.clientId,
-          employeePhone: normalize(req.body.employeePhone || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]),
+          employeeId: normalize(req.body.employeeId || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]),
           employeeName: normalize(req.body.employeeName),
           leadId: lead?._id || null,
           leadCompanyName: clientCompanyName,
@@ -314,12 +331,15 @@ router.post('/', async (req, res) => {
           sgst: gstAmount / 2,
           gstAmount,
           total: subtotal + gstAmount,
+          isInclusiveGst,
+          amountPaid: Number(req.body.amountPaid || 0),
+          balanceDue: (subtotal + gstAmount) - Number(req.body.amountPaid || 0),
           invoiceDate,
           dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
           paymentStatus: normalizePaymentStatus(req.body.paymentStatus),
           createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
           createdByName: normalize(req.body.createdByName || req.body.employeeName),
-          createdByPhone: normalize(req.body.createdByPhone || req.body.employeePhone),
+          createdById: normalize(req.body.createdById || req.body.employeeId),
           companySnapshot: {
             name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
             logo: user.invoiceLogo || '',
@@ -377,25 +397,29 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
+  
   try {
     const invoiceId = req.params.id;
     if (!invoiceId) {
       return res.status(400).json({ success: false, message: 'Invoice ID is required.' });
     }
 
-    const { items, total, subTotal, taxTotal, invoiceDate, paymentStatus } = req.body;
+    const { items, total, subTotal, taxTotal, invoiceDate, paymentStatus, amountPaid, balanceDue, isInclusiveGst } = req.body;
     const updateData = {};
     
     if (items !== undefined) updateData.items = items;
     if (total !== undefined) updateData.total = Number(total);
-    if (subTotal !== undefined) updateData.subTotal = Number(subTotal);
-    if (taxTotal !== undefined) updateData.taxTotal = Number(taxTotal);
+    if (subTotal !== undefined) updateData.subtotal = Number(subTotal);
+    if (taxTotal !== undefined) updateData.gstAmount = Number(taxTotal);
     if (invoiceDate !== undefined) updateData.invoiceDate = new Date(invoiceDate);
     if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
+    if (amountPaid !== undefined) updateData.amountPaid = Number(amountPaid);
+    if (balanceDue !== undefined) updateData.balanceDue = Number(balanceDue);
+    if (isInclusiveGst !== undefined) updateData.isInclusiveGst = Boolean(isInclusiveGst);
     
     updateData.updatedAt = new Date();
 
-    const invoice = await Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { new: true });
+    const invoice = await req.models.Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { new: true });
     
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Invoice not found.' });
@@ -414,13 +438,14 @@ router.put('/:id', async (req, res) => {
 });
 
 router.get('/public/:publicToken', async (req, res) => {
+  
   try {
     const publicToken = normalize(req.params.publicToken);
     if (!publicToken) {
       return res.status(404).json({ success: false, message: 'Invoice not found.' });
     }
 
-    const invoice = await Invoice.findOne({ publicToken }).lean();
+    const invoice = await req.models.Invoice.findOne({ publicToken }).lean();
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Invoice not found.' });
     }
@@ -433,6 +458,7 @@ router.get('/public/:publicToken', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+  
   try {
     const companyCode = normalize(req.query.companyCode);
     if (!companyCode) {
@@ -442,8 +468,8 @@ router.get('/', async (req, res) => {
     const filter = { companyCode };
     const clientId = normalize(req.query.clientId);
     if (clientId) filter.clientId = clientId;
-    const employeePhone = normalize(req.query.employeePhone);
-    if (employeePhone) filter.employeePhone = employeePhone;
+    const employeeId = normalize(req.query.employeeId);
+    if (employeeId) filter.employeeId = employeeId;
 
     const search = normalize(req.query.search);
     if (search) {
@@ -470,8 +496,8 @@ router.get('/', async (req, res) => {
 
     const pagination = parsePageQuery(req.query);
     const [total, invoices] = await Promise.all([
-      Invoice.countDocuments(filter),
-      Invoice.find(filter)
+      req.models.Invoice.countDocuments(filter),
+      req.models.Invoice.find(filter)
         .sort({ invoiceDate: -1, createdAt: -1 })
         .skip(pagination.isPaginated ? pagination.skip : 0)
         .limit(pagination.isPaginated ? pagination.pageSize : 300)

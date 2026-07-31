@@ -17,7 +17,7 @@ class BookmarkTab extends StatefulWidget {
 
 class _BookmarkTabState extends State<BookmarkTab> {
   String _companyCode = '';
-  String _mobileNumber = '';
+  String _employeeId = '';
   String _whatsappTemplate = 'Hi {name}!';
   String _smsTemplate = 'Hi {name}!';
   List<Map<String, dynamic>> _bookmarks = [];
@@ -36,7 +36,7 @@ class _BookmarkTabState extends State<BookmarkTab> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _companyCode = prefs.getString('companyCode') ?? '';
-      _mobileNumber = prefs.getString('mobileNumber') ?? '';
+      _employeeId = prefs.getString('employeeId') ?? '';
       _whatsappTemplate = prefs.getString('whatsappTemplate') ?? 'Hi {name}!';
       _smsTemplate = prefs.getString('smsTemplate') ?? 'Hi {name}!';
     });
@@ -44,12 +44,12 @@ class _BookmarkTabState extends State<BookmarkTab> {
   }
 
   Future<void> _fetchBookmarks() async {
-    if (_companyCode.isEmpty || _mobileNumber.isEmpty) {
+    if (_companyCode.isEmpty || _employeeId.isEmpty) {
       setState(() { _loading = false; _error = 'Not logged in. (code: "$_companyCode", phone: "$_mobileNumber")'; });
       return;
     }
     setState(() { _loading = true; _error = ''; });
-    final res = await ApiService.getBookmarks(companyCode: _companyCode, phone: _mobileNumber);
+    final res = await ApiService.getBookmarks(companyCode: _companyCode, employeeId: _employeeId);
     if (!mounted) return;
     if (res['success'] == true) {
       setState(() {

@@ -117,7 +117,7 @@ export interface CrmProjectRow {
   clientCompanyName: string;
   clientStatus?: string;
   projectManagerName?: string;
-  projectManagerPhone?: string;
+  projectManagerId?: string;
   projectManagerEmail?: string;
   projectManagerRole?: 'project_manager' | string;
   status?: 'Assigned' | 'In Progress' | 'On Hold' | 'Completed' | string;
@@ -146,8 +146,7 @@ export class CrmService {
   }
 
   getClientOnboardRequests(weCrmUrl: string, params: { search?: string; companyCode?: string; company_id?: string } = {}): Observable<any> {
-    const baseUrlToUse = weCrmUrl ? weCrmUrl.replace(/\/api\/?$/, '') : this.baseUrl;
-    return this.http.get<any>(`${baseUrlToUse}/api/users/client-onboard-requests${this.query(params)}`, {
+    return this.http.get<any>(`${this.baseUrl}/api/users/client-onboard-requests${this.query(params)}`, {
       headers: this.headers(),
     });
   }
@@ -310,7 +309,7 @@ export class CrmService {
     clientCompanyName: string;
     clientStatus?: string;
     projectManagerName: string;
-    projectManagerPhone?: string;
+    projectManagerId?: string;
     projectManagerEmail?: string;
     status?: string;
     notes?: string;
@@ -337,7 +336,7 @@ export class CrmService {
   }
 
   private headers(): HttpHeaders {
-    const token = localStorage.getItem('tracecall_crm_token') || '';
+    const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('tracecall_admin_token') || localStorage.getItem('tracecall_crm_token') || '') : '';
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     if (token) headers = headers.set('Authorization', `Bearer ${token}`);
     return headers;

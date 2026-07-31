@@ -1,17 +1,17 @@
 const crypto = require('crypto');
 const { getRedisClient, getRedisSubscriber, isRedisEnabled } = require('./redisClient');
 
-// Map<"companyCode_phone", Set<res>>
+// Map<"companyCode_employeeId", Set<res>>
 const clients = new Map();
 const instanceId = crypto.randomUUID();
 let subscriberReady = false;
 
-function key(companyCode, phone) {
-  return `${companyCode}__${phone}`;
+function key(companyCode, employeeId) {
+  return `${companyCode}__${employeeId}`;
 }
 
-function emitLocalToEmployee(companyCode, phone, data) {
-  const clientKey = key(companyCode, phone);
+function emitLocalToEmployee(companyCode, employeeId, data) {
+  const clientKey = key(companyCode, employeeId);
   const set = clients.get(clientKey);
   if (!set || set.size === 0) return;
 
@@ -79,8 +79,8 @@ function ensureRedisSubscriber() {
       }
 
       if (channel.startsWith('events:employee:')) {
-        const [, , companyCode, phone] = channel.split(':');
-        emitLocalToEmployee(companyCode, phone, parsed.data);
+        const [, , companyCode, employeeId] = channel.split(':');
+        emitLocalToEmployee(companyCode, employeeId, parsed.data);
       }
     } catch (err) {
       console.warn(`[SSE redis pmessage] ${err.message}`);
@@ -88,16 +88,16 @@ function ensureRedisSubscriber() {
   });
 }
 
-function addClient(companyCode, phone, res) {
+function addClient(companyCode, employeeId, res) {
   ensureRedisSubscriber();
-  const clientKey = key(companyCode, phone);
+  const clientKey = key(companyCode, employeeId);
   if (!clients.has(clientKey)) clients.set(clientKey, new Set());
   clients.get(clientKey).add(res);
   console.log(`[SSE] Client connected: ${clientKey} (total: ${clients.get(clientKey).size})`);
 }
 
-function removeClient(companyCode, phone, res) {
-  const clientKey = key(companyCode, phone);
+function removeClient(companyCode, employeeId, res) {
+  const clientKey = key(companyCode, employeeId);
   const set = clients.get(clientKey);
   if (set) {
     set.delete(res);
@@ -106,10 +106,10 @@ function removeClient(companyCode, phone, res) {
   console.log(`[SSE] Client disconnected: ${clientKey}`);
 }
 
-function emitToEmployee(companyCode, phone, data, options = {}) {
-  emitLocalToEmployee(companyCode, phone, data);
+function emitToEmployee(companyCode, employeeId, data, options = {}) {
+  emitLocalToEmployee(companyCode, employeeId, data);
   if (!options.skipRedis) {
-    publish(`events:employee:${companyCode}:${phone}`, data);
+    publish(`events:employee:${companyCode}:${employeeId}`, data);
   }
 }
 

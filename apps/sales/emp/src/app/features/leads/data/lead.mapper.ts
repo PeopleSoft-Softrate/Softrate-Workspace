@@ -12,7 +12,7 @@ export function mapLeadDto(dto: LeadDto): Lead {
   return {
     id: String(dto._id || ''),
     companyCode: String(dto.companyCode || ''),
-    assignedEmployeePhone: String(dto.assignedEmployeePhone || ''),
+    assignedEmployeeId: String(dto.assignedEmployeeId || ''),
     companyName: String(dto.leadCompanyName || ''),
     contactName: String(dto.contactName || ''),
     contactNumber: String(dto.contactNumber || ''),

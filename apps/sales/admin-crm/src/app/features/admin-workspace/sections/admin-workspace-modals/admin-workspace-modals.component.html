@@ -1245,12 +1245,14 @@
                 <span>Quantity</span>
                 <input class="field-input" type="number" [(ngModel)]="vm.invoiceQuantity" />
               </label>
+
               <label class="mini-field" *ngIf="!vm.quoteMode">
-                <span>Status</span>
-                <select class="field-select" [(ngModel)]="vm.invoicePaymentStatus">
-                  <option value="unpaid">Partially Paid</option>
-                  <option value="paid">Paid</option>
-                </select>
+                <span>Amount Paid</span>
+                <input class="field-input" type="number" [(ngModel)]="vm.invoiceAmountPaid" placeholder="0" />
+              </label>
+              <label class="mini-field checkbox-field" *ngIf="!vm.viewingSavedDocument" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
+                <input type="checkbox" [(ngModel)]="vm.invoiceIsInclusiveGst" (change)="vm.refreshInvoiceItemGstFromSelection()" />
+                <span style="margin: 0;">Inclusive of GST</span>
               </label>
               <button class="primary-action" type="button" (click)="vm.addInvoiceItem()"
                 [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
@@ -1408,12 +1410,14 @@
             <span>Quantity</span>
             <input class="field-input" type="number" [(ngModel)]="vm.invoiceQuantity" />
           </label>
+
           <label class="mini-field" *ngIf="!vm.quoteMode">
-            <span>Status</span>
-            <select class="field-select" [(ngModel)]="vm.invoicePaymentStatus">
-              <option value="unpaid">Partially Paid</option>
-              <option value="paid">Paid</option>
-            </select>
+            <span>Amount Paid</span>
+            <input class="field-input" type="number" [(ngModel)]="vm.invoiceAmountPaid" placeholder="0" />
+          </label>
+          <label class="mini-field checkbox-field" *ngIf="!vm.viewingSavedDocument" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
+            <input type="checkbox" [(ngModel)]="vm.invoiceIsInclusiveGst" (change)="vm.refreshInvoiceItemGstFromSelection()" />
+            <span style="margin: 0;">Inclusive of GST</span>
           </label>
           <button class="primary-action" type="button" (click)="vm.addInvoiceItem()"
             [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
@@ -1570,21 +1574,29 @@
                         <strong>{{ vm.formatInvoiceMoney(vm.invoiceSgstAmount) }}</strong>
                       </div>
                       <div class="summary-line grand-total-line">
-                        <span>Total</span>
+                        <span>Total <small *ngIf="vm.invoiceIsInclusiveGst" style="font-weight: normal; color: #64748b;">(Inclusive of GST)</small></span>
                         <strong class="grand-total-val">{{ vm.formatInvoiceMoney(vm.invoiceTotal) }}</strong>
+                      </div>
+                      <div class="summary-line" *ngIf="vm.invoiceAmountPaid > 0">
+                        <span>Amount Paid</span>
+                        <strong>{{ vm.formatInvoiceMoney(vm.invoiceAmountPaid) }}</strong>
+                      </div>
+                      <div class="summary-line" style="padding-top: 4px;" *ngIf="vm.invoiceBalanceDue > 0">
+                        <span>Balance Due</span>
+                        <strong style="color: #ef4444;">{{ vm.formatInvoiceMoney(vm.invoiceBalanceDue) }}</strong>
                       </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
-            </div>
+            </div>  
 
             <div class="invoice-footer-stack">
               <div class="total-in-words-row">
                 Total amount (in words): <strong>{{ vm.numberToWords(vm.invoiceTotal) }}</strong>
               </div>
 
-              <div class="gst-breakdown-section">
+              <div class="gst-breakdown-section" *ngIf="(vm.quoteMode || ((vm.invoiceAmountPaid || 0) >= vm.invoiceTotal)) && vm.invoicePreviewGstPercentage() > 0 && vm.invoiceClientGstNumber()">
                 <table class="gst-breakdown-table">
                   <thead>
                     <tr>

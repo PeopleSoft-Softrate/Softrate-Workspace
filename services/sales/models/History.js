@@ -5,11 +5,11 @@ const historySchema = new mongoose.Schema({
   contactNumber: { type: String, required: true, index: true },
   contactName:   { type: String },
   companyName:   { type: String },
-  action:        { type: String, required: true }, // 'Lead Created', 'Status Change', 'Remark Added', 'Starred', 'Favourited', 'Bookmarked', etc.
+  action:        { type: String, required: true },
   oldValue:      { type: mongoose.Schema.Types.Mixed },
   newValue:      { type: mongoose.Schema.Types.Mixed },
   details:       { type: String },
-  changedBy:     { type: String }, // Phone number of employee
+  changedBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', default: null }, // ObjectId of employee
   timestamp:     { type: Date, default: Date.now }
 }, { timestamps: true });
 

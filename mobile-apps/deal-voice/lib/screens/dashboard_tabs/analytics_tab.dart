@@ -83,7 +83,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
 
       final prefs = await SharedPreferences.getInstance();
       final companyCode = prefs.getString('companyCode') ?? '';
-      final phone = prefs.getString('mobileNumber') ?? '';
+      final employeeId = prefs.getString('employeeId') ?? '';
 
       // Convert ms to yyyy-MM-dd
       final String fromDate = DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(fromMs));
@@ -91,7 +91,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
 
       final res = await ApiService.fetchCallLogDetails(
         companyCode: companyCode,
-        phone: phone,
+        employeeId: employeeId,
         fromDate: fromDate,
         toDate: toDate,
       );

@@ -1,5 +1,8 @@
 const express  = require('express');
-const router   = express.Router();
+const mongoose = require('mongoose');
+const { companyMiddleware } = require('../../common/tenantMiddleware');
+const router = express.Router();
+router.use(companyMiddleware);
 const CallLog  = require('../../../models/CallLog');
 const CallDetail = require('../../../models/CallDetail');
 const Employee = require('../../../models/Employee');
@@ -12,6 +15,18 @@ const {
 } = require('../../../services/calllogCache');
 const { buildPageResponse, parsePageQuery } = require('../../common/pagination/pagination');
 
+
+async function resolveEmployeeId(id, companyCode) {
+  if (!id || id === 'undefined' || id === 'null') return null;
+  const s = String(id).trim();
+  if (mongoose.Types.ObjectId.isValid(s)) {
+    return new mongoose.Types.ObjectId(s);
+  }
+  // If it's a phone number, look up the employee ID
+  const Employee = require('../../../models/Employee');
+  const emp = await Employee.findOne({ companyCode, mobile: s }).lean();
+  return emp ? emp._id : null;
+}
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -71,7 +86,7 @@ function sumDocs(docs) {
 router.post('/sync', async (req, res) => {
   try {
     const {
-      companyCode, phone, date,
+      companyCode, employeeId, date,
       incoming, outgoing, missed, rejected,
       incomingDuration, outgoingDuration, totalDuration,
       // individual call entries array
@@ -80,8 +95,12 @@ router.post('/sync', async (req, res) => {
       deviceModel, appVersion,
     } = req.body;
 
-    if (!companyCode || !phone || !date) {
-      return res.status(400).json({ success: false, message: 'companyCode, phone, date required.' });
+    if (!companyCode || !employeeId || !date) {
+      return res.status(400).json({ success: false, message: 'companyCode, employeeId, date required.' });
+    }
+    const resolvedEmpId = await resolveEmployeeId(employeeId, companyCode);
+    if (!resolvedEmpId) {
+      return res.status(400).json({ success: false, message: 'Invalid employeeId.' });
     }
 
     // ── Subscription guard ──────────────────────────────────────
@@ -106,13 +125,13 @@ router.post('/sync', async (req, res) => {
         updateOne: {
           filter: { 
             companyCode, 
-            phone, 
+            employeeId: resolvedEmpId, 
             timestamp: new Date(c.timestamp), 
             number: c.number 
           },
           update: { 
             $set: {
-              companyCode, phone, date,
+              companyCode, employeeId: resolvedEmpId, date,
               number:    c.number    || '',
               name:      c.name      || '',
               callType:  c.callType.toLowerCase(),
@@ -124,13 +143,13 @@ router.post('/sync', async (req, res) => {
         }
       }));
       
-      await CallDetail.bulkWrite(ops);
+      await req.models.CallDetail.bulkWrite(ops);
 
       // Fetch company setting for connected call threshold
       const connThreshold = company?.connectedCallDuration || 0;
 
       // 2. Recalculate daily aggregate from individual DETAIL records for total accuracy
-      const allCallsToday = await CallDetail.find({ companyCode, phone, date });
+      const allCallsToday = await req.models.CallDetail.find({ companyCode, employeeId: resolvedEmpId, date });
       let inc = 0, out = 0, mis = 0, rej = 0, conn = 0;
       let incConn = 0, outConn = 0;
       let incDur = 0, outDur = 0, totDur = 0;
@@ -155,8 +174,8 @@ router.post('/sync', async (req, res) => {
       }
 
       // 3. Update the daily aggregate log
-      await CallLog.findOneAndUpdate(
-        { companyCode, phone, date },
+      await req.models.CallLog.findOneAndUpdate(
+        { companyCode, employeeId: resolvedEmpId, date },
         { $set: { 
             incoming: inc, outgoing: out, missed: mis, rejected: rej,
             incomingDuration: incDur, outgoingDuration: outDur,
@@ -175,7 +194,7 @@ router.post('/sync', async (req, res) => {
         c.timestamp > latest ? c : latest, allCallsToday[0]);
 
       await Employee.findOneAndUpdate(
-        { companyCode, mobile: phone },
+        { companyCode, _id: resolvedEmpId },
         { $set: {
             deviceModel:  deviceModel  || '',
             appVersion:   appVersion   || '',
@@ -186,19 +205,19 @@ router.post('/sync', async (req, res) => {
       );
     } else {
       // No new calls, but still update the daily record existence and sync time
-      await CallLog.findOneAndUpdate(
-        { companyCode, phone, date },
+      await req.models.CallLog.findOneAndUpdate(
+        { companyCode, employeeId: resolvedEmpId, date },
         { $setOnInsert: { incoming:0, outgoing:0, missed:0, rejected:0, totalDuration:0 },
           $set: { updatedAt: new Date() } },
         { upsert: true }
       );
       await Employee.findOneAndUpdate(
-        { companyCode, mobile: phone },
+        { companyCode, _id: resolvedEmpId },
         { $set: { deviceModel: deviceModel||'', appVersion: appVersion||'', lastSyncTime: new Date() } }
       );
     }
 
-    await invalidateCalllogCaches({ companyCode, phone });
+    await invalidateCalllogCaches({ companyCode, employeeId: resolvedEmpId });
 
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -215,7 +234,7 @@ router.get('/summary', async (req, res) => {
     const [from, to] = resolveRange(req.query);
     const cacheKey = buildCalllogCacheKey(`calllog:summary:${companyCode}`, { ...req.query, from, to });
     const { value } = await getOrSet(cacheKey, CALLLOG_CACHE_TTLS.summary, async () => {
-      const docs = await CallLog.find({ companyCode, date: { $gte: from, $lte: to } }).lean();
+      const docs = await req.models.CallLog.find({ companyCode, date: { $gte: from, $lte: to } }).lean();
       const totals = docs.reduce((acc, d) => ({
         incoming: acc.incoming + d.incoming, outgoing: acc.outgoing + d.outgoing,
         missed: acc.missed + d.missed, rejected: acc.rejected + d.rejected,
@@ -259,7 +278,7 @@ router.get('/employees', async (req, res) => {
         
         if (callType && callType !== 'Select') query.callType = callType.toLowerCase();
 
-        let calls = await CallDetail.find(query).lean();
+        let calls = await req.models.CallDetail.find(query).lean();
 
         if (duration && duration !== 'Select') {
           calls = calls.filter(c => {
@@ -286,8 +305,8 @@ router.get('/employees', async (req, res) => {
 
         const map = {};
         for (const c of calls) {
-          if (!map[c.phone]) map[c.phone] = { phone: c.phone, incoming:0, outgoing:0, missed:0, rejected:0, incomingDuration:0, outgoingDuration:0, totalDuration:0, connected:0, incomingConnected:0, outgoingConnected:0 };
-          const e = map[c.phone];
+          if (!map[c.employeeId]) map[c.employeeId] = { employeeId: c.employeeId, incoming:0, outgoing:0, missed:0, rejected:0, incomingDuration:0, outgoingDuration:0, totalDuration:0, connected:0, incomingConnected:0, outgoingConnected:0 };
+          const e = map[c.employeeId];
           const type = c.callType.toLowerCase();
           const dur = c.duration || 0;
           const isConnected = connThreshold > 0 ? (dur >= connThreshold) : (dur > 0);
@@ -310,11 +329,11 @@ router.get('/employees', async (req, res) => {
         return { success: true, employees };
       }
 
-      const docs = await CallLog.find({ companyCode, date: { $gte: from, $lte: to } }).lean();
+      const docs = await req.models.CallLog.find({ companyCode, date: { $gte: from, $lte: to } }).lean();
       const map = {};
       for (const d of docs) {
-        if (!map[d.phone]) map[d.phone] = { phone: d.phone, incoming:0, outgoing:0, missed:0, rejected:0, incomingDuration:0, outgoingDuration:0, totalDuration:0, connected:0, incomingConnected:0, outgoingConnected:0 };
-        const e = map[d.phone];
+        if (!map[d.employeeId]) map[d.employeeId] = { employeeId: d.employeeId, incoming:0, outgoing:0, missed:0, rejected:0, incomingDuration:0, outgoingDuration:0, totalDuration:0, connected:0, incomingConnected:0, outgoingConnected:0 };
+        const e = map[d.employeeId];
         e.incoming += d.incoming;
         e.outgoing += d.outgoing;
         e.missed += d.missed;
@@ -340,12 +359,15 @@ router.get('/employees', async (req, res) => {
 // ── GET /api/calllogs/employee ────────────────────────────────
 router.get('/employee', async (req, res) => {
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) return res.status(400).json({ success: false, message: 'companyCode and phone required' });
+    const { companyCode, employeeId } = req.query;
+    console.log('[DEBUG /employee] req.query:', req.query);
+    if (!companyCode || !employeeId) return res.status(400).json({ success: false, message: 'companyCode and employeeId required' });
     const [from, to] = resolveRange(req.query);
-    const cacheKey = buildCalllogCacheKey(`calllog:employee:${companyCode}:${phone}`, { ...req.query, from, to });
+    const resolvedEmpId = await resolveEmployeeId(employeeId, companyCode);
+    if (!resolvedEmpId) return res.status(200).json({ success: true, employeeId, from, to, stats: { incoming:0, outgoing:0, missed:0, rejected:0, incomingDuration:0, outgoingDuration:0, totalDuration:0, connected:0, incomingConnected:0, outgoingConnected:0, total: 0 } });
+    const cacheKey = buildCalllogCacheKey(`calllog:employee:${companyCode}:${resolvedEmpId}`, { ...req.query, from, to });
     const { value } = await getOrSet(cacheKey, CALLLOG_CACHE_TTLS.employee, async () => {
-      const docs = await CallLog.find({ companyCode, phone, date: { $gte: from, $lte: to } }).lean();
+      const docs = await req.models.CallLog.find({ companyCode, employeeId: resolvedEmpId, date: { $gte: from, $lte: to } }).lean();
       const totals = docs.reduce((acc, d) => ({
         incoming: acc.incoming + d.incoming, outgoing: acc.outgoing + d.outgoing,
         missed: acc.missed + d.missed, rejected: acc.rejected + d.rejected,
@@ -359,7 +381,7 @@ router.get('/employee', async (req, res) => {
 
       return {
         success: true,
-        phone,
+        employeeId,
         from,
         to,
         stats: { ...totals, total: totals.incoming + totals.outgoing + totals.missed + totals.rejected, connected: totals.connected },
@@ -376,14 +398,17 @@ router.get('/employee', async (req, res) => {
 // Individual call entries for one employee on a given date/period
 router.get('/details', async (req, res) => {
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) return res.status(400).json({ success: false, message: 'companyCode and phone required' });
+    const { companyCode, employeeId } = req.query;
+    console.log('[DEBUG /details] req.query:', req.query);
+    if (!companyCode || !employeeId) return res.status(400).json({ success: false, message: 'companyCode and employeeId required' });
     const [from, to] = resolveRange(req.query);
     const pagination = parsePageQuery(req.query);
-    const cacheKey = buildCalllogCacheKey(`calllog:details:${companyCode}:${phone}`, { ...req.query, from, to });
+    const resolvedEmpId = await resolveEmployeeId(employeeId, companyCode);
+    if (!resolvedEmpId) return res.status(200).json({ success: true, calls: [], items: [], total: 0, page: 1, pageSize: pagination.pageSize || 10, totalPages: 0 });
+    const cacheKey = buildCalllogCacheKey(`calllog:details:${companyCode}:${resolvedEmpId}`, { ...req.query, from, to });
     const { value } = await getOrSet(cacheKey, CALLLOG_CACHE_TTLS.details, async () => {
       const query = {
-        companyCode, phone, date: { $gte: from, $lte: to },
+        companyCode, employeeId: resolvedEmpId, date: { $gte: from, $lte: to },
       };
       const search = String(req.query.search || '').trim();
       if (search) {
@@ -396,13 +421,13 @@ router.get('/details', async (req, res) => {
       }
 
       if (!pagination.isPaginated) {
-        const calls = await CallDetail.find(query).sort({ timestamp: -1 }).lean();
+        const calls = await req.models.CallDetail.find(query).sort({ timestamp: -1 }).lean();
         return { success: true, calls, items: calls };
       }
 
       const [total, calls] = await Promise.all([
-        CallDetail.countDocuments(query),
-        CallDetail.find(query)
+        req.models.CallDetail.countDocuments(query),
+        req.models.CallDetail.find(query)
           .sort({ timestamp: -1 })
           .skip(pagination.skip)
           .limit(pagination.pageSize)
@@ -433,21 +458,23 @@ router.get('/details', async (req, res) => {
 // Returns array of { date, incoming, outgoing, missed, rejected } per day (or per hour for single day)
 router.get('/timeline', async (req, res) => {
   try {
-    const { companyCode, phone } = req.query;
+    const { companyCode, employeeId } = req.query;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required' });
     const [from, to] = resolveRange(req.query);
-    const cachePrefix = phone
-      ? `calllog:timeline:${companyCode}:${phone}`
+    const resolvedEmpId = await resolveEmployeeId(employeeId, companyCode);
+    if (employeeId && !resolvedEmpId) return res.status(200).json({ success: true, timeline: [] });
+    const cachePrefix = resolvedEmpId
+      ? `calllog:timeline:${companyCode}:${resolvedEmpId}`
       : `calllog:timeline:${companyCode}`;
     const cacheKey = buildCalllogCacheKey(cachePrefix, { ...req.query, from, to });
     const { value } = await getOrSet(cacheKey, CALLLOG_CACHE_TTLS.timeline, async () => {
       const baseQuery = { companyCode, date: { $gte: from, $lte: to } };
-      if (phone) baseQuery.phone = phone;
+      if (resolvedEmpId) baseQuery.employeeId = resolvedEmpId;
 
       if (from === to) {
         const detailQuery = { companyCode, date: from };
-        if (phone) detailQuery.phone = phone;
-        const calls = await CallDetail.find(detailQuery).lean();
+        if (resolvedEmpId) detailQuery.employeeId = resolvedEmpId;
+        const calls = await req.models.CallDetail.find(detailQuery).lean();
         const byHour = {};
 
         for (let i = 0; i < 24; i++) {
@@ -471,7 +498,7 @@ router.get('/timeline', async (req, res) => {
         return { success: true, timeline: Object.values(byHour) };
       }
 
-      const docs = await CallLog.find(baseQuery).sort({ date: 1 }).lean();
+      const docs = await req.models.CallLog.find(baseQuery).sort({ date: 1 }).lean();
       const byDate = {};
       for (const d of docs) {
         if (!byDate[d.date]) byDate[d.date] = { date: d.date, incoming: 0, outgoing: 0, missed: 0, rejected: 0, totalDuration: 0 };
@@ -499,7 +526,7 @@ router.get('/lead-counts', async (req, res) => {
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required' });
     const cacheKey = buildCalllogCacheKey(`calllog:lead-counts:${companyCode}`, req.query);
     const { value } = await getOrSet(cacheKey, CALLLOG_CACHE_TTLS.leadCounts, async () => {
-      const counts = await CallDetail.aggregate([
+      const counts = await req.models.CallDetail.aggregate([
         { $match: { companyCode } },
         { $group: { _id: '$number', count: { $sum: 1 } } },
       ]);

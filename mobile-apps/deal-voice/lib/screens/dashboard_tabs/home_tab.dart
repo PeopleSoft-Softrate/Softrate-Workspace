@@ -24,7 +24,7 @@ class HomeTab extends StatefulWidget {
 class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
   // Unused fields from header removed
   String _companyCode = '';
-  String _mobileNumber = '';
+  String _employeeId = '';
   String _whatsappTemplate = 'Hi {name}!';
   String _smsTemplate = 'Hi {name}!';
   bool _showFloatingActions = true;
@@ -97,7 +97,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _companyCode = prefs.getString('companyCode') ?? 'XXXX';
-      _mobileNumber = prefs.getString('mobileNumber') ?? 'N/A';
+      _employeeId = prefs.getString('mobileNumber') ?? 'N/A';
       _whatsappTemplate = prefs.getString('whatsappTemplate') ?? 'Hi {name}!';
       _smsTemplate = prefs.getString('smsTemplate') ?? 'Hi {name}!';
       _showFloatingActions = prefs.getBool('showFloatingActions') ?? true;
@@ -111,11 +111,11 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
     setState(() => _isLoadingLogs = true);
     
     // Auto-sync missing calls to the backend immediately when app/UI opens
-    if (_companyCode.isNotEmpty && _mobileNumber.isNotEmpty) {
+    if (_companyCode.isNotEmpty && _employeeId.isNotEmpty) {
       try {
         await CallLogService.syncNewEntries(
           companyCode: _companyCode,
-          phone: _mobileNumber,
+          employeeId: _employeeId,
         );
         if (mounted) setState(() => _lastSyncTime = DateTime.now());
       } catch (e) {
@@ -138,7 +138,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
 
   /// Called every 30s — only syncs NEW entries since the last sync.
   Future<void> _syncNewCalls() async {
-    if (_companyCode.isEmpty || _mobileNumber.isEmpty) return;
+    if (_companyCode.isEmpty || _employeeId.isEmpty) return;
     if (mounted) {
       setState(() => _isSyncing = true);
       _syncRotateController.repeat();
@@ -146,7 +146,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
     try {
       final res = await CallLogService.syncNewEntries(
         companyCode: _companyCode,
-        phone: _mobileNumber,
+        employeeId: _employeeId,
       );
       
       if (res['success'] == false) {
@@ -228,7 +228,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
     final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     await ApiService.syncCallLogs(
       companyCode: _companyCode,
-      phone: _mobileNumber,
+      employeeId: _employeeId,
       date: dateStr,
       incoming: incoming,
       outgoing: outgoing,

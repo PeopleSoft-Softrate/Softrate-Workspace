@@ -36,9 +36,13 @@ app.get('/api/crm/health', (req, res) => {
   res.json({ success: true, service: 'crm-backend', status: 'OK' });
 });
 
-app.use('/api/crm/auth', require('./routes/auth.routes'));
-app.use('/api/crm', require('./routes/crm.routes'));
-
+app.use('/api/crm/auth', require('./src/modules/auth/auth.routes'));
+app.use('/api/crm', require('./src/modules/clients/clients.routes'));
+app.use('/api/crm', require('./src/modules/contracts/contracts.routes'));
+app.use('/api/crm', require('./src/modules/amc/amc.routes'));
+app.use('/api/crm', require('./src/modules/projects/projects.routes'));
+app.use('/api/crm', require('./src/modules/tickets/tickets.routes'));
+app.use('/api/crm', require('./src/modules/payments/payments.routes'));
 const PORT = process.env.CRM_PORT || 4100;
 app.listen(PORT, () => {
   console.log(`🚀 CRM backend running on port ${PORT}`);

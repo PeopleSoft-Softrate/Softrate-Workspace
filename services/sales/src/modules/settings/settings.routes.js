@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://calluserfrontend.netlify.app';
+const { verifyToken, signToken } = require('../../common/jwtHelper');
 const User = require('../../../models/User');
 const { 
   notifyAdminOfRequest, 
@@ -190,6 +191,7 @@ router.post('/login', async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Login successful.',
+      token: signToken({ employeeId: 'admin', companyCode: user.companyCode, role: 'company_admin' }),
       user: {
         id: user._id,
         name: user.name,

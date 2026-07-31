@@ -189,6 +189,7 @@ class _SimSelectionScreenState extends State<SimSelectionScreen> {
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('employeeName', employee['name'] ?? '');
       await prefs.setString('mobileNumber', rawNumber);
+      await prefs.setString('employeeId', employee['_id'] ?? '');
 
       final existingCode = employee['employeeCode'] ?? '';
       if (existingCode.isNotEmpty) {

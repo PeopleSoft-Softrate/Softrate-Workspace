@@ -3,7 +3,7 @@ import { CompanyGroup } from '../../../shared/types/pagination';
 export interface LeadDto {
   _id?: string;
   companyCode?: string;
-  assignedEmployeePhone?: string;
+  assignedEmployeeId?: string;
   leadCompanyName?: string;
   contactName?: string;
   contactNumber?: string;

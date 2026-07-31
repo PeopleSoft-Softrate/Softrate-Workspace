@@ -4,8 +4,10 @@ const employeeSchema = new mongoose.Schema({
   name:         { type: String, required: true, trim: true },
   countryCode:  { type: String, default: '+91', trim: true },
   mobile:       { type: String, required: true, trim: true },
+  // companyCode kept for backward compat during transition — scoped by tenant DB
   companyCode:  { type: String, required: true, index: true },
   employeeCode: { type: String, default: '' },  // Optional — set by employee in app
+  passwordHash: { type: String, default: '' },  // bcrypt hash — empty = no password set
   tags:         [{ type: String }],
   // Device info (updated on each sync from Flutter)
   deviceModel:  { type: String, default: '' },

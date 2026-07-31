@@ -17,7 +17,7 @@ export interface CallStats {
 }
 
 export interface EmployeeCallStat {
-  phone: string;
+  employeeId: string;
   name?: string;
   incoming: number;
   outgoing: number;
@@ -57,14 +57,14 @@ export class CallLogService {
     return this.api.get(url);
   }
 
-  getEmployeeStat(companyCode: string, phone: string, period: string, from?: string, to?: string): Observable<any> {
+  getEmployeeStat(companyCode: string, employeeId: string, period: string, from?: string, to?: string): Observable<any> {
     const r = this.rangeParams(period, from, to);
-    return this.api.get(`/api/calllogs/employee?companyCode=${encodeURIComponent(companyCode)}&phone=${encodeURIComponent(phone)}&${r}`);
+    return this.api.get(`/api/calllogs/employee?companyCode=${encodeURIComponent(companyCode)}&employeeId=${encodeURIComponent(employeeId)}&${r}`);
   }
 
-  getCallDetails(companyCode: string, phone: string, period: string, from?: string, to?: string): Observable<any> {
+  getCallDetails(companyCode: string, employeeId: string, period: string, from?: string, to?: string): Observable<any> {
     const r = this.rangeParams(period, from, to);
-    return this.api.get(`/api/calllogs/details?companyCode=${encodeURIComponent(companyCode)}&phone=${encodeURIComponent(phone)}&${r}`);
+    return this.api.get(`/api/calllogs/details?companyCode=${encodeURIComponent(companyCode)}&employeeId=${encodeURIComponent(employeeId)}&${r}`);
   }
 
   getTimeline(companyCode: string, period: string, from?: string, to?: string): Observable<any> {

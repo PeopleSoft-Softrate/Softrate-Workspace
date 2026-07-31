@@ -20,12 +20,12 @@ export class RealtimeService {
 
   constructor(private zone: NgZone) {}
 
-  connect(companyCode: string, phone: string) {
+  connect(companyCode: string, employeeId: string) {
     this.disconnect();
 
     const url = this.buildEventsUrl();
     url.searchParams.set('companyCode', companyCode);
-    url.searchParams.set('phone', phone);
+    url.searchParams.set('employeeId', employeeId);
 
     this.eventSource = new EventSource(url.toString());
 
@@ -43,7 +43,7 @@ export class RealtimeService {
     this.eventSource.onerror = (error) => {
       console.warn('[SSE connection error] Reconnecting in 3s...', error);
       this.disconnect();
-      this.reconnectTimer = setTimeout(() => this.connect(companyCode, phone), 3000);
+      this.reconnectTimer = setTimeout(() => this.connect(companyCode, employeeId), 3000);
     };
   }
 

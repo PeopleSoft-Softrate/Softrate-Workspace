@@ -44,7 +44,7 @@ interface Employee {
 interface Lead {
   _id: string;
   companyCode: string;
-  assignedEmployeePhone: string;
+  assignedEmployeeId: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;
@@ -58,6 +58,7 @@ interface Lead {
   isStarred?: boolean;
   isFavourite?: boolean;
   sheetOrder?: number;
+  gstNumber?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -65,7 +66,7 @@ interface Lead {
 interface Bookmark {
   _id: string;
   companyCode: string;
-  employeePhone: string;
+  employeeId: string;
   contactNumber: string;
   contactName: string;
   companyName: string;
@@ -112,7 +113,7 @@ interface ClientRecord {
   status?: string;
   source?: string;
   sourceLeadIds?: string[];
-  assignedEmployeePhones?: string[];
+  assignedEmployeeIds?: string[];
   onboardedAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -137,7 +138,7 @@ interface InvoiceRecord {
   contactName: string;
   contactNumber: string;
   directorEmailAddress?: string;
-  employeePhone?: string;
+  employeeId?: string;
   employeeName?: string;
   total: number;
   invoiceDate: string;
@@ -145,6 +146,9 @@ interface InvoiceRecord {
   dueDate?: string;
   versionNo?: number;
   paymentStatus?: string;
+  amountPaid?: number;
+  balanceDue?: number;
+  isInclusiveGst?: boolean;
   items?: Array<{ name: string; quantity: number; rate: number; total: number; sacHsn?: string; taxable?: number; cgst?: number; sgst?: number }>;
   subtotal?: number;
   gstPercentage?: number;
@@ -879,7 +883,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return {
       _id: matchingLead?._id || '',
       companyCode: bookmark.companyCode,
-      assignedEmployeePhone: bookmark.employeePhone,
+      assignedEmployeeId: bookmark.employeeId,
       leadCompanyName: bookmark.companyName,
       contactName: bookmark.contactName,
       contactNumber: bookmark.contactNumber,
@@ -1775,6 +1779,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
   invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
+  invoiceAmountPaid = 0;
+  invoiceIsInclusiveGst = false;
   invoiceRecords: InvoiceRecord[] = [];
   invoiceRecordsLoading = false;
   invoiceRecordsLoadingMore = false;
@@ -1813,6 +1819,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     primaryPhone: '',
     primaryEmail: '',
     address: '',
+    gstNumber: '',
   };
   clientOnboardingEditDraft = {
     companyName: '',
@@ -1820,6 +1827,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     primaryPhone: '',
     primaryEmail: '',
     address: '',
+    gstNumber: '',
   };
   editingClientOnboarding: ClientRecord | null = null;
   clientOnboardingSaving = false;
@@ -1890,6 +1898,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
     this.invoicePaymentStatus = 'unpaid';
+    this.invoiceAmountPaid = 0;
+    this.invoiceIsInclusiveGst = false;
     this.quotationKindNoteDraft = DEFAULT_QUOTATION_KIND_NOTE;
     this.showInvoiceModal = true;
     this.quoteNumber = Math.floor(100000 + Math.random() * 900000);
@@ -1979,6 +1989,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.selectedInvoiceProduct = null;
     this.invoicePrice = 0;
     this.invoiceQuantity = 1;
+
+    // Refresh GST for the new items
+    this.refreshInvoiceItemGstFromSelection();
   }
 
   async transferLatestQuotationToInvoice(): Promise<void> {
@@ -1991,7 +2004,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     try {
       const pageResult = await firstValueFrom(this.quotationsRepository.history({
         companyCode: this.employee.companyCode,
-        employeePhone: this.employee.mobile,
+        employeeId: this.employee._id,
         leadId: String(this.invoiceLead._id || '').trim(),
         page: 1,
         pageSize: 5,
@@ -2005,7 +2018,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       if (!latestQuotation) {
         const fallbackResult = await firstValueFrom(this.quotationsRepository.history({
           companyCode: this.employee.companyCode,
-          employeePhone: this.employee.mobile,
+          employeeId: this.employee._id,
           search: this.invoiceLead.leadCompanyName,
           page: 1,
           pageSize: 15,
@@ -2055,8 +2068,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       });
       const price = Number(item?.rate || 0);
       const quantity = Math.max(1, Number(item?.quantity || 1));
-      const taxable = Number(item?.taxable ?? (price * quantity));
-      const gst = Number(item?.gst ?? (taxable * (this.invoicePreviewGstPercentage() / 100)));
+      let taxable, gst, total;
+
+      if (this.invoiceIsInclusiveGst) {
+        total = price * quantity;
+        taxable = total / (1 + (this.invoicePreviewGstPercentage() / 100));
+        gst = total - taxable;
+      } else {
+        taxable = Number(item?.taxable ?? (price * quantity));
+        gst = Number(item?.gst ?? (taxable * (this.invoicePreviewGstPercentage() / 100)));
+        total = Number(item?.total ?? (taxable + gst));
+      }
+
       return {
         product: matchedProduct || {
           _id: (item as any)?.productId || null,
@@ -2068,7 +2091,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         quantity,
         taxable,
         gst,
-        total: Number(item?.total ?? (taxable + gst)),
+        total,
       };
     });
   }
@@ -2080,9 +2103,16 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const price = Math.max(0, Number(value || 0));
     const quantity = Math.max(1, Number(item.quantity || 1));
     item.price = price;
-    item.taxable = price * quantity;
-    item.gst = item.taxable * (this.invoicePreviewGstPercentage() / 100);
-    item.total = item.taxable + item.gst;
+    
+    if (this.invoiceIsInclusiveGst) {
+      item.total = price * quantity;
+      item.taxable = item.total / (1 + (this.invoicePreviewGstPercentage() / 100));
+      item.gst = item.total - item.taxable;
+    } else {
+      item.taxable = price * quantity;
+      item.gst = item.taxable * (this.invoicePreviewGstPercentage() / 100);
+      item.total = item.taxable + item.gst;
+    }
   }
 
   removeInvoiceItem(index: number): void {
@@ -2092,7 +2122,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   get invoiceSubtotal(): number {
     const savedRecord = this.savedFinancialRecord();
     if (savedRecord && savedRecord.subtotal !== undefined) return Number(savedRecord.subtotal || 0);
-    return this.invoiceItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return this.invoiceItems.reduce((sum, item) => sum + Number((item as any).taxable ?? (item.price * item.quantity)), 0);
   }
 
   get invoiceTotalUnits(): number {
@@ -2102,13 +2132,20 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   get invoiceGstAmount(): number {
     const savedRecord = this.savedFinancialRecord();
     if (savedRecord && savedRecord.gstAmount !== undefined) return Number(savedRecord.gstAmount || 0);
-    return this.invoiceSubtotal * (this.invoicePreviewGstPercentage() / 100);
+    return this.invoiceItems.reduce((sum, item) => sum + Number((item as any).gst ?? (Number((item as any).taxable ?? (item.price * item.quantity)) * (this.invoicePreviewGstPercentage() / 100))), 0);
   }
 
   get invoiceTotal(): number {
     const savedRecord = this.savedFinancialRecord();
     if (savedRecord && savedRecord.total !== undefined) return Number(savedRecord.total || 0);
     return this.invoiceSubtotal + this.invoiceGstAmount;
+  }
+
+  get invoiceBalanceDue(): number {
+    if (this.viewingSavedDocument && !this.quoteMode && this.openedInvoiceRecord?.balanceDue !== undefined) {
+      return Number(this.openedInvoiceRecord.balanceDue || 0);
+    }
+    return Math.max(0, this.invoiceTotal - (this.invoiceAmountPaid || 0));
   }
 
   get invoiceCgstAmount(): number {
@@ -2126,11 +2163,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   get invoiceAmountReceived(): number {
-    return this.normalizeInvoicePaymentStatus(this.invoicePaymentStatus) === 'paid' ? this.invoiceTotal : 0;
-  }
-
-  get invoiceBalanceDue(): number {
-    return Math.max(0, this.invoiceTotal - this.invoiceAmountReceived);
+    return this.normalizeInvoicePaymentStatus(this.invoicePaymentStatus) === 'paid' ? this.invoiceTotal : this.invoiceAmountPaid;
   }
 
   invoiceItemTaxable(item: any): number {
@@ -2263,6 +2296,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       '',
     ).trim();
   }
+
+  invoiceClientGstNumber(): string {
+    if (this.viewingSavedDocument) {
+      const record = this.quoteMode ? this.openedQuotationRecord : this.openedInvoiceRecord;
+      return String((record as any)?.clientSnapshot?.gstNumber || (record as any)?.gstNumber || '').trim();
+    }
+    return String(this.invoiceLead?.gstNumber || '').trim();
+  }
+
 
   invoicePreparedByName(): string {
     return String(
@@ -2545,15 +2587,19 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   refreshInvoiceItemGstFromSelection(): void {
-    if (this.viewingSavedDocument) return;
     this.invoiceItems.forEach((item) => {
-      if (item?.taxable === undefined && item?.gst === undefined && item?.total === undefined) return;
       const quantity = Math.max(1, Number(item.quantity || 1));
-      const taxable = Number(item.price || 0) * quantity;
-      const gst = taxable * (this.invoicePreviewGstPercentage() / 100);
-      item.taxable = taxable;
-      item.gst = gst;
-      item.total = taxable + gst;
+      const price = Number(item.price || 0);
+      
+      if (this.invoiceIsInclusiveGst) {
+        item.total = price * quantity;
+        item.taxable = item.total / (1 + (this.invoicePreviewGstPercentage() / 100));
+        item.gst = item.total - item.taxable;
+      } else {
+        item.taxable = price * quantity;
+        item.gst = item.taxable * (this.invoicePreviewGstPercentage() / 100);
+        item.total = item.taxable + item.gst;
+      }
     });
   }
 
@@ -2657,7 +2703,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const payload = {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
       createdByName: this.employee.name,
@@ -2668,7 +2714,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       gstPercentage: this.invoicePreviewGstPercentage(),
       invoiceDate: this.invoiceIssuedAt,
       dueDate: this.dueDate,
-      paymentStatus: this.invoicePaymentStatus,
+      paymentStatus: (this.invoiceAmountPaid || 0) >= this.invoiceTotal ? 'paid' : 'unpaid',
       items: this.invoiceItems.map((item) => ({
         productId: item.product?._id,
         name: item.name,
@@ -2676,6 +2722,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         quantity: item.quantity,
         sacHsn: item.product?.sacHsn || '',
       })),
+      isInclusiveGst: this.invoiceIsInclusiveGst,
+      amountPaid: this.invoiceAmountPaid,
     };
 
     this.invoiceSaving = true;
@@ -2688,6 +2736,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         taxTotal: this.invoiceGstAmount,
         invoiceDate: payload.invoiceDate,
         paymentStatus: payload.paymentStatus,
+        isInclusiveGst: this.invoiceIsInclusiveGst,
+        amountPaid: this.invoiceAmountPaid,
       };
       this.api.put<any>(`/api/invoices/${this.openedInvoiceRecord._id}`, updatePayload).subscribe({
         next: (res) => {
@@ -2744,6 +2794,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.invoiceIssuedAt = new Date(this.openedInvoiceRecord.invoiceDate || new Date());
     this.invoiceDate = this.invoiceIssuedAt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(this.openedInvoiceRecord.paymentStatus);
+    this.invoiceAmountPaid = Number(this.openedInvoiceRecord.amountPaid || 0);
+    this.invoiceIsInclusiveGst = Boolean(this.openedInvoiceRecord.isInclusiveGst);
   }
 
 
@@ -2752,7 +2804,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
       createdByName: this.employee.name,
@@ -2961,6 +3013,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       primaryPhone: client.primaryPhone || '',
       primaryEmail: client.primaryEmail || '',
       address: client.address || '',
+      gstNumber: (client as any).gstNumber || '',
     };
     this.clientOnboardingEditError = '';
     this.clientOnboardingEditOpen = true;
@@ -2978,6 +3031,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       primaryPhone: '',
       primaryEmail: '',
       address: '',
+      gstNumber: '',
     };
     this.clientOnboardingError = '';
     this.clientOnboardingSuccess = '';
@@ -2996,7 +3050,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.clientOnboardingSuccess = '';
     this.api.post<any>('/api/clients', {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       createdByRole: 'employee',
       createdByName: this.employee.name,
       createdByPhone: this.employee.mobile,
@@ -3005,6 +3059,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       primaryPhone: this.clientOnboardingDraft.primaryPhone.trim(),
       primaryEmail: this.clientOnboardingDraft.primaryEmail.trim(),
       address: this.clientOnboardingDraft.address.trim(),
+      gstNumber: (this.clientOnboardingDraft as any).gstNumber?.trim() || '',
     }).subscribe({
       next: (res) => {
         this.clientOnboardingSaving = false;
@@ -3021,6 +3076,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           primaryPhone: '',
           primaryEmail: '',
           address: '',
+          gstNumber: '',
         };
         this.invalidateInvoiceCaches();
         this.clientOnboardingLoaded = false;
@@ -3057,12 +3113,13 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.clientOnboardingEditError = '';
     this.api.put<any>(`/api/clients/${encodeURIComponent(clientId)}`, {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       companyName,
       primaryContactName: this.clientOnboardingEditDraft.primaryContactName.trim(),
       primaryPhone: this.clientOnboardingEditDraft.primaryPhone.trim(),
       primaryEmail: this.clientOnboardingEditDraft.primaryEmail.trim(),
       address: this.clientOnboardingEditDraft.address.trim(),
+      gstNumber: (this.clientOnboardingEditDraft as any).gstNumber?.trim() || '',
     }).subscribe({
       next: (res) => {
         this.clientOnboardingEditSaving = false;
@@ -3113,7 +3170,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.invoiceLead = {
       _id: record._id,
       companyCode: this.employee?.companyCode || '',
-      assignedEmployeePhone: this.employee?.mobile || '',
+      assignedEmployeeId: this.employee?._id || '',
       leadCompanyName: record.leadCompanyName,
       contactName: record.contactName,
       contactNumber: record.contactNumber,
@@ -3121,8 +3178,10 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       address: '',
       status: '',
       setLabel: '',
+      gstNumber: record.clientSnapshot?.gstNumber || (record as any).gstNumber || '',
     };
     this.invoiceItems = this.mapSavedDocumentItems(record.items);
+    this.refreshInvoiceItemGstFromSelection();
     this.showInvoiceModal = true;
   }
 
@@ -3143,7 +3202,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.invoiceLead = {
       _id: record._id,
       companyCode: this.employee?.companyCode || '',
-      assignedEmployeePhone: this.employee?.mobile || '',
+      assignedEmployeeId: this.employee?._id || '',
       leadCompanyName: record.leadCompanyName,
       contactName: record.contactName,
       contactNumber: record.contactNumber,
@@ -3151,8 +3210,10 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       address: '',
       status: '',
       setLabel: '',
+      gstNumber: (record as any).clientSnapshot?.gstNumber || (record as any).gstNumber || '',
     };
     this.invoiceItems = this.mapSavedDocumentItems(record.items);
+    this.refreshInvoiceItemGstFromSelection();
     this.showInvoiceModal = true;
   }
 
@@ -3659,17 +3720,17 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   async saveCompanyFullFollowup(): Promise<void> {
     const sourceLead = this.companyFullFollowupLead();
     const companyCode = String(this.employee?.companyCode || sourceLead?.companyCode || '').trim();
-    const employeePhone = String(this.employee?.mobile || sourceLead?.assignedEmployeePhone || '').trim();
+    const employeeId = String(this.employee?._id || sourceLead?.assignedEmployeeId || '').trim();
     const companyName = this.companyFullCompanyName();
 
-    if (!sourceLead || !companyCode || !employeePhone || !companyName || this.companyFullFollowupSaving) return;
+    if (!sourceLead || !companyCode || !employeeId || !companyName || this.companyFullFollowupSaving) return;
 
     this.companyFullFollowupSaving = true;
     this.companyFullFollowupError = '';
 
     const payload = {
       companyCode,
-      employeePhone,
+      employeeId,
       contactNumber: sourceLead.contactNumber,
       contactName: sourceLead.contactName,
       companyName,
@@ -3789,7 +3850,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.companyFullQuotationLoading = true;
     this.companyFullFollowupLoading = true;
 
-    const employeePhone = String(this.employee?.mobile || lead?.assignedEmployeePhone || '').trim();
+    const employeeId = String(this.employee?._id || lead?.assignedEmployeeId || '').trim();
     const query = this.buildApiQueryString({ companyCode, companyName });
 
     const [profileResult, historyResult, invoiceResult, quotationResult, followupResult] = await Promise.allSettled([
@@ -3797,20 +3858,20 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       firstValueFrom(this.api.get<any>(`/api/history?${query}`)),
       firstValueFrom(this.invoicesRepository.history({
         companyCode,
-        employeePhone: employeePhone || undefined,
+        employeeId: employeeId || undefined,
         search: companyName,
         page: 1,
         pageSize: 100,
       })),
       firstValueFrom(this.quotationsRepository.history({
         companyCode,
-        employeePhone: employeePhone || undefined,
+        employeeId: employeeId || undefined,
         search: companyName,
         page: 1,
         pageSize: 100,
       })),
-      employeePhone
-        ? firstValueFrom(this.api.get<any>(`/api/bookmarks?${this.buildApiQueryString({ companyCode, phone: employeePhone })}`))
+      employeeId
+        ? firstValueFrom(this.api.get<any>(`/api/bookmarks?${this.buildApiQueryString({ companyCode, phone: employeeId })}`))
         : Promise.resolve({ success: true, bookmarks: [] }),
     ]);
 
@@ -3851,7 +3912,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     if (followupResult.status === 'fulfilled') {
       const bookmarks = Array.isArray((followupResult.value as any)?.bookmarks) ? (followupResult.value as any).bookmarks : [];
-      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName, companyCode, employeePhone);
+      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName, companyCode, employeeId);
       this.syncCompanyFullFollowupForm();
     } else {
       this.companyFullFollowupError = 'Failed to load follow-up details.';
@@ -3923,17 +3984,17 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private async reloadCompanyFullFollowupData(): Promise<void> {
     const sourceLead = this.companyFullFollowupLead() || this.companyFullViewLead();
     const companyCode = String(this.employee?.companyCode || sourceLead?.companyCode || '').trim();
-    const employeePhone = String(this.employee?.mobile || sourceLead?.assignedEmployeePhone || '').trim();
+    const employeeId = String(this.employee?._id || sourceLead?.assignedEmployeeId || '').trim();
     const companyName = this.companyFullCompanyName();
-    if (!companyCode || !employeePhone || !companyName) return;
+    if (!companyCode || !employeeId || !companyName) return;
 
     this.companyFullFollowupLoading = true;
     this.companyFullFollowupError = '';
     try {
-      const query = this.buildApiQueryString({ companyCode, phone: employeePhone });
+      const query = this.buildApiQueryString({ companyCode, phone: employeeId });
       const response = await firstValueFrom(this.api.get<any>(`/api/bookmarks?${query}`));
       const bookmarks = Array.isArray(response?.bookmarks) ? response.bookmarks : [];
-      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName, companyCode, employeePhone);
+      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName, companyCode, employeeId);
       this.syncCompanyFullFollowupForm();
     } catch (error: any) {
       this.companyFullFollowupError = error?.error?.message || 'Failed to load follow-up details.';
@@ -3973,14 +4034,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return String(value || '').trim().toLowerCase();
   }
 
-  private normalizeCompanyFollowups(items: any[], companyName: string, companyCode: string, employeePhone: string): Bookmark[] {
+  private normalizeCompanyFollowups(items: any[], companyName: string, companyCode: string, employeeId: string): Bookmark[] {
     const normalizedCompany = this.normalizeCompanyName(companyName);
     return items
       .filter((item) => this.normalizeCompanyName(item?.companyName) === normalizedCompany)
       .map((item) => ({
         _id: String(item?._id || ''),
         companyCode: String(item?.companyCode || companyCode || '').trim(),
-        employeePhone: String(item?.employeePhone || employeePhone || '').trim(),
+        employeeId: String(item?.employeeId || employeeId || '').trim(),
         contactNumber: String(item?.contactNumber || '').trim(),
         contactName: String(item?.contactName || '').trim(),
         companyName: String(item?.companyName || companyName || '').trim(),
@@ -4244,7 +4305,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const body = {
       companyCode: bookmark.companyCode,
-      employeePhone: bookmark.employeePhone,
+      employeeId: bookmark.employeeId,
       contactNumber: bookmark.contactNumber,
       contactName: bookmark.contactName,
       companyName: bookmark.companyName,
@@ -4400,7 +4461,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const body = {
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       contactNumber: this.followupLead.contactNumber,
       contactName: this.followupLead.contactName,
       companyName: this.followupLead.leadCompanyName,
@@ -4542,6 +4603,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.loginLoading = false;
         if (res.success) {
           this.employee = res.employee;
+          if ((res as any).token) {
+            localStorage.setItem('tracecall_emp_token', (res as any).token);
+          }
 
           // Also fetch company name
           this.api.get<any>(`/api/auth/company/${companyCode.trim()}`).subscribe({
@@ -4892,7 +4956,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return {
       _id: lead.id,
       companyCode: lead.companyCode,
-      assignedEmployeePhone: lead.assignedEmployeePhone,
+      assignedEmployeeId: lead.assignedEmployeeId,
       leadCompanyName: lead.companyName,
       contactName: lead.contactName,
       contactNumber: lead.contactNumber,
@@ -4914,7 +4978,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return {
       id: lead._id,
       companyCode: lead.companyCode,
-      assignedEmployeePhone: lead.assignedEmployeePhone,
+      assignedEmployeeId: lead.assignedEmployeeId,
       companyName: lead.leadCompanyName,
       contactName: lead.contactName,
       contactNumber: lead.contactNumber,
@@ -4943,7 +5007,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       contactName: String(record?.contactName || ''),
       contactNumber: String(record?.contactNumber || ''),
       directorEmailAddress: String(record?.directorEmailAddress || ''),
-      employeePhone: String(record?.employeePhone || ''),
+      employeeId: String(record?.employeeId || ''),
       employeeName: String(record?.employeeName || ''),
       total: Number(record?.total || 0),
       invoiceDate: String(record?.invoiceDate || ''),
@@ -5193,14 +5257,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   private overviewCacheKey(period: OverviewPeriod): string {
-    return `overview|${this.employee?.companyCode || ''}|${this.employee?.mobile || ''}|${period}`;
+    return `overview|${this.employee?.companyCode || ''}|${this.employee?._id || ''}|${period}`;
   }
 
   private followupsCacheKey(page = 1): string {
     return [
       'followups',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
       this.followupFilter,
       this.leadSearch.trim(),
       this.followupReminderDateFilter(),
@@ -5212,7 +5276,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return [
       'overview-followups-v2',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
     ].join('|');
   }
 
@@ -5220,7 +5284,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return [
       'today-history',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
       this.historyFilterDate || this.todayInputDate,
       this.leadSearch.trim(),
       page,
@@ -5231,7 +5295,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return [
       'invoice',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
       this.invoiceHistorySearch.trim(),
       this.invoiceDateFrom,
       this.invoiceDateTo,
@@ -5243,7 +5307,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return [
       'quotation',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
       this.quotationHistorySearch.trim(),
       this.quotationDateFrom,
       this.quotationDateTo,
@@ -5255,7 +5319,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return [
       'invoice-client-companies',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
       this.invoiceSearch.trim(),
       page,
     ].join('|');
@@ -5265,7 +5329,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return [
       'quotation-lead-companies',
       this.employee?.companyCode || '',
-      this.employee?.mobile || '',
+      this.employee?._id || '',
       this.quotationSearch.trim(),
       page,
     ].join('|');
@@ -5417,8 +5481,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const { companyCode, mobile } = this.employee;
     try {
       const [statsRes, timelineRes] = await Promise.all([
-        firstValueFrom(this.api.get<any>(`/api/calllogs/employee?companyCode=${companyCode}&phone=${mobile}&period=${period}`)),
-        firstValueFrom(this.api.get<any>(`/api/calllogs/timeline?companyCode=${companyCode}&phone=${mobile}&period=${period}`)),
+        firstValueFrom(this.api.get<any>(`/api/calllogs/employee?companyCode=${companyCode}&employeeId=${this.employee._id}&period=${period}`)),
+        firstValueFrom(this.api.get<any>(`/api/calllogs/timeline?companyCode=${companyCode}&employeeId=${this.employee._id}&period=${period}`)),
       ]);
       const payload: CachedOverviewPeriodData = {
         stats: statsRes?.success ? statsRes.stats : null,
@@ -5791,7 +5855,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     try {
       const pageResult = await firstValueFrom(this.invoicesRepository.history({
         companyCode: this.employee.companyCode,
-        employeePhone: this.employee.mobile,
+        employeeId: this.employee._id,
         search: this.invoiceHistorySearch.trim(),
         dateFrom: this.invoiceDateFrom || undefined,
         dateTo: this.invoiceDateTo || undefined,
@@ -5845,7 +5909,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     try {
       const pageResult = await firstValueFrom(this.quotationsRepository.history({
         companyCode: this.employee.companyCode,
-        employeePhone: this.employee.mobile,
+        employeeId: this.employee._id,
         search: this.quotationHistorySearch.trim(),
         dateFrom: this.quotationDateFrom || undefined,
         dateTo: this.quotationDateTo || undefined,
@@ -6017,7 +6081,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   // ── Break Button Logic ──
   fetchBreakStatus(): void {
     if (!this.employee) return;
-    this.api.get<any>(`/api/breaklog/employee-today?companyCode=${this.employee.companyCode}&employeePhone=${this.employee.mobile}`).subscribe({
+    this.api.get<any>(`/api/breaklog/employee-today?companyCode=${this.employee.companyCode}&employeeId=${this.employee._id}`).subscribe({
       next: res => {
         if (res.success) {
           this.breakTotalSecondsToday = res.totalSeconds ?? 0;
@@ -6042,7 +6106,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       // Post to backend
       this.api.post<any>('/api/breaklog/mark', {
         companyCode: this.employee!.companyCode,
-        employeePhone: this.employee!.mobile,
+        employeeId: this.employee!._id,
         employeeName: this.employee!.name,
         durationSeconds: elapsedSec,
       }).subscribe({
@@ -6482,7 +6546,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       status: String(raw?.status || 'Onboarded'),
       source: String(raw?.source || ''),
       sourceLeadIds: Array.isArray(raw?.sourceLeadIds) ? raw.sourceLeadIds.map((id: any) => String(id || '')).filter(Boolean) : [],
-      assignedEmployeePhones: Array.isArray(raw?.assignedEmployeePhones) ? raw.assignedEmployeePhones.map((phone: any) => String(phone || '')).filter(Boolean) : [],
+      assignedEmployeeIds: Array.isArray(raw?.assignedEmployeeIds) ? raw.assignedEmployeeIds.map((phone: any) => String(phone || '')).filter(Boolean) : [],
       onboardedAt: String(raw?.onboardedAt || ''),
       createdAt: String(raw?.createdAt || ''),
       updatedAt: String(raw?.updatedAt || ''),
@@ -6530,7 +6594,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return {
       _id: client.sourceLeadIds?.[0] || `client:${client.clientId}`,
       companyCode: this.employee?.companyCode || client.companyCode || '',
-      assignedEmployeePhone: this.employee?.mobile || client.assignedEmployeePhones?.[0] || '',
+      assignedEmployeeId: this.employee?._id || client.assignedEmployeeIds?.[0] || '',
       leadCompanyName: client.companyName,
       contactName: client.primaryContactName || client.primaryContact || 'Primary Contact',
       contactNumber: client.primaryPhone || '',
@@ -6595,7 +6659,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       search: this.invoiceSearch.trim(),
       page: String(page),
       pageSize: String(OPERATIONAL_PAGE_SIZE),
@@ -6662,7 +6726,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      employeePhone: this.employee.mobile,
+      employeeId: this.employee._id,
       search: this.clientOnboardingSearch.trim(),
       page: String(page),
       pageSize: String(OPERATIONAL_PAGE_SIZE),
@@ -6724,6 +6788,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
+      employeeId: this.employee._id,
       phone: this.employee.mobile,
       search: this.quotationSearch.trim(),
       page: String(page),
@@ -7533,7 +7598,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         ) || {
           _id: '',
           companyCode: bookmark.companyCode,
-          assignedEmployeePhone: bookmark.employeePhone,
+          assignedEmployeeId: bookmark.employeeId,
           leadCompanyName: bookmark.companyName,
           contactName: bookmark.contactName,
           contactNumber: bookmark.contactNumber,

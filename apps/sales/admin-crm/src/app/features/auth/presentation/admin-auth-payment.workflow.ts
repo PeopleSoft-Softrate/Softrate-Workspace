@@ -655,6 +655,9 @@ export class AdminAuthPaymentWorkflow {
           vm.selectedCrmClientCompany = '';
           vm.loadAdminProfilePhoto?.();
           localStorage.removeItem('tracecall_crm_token');
+          if ((res as any).token) {
+            localStorage.setItem('tracecall_admin_token', (res as any).token);
+          }
           localStorage.setItem('tracecall_user', JSON.stringify(adminUser));
           setTimeout(() => window.scrollTo(0, 0), 0);
           vm._loadDashboard();

@@ -6,7 +6,7 @@ import { ApiService } from './api.service';
 export interface Bookmark {
   _id?: string;
   companyCode: string;
-  employeePhone: string;
+  employeeId: string;
   contactNumber: string;
   contactName: string;
   description?: string;
@@ -31,7 +31,7 @@ export class BookmarkService {
   private baseUrl: string;
 
   constructor(private http: HttpClient, private apiService: ApiService) {
-    this.baseUrl = this.apiService.baseUrl + '/api/bookmarks';
+    this.baseUrl = '/api/bookmarks';
   }
 
   private buildQueryString(params: Record<string, string | number | boolean | undefined>): string {
@@ -44,13 +44,13 @@ export class BookmarkService {
     return query ? `?${query}` : '';
   }
 
-  getBookmarks(companyCode: string, phone: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}?companyCode=${companyCode}&phone=${phone}`);
+  getBookmarks(companyCode: string, employeeId: string): Observable<any> {
+    return this.apiService.get(`${this.baseUrl}?companyCode=${companyCode}&employeeId=${employeeId}`);
   }
 
   getEmployeeBookmarkPage(
     companyCode: string,
-    phone: string,
+    employeeId: string,
     query: {
       page?: number;
       pageSize?: number;
@@ -65,9 +65,8 @@ export class BookmarkService {
       sort?: string;
     } = {}
   ): Observable<any> {
-    return this.http.get(`${this.baseUrl}${this.buildQueryString({
-      companyCode,
-      phone,
+    return this.apiService.get(`${this.baseUrl}${this.buildQueryString({
+      companyCode, employeeId,
       ...query,
     })}`);
   }
@@ -89,18 +88,18 @@ export class BookmarkService {
       if (value === undefined || value === null || value === '') return;
       params.set(key, String(value));
     });
-    return this.http.get(`${this.baseUrl}/admin?${params.toString()}`);
+    return this.apiService.get(`${this.baseUrl}/admin?${params.toString()}`);
   }
 
   deleteBookmark(id: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`);
+    return this.apiService.delete(`${this.baseUrl}/${id}`);
   }
 
   updateBookmark(id: string, payload: { description?: string, reminderDate?: string | null }): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/${id}`, payload);
+    return this.apiService.patch(`${this.baseUrl}/${id}`, payload);
   }
 
   addBulkBookmarks(bookmarks: Partial<Bookmark>[]): Observable<any> {
-    return this.http.post(`${this.baseUrl}/bulk`, { bookmarks });
+    return this.apiService.post(`${this.baseUrl}/bulk`, { bookmarks });
   }
 }

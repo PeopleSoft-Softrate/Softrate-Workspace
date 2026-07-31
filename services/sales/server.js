@@ -116,9 +116,9 @@ app.use('/api/history', require('./src/modules/history/history.routes'));
 const eventBus = require('./services/eventBus');
 
 app.get('/api/events', (req, res) => {
-  const { companyCode, phone } = req.query;
-  if (!companyCode || !phone) {
-    return res.status(400).json({ success: false, message: 'companyCode and phone required.' });
+  const { companyCode, employeeId } = req.query;
+  if (!companyCode || !employeeId) {
+    return res.status(400).json({ success: false, message: 'companyCode and employeeId required.' });
   }
 
   // SSE headers
@@ -129,10 +129,10 @@ app.get('/api/events', (req, res) => {
   res.flushHeaders();
 
   // Register client
-  eventBus.addClient(companyCode, phone, res);
+  eventBus.addClient(companyCode, employeeId, res);
 
   // Send initial connected event
-  res.write(`data: ${JSON.stringify({ type: 'connected', companyCode, phone })}\n\n`);
+  res.write(`data: ${JSON.stringify({ type: 'connected', companyCode, employeeId })}\n\n`);
 
   // Heartbeat every 25s to keep connection alive through proxies/load balancers
   const heartbeat = setInterval(() => {
@@ -142,7 +142,7 @@ app.get('/api/events', (req, res) => {
   // Cleanup on disconnect
   req.on('close', () => {
     clearInterval(heartbeat);
-    eventBus.removeClient(companyCode, phone, res);
+    eventBus.removeClient(companyCode, employeeId, res);
   });
 });
 

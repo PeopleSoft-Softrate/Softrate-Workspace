@@ -9,7 +9,7 @@ import { mapInvoiceDto } from './invoice.mapper';
 
 export interface InvoiceHistoryQuery {
   companyCode: string;
-  employeePhone?: string;
+  employeeId?: string;
   search?: string;
   dateFrom?: string;
   dateTo?: string;

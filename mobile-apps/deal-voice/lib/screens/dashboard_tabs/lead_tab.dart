@@ -18,7 +18,7 @@ class _LeadTabState extends State<LeadTab> {
   bool _isLoading = true;
   String? _error;
   String _companyCode = '';
-  String _phone = '';
+  String _employeeId = '';
 
   // To group leads by company
   Map<String, List<dynamic>> _groupedLeads = {};
@@ -51,7 +51,7 @@ class _LeadTabState extends State<LeadTab> {
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     _companyCode = prefs.getString('companyCode') ?? '';
-    _phone = prefs.getString('mobileNumber') ?? '';
+    _employeeId = prefs.getString('employeeId') ?? '';
     await _fetchLeads();
   }
 
@@ -64,7 +64,7 @@ class _LeadTabState extends State<LeadTab> {
     try {
       final res = await ApiService.getLeads(
         companyCode: _companyCode, 
-        phone: _phone, 
+        employeeId: _employeeId, 
         setLabel: _selectedSetLabel,
       );
       if (res['success']) {
@@ -340,7 +340,7 @@ class _LeadTabState extends State<LeadTab> {
                                   setDialogState(() { saving = true; errorMsg = ''; });
                                   final res = await ApiService.addBookmark(
                                     companyCode: _companyCode,
-                                    employeePhone: _phone,
+                                    employeeId: _employeeId,
                                     contactNumber: number,
                                     contactName: name,
                                     description: descCtrl.text.trim(),

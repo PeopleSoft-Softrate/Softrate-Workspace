@@ -73,7 +73,7 @@ class ApiService {
     }
   }
   // ── Sync Status (Polling) ───────────────────────────────────
-  static Future<Map<String, dynamic>> checkSyncStatus(String companyCode, String mobile) async {
+  static Future<Map<String, dynamic>> checkSyncStatus(String companyCode, String employeeId) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/employees/sync-status?companyCode=$companyCode&mobile=$mobile'),
@@ -108,7 +108,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'companyCode': companyCode,
-          'phone': phone,
+          'employeeId': employeeId,
           'date': date,
           'incoming': incoming,
           'outgoing': outgoing,
@@ -308,7 +308,7 @@ class ApiService {
     String? setLabel,
   }) async {
     try {
-      final queryParams = {'companyCode': companyCode, 'phone': phone};
+      final queryParams = {'companyCode': companyCode, 'employeeId': employeeId};
       if (setLabel != null && setLabel.isNotEmpty) {
         queryParams['setLabel'] = setLabel;
       }

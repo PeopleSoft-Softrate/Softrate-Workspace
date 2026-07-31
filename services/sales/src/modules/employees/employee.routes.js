@@ -1,5 +1,7 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const Employee = require('../../../models/Employee');
+const { signToken } = require('../../common/jwtHelper');
 const router = express.Router();
 
 // GET employees for a given company code
@@ -114,7 +116,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Employee Login (via mobile + companyCode)
+// Employee Login (via mobile + companyCode) — returns a JWT
 router.post('/login', async (req, res) => {
   try {
     const { companyCode, mobile, countryCode } = req.body;
@@ -127,7 +129,11 @@ router.post('/login', async (req, res) => {
     if (!employee) {
       return res.status(404).json({ success: false, message: 'Employee not found with this number & company code.' });
     }
-    return res.status(200).json({ success: true, message: 'Employee authenticated', employee });
+
+    // Issue JWT — employeeId + companyCode embedded in token
+    const token = signToken({ employeeId: String(employee._id), companyCode, role: 'employee' });
+
+    return res.status(200).json({ success: true, message: 'Employee authenticated', employee, token });
   } catch (err) {
     console.error('[employee login]', err);
     return res.status(500).json({ success: false, message: 'Server error during employee login' });
@@ -157,15 +163,15 @@ router.post('/trigger-sync-all', async (req, res) => {
   }
 });
 
-// Mobile App: Poll for sync trigger
+// Mobile App: Poll for sync trigger (uses employeeId from query param)
 router.get('/sync-status', async (req, res) => {
   try {
-    const { companyCode, mobile } = req.query;
-    if (!companyCode || !mobile) return res.status(400).json({ success: false, message: 'companyCode and mobile required.' });
+    const { employeeId } = req.query;
+    if (!employeeId) return res.status(400).json({ success: false, message: 'employeeId required.' });
     
     // Find employee and if forceSync is true, return it and reset it to false atomically
     const employee = await Employee.findOneAndUpdate(
-      { companyCode, mobile, forceSync: true },
+      { _id: employeeId, forceSync: true },
       { $set: { forceSync: false } }
     );
 

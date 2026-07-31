@@ -34,7 +34,9 @@ const { ensureClientForLead } = require('../../../services/clientService');
 const { getAiBriefForLead } = require('../../../services/ai/researchWorkflow');
 const { getAiSuggestionForLead } = require('../../../services/ai/suggestionWorkflow');
 
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
+router.use(companyMiddleware);
 const DEFAULT_COMPANY_CONTACT_PAGE_SIZE = 20;
 const MAX_COMPANY_CONTACT_PAGE_SIZE = 200;
 
@@ -81,14 +83,14 @@ function mapCompanyProfile(profile, companyName = '') {
   };
 }
 
-async function getCachedLeadSets({ companyCode, phone, cacheKey }) {
+async function getCachedLeadSets({ LeadModel, companyCode, employeeId, cacheKey }) {
   const { value } = await getOrSet(cacheKey, LEAD_CACHE_TTLS.facets, async () => {
-    return getLeadSets({ companyCode, phone, query: {} });
+    return getLeadSets({ LeadModel, companyCode, employeeId, query: {} });
   });
   return value;
 }
 
-async function getCachedLeadCompanies({ companyCode, phone, query, cacheKey }) {
+async function getCachedLeadCompanies({ LeadModel, companyCode, employeeId, query, cacheKey }) {
   const companiesQuery = { ...query };
   delete companiesQuery.company;
   delete companiesQuery.sort;
@@ -97,7 +99,7 @@ async function getCachedLeadCompanies({ companyCode, phone, query, cacheKey }) {
   delete companiesQuery.contactPageSize;
 
   const { value } = await getOrSet(cacheKey, LEAD_CACHE_TTLS.facets, async () => {
-    return getLeadCompanies({ companyCode, phone, query: companiesQuery });
+    return getLeadCompanies({ LeadModel, companyCode, employeeId, query: companiesQuery });
   });
   return value;
 }
@@ -112,7 +114,7 @@ function shouldIncludeCompanyContacts(query) {
   return query.includeContacts === true || String(query.includeContacts ?? '').trim().toLowerCase() === 'true';
 }
 
-async function getCachedEmployeeCompanyContacts({ companyCode, phone, query, companyNames, cacheKey }) {
+async function getCachedEmployeeCompanyContacts({ LeadModel, companyCode, employeeId, query, companyNames, cacheKey }) {
   const contactPageSize = parseContactPageSize(query.contactPageSize);
   const contactQuery = { ...query };
   delete contactQuery.page;
@@ -133,12 +135,12 @@ async function getCachedEmployeeCompanyContacts({ companyCode, phone, query, com
 
     const { mongoQuery } = buildLeadSearchQuery({
       companyCode,
-      phone,
+      employeeId,
       query: contactQuery,
     });
     mongoQuery.leadCompanyNameLower = { $in: companyKeys };
 
-    const rows = await Lead.aggregate([
+    const rows = await LeadModel.aggregate([
       { $match: mongoQuery },
       { $sort: { leadCompanyNameLower: 1, sheetOrder: 1, createdAt: 1, _id: 1 } },
       { $group: { _id: '$leadCompanyName', contacts: { $push: '$$ROOT' } } },
@@ -156,9 +158,9 @@ async function getCachedEmployeeCompanyContacts({ companyCode, phone, query, com
   return value;
 }
 
-async function fetchLeadList({ companyCode, phone, scope, reqQuery }) {
+async function fetchLeadList({ LeadModel, companyCode, employeeId, scope, reqQuery }) {
   const pagination = parsePagination(reqQuery);
-  const searchContext = buildLeadSearchQuery({ companyCode, phone, query: reqQuery });
+  const searchContext = buildLeadSearchQuery({ companyCode, employeeId: employeeId, query: reqQuery });
   const shouldIncludeFacets = !pagination.isPaginated || pagination.page === 1 || reqQuery.includeFacets === 'true';
   const cacheParams = {
     query: reqQuery,
@@ -167,14 +169,14 @@ async function fetchLeadList({ companyCode, phone, scope, reqQuery }) {
     scope,
   };
   const cacheKey = scope === 'employee'
-    ? buildEmployeeLeadListKey(companyCode, phone, cacheParams)
+    ? buildEmployeeLeadListKey(companyCode, employeeId, cacheParams)
     : buildAdminLeadListKey(companyCode, cacheParams);
 
   const { cacheHit, value } = await getOrSet(cacheKey, LEAD_CACHE_TTLS.list, async () => {
     const { mongoQuery, projection, sort } = searchContext;
 
     if (!pagination.isPaginated) {
-      const items = await Lead.find(mongoQuery, projection).sort(sort).lean();
+      const items = await LeadModel.find(mongoQuery, projection).sort(sort).lean();
       return {
         items: items.map(normalizeLeadForResponse),
         total: items.length,
@@ -182,8 +184,8 @@ async function fetchLeadList({ companyCode, phone, scope, reqQuery }) {
     }
 
     const [total, items] = await Promise.all([
-      Lead.countDocuments(mongoQuery),
-      Lead.find(mongoQuery, projection)
+      LeadModel.countDocuments(mongoQuery),
+      LeadModel.find(mongoQuery, projection)
         .sort(sort)
         .skip(pagination.skip)
         .limit(pagination.pageSize)
@@ -210,25 +212,29 @@ async function fetchLeadList({ companyCode, phone, scope, reqQuery }) {
     [setPayload, companyPayload] = await Promise.all([
       scope === 'employee'
         ? getCachedLeadSets({
+            LeadModel,
             companyCode,
-            phone,
-            cacheKey: buildEmployeeSetKey(companyCode, phone, {}),
+            employeeId: employeeId,
+            cacheKey: buildEmployeeSetKey(companyCode, employeeId, {}),
           })
         : getCachedLeadSets({
+            LeadModel,
             companyCode,
-            phone: undefined,
+            employeeId: undefined,
             cacheKey: buildAdminSetKey(companyCode, {}),
           }),
       scope === 'employee'
         ? getCachedLeadCompanies({
+            LeadModel,
             companyCode,
-            phone,
+            employeeId: employeeId,
             query: facetQuery,
-            cacheKey: buildEmployeeCompanyKey(companyCode, phone, facetQuery),
+            cacheKey: buildEmployeeCompanyKey(companyCode, employeeId, facetQuery),
           })
         : getCachedLeadCompanies({
+            LeadModel,
             companyCode,
-            phone: undefined,
+            employeeId: undefined,
             query: facetQuery,
             cacheKey: buildAdminCompanyKey(companyCode, facetQuery),
           }),
@@ -247,38 +253,43 @@ async function fetchLeadList({ companyCode, phone, scope, reqQuery }) {
   });
 }
 
-async function invalidateLeadScope(companyCode, phone) {
-  await invalidateLeadCaches({ companyCode, phone });
+async function invalidateLeadScope(companyCode, employeeId) {
+  await invalidateLeadCaches({ companyCode, employeeId });
 }
 
 // POST — create a single lead
 router.post('/', async (req, res) => {
+  
   try {
     const payload = enrichLeadForStorage(req.body);
-    if (!payload.companyCode || !payload.assignedEmployeePhone || !payload.contactNumber || !payload.leadCompanyName) {
+    if (!payload.companyCode || !payload.assignedEmployeeId || !payload.contactNumber || !payload.leadCompanyName) {
       return res.status(400).json({
         success: false,
-        message: 'companyCode, assignedEmployeePhone, leadCompanyName, and contactNumber are required.',
+        message: 'companyCode, assignedEmployeeId, leadCompanyName, and contactNumber are required.',
       });
     }
 
-    const lead = await Lead.create(payload);
+    const lead = await req.models.Lead.create(payload);
     const responseLead = normalizeLeadForResponse(lead.toObject());
 
-    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeePhone);
-    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeePhone, { type: 'LEAD_CREATED', lead: responseLead });
+    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
+    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_CREATED', lead: responseLead });
 
-    await logChange({
+    await logChange({ HistoryModel: History,
       companyCode: lead.companyCode,
       contactNumber: lead.contactNumber,
       contactName: lead.contactName,
       companyName: lead.leadCompanyName,
       action: 'Lead Created',
       newValue: lead.status,
-      changedBy: lead.assignedEmployeePhone,
+      changedBy: lead.assignedEmployeeId,
     });
 
-    await ensureClientForLead(lead);
+    await ensureClientForLead({ 
+      ClientModel: req.models.Client, 
+      LeadModel: req.models.Lead, 
+      CounterModel: req.models.Counter
+    }, lead);
 
     return res.status(201).json({ success: true, lead: responseLead });
   } catch (err) {
@@ -289,6 +300,7 @@ router.post('/', async (req, res) => {
 
 // POST — create bulk leads via mapped JSON data (Excel upload)
 router.post('/bulk', async (req, res) => {
+  
   try {
     const { leads, async: asyncImport, originalFileName, setLabel } = req.body || {};
     if (!Array.isArray(leads) || leads.length === 0) {
@@ -296,13 +308,13 @@ router.post('/bulk', async (req, res) => {
     }
 
     const firstLead = enrichLeadForStorage(leads[0]);
-    if (!firstLead.companyCode || !firstLead.assignedEmployeePhone) {
-      return res.status(400).json({ success: false, message: 'Bulk leads require companyCode and assignedEmployeePhone.' });
+    if (!firstLead.companyCode || !firstLead.assignedEmployeeId) {
+      return res.status(400).json({ success: false, message: 'Bulk leads require companyCode and assignedEmployeeId.' });
     }
 
     const batch = await createLeadImportBatch({
       companyCode: firstLead.companyCode,
-      assignedEmployeePhone: firstLead.assignedEmployeePhone,
+      assignedEmployeeId: firstLead.assignedEmployeeId,
       originalFileName,
       setLabel: setLabel || firstLead.setLabel,
       rowCount: leads.length,
@@ -338,6 +350,7 @@ router.post('/bulk', async (req, res) => {
 });
 
 router.get('/import-batches/:id', async (req, res) => {
+  
   try {
     const batch = await getLeadImportBatch(req.params.id);
     if (!batch) {
@@ -353,15 +366,16 @@ router.get('/import-batches/:id', async (req, res) => {
 // GET — fetch only distinct set labels for an employee
 router.get('/employee/sets', async (req, res) => {
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) {
-      return res.status(400).json({ success: false, message: 'companyCode and phone are required.' });
+    const { companyCode, employeeId } = req.query;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
     const payload = await getCachedLeadSets({
+      LeadModel: req.models.Lead,
       companyCode,
-      phone,
-      cacheKey: buildEmployeeSetKey(companyCode, phone, {}),
+      employeeId,
+      cacheKey: buildEmployeeSetKey(companyCode, employeeId, {}),
     });
 
     return res.status(200).json({ success: true, sets: payload.sets, items: payload.items });
@@ -374,12 +388,12 @@ router.get('/employee/sets', async (req, res) => {
 // GET — fetch only distinct lead segregation values for an employee
 router.get('/employee/divisions', async (req, res) => {
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) {
-      return res.status(400).json({ success: false, message: 'companyCode and phone are required.' });
+    const { companyCode, employeeId } = req.query;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
-    const payload = await getLeadDivisions({ companyCode, phone, query: {} });
+    const payload = await getLeadDivisions({ LeadModel: req.models.Lead, companyCode, employeeId, query: {} });
 
     return res.status(200).json({ success: true, divisions: payload.divisions, items: payload.items });
   } catch (err) {
@@ -390,25 +404,27 @@ router.get('/employee/divisions', async (req, res) => {
 
 router.get('/employee/companies', async (req, res) => {
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) {
-      return res.status(400).json({ success: false, message: 'companyCode and phone are required.' });
+    const { companyCode, employeeId } = req.query;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
     const payload = await getCachedLeadCompanies({
+      LeadModel: req.models.Lead,
       companyCode,
-      phone,
+      employeeId,
       query: req.query,
-      cacheKey: buildEmployeeCompanyKey(companyCode, phone, req.query),
+      cacheKey: buildEmployeeCompanyKey(companyCode, employeeId, req.query),
     });
 
     const contactsByCompany = shouldIncludeCompanyContacts(req.query)
       ? await getCachedEmployeeCompanyContacts({
+          LeadModel: req.models.Lead,
           companyCode,
-          phone,
+          employeeId: employeeId,
           query: req.query,
           companyNames: payload.names,
-          cacheKey: buildEmployeeCompanyContactsKey(companyCode, phone, {
+          cacheKey: buildEmployeeCompanyContactsKey(companyCode, employeeId, {
             query: req.query,
             companyNames: payload.names,
             contactPageSize: parseContactPageSize(req.query.contactPageSize),
@@ -433,19 +449,20 @@ router.get('/employee/companies', async (req, res) => {
 });
 
 router.get('/employee/status-counts', async (req, res) => {
+  
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) {
-      return res.status(400).json({ success: false, message: 'companyCode and phone are required.' });
+    const { companyCode, employeeId } = req.query;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
-    const cacheKey = buildEmployeeStatusCountKey(companyCode, phone, req.query);
+    const cacheKey = buildEmployeeStatusCountKey(companyCode, employeeId, req.query);
     const { value } = await getOrSet(cacheKey, LEAD_CACHE_TTLS.facets, async () => {
-      const rows = await Lead.aggregate([
+      const rows = await req.models.Lead.aggregate([
         {
           $match: {
             companyCode,
-            assignedEmployeePhone: phone,
+            assignedEmployeeId: employeeId,
             isArchived: { $ne: true },
           },
         },
@@ -474,15 +491,17 @@ router.get('/employee/status-counts', async (req, res) => {
 
 // GET — fetch leads for an employee
 router.get('/employee', async (req, res) => {
+  
   try {
-    const { companyCode, phone } = req.query;
-    if (!companyCode || !phone) {
-      return res.status(400).json({ success: false, message: 'companyCode and phone are required.' });
+    const { companyCode, employeeId } = req.query;
+    if (!companyCode || !employeeId) {
+      return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
     const response = await fetchLeadList({
+      LeadModel: req.models.Lead,
       companyCode,
-      phone,
+      employeeId,
       scope: 'employee',
       reqQuery: req.query,
     });
@@ -495,6 +514,7 @@ router.get('/employee', async (req, res) => {
 });
 
 router.get('/admin/sets', async (req, res) => {
+  
   try {
     const { companyCode } = req.query;
     if (!companyCode) {
@@ -502,8 +522,9 @@ router.get('/admin/sets', async (req, res) => {
     }
 
     const payload = await getCachedLeadSets({
+      LeadModel: req.models.Lead,
       companyCode,
-      phone: undefined,
+      employeeId: undefined,
       cacheKey: buildAdminSetKey(companyCode, {}),
     });
 
@@ -515,6 +536,7 @@ router.get('/admin/sets', async (req, res) => {
 });
 
 router.get('/admin/companies', async (req, res) => {
+  
   try {
     const { companyCode } = req.query;
     if (!companyCode) {
@@ -522,8 +544,9 @@ router.get('/admin/companies', async (req, res) => {
     }
 
     const payload = await getCachedLeadCompanies({
+      LeadModel: req.models.Lead,
       companyCode,
-      phone: undefined,
+      employeeId: undefined,
       query: req.query,
       cacheKey: buildAdminCompanyKey(companyCode, req.query),
     });
@@ -546,6 +569,7 @@ router.get('/admin/companies', async (req, res) => {
 
 // GET — fetch leads for an admin's company
 router.get('/admin', async (req, res) => {
+  
   try {
     const { companyCode } = req.query;
     if (!companyCode) {
@@ -553,8 +577,9 @@ router.get('/admin', async (req, res) => {
     }
 
     const response = await fetchLeadList({
+      LeadModel: req.models.Lead,
       companyCode,
-      phone: undefined,
+      employeeId: undefined,
       scope: 'admin',
       reqQuery: req.query,
     });
@@ -568,21 +593,22 @@ router.get('/admin', async (req, res) => {
 
 // POST — remove all leads in a set for an employee
 router.post('/set/delete', async (req, res) => {
+  
   try {
-    const { companyCode, phone, setLabel } = req.body;
-    if (!companyCode || !phone || !setLabel) {
-      return res.status(400).json({ success: false, message: 'companyCode, phone, and setLabel are required.' });
+    const { companyCode, employeeId, setLabel } = req.body;
+    if (!companyCode || !employeeId || !setLabel) {
+      return res.status(400).json({ success: false, message: 'companyCode, employeeId, and setLabel are required.' });
     }
 
-    const result = await Lead.deleteMany({
+    const result = await req.models.Lead.deleteMany({
       companyCode,
-      assignedEmployeePhone: phone,
+      assignedEmployeeId: employeeId,
       setLabelLower: normalizeText(setLabel),
       isArchived: false,
     });
 
-    await invalidateLeadScope(companyCode, phone);
-    eventBus.emitToEmployee(companyCode, phone, { type: 'LEADS_REFRESH' });
+    await invalidateLeadScope(companyCode, employeeId);
+    eventBus.emitToEmployee(companyCode, employeeId, { type: 'LEADS_REFRESH' });
     return res.status(200).json({ success: true, deleted: result.deletedCount });
   } catch (err) {
     console.error('[delete set leads]', err);
@@ -592,13 +618,14 @@ router.post('/set/delete', async (req, res) => {
 
 // POST — remove all leads in a set for the whole company
 router.post('/admin/delete-set', async (req, res) => {
+  
   try {
     const { companyCode, setLabel } = req.body;
     if (!companyCode || !setLabel) {
       return res.status(400).json({ success: false, message: 'companyCode and setLabel are required.' });
     }
 
-    const result = await Lead.deleteMany({
+    const result = await req.models.Lead.deleteMany({
       companyCode,
       setLabelLower: normalizeText(setLabel),
       isArchived: false,
@@ -614,6 +641,7 @@ router.post('/admin/delete-set', async (req, res) => {
 });
 
 router.get('/company-profile', async (req, res) => {
+  
   try {
     const companyCode = String(req.query.companyCode || '').trim();
     const companyName = String(req.query.companyName || '').trim();
@@ -637,6 +665,7 @@ router.get('/company-profile', async (req, res) => {
 });
 
 router.patch('/company-profile', async (req, res) => {
+  
   try {
     const companyCode = String(req.body.companyCode || '').trim();
     const companyName = String(req.body.companyName || '').trim();
@@ -669,6 +698,7 @@ router.patch('/company-profile', async (req, res) => {
 });
 
 router.post('/company-profile/notes', async (req, res) => {
+  
   try {
     const companyCode = String(req.body.companyCode || '').trim();
     const companyName = String(req.body.companyName || '').trim();
@@ -713,6 +743,7 @@ router.post('/company-profile/notes', async (req, res) => {
 
 // GET — fetch cached or newly generated AI brief for a lead/company
 router.get('/:id/ai-brief', async (req, res) => {
+  
   try {
     const result = await getAiBriefForLead(req.params.id);
     return res.status(result.status).json(result.body);
@@ -728,6 +759,7 @@ router.get('/:id/ai-brief', async (req, res) => {
 
 // POST — fetch scenario-specific AI suggestion for a lead/workflow
 router.post('/:id/ai-suggestion', async (req, res) => {
+  
   try {
     const result = await getAiSuggestionForLead(req.params.id, req.body || {});
     return res.status(result.status).json(result.body);
@@ -743,11 +775,12 @@ router.post('/:id/ai-suggestion', async (req, res) => {
 
 // DELETE — remove a single lead by ID
 router.delete('/:id', async (req, res) => {
+  
   try {
-    const lead = await Lead.findByIdAndDelete(req.params.id);
+    const lead = await req.models.Lead.findByIdAndDelete(req.params.id);
     if (lead) {
-      await invalidateLeadScope(lead.companyCode, lead.assignedEmployeePhone);
-      eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeePhone, { type: 'LEAD_DELETED', id: req.params.id });
+      await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
+      eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_DELETED', id: req.params.id });
     }
     return res.status(200).json({ success: true });
   } catch (err) {
@@ -758,28 +791,29 @@ router.delete('/:id', async (req, res) => {
 
 // PATCH — update lead status
 router.patch('/:id/status', async (req, res) => {
+  
   try {
     const { status } = req.body;
     if (!status) {
       return res.status(400).json({ success: false, message: 'Status is required.' });
     }
 
-    const oldLead = await Lead.findById(req.params.id);
+    const oldLead = await req.models.Lead.findById(req.params.id);
     if (!oldLead) {
       return res.status(404).json({ success: false, message: 'Lead not found.' });
     }
 
     const oldStatus = oldLead.status;
-    const lead = await Lead.findByIdAndUpdate(req.params.id, { status: String(status).trim() }, { new: true });
+    const lead = await req.models.Lead.findByIdAndUpdate(req.params.id, { status: String(status).trim() }, { new: true });
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found.' });
     }
 
     const responseLead = normalizeLeadForResponse(lead.toObject());
-    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeePhone);
-    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeePhone, { type: 'LEAD_UPDATED', lead: responseLead });
+    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
+    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
 
-    await logChange({
+    await logChange({ HistoryModel: History,
       companyCode: lead.companyCode,
       contactNumber: lead.contactNumber,
       contactName: lead.contactName,
@@ -787,10 +821,14 @@ router.patch('/:id/status', async (req, res) => {
       action: 'Status Change',
       oldValue: oldStatus,
       newValue: lead.status,
-      changedBy: lead.assignedEmployeePhone,
+      changedBy: lead.assignedEmployeeId,
     });
 
-    await ensureClientForLead(lead);
+    await ensureClientForLead({ 
+      ClientModel: req.models.Client, 
+      LeadModel: req.models.Lead, 
+      CounterModel: req.models.Counter
+    }, lead);
 
     return res.status(200).json({ success: true, lead: responseLead });
   } catch (err) {
@@ -801,6 +839,7 @@ router.patch('/:id/status', async (req, res) => {
 
 // PATCH — update lead flags (isStarred, isFavourite)
 router.patch('/:id/flags', async (req, res) => {
+  
   try {
     const update = {};
     if (req.body.isStarred !== undefined) update.isStarred = req.body.isStarred;
@@ -810,12 +849,12 @@ router.patch('/:id/flags', async (req, res) => {
       return res.status(400).json({ success: false, message: 'No flags provided to update.' });
     }
 
-    const oldLead = await Lead.findById(req.params.id);
+    const oldLead = await req.models.Lead.findById(req.params.id);
     if (!oldLead) {
       return res.status(404).json({ success: false, message: 'Lead not found.' });
     }
 
-    const lead = await Lead.findByIdAndUpdate(
+    const lead = await req.models.Lead.findByIdAndUpdate(
       req.params.id,
       { $set: update },
       { new: true }
@@ -825,27 +864,27 @@ router.patch('/:id/flags', async (req, res) => {
     }
 
     const responseLead = normalizeLeadForResponse(lead.toObject());
-    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeePhone);
-    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeePhone, { type: 'LEAD_UPDATED', lead: responseLead });
+    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
+    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
 
     if (update.isStarred !== undefined && update.isStarred !== oldLead.isStarred) {
-      await logChange({
+      await logChange({ HistoryModel: History,
         companyCode: lead.companyCode,
         contactNumber: lead.contactNumber,
         contactName: lead.contactName,
         companyName: lead.leadCompanyName,
         action: lead.isStarred ? 'Starred' : 'Unstarred',
-        changedBy: lead.assignedEmployeePhone,
+        changedBy: lead.assignedEmployeeId,
       });
     }
     if (update.isFavourite !== undefined && update.isFavourite !== oldLead.isFavourite) {
-      await logChange({
+      await logChange({ HistoryModel: History,
         companyCode: lead.companyCode,
         contactNumber: lead.contactNumber,
         contactName: lead.contactName,
         companyName: lead.leadCompanyName,
         action: lead.isFavourite ? 'Favourited' : 'Unfavourited',
-        changedBy: lead.assignedEmployeePhone,
+        changedBy: lead.assignedEmployeeId,
       });
     }
 
@@ -858,29 +897,30 @@ router.patch('/:id/flags', async (req, res) => {
 
 // POST — add a remark to a lead
 router.post('/:id/remarks', async (req, res) => {
+  
   try {
     const { remark } = req.body;
     if (!remark) {
       return res.status(400).json({ success: false, message: 'Remark is required.' });
     }
 
-    const lead = await Lead.findById(req.params.id);
+    const lead = await req.models.Lead.findById(req.params.id);
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found.' });
     }
 
     const updatedRemarks = [...normalizeRemarks(lead.remarks), String(remark).trim()];
-    const updatedLead = await Lead.findByIdAndUpdate(
+    const updatedLead = await req.models.Lead.findByIdAndUpdate(
       req.params.id,
       { $set: { remarks: updatedRemarks } },
       { new: true }
     );
 
     const responseLead = normalizeLeadForResponse(updatedLead.toObject());
-    await invalidateLeadScope(updatedLead.companyCode, updatedLead.assignedEmployeePhone);
-    eventBus.emitToEmployee(updatedLead.companyCode, updatedLead.assignedEmployeePhone, { type: 'LEAD_UPDATED', lead: responseLead });
+    await invalidateLeadScope(updatedLead.companyCode, updatedLead.assignedEmployeeId);
+    eventBus.emitToEmployee(updatedLead.companyCode, updatedLead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
 
-    await logChange({
+    await logChange({ HistoryModel: History,
       companyCode: updatedLead.companyCode,
       contactNumber: updatedLead.contactNumber,
       contactName: updatedLead.contactName,
@@ -888,7 +928,7 @@ router.post('/:id/remarks', async (req, res) => {
       action: 'Remark Added',
       newValue: remark,
       details: `To Director: ${updatedLead.contactName || 'Primary'}`,
-      changedBy: updatedLead.assignedEmployeePhone,
+      changedBy: updatedLead.assignedEmployeeId,
     });
 
     return res.status(200).json({ success: true, lead: responseLead });
@@ -900,9 +940,10 @@ router.post('/:id/remarks', async (req, res) => {
 
 // DELETE — remove a specific remark from a lead
 router.delete('/:id/remarks/:index', async (req, res) => {
+  
   try {
     const { id, index } = req.params;
-    const lead = await Lead.findById(id);
+    const lead = await req.models.Lead.findById(id);
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found.' });
     }
@@ -914,15 +955,15 @@ router.delete('/:id/remarks/:index', async (req, res) => {
     const updatedRemarks = [...lead.remarks];
     updatedRemarks.splice(Number.parseInt(index, 10), 1);
 
-    const updatedLead = await Lead.findByIdAndUpdate(
+    const updatedLead = await req.models.Lead.findByIdAndUpdate(
       id,
       { $set: { remarks: updatedRemarks } },
       { new: true }
     );
 
     const responseLead = normalizeLeadForResponse(updatedLead.toObject());
-    await invalidateLeadScope(updatedLead.companyCode, updatedLead.assignedEmployeePhone);
-    eventBus.emitToEmployee(updatedLead.companyCode, updatedLead.assignedEmployeePhone, { type: 'LEAD_UPDATED', lead: responseLead });
+    await invalidateLeadScope(updatedLead.companyCode, updatedLead.assignedEmployeeId);
+    eventBus.emitToEmployee(updatedLead.companyCode, updatedLead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
     return res.status(200).json({ success: true, lead: responseLead });
   } catch (err) {
     console.error('[delete lead remark]', err);

@@ -64,10 +64,10 @@ void onStart(ServiceInstance service) async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.reload();
       final companyCode = prefs.getString('companyCode') ?? '';
-      final phone = prefs.getString('mobileNumber') ?? '';
+      final employeeId = prefs.getString('employeeId') ?? '';
       
-      if (companyCode.isNotEmpty && phone.isNotEmpty) {
-        final res = await ApiService.checkSyncStatus(companyCode, phone);
+      if (companyCode.isNotEmpty && employeeId.isNotEmpty) {
+        final res = await ApiService.checkSyncStatus(companyCode, employeeId);
         if (res['success'] == true && res['triggerSync'] == true) {
           debugPrint('Admin requested forced sync via polling!');
           final hasNew = await BackgroundSyncService.performSync();
@@ -100,10 +100,10 @@ class BackgroundSyncService {
     }
 
     final companyCode = prefs.getString('companyCode') ?? '';
-    final phone = prefs.getString('mobileNumber') ?? '';
+    final employeeId = prefs.getString('employeeId') ?? '';
 
     debugPrint('Sync Credentials: Company=$companyCode, Phone=$phone');
-    if (companyCode.isEmpty || phone.isEmpty) {
+    if (companyCode.isEmpty || employeeId.isEmpty) {
       debugPrint('Sync aborted: Missing credentials in SharedPreferences.');
       return false;
     }
@@ -111,7 +111,7 @@ class BackgroundSyncService {
     try {
       final res = await CallLogService.syncNewEntries(
         companyCode: companyCode,
-        phone: phone,
+        employeeId: employeeId,
       );
       return res['hasNew'] == true;
     } catch (e) {

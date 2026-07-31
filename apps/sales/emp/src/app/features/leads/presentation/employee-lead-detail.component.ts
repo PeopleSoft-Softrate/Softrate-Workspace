@@ -6,7 +6,7 @@ import { LeadDrawerSection, LeadHistoryLog } from '../domain/lead.model';
 export interface EmployeeLeadDetailView {
   _id: string;
   companyCode: string;
-  assignedEmployeePhone: string;
+  assignedEmployeeId: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;

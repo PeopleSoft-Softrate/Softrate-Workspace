@@ -3,7 +3,7 @@ export interface FollowUpDto {
   companyName?: string;
   contactName?: string;
   contactNumber?: string;
-  employeePhone?: string;
+  employeeId?: string;
   reminderDate?: string;
   remarks?: string[];
   updatedAt?: string;

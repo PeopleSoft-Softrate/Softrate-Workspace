@@ -9,7 +9,7 @@ import { mapQuotationDto } from './quotation.mapper';
 
 export interface QuotationHistoryQuery {
   companyCode: string;
-  employeePhone?: string;
+  employeeId?: string;
   search?: string;
   dateFrom?: string;
   dateTo?: string;

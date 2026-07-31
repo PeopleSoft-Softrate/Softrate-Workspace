@@ -7,7 +7,7 @@ export interface InvoiceDto {
   contactName?: string;
   contactNumber?: string;
   directorEmailAddress?: string;
-  employeePhone?: string;
+  employeeId?: string;
   employeeName?: string;
   total?: number;
   invoiceDate?: string;
@@ -15,6 +15,9 @@ export interface InvoiceDto {
   dueDate?: string;
   versionNo?: number;
   paymentStatus?: string;
+  amountPaid?: number;
+  balanceDue?: number;
+  isInclusiveGst?: boolean;
   items?: Array<{
     name?: string;
     quantity?: number;

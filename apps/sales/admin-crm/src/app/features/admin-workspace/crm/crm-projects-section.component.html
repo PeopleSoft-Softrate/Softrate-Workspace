@@ -67,7 +67,7 @@
             <td>{{ project.clientId || '-' }}</td>
             <td><span class="crm-status-pill">{{ project.clientStatus || vm.crmProjectClientStatus(project.clientCompanyName) }}</span></td>
             <td><strong>{{ project.projectManagerName || '-' }}</strong></td>
-            <td>{{ project.projectManagerPhone || project.projectManagerEmail || '-' }}</td>
+            <td>{{ project.projectManagerId || project.projectManagerEmail || '-' }}</td>
             <td>
               <select class="field-select crm-inline-select" [(ngModel)]="project.status" (ngModelChange)="vm.setCrmProjectStatus(project, $event)" [disabled]="vm.crmProjectsLoading">
                 <option>Assigned</option>

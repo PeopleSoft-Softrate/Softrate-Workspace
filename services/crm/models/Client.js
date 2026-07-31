@@ -15,7 +15,7 @@ const clientSchema = new mongoose.Schema(
     status: { type: String, trim: true, default: 'Onboarded' },
     source: { type: String, trim: true, default: 'manual' },
     sourceLeadIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lead' }],
-    assignedEmployeePhones: [{ type: String, trim: true }],
+    assignedEmployeeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],
     onboardedAt: { type: Date },
   },
   { timestamps: true, collection: 'clients' }
@@ -23,6 +23,6 @@ const clientSchema = new mongoose.Schema(
 
 clientSchema.index({ companyCode: 1, clientId: 1 }, { unique: true });
 clientSchema.index({ companyCode: 1, normalizedCompanyName: 1 }, { unique: true });
-clientSchema.index({ companyCode: 1, assignedEmployeePhones: 1, updatedAt: -1 });
+clientSchema.index({ companyCode: 1, assignedEmployeeIds: 1, updatedAt: -1 });
 
 module.exports = mongoose.models.Client || mongoose.model('Client', clientSchema);

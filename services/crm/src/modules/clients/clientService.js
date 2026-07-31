@@ -1,7 +1,7 @@
-const Client = require('../models/Client');
-const CrmContract = require('../models/CrmContract');
-const CrmAmc = require('../models/CrmAmc');
-const { lifecycleStatusFor } = require('./amcService');
+// Removed global Client require
+// Removed global CrmContract require
+// Removed global CrmAmc require
+const { lifecycleStatusFor } = require('../amc/amcService');
 
 function escapeRegex(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -41,7 +41,7 @@ function contactFromClient(client) {
   return [{
     _id: String(client._id || ''),
     companyCode: client.companyCode || '',
-    assignedEmployeePhone: client.assignedEmployeePhones?.[0] || '',
+    assignedEmployeeId: client.assignedEmployeeIds?.[0] || '',
     leadCompanyName: client.companyName || '',
     contactName: client.primaryContactName || 'Primary Contact',
     contactNumber: client.primaryPhone || '',
@@ -58,7 +58,7 @@ function contactFromClient(client) {
   }];
 }
 
-async function getConvertedClients({ companyCode = '', search = '' } = {}) {
+async function getConvertedClients({ Client, CrmContract, CrmAmc, companyCode = '', search = '' } = {}) {
   const filter = { status: { $ne: 'Inactive' } };
   if (companyCode) filter.companyCode = companyCode;
 
@@ -71,7 +71,6 @@ async function getConvertedClients({ companyCode = '', search = '' } = {}) {
       { primaryContactName: regex },
       { primaryPhone: regex },
       { primaryEmail: regex },
-      { assignedEmployeePhones: regex },
     ];
   }
 
@@ -83,7 +82,7 @@ async function getConvertedClients({ companyCode = '', search = '' } = {}) {
 
   return clients.map((client) => {
     const contacts = contactFromClient(client);
-    const managers = Array.from(new Set(compact(client.assignedEmployeePhones || [])));
+    const managers = Array.from(new Set(compact(client.assignedEmployeeIds || [])));
     const latest = buildDateLabel(client.updatedAt || client.createdAt);
 
     return {

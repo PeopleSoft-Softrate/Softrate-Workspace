@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const breakLogSchema = new mongoose.Schema({
-  companyCode: { type: String, required: true, index: true },
-  employeePhone: { type: String, required: true },
-  employeeName: { type: String, default: '' },
+  companyCode:   { type: String, required: true, index: true },
+  employeeId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
+  employeeName:  { type: String, default: '' },
   date: { type: String, required: true }, // "YYYY-MM-DD"
   // Each entry is one break tap
   breaks: [{
@@ -14,6 +14,6 @@ const breakLogSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Unique per employee per day
-breakLogSchema.index({ companyCode: 1, employeePhone: 1, date: 1 }, { unique: true });
+breakLogSchema.index({ companyCode: 1, employeeId: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model('BreakLog', breakLogSchema);

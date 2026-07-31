@@ -1,4 +1,4 @@
-const History = require('../models/History');
+// Removed global History require
 
 /**
  * Logs a change to the history collection.
@@ -13,9 +13,9 @@ const History = require('../models/History');
  * @param {string} [data.details]
  * @param {string} [data.changedBy]
  */
-const logChange = async (data) => {
+const logChange = async ({ HistoryModel, ...data }) => {
   try {
-    const history = new History(data);
+    const history = new HistoryModel(data);
     await history.save();
     return history;
   } catch (err) {

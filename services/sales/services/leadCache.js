@@ -7,39 +7,39 @@ const LEAD_CACHE_TTLS = {
 };
 const LEAD_CACHE_NAMESPACE = 'lead:v2';
 
-function buildEmployeeLeadListKey(companyCode, phone, params) {
-  return `${LEAD_CACHE_NAMESPACE}:list:employee:${companyCode}:${phone}:${hashObject(params)}`;
+function buildEmployeeLeadListKey(companyCode, employeeId, params) {
+  return `${LEAD_CACHE_NAMESPACE}:list:employee:${companyCode}:${employeeId}:${hashObject(params)}`;
 }
 
 function buildAdminLeadListKey(companyCode, params) {
   return `${LEAD_CACHE_NAMESPACE}:list:admin:${companyCode}:${hashObject(params)}`;
 }
 
-function buildEmployeeSetKey(companyCode, phone, params) {
-  return `${LEAD_CACHE_NAMESPACE}:sets:employee:${companyCode}:${phone}:${hashObject(params)}`;
+function buildEmployeeSetKey(companyCode, employeeId, params) {
+  return `${LEAD_CACHE_NAMESPACE}:sets:employee:${companyCode}:${employeeId}:${hashObject(params)}`;
 }
 
 function buildAdminSetKey(companyCode, params) {
   return `${LEAD_CACHE_NAMESPACE}:sets:admin:${companyCode}:${hashObject(params)}`;
 }
 
-function buildEmployeeCompanyKey(companyCode, phone, params) {
-  return `${LEAD_CACHE_NAMESPACE}:companies:employee:${companyCode}:${phone}:${hashObject(params)}`;
+function buildEmployeeCompanyKey(companyCode, employeeId, params) {
+  return `${LEAD_CACHE_NAMESPACE}:companies:employee:${companyCode}:${employeeId}:${hashObject(params)}`;
 }
 
-function buildEmployeeCompanyContactsKey(companyCode, phone, params) {
-  return `${LEAD_CACHE_NAMESPACE}:company-contacts:employee:${companyCode}:${phone}:${hashObject(params)}`;
+function buildEmployeeCompanyContactsKey(companyCode, employeeId, params) {
+  return `${LEAD_CACHE_NAMESPACE}:company-contacts:employee:${companyCode}:${employeeId}:${hashObject(params)}`;
 }
 
 function buildAdminCompanyKey(companyCode, params) {
   return `${LEAD_CACHE_NAMESPACE}:companies:admin:${companyCode}:${hashObject(params)}`;
 }
 
-function buildEmployeeStatusCountKey(companyCode, phone, params) {
-  return `${LEAD_CACHE_NAMESPACE}:status-counts:employee:${companyCode}:${phone}:${hashObject(params)}`;
+function buildEmployeeStatusCountKey(companyCode, employeeId, params) {
+  return `${LEAD_CACHE_NAMESPACE}:status-counts:employee:${companyCode}:${employeeId}:${hashObject(params)}`;
 }
 
-async function invalidateLeadCaches({ companyCode, phone }) {
+async function invalidateLeadCaches({ companyCode, employeeId }) {
   const prefixes = [
     `${LEAD_CACHE_NAMESPACE}:list:admin:${companyCode}:`,
     `${LEAD_CACHE_NAMESPACE}:sets:admin:${companyCode}:`,
@@ -49,17 +49,17 @@ async function invalidateLeadCaches({ companyCode, phone }) {
     `lead:companies:admin:${companyCode}:`,
   ];
 
-  if (phone) {
+  if (employeeId) {
     prefixes.push(
-      `${LEAD_CACHE_NAMESPACE}:list:employee:${companyCode}:${phone}:`,
-      `${LEAD_CACHE_NAMESPACE}:sets:employee:${companyCode}:${phone}:`,
-      `${LEAD_CACHE_NAMESPACE}:companies:employee:${companyCode}:${phone}:`,
-      `${LEAD_CACHE_NAMESPACE}:company-contacts:employee:${companyCode}:${phone}:`,
-      `${LEAD_CACHE_NAMESPACE}:status-counts:employee:${companyCode}:${phone}:`,
-      `lead:list:employee:${companyCode}:${phone}:`,
-      `lead:sets:employee:${companyCode}:${phone}:`,
-      `lead:companies:employee:${companyCode}:${phone}:`,
-      `lead:status-counts:employee:${companyCode}:${phone}:`,
+      `${LEAD_CACHE_NAMESPACE}:list:employee:${companyCode}:${employeeId}:`,
+      `${LEAD_CACHE_NAMESPACE}:sets:employee:${companyCode}:${employeeId}:`,
+      `${LEAD_CACHE_NAMESPACE}:companies:employee:${companyCode}:${employeeId}:`,
+      `${LEAD_CACHE_NAMESPACE}:company-contacts:employee:${companyCode}:${employeeId}:`,
+      `${LEAD_CACHE_NAMESPACE}:status-counts:employee:${companyCode}:${employeeId}:`,
+      `lead:list:employee:${companyCode}:${employeeId}:`,
+      `lead:sets:employee:${companyCode}:${employeeId}:`,
+      `lead:companies:employee:${companyCode}:${employeeId}:`,
+      `lead:status-counts:employee:${companyCode}:${employeeId}:`,
     );
   } else {
     prefixes.push(

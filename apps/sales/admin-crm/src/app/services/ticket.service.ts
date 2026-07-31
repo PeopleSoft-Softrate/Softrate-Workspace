@@ -87,7 +87,7 @@ export class TicketService {
   }
 
   private headers(json = true): HttpHeaders {
-    const token = localStorage.getItem('tracecall_crm_token') || '';
+    const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('tracecall_admin_token') || localStorage.getItem('tracecall_crm_token') || '') : '';
     let headers = new HttpHeaders();
     if (json) headers = headers.set('Content-Type', 'application/json');
     if (token) headers = headers.set('Authorization', `Bearer ${token}`);

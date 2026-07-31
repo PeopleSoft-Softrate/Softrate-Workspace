@@ -5,7 +5,7 @@ import { ApiService } from './api.service';
 export interface Lead {
   _id?: string;
   companyCode: string;
-  assignedEmployeePhone: string;
+  assignedEmployeeId: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;
@@ -73,16 +73,15 @@ export class LeadService {
     return this.api.post('/api/leads/bulk', { leads, ...(options || {}) });
   }
 
-  getEmployeeLeads(companyCode: string, phone: string, setLabel?: string): Observable<any> {
-    let url = `/api/leads/employee?companyCode=${encodeURIComponent(companyCode)}&phone=${encodeURIComponent(phone)}`;
+  getEmployeeLeads(companyCode: string, employeeId: string, setLabel?: string): Observable<any> {
+    let url = `/api/leads/employee?companyCode=${encodeURIComponent(companyCode)}&employeeId=${encodeURIComponent(employeeId)}`;
     if (setLabel) url += `&setLabel=${encodeURIComponent(setLabel)}`;
     return this.api.get(url);
   }
 
-  getEmployeeLeadPage(companyCode: string, phone: string, query: LeadListQuery = {}): Observable<LeadListResponse> {
+  getEmployeeLeadPage(companyCode: string, employeeId: string, query: LeadListQuery = {}): Observable<LeadListResponse> {
     const url = `/api/leads/employee${this.buildQueryString({
-      companyCode,
-      phone,
+      companyCode, employeeId,
       ...query,
     })}`;
     return this.api.get(url);
@@ -103,17 +102,16 @@ export class LeadService {
     return this.api.get(url);
   }
 
-  getEmployeeLeadCompanies(companyCode: string, phone: string, query: LeadListQuery = {}): Observable<any> {
+  getEmployeeLeadCompanies(companyCode: string, employeeId: string, query: LeadListQuery = {}): Observable<any> {
     const url = `/api/leads/employee/companies${this.buildQueryString({
-      companyCode,
-      phone,
+      companyCode, employeeId,
       ...query,
     })}`;
     return this.api.get(url);
   }
 
-  getEmployeeLeadSets(companyCode: string, phone: string): Observable<any> {
-    return this.api.get(`/api/leads/employee/sets${this.buildQueryString({ companyCode, phone })}`);
+  getEmployeeLeadSets(companyCode: string, employeeId: string): Observable<any> {
+    return this.api.get(`/api/leads/employee/sets${this.buildQueryString({ companyCode, employeeId })}`);
   }
 
   getAdminLeadCompanies(companyCode: string, query: LeadListQuery = {}): Observable<any> {
@@ -136,8 +134,8 @@ export class LeadService {
     return this.api.delete(`/api/leads/${id}`);
   }
 
-  deleteLeadSet(companyCode: string, phone: string, setLabel: string): Observable<any> {
-    return this.api.post('/api/leads/set/delete', { companyCode, phone, setLabel });
+  deleteLeadSet(companyCode: string, employeeId: string, setLabel: string): Observable<any> {
+    return this.api.post('/api/leads/set/delete', { companyCode, employeeId, setLabel });
   }
 
   deleteAdminLeadSet(companyCode: string, setLabel: string): Observable<any> {

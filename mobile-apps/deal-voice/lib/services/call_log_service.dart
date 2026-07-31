@@ -11,7 +11,7 @@ class CallLogService {
 
   static Future<Map<String, dynamic>> syncNewEntries({
     required String companyCode,
-    required String phone,
+    required String employeeId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -129,7 +129,7 @@ class CallLogService {
 
       final res = await ApiService.syncCallLogs(
         companyCode: companyCode,
-        phone: phone,
+        employeeId: employeeId,
         date: dateStr,
         incoming: incoming,
         outgoing: outgoing,

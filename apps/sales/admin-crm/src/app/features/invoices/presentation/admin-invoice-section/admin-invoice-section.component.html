@@ -71,6 +71,8 @@
                       <th>Contact</th>
                       <th>Status</th>
                       <th>Total</th>
+                      <th>Paid</th>
+                      <th>Balance</th>
                       <th>Date</th>
                     </tr>
                   </thead>
@@ -82,16 +84,18 @@
                       <td>{{ invoice.clientSnapshot?.contactName || invoice.contactName || invoice.contactNumber || '—' }}</td>
                       <td><span class="invoice-status-chip" [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
                       <td>{{ formatInvoiceMoney(invoice.total) }}</td>
+                      <td style="color: #10b981;">{{ formatInvoiceMoney(invoice.amountPaid || 0) }}</td>
+                      <td style="color: #ef4444;">{{ formatInvoiceMoney(invoice.balanceDue || 0) }}</td>
                       <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
                     </tr>
                     <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
-                      <td colspan="7" class="empty-cell">No invoices saved yet.</td>
+                      <td colspan="9" class="empty-cell">No invoices saved yet.</td>
                     </tr>
                     <tr *ngIf="invoiceRecordsLoading">
-                      <td colspan="7" class="empty-cell">Loading invoices...</td>
+                      <td colspan="9" class="empty-cell">Loading invoices...</td>
                     </tr>
                     <tr *ngIf="invoiceRecordsLoadingMore">
-                      <td colspan="7" class="empty-cell">Loading more invoices...</td>
+                      <td colspan="9" class="empty-cell">Loading more invoices...</td>
                     </tr>
                   </tbody>
                 </table>

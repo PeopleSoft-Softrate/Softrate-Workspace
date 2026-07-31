@@ -16,7 +16,7 @@ const clientSchema = new mongoose.Schema({
   status: { type: String, enum: ['Onboarded', 'Inactive'], default: 'Onboarded' },
   source: { type: String, enum: ['converted_lead', 'manual'], default: 'manual' },
   sourceLeadIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lead' }],
-  assignedEmployeePhones: [{ type: String, trim: true }],
+  assignedEmployeeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],
   onboardedByRole: { type: String, enum: ['employee', 'admin', 'system'], default: 'system' },
   onboardedByName: { type: String, trim: true, default: '' },
   onboardedByPhone: { type: String, trim: true, default: '' },
@@ -35,12 +35,12 @@ clientSchema.pre('validate', function normalizeClient() {
   this.address = String(this.address || '').trim();
   this.gstNumber = String(this.gstNumber || '').trim().toUpperCase();
   this.description = String(this.description || '').trim();
-  this.assignedEmployeePhones = Array.from(new Set((this.assignedEmployeePhones || []).map((phone) => String(phone || '').trim()).filter(Boolean)));
+  this.assignedEmployeeIds = Array.from(new Set((this.assignedEmployeeIds || []).map((id) => String(id || '').trim()).filter(Boolean)));
 });
 
 clientSchema.index({ companyCode: 1, clientId: 1 }, { unique: true });
 clientSchema.index({ companyCode: 1, normalizedCompanyName: 1 }, { unique: true });
-clientSchema.index({ companyCode: 1, assignedEmployeePhones: 1, updatedAt: -1 });
+clientSchema.index({ companyCode: 1, assignedEmployeeIds: 1, updatedAt: -1 });
 clientSchema.index({
   companyName: 'text',
   primaryContactName: 'text',

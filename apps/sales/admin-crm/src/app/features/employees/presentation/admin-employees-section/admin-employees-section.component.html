@@ -59,7 +59,7 @@
                     <div class="emp-avatar">{{ emp.name.charAt(0).toUpperCase() }}</div>
                     <div>
                       <div class="emp-name">{{ emp.name }}</div>
-                      <div class="emp-phone">{{ emp.mobile }}</div>
+                      <div class="emp-phone">{{ emp._id }}</div>
                     </div>
                   </div>
                 </td>
@@ -126,7 +126,7 @@
                 <td style="text-align: center;">
                   <span
                     style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
-                    {{ getEmployeeInteractionCount(emp.mobile) }}
+                    {{ getEmployeeInteractionCount(emp._id!) }}
                   </span>
                 </td>
                 <td style="text-align: center;">

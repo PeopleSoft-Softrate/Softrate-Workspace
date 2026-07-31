@@ -5,7 +5,9 @@ const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
 
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
+router.use(companyMiddleware);
 
 function normalize(value) {
   return String(value || '').trim();
@@ -15,11 +17,11 @@ async function findLead(body) {
   const companyCode = normalize(body.companyCode);
   const leadId = normalize(body.leadId);
   if (leadId && mongoose.Types.ObjectId.isValid(leadId)) {
-    const lead = await Lead.findOne({ _id: leadId, companyCode, isArchived: { $ne: true } });
+    const lead = await req.models.Lead.findOne({ _id: leadId, companyCode, isArchived: { $ne: true } });
     if (lead) return lead;
   }
   const contactNumber = normalize(body.contactNumber);
-  if (contactNumber) return Lead.findOne({ companyCode, contactNumber, isArchived: { $ne: true } });
+  if (contactNumber) return req.models.Lead.findOne({ companyCode, contactNumber, isArchived: { $ne: true } });
   return null;
 }
 
@@ -35,7 +37,7 @@ function parseQuotationNumber(value) {
 async function generateQuotationNumber(companyCode, lead, quotationDate) {
   const leadCompanyName = normalize(lead?.leadCompanyName);
   const latestCompanyQuotation = leadCompanyName
-    ? await Quotation.findOne({ companyCode, leadCompanyName })
+    ? await req.models.Quotation.findOne({ companyCode, leadCompanyName })
         .sort({ versionNo: -1, createdAt: -1 })
         .select('quotationNumber versionNo')
         .lean()
@@ -55,7 +57,7 @@ async function generateQuotationNumber(companyCode, lead, quotationDate) {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const prefix = `QT-${yy}${mm}`;
   // NOTE: quotationNumber is unique across the entire database collection, so search globally
-  const existingQuotations = await Quotation.find({
+  const existingQuotations = await req.models.Quotation.find({
     quotationNumber: new RegExp(`^${prefix}\\d{3}(?:_v\\d+)?$`, 'i'),
   }).select('quotationNumber').lean();
   const maxSequence = existingQuotations.reduce((max, quotation) => {
@@ -92,6 +94,7 @@ function buildItems(rawItems, gstPercentage) {
 }
 
 router.post('/', async (req, res) => {
+  
   try {
     const companyCode = normalize(req.body.companyCode);
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode is required.' });
@@ -100,7 +103,7 @@ router.post('/', async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'Company settings not found.' });
 
     const lead = await findLead(req.body);
-    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found for quotation.' });
+    if (!lead) return res.status(404).json({ success: false, message: 'req.models.Lead not found for quotation.' });
 
     const gstPercentage = Number(req.body.gstPercentage ?? user.gstPercentage ?? 18);
     const items = buildItems(req.body.items, gstPercentage);
@@ -118,9 +121,9 @@ router.post('/', async (req, res) => {
         const quotationDate = req.body.quotationDate ? new Date(req.body.quotationDate) : new Date();
         const { quotationNumber, versionNo } = await generateQuotationNumber(companyCode, lead, quotationDate);
 
-        quotation = await Quotation.create({
+        quotation = await req.models.Quotation.create({
           companyCode,
-          employeePhone: normalize(req.body.employeePhone || lead.assignedEmployeePhone),
+          employeeId: normalize(req.body.employeeId || lead.assignedEmployeePhone),
           employeeName: normalize(req.body.employeeName),
           leadId: lead._id,
           leadCompanyName: lead.leadCompanyName,
@@ -138,7 +141,7 @@ router.post('/', async (req, res) => {
           quotationDate,
           createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
           createdByName: normalize(req.body.createdByName || req.body.employeeName),
-          createdByPhone: normalize(req.body.createdByPhone || req.body.employeePhone),
+          createdById: normalize(req.body.createdById || req.body.employeeId),
           companySnapshot: {
             name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
             logo: user.invoiceLogo || '',
@@ -149,7 +152,7 @@ router.post('/', async (req, res) => {
             gstNumber: user.gstNumber || '',
             footer: user.invoiceFooter || '',
             bankDetails: (() => {
-              const clientGst = clientDto.gstNumber || '';
+              const clientGst = lead.gstNumber || '';
               const hasGst = !!clientGst.trim();
               const selectedBank = (!hasGst && user.bankDetails2 && user.bankDetails2.bankName) ? user.bankDetails2 : user.bankDetails;
               return {
@@ -184,13 +187,14 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+  
   try {
     const companyCode = normalize(req.query.companyCode);
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode is required.' });
 
     const filter = { companyCode };
-    const employeePhone = normalize(req.query.employeePhone);
-    if (employeePhone) filter.employeePhone = employeePhone;
+    const employeeId = normalize(req.query.employeeId);
+    if (employeeId) filter.employeeId = employeeId;
     const leadId = normalize(req.query.leadId);
     if (leadId && mongoose.Types.ObjectId.isValid(leadId)) {
       filter.leadId = new mongoose.Types.ObjectId(leadId);
@@ -220,8 +224,8 @@ router.get('/', async (req, res) => {
 
     const pagination = parsePageQuery(req.query);
     const [total, quotations] = await Promise.all([
-      Quotation.countDocuments(filter),
-      Quotation.find(filter)
+      req.models.Quotation.countDocuments(filter),
+      req.models.Quotation.find(filter)
         .sort({ quotationDate: -1, createdAt: -1 })
         .skip(pagination.isPaginated ? pagination.skip : 0)
         .limit(pagination.isPaginated ? pagination.pageSize : 300)

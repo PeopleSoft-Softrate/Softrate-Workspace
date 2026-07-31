@@ -12,7 +12,7 @@ const quotationItemSchema = new mongoose.Schema({
 
 const quotationSchema = new mongoose.Schema({
   companyCode: { type: String, required: true, index: true },
-  employeePhone: { type: String, default: '', index: true },
+  employeeId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', index: true },
   employeeName: { type: String, default: '' },
   leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
   leadCompanyName: { type: String, required: true },
@@ -30,7 +30,7 @@ const quotationSchema = new mongoose.Schema({
   quotationDate: { type: Date, default: Date.now, index: true },
   createdByRole: { type: String, enum: ['employee', 'admin'], default: 'employee' },
   createdByName: { type: String, default: '' },
-  createdByPhone: { type: String, default: '' },
+  createdById:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', default: null },
   companySnapshot: {
     name: { type: String, default: '' },
     logo: { type: String, default: '' },
@@ -49,7 +49,7 @@ const quotationSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-quotationSchema.index({ companyCode: 1, employeePhone: 1, quotationDate: -1 });
+quotationSchema.index({ companyCode: 1, employeeId: 1, quotationDate: -1 });
 quotationSchema.index({ companyCode: 1, quotationDate: -1 });
 
 module.exports = mongoose.model('Quotation', quotationSchema);

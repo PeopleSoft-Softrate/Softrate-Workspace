@@ -23,7 +23,7 @@
                 <span>Employee</span>
                 <select class="field-select filter-select-field" [(ngModel)]="leadEmployeeFilter" (change)="closeAdminLeadPanels()" aria-label="Employee filter">
                   <option value="">All Employees</option>
-                  <option *ngFor="let emp of employees" [value]="emp.mobile">{{ emp.name || emp.mobile }}</option>
+                  <option *ngFor="let emp of employees" [value]="emp._id">{{ emp.name || emp.mobile }}</option>
                 </select>
               </label>
 

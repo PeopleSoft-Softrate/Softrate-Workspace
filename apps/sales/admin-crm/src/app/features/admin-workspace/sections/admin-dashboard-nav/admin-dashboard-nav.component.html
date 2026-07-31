@@ -50,7 +50,7 @@
           <div class="break-notification-row" *ngFor="let emp of vm.breakOverLimitEmps">
             <div>
               <div class="break-notification-name">{{ emp.employeeName }}</div>
-              <div class="break-notification-phone">{{ emp.employeePhone }}</div>
+              <div class="break-notification-phone">{{ emp.employeeId }}</div>
             </div>
             <div class="break-notification-time">
               <div>{{ vm.fmtSecs(emp.totalSeconds) }}</div>

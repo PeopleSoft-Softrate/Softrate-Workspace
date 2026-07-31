@@ -58,6 +58,9 @@ interface PublicInvoice {
   sgst?: number;
   gstAmount?: number;
   total?: number;
+  amountPaid?: number;
+  balanceDue?: number;
+  isInclusiveGst?: boolean;
   invoiceDate?: string;
   dueDate?: string | null;
   paymentStatus?: string;
@@ -153,6 +156,10 @@ export class PublicInvoiceComponent implements OnInit, AfterViewInit {
 
   companyName(invoice: PublicInvoice): string {
     return invoice.companySnapshot?.name || 'Softrate';
+  }
+
+  clientGstNumber(invoice: PublicInvoice): string {
+    return String(invoice.clientSnapshot?.gstNumber || (invoice as any).gstNumber || '').trim();
   }
 
   companyAddress(invoice: PublicInvoice): string {

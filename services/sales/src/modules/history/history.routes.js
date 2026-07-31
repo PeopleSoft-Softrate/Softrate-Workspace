@@ -4,6 +4,7 @@ const router = express.Router();
 
 // GET — fetch history for a specific company/lead
 router.get('/', async (req, res) => {
+  const { Lead, CallLog, CallDetail, Bookmark, BreakLog, Quotation, Invoice, History } = req.models;
   try {
     const { companyCode, contactNumber, companyName } = req.query;
     if (!companyCode) {

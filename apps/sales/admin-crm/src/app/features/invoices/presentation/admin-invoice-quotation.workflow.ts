@@ -271,6 +271,14 @@ export class AdminInvoiceQuotationWorkflow {
     return url.startsWith('/assets/') ? url.slice(1) : url;
   }
 
+  invoiceClientGstNumber(vm: any): string {
+    if (vm.viewingSavedDocument) {
+      const record = vm.quoteMode ? vm.currentQuotationRecord : vm.currentInvoiceRecord;
+      return String(record?.clientSnapshot?.gstNumber || record?.gstNumber || '').trim();
+    }
+    return String(vm.invoiceLead?.gstNumber || '').trim();
+  }
+
   private resolveInvoiceNumber(vm: any): string {
     if (vm.quoteMode && vm.currentQuotationNumber) return vm.currentQuotationNumber;
     if (!vm.quoteMode && vm.currentInvoiceNumber) return vm.currentInvoiceNumber;
@@ -322,15 +330,23 @@ export class AdminInvoiceQuotationWorkflow {
     const normalizedItems = (vm.invoiceItems || []).map((item: any) => {
       const price = Number(item?.price || 0);
       const quantity = Number(item?.quantity || 1);
-      const taxableAmount = price * quantity;
-      const gstAmount = taxableAmount * (gstPercentage / 100);
+      let taxableAmount, gstAmount, totalAmount;
+      if (vm.invoiceIsInclusiveGst) {
+        totalAmount = price * quantity;
+        taxableAmount = totalAmount / (1 + (gstPercentage / 100));
+        gstAmount = totalAmount - taxableAmount;
+      } else {
+        taxableAmount = price * quantity;
+        gstAmount = taxableAmount * (gstPercentage / 100);
+        totalAmount = taxableAmount + gstAmount;
+      }
       return {
         ...item,
         price,
         quantity,
         taxableAmount,
         gstAmount,
-        totalAmount: taxableAmount + gstAmount,
+        totalAmount,
       };
     });
     const invoiceSubtotal = normalizedItems.reduce((sum: number, item: any) => sum + item.taxableAmount, 0);
@@ -412,7 +428,7 @@ export class AdminInvoiceQuotationWorkflow {
       source: String(raw?.source || ''),
       status: String(raw?.status || 'Onboarded'),
       sourceLeadIds: Array.isArray(raw?.sourceLeadIds) ? raw.sourceLeadIds.map((id: any) => String(id || '')).filter(Boolean) : [],
-      assignedEmployeePhones: Array.isArray(raw?.assignedEmployeePhones) ? raw.assignedEmployeePhones.map((phone: any) => String(phone || '')).filter(Boolean) : [],
+      assignedEmployeeIds: Array.isArray(raw?.assignedEmployeeIds) ? raw.assignedEmployeeIds.map((phone: any) => String(phone || '')).filter(Boolean) : [],
       onboardedAt: String(raw?.onboardedAt || raw?.createdAt || ''),
       updatedAt: String(raw?.updatedAt || ''),
     };
@@ -422,7 +438,7 @@ export class AdminInvoiceQuotationWorkflow {
     return {
       _id: client.sourceLeadIds?.[0] || `client:${client.clientId}`,
       companyCode: vm.dashboardCode,
-      assignedEmployeePhone: client.assignedEmployeePhones?.[0] || '',
+      assignedEmployeeId: client.assignedEmployeeIds?.[0] || '',
       leadCompanyName: client.companyName,
       contactName: client.primaryContactName || client.primaryContact || 'Primary Contact',
       contactNumber: client.primaryPhone || '',
@@ -1142,6 +1158,7 @@ export class AdminInvoiceQuotationWorkflow {
       primaryPhone: String(vm.clientOnboardingDraft.primaryPhone || '').trim(),
       primaryEmail: String(vm.clientOnboardingDraft.primaryEmail || '').trim(),
       address: String(vm.clientOnboardingDraft.address || '').trim(),
+      gstNumber: String(vm.clientOnboardingDraft.gstNumber || '').trim().toUpperCase(),
       serviceName: String(vm.clientOnboardingDraft.serviceName || '').trim() || undefined,
     }).subscribe({
       next: (res) => {
@@ -1212,7 +1229,7 @@ export class AdminInvoiceQuotationWorkflow {
           lead.contactName,
           lead.contactNumber,
           lead.directorEmailAddress,
-          lead.assignedEmployeePhone,
+          lead.assignedEmployeeId,
         ].some((value) => String(value || '').toLowerCase().includes(query));
       })
       .slice(0, 200);
@@ -1233,7 +1250,7 @@ export class AdminInvoiceQuotationWorkflow {
         invoice.contactName,
         invoice.contactNumber,
         invoice.employeeName,
-        invoice.employeePhone,
+        invoice.employeeId,
       ].join(' ').toLowerCase().includes(query);
       return matchesSearch && vm.matchesInvoiceDateRange(invoice.invoiceDate || invoice.createdAt);
     });
@@ -1248,7 +1265,7 @@ export class AdminInvoiceQuotationWorkflow {
         quote.contactName,
         quote.contactNumber,
         quote.employeeName,
-        quote.employeePhone,
+        quote.employeeId,
       ].join(' ').toLowerCase().includes(query);
       return matchesSearch && vm.matchesQuotationDateRange(quote.quotationDate || quote.createdAt);
     });
@@ -1313,7 +1330,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceLead = {
       _id: record.leadId || '',
       companyCode: vm.dashboardCode,
-      assignedEmployeePhone: record.employeePhone || '',
+      assignedEmployeeId: record.employeeId || '',
       leadCompanyName: record.clientSnapshot?.companyName || record.leadCompanyName || '',
       contactName: record.clientSnapshot?.contactName || record.contactName || '',
       contactNumber: record.clientSnapshot?.phone || record.contactNumber || '',
@@ -1324,6 +1341,8 @@ export class AdminInvoiceQuotationWorkflow {
     };
     vm.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
     vm.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(record.paymentStatus);
+    vm.invoiceAmountPaid = Number(record.amountPaid || 0);
+    vm.invoiceIsInclusiveGst = Boolean(record.isInclusiveGst);
     vm.invoiceItems = (record.items || []).map((item: any) => ({
       product: item.product || { name: item.name, sacHsn: item.sacHsn || '' },
       name: item.name || item.product?.name || 'Service',
@@ -1351,7 +1370,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceLead = {
       _id: record.leadId || '',
       companyCode: vm.dashboardCode,
-      assignedEmployeePhone: record.employeePhone || '',
+      assignedEmployeeId: record.employeeId || '',
       leadCompanyName: record.leadCompanyName || '',
       contactName: record.contactName || '',
       contactNumber: record.contactNumber || '',
@@ -1362,6 +1381,8 @@ export class AdminInvoiceQuotationWorkflow {
     };
     vm.invoiceIssuedAt = record.quotationDate ? new Date(record.quotationDate) : new Date(record.createdAt || Date.now());
     vm.invoicePaymentStatus = 'unpaid';
+    vm.invoiceAmountPaid = 0;
+    vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = String(record.kindNote || record.companySnapshot?.footer || this.defaultQuotationKindNote(vm));
     vm.invoiceItems = (record.items || []).map((item: any) => ({
       product: item.product || { name: item.name, sacHsn: item.sacHsn || '' },
@@ -1395,6 +1416,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
     vm.invoicePaymentStatus = 'unpaid';
+    vm.invoiceAmountPaid = 0;
+    vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
@@ -1416,6 +1439,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
     vm.invoicePaymentStatus = 'unpaid';
+    vm.invoiceAmountPaid = 0;
+    vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
@@ -1438,6 +1463,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
     vm.invoicePaymentStatus = 'unpaid';
+    vm.invoiceAmountPaid = 0;
+    vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
@@ -1460,6 +1487,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoicePrice = 0;
     vm.invoiceQuantity = 1;
     vm.invoicePaymentStatus = 'unpaid';
+    vm.invoiceAmountPaid = 0;
+    vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
@@ -1479,6 +1508,8 @@ export class AdminInvoiceQuotationWorkflow {
     this.resetInvoicePublicLink(vm);
     this.resetDocumentGstSelection(vm);
     vm.invoicePaymentStatus = 'unpaid';
+    vm.invoiceAmountPaid = 0;
+    vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     this.refreshInvoicePreviewCaches(vm);
   }
@@ -1533,6 +1564,14 @@ export class AdminInvoiceQuotationWorkflow {
 
   invoiceTotal(vm: any): number {
     return Number(vm.invoiceTotalCache || 0);
+  }
+
+  invoiceAmountReceived(vm: any): number {
+    return this.normalizeInvoicePaymentStatus(vm.invoicePaymentStatus) === 'paid' ? this.invoiceTotal(vm) : Number(vm.invoiceAmountPaid || 0);
+  }
+
+  invoiceBalanceDue(vm: any): number {
+    return Math.max(0, this.invoiceTotal(vm) - this.invoiceAmountReceived(vm));
   }
 
   invoiceItemTaxable(vm: any, item: { price: number; quantity: number }): number {
@@ -1615,11 +1654,16 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceItems.forEach((item: any) => {
       if (item?.taxable === undefined && item?.gst === undefined && item?.total === undefined) return;
       const quantity = Math.max(1, Number(item.quantity || 1));
-      const taxable = Number(item.price || 0) * quantity;
-      const gst = taxable * (this.invoicePreviewGstPercentage(vm) / 100);
-      item.taxable = taxable;
-      item.gst = gst;
-      item.total = taxable + gst;
+      const price = Number(item.price || 0);
+      if (vm.invoiceIsInclusiveGst) {
+        item.total = price * quantity;
+        item.taxable = item.total / (1 + (this.invoicePreviewGstPercentage(vm) / 100));
+        item.gst = item.total - item.taxable;
+      } else {
+        item.taxable = price * quantity;
+        item.gst = item.taxable * (this.invoicePreviewGstPercentage(vm) / 100);
+        item.total = item.taxable + item.gst;
+      }
     });
     this.refreshInvoicePreviewCaches(vm);
   }
@@ -1645,8 +1689,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceSaving = true;
     const payload = {
       companyCode: vm.dashboardCode,
-      employeePhone: vm.invoiceLead.assignedEmployeePhone,
-      employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeePhone),
+      employeeId: vm.invoiceLead.assignedEmployeeId,
+      employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeeId),
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
       clientId: invoiceClient?.clientId || undefined,
@@ -1654,7 +1698,7 @@ export class AdminInvoiceQuotationWorkflow {
       contactNumber: vm.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(vm),
       invoiceDate: vm.invoiceIssuedAt,
-      paymentStatus: this.normalizeInvoicePaymentStatus(vm.invoicePaymentStatus),
+      paymentStatus: (vm.invoiceAmountPaid || 0) >= this.invoiceTotal(vm) ? 'paid' : 'unpaid',
       items: vm.invoiceItems.map((item: any) => ({
         productId: item.product?._id,
         name: item.name,
@@ -1662,6 +1706,8 @@ export class AdminInvoiceQuotationWorkflow {
         quantity: item.quantity,
         sacHsn: item.product?.sacHsn || '',
       })),
+      isInclusiveGst: vm.invoiceIsInclusiveGst,
+      amountPaid: vm.invoiceAmountPaid,
     };
 
     if (vm.invoiceEditMode && vm.currentInvoiceRecord?._id) {
@@ -1672,6 +1718,8 @@ export class AdminInvoiceQuotationWorkflow {
         taxTotal: vm.invoiceGstAmount,
         invoiceDate: payload.invoiceDate,
         paymentStatus: payload.paymentStatus,
+        isInclusiveGst: vm.invoiceIsInclusiveGst,
+        amountPaid: vm.invoiceAmountPaid,
       };
       this.api.put<any>(`/api/invoices/${vm.currentInvoiceRecord._id}`, updatePayload).subscribe({
         next: (res) => {
@@ -1716,8 +1764,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
       companyCode: vm.dashboardCode,
-      employeePhone: vm.invoiceLead.assignedEmployeePhone,
-      employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeePhone),
+      employeeId: vm.invoiceLead.assignedEmployeeId,
+      employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeeId),
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
       leadId: vm.invoiceLead._id,
@@ -1761,8 +1809,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceSavingLeadId = lead._id;
     this.api.post<any>('/api/invoices', {
       companyCode: vm.dashboardCode,
-      employeePhone: lead.assignedEmployeePhone,
-      employeeName: vm.employees.find((emp: any) => emp.mobile === lead.assignedEmployeePhone)?.name || '',
+      employeeId: lead.assignedEmployeeId,
+      employeeName: vm.employees.find((emp: any) => emp.mobile === lead.assignedEmployeeId)?.name || '',
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
       leadId: lead._id,

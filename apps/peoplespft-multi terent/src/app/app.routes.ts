@@ -23,6 +23,7 @@ import { InternRequests } from './features/interns/intern-requests/intern-reques
 import { EmployeeRequests } from './features/employees/employee-requests/employee-requests';
 import { EmployeeDashboard } from './features/employees/employee-dashboard/employee-dashboard';
 import { InternDashboard } from './features/interns/intern-dashboard/intern-dashboard';
+import { InternFormTwo } from './features/interns/intern-form-two/intern-form-two';
 import { EmployeeAdd } from './features/employees/employee-add/employee-add';
 import { AppSettings } from './features/app-settings/app-settings';
 import { CertificateSettings } from './features/certificate-settings/certificate-settings';
@@ -33,6 +34,7 @@ import { PayrollManagement } from './features/payroll/payroll-management/payroll
 
 import { PerformanceGoals } from './features/performance-goals/performance-goals';
 import { TodayAttendance } from './features/attendance/today-attendance/today-attendance';
+import { NotificationsComponent } from './features/notifications/notifications';
 import { ProfileComponent } from './features/profile/profile';
 
 export const routes: Routes = [
@@ -41,10 +43,12 @@ export const routes: Routes = [
   { path: 'register', component: Register },
   { path: 'user-register', component: UserRegister },
   { path: 'dashboard', component: Dashboard },
+  { path: 'notifications', component: NotificationsComponent },
   { path: 'payroll', component: PayrollManagement },
   { path: 'attendance/today', component: TodayAttendance },
   { path: 'employee/dashboard', component: EmployeeDashboard },
   { path: 'intern/dashboard', component: InternDashboard },
+  { path: 'intern/form-two', component: InternFormTwo },
   { path: 'intern/attendance', component: InternAttendance },
   { path: 'intern/leaves', component: InternLeaves },
   { path: 'intern/review', component: InternReview },

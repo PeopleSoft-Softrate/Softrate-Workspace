@@ -112,6 +112,15 @@ app.use('/api/breaklog', require('./src/modules/break-logs/break-log.routes'));
 // History routes
 app.use('/api/history', require('./src/modules/history/history.routes'));
 
+// Mail routes
+app.use('/api/mail', require('./src/modules/mail/mail.routes'));
+
+// Email templates routes
+app.use('/api/templates', require('./src/modules/mail/template.routes'));
+
+// Activities routes
+app.use('/api/activities', require('./src/modules/activities/activities.routes'));
+
 // ── Real-time SSE events endpoint ────────────────────────────
 const eventBus = require('./services/eventBus');
 

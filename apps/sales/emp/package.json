@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "./scripts/run-angular.sh serve",
-    "build": "./scripts/run-angular.sh build",
-    "watch": "./scripts/run-angular.sh build --watch --configuration development",
-    "test": "./scripts/run-angular.sh test"
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
   },
   "private": true,
   "packageManager": "npm@10.9.2",

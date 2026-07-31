@@ -470,6 +470,20 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/api/attendance/punch-out`, { internId, location });
   }
 
+  // --- Attendance Ratification / Correction ---
+  applyAttendanceCorrection(payload: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/attendance-requests/apply`, payload, { headers: this.getHeaders() });
+  }
+
+  // Form 2 — Document upload
+  sendInternDocuments(formData: FormData): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/send-documents`, formData);
+  }
+
+  updateInternStatus(internId: string, status: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/intern/update-status`, { internId, status });
+  }
+
   getInternTodayAttendance(internId: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/api/attendance/today/${internId}`);
   }
@@ -841,6 +855,15 @@ export class ApiService {
 
   getManagerAllLeaves(managerId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/employee-leave/manager-all/${managerId}`);
+  }
+
+  // --- Notifications ---
+  getNotifications(role: string, userId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/notifications?role=${role}&userId=${userId}`, { headers: this.getHeaders() });
+  }
+
+  markNotificationRead(notificationId: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/api/notifications/${notificationId}/read`, {}, { headers: this.getHeaders() });
   }
 
   // Fund Requests

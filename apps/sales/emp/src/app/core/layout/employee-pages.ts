@@ -12,7 +12,8 @@ export type EmployeePageId =
   | 'today-calls'
   | 'invoices'
   | 'client-onboarding'
-  | 'quotations';
+  | 'quotations'
+  | 'activities';
 
 export const EMPLOYEE_PAGES: readonly EmployeePageId[] = [
   'overview',
@@ -26,6 +27,7 @@ export const EMPLOYEE_PAGES: readonly EmployeePageId[] = [
   'invoices',
   'client-onboarding',
   'quotations',
+  'activities',
 ];
 
 export const EMPLOYEE_ROUTES: Routes = [

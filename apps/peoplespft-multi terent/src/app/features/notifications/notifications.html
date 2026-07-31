@@ -1,0 +1,58 @@
+<div class="notifications-page">
+
+  <!-- Header -->
+  <div class="form-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <div class="header-text">
+      <h1>Notifications</h1>
+    </div>
+  </div>
+
+  <div class="notifications-content">
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading notifications...</p>
+    </div>
+
+    <div *ngIf="!isLoading() && notifications().length === 0" class="empty-state">
+      <div class="empty-icon-wrap">
+        <hugeicons-icon [icon]="Notification01Icon" size="48" color="#00838f" [strokeWidth]="1.5"></hugeicons-icon>
+      </div>
+      <h3>No new notifications</h3>
+      <p>You're all caught up! Check back later for updates.</p>
+    </div>
+
+    <div *ngIf="!isLoading() && notifications().length > 0" class="notification-list">
+      <div 
+        class="notification-card" 
+        *ngFor="let notif of notifications()" 
+        [class.unread]="!notif.read"
+        (click)="markAsRead(notif)">
+        
+        <div class="notif-icon-col">
+          <div class="notif-icon-wrap" [class.is-read]="notif.read">
+            <hugeicons-icon [icon]="Notification01Icon" size="20" [color]="notif.read ? '#757575' : 'white'" [strokeWidth]="2"></hugeicons-icon>
+          </div>
+        </div>
+
+        <div class="notif-content-col">
+          <div class="notif-header">
+            <h4 class="notif-title">{{ notif.title }}</h4>
+            <span class="notif-time">{{ notif.createdAt | date:'MMM d, h:mm a' }}</span>
+          </div>
+          <p class="notif-desc">{{ notif.description }}</p>
+        </div>
+
+        <div class="notif-action-col" *ngIf="!notif.read">
+          <div class="unread-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

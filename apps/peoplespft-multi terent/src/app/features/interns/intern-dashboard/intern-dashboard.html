@@ -88,8 +88,8 @@
               <p>Intern Dashboard</p>
            </div>
            <div class="flutter-app-bar-right">
-              <button class="icon-btn">
-                 <hugeicons-icon [icon]="Notification03Icon" size="24" color="white" [strokeWidth]="2"></hugeicons-icon>
+              <button class="icon-btn" routerLink="/notifications">
+                 <hugeicons-icon [icon]="Notification01Icon" size="24" color="white" [strokeWidth]="2"></hugeicons-icon>
               </button>
               <div class="profile-avatar-circle" routerLink="/profile" style="cursor: pointer;">
                  <img *ngIf="getInternPhotoUrl(internData()?._id) as photoUrl" [src]="photoUrl" (error)="onImageError($event)">
@@ -110,6 +110,17 @@
               <span class="holiday-title">Today is Holiday</span>
               <span class="holiday-reason">{{ holidayReason() || 'Holiday' }}</span>
            </div>
+        </div>
+
+        <!-- Form 2 — Profile Completion Banner (shown when status is 'approved') -->
+        <div *ngIf="internData()?.status === 'approved'" class="form2-banner">
+          <div class="form2-banner-icon">
+            <hugeicons-icon [icon]="Notification01Icon" size="24" color="#f57c00" [strokeWidth]="2"></hugeicons-icon>
+          </div>
+          <div class="form2-banner-content">
+            <p>{{ internData()?.fullName?.split(' ')[0] || 'Hi' }}, please complete your profile by submitting the required documents.</p>
+            <button class="form2-fill-btn" routerLink="/intern/form-two">Fill Form</button>
+          </div>
         </div>
 
         <!-- Image Banner with Punch Button -->

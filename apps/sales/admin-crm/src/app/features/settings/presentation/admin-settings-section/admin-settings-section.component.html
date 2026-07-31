@@ -82,6 +82,44 @@
             </div>
           </div>
 
+          <!-- Email Templates Management Card -->
+          <div class="company-card" style="display: flex; flex-direction: column; grid-column: 1 / -1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+              <div>
+                <h3 class="cc-title" style="margin-bottom:0.25rem;">Email Templates</h3>
+                <p style="font-size:0.85rem;color:#64748b;margin:0;">Create predefined templates for your employees to use when sending emails to leads.</p>
+              </div>
+              <button (click)="openEmailTemplateModal()" class="cta-primary" style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">
+                + Create Template
+              </button>
+            </div>
+            
+            <div *ngIf="emailTemplateLoading && emailTemplates.length === 0" style="padding: 20px; text-align: center; color: #64748b;">
+              Loading templates...
+            </div>
+
+            <div *ngIf="emailTemplates.length === 0 && !emailTemplateLoading" style="padding: 30px; text-align: center; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+              <div style="font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 4px;">No templates yet</div>
+              <div style="font-size: 13px; color: #64748b;">Click "Create Template" to add one.</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+              <div *ngFor="let t of emailTemplates" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; background: #fff; display: flex; flex-direction: column; position: relative;">
+                <div style="position: absolute; top: 12px; right: 12px; display: flex; gap: 8px;">
+                  <button (click)="openEmailTemplateModal(t)" style="background: transparent; border: none; color: #64748b; cursor: pointer; padding: 4px;" title="Edit Template">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  </button>
+                  <button (click)="deleteEmailTemplate(t._id)" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px;" title="Delete Template">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </div>
+                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px; padding-right: 24px;">{{ t.name }}</div>
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px; padding-right: 24px;">Subject: {{ t.subject }}</div>
+                <div style="font-size: 12px; color: #475569; background: #f8fafc; padding: 8px; border-radius: 6px; flex-grow: 1; max-height: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ t.description }}</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Call Settings Card -->
           <div class="company-card" style="display: flex; flex-direction: column;">
             <h3 class="cc-title" style="margin-bottom:1.25rem;">Call Settings</h3>
@@ -224,6 +262,61 @@
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Email Template Modal -->
+      <div class="modal-overlay open" *ngIf="showEmailTemplateModal" (click)="closeEmailTemplateModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 600px; width: 90%; border-radius: 12px; padding: 24px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0;">{{ emailTemplateEditId ? 'Edit Email Template' : 'Create Email Template' }}</h2>
+            <button (click)="closeEmailTemplateModal()" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; padding: 0;">&times;</button>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">
+                Template Name <span style="color: #ef4444;">*</span>
+              </label>
+              <input type="text" [(ngModel)]="emailTemplateForm.name" placeholder="e.g. Initial Outreach, Follow-Up, Welcome Mail"
+                required
+                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;"
+                [style.border-color]="(!emailTemplateForm.name || emailTemplateForm.name.trim() === '') && emailTemplateLoading ? '#ef4444' : '#cbd5e1'"
+                [disabled]="emailTemplateLoading">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">
+                Email Subject <span style="color: #ef4444;">*</span>
+              </label>
+              <input type="text" [(ngModel)]="emailTemplateForm.subject" placeholder="e.g. Introducing Our Services to You"
+                required
+                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;"
+                [disabled]="emailTemplateLoading">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">
+                Description <span style="color: #ef4444;">*</span>
+              </label>
+              <textarea [(ngModel)]="emailTemplateForm.description"
+                placeholder="Write the email body here. This will be pre-filled for employees when they select this template. E.g. Hi [Client Name], Thank you for your interest..."
+                rows="6"
+                required
+                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.85rem; resize: vertical; box-sizing: border-box; line-height: 1.6;"
+                [disabled]="emailTemplateLoading"></textarea>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                <span style="color: #ef4444;">*</span> All fields are mandatory. This description will appear as the email body for employees.
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+            <button (click)="closeEmailTemplateModal()" style="padding: 8px 16px; border-radius: 6px; background: #f1f5f9; color: #475569; border: none; font-weight: 600; cursor: pointer;" [disabled]="emailTemplateLoading">Cancel</button>
+            <button (click)="saveEmailTemplate()" class="cta-primary" style="padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;"
+              [disabled]="emailTemplateLoading || !emailTemplateForm.name || !emailTemplateForm.subject || !emailTemplateForm.description || emailTemplateForm.name.trim() === '' || emailTemplateForm.subject.trim() === '' || emailTemplateForm.description.trim() === ''">
+              <span *ngIf="emailTemplateLoading" class="btn-spinner" style="width: 14px; height: 14px; border-width: 2px;"></span>
+              Save Template
+            </button>
+          </div>
         </div>
       </div>
 

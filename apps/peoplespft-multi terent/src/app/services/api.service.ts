@@ -472,7 +472,7 @@ export class ApiService {
 
   // --- Attendance Ratification / Correction ---
   applyAttendanceCorrection(payload: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/attendance-requests/apply`, payload);
+    return this.http.post(`${this.baseUrl}/api/attendance-requests/apply`, payload, { headers: this.getHeaders() });
   }
 
   // Form 2 — Document upload

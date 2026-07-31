@@ -83,12 +83,20 @@ router.post("/apply", verifyTenant, async (req, res) => {
     let managerApprovalStatus;
 
     if (employeeMongoId) {
-      user = await Employee.findById(employeeMongoId);
+      if (employeeMongoId.match(/^[0-9a-fA-F]{24}$/)) {
+        user = await Employee.findById(employeeMongoId);
+      } else {
+        user = await Employee.findOne({ EmployeeId: employeeMongoId });
+      }
       if (!user) return res.status(404).json({ success: false, message: "Employee not found" });
       userIdString = user.EmployeeId;
       managerApprovalStatus = user.assignedManager ? "pending" : "approved";
     } else if (internMongoId) {
-      user = await Intern.findById(internMongoId);
+      if (internMongoId.match(/^[0-9a-fA-F]{24}$/)) {
+        user = await Intern.findById(internMongoId);
+      } else {
+        user = await Intern.findOne({ internid: internMongoId });
+      }
       if (!user) return res.status(404).json({ success: false, message: "Intern not found" });
       userIdString = user.internid;
       managerApprovalStatus = user.assignedManager ? "pending" : "approved";
@@ -99,8 +107,8 @@ router.post("/apply", verifyTenant, async (req, res) => {
     const request = new AttendanceRequest({
       companyId: req.tenant.companyId,
       internId: userIdString,
-      internMongoId: internMongoId || null,
-      employeeMongoId: employeeMongoId || null,
+      internMongoId: employeeMongoId ? null : user._id,
+      employeeMongoId: employeeMongoId ? user._id : null,
       internName: user.fullName,
       managerMongoId: user.assignedManager || null,
       managerApprovalStatus,

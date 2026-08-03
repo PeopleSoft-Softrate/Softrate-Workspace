@@ -695,153 +695,12 @@
             </div>
           </section>
 
-          <section class="company-full-card" [id]="vm.companyFullSectionId('followups')"
-            *ngIf="vm.companyFullHasFollowupSection()">
-            <div class="company-full-card-head">
-              <h4>Followups</h4>
-              <span class="company-full-card-meta" *ngIf="vm.companyFullFollowupLead() as followupLead">
-                {{ followupLead.contactName || 'Primary Contact' }}
-              </span>
-            </div>
-            <div *ngIf="vm.companyFullFollowupError" class="form-error company-full-inline-error">{{
-              vm.companyFullFollowupError }}</div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Current Overview</div>
-              <div class="lead-detail-grid followup-flag-grid company-full-followup-overview">
-                <div class="lead-detail-field">
-                  <span>Remarks</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.remarks?.length || 0 }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Brochure Sent</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.brochuresSent ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Quotation Sent</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.quotationSent ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Proposal Sent</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.proposalSent ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Tech Meet</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.techMeet ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Whatsapp Group</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.whatsappGrp ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Meeting Remarks</span>
-                  <strong>{{ vm.companyFullPrimaryFollowup()?.meetingRemarks ? 'Yes' : 'No' }}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="company-full-section-divider" aria-hidden="true"></div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Edit Follow-up</div>
-              <div class="checkbox-grid">
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="vm.companyFullFollowupForm.brochuresSent" /> <span>Brochure Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="vm.companyFullFollowupForm.techMeet" /> <span>Tech Meet</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="vm.companyFullFollowupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="vm.companyFullFollowupForm.quotationSent" /> <span>Quotation Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="vm.companyFullFollowupForm.proposalSent" /> <span>Proposal Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="vm.companyFullFollowupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
-              </div>
-            </div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-grid company-full-followup-edit-grid">
-                <label class="lead-detail-field lead-detail-field-wide company-full-followup-description">
-                  <span>Description</span>
-                  <textarea class="field-textarea" rows="4" [(ngModel)]="vm.companyFullFollowupForm.description"
-                    placeholder="Describe the current follow-up context"></textarea>
-                </label>
-                <label class="lead-detail-field">
-                  <span>New Remark</span>
-                  <input class="field-input" type="text" [(ngModel)]="vm.companyFullFollowupForm.newRemark"
-                    placeholder="Add a new remark to history" />
-                </label>
-                <label class="lead-detail-field">
-                  <span>Reminder Date</span>
-                  <input class="field-input" type="date" [(ngModel)]="vm.companyFullFollowupForm.reminderDate" />
-                </label>
-              </div>
-              <div class="company-full-followup-meta-row">
-                <div class="lead-detail-field">
-                  <span>Saved Description</span>
-                  <strong [title]="vm.companyFullFollowupDescription()">{{ vm.companyFullFollowupDescription()
-                    }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Reminder</span>
-                  <strong class="nowrap-value">{{ vm.companyFullFollowupReminderLabel() }}</strong>
-                </div>
-              </div>
-              <div class="company-full-action-row">
-                <button class="primary-action" type="button" (click)="vm.saveCompanyFullFollowup()"
-                  [disabled]="vm.companyFullFollowupSaving || vm.companyFullFollowupLoading">
-                  <span *ngIf="!vm.companyFullFollowupSaving">{{ vm.companyFullPrimaryFollowup()?._id ? 'Update
-                    Follow-up' : 'Save Follow-up' }}</span>
-                  <span *ngIf="vm.companyFullFollowupSaving" class="button-spinner"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="company-full-section-divider" aria-hidden="true"></div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Follow-up History</div>
-              <div class="company-full-scroll-card company-full-followup-history">
-                <div *ngIf="vm.companyFullFollowupLoading || vm.companyFullHistoryLoading"
-                  class="empty-state-inline empty-state-inline-minimal">Loading follow-up history.</div>
-                <ng-container
-                  *ngIf="!vm.companyFullFollowupLoading && !vm.companyFullHistoryLoading && vm.companyFullFollowupHistoryEntries().length > 0; else fallbackCompanyFullFollowupHistory">
-                  <article class="company-full-history-row"
-                    *ngFor="let log of vm.companyFullFollowupHistoryEntries(); trackBy: vm.trackByHistoryIdentity">
-                    <div class="company-full-history-head">
-                      <strong>{{ log.action }}</strong>
-                      <span>{{ vm.fmtDateTime(log.createdAt || log.timestamp) }}</span>
-                    </div>
-                    <div class="company-full-history-copy">{{ vm.companyFullFollowupHistoryText(log) }}</div>
-                    <div class="company-full-history-meta" *ngIf="log.changedBy">By {{ log.changedBy }}</div>
-                  </article>
-                </ng-container>
-                <ng-template #fallbackCompanyFullFollowupHistory>
-                  <ng-container
-                    *ngIf="!vm.companyFullFollowupLoading && !vm.companyFullHistoryLoading && vm.companyFullFollowupFallbackRemarks().length > 0; else emptyCompanyFullFollowupHistory">
-                    <article class="company-full-history-row"
-                      *ngFor="let remark of vm.companyFullFollowupFallbackRemarks(); trackBy: vm.trackByAdminRecordIdentity">
-                      <div class="company-full-history-head">
-                        <strong>Follow-up Remark</strong>
-                      </div>
-                      <div class="company-full-history-copy">{{ remark }}</div>
-                    </article>
-                  </ng-container>
-                </ng-template>
-                <ng-template #emptyCompanyFullFollowupHistory>
-                  <div class="empty-state-inline empty-state-inline-minimal">No follow-up history recorded for this
-                    company.</div>
-                </ng-template>
-              </div>
-            </div>
+          <section class="company-full-card" [id]="vm.companyFullSectionId('followups')">
+            <app-activities-calendar [allLeads]="vm.companyFullOverviewContacts()" [filterCompanyId]="vm.companyFullViewLead()?._id" [filterCompanyName]="vm.companyFullViewLead()?.leadCompanyName" [embedded]="true"></app-activities-calendar>
           </section>
 
           <section class="company-full-card" [id]="vm.companyFullSectionId('remarks')">
-            <div class="company-full-card-head">
-              <h4>Remarks History</h4>
-            </div>
-            <div class="company-full-remark-entry">
+            <div class="company-full-remark-entry" style="margin-bottom: 24px;">
               <div class="lead-card-remark-combobox company-full-remark-combobox" (click)="$event.stopPropagation()">
                 <input class="field-input lead-card-remark-input company-full-remark-input" type="text"
                   [ngModel]="vm.companyFullRemarkDraft" (ngModelChange)="vm.handleCompanyFullRemarkInput($event)"
@@ -874,28 +733,13 @@
             </div>
             <div *ngIf="vm.companyFullRemarkError" class="form-error company-full-inline-error">{{
               vm.companyFullRemarkError }}</div>
-            <div class="company-full-scroll-card">
-              <div *ngIf="vm.companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading
-                remark history.</div>
-              <div *ngIf="!vm.companyFullHistoryLoading && vm.companyFullHistoryError"
-                class="empty-state-inline empty-state-inline-minimal">{{ vm.companyFullHistoryError }}</div>
-              <ng-container
-                *ngIf="!vm.companyFullHistoryLoading && !vm.companyFullHistoryError && vm.companyFullRemarkEntries().length > 0; else emptyCompanyFullRemarks">
-                <article class="company-full-history-row" *ngFor="let log of vm.companyFullRemarkEntries()">
-                  <div class="company-full-history-head">
-                    <strong>{{ log.action }}</strong>
-                    <span>{{ vm.fmtDateTime(log.createdAt || log.timestamp) }}</span>
-                  </div>
-                  <div class="company-full-history-copy">{{ vm.companyFullRemarkText(log) || 'Remark updated.' }}</div>
-                  <div class="company-full-history-meta" *ngIf="log.changedBy">By {{ log.changedBy }}</div>
-                </article>
-              </ng-container>
-              <ng-template #emptyCompanyFullRemarks>
-                <div *ngIf="!vm.companyFullHistoryLoading && !vm.companyFullHistoryError"
-                  class="empty-state-inline empty-state-inline-minimal">No remark history recorded for this company.
-                </div>
-              </ng-template>
-            </div>
+
+            <app-company-timeline 
+              [lead]="vm.companyFullViewLead()" 
+              [remarks]="vm.companyFullRemarksHistory"
+              [invoices]="vm.companyFullInvoiceItems"
+              [quotations]="vm.companyFullQuotationItems">
+            </app-company-timeline>
           </section>
 
           <section class="company-full-card" [id]="vm.companyFullSectionId('invoices')">
@@ -983,6 +827,15 @@
                 <span>Alternate Email</span>
                 <input class="field-input" type="email" [(ngModel)]="vm.companyFullAlternateEmail"
                   placeholder="Add alternate email" />
+              </label>
+              <label class="lead-detail-field" style="grid-column: 1 / -1;">
+                <span>Company Priority</span>
+                <select class="field-input" [(ngModel)]="vm.companyFullProfile.priority">
+                  <option value="">None</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
               </label>
             </div>
             <div *ngIf="vm.companyFullProfileError" class="form-error company-full-inline-error">{{

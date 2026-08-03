@@ -1952,7 +1952,7 @@
 
           <section class="company-full-card" [id]="companyFullSectionId('timeline')">
             <app-company-timeline 
-              [leadId]="companyFullViewLead()?._id" 
+              [lead]="companyFullViewLead()" 
               [remarks]="companyFullRemarksHistory" 
               [invoices]="companyFullInvoiceItems" 
               [quotations]="companyFullQuotationItems">
@@ -1973,6 +1973,15 @@
                 <span>Alternate Email</span>
                 <input class="field-input" type="email" [(ngModel)]="companyFullAlternateEmail"
                   placeholder="Add alternate email" />
+              </label>
+              <label class="lead-detail-field" style="grid-column: 1 / -1;">
+                <span>Company Priority</span>
+                <select class="field-input" [(ngModel)]="companyFullProfile.priority">
+                  <option value="">None</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
               </label>
             </div>
             <div *ngIf="companyFullProfileError" class="form-error company-full-inline-error">{{ companyFullProfileError

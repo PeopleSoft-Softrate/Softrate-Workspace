@@ -111,7 +111,21 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
   }
 
   async generateCalendarDays() {
-    if (this.employee?._id) {
+    if (this.filterCompanyId && !this.employee?._id) {
+      try {
+        const url = `/api/activities/lead/${this.filterCompanyId}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          this.mockActivities = result.data.map((a: any) => ({
+            ...a,
+            date: new Date(a.activityDate)
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching lead activities for admin', err);
+      }
+    } else if (this.employee?._id) {
       try {
         const firstDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth(), 1);
         const lastDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 0);
@@ -228,11 +242,6 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
   
   async saveActivity() {
     try {
-      if (!this.employee?._id) {
-        alert('Error: Employee ID is missing. Please try refreshing the page.');
-        return;
-      }
-      
       if (!this.activityForm.title?.trim()) {
         alert('Please enter a title for the activity.');
         return;
@@ -251,8 +260,8 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employeeId: this.employee._id,
-          leadId: this.activityForm.leadId || undefined,
+          employeeId: this.employee?._id || 'admin',
+          leadId: this.activityForm.leadId || this.filterCompanyId || undefined,
           type: this.activityForm.type,
           title: this.activityForm.title,
           description: this.activityForm.description,

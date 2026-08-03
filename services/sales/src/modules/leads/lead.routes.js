@@ -702,6 +702,7 @@ router.patch('/company-profile', async (req, res) => {
       spocName: String(req.body.spocName || '').trim(),
       spocNumber: String(req.body.spocNumber || '').trim(),
       spocEmailAddress: String(req.body.spocEmailAddress || '').trim(),
+      priority: String(req.body.priority || '').trim(),
     };
 
     const profile = await LeadCompanyProfile.findOneAndUpdate(

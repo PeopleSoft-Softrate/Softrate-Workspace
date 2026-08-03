@@ -80,7 +80,7 @@ export class AdminLeadsViewModel {
 
   updateStatus(lead: Lead, status: string): void {
     if (!lead.id) return;
-    this.repository.updateStatus(lead.id, status).subscribe({
+    this.repository.updateStatus(lead.id, lead.companyCode, status).subscribe({
       next: (updated) => {
         const leads = this.stateSubject.value.leads.map((item) => item.id === lead.id ? updated : item);
         this.patch({ leads });

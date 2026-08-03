@@ -546,4 +546,114 @@ router.get('/lead-counts', async (req, res) => {
   }
 });
 
+// ── GET /api/calllogs/lead-calls ──────────────────────────────
+// ── GET /api/calllogs/lead-calls ──────────────────────────────
+// Returns all calls for given phone numbers with enriched employee and contact names
+router.get('/lead-calls', async (req, res) => {
+  try {
+    const { companyCode, phones } = req.query;
+    if (!phones) return res.status(400).json({ success: false, message: 'phones required' });
+    
+    const phoneArray = String(phones).split(',').map(p => p.trim()).filter(Boolean);
+    if (phoneArray.length === 0) return res.status(200).json({ success: true, calls: [] });
+
+    // Extract robust numeric substrings (last 8-10 digits) for regex matching
+    const orConditions = [];
+    phoneArray.forEach(p => {
+      const clean = p.replace(/\D/g, '');
+      if (clean.length >= 7) {
+        const suffix = clean.slice(-8);
+        orConditions.push({ number: { $regex: suffix, $options: 'i' } });
+      } else if (clean.length > 0) {
+        orConditions.push({ number: { $regex: clean, $options: 'i' } });
+      }
+      orConditions.push({ number: p });
+    });
+
+    const query = { $or: orConditions };
+    if (companyCode && companyCode !== 'undefined' && companyCode !== 'null') {
+      query.companyCode = new RegExp('^' + String(companyCode).trim() + '$', 'i');
+    }
+
+    const calls = await req.models.CallDetail.find(query).sort({ timestamp: -1 }).limit(200).lean();
+
+    // 1. Build Employee lookup map (by _id and by mobile phone number)
+    const empQuery = (companyCode && companyCode !== 'undefined' && companyCode !== 'null') ? { companyCode } : {};
+    const employees = await Employee.find(empQuery).select('_id name mobile').lean();
+    const empById = new Map();
+    const empByMobile = new Map();
+    employees.forEach(e => {
+      if (e._id) empById.set(String(e._id), e.name);
+      if (e.mobile) {
+        const mobKey = String(e.mobile).replace(/\D/g, '').slice(-10);
+        if (mobKey) empByMobile.set(mobKey, e.name);
+      }
+    });
+
+    // 2. Build Lead lookup map (by contactNumber phone digits)
+    const leadQuery = (companyCode && companyCode !== 'undefined' && companyCode !== 'null') ? { companyCode } : {};
+    const leads = await req.models.Lead.find(leadQuery).select('contactNumber contactName leadCompanyName').lean();
+    const nameByPhone = new Map();
+    leads.forEach(l => {
+      if (l.contactNumber) {
+        const key = String(l.contactNumber).replace(/\D/g, '').slice(-10);
+        if (key) nameByPhone.set(key, l.contactName || l.leadCompanyName);
+      }
+    });
+
+    // 3. Enrich each call record with employeeName and contactName
+    const enrichedCalls = calls.map(c => {
+      let empName = 'Team Member';
+      if (c.employeeId) {
+        const idStr = String(c.employeeId);
+        if (empById.has(idStr)) {
+          empName = empById.get(idStr);
+        } else {
+          const mobKey = idStr.replace(/\D/g, '').slice(-10);
+          if (empByMobile.has(mobKey)) empName = empByMobile.get(mobKey);
+        }
+      }
+      if (empName === 'Team Member' && c.employeePhone) {
+        const mobKey = String(c.employeePhone).replace(/\D/g, '').slice(-10);
+        if (empByMobile.has(mobKey)) empName = empByMobile.get(mobKey);
+      }
+
+      let contactName = c.name || '';
+      if (!contactName && c.number) {
+        const numKey = String(c.number).replace(/\D/g, '').slice(-10);
+        if (nameByPhone.has(numKey)) {
+          contactName = nameByPhone.get(numKey);
+        }
+      }
+      // Also check if c.number is actually an employee calling another employee/number
+      if (!contactName && c.number) {
+        const numKey = String(c.number).replace(/\D/g, '').slice(-10);
+        if (empByMobile.has(numKey)) {
+          contactName = empByMobile.get(numKey);
+        }
+      }
+
+      let rawType = String(c.callType || c.status || c.type || 'unknown').toLowerCase().trim();
+      let normType = 'Unknown';
+      if (rawType === 'incoming' || rawType === '1') normType = 'Incoming';
+      else if (rawType === 'outgoing' || rawType === '2') normType = 'Outgoing';
+      else if (rawType === 'missed' || rawType === '3') normType = 'Missed';
+      else if (rawType === 'rejected' || rawType === '5') normType = 'Rejected';
+      else if (rawType !== 'unknown') normType = rawType.charAt(0).toUpperCase() + rawType.slice(1);
+
+      return {
+        ...c,
+        callType: normType,
+        employeeName: empName,
+        contactName: contactName,
+      };
+    });
+
+    return res.status(200).json({ success: true, calls: enrichedCalls });
+  } catch (err) {
+    console.error('[lead-calls]', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;

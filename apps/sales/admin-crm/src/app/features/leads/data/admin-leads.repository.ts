@@ -39,9 +39,9 @@ export class AdminLeadsRepository {
     );
   }
 
-  updateStatus(leadId: string, status: string): Observable<Lead> {
+  updateStatus(leadId: string, companyCode: string, status: string): Observable<Lead> {
     return this.leadService
-      .updateLeadStatus(leadId, status)
+      .updateLeadStatus(leadId, companyCode, status)
       .pipe(map((response: any) => mapLeadListDto({ success: true, items: [response.lead] }).items[0]));
   }
 

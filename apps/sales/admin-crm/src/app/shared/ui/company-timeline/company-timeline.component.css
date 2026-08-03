@@ -89,26 +89,25 @@
 }
 
 .timeline-title {
-  margin: 0 0 4px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
+  margin: 0 0 4px 0;
 }
 
 .timeline-desc {
-  margin: 0;
   font-size: 13px;
   color: #475569;
-  line-height: 1.5;
+  margin: 0;
+  line-height: 1.4;
 }
 
-.timeline-loading, .timeline-empty {
+.timeline-loading,
+.timeline-empty {
   text-align: center;
-  padding: 40px 0;
+  padding: 32px;
   color: #64748b;
-  font-size: 14px;
-}
-.timeline-empty svg {
-  display: block;
-  margin: 0 auto 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #e2e8f0;
 }

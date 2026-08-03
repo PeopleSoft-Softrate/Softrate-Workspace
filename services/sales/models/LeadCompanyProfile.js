@@ -16,6 +16,7 @@ const leadCompanyProfileSchema = new mongoose.Schema(
     normalizedCompanyName: { type: String, required: true, index: true },
     alternatePhone: { type: String, default: '', trim: true },
     alternateEmail: { type: String, default: '', trim: true },
+    priority: { type: String, enum: ['High', 'Medium', 'Low', ''], default: '' },
     notes: { type: [companyNoteSchema], default: [] },
   },
   { timestamps: true }

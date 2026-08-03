@@ -61,6 +61,7 @@ interface CompanyFullViewProfile {
   spocName: string;
   spocNumber: string;
   spocEmailAddress: string;
+  priority: string;
   notes: CompanyFullViewNote[];
   updatedAt?: string;
   createdAt?: string;
@@ -588,7 +589,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
     { id: 'followups', label: 'Schedule / Follow-up' },
-    { id: 'remarks', label: 'Remarks History' },
+    { id: 'remarks', label: 'Overall History' },
     { id: 'invoices', label: 'Invoice History' },
     { id: 'quotations', label: 'Quotation History' },
     { id: 'alternate', label: 'Alternate Info' },
@@ -617,6 +618,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     spocName: '',
     spocNumber: '',
     spocEmailAddress: '',
+    priority: '',
     notes: [],
   };
   companyFullHistoryLogs: any[] = [];
@@ -5803,6 +5805,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         companyName: this.companyFullCompanyName(),
         alternatePhone: this.companyFullAlternatePhone.trim(),
         alternateEmail: this.companyFullAlternateEmail.trim(),
+        priority: this.companyFullProfile.priority,
       }));
       this.applyCompanyFullProfile(response?.profile);
     } catch (error: any) {
@@ -5938,6 +5941,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       spocName: '',
       spocNumber: '',
       spocEmailAddress: '',
+      priority: '',
       notes: [],
     };
     this.companyFullHistoryLogs = [];
@@ -6085,6 +6089,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       spocName: String(profile?.spocName || '').trim(),
       spocNumber: String(profile?.spocNumber || '').trim(),
       spocEmailAddress: String(profile?.spocEmailAddress || '').trim(),
+      priority: String(profile?.priority || '').trim(),
       notes: Array.isArray(profile?.notes)
         ? profile.notes
             .map((note: any) => ({

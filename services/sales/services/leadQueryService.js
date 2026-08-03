@@ -325,8 +325,9 @@ async function getLeadCompanies({ LeadModel, companyCode, employeeId, query = {}
 
   if (query.includeContacts === 'true' && names.length) {
     const contactPageSize = Math.min(parsePositiveInt(query.contactPageSize, pagination.pageSize), MAX_PAGE_SIZE);
+    const baseSecurityQuery = buildBaseLeadQuery({ companyCode, employeeId, query: {} });
     const contacts = await LeadModel.find({
-      ...mongoQuery,
+      ...baseSecurityQuery,
       leadCompanyName: { $in: names },
     })
       .sort({ leadCompanyNameLower: 1, sheetOrder: 1, createdAt: 1, _id: 1 })

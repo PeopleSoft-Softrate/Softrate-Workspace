@@ -18,12 +18,22 @@ async function generateEmployeeId(companyId) {
   const Company = masterDb.models.Company || masterDb.model('Company', CompanyModelExport.schema);
   const company = await Company.findById(companyId);
   const companyCode = company ? company.companyCode : "UNKNOWN";
-  const counter = await Counter.findOneAndUpdate(
-    { companyId: companyId, type: 'employee' },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
-  return `${companyCode}-EMP-${String(counter.seq).padStart(3, "0")}`;
+
+  const year = new Date().getFullYear().toString().slice(-2);
+  let counter;
+  let employeeId;
+
+  do {
+    counter = await Counter.findOneAndUpdate(
+      { companyId: companyId, type: 'employee', year: year },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+
+    employeeId = `${year}2${String(counter.seq).padStart(3, "0")}`;
+  } while (await Employee.exists({ EmployeeId: employeeId, companyId: companyId }));
+
+  return employeeId;
 }
 
 /**
@@ -53,6 +63,9 @@ router.post('/intern-to-employee/:id', verifyTenant, async (req, res) => {
     const employeeData = {
       companyId: req.tenant.companyId,
       EmployeeId: newEmployeeId,
+      password: req.tenant.defaultPassword || "softrate@123",
+      webAccess: intern.webAccess !== undefined ? intern.webAccess : true,
+      remoteAccess: intern.remoteAccess !== undefined ? intern.remoteAccess : true,
       fullName: intern.fullName || "Unknown",
       email: intern.email || "no-email@provided.com",
       phone: intern.contact || intern.phone || "0000000000",
@@ -76,14 +89,18 @@ router.post('/intern-to-employee/:id', verifyTenant, async (req, res) => {
     // 2. Update User Role to EMPLOYEE
     const employeeRole = await Role.findOne({ companyId: req.tenant.companyId, name: 'EMPLOYEE' });
     if (employeeRole && intern.email) {
-      await User.findOneAndUpdate(
-        { email: intern.email, companyId: req.tenant.companyId },
-        { 
-          roleId: employeeRole._id,
-          'employment.type': 'FULL_TIME',
-          'employment.status': 'approved'
+      const userDoc = await User.findOne({ email: intern.email, companyId: req.tenant.companyId }).select('+password');
+      if (userDoc) {
+        userDoc.roleId = employeeRole._id;
+        userDoc.employeeId = newEmployeeId;
+        userDoc.employment = userDoc.employment || {};
+        userDoc.employment.type = 'FULL_TIME';
+        userDoc.employment.status = 'approved';
+        if (!userDoc.password || userDoc.password === "") {
+          userDoc.password = req.tenant.defaultPassword || "softrate@123";
         }
-      );
+        await userDoc.save();
+      }
     }
 
     // 3. Mark Intern as Completed/Archived

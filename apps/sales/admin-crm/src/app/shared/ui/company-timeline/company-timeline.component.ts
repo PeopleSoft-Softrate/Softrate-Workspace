@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { ApiService } from '../../../api.service';
+import { ApiService } from '../../../services/api.service';
 
 export interface TimelineItem {
   id: string;
@@ -131,7 +131,7 @@ export class CompanyTimelineComponent implements OnChanges {
           type: 'invoice',
           date: new Date(inv.date || inv.createdAt || new Date()),
           title: `Invoice Generated (${inv.invoiceNumber || 'Unknown'})`,
-          description: `Amount: INR${inv.amount || inv.totalAmount || 0} - Status: ${inv.status || 'Pending'}`,
+          description: `Amount: INR ${inv.amount || inv.totalAmount || 0} - Status: ${inv.status || 'Pending'}`,
           meta: inv
         });
       });
@@ -143,7 +143,7 @@ export class CompanyTimelineComponent implements OnChanges {
           type: 'quotation',
           date: new Date(quo.date || quo.createdAt || new Date()),
           title: `Quotation Sent (${quo.quoteNumber || 'Unknown'})`,
-          description: `Total: $${quo.totalAmount || quo.amount || 0} - Status: ${quo.status || 'Pending'}`,
+          description: `Total: INR ${quo.totalAmount || quo.amount || 0} - Status: ${quo.status || 'Pending'}`,
           meta: quo
         });
       });

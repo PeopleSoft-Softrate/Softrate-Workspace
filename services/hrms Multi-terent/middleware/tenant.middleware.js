@@ -86,6 +86,7 @@ const verifyTenant = async (req, res, next) => {
       companyCode: companyData ? companyData.companyCode : 'softrate',
       receivingEmail: companyData?.settings?.receivingEmail || process.env.RECIVER_EMAIL_USER,
       logo: companyData?.settings?.communication?.emailLogoUrl || null,
+      defaultPassword: companyData?.settings?.defaultPassword || "",
       dbName: dbName
     };
     

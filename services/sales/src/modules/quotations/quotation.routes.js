@@ -13,7 +13,7 @@ function normalize(value) {
   return String(value || '').trim();
 }
 
-async function findLead(body) {
+async function findLead(req, body) {
   const companyCode = normalize(body.companyCode);
   const leadId = normalize(body.leadId);
   if (leadId && mongoose.Types.ObjectId.isValid(leadId)) {
@@ -34,7 +34,7 @@ function parseQuotationNumber(value) {
   };
 }
 
-async function generateQuotationNumber(companyCode, lead, quotationDate) {
+async function generateQuotationNumber(req, companyCode, lead, quotationDate) {
   const leadCompanyName = normalize(lead?.leadCompanyName);
   const latestCompanyQuotation = leadCompanyName
     ? await req.models.Quotation.findOne({ companyCode, leadCompanyName })
@@ -102,7 +102,7 @@ router.post('/', async (req, res) => {
     const user = await User.findOne({ companyCode });
     if (!user) return res.status(404).json({ success: false, message: 'Company settings not found.' });
 
-    const lead = await findLead(req.body);
+    const lead = await findLead(req, req.body);
     if (!lead) return res.status(404).json({ success: false, message: 'req.models.Lead not found for quotation.' });
 
     const gstPercentage = Number(req.body.gstPercentage ?? user.gstPercentage ?? 18);
@@ -119,7 +119,7 @@ router.post('/', async (req, res) => {
     while (retries > 0) {
       try {
         const quotationDate = req.body.quotationDate ? new Date(req.body.quotationDate) : new Date();
-        const { quotationNumber, versionNo } = await generateQuotationNumber(companyCode, lead, quotationDate);
+        const { quotationNumber, versionNo } = await generateQuotationNumber(req, companyCode, lead, quotationDate);
 
         quotation = await req.models.Quotation.create({
           companyCode,

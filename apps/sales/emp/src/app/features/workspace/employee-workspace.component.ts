@@ -200,6 +200,7 @@ interface CompanyFullViewProfile {
   spocName: string;
   spocNumber: string;
   spocEmailAddress: string;
+  priority: string;
   notes: CompanyFullViewNote[];
   updatedAt?: string;
   createdAt?: string;
@@ -586,6 +587,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     spocName: '',
     spocNumber: '',
     spocEmailAddress: '',
+    priority: '',
     notes: []
   };
   companyFullHistoryLogs: LeadHistoryLog[] = [];
@@ -3452,10 +3454,6 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const contextCompany = String(this.companyFullContextLead?.leadCompanyName || this.selectedLeadCompany || '').trim();
     if (!contextCompany) return this.activeLeadRows;
 
-    if (this.activeLeadRows.length && this.activeLeadRows[0]?.leadCompanyName === contextCompany) {
-      return this.activeLeadRows;
-    }
-
     const sourceRows = this.employeeScopedLeads.length ? this.employeeScopedLeads : this.allLeads;
     const rows = this.rowsForCompany(sourceRows, contextCompany);
     if (rows.length) return rows;
@@ -3690,6 +3688,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         companyName: this.companyFullCompanyName(),
         alternatePhone: this.companyFullAlternatePhone.trim(),
         alternateEmail: this.companyFullAlternateEmail.trim(),
+        priority: this.companyFullProfile.priority,
       }));
       this.applyCompanyFullProfile(response?.profile);
     } catch (error: any) {
@@ -3843,6 +3842,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       spocName: '',
       spocNumber: '',
       spocEmailAddress: '',
+      priority: '',
       notes: [],
     };
     this.companyFullHistoryLogs = [];
@@ -3962,6 +3962,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       spocName: String(profile?.spocName || '').trim(),
       spocNumber: String(profile?.spocNumber || '').trim(),
       spocEmailAddress: String(profile?.spocEmailAddress || '').trim(),
+      priority: String(profile?.priority || '').trim(),
       notes: Array.isArray(profile?.notes)
         ? profile.notes
             .map((note: any) => ({
@@ -4578,7 +4579,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   async fetchEmailTemplates() {
     if (!this.employee?.companyCode) return;
     try {
-      const response = await fetch(`http://localhost:4000/api/templates/${this.employee.companyCode}`);
+      const response = await fetch(`/api/templates/${this.employee.companyCode}`);
       const data = await response.json();
       if (data.success) {
         this.emailTemplates = data.data;
@@ -4670,7 +4671,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         formData.append('attachments', file);
       });
 
-      const response = await fetch('http://localhost:4000/api/mail/send', {
+      const response = await fetch('/api/mail/send', {
         method: 'POST',
         body: formData
       });
@@ -7324,14 +7325,30 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const interestedStatusSet = new Set(this.INTERESTED_PAGE_STATUSES.map(normalizedStatus));
     const dnpStatusSet = new Set(this.DNP_PAGE_STATUSES.map(normalizedStatus));
     const convertedStatusSet = new Set(this.CONVERTED_PAGE_STATUSES.map(normalizedStatus));
-    const statusIn = (lead: Lead, statuses: Set<string>) => statuses.has(normalizedStatus(lead.status));
+    
+    const primaryContactMap = new Map<string, Lead>();
+    for (const lead of this.allLeads) {
+      const company = String(lead.leadCompanyName || '').trim();
+      if (!company) continue;
+      const existing = primaryContactMap.get(company);
+      if (!existing || lead.isStarred) {
+        primaryContactMap.set(company, lead);
+      }
+    }
+    const getEffectiveStatus = (lead: Lead) => {
+      const company = String(lead.leadCompanyName || '').trim();
+      const primary = primaryContactMap.get(company) || lead;
+      return primary.status;
+    };
+
+    const statusIn = (lead: Lead, statuses: Set<string>) => statuses.has(normalizedStatus(getEffectiveStatus(lead)));
     const selectedStatusMatches = (lead: Lead, selectedStatus: string) => (
-      selectedStatus === 'All' || normalizedStatus(lead.status) === normalizedStatus(selectedStatus)
+      selectedStatus === 'All' || normalizedStatus(getEffectiveStatus(lead)) === normalizedStatus(selectedStatus)
     );
 
     const filteredLeads = this.allLeads.filter((lead) => {
       if (!matchesLeadWorkspaceFilter(lead)) return false;
-      if (this.leadStatusFilter && lead.status !== this.leadStatusFilter) return false;
+      if (this.leadStatusFilter && getEffectiveStatus(lead) !== this.leadStatusFilter) return false;
       return true;
     });
 
@@ -7394,6 +7411,16 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       todayUpdateCompanyCounts[company] = (todayUpdateCompanyCounts[company] || 0) + 1;
     }
 
+    let convertedLeadsCount = 0;
+    let pendingLeadsCount = 0;
+    for (const primary of primaryContactMap.values()) {
+      if (this.CONVERTED_PAGE_STATUSES.includes(primary.status)) {
+        convertedLeadsCount++;
+      } else if (!this.DNP_PAGE_STATUSES.includes(primary.status)) {
+        pendingLeadsCount++;
+      }
+    }
+
     const value: LeadCollections = {
       filteredLeads,
       uniqueLeadCompanies: this.uniqueCompanyNames(filteredLeads, (lead) => lead.leadCompanyName),
@@ -7413,11 +7440,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       overviewTopCompanies,
       leadCompanyCounts,
       todayUpdateCompanyCounts,
-      totalLeadsCount: this.allLeads.length,
-      convertedLeadsCount: this.allLeads.filter((lead) => this.CONVERTED_PAGE_STATUSES.includes(lead.status)).length,
-      pendingLeadsCount: this.allLeads.filter(
-        (lead) => !this.CONVERTED_PAGE_STATUSES.includes(lead.status) && !this.DNP_PAGE_STATUSES.includes(lead.status),
-      ).length,
+      totalLeadsCount: primaryContactMap.size,
+      convertedLeadsCount,
+      pendingLeadsCount,
     };
 
     this.leadCollectionsCache = { key, value };

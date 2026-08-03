@@ -1,10 +1,13 @@
 const express = require('express');
 const History = require('../../../models/History');
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
+
+router.use(companyMiddleware);
 
 // GET — fetch history for a specific company/lead
 router.get('/', async (req, res) => {
-  const { Lead, CallLog, CallDetail, Bookmark, BreakLog, Quotation, Invoice, History } = req.models;
+  const { History } = req.models;
   try {
     const { companyCode, contactNumber, companyName } = req.query;
     if (!companyCode) {

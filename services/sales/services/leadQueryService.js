@@ -9,6 +9,75 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ── Fuzzy search helpers ─────────────────────────────────────────────────────
+
+/**
+ * Generate character n-grams from a string.
+ * e.g. "INMAZH", 3 → ["INM", "NMA", "MAZ", "AZH"]
+ */
+function generateNgrams(str, size = 3) {
+  const ngrams = new Set();
+  for (let i = 0; i <= str.length - size; i++) {
+    ngrams.add(str.substring(i, i + size));
+  }
+  return Array.from(ngrams);
+}
+
+/**
+ * Jaro-Winkler similarity between two strings (0..1, 1 = identical).
+ * Tolerates transpositions and short substitutions.
+ */
+function jaroWinkler(s1, s2) {
+  if (s1 === s2) return 1;
+  const len1 = s1.length;
+  const len2 = s2.length;
+  if (!len1 || !len2) return 0;
+  const matchDist = Math.floor(Math.max(len1, len2) / 2) - 1;
+  const s1Matches = new Array(len1).fill(false);
+  const s2Matches = new Array(len2).fill(false);
+  let matches = 0;
+  let transpositions = 0;
+  for (let i = 0; i < len1; i++) {
+    const start = Math.max(0, i - matchDist);
+    const end = Math.min(i + matchDist + 1, len2);
+    for (let j = start; j < end; j++) {
+      if (s2Matches[j] || s1[i] !== s2[j]) continue;
+      s1Matches[i] = true;
+      s2Matches[j] = true;
+      matches++;
+      break;
+    }
+  }
+  if (!matches) return 0;
+  let k = 0;
+  for (let i = 0; i < len1; i++) {
+    if (!s1Matches[i]) continue;
+    while (!s2Matches[k]) k++;
+    if (s1[i] !== s2[k]) transpositions++;
+    k++;
+  }
+  const jaro = (matches / len1 + matches / len2 + (matches - transpositions / 2) / matches) / 3;
+  const prefix = Math.min(4, [...s1].findIndex((c, i) => c !== s2[i]) < 0 ? Math.min(len1, len2) : [...s1].findIndex((c, i) => c !== s2[i]));
+  return jaro + prefix * 0.1 * (1 - jaro);
+}
+
+/**
+ * Score a candidate string against the query using:
+ *  - Jaro-Winkler on the full string
+ *  - bonus if the candidate *contains* the query
+ *  - bonus for trigram overlap ratio
+ */
+function fuzzyScore(query, candidate) {
+  const q = query.toLowerCase();
+  const c = candidate.toLowerCase();
+  const jw = jaroWinkler(q, c);
+  const containsBonus = c.includes(q) ? 0.2 : 0;
+  const qGrams = generateNgrams(q, 3);
+  const cGrams = new Set(generateNgrams(c, 3));
+  const overlap = qGrams.length ? qGrams.filter(g => cGrams.has(g)).length / qGrams.length : 0;
+  return Math.min(1, jw * 0.5 + overlap * 0.4 + containsBonus);
+}
+
 function parsePositiveInt(value, fallback) {
   const parsed = Number.parseInt(String(value ?? ''), 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -154,37 +223,31 @@ function buildLeadSearchQuery({ companyCode, employeeId, query = {} }) {
     };
   }
 
-  if (normalizedSearch.length < 3) {
-    const prefixRegex = new RegExp(`^${escapeRegex(normalizedSearch)}`);
-    const rawPrefixRegex = new RegExp(`^${escapeRegex(search)}`, 'i');
-    mongoQuery.$or = [
-      { leadCompanyNameLower: prefixRegex },
-      { leadCompanyName: rawPrefixRegex },
-      { contactNameLower: prefixRegex },
-      { contactName: rawPrefixRegex },
-      { directorEmailLower: prefixRegex },
-      { directorEmailAddress: rawPrefixRegex },
-      { setLabelLower: prefixRegex },
-      { setLabel: rawPrefixRegex },
-      { status: new RegExp(`^${escapeRegex(search)}$`, 'i') },
-    ];
+  // Use regex contains search for all string searches >= 3 chars.
+  // MongoDB $text full-text search only matches whole word tokens (e.g. "INMA" won't match "INMAZH"),
+  // so we use a case-insensitive substring regex on the normalized lowercase fields instead.
+  const containsRegex = new RegExp(escapeRegex(normalizedSearch));
+  const rawContainsRegex = new RegExp(escapeRegex(search), 'i');
+  mongoQuery.$or = [
+    { leadCompanyNameLower: containsRegex },
+    { leadCompanyName: rawContainsRegex },
+    { contactNameLower: containsRegex },
+    { contactName: rawContainsRegex },
+    { directorEmailLower: containsRegex },
+    { directorEmailAddress: rawContainsRegex },
+    { setLabelLower: containsRegex },
+    { setLabel: rawContainsRegex },
+    { status: rawContainsRegex },
+  ];
 
-    return {
-      mongoQuery,
-      projection,
-      searchStrategy: 'prefix',
-      sort,
-    };
+  if (normalizedPhone.length >= 4) {
+    mongoQuery.$or.unshift({ contactNumberNormalized: new RegExp(escapeRegex(normalizedPhone)) });
   }
-
-  mongoQuery.$text = { $search: search };
-  projection = { score: { $meta: 'textScore' } };
-  sort = { score: { $meta: 'textScore' }, ...sort };
 
   return {
     mongoQuery,
     projection,
-    searchStrategy: 'text',
+    searchStrategy: 'contains',
     sort,
   };
 }
@@ -288,7 +351,46 @@ async function getLeadCompanies({ LeadModel, companyCode, employeeId, query = {}
     pageSize: pagination.pageSize,
     total,
     hasMore: pagination.isPaginated ? pagination.page * pagination.pageSize < total : false,
+    fuzzy: false,
   };
+}
+
+/**
+ * Fuzzy search fallback: when a strict search yields 0 results, retrieve candidates
+ * via trigram regex matching then rank by Jaro-Winkler similarity.
+ */
+async function fuzzySearchLeads({ LeadModel, baseQuery, search, limit = 50, threshold = 0.55 }) {
+  if (!search || search.length < 4) return [];
+  const normalized = search.toLowerCase();
+  const ngrams = generateNgrams(normalized, 3);
+  if (!ngrams.length) return [];
+
+  // Build an $or that matches any trigram against the normalized company name field
+  const trigramOr = ngrams.map(gram => ({ leadCompanyNameLower: new RegExp(escapeRegex(gram)) }));
+  const candidateQuery = { ...baseQuery, $or: trigramOr };
+  delete candidateQuery.$and; // keep companyCode / employeeId filters but not prior $or/$and
+
+  const candidates = await LeadModel.find(
+    { companyCode: baseQuery.companyCode, assignedEmployeeId: baseQuery.assignedEmployeeId, isArchived: { $ne: true }, $or: trigramOr },
+    { leadCompanyName: 1, leadCompanyNameLower: 1, contactName: 1, sheetOrder: 1 },
+  ).limit(500).lean();
+
+  // Group by company name, pick best score per company
+  const companyScores = new Map();
+  for (const lead of candidates) {
+    const name = lead.leadCompanyName || '';
+    if (!name) continue;
+    const score = fuzzyScore(normalized, name);
+    if (score < threshold) continue;
+    if (!companyScores.has(name) || companyScores.get(name).score < score) {
+      companyScores.set(name, { name, score, sheetOrder: lead.sheetOrder });
+    }
+  }
+
+  return Array.from(companyScores.values())
+    .sort((a, b) => b.score - a.score || a.sheetOrder - b.sheetOrder)
+    .slice(0, limit)
+    .map(r => ({ name: r.name, score: r.score }));
 }
 
 module.exports = {
@@ -299,6 +401,7 @@ module.exports = {
   getLeadDivisions,
   getLeadCompanies,
   getLeadSets,
+  fuzzySearchLeads,
   isPaginatedRequest,
   parsePagination,
 };

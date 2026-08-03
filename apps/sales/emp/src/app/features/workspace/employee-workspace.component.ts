@@ -197,12 +197,15 @@ interface CompanyFullViewProfile {
   leadCompanyName: string;
   alternatePhone: string;
   alternateEmail: string;
+  spocName: string;
+  spocNumber: string;
+  spocEmailAddress: string;
   notes: CompanyFullViewNote[];
   updatedAt?: string;
   createdAt?: string;
 }
 
-type CompanyFullSection = 'overview' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'alternate' | 'notes';
+type CompanyFullSection = 'overview' | 'followups' | 'timeline' | 'alternate' | 'notes';
 
 interface CallStats {
   incoming: number;
@@ -308,10 +311,13 @@ interface PagedResponse<T> {
   hasMore: boolean;
 }
 
+import { ActivitiesCalendarComponent } from '../../shared/ui/activities-calendar/activities-calendar.component';
+import { CompanyTimelineComponent } from '../../shared/ui/company-timeline/company-timeline.component';
+
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent],
+  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -552,10 +558,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
-    { id: 'followups', label: 'Followups' },
-    { id: 'remarks', label: 'Remarks History' },
-    { id: 'invoices', label: 'Invoice History' },
-    { id: 'quotations', label: 'Quotation History' },
+    { id: 'followups', label: 'Schedule / Follow-up' },
+    { id: 'timeline', label: 'Overall History' },
     { id: 'alternate', label: 'Alternate Info' },
     { id: 'notes', label: 'Notes' },
   ];
@@ -579,7 +583,10 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     leadCompanyName: '',
     alternatePhone: '',
     alternateEmail: '',
-    notes: [],
+    spocName: '',
+    spocNumber: '',
+    spocEmailAddress: '',
+    notes: []
   };
   companyFullHistoryLogs: LeadHistoryLog[] = [];
   companyFullRemarksHistory: LeadHistoryLog[] = [];
@@ -615,9 +622,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   >();
 
   get companyFullSections(): Array<{ id: CompanyFullSection; label: string }> {
-    return this.companyFullBaseSections.filter((section) => (
-      section.id !== 'followups' || this.companyFullHasFollowupSection()
-    ));
+    return this.companyFullBaseSections;
   }
   detailAiSuggestion: AiSuggestion | null = null;
   detailAiSuggestionLoading = false;
@@ -1784,6 +1789,17 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   documentGstPercentageOverride: number | null = null;
   private gstSelectionConfirmed = false;
   invoiceSaving = false;
+
+  // Director Edit State
+  directorEditOpen = false;
+  directorEditLeadId = '';
+  directorEditSaving = false;
+  directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  
+  // Contact Add State
+  contactAddOpen = false;
+  contactAddSaving = false;
+  contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
   currentInvoiceNumber = '';
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
@@ -3448,7 +3464,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   companyFullViewLead(): Lead | null {
-    return this.companyFullViewRows()[0] || this.companyFullContextLead || this.activeLeadBannerLead();
+    const rows = this.companyFullViewRows();
+    const spoc = rows.find(r => r.isStarred);
+    return spoc || rows[0] || this.companyFullContextLead || this.activeLeadBannerLead();
   }
 
   companyFullCompanyName(): string {
@@ -3503,6 +3521,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullAlternateEmailValue(): string {
     return this.companyFullAlternateEmail.trim() || '—';
   }
+
+
 
   companyFullOverviewContacts(): Lead[] {
     return this.companyFullViewRows();
@@ -3718,7 +3738,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       this.companyFullRemarkMenuOpen = false;
       this.companyFullRemarkDraft = '';
       await this.reloadCompanyFullRemarkHistory();
-      this.scrollCompanyFullSection('remarks', 'auto');
+      this.scrollCompanyFullSection('timeline', 'auto');
     } catch (error: any) {
       this.companyFullRemarkError = error?.error?.message || 'Failed to add remark.';
     } finally {
@@ -3820,6 +3840,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       leadCompanyName: '',
       alternatePhone: '',
       alternateEmail: '',
+      spocName: '',
+      spocNumber: '',
+      spocEmailAddress: '',
       notes: [],
     };
     this.companyFullHistoryLogs = [];
@@ -3880,7 +3903,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         pageSize: 100,
       })),
       employeeId
-        ? firstValueFrom(this.api.get<any>(`/api/bookmarks?${this.buildApiQueryString({ companyCode, phone: employeeId })}`))
+        ? firstValueFrom(this.api.get<any>(`/api/bookmarks?${this.buildApiQueryString({ companyCode, employeeId: employeeId })}`))
         : Promise.resolve({ success: true, bookmarks: [] }),
     ]);
 
@@ -3936,6 +3959,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       leadCompanyName: String(profile?.leadCompanyName || this.companyFullCompanyName() || '').trim(),
       alternatePhone: String(profile?.alternatePhone || '').trim(),
       alternateEmail: String(profile?.alternateEmail || '').trim(),
+      spocName: String(profile?.spocName || '').trim(),
+      spocNumber: String(profile?.spocNumber || '').trim(),
+      spocEmailAddress: String(profile?.spocEmailAddress || '').trim(),
       notes: Array.isArray(profile?.notes)
         ? profile.notes
             .map((note: any) => ({
@@ -4000,7 +4026,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.companyFullFollowupLoading = true;
     this.companyFullFollowupError = '';
     try {
-      const query = this.buildApiQueryString({ companyCode, phone: employeeId });
+      const query = this.buildApiQueryString({ companyCode, employeeId: employeeId });
       const response = await firstValueFrom(this.api.get<any>(`/api/bookmarks?${query}`));
       const bookmarks = Array.isArray(response?.bookmarks) ? response.bookmarks : [];
       this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName, companyCode, employeeId);
@@ -4663,232 +4689,6 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.closeMailModal();
   }
 
-  // ── Activities Module ──────────────────────────────────────────
-  activitiesSubTab: 'calendar' | 'tasks' | 'meetings' | 'calls' = 'calendar';
-  currentCalendarDate = new Date();
-  activitiesFilter = {
-    tasks: true,
-    meetings: true,
-    calls: true
-  };
-  
-  mockActivities: ActivityItem[] = [];
-  
-  showActivityModal = false;
-  selectedActivityDate: Date = new Date();
-  activityForm = {
-    type: 'task' as 'task' | 'meeting' | 'call',
-    title: '',
-    description: '',
-    time: '10:00',
-    leadId: ''
-  };
-  
-  activityClientSearchQuery = '';
-  showActivityClientDropdown = false;
-
-  get filteredModalClients() {
-    if (!this.activityClientSearchQuery) return this.allLeads;
-    const lowerQuery = this.activityClientSearchQuery.toLowerCase();
-    return this.allLeads.filter(l => 
-      l.leadCompanyName?.toLowerCase().includes(lowerQuery) || 
-      l.contactName?.toLowerCase().includes(lowerQuery)
-    );
-  }
-
-  selectActivityClient(lead: any) {
-    this.activityForm.leadId = lead._id;
-    this.activityClientSearchQuery = `${lead.leadCompanyName} (${lead.contactName})`;
-    this.showActivityClientDropdown = false;
-  }
-
-  calendarDays: Array<{ 
-    date: Date; 
-    isCurrentMonth: boolean; 
-    isToday: boolean;
-    events: any[];
-    taskCount: number; 
-    meetingCount: number; 
-    callCount: number; 
-  }> = [];
-
-  get activitiesForCurrentTab(): any[] {
-    if (this.activitiesSubTab === 'calendar') return [];
-    
-    // Convert 'tasks' -> 'task', 'meetings' -> 'meeting', 'calls' -> 'call'
-    const typeMapping: Record<string, string> = {
-      'tasks': 'task',
-      'meetings': 'meeting',
-      'calls': 'call'
-    };
-    const filterType = typeMapping[this.activitiesSubTab];
-    
-    return this.mockActivities
-      .filter(a => a.type === filterType)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-  }
-
-  async generateCalendarDays() {
-    // Fetch activities from backend
-    if (this.employee?._id) {
-      try {
-        const firstDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth(), 1);
-        const lastDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 0);
-        
-        const response = await fetch(`http://localhost:4000/api/activities/employee/${this.employee._id}?start=${firstDayOfMonth.toISOString()}&end=${lastDayOfMonth.toISOString()}`);
-        const result = await response.json();
-        
-        if (result.success) {
-          // Convert string dates to Date objects
-          this.mockActivities = result.data.map((a: any) => ({
-            ...a,
-            date: new Date(a.activityDate)
-          }));
-        }
-      } catch (err) {
-        console.error('Error fetching activities', err);
-      }
-    }
-
-    const year = this.currentCalendarDate.getFullYear();
-    const month = this.currentCalendarDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Start on Monday
-    
-    this.calendarDays = [];
-    
-    // Previous month padding
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      this.calendarDays.push({
-        date: new Date(year, month - 1, prevMonthLastDay - i),
-        isCurrentMonth: false,
-        isToday: false,
-        events: [],
-        taskCount: 0,
-        meetingCount: 0,
-        callCount: 0
-      });
-    }
-
-    // Current month
-    const today = new Date();
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      const d = new Date(year, month, i);
-      
-      const dayActivities = this.mockActivities.filter(a => 
-        a.date.getFullYear() === d.getFullYear() &&
-        a.date.getMonth() === d.getMonth() &&
-        a.date.getDate() === d.getDate()
-      );
-
-      this.calendarDays.push({
-        date: d,
-        isCurrentMonth: true,
-        isToday: d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(),
-        events: dayActivities,
-        taskCount: dayActivities.filter(a => a.type === 'task').length,
-        meetingCount: dayActivities.filter(a => a.type === 'meeting').length,
-        callCount: dayActivities.filter(a => a.type === 'call').length
-      });
-    }
-
-    // Next month padding (to fill grid)
-    const remainingSlots = 42 - this.calendarDays.length; // 6 rows of 7 days
-    for (let i = 1; i <= remainingSlots; i++) {
-      this.calendarDays.push({
-        date: new Date(year, month + 1, i),
-        isCurrentMonth: false,
-        isToday: false,
-        events: [],
-        taskCount: 0,
-        meetingCount: 0,
-        callCount: 0
-      });
-    }
-  }
-
-  prevCalendarMonth() {
-    this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() - 1, 1);
-    this.generateCalendarDays();
-  }
-
-  nextCalendarMonth() {
-    this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 1);
-    this.generateCalendarDays();
-  }
-
-  setActivitiesSubTab(tab: 'calendar' | 'tasks' | 'meetings' | 'calls') {
-    this.activitiesSubTab = tab;
-  }
-  
-  openActivityModal(date?: Date) {
-    this.selectedActivityDate = date ? new Date(date) : new Date();
-    this.activityForm = { type: 'task', title: '', description: '', time: '10:00', leadId: '' };
-    this.activityClientSearchQuery = '';
-    this.showActivityClientDropdown = false;
-    this.showActivityModal = true;
-  }
-  
-  closeActivityModal() {
-    this.showActivityModal = false;
-  }
-  
-  async saveActivity() {
-    try {
-      if (!this.employee?._id) {
-        alert('Error: Employee ID is missing. Please try refreshing the page.');
-        return;
-      }
-      
-      if (!this.activityForm.title?.trim()) {
-        alert('Please enter a title for the activity.');
-        return;
-      }
-      
-      if (!this.activityForm.time) {
-        alert('Please select a valid time.');
-        return;
-      }
-      
-      // Parse time safely
-      const [hours, minutes] = this.activityForm.time.split(':').map(Number);
-      const activityDate = new Date(this.selectedActivityDate);
-      activityDate.setHours(hours, minutes, 0, 0);
-      
-      const response = await fetch('http://localhost:4000/api/activities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          employeeId: this.employee._id,
-          leadId: this.activityForm.leadId || undefined,
-          type: this.activityForm.type,
-          title: this.activityForm.title,
-          description: this.activityForm.description,
-          activityDate: activityDate
-        })
-      });
-      
-      let result;
-      try {
-        result = await response.json();
-      } catch (jsonErr) {
-        throw new Error('Server returned invalid JSON. It might be down or crashing.');
-      }
-      
-      if (result.success) {
-        this.closeActivityModal();
-        await this.generateCalendarDays();
-      } else {
-        alert('Failed to save activity: ' + result.message);
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert('Error saving activity: ' + (err.message || String(err)));
-    }
-  }
-
   // ── Util ──────────────────────────────────────────────────────
   sidebarOpen = false;
   sidebarMinimized = false;
@@ -4922,7 +4722,6 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.generateCalendarDays();
     Chart.register(...registerables);
     this.leadVmSub = this.employeeLeadsVm.state$.subscribe((state) => this.applyEmployeeLeadViewModelState(state));
     const raw = localStorage.getItem('dv_employee');
@@ -5093,6 +4892,103 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.profilePhotoSuccess = '';
     input.value = '';
     input.click();
+  }
+
+  openDirectorEditModal(lead: Lead): void {
+    if (!lead || !lead._id) return;
+    this.directorEditLeadId = lead._id;
+    this.directorEditDraft = {
+      contactName: String(lead.contactName || '').trim(),
+      contactNumber: String(lead.contactNumber || '').trim(),
+      directorEmailAddress: String(lead.directorEmailAddress || '').trim()
+    };
+    this.directorEditOpen = true;
+  }
+
+  closeDirectorEditModal(): void {
+    this.directorEditOpen = false;
+    this.directorEditLeadId = '';
+    this.directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  }
+
+  async saveDirectorEdit(): Promise<void> {
+    if (!this.directorEditLeadId || this.directorEditSaving) return;
+    this.directorEditSaving = true;
+
+    try {
+      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, {
+        contactName: this.directorEditDraft.contactName,
+        contactNumber: this.directorEditDraft.contactNumber,
+        directorEmailAddress: this.directorEditDraft.directorEmailAddress
+      }));
+      
+      if (response && response.lead) {
+        const updatedLead = response.lead;
+        if (this.currentDrawerLead && this.currentDrawerLead._id === this.directorEditLeadId) {
+          this.currentDrawerLead.contactName = updatedLead.contactName;
+          this.currentDrawerLead.contactNumber = updatedLead.contactNumber;
+          this.currentDrawerLead.directorEmailAddress = updatedLead.directorEmailAddress;
+        }
+        if (this.currentSelectedFollowup && this.currentSelectedFollowup._id === this.directorEditLeadId) {
+          this.currentSelectedFollowup.contactName = updatedLead.contactName;
+          this.currentSelectedFollowup.contactNumber = updatedLead.contactNumber;
+        }
+      }
+      this.closeDirectorEditModal();
+      alert('Director details updated successfully');
+    } catch (error) {
+      console.error('Failed to update director', error);
+      alert('Failed to update director details');
+    } finally {
+      this.directorEditSaving = false;
+    }
+  }
+
+  openContactAddModal(): void {
+    this.contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+    this.contactAddOpen = true;
+  }
+
+  closeContactAddModal(): void {
+    this.contactAddOpen = false;
+    this.contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  }
+
+  async saveContactAdd(): Promise<void> {
+    if (this.contactAddSaving) return;
+    const companyCode = this.employee?.companyCode;
+    const assignedEmployeeId = this.employee?._id;
+    const leadCompanyName = this.companyFullCompanyName();
+    
+    if (!companyCode || !assignedEmployeeId || !leadCompanyName || !this.contactAddDraft.contactName || !this.contactAddDraft.contactNumber) {
+      alert('Missing required fields for new contact');
+      return;
+    }
+
+    this.contactAddSaving = true;
+    try {
+      const response = await firstValueFrom(this.api.post<any>('/api/leads', {
+        companyCode,
+        assignedEmployeeId,
+        leadCompanyName,
+        contactName: this.contactAddDraft.contactName,
+        contactNumber: this.contactAddDraft.contactNumber,
+        directorEmailAddress: this.contactAddDraft.directorEmailAddress
+      }));
+      
+      if (response && response.lead) {
+        this.allLeads.push(response.lead);
+        if (this.employeeScopedLeads) this.employeeScopedLeads.push(response.lead);
+        if (this.activeLeadRows) this.activeLeadRows.push(response.lead);
+      }
+      this.closeContactAddModal();
+      alert('Contact added successfully');
+    } catch (error) {
+      console.error('Failed to add contact', error);
+      alert('Failed to add contact');
+    } finally {
+      this.contactAddSaving = false;
+    }
   }
 
   onProfilePhotoSelected(event: Event): void {
@@ -5892,7 +5788,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private async warmDefaultLeadScopes(): Promise<void> {
     if (!this.employee) return;
     const baseScopes = this.uniqueLeadScopes(this.leadWarmupScopesForSet('', { includeToday: true }));
-    await this.employeeLeadsVm.prefetchScopes(this.employee.companyCode, this.employee.mobile, baseScopes);
+    await this.employeeLeadsVm.prefetchScopes(this.employee.companyCode, this.employee._id || '', baseScopes);
   }
 
   private leadWarmupScopesForSet(
@@ -5971,7 +5867,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     const pageSize = 20;
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      phone: this.employee.mobile,
+      employeeId: this.employee._id || '',
       page: '1',
       pageSize: String(pageSize),
       paginated: 'true',
@@ -6123,7 +6019,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      phone: this.employee.mobile,
+      employeeId: this.employee._id || '',
       page: String(page),
       pageSize: String(OPERATIONAL_PAGE_SIZE),
       paginated: 'true',
@@ -6177,7 +6073,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const params = new URLSearchParams({
       companyCode: this.employee.companyCode,
-      phone: this.employee.mobile,
+      employeeId: this.employee._id || '',
       from: this.historyFilterDate || this.todayInputDate,
       to: this.historyFilterDate || this.todayInputDate,
       page: String(page),
@@ -6773,7 +6669,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (clearCache) this.employeeLeadsVm.clearCache();
     const hasCachedScope = !forceRefresh && this.employeeLeadsVm.hasCachedScope(
       this.employee.companyCode,
-      this.employee.mobile,
+      this.employee._id || '',
       scope,
     );
     if (!hasCachedScope || forceRefresh) {
@@ -6785,7 +6681,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
     this.employeeLeadsVm.loadScope(
       this.employee.companyCode,
-      this.employee.mobile,
+      this.employee._id || '',
       scope,
       { forceRefresh },
     );

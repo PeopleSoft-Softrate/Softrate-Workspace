@@ -9,7 +9,7 @@ import { mapFollowUpDto } from './follow-up.mapper';
 
 export interface FollowUpQuery {
   companyCode: string;
-  phone: string;
+  employeeId: string;
   search?: string;
   filter?: 'all' | 'today' | 'custom';
   reminderDate?: string;
@@ -21,8 +21,8 @@ export interface FollowUpQuery {
 export class FollowUpsRepository {
   constructor(private api: ApiService) {}
 
-  listForEmployee(companyCode: string, phone: string): Observable<FollowUp[]> {
-    const params = new URLSearchParams({ companyCode, phone });
+  listForEmployee(companyCode: string, employeeId: string): Observable<FollowUp[]> {
+    const params = new URLSearchParams({ companyCode, employeeId });
     return this.api.get<any>(`/api/bookmarks?${params.toString()}`).pipe(
       map((response) => (response?.bookmarks || []).map((dto: FollowUpDto) => mapFollowUpDto(dto)))
     );

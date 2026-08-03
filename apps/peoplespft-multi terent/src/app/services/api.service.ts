@@ -6,7 +6,7 @@ import { Observable, forkJoin, map } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private useLocalBackend = true;
+  private useLocalBackend = false;
   private resolveBaseUrl(): string {
     if (typeof window === 'undefined') return 'https://peoplesoft.softrateglobal.com/hrms-api';
     const hostname = window.location.hostname;
@@ -461,6 +461,7 @@ export class ApiService {
   getInternAttendance(internId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/attendance/intern/${internId}`);
   }
+
 
   internPunchIn(internId: string, location: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/attendance/punch-in`, { internId, location });

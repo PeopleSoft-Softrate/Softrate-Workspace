@@ -374,7 +374,7 @@ export class EmployeeLeadsViewModel {
 
   updateStatus(lead: Lead, status: string): void {
     if (!lead.id) return;
-    this.repository.updateStatus(lead.id, status).subscribe({
+    this.repository.updateStatus(lead.id, lead.companyCode, status).subscribe({
       next: (updated) => this.replaceLead(updated),
       error: () => this.patch({ error: 'Failed to update lead status.' }),
     });
@@ -382,7 +382,7 @@ export class EmployeeLeadsViewModel {
 
   toggleFavourite(lead: Lead): void {
     if (!lead.id) return;
-    this.repository.updateFlags(lead.id, { isFavourite: !lead.isFavourite }).subscribe({
+    this.repository.updateFlags(lead.id, lead.companyCode, { isFavourite: !lead.isFavourite }).subscribe({
       next: (updated) => this.replaceLead(updated),
       error: () => this.patch({ error: 'Failed to update favourite.' }),
     });
@@ -390,7 +390,7 @@ export class EmployeeLeadsViewModel {
 
   toggleStar(lead: Lead): void {
     if (!lead.id) return;
-    this.repository.updateFlags(lead.id, { isStarred: !lead.isStarred }).subscribe({
+    this.repository.updateFlags(lead.id, lead.companyCode, { isStarred: !lead.isStarred }).subscribe({
       next: (updated) => this.replaceLead(updated),
       error: () => this.patch({ error: 'Failed to update star.' }),
     });
@@ -398,7 +398,7 @@ export class EmployeeLeadsViewModel {
 
   addRemark(lead: Lead, remark: string): void {
     if (!lead.id || !remark.trim()) return;
-    this.repository.addRemark(lead.id, remark.trim()).subscribe({
+    this.repository.addRemark(lead.id, lead.companyCode, remark.trim()).subscribe({
       next: (updated) => this.replaceLead(updated),
       error: () => this.patch({ error: 'Failed to add remark.' }),
     });

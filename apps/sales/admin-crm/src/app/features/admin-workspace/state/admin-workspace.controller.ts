@@ -58,6 +58,9 @@ interface CompanyFullViewProfile {
   leadCompanyName: string;
   alternatePhone: string;
   alternateEmail: string;
+  spocName: string;
+  spocNumber: string;
+  spocEmailAddress: string;
   notes: CompanyFullViewNote[];
   updatedAt?: string;
   createdAt?: string;
@@ -584,7 +587,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
-    { id: 'followups', label: 'Followups' },
+    { id: 'followups', label: 'Schedule / Follow-up' },
     { id: 'remarks', label: 'Remarks History' },
     { id: 'invoices', label: 'Invoice History' },
     { id: 'quotations', label: 'Quotation History' },
@@ -611,6 +614,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     leadCompanyName: '',
     alternatePhone: '',
     alternateEmail: '',
+    spocName: '',
+    spocNumber: '',
+    spocEmailAddress: '',
     notes: [],
   };
   companyFullHistoryLogs: any[] = [];
@@ -707,6 +713,18 @@ export abstract class AdminWorkspaceController implements OnInit {
     workingHours: ''
   };
   adminRmLoading = false;
+  adminRemarkLoading = false;
+
+  // Director Edit State
+  directorEditOpen = false;
+  directorEditLeadId = '';
+  directorEditSaving = false;
+  directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  
+  // Contact Add State
+  contactAddOpen = false;
+  contactAddSaving = false;
+  contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
   rmCountdown = '';
 
   openLogin(): void { this.authPaymentWorkflow.openLogin(this); }
@@ -5495,9 +5513,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   get companyFullSections(): Array<{ id: CompanyFullSection; label: string }> {
-    return this.companyFullBaseSections.filter((section) => (
-      section.id !== 'followups' || this.companyFullHasFollowupSection()
-    ));
+    return this.companyFullBaseSections;
   }
 
   companyFullViewRows(): Lead[] {
@@ -5553,7 +5569,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   companyFullViewLead(): Lead | null {
-    return this.companyFullViewRows()[0] || this.companyFullContextLead || null;
+    const rows = this.companyFullViewRows();
+    const spoc = rows.find(r => r.isStarred);
+    return spoc || rows[0] || this.companyFullContextLead || null;
   }
 
   companyFullCompanyName(): string {
@@ -5611,6 +5629,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullAlternateEmailValue(): string {
     return this.companyFullAlternateEmail.trim() || '—';
   }
+
+
 
   companyFullOverviewContacts(): Lead[] {
     return this.companyFullViewRows();
@@ -5915,6 +5935,9 @@ export abstract class AdminWorkspaceController implements OnInit {
       leadCompanyName: '',
       alternatePhone: '',
       alternateEmail: '',
+      spocName: '',
+      spocNumber: '',
+      spocEmailAddress: '',
       notes: [],
     };
     this.companyFullHistoryLogs = [];
@@ -6059,6 +6082,9 @@ export abstract class AdminWorkspaceController implements OnInit {
       leadCompanyName: String(profile?.leadCompanyName || this.companyFullCompanyName() || '').trim(),
       alternatePhone: String(profile?.alternatePhone || '').trim(),
       alternateEmail: String(profile?.alternateEmail || '').trim(),
+      spocName: String(profile?.spocName || '').trim(),
+      spocNumber: String(profile?.spocNumber || '').trim(),
+      spocEmailAddress: String(profile?.spocEmailAddress || '').trim(),
       notes: Array.isArray(profile?.notes)
         ? profile.notes
             .map((note: any) => ({
@@ -6334,7 +6360,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   deleteLeadRemark(lead: Lead, index: number): void {
     if (!confirm('Delete this remark?')) return;
-    this.api.delete(`/api/leads/${lead._id}/remarks/${index}`).subscribe({
+    this.leadService.deleteLeadRemark(lead._id!, lead.companyCode, index).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.invalidateAdminDashboardCaches();
@@ -6354,7 +6380,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (!remark || !remark.trim() || this.remarkPostingIds.has(lead._id)) return;
 
     this.remarkPostingIds.add(lead._id);
-    this.leadService.addLeadRemark(lead._id, remark.trim()).subscribe({
+    this.leadService.addLeadRemark(lead._id!, lead.companyCode, remark.trim()).subscribe({
       next: (res: any) => {
         if (res?.success && res.lead) {
           const normalized = this.normalizeLead(res.lead);
@@ -6453,7 +6479,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   toggleStar(lead: Lead): void {
     const newValue = !lead.isStarred;
     lead.isStarred = newValue;
-    this.leadService.updateLeadFlags(lead._id!, { isStarred: newValue }).subscribe({
+    this.leadService.updateLeadFlags(lead._id!, lead.companyCode, { isStarred: newValue }).subscribe({
       next: () => this.invalidateAdminDashboardCaches(),
       error: () => { lead.isStarred = !newValue; }
     });
@@ -6462,7 +6488,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   toggleFavourite(lead: Lead): void {
     const newValue = !lead.isFavourite;
     lead.isFavourite = newValue;
-    this.leadService.updateLeadFlags(lead._id!, { isFavourite: newValue }).subscribe({
+    this.leadService.updateLeadFlags(lead._id!, lead.companyCode, { isFavourite: newValue }).subscribe({
       next: () => this.invalidateAdminDashboardCaches(),
       error: () => { lead.isFavourite = !newValue; }
     });
@@ -7343,4 +7369,98 @@ export abstract class AdminWorkspaceController implements OnInit {
   onFollowupExcelUpload(event: any): void { return this.adminFollowupsWorkflow.onFollowupExcelUpload(this, event); }
 
   confirmFollowupMapping(): void { return this.adminFollowupsWorkflow.confirmFollowupMapping(this); }
+
+  // Director Edit Methods
+  openDirectorEditModal(lead: any): void {
+    if (!lead || !lead._id) return;
+    this.directorEditLeadId = lead._id;
+    this.directorEditDraft = {
+      contactName: String(lead.contactName || '').trim(),
+      contactNumber: String(lead.contactNumber || '').trim(),
+      directorEmailAddress: String(lead.directorEmailAddress || '').trim()
+    };
+    this.directorEditOpen = true;
+  }
+
+  closeDirectorEditModal(): void {
+    this.directorEditOpen = false;
+    this.directorEditLeadId = '';
+    this.directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  }
+
+  async saveDirectorEdit(): Promise<void> {
+    if (!this.directorEditLeadId || this.directorEditSaving) return;
+    this.directorEditSaving = true;
+
+    try {
+      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, {
+        contactName: this.directorEditDraft.contactName,
+        contactNumber: this.directorEditDraft.contactNumber,
+        directorEmailAddress: this.directorEditDraft.directorEmailAddress
+      }));
+      if (response && response.lead) {
+        const updatedLead = response.lead;
+        // If updating within company full rows
+        const rowIndex = this.companyFullRows.findIndex(r => r._id === this.directorEditLeadId);
+        if (rowIndex !== -1) {
+          this.companyFullRows[rowIndex].contactName = updatedLead.contactName;
+          this.companyFullRows[rowIndex].contactNumber = updatedLead.contactNumber;
+          this.companyFullRows[rowIndex].directorEmailAddress = updatedLead.directorEmailAddress;
+        }
+      }
+      this.closeDirectorEditModal();
+      alert('Director details updated successfully');
+    } catch (error) {
+      console.error('Failed to update director', error);
+      alert('Failed to update director details');
+    } finally {
+      this.directorEditSaving = false;
+    }
+  }
+
+  openContactAddModal(): void {
+    this.contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+    this.contactAddOpen = true;
+  }
+
+  closeContactAddModal(): void {
+    this.contactAddOpen = false;
+    this.contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  }
+
+  async saveContactAdd(): Promise<void> {
+    if (this.contactAddSaving) return;
+    const companyCode = this.dashboardCode;
+    const assignedEmployeeId = this.companyFullContextLead?.assignedEmployeeId || this.companyFullViewRows()[0]?.assignedEmployeeId;
+    const leadCompanyName = this.companyFullCompanyName();
+    
+    if (!companyCode || !assignedEmployeeId || !leadCompanyName || !this.contactAddDraft.contactName || !this.contactAddDraft.contactNumber) {
+      alert('Missing required fields for new contact');
+      return;
+    }
+
+    this.contactAddSaving = true;
+    try {
+      const response = await firstValueFrom(this.api.post<any>('/api/leads', {
+        companyCode,
+        assignedEmployeeId,
+        leadCompanyName,
+        contactName: this.contactAddDraft.contactName,
+        contactNumber: this.contactAddDraft.contactNumber,
+        directorEmailAddress: this.contactAddDraft.directorEmailAddress
+      }));
+      
+      if (response && response.lead) {
+        this.allLeads.push(response.lead);
+        if (this.companyFullRows) this.companyFullRows.push(response.lead);
+      }
+      this.closeContactAddModal();
+      alert('Contact added successfully');
+    } catch (error) {
+      console.error('Failed to add contact', error);
+      alert('Failed to add contact');
+    } finally {
+      this.contactAddSaving = false;
+    }
+  }
 }

@@ -1,6 +1,7 @@
 const express = require('express');
 const Lead = require('../../../models/Lead');
 const LeadCompanyProfile = require('../../../models/LeadCompanyProfile');
+const History = require('../../../models/History');
 const eventBus = require('../../../services/eventBus');
 const { getOrSet } = require('../../../services/cacheService');
 const {
@@ -27,6 +28,7 @@ const {
   getLeadDivisions,
   getLeadCompanies,
   getLeadSets,
+  fuzzySearchLeads,
   parsePagination,
 } = require('../../../services/leadQueryService');
 const { enrichLeadForStorage, normalizeRemarks, normalizeText } = require('../../../services/leadNormalization');
@@ -68,6 +70,9 @@ function mapCompanyProfile(profile, companyName = '') {
     leadCompanyName: String(profile?.leadCompanyName || companyName || '').trim(),
     alternatePhone: String(profile?.alternatePhone || '').trim(),
     alternateEmail: String(profile?.alternateEmail || '').trim(),
+    spocName: String(profile?.spocName || '').trim(),
+    spocNumber: String(profile?.spocNumber || '').trim(),
+    spocEmailAddress: String(profile?.spocEmailAddress || '').trim(),
     notes: Array.isArray(profile?.notes)
       ? profile.notes
           .map((note) => ({
@@ -409,13 +414,27 @@ router.get('/employee/companies', async (req, res) => {
       return res.status(400).json({ success: false, message: 'companyCode and employeeId are required.' });
     }
 
-    const payload = await getCachedLeadCompanies({
+    const search = String(req.query.search ?? '').trim();
+    let payload = await getCachedLeadCompanies({
       LeadModel: req.models.Lead,
       companyCode,
       employeeId,
       query: req.query,
       cacheKey: buildEmployeeCompanyKey(companyCode, employeeId, req.query),
     });
+
+    // ── Fuzzy fallback: if no results and search >= 4 chars, try typo-tolerant search
+    let fuzzyResults = [];
+    if (search.length >= 4 && payload.total === 0) {
+      const baseMongoQuery = { companyCode, assignedEmployeeId: employeeId, isArchived: { $ne: true } };
+      fuzzyResults = await fuzzySearchLeads({
+        LeadModel: req.models.Lead,
+        baseQuery: baseMongoQuery,
+        search,
+        limit: 30,
+        threshold: 0.55,
+      });
+    }
 
     const contactsByCompany = shouldIncludeCompanyContacts(req.query)
       ? await getCachedEmployeeCompanyContacts({
@@ -434,13 +453,14 @@ router.get('/employee/companies', async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      companies: payload.companies,
-      names: payload.names,
+      companies: fuzzyResults.length ? fuzzyResults : payload.companies,
+      names: fuzzyResults.length ? fuzzyResults.map(r => r.name) : payload.names,
       contactsByCompany,
       page: payload.page,
       pageSize: payload.pageSize,
-      total: payload.total,
-      hasMore: payload.hasMore,
+      total: fuzzyResults.length ? fuzzyResults.length : payload.total,
+      hasMore: fuzzyResults.length ? false : payload.hasMore,
+      fuzzy: fuzzyResults.length > 0,
     });
   } catch (err) {
     console.error('[get employee companies]', err);
@@ -679,6 +699,9 @@ router.patch('/company-profile', async (req, res) => {
       normalizedCompanyName: normalizeText(companyName),
       alternatePhone: String(req.body.alternatePhone || '').trim(),
       alternateEmail: String(req.body.alternateEmail || '').trim(),
+      spocName: String(req.body.spocName || '').trim(),
+      spocNumber: String(req.body.spocNumber || '').trim(),
+      spocEmailAddress: String(req.body.spocEmailAddress || '').trim(),
     };
 
     const profile = await LeadCompanyProfile.findOneAndUpdate(
@@ -786,6 +809,47 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('[delete lead]', err);
     return res.status(500).json({ success: false, message: 'Server error deleting lead.' });
+  }
+});
+
+// PATCH — update lead director details
+router.patch('/:id/director', async (req, res) => {
+  try {
+    const { contactName, contactNumber, directorEmailAddress } = req.body;
+    
+    const oldLead = await req.models.Lead.findById(req.params.id);
+    if (!oldLead) {
+      return res.status(404).json({ success: false, message: 'Lead not found.' });
+    }
+
+    const updates = {};
+    if (contactName !== undefined) updates.contactName = String(contactName).trim();
+    if (contactNumber !== undefined) {
+      updates.contactNumber = String(contactNumber).trim();
+      updates.contactNumberNormalized = normalizePhone(updates.contactNumber);
+    }
+    if (directorEmailAddress !== undefined) {
+      updates.directorEmailAddress = String(directorEmailAddress).trim();
+      updates.directorEmailLower = normalizeText(updates.directorEmailAddress);
+    }
+
+    const lead = await req.models.Lead.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
+    
+    const responseLead = normalizeLeadForResponse(lead.toObject());
+    await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
+    
+    if (eventBus.canEmitToEmployee()) {
+      eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, {
+        type: 'LEAD_UPDATED',
+        lead: responseLead,
+        isContactUpdate: true
+      });
+    }
+
+    return res.status(200).json({ success: true, lead: responseLead });
+  } catch (err) {
+    console.error('[patch lead director]', err);
+    return res.status(500).json({ success: false, message: 'Server error updating lead director.' });
   }
 });
 

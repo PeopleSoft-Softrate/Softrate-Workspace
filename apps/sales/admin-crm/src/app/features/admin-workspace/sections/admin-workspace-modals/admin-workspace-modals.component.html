@@ -651,14 +651,35 @@
             </div>
 
             <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Directors / Contacts</div>
+              <div class="lead-detail-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                Directors / Contacts
+                <button class="icon-button" style="padding: 2px 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="vm.openContactAddModal()">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Contact
+                </button>
+              </div>
               <div class="company-full-scroll-card company-full-contact-list"
                 *ngIf="vm.companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
                 <article class="company-full-contact-row"
                   *ngFor="let lead of vm.companyFullOverviewContacts(); trackBy: vm.trackByLeadIdentity">
                   <div class="company-full-contact-main">
-                    <strong>{{ lead.contactName || 'Primary Contact' }}</strong>
+                    <strong style="display: flex; align-items: center; gap: 6px;">
+                      {{ lead.contactName || 'Primary Contact' }}
+                      <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px;">SPOC</span>
+                    </strong>
                     <span [title]="vm.companyFullContactEmail(lead)">{{ vm.companyFullContactEmail(lead) }}</span>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                      <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px;" (click)="vm.openDirectorEditModal(lead)">Edit</button>
+                      <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px;" [style.color]="lead.isStarred ? '#eab308' : '#64748b'" [style.border-color]="lead.isStarred ? '#fef08a' : '#e2e8f0'" [style.background]="lead.isStarred ? '#fef9c3' : '#fff'" (click)="vm.toggleStar(lead)">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                          <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
+                        </svg>
+                        {{ lead.isStarred ? 'SPOC' : 'Mark SPOC' }}
+                      </button>
+                    </div>
                   </div>
                   <div class="company-full-contact-field">
                     <span>Phone</span>
@@ -2001,5 +2022,79 @@
         </div>
       </div>
     </section>
+  </div>
+</div>
+
+<!-- Director Edit Modal -->
+<div class="invoice-overlay" *ngIf="vm.directorEditOpen" (click)="vm.closeDirectorEditModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(560px, calc(100vw - 32px)); max-width: 560px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+    <button class="modal-close" type="button" (click)="vm.closeDirectorEditModal()"
+      aria-label="Close edit director">✕</button>
+      
+    <h2 class="client-onboarding-modal-title">Edit Director / Contact</h2>
+    <p class="client-onboarding-modal-subtitle">Update contact details for this lead.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form">
+      <div class="form-group">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
+        <input class="field-input" type="text" placeholder="Enter contact name" [(ngModel)]="vm.directorEditDraft.contactName" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number</label>
+        <input class="field-input" type="tel" placeholder="Enter phone number" [(ngModel)]="vm.directorEditDraft.contactNumber" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
+        <input class="field-input" type="email" placeholder="Enter email address" [(ngModel)]="vm.directorEditDraft.directorEmailAddress" />
+      </div>
+      
+      <div class="client-onboarding-actions" style="margin-top: 2rem;">
+        <button class="secondary-action" type="button" (click)="vm.closeDirectorEditModal()"
+          [disabled]="vm.directorEditSaving">Cancel</button>
+        <button class="primary-action" type="button" (click)="vm.saveDirectorEdit()" [disabled]="vm.directorEditSaving">
+          <span *ngIf="!vm.directorEditSaving">Save Changes</span>
+          <span *ngIf="vm.directorEditSaving" class="button-spinner"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Add Modal -->
+<div class="invoice-overlay" *ngIf="vm.contactAddOpen" (click)="vm.closeContactAddModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(560px, calc(100vw - 32px)); max-width: 560px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+    <button class="modal-close" type="button" (click)="vm.closeContactAddModal()"
+      aria-label="Close add contact">✕</button>
+      
+    <h2 class="client-onboarding-modal-title">Add New Contact</h2>
+    <p class="client-onboarding-modal-subtitle">Add a new director or contact for this company.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form">
+      <div class="form-group">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
+        <input class="field-input" type="text" name="newContactName_rand" autocomplete="new-password" placeholder="Enter contact name" [(ngModel)]="vm.contactAddDraft.contactName" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number <span style="color: #ef4444;">*</span></label>
+        <input class="field-input" type="tel" name="newContactPhone_rand" autocomplete="new-password" placeholder="Enter phone number" [(ngModel)]="vm.contactAddDraft.contactNumber" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
+        <input class="field-input" type="email" name="newContactEmail_rand" autocomplete="new-password" placeholder="Enter email address" [(ngModel)]="vm.contactAddDraft.directorEmailAddress" />
+      </div>
+      
+      <div class="client-onboarding-actions" style="margin-top: 2rem;">
+        <button class="secondary-action" type="button" (click)="vm.closeContactAddModal()"
+          [disabled]="vm.contactAddSaving">Cancel</button>
+        <button class="primary-action" type="button" (click)="vm.saveContactAdd()" [disabled]="vm.contactAddSaving || !vm.contactAddDraft.contactNumber">
+          <span *ngIf="!vm.contactAddSaving">Save Contact</span>
+          <span *ngIf="vm.contactAddSaving" class="button-spinner"></span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>

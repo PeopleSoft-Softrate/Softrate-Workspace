@@ -98,6 +98,7 @@
                 <ng-template #adminLeadCardsContent>
               <div class="lead-company-pane-scroll admin-leads-card-scroll" (scroll)="onAdminLeadContactsScroll($event)">
               <div class="lead-card-grid admin-leads-card-grid admin-employee-style-grid" *ngIf="adminLeadViewMode === 'grid' && leadsInSelectedCompany.length > 0">
+                
                 <article *ngFor="let lead of leadsInSelectedCompany" class="lead-record-card admin-lead-record-card admin-employee-style-card">
 
                   <div class="admin-lead-call-count" *ngIf="getLeadInteractionCount(lead.contactNumber) > 0">
@@ -105,7 +106,10 @@
                   </div>
                   <div class="lead-record-card-head admin-lead-card-head">
                     <div class="lead-record-title-row">
-                      <h4>{{ lead.contactName || 'Primary Contact' }}</h4>
+                      <h4>
+                        {{ lead.contactName || 'Primary Contact' }}
+                        <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">SPOC</span>
+                      </h4>
                       <button
                         class="lead-card-star"
                         type="button"
@@ -241,6 +245,7 @@
                         <td>
                           <div class="lead-table-name">
                             <span>{{ lead.contactName || 'Primary Contact' }}</span>
+                            <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">SPOC</span>
                           </div>
                         </td>
                         <td (mouseenter)="hoveredField='contact_'+lead._id" (mouseleave)="hoveredField=null">

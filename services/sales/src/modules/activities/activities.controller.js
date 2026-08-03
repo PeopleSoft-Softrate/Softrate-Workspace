@@ -78,3 +78,14 @@ exports.getEmployeeActivities = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error fetching activities' });
   }
 };
+
+exports.getLeadActivities = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    let activities = await Activity.find({ leadId }).sort({ activityDate: -1 }).lean();
+    res.status(200).json({ success: true, data: activities });
+  } catch (error) {
+    console.error('Error fetching lead activities:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching lead activities' });
+  }
+};

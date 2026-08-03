@@ -391,7 +391,7 @@ export class App implements OnInit, OnDestroy {
 
     this.remarkPostingIds.add(lead._id);
 
-    this.api.post(`/api/leads/${lead._id}/remarks`, { remark }).subscribe({
+    this.api.post(`/api/leads/${lead._id}/remarks`, { companyCode: lead.companyCode, remark }).subscribe({
       next: (res: any) => {
         this.remarkPostingIds.delete(lead._id);
         if (res.success) {
@@ -445,7 +445,7 @@ export class App implements OnInit, OnDestroy {
 
   toggleFavourite(lead: Lead): void {
     const newVal = !lead.isFavourite;
-    this.api.patch<any>(`/api/leads/${lead._id}/flags`, { isFavourite: newVal }).subscribe({
+    this.api.patch<any>(`/api/leads/${lead._id}/flags`, { companyCode: lead.companyCode, isFavourite: newVal }).subscribe({
       next: res => {
         if (res.success && res.lead) {
           const normalized = this.normalizeLead(res.lead);
@@ -460,7 +460,7 @@ export class App implements OnInit, OnDestroy {
 
   toggleStar(lead: Lead): void {
     const newVal = !lead.isStarred;
-    this.api.patch<any>(`/api/leads/${lead._id}/flags`, { isStarred: newVal }).subscribe({
+    this.api.patch<any>(`/api/leads/${lead._id}/flags`, { companyCode: lead.companyCode, isStarred: newVal }).subscribe({
       next: res => {
         if (res.success && res.lead) {
           const normalized = this.normalizeLead(res.lead);
@@ -3211,7 +3211,7 @@ export class App implements OnInit, OnDestroy {
 
   updateLeadStatus(lead: Lead, newStatus: string): void {
     this.updatingLeadId = lead._id;
-    this.api.patch<any>(`/api/leads/${lead._id}/status`, { status: newStatus })
+    this.api.patch<any>(`/api/leads/${lead._id}/status`, { companyCode: lead.companyCode, status: newStatus })
       .subscribe({
         next: res => {
           this.updatingLeadId = '';

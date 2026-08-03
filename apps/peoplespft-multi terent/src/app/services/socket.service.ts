@@ -10,7 +10,7 @@ export class SocketService {
   private useLocalBackend = false;
   private readonly baseUrl = this.useLocalBackend 
     ? 'http://localhost:5001' 
-    : 'https://peoplesoft-develop.onrender.com';
+    : 'https://peoplesoft.softrateglobal.com/hrms-api';
 
   constructor() {
     this.socket = io(this.baseUrl);

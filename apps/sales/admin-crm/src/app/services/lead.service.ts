@@ -142,20 +142,20 @@ export class LeadService {
     return this.api.post('/api/leads/admin/delete-set', { companyCode, setLabel });
   }
 
-  updateLeadFlags(id: string, flags: { isStarred?: boolean; isFavourite?: boolean }): Observable<any> {
-    return this.api.patch(`/api/leads/${id}/flags`, flags);
+  updateLeadFlags(id: string, companyCode: string, flags: { isStarred?: boolean; isFavourite?: boolean }): Observable<any> {
+    return this.api.patch(`/api/leads/${id}/flags`, { companyCode, ...flags });
   }
 
-  updateLeadStatus(id: string, status: string): Observable<any> {
-    return this.api.patch(`/api/leads/${id}/status`, { status });
+  updateLeadStatus(id: string, companyCode: string, status: string): Observable<any> {
+    return this.api.patch(`/api/leads/${id}/status`, { companyCode, status });
   }
 
-  addLeadRemark(id: string, remark: string): Observable<any> {
-    return this.api.post(`/api/leads/${id}/remarks`, { remark });
+  addLeadRemark(id: string, companyCode: string, remark: string): Observable<any> {
+    return this.api.post(`/api/leads/${id}/remarks`, { companyCode, remark });
   }
 
-  deleteLeadRemark(id: string, index: number): Observable<any> {
-    return this.api.delete(`/api/leads/${id}/remarks/${index}`);
+  deleteLeadRemark(id: string, companyCode: string, index: number): Observable<any> {
+    return this.api.delete(`/api/leads/${id}/remarks/${index}?companyCode=${companyCode}`);
   }
 
   getLeadHistory(companyCode: string, companyName?: string, contactNumber?: string): Observable<any> {

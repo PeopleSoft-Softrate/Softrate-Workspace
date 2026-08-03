@@ -34,7 +34,7 @@ export class AdminLeadsWorkflow {
     updateLeadStatus(vm: any, lead: Lead, status: string): void {
     if (!lead._id) return;
     vm.updatingLeadId = lead._id;
-    this.leadService.updateLeadStatus(lead._id, status).subscribe({
+    this.leadService.updateLeadStatus(lead._id!, lead.companyCode, status).subscribe({
       next: (res) => {
         if (res.success) {
           vm.invalidateAdminDashboardCaches();

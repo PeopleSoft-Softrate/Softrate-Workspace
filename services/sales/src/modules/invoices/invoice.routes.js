@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Invoice = require('../../../models/Invoice');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
+const Employee = require('../../../models/Employee');
 const { getClientByClientId, ensureClientForLead, mapClient } = require('../../../services/clientService');
 const { normalizeText } = require('../../../services/leadNormalization');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
@@ -160,7 +161,7 @@ function buildCompanyInvoiceFilter(companyCode, lead, client) {
   return conditions.length ? { companyCode, $or: conditions } : { companyCode };
 }
 
-async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = null) {
+async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = null, req) {
   const existingInvoice = await req.models.Invoice.findOne(buildCompanyInvoiceFilter(companyCode, lead, client))
     .sort({ versionNo: -1, createdAt: -1 })
     .select('invoiceNumber versionNo')
@@ -225,7 +226,7 @@ function buildLineItems(rawItems, gstPercentage, isInclusiveGst = false) {
     .filter((item) => item.name && item.rate > 0);
 }
 
-async function findInvoiceLead(body) {
+async function findInvoiceLead(body, req) {
   const companyCode = normalize(body.companyCode);
   const leadId = normalize(body.leadId);
   if (leadId && mongoose.Types.ObjectId.isValid(leadId)) {
@@ -241,7 +242,7 @@ async function findInvoiceLead(body) {
   return null;
 }
 
-async function findClientPrimaryLead(client) {
+async function findClientPrimaryLead(client, req) {
   const sourceLeadIds = Array.isArray(client?.sourceLeadIds) ? client.sourceLeadIds : [];
   const firstLeadId = sourceLeadIds.find((id) => mongoose.Types.ObjectId.isValid(id));
   if (firstLeadId) {
@@ -269,8 +270,8 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Company settings not found.' });
     }
 
-    let client = await getClientByClientId(companyCode, req.body.clientId);
-    let lead = await findInvoiceLead(req.body);
+    let client = await getClientByClientId({ ClientModel: req.models.Client }, companyCode, req.body.clientId);
+    let lead = await findInvoiceLead(req.body, req);
 
     if (!client && lead) {
       if (!isConvertedLead(lead, user)) {
@@ -279,7 +280,7 @@ router.post('/', async (req, res) => {
           message: 'Invoices can only be generated for onboarded clients.',
         });
       }
-      client = await ensureClientForLead(lead);
+      client = await ensureClientForLead({ ClientModel: req.models.Client, LeadModel: req.models.Lead, CounterModel: req.models.Counter }, lead);
     }
 
     if (!client) {
@@ -287,7 +288,7 @@ router.post('/', async (req, res) => {
     }
 
     if (!lead) {
-      lead = await findClientPrimaryLead(client);
+      lead = await findClientPrimaryLead(client, req);
     }
 
     const gstPercentage = Number(req.body.gstPercentage ?? user.gstPercentage ?? 18);
@@ -305,16 +306,27 @@ router.post('/', async (req, res) => {
     let retries = 3;
     let lastError;
 
+    const resolveEmployeeId = async (val) => {
+      const v = normalize(val);
+      if (!v) return null;
+      if (mongoose.Types.ObjectId.isValid(v)) return v;
+      const emp = await Employee.findOne({ companyCode, phone: v }).lean();
+      return emp ? emp._id : null;
+    };
+    
+    const clientDto = mapClient(client);
+    const resolvedEmployeeId = await resolveEmployeeId(req.body.employeeId || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]);
+    const resolvedCreatedById = await resolveEmployeeId(req.body.createdById || req.body.employeeId);
+
     while (retries > 0) {
       try {
-        const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate, client);
-        const clientDto = mapClient(client);
+        const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate, client, req);
         const clientCompanyName = clientDto.companyName || lead?.leadCompanyName || 'Client Company';
 
         invoice = await req.models.Invoice.create({
           companyCode,
           clientId: client.clientId,
-          employeeId: normalize(req.body.employeeId || lead?.assignedEmployeePhone || clientDto.assignedEmployeePhones?.[0]),
+          employeeId: resolvedEmployeeId,
           employeeName: normalize(req.body.employeeName),
           leadId: lead?._id || null,
           leadCompanyName: clientCompanyName,
@@ -339,7 +351,7 @@ router.post('/', async (req, res) => {
           paymentStatus: normalizePaymentStatus(req.body.paymentStatus),
           createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
           createdByName: normalize(req.body.createdByName || req.body.employeeName),
-          createdById: normalize(req.body.createdById || req.body.employeeId),
+          createdById: resolvedCreatedById,
           companySnapshot: {
             name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
             logo: user.invoiceLogo || '',

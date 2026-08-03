@@ -418,244 +418,9 @@
     <main class="crm-main">
       <!-- ── Activities Workspace ──────────────────────────────────── -->
       <section class="workspace activities-workspace" *ngIf="dashTab==='activities'">
-        <div class="workspace-header">
-          <h2 class="workspace-title">Activities</h2>
-          <div class="workspace-controls">
-            <!-- Tabs for Calendar, Tasks, Events, Calls -->
-            <div class="activities-tabs">
-              <button class="activities-tab" [class.active]="activitiesSubTab === 'calendar'" (click)="setActivitiesSubTab('calendar')">Calendar</button>
-              <button class="activities-tab" [class.active]="activitiesSubTab === 'tasks'" (click)="setActivitiesSubTab('tasks')">Tasks</button>
-              <button class="activities-tab" [class.active]="activitiesSubTab === 'meetings'" (click)="setActivitiesSubTab('meetings')">Meetings</button>
-              <button class="activities-tab" [class.active]="activitiesSubTab === 'calls'" (click)="setActivitiesSubTab('calls')">Calls</button>
-            </div>
-            <button class="primary-action" style="margin-left: auto;" (click)="openActivityModal()">
-              <span class="button-icon" aria-hidden="true">+</span>
-              Create Activity
-            </button>
-          </div>
-        </div>
-
-        <div class="workspace-body activities-body">
-          <!-- Calendar View -->
-          <div class="activities-calendar-layout" *ngIf="activitiesSubTab === 'calendar'">
-            <div class="calendar-main">
-              <div class="calendar-header">
-                <div class="calendar-nav-controls">
-                  <button type="button" (click)="prevCalendarMonth()">&lt;</button>
-                  <button type="button" (click)="nextCalendarMonth()">&gt;</button>
-                  <h3 class="calendar-month-title">{{ currentCalendarDate | date:'MMMM yyyy' }}</h3>
-                </div>
-                <div class="calendar-view-toggles">
-                  <button class="view-toggle">Month</button>
-                  <button class="view-toggle">Week</button>
-                  <button class="view-toggle">Day</button>
-                </div>
-              </div>
-              
-              <div class="calendar-grid">
-                <div class="calendar-day-header">Mon</div>
-                <div class="calendar-day-header">Tue</div>
-                <div class="calendar-day-header">Wed</div>
-                <div class="calendar-day-header">Thu</div>
-                <div class="calendar-day-header">Fri</div>
-                <div class="calendar-day-header">Sat</div>
-                <div class="calendar-day-header">Sun</div>
-                
-                <div class="calendar-day" *ngFor="let day of calendarDays" 
-                     [class.out-of-month]="!day.isCurrentMonth"
-                     [class.is-today]="day.isToday"
-                     (click)="openActivityModal(day.date)"
-                     style="cursor: pointer;">
-                  <span class="day-number">{{ day.date | date:'d' }}</span>
-                  <div class="day-indicators">
-                    <ng-container *ngFor="let ev of day.events; let i = index">
-                      <div class="activity-pill {{ev.type}}-pill" *ngIf="i < 3 && ((ev.type === 'task' && activitiesFilter.tasks) || (ev.type === 'meeting' && activitiesFilter.meetings) || (ev.type === 'call' && activitiesFilter.calls))" title="{{ ev.title }}">
-                        {{ ev.date | date:'shortTime' }} {{ ev.title }}
-                      </div>
-                    </ng-container>
-                    <div class="activity-pill overflow-pill" *ngIf="day.events && day.events.length > 3">
-                      +{{ day.events.length - 3 }} more
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <aside class="calendar-sidebar">
-              <div class="mini-calendar-wrap">
-                <div class="mini-calendar-header">
-                  <strong>{{ currentCalendarDate | date:'MMMM yyyy' }}</strong>
-                  <div class="mini-nav">
-                    <span (click)="prevCalendarMonth()">&lt;</span>
-                    <span (click)="nextCalendarMonth()">&gt;</span>
-                  </div>
-                </div>
-                <!-- Mini calendar grid simplified for mock -->
-                <div class="mini-calendar-grid">
-                  <span *ngFor="let d of ['M','T','W','T','F','S','S']" class="mini-day-header">{{d}}</span>
-                  <span *ngFor="let day of calendarDays" 
-                        class="mini-day"
-                        [class.out-of-month]="!day.isCurrentMonth"
-                        [class.is-today]="day.isToday">{{ day.date | date:'d' }}</span>
-                </div>
-              </div>
-              
-              <div class="activity-filters">
-                <h4 class="filter-heading">Activity Types</h4>
-                <label class="filter-checkbox">
-                  <input type="checkbox" [(ngModel)]="activitiesFilter.tasks">
-                  <span class="checkbox-box task-box"></span> Tasks
-                </label>
-                <label class="filter-checkbox">
-                  <input type="checkbox" [(ngModel)]="activitiesFilter.meetings">
-                  <span class="checkbox-box meeting-box"></span> Meetings
-                </label>
-                <label class="filter-checkbox">
-                  <input type="checkbox" [(ngModel)]="activitiesFilter.calls">
-                  <span class="checkbox-box call-box"></span> Calls
-                </label>
-              </div>
-            </aside>
-          </div>
-          
-          <!-- Dynamic List views for other tabs -->
-          <div class="activities-list-layout" *ngIf="activitiesSubTab !== 'calendar'">
-            
-            <div class="activities-list-container" *ngIf="activitiesForCurrentTab.length > 0" style="overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                <thead>
-                  <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 12px 16px; font-weight: 600; color: #475569; width: 15%;">Date</th>
-                    <th style="padding: 12px 16px; font-weight: 600; color: #475569; width: 15%;">Time</th>
-                    <th style="padding: 12px 16px; font-weight: 600; color: #475569; width: 20%;">Client ID</th>
-                    <th style="padding: 12px 16px; font-weight: 600; color: #475569; width: 30%;">Client Name</th>
-                    <th style="padding: 12px 16px; font-weight: 600; color: #475569; width: 20%; text-align: right;">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let activity of activitiesForCurrentTab" style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
-                    <td style="padding: 16px; vertical-align: middle;">
-                      <div style="font-weight: 600; color: #1e293b;">{{ activity.date | date:'dd MMM, yyyy' }}</div>
-                    </td>
-                    <td style="padding: 16px; vertical-align: middle;">
-                      <div style="color: #64748b; font-weight: 500;">{{ activity.date | date:'shortTime' }}</div>
-                    </td>
-                    <td style="padding: 16px; vertical-align: middle;">
-                      <div style="color: #475569;">{{ activity.companyCode || activity.leadId || 'N/A' }}</div>
-                    </td>
-                    <td style="padding: 16px; vertical-align: middle;">
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="activity-type-badge" [ngClass]="activity.type" style="margin-right: 4px;">
-                          {{ activity.type | titlecase }}
-                        </span>
-                        <div style="font-weight: 600; color: #0f172a;">
-                          {{ activity.companyName || activity.contactName || activity.clientName || activity.leadName || 'No Name' }}
-                        </div>
-                      </div>
-                      <div *ngIf="activity.title || activity.description" style="color: #64748b; font-size: 13px; margin-top: 4px; line-height: 1.5;">
-                        <strong *ngIf="activity.title">{{ activity.title }}</strong>
-                        <span *ngIf="activity.title && activity.description"> - </span>
-                        {{ activity.description }}
-                      </div>
-                    </td>
-                    <td style="padding: 16px; vertical-align: middle; text-align: right;">
-                      <div style="display: flex; justify-content: flex-end;">
-                        <button *ngIf="activity.status === 'pending'" (click)="activity.status = 'completed'; $event.stopPropagation();" 
-                                style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3); transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 6px;"
-                                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(236, 72, 153, 0.5)';"
-                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(236, 72, 153, 0.3)';">
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"></path></svg>
-                          Complete
-                        </button>
-                        <span *ngIf="activity.status === 'completed'" 
-                              style="background: linear-gradient(135deg, #3b82f6, #0ea5e9); color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"></path></svg>
-                          Completed
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Placeholder when list is empty -->
-            <div class="placeholder-content" *ngIf="activitiesForCurrentTab.length === 0">
-              <svg viewBox="0 0 24 24" width="48" height="48" stroke="#94a3b8" stroke-width="1.5" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <h3>No {{ activitiesSubTab }} scheduled</h3>
-              <p>You don't have any {{ activitiesSubTab }} for this time period.</p>
-              <button class="primary-action" (click)="openActivityModal()">Create {{ activitiesSubTab | titlecase }}</button>
-            </div>
-          </div>
-        </div>
+        <app-activities-calendar [employee]="employee" [allLeads]="allLeads"></app-activities-calendar>
       </section>
 
-      <!-- Activity Modal Overlay -->
-      <div class="modal-overlay" *ngIf="showActivityModal" (click)="closeActivityModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Schedule Activity</h3>
-            <button class="modal-close" (click)="closeActivityModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <label class="field-label">
-              <span>Date</span>
-              <input type="text" class="field-input" [value]="selectedActivityDate | date:'fullDate'" disabled>
-            </label>
-            
-            <label class="field-label" style="margin-top: 12px;">
-              <span>Time</span>
-              <input type="time" class="field-input" [(ngModel)]="activityForm.time">
-            </label>
-
-            <label class="field-label" style="margin-top: 12px; position: relative;">
-              <span>Client / Lead (Optional)</span>
-              <input type="text" 
-                     class="field-input" 
-                     placeholder="Search for a client..." 
-                     [(ngModel)]="activityClientSearchQuery"
-                     (focus)="showActivityClientDropdown = true"
-                     (blur)="showActivityClientDropdown = false">
-              <div class="custom-dropdown-list" *ngIf="showActivityClientDropdown" (mousedown)="$event.preventDefault()">
-                <div class="dropdown-item" (click)="selectActivityClient({ _id: '', leadCompanyName: 'No specific client', contactName: '' })">
-                  -- No specific client --
-                </div>
-                <div class="dropdown-item" *ngFor="let lead of filteredModalClients" (click)="selectActivityClient(lead)">
-                  {{ lead.leadCompanyName }} <span style="color: #64748b; font-size: 13px;">({{ lead.contactName }})</span>
-                </div>
-                <div class="dropdown-item no-results" *ngIf="filteredModalClients.length === 0">
-                  No clients found
-                </div>
-              </div>
-            </label>
-
-            <label class="field-label" style="margin-top: 12px;">
-              <span>Activity Type</span>
-              <select class="field-select" [(ngModel)]="activityForm.type">
-                <option value="task">Task</option>
-                <option value="meeting">Meeting</option>
-                <option value="call">Call</option>
-              </select>
-            </label>
-
-            <label class="field-label" style="margin-top: 12px;">
-              <span>Title</span>
-              <input type="text" class="field-input" placeholder="e.g. Discuss onboarding process" [(ngModel)]="activityForm.title">
-            </label>
-
-            <label class="field-label" style="margin-top: 12px;">
-              <span>Description / Notes (Optional)</span>
-              <textarea class="field-input" rows="3" placeholder="What is this scheduled for?" [(ngModel)]="activityForm.description"></textarea>
-            </label>
-          </div>
-          <div class="modal-footer" style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
-            <button class="secondary-action" (click)="closeActivityModal()">Cancel</button>
-            <button class="primary-action" (click)="saveActivity()">Save Activity</button>
-          </div>
-        </div>
-      </div>
       <div class="overview-greeting-wrap" *ngIf="dashTab==='overview'">
         <section class="overview-greeting-card" aria-label="Employee greeting">
           <div class="overview-greeting-copy">
@@ -1431,6 +1196,7 @@
                 <div class="lead-company-pane-scroll" (scroll)="onEmployeeLeadContactScroll($event)">
                   <ng-container *ngIf="activeLeadRows.length > 0; else emptyLeadCompanyState">
                     <div class="lead-card-grid" *ngIf="leadViewMode === 'grid'">
+                      <!-- Regular Lead Cards -->
                       <app-employee-lead-card *ngFor="let lead of activeLeadRows; trackBy: trackLeadId" [lead]="lead"
                         [statuses]="LEAD_STATUSES" [productRemarks]="productRemarks"
                         [remarkValue]="leadRemarksInputs[lead._id] || ''"
@@ -1456,10 +1222,12 @@
                           </tr>
                         </thead>
                         <tbody>
+                          <!-- Regular Lead Rows -->
                           <tr *ngFor="let lead of activeLeadRows; trackBy: trackLeadId">
                             <td>
                               <div class="lead-table-name">
                                 <span>{{ lead.contactName || 'Primary Contact' }}</span>
+                                <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">SPOC</span>
                               </div>
                             </td>
                             <td (mouseenter)="hoveredField='contact_'+lead._id" (mouseleave)="hoveredField=null">
@@ -1842,6 +1610,11 @@
                 <strong [title]="currentDrawerLead.directorEmailAddress || ''">{{ currentDrawerLead.directorEmailAddress
                   || '—' }}</strong>
               </div>
+              
+              <div class="lead-detail-field" *ngIf="currentDrawerLead">
+                <span>Action</span>
+                <button class="secondary-action" type="button" style="padding: 2px 8px; font-size: 11px;" (click)="openDirectorEditModal(currentDrawerLead)">Edit Director</button>
+              </div>
 
               <div class="lead-detail-section">
                 <div class="lead-detail-section-title">Description</div>
@@ -2130,13 +1903,34 @@
             </div>
 
             <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Directors / Contacts</div>
+              <div class="lead-detail-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                Directors / Contacts
+                <button class="icon-button" style="padding: 2px 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="openContactAddModal()">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Contact
+                </button>
+              </div>
               <div class="company-full-scroll-card company-full-contact-list"
                 *ngIf="companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
                 <article class="company-full-contact-row" *ngFor="let lead of companyFullOverviewContacts()">
                   <div class="company-full-contact-main">
-                    <strong>{{ lead.contactName || 'Primary Contact' }}</strong>
+                    <strong style="display: flex; align-items: center; gap: 6px;">
+                      {{ lead.contactName || 'Primary Contact' }}
+                      <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px;">SPOC</span>
+                    </strong>
                     <span [title]="companyFullContactEmail(lead)">{{ companyFullContactEmail(lead) }}</span>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                      <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px;" (click)="openDirectorEditModal(lead)">Edit</button>
+                      <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px;" [style.color]="lead.isStarred ? '#eab308' : '#64748b'" [style.border-color]="lead.isStarred ? '#fef08a' : '#e2e8f0'" [style.background]="lead.isStarred ? '#fef9c3' : '#fff'" (click)="toggleStar(lead)">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                          <path d="m12 4 2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 16l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76Z" />
+                        </svg>
+                        {{ lead.isStarred ? 'SPOC' : 'Mark SPOC' }}
+                      </button>
+                    </div>
                   </div>
                   <div class="company-full-contact-field">
                     <span>Phone</span>
@@ -2152,275 +1946,17 @@
             </div>
           </section>
 
-          <section class="company-full-card" [id]="companyFullSectionId('followups')"
-            *ngIf="companyFullHasFollowupSection()">
-            <div class="company-full-card-head">
-              <h4>Followups</h4>
-              <span class="company-full-card-meta" *ngIf="companyFullFollowupLead() as followupLead">
-                {{ followupLead.contactName || 'Primary Contact' }}
-              </span>
-            </div>
-
-            <div *ngIf="companyFullFollowupError" class="form-error company-full-inline-error">{{
-              companyFullFollowupError }}</div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Current Overview</div>
-              <div class="lead-detail-grid followup-flag-grid company-full-followup-overview">
-                <div class="lead-detail-field">
-                  <span>Remarks</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.remarks?.length || 0 }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Brochure Sent</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.brochuresSent ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Quotation Sent</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.quotationSent ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Proposal Sent</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.proposalSent ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Tech Meet</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.techMeet ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Whatsapp Group</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.whatsappGrp ? 'Yes' : 'No' }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Meeting Remarks</span>
-                  <strong>{{ companyFullPrimaryFollowup()?.meetingRemarks ? 'Yes' : 'No' }}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="company-full-section-divider" aria-hidden="true"></div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Edit Follow-up</div>
-              <div class="checkbox-grid">
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="companyFullFollowupForm.brochuresSent" /> <span>Brochure Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox" [(ngModel)]="companyFullFollowupForm.techMeet" />
-                  <span>Tech Meet</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="companyFullFollowupForm.meetingRemarks" /> <span>Meeting Remarks</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="companyFullFollowupForm.quotationSent" /> <span>Quotation Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="companyFullFollowupForm.proposalSent" /> <span>Proposal Sent</span></label>
-                <label class="checkbox-field"><input type="checkbox"
-                    [(ngModel)]="companyFullFollowupForm.whatsappGrp" /> <span>Whatsapp Group</span></label>
-              </div>
-            </div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-grid company-full-followup-edit-grid">
-                <label class="lead-detail-field lead-detail-field-wide company-full-followup-description">
-                  <span>Description</span>
-                  <textarea class="field-textarea" rows="4" [(ngModel)]="companyFullFollowupForm.description"
-                    placeholder="Describe the current follow-up context"></textarea>
-                </label>
-                <label class="lead-detail-field">
-                  <span>New Remark</span>
-                  <input class="field-input" type="text" [(ngModel)]="companyFullFollowupForm.newRemark"
-                    placeholder="Add a new remark to history" />
-                </label>
-                <label class="lead-detail-field">
-                  <span>Reminder Date</span>
-                  <input class="field-input" type="date" [(ngModel)]="companyFullFollowupForm.reminderDate" />
-                </label>
-              </div>
-              <div class="company-full-followup-meta-row">
-                <div class="lead-detail-field">
-                  <span>Saved Description</span>
-                  <strong [title]="companyFullFollowupDescription()">{{ companyFullFollowupDescription() }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Reminder</span>
-                  <strong class="nowrap-value">{{ companyFullFollowupReminderLabel() }}</strong>
-                </div>
-              </div>
-              <div class="company-full-action-row">
-                <button class="primary-action" type="button" (click)="saveCompanyFullFollowup()"
-                  [disabled]="companyFullFollowupSaving || companyFullFollowupLoading">
-                  <span *ngIf="!companyFullFollowupSaving">{{ companyFullPrimaryFollowup()?._id ? 'Update Follow-up' :
-                    'Save Follow-up' }}</span>
-                  <span *ngIf="companyFullFollowupSaving" class="button-spinner"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="company-full-section-divider" aria-hidden="true"></div>
-
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title">Follow-up History</div>
-              <div class="company-full-scroll-card company-full-followup-history">
-                <div *ngIf="companyFullFollowupLoading || companyFullHistoryLoading"
-                  class="empty-state-inline empty-state-inline-minimal">Loading follow-up history.</div>
-                <ng-container
-                  *ngIf="!companyFullFollowupLoading && !companyFullHistoryLoading && companyFullFollowupHistoryEntries().length > 0; else fallbackCompanyFullFollowupHistory">
-                  <article class="company-full-history-row" *ngFor="let log of companyFullFollowupHistoryEntries()">
-                    <div class="company-full-history-head">
-                      <strong>{{ log.action }}</strong>
-                      <span>{{ fmtDateTime(log.createdAt || log.timestamp) }}</span>
-                    </div>
-                    <div class="company-full-history-copy">{{ companyFullFollowupHistoryText(log) }}</div>
-                    <div class="company-full-history-meta" *ngIf="log.changedBy">By {{ log.changedBy }}</div>
-                  </article>
-                </ng-container>
-                <ng-template #fallbackCompanyFullFollowupHistory>
-                  <ng-container
-                    *ngIf="!companyFullFollowupLoading && !companyFullHistoryLoading && companyFullFollowupFallbackRemarks().length > 0; else emptyCompanyFullFollowupHistory">
-                    <article class="company-full-history-row"
-                      *ngFor="let remark of companyFullFollowupFallbackRemarks()">
-                      <div class="company-full-history-head">
-                        <strong>Follow-up Remark</strong>
-                      </div>
-                      <div class="company-full-history-copy">{{ remark }}</div>
-                    </article>
-                  </ng-container>
-                </ng-template>
-                <ng-template #emptyCompanyFullFollowupHistory>
-                  <div class="empty-state-inline empty-state-inline-minimal">No follow-up history recorded for this
-                    company.</div>
-                </ng-template>
-              </div>
-            </div>
+          <section class="company-full-card" [id]="companyFullSectionId('followups')">
+            <app-activities-calendar [employee]="employee" [allLeads]="allLeads" [filterCompanyId]="companyFullViewLead()?._id" [filterCompanyName]="companyFullViewLead()?.leadCompanyName" [embedded]="true"></app-activities-calendar>
           </section>
 
-          <section class="company-full-card" [id]="companyFullSectionId('remarks')">
-            <div class="company-full-card-head">
-              <h4>Remarks History</h4>
-            </div>
-            <div class="company-full-remark-entry">
-              <div class="lead-card-remark-combobox company-full-remark-combobox" (click)="$event.stopPropagation()">
-                <input class="field-input lead-card-remark-input company-full-remark-input" type="text"
-                  [ngModel]="companyFullRemarkDraft" (ngModelChange)="handleCompanyFullRemarkInput($event)"
-                  (click)="$event.stopPropagation()" (focus)="openCompanyFullRemarkMenu()"
-                  (blur)="queueCloseCompanyFullRemarkMenu()"
-                  (keyup.enter)="$event.stopPropagation(); addCompanyFullRemark()" autocomplete="off"
-                  autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type remark..."
-                  [title]="companyFullRemarkDraft || 'Type remark'" />
-                <button class="lead-card-remark-toggle" type="button" title="Show admin remark options"
-                  aria-label="Show admin remark options" (mousedown)="$event.preventDefault()"
-                  (click)="toggleCompanyFullRemarkMenu()">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
-                <div class="lead-card-remark-options"
-                  *ngIf="companyFullRemarkMenuOpen && filteredCompanyFullAdminRemarkOptions().length > 0">
-                  <button class="lead-card-remark-option" type="button"
-                    *ngFor="let remark of filteredCompanyFullAdminRemarkOptions()" [title]="remark"
-                    (mousedown)="$event.preventDefault()" (click)="selectCompanyFullAdminRemark(remark)">
-                    {{ remark }}
-                  </button>
-                </div>
-              </div>
-              <button class="primary-action company-full-remark-add" type="button" (click)="addCompanyFullRemark()"
-                [disabled]="companyFullRemarkSaving || !companyFullRemarkDraft.trim()">
-                <span *ngIf="!companyFullRemarkSaving">Add Remark</span>
-                <span *ngIf="companyFullRemarkSaving" class="button-spinner"></span>
-              </button>
-            </div>
-            <div *ngIf="companyFullRemarkError" class="form-error company-full-inline-error">{{ companyFullRemarkError
-              }}</div>
-            <div class="company-full-scroll-card">
-              <div *ngIf="companyFullHistoryLoading" class="empty-state-inline empty-state-inline-minimal">Loading
-                remark history.</div>
-              <div *ngIf="!companyFullHistoryLoading && companyFullHistoryError"
-                class="empty-state-inline empty-state-inline-minimal">{{ companyFullHistoryError }}</div>
-              <ng-container
-                *ngIf="!companyFullHistoryLoading && !companyFullHistoryError && companyFullRemarkEntries().length > 0; else emptyCompanyFullRemarks">
-                <article class="company-full-history-row" *ngFor="let log of companyFullRemarkEntries()">
-                  <div class="company-full-history-head">
-                    <strong>{{ log.action }}</strong>
-                    <span>{{ fmtDateTime(log.createdAt || log.timestamp) }}</span>
-                  </div>
-                  <div class="company-full-history-copy">{{ companyFullRemarkText(log) || 'Remark updated.' }}</div>
-                  <div class="company-full-history-meta" *ngIf="log.changedBy">By {{ log.changedBy }}</div>
-                </article>
-              </ng-container>
-              <ng-template #emptyCompanyFullRemarks>
-                <div *ngIf="!companyFullHistoryLoading && !companyFullHistoryError"
-                  class="empty-state-inline empty-state-inline-minimal">No remark history recorded for this company.
-                </div>
-              </ng-template>
-            </div>
-          </section>
-
-          <section class="company-full-card" [id]="companyFullSectionId('invoices')">
-            <div class="company-full-card-head">
-              <h4>Invoice History</h4>
-              <span class="company-full-card-meta">{{ companyFullInvoiceItems.length }} record{{
-                companyFullInvoiceItems.length === 1 ? '' : 's' }}</span>
-            </div>
-            <div class="company-full-scroll-card">
-              <div *ngIf="companyFullInvoiceLoading" class="empty-state-inline empty-state-inline-minimal">Loading
-                invoice history.</div>
-              <div *ngIf="!companyFullInvoiceLoading && companyFullInvoiceError"
-                class="empty-state-inline empty-state-inline-minimal">{{ companyFullInvoiceError }}</div>
-              <ng-container
-                *ngIf="!companyFullInvoiceLoading && !companyFullInvoiceError && companyFullInvoiceItems.length > 0; else emptyCompanyFullInvoices">
-                <article class="company-full-record-row company-full-record-action"
-                  *ngFor="let invoice of companyFullInvoiceItems" tabindex="0" role="button"
-                  (click)="openSavedInvoice(invoice)" (keydown.enter)="openSavedInvoice(invoice)"
-                  (keydown.space)="$event.preventDefault(); openSavedInvoice(invoice)">
-                  <div class="company-full-record-main">
-                    <strong>{{ invoice.invoiceNumber || 'Invoice' }}</strong>
-                    <span>{{ invoice.contactName || companyFullCompanyName() }}</span>
-                  </div>
-                  <div class="company-full-record-meta">
-                    <span>{{ formatInvoicePaymentStatus(invoice.paymentStatus) }}</span>
-                    <span>{{ fmtDate(invoice.invoiceDate || invoice.createdAt) }}</span>
-                    <strong>Rs {{ invoice.total | number:'1.0-2' }}</strong>
-                  </div>
-                </article>
-              </ng-container>
-              <ng-template #emptyCompanyFullInvoices>
-                <div *ngIf="!companyFullInvoiceLoading && !companyFullInvoiceError"
-                  class="empty-state-inline empty-state-inline-minimal">No invoices recorded for this company.</div>
-              </ng-template>
-            </div>
-          </section>
-
-          <section class="company-full-card" [id]="companyFullSectionId('quotations')">
-            <div class="company-full-card-head">
-              <h4>Quotation History</h4>
-              <span class="company-full-card-meta">{{ companyFullQuotationItems.length }} record{{
-                companyFullQuotationItems.length === 1 ? '' : 's' }}</span>
-            </div>
-            <div class="company-full-scroll-card">
-              <div *ngIf="companyFullQuotationLoading" class="empty-state-inline empty-state-inline-minimal">Loading
-                quotation history.</div>
-              <div *ngIf="!companyFullQuotationLoading && companyFullQuotationError"
-                class="empty-state-inline empty-state-inline-minimal">{{ companyFullQuotationError }}</div>
-              <ng-container
-                *ngIf="!companyFullQuotationLoading && !companyFullQuotationError && companyFullQuotationItems.length > 0; else emptyCompanyFullQuotations">
-                <article class="company-full-record-row company-full-record-action"
-                  *ngFor="let quotation of companyFullQuotationItems" tabindex="0" role="button"
-                  (click)="openSavedQuotation(quotation)" (keydown.enter)="openSavedQuotation(quotation)"
-                  (keydown.space)="$event.preventDefault(); openSavedQuotation(quotation)">
-                  <div class="company-full-record-main">
-                    <strong>{{ quotation.quotationNumber || 'Quotation' }}</strong>
-                    <span>{{ quotation.contactName || companyFullCompanyName() }}</span>
-                  </div>
-                  <div class="company-full-record-meta">
-                    <span>{{ fmtDate(quotation.quotationDate || quotation.createdAt) }}</span>
-                    <strong>Rs {{ quotation.total | number:'1.0-2' }}</strong>
-                  </div>
-                </article>
-              </ng-container>
-              <ng-template #emptyCompanyFullQuotations>
-                <div *ngIf="!companyFullQuotationLoading && !companyFullQuotationError"
-                  class="empty-state-inline empty-state-inline-minimal">No quotations recorded for this company.</div>
-              </ng-template>
-            </div>
+          <section class="company-full-card" [id]="companyFullSectionId('timeline')">
+            <app-company-timeline 
+              [leadId]="companyFullViewLead()?._id" 
+              [remarks]="companyFullRemarksHistory" 
+              [invoices]="companyFullInvoiceItems" 
+              [quotations]="companyFullQuotationItems">
+            </app-company-timeline>
           </section>
 
           <section class="company-full-card" [id]="companyFullSectionId('alternate')">
@@ -3405,6 +2941,79 @@
     </div>
   </div>
 </ng-template>
+
+<!-- Director Edit Modal -->
+<div class="invoice-overlay" *ngIf="directorEditOpen" (click)="closeDirectorEditModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff;" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="closeDirectorEditModal()"
+      aria-label="Close edit director">✕</button>
+      
+    <h2 class="client-onboarding-modal-title">Edit Director / Contact</h2>
+    <p class="client-onboarding-modal-subtitle">Update contact details for this lead.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form">
+      <div class="form-group">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
+        <input class="field-input" type="text" placeholder="Enter contact name" [(ngModel)]="directorEditDraft.contactName" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number</label>
+        <input class="field-input" type="tel" placeholder="Enter phone number" [(ngModel)]="directorEditDraft.contactNumber" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
+        <input class="field-input" type="email" placeholder="Enter email address" [(ngModel)]="directorEditDraft.directorEmailAddress" />
+      </div>
+      
+      <div class="client-onboarding-actions" style="margin-top: 2rem;">
+        <button class="secondary-action" type="button" (click)="closeDirectorEditModal()"
+          [disabled]="directorEditSaving">Cancel</button>
+        <button class="primary-action" type="button" (click)="saveDirectorEdit()" [disabled]="directorEditSaving">
+          <span *ngIf="!directorEditSaving">Save Changes</span>
+          <span *ngIf="directorEditSaving" class="button-spinner"></span>
+        </button>
+      </div>
+    </div>
+</div>
+</div>
+
+<div class="invoice-overlay" *ngIf="contactAddOpen" (click)="closeContactAddModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff;" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="closeContactAddModal()"
+      aria-label="Close add contact">✕</button>
+      
+    <h2 class="client-onboarding-modal-title">Add New Contact</h2>
+    <p class="client-onboarding-modal-subtitle">Add a new director or contact for this company.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form">
+      <div class="form-group">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
+        <input class="field-input" type="text" name="newContactName_rand" autocomplete="new-password" placeholder="Enter contact name" [(ngModel)]="contactAddDraft.contactName" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number <span style="color: #ef4444;">*</span></label>
+        <input class="field-input" type="tel" name="newContactPhone_rand" autocomplete="new-password" placeholder="Enter phone number" [(ngModel)]="contactAddDraft.contactNumber" />
+      </div>
+      
+      <div class="form-group" style="margin-top: 1rem;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
+        <input class="field-input" type="email" name="newContactEmail_rand" autocomplete="new-password" placeholder="Enter email address" [(ngModel)]="contactAddDraft.directorEmailAddress" />
+      </div>
+      
+      <div class="client-onboarding-actions" style="margin-top: 2rem;">
+        <button class="secondary-action" type="button" (click)="closeContactAddModal()"
+          [disabled]="contactAddSaving">Cancel</button>
+        <button class="primary-action" type="button" (click)="saveContactAdd()" [disabled]="contactAddSaving || !contactAddDraft.contactNumber">
+          <span *ngIf="!contactAddSaving">Save Contact</span>
+          <span *ngIf="contactAddSaving" class="button-spinner"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <ng-template #quotationPrintBody>
   <section class="quotation-letter">

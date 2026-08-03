@@ -39,13 +39,13 @@ export interface LeadDivisionPage {
 export class EmployeeLeadsRepository {
   constructor(private api: ApiService) {}
 
-  list(companyCode: string, phone: string, query: LeadListQueryDto): Observable<LeadPage> {
-    const url = `/api/leads/employee${this.queryString({ companyCode, phone, ...query })}`;
+  list(companyCode: string, employeeId: string, query: LeadListQueryDto): Observable<LeadPage> {
+    const url = `/api/leads/employee${this.queryString({ companyCode, employeeId, ...query })}`;
     return this.api.get<LeadListDto>(url).pipe(map(mapLeadListDto));
   }
 
-  listCompanies(companyCode: string, phone: string, query: LeadListQueryDto): Observable<LeadCompanyPage> {
-    const url = `/api/leads/employee/companies${this.queryString({ companyCode, phone, ...query })}`;
+  listCompanies(companyCode: string, employeeId: string, query: LeadListQueryDto): Observable<LeadCompanyPage> {
+    const url = `/api/leads/employee/companies${this.queryString({ companyCode, employeeId, ...query })}`;
     return this.api.get<any>(url).pipe(map((response) => ({
       companies: response?.companies || [],
       contactsByCompany: this.mapContactsByCompany(response?.contactsByCompany),
@@ -56,37 +56,37 @@ export class EmployeeLeadsRepository {
     })));
   }
 
-  listSets(companyCode: string, phone: string): Observable<LeadSetPage> {
-    const url = `/api/leads/employee/sets${this.queryString({ companyCode, phone })}`;
+  listSets(companyCode: string, employeeId: string): Observable<LeadSetPage> {
+    const url = `/api/leads/employee/sets${this.queryString({ companyCode, employeeId })}`;
     return this.api.get<any>(url).pipe(map((response) => ({
       sets: Array.isArray(response?.sets) ? response.sets : [],
       items: Array.isArray(response?.items) ? response.items : [],
     })));
   }
 
-  listDivisions(companyCode: string, phone: string): Observable<LeadDivisionPage> {
-    const url = `/api/leads/employee/divisions${this.queryString({ companyCode, phone })}`;
+  listDivisions(companyCode: string, employeeId: string): Observable<LeadDivisionPage> {
+    const url = `/api/leads/employee/divisions${this.queryString({ companyCode, employeeId })}`;
     return this.api.get<any>(url).pipe(map((response) => ({
       divisions: Array.isArray(response?.divisions) ? response.divisions : [],
       items: Array.isArray(response?.items) ? response.items : [],
     })));
   }
 
-  updateStatus(leadId: string, status: string): Observable<Lead> {
+  updateStatus(leadId: string, companyCode: string, status: string): Observable<Lead> {
     return this.api
-      .patch<any>(`/api/leads/${leadId}/status`, { status })
+      .patch<any>(`/api/leads/${leadId}/status`, { companyCode, status })
       .pipe(map((response) => mapLeadDto(response.lead)));
   }
 
-  updateFlags(leadId: string, flags: { isStarred?: boolean; isFavourite?: boolean }): Observable<Lead> {
+  updateFlags(leadId: string, companyCode: string, flags: { isStarred?: boolean; isFavourite?: boolean }): Observable<Lead> {
     return this.api
-      .patch<any>(`/api/leads/${leadId}/flags`, flags)
+      .patch<any>(`/api/leads/${leadId}/flags`, { companyCode, ...flags })
       .pipe(map((response) => mapLeadDto(response.lead)));
   }
 
-  addRemark(leadId: string, remark: string): Observable<Lead> {
+  addRemark(leadId: string, companyCode: string, remark: string): Observable<Lead> {
     return this.api
-      .post<any>(`/api/leads/${leadId}/remarks`, { remark })
+      .post<any>(`/api/leads/${leadId}/remarks`, { companyCode, remark })
       .pipe(map((response) => mapLeadDto(response.lead)));
   }
 

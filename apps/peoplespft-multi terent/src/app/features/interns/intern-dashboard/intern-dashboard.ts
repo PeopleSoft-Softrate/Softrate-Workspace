@@ -658,7 +658,20 @@ export class InternDashboard implements OnInit {
   fetchTodayAttendance(internId: string) {
     this.apiService.getInternTodayAttendance(internId).subscribe({
       next: (res) => {
-        this.todayRecord.set(res?.record || null);
+        const record = res?.record || null;
+        this.todayRecord.set(record);
+        if (record && record.punchInTime) {
+          this.todayPunchInTime.set(new Date(record.punchInTime));
+          if (record.punchOutTime) {
+            this.todayPunchOutTime.set(new Date(record.punchOutTime));
+          } else {
+            this.todayPunchOutTime.set(null);
+          }
+        } else {
+          this.todayPunchInTime.set(null);
+          this.todayPunchOutTime.set(null);
+        }
+        this.updateTimer();
       },
       error: (err) => {
         console.error('Failed to fetch today record', err);

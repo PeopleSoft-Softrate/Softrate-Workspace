@@ -366,7 +366,7 @@
       <span class="sidebar-label">Periodic Reports</span>
     </button>
 
-    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Company Settings', 'Invoice Settings', 'App Settings', 'Help & Support'])">Organization</div>
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Company Settings', 'Invoice Settings', 'App Settings', 'Email Integration', 'Help & Support'])">Organization</div>
 
     <button
       class="sidebar-link sidebar-link-company"
@@ -428,6 +428,23 @@
         </svg>
       </span>
       <span class="sidebar-label">App Settings</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-email-integration"
+      type="button"
+      [class.active]="vm.dashTab==='email_integration'"
+      (click)="vm.switchTab('email_integration')"
+      *ngIf="vm.userRole === 'admin' && vm.sidebarFeatureMatches('Email Integration')"
+      [title]="vm.sidebarMinimized ? 'Email Integration' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Email Integration</span>
     </button>
 
     <button

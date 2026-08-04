@@ -46,20 +46,35 @@ export class ApiService {
   }
 
   post<T>(path: string, body: unknown): Observable<T> {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+    let reqHeaders = this.headers;
+    if (isFormData) {
+      reqHeaders = reqHeaders.delete('Content-Type');
+    }
     return this.http.post<T>(`${this.baseUrl}${path}`, body, {
-      headers: this.headers,
+      headers: reqHeaders,
     });
   }
 
   patch<T>(path: string, body: unknown): Observable<T> {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+    let reqHeaders = this.headers;
+    if (isFormData) {
+      reqHeaders = reqHeaders.delete('Content-Type');
+    }
     return this.http.patch<T>(`${this.baseUrl}${path}`, body, {
-      headers: this.headers,
+      headers: reqHeaders,
     });
   }
 
   put<T>(path: string, body: unknown): Observable<T> {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+    let reqHeaders = this.headers;
+    if (isFormData) {
+      reqHeaders = reqHeaders.delete('Content-Type');
+    }
     return this.http.put<T>(`${this.baseUrl}${path}`, body, {
-      headers: this.headers,
+      headers: reqHeaders,
     });
   }
 

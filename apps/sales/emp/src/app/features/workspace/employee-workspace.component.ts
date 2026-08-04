@@ -25,6 +25,7 @@ import { InvoicesRepository } from '../invoices/data/invoices.repository';
 import { QuotationsRepository } from '../quotations/data/quotations.repository';
 import { EmployeeLeadCardComponent } from '../leads/presentation/employee-lead-card.component';
 import { EmployeeLeadDetailComponent } from '../leads/presentation/employee-lead-detail.component';
+import { EmployeeEmailIntegrationSectionComponent } from '../settings/presentation/employee-email-integration-section/employee-email-integration-section';
 import { Lead as EmployeeLeadModel, LeadDrawerSection, LeadHistoryLog } from '../leads/domain/lead.model';
 
 type EmployeeLeadScope = Partial<Pick<EmployeeLeadsState, 'search' | 'status' | 'statuses' | 'isFavourite' | 'updatedFrom' | 'updatedTo' | 'setLabel' | 'division'>>;
@@ -318,7 +319,7 @@ import { CompanyTimelineComponent } from '../../shared/ui/company-timeline/compa
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent],
+  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, EmployeeEmailIntegrationSectionComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -4671,20 +4672,23 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         formData.append('attachments', file);
       });
 
-      const response = await fetch('/api/mail/send', {
-        method: 'POST',
-        body: formData
+      this.api.post<any>('/api/email/send', formData).subscribe({
+        next: (result) => {
+          if (result.success) {
+            alert('Email sent successfully via Google Workspace!');
+          } else {
+            alert('Failed to send email: ' + result.message);
+          }
+        },
+        error: (err) => {
+          console.error(err);
+          const errorMsg = err.error?.message || err.message || 'Unknown error';
+          alert('Failed to send email: ' + errorMsg);
+        }
       });
-      
-      const result = await response.json();
-      if (result.success) {
-        alert('Email sent successfully!');
-      } else {
-        alert('Failed to send email: ' + result.message);
-      }
     } catch (err) {
       console.error(err);
-      alert('Failed to send email. Check console for details.');
+      alert('Failed to prepare email data.');
     }
 
     this.closeMailModal();

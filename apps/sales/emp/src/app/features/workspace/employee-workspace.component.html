@@ -131,6 +131,17 @@
         <span class="sidebar-label">Quotation</span>
       </button>
 
+      <button class="sidebar-link sidebar-link-email-accounts" [class.active]="dashTab==='email_accounts'"
+        (click)="switchTab('email_accounts')" [title]="sidebarMinimized ? 'Email Accounts' : ''">
+        <span class="sidebar-icon sidebar-icon-email-accounts" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+        </span>
+        <span class="sidebar-label">Email Accounts</span>
+      </button>
+
       <div class="sidebar-group-label"
         *ngIf="sidebarSectionHas(['My Leads', 'Interested', 'Not Connected', 'Converted', 'Favorites'])">Lead Views
       </div>
@@ -416,6 +427,11 @@
     </div>
 
     <main class="crm-main">
+      <!-- ── Email Accounts Workspace ──────────────────────────────────── -->
+      <section class="workspace email-accounts-workspace" *ngIf="dashTab==='email_accounts'" style="padding: 24px; background: #f8fafc; height: 100%; overflow-y: auto;">
+        <app-employee-email-integration-section></app-employee-email-integration-section>
+      </section>
+
       <!-- ── Activities Workspace ──────────────────────────────────── -->
       <section class="workspace activities-workspace" *ngIf="dashTab==='activities'">
         <app-activities-calendar [employee]="employee" [allLeads]="allLeads"></app-activities-calendar>

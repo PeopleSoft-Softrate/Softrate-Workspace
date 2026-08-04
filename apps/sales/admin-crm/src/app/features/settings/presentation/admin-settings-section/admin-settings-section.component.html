@@ -149,6 +149,92 @@
             </div>
           </div>
 
+          <!-- Collaborating Companies Card -->
+          <div class="company-card" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div>
+              <h3 class="cc-title" style="margin-bottom:0.5rem;">Collaborating Companies</h3>
+              <p style="font-size:0.85rem;color:#64748b;margin-bottom:0;line-height:1.5;">Send an invite to a partner company using their Company Code. They must accept before you can assign employees or generate documents for them.</p>
+            </div>
+
+            <!-- Send Invite Row -->
+            <div>
+              <label style="font-size:0.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:0.5rem;">SEND INVITE</label>
+              <div style="display:flex;gap:0.75rem;">
+                <input [(ngModel)]="vm.inviteCodeInput" type="text" class="field-input" placeholder="Enter Partner Company Code (e.g. STP-1603-2026)"
+                  style="flex:1;"
+                  (keyup.enter)="vm.sendCollaborationInvite()">
+                <button (click)="vm.sendCollaborationInvite()" class="cta-primary"
+                  [disabled]="vm.inviteLoading || !vm.inviteCodeInput"
+                  style="padding: 0.5rem 1.25rem; border-radius: 8px; white-space:nowrap;">
+                  <span *ngIf="vm.inviteLoading">Sending...</span>
+                  <span *ngIf="!vm.inviteLoading">Send Invite</span>
+                </button>
+              </div>
+              <div *ngIf="vm.inviteError" style="color:var(--red,#ef4444);font-size:0.8rem;margin-top:0.4rem;">{{ vm.inviteError }}</div>
+              <div *ngIf="vm.inviteSuccess" style="color:var(--green,#22c55e);font-size:0.8rem;margin-top:0.4rem;">✓ {{ vm.inviteSuccess }}</div>
+            </div>
+
+            <!-- Sent Invites -->
+            <div *ngIf="(vm.sentInvites?.length || 0) > 0">
+              <label style="font-size:0.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:0.5rem;">SENT INVITES</label>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                <div *ngFor="let inv of vm.sentInvites"
+                  style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--bg-card-1);border:1px solid var(--border);border-radius:8px;">
+                  <div>
+                    <span style="font-weight:600;font-size:0.85rem;">{{ inv.companyName }}</span>
+                    <span style="color:var(--text-3);font-size:0.75rem;margin-left:0.5rem;">{{ inv.companyCode }}</span>
+                  </div>
+                  <span [style.color]="inv.status === 'accepted' ? 'var(--green,#22c55e)' : inv.status === 'declined' ? 'var(--red,#ef4444)' : '#f59e0b'"
+                    style="font-size:0.75rem;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,0.08);">
+                    {{ inv.status }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Received Invites -->
+            <div *ngIf="(vm.receivedInvites?.length || 0) > 0">
+              <label style="font-size:0.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:0.5rem;">RECEIVED INVITES</label>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                <div *ngFor="let inv of vm.receivedInvites"
+                  style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--bg-card-1);border:1px solid var(--border);border-radius:8px;">
+                  <div>
+                    <span style="font-weight:600;font-size:0.85rem;">{{ inv.fromCompanyName }}</span>
+                    <span style="color:var(--text-3);font-size:0.75rem;margin-left:0.5rem;">{{ inv.fromCompanyCode }}</span>
+                  </div>
+                  <div *ngIf="inv.status === 'pending'" style="display:flex;gap:0.5rem;">
+                    <button (click)="vm.respondToInvite(inv.fromCompanyCode, 'accept')"
+                      [disabled]="vm.inviteRespondLoading === inv.fromCompanyCode + '_accept'"
+                      style="background:#22c55e;color:#fff;border:none;padding:4px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;">
+                      {{ vm.inviteRespondLoading === inv.fromCompanyCode + '_accept' ? '...' : 'Accept' }}
+                    </button>
+                    <button (click)="vm.respondToInvite(inv.fromCompanyCode, 'decline')"
+                      [disabled]="vm.inviteRespondLoading === inv.fromCompanyCode + '_decline'"
+                      style="background:transparent;color:var(--text-3);border:1px solid var(--border);padding:4px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;">
+                      {{ vm.inviteRespondLoading === inv.fromCompanyCode + '_decline' ? '...' : 'Decline' }}
+                    </button>
+                  </div>
+                  <span *ngIf="inv.status !== 'pending'"
+                    [style.color]="inv.status === 'accepted' ? 'var(--green,#22c55e)' : 'var(--red,#ef4444)'"
+                    style="font-size:0.75rem;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,0.08);">
+                    {{ inv.status }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Collaborations -->
+            <div *ngIf="(vm.settingsCollaboratingCompanies?.length || 0) > 0">
+              <label style="font-size:0.8rem;font-weight:600;color:var(--green,#22c55e);display:block;margin-bottom:0.5rem;">✓ ACTIVE COLLABORATIONS</label>
+              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                <span *ngFor="let code of vm.settingsCollaboratingCompanies"
+                  style="padding:4px 12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:20px;font-size:0.8rem;font-weight:600;color:var(--green,#22c55e);">
+                  {{ code }}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <!-- Lead Status Management Card -->
           <div class="company-card" style="grid-column:1 / -1;">
             <h3 class="cc-title" style="margin-bottom:0.5rem;">Lead Status Management</h3>

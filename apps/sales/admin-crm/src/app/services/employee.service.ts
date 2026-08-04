@@ -40,8 +40,12 @@ export class EmployeeService {
     return this.api.patch<EmployeeResponse>(`/api/employees/${employeeId}/tags`, { tags, companyCode });
   }
 
-  updateEmployee(employeeId: string, payload: { name: string; mobile: string; countryCode?: string; tags: string[] }): Observable<EmployeeResponse> {
+  updateEmployee(employeeId: string, payload: { name: string; mobile: string; countryCode?: string; tags: string[]; allowedCompanies?: string[] }): Observable<EmployeeResponse> {
     return this.api.put<EmployeeResponse>(`/api/employees/${employeeId}`, payload);
+  }
+
+  updateAllowedCompanies(employeeId: string, allowedCompanies: string[]): Observable<EmployeeResponse> {
+    return this.api.patch<EmployeeResponse>(`/api/employees/${employeeId}/allowed-companies`, { allowedCompanies });
   }
 
   triggerSync(employeeId: string): Observable<EmployeeResponse> {

@@ -516,7 +516,7 @@ router.post('/reset-password', async (req, res) => {
 router.get('/company/:companyCode/settings', async (req, res) => {
   try {
     const { companyCode } = req.params;
-    const user = await User.findOne({ companyCode }, 'companyName breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks');
+    const user = await User.findOne({ companyCode }, 'companyName breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies');
     if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
     const leadStatuses = user.leadStatuses || [];
     const valid = new Set(leadStatuses);
@@ -545,6 +545,7 @@ router.get('/company/:companyCode/settings', async (req, res) => {
         contactDetails: user.contactDetails || { website: '', email: '', phone: '' },
         products: user.products || [],
         productRemarks: user.productRemarks || [],
+        collaboratingCompanies: user.collaboratingCompanies || [],
         weCrmAccessEnabled: process.env.WE_CRM_ACCESS && companyCode === process.env.WE_CRM_ACCESS,
         weCrmUrl: process.env.WE_CRM_URL || 'http://localhost:5001/api',
         weCrmCompanyId: process.env.WE_CRM_COMPANYID || null

@@ -76,18 +76,49 @@ async function tenantMiddleware(req, res, next) {
       return res.status(401).json({ success: false, message: 'Token missing companyCode.' });
     }
 
-    // Resolve tenant DB from master User collection
-    const company = await User.findOne({ companyCode }).lean();
-    if (!company) {
-      return res.status(404).json({ success: false, message: 'Company not found.' });
+    // Resolve tenant DB from master User collection for the native company
+    const nativeCompany = await User.findOne({ companyCode }).lean();
+    if (!nativeCompany) {
+      return res.status(404).json({ success: false, message: 'Native company not found.' });
     }
 
-    // Derive DB name: e.g. "salesdb_MYCO-0101-2025"
-    const dbName = `salesdb_${companyCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+    let activeCompanyCode = companyCode;
+    let activeCompany = nativeCompany;
+    const requestedCompanyCode = req.headers['x-active-company-code'];
+
+    if (requestedCompanyCode && requestedCompanyCode !== companyCode) {
+      if (role === 'admin') {
+        // Admins check User.collaboratingCompanies
+        const allowed = nativeCompany.collaboratingCompanies && nativeCompany.collaboratingCompanies.includes(requestedCompanyCode);
+        if (!allowed) {
+          return res.status(403).json({ success: false, message: 'Collaboration access denied for this company.' });
+        }
+      } else {
+        // Employees check their Employee record in the native DB
+        const nativeDbName = `salesdb_${companyCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        const nativeDb = getTenantConnection(nativeDbName);
+        const EmployeeNativeModel = nativeDb.model('Employee');
+        const employeeRecord = await EmployeeNativeModel.findById(employeeId).lean();
+        if (!employeeRecord || !employeeRecord.allowedCompanies || !employeeRecord.allowedCompanies.includes(requestedCompanyCode)) {
+          return res.status(403).json({ success: false, message: 'Employee not authorized for this company.' });
+        }
+      }
+
+      // Load active company
+      activeCompany = await User.findOne({ companyCode: requestedCompanyCode }).lean();
+      if (!activeCompany) {
+        return res.status(404).json({ success: false, message: 'Active company not found.' });
+      }
+      activeCompanyCode = requestedCompanyCode;
+    }
+
+    // Derive DB name for the active company
+    const dbName = `salesdb_${activeCompanyCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     const db = getTenantConnection(dbName);
 
-    req.tenant = { companyCode, company, dbName };
+    req.tenant = { companyCode: activeCompanyCode, company: activeCompany, dbName };
     req.db = db;
+    // req.employee always holds the native companyCode and ID
     req.employee = { id: employeeId, companyCode, role };
     req.models = {
       Lead: db.model('Lead'),

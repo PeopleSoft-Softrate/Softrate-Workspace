@@ -14,6 +14,15 @@ export class ApiService {
       if (token) {
         headers = headers.set('Authorization', `Bearer ${token}`);
       }
+      try {
+        const rawUser = localStorage.getItem('tracecall_user');
+        if (rawUser) {
+          const user = JSON.parse(rawUser);
+          if (user.companyCode) {
+            headers = headers.set('x-active-company-code', user.companyCode);
+          }
+        }
+      } catch (e) {}
     }
     return headers;
   }

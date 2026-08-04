@@ -4,6 +4,7 @@ import { QuotationRecord } from '../domain/quotation.model';
 export function mapQuotationDto(dto: QuotationDto): QuotationRecord {
   return {
     id: String(dto._id || ''),
+    companyCode: dto.companyCode || '',
     quotationNumber: String(dto.quotationNumber || ''),
     companyName: String(dto.leadCompanyName || ''),
     contactName: String(dto.contactName || ''),

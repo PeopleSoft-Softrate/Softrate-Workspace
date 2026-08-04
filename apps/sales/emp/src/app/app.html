@@ -1701,7 +1701,16 @@
           <div class="section-kicker">{{ viewingSavedDocument ? (quoteMode ? 'Saved Quotation' : 'Saved Invoice') : (quoteMode ? 'Quotation Builder' : 'Invoice Builder') }}</div>
           <h3>{{ quoteMode ? 'Quote' : 'Invoice' }} {{ invoiceNumber() }}</h3>
         </div>
-        <button class="secondary-action" (click)="closeInvoiceModal()">Close</button>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <label class="mini-field" *ngIf="!viewingSavedDocument && (employee?.allowedCompanies?.length || 0) > 0">
+            <span style="font-size: 0.75rem; color: var(--text-2);">Company</span>
+            <select class="field-select" [ngModel]="documentCompanyCode" (ngModelChange)="onDocumentCompanyChange($event)" style="min-width: 120px;">
+              <option [value]="employee?.companyCode">{{ employee?.companyCode }} (Main)</option>
+              <option *ngFor="let comp of employee?.allowedCompanies" [value]="comp">{{ comp }}</option>
+            </select>
+          </label>
+          <button class="secondary-action" (click)="closeInvoiceModal()">Close</button>
+        </div>
       </div>
 
       <div class="invoice-form-grid invoice-control-card" *ngIf="!viewingSavedDocument">

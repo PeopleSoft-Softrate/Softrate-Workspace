@@ -1,0 +1,142 @@
+const { generateAuthUrl, exchangeCode } = require('../provider/google.provider');
+const {
+  getConnection,
+  saveConnection,
+  disconnectConnection,
+  buildStatusPayload,
+} = require('../service/email.service');
+const { sendEmailFromCRM } = require('../service/email-sender.service');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://dealvoice.softrateglobal.com';
+const EMAIL_INTEGRATION_ROUTE = '/?tab=email_integration';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GET /api/email/google/connect
+   Generate and return the Google OAuth consent URL.
+───────────────────────────────────────────────────────────────────────────── */
+async function connectGoogle(req, res) {
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+
+    if (!clientId || !clientSecret || !redirectUri) {
+      return res.status(503).json({
+        success: false,
+        message: 'Google OAuth is not configured on the server. Please contact your administrator.',
+      });
+    }
+
+    // Pass both companyCode and userId in the state parameter separated by a colon
+    const state = Buffer.from(`${req.companyCode}:${req.userId}`).toString('base64');
+    const authUrl = generateAuthUrl(state);
+    return res.status(200).json({ success: true, authUrl });
+  } catch (err) {
+    console.error('[email.controller/connectGoogle]', err);
+    return res.status(500).json({ success: false, message: 'Failed to generate Google OAuth URL.' });
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GET /api/email/google/callback
+   Called by Google after user consents. No auth header here — Google redirects.
+   Uses ?state=companyCode to identify the company.
+───────────────────────────────────────────────────────────────────────────── */
+async function googleCallback(req, res) {
+  const { code, state, error } = req.query;
+  const redirectBase = `${FRONTEND_URL}${EMAIL_INTEGRATION_ROUTE}`;
+
+  if (error || !code) {
+    console.warn('[email.controller/googleCallback] OAuth error:', error || 'No code received');
+    return res.redirect(`${redirectBase}&oauth=error&reason=${encodeURIComponent(error || 'access_denied')}`);
+  }
+
+  // The state parameter contains the base64 encoded companyCode:userId
+  const decodedState = Buffer.from(state, 'base64').toString('utf8');
+  const [companyCode, userId] = decodedState.split(':');
+
+  if (!companyCode || !userId) {
+    console.warn('[email.controller/googleCallback] Missing or invalid state');
+    return res.redirect(`${redirectBase}&oauth=error&reason=invalid_state`);
+  }
+
+  try {
+    const { refreshToken, email } = await exchangeCode(code);
+    await saveConnection(companyCode, userId, { provider: 'google', email, refreshToken });
+    console.log(`✅ Google Workspace connected for company ${companyCode} user ${userId} (${email})`);
+    return res.redirect(`${redirectBase}&oauth=success`);
+  } catch (err) {
+    console.error('[email.controller/googleCallback]', err);
+    return res.redirect(`${redirectBase}&oauth=error&reason=${encodeURIComponent(err.message || 'token_exchange_failed')}`);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GET /api/email/status
+   Returns the current connection status for the logged-in employee.
+───────────────────────────────────────────────────────────────────────────── */
+async function getStatus(req, res) {
+  try {
+    const conn = await getConnection(req.companyCode, req.userId);
+    return res.status(200).json({ success: true, ...buildStatusPayload(conn) });
+  } catch (err) {
+    console.error('[email.controller/getStatus]', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch email integration status.' });
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   POST /api/email/disconnect
+   Removes credentials and marks connection as disconnected.
+───────────────────────────────────────────────────────────────────────────── */
+async function disconnect(req, res) {
+  try {
+    const provider = req.body?.provider || 'google';
+    await disconnectConnection(req.companyCode, req.userId, provider);
+    return res.status(200).json({ success: true, message: 'Email integration disconnected successfully.' });
+  } catch (err) {
+    console.error('[email.controller/disconnect]', err);
+    return res.status(500).json({ success: false, message: 'Failed to disconnect email integration.' });
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   POST /api/email/send
+   Send email using the CRM's connected Google account (for employees).
+───────────────────────────────────────────────────────────────────────────── */
+async function sendEmailFromCRMController(req, res) {
+  try {
+    const { to, subject, html } = req.body;
+    
+    // Convert multer files to Nodemailer attachment format
+    const attachments = req.files ? req.files.map(file => ({
+      filename: file.originalname,
+      content: file.buffer,
+      contentType: file.mimetype
+    })) : [];
+
+    const mailOptions = {
+      to,
+      subject,
+      html,
+      attachments
+    };
+
+    // Send email using the secure EmailSenderService, tied to this specific employee
+    const info = await sendEmailFromCRM(req.companyCode, req.userId, mailOptions);
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Email sent successfully via Google Workspace!', 
+      messageId: info.messageId 
+    });
+  } catch (err) {
+    console.error('[email.controller/sendEmailFromCRMController]', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: err.message || 'Failed to send email.' 
+    });
+  }
+}
+
+module.exports = { connectGoogle, googleCallback, getStatus, disconnect, sendEmailFromCRMController };

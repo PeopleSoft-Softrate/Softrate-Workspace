@@ -102,7 +102,7 @@ class BackgroundSyncService {
     final companyCode = prefs.getString('companyCode') ?? '';
     final employeeId = prefs.getString('employeeId') ?? '';
 
-    debugPrint('Sync Credentials: Company=$companyCode, Phone=$phone');
+    debugPrint('Sync Credentials: Company=$companyCode, EmployeeId=$employeeId');
     if (companyCode.isEmpty || employeeId.isEmpty) {
       debugPrint('Sync aborted: Missing credentials in SharedPreferences.');
       return false;

@@ -947,7 +947,7 @@ class _HomeTabState extends State<HomeTab> with SingleTickerProviderStateMixin {
                                     setDialogState(() { saving = true; errorMsg = ''; });
                                     final res = await ApiService.addBookmark(
                                       companyCode: _companyCode,
-                                      employeePhone: _mobileNumber,
+                                      employeeId: _employeeId,
                                       contactNumber: number,
                                       contactName: name,
                                       description: descCtrl.text.trim(),

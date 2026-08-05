@@ -1102,7 +1102,13 @@
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
           <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Close</button>
           <div *ngIf="!vm.viewingSavedDocument" style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">Company</label>
+              <select class="glass-input" [ngModel]="vm.documentCompanyCode || vm.dashboardCode" (ngModelChange)="vm.onDocumentCompanyChange($event)" style="min-width: 120px; height: 32px; padding: 4px 8px; font-size: 0.85rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer;">
+                <option [value]="vm.baseCompanyCode">{{ vm.baseCompanyCode }} (Home)</option>
+                <option *ngFor="let code of vm.settingsCollaboratingCompanies" [value]="code">{{ code }}</option>
+              </select>
+            </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">{{ vm.quoteMode ? 'Quote' : 'Invoice' }} Date</label>
               <input type="date" class="glass-input" style="padding: 4px 8px; font-size: 0.85rem; width: auto; height: 32px;" 

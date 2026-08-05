@@ -200,6 +200,33 @@ export class AdminSettingsWorkflow {
     this.loadCollaborationInvites(vm);
   }
 
+  fetchSettingsForDocument(vm: any, code: string, onComplete?: () => void): void {
+    if (!code) return;
+    this.authService.getCompanySettings(code).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          vm.settingsCompanyName = res.settings.companyName || '';
+          vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(res.settings.invoiceLogo || '/assets/logos/softrate-logo-dark.png');
+          vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(res.settings.invoiceSeal || '');
+          vm.settingsInvoiceTerms = res.settings.invoiceTerms || '';
+          vm.settingsShowCompanyNameOnInvoice = res.settings.showCompanyNameOnInvoice ?? true;
+          vm.settingsGstNumber = res.settings.gstNumber || '';
+          vm.settingsGstPercentage = res.settings.gstPercentage ?? 18;
+          vm.settingsInvoiceRegisteredAddress = res.settings.invoiceRegisteredAddress || '';
+          vm.settingsInvoiceFooter = res.settings.invoiceFooter || '';
+          vm.settingsBankDetails = res.settings.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+          vm.settingsBankDetails2 = res.settings.bankDetails2 || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+          vm.settingsContactDetails = res.settings.contactDetails || { website: '', email: '', phone: '' };
+          vm.settingsProducts = res.settings.products || [];
+          vm.settingsProductRemarks = res.settings.productRemarks || [];
+          // Refresh invoice preview caches so logo/address/bank update immediately
+          onComplete?.();
+        }
+      },
+      error: () => {},
+    });
+  }
+
   loadCollaborationInvites(vm: any): void {
     if (!vm.dashboardCode) return;
     this.authService.getCollaborationInvites(vm.dashboardCode).subscribe({

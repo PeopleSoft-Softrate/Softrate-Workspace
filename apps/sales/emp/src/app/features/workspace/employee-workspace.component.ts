@@ -2756,7 +2756,8 @@ invoiceSeal: string = '';
     const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id;
 
     const payload = {
-      companyCode: this.documentCompanyCode || this.employee.companyCode,
+      companyCode: this.employee.companyCode,
+      brandingCompanyCode: this.documentCompanyCode || this.employee.companyCode,
       employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
@@ -2857,13 +2858,15 @@ invoiceSeal: string = '';
     if (!this.invoiceLead || !this.employee || this.quotationSaving) return;
     this.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
-      companyCode: this.documentCompanyCode || this.employee.companyCode,
+      companyCode: this.employee.companyCode,
+      brandingCompanyCode: this.documentCompanyCode || this.employee.companyCode,
       employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
       createdByName: this.employee.name,
       createdByPhone: this.employee.mobile,
-      leadId: this.invoiceLead._id,
+      clientId: this.selectedInvoiceClient?.clientId || undefined,
+      leadId: this.selectedInvoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id,
       contactNumber: this.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(),
       quotationDate: this.invoiceIssuedAt,

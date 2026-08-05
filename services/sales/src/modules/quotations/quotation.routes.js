@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Quotation = require('../../../models/Quotation');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
+const Employee = require('../../../models/Employee');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
 
 const { companyMiddleware } = require('../../common/tenantMiddleware');
@@ -34,8 +35,8 @@ function parseQuotationNumber(value) {
   };
 }
 
-async function generateQuotationNumber(req, companyCode, lead, quotationDate) {
-  const leadCompanyName = normalize(lead?.leadCompanyName);
+async function generateQuotationNumber(req, companyCode, lead, quotationDate, client = null) {
+  const leadCompanyName = normalize(client?.companyName || lead?.leadCompanyName);
   const latestCompanyQuotation = leadCompanyName
     ? await req.models.Quotation.findOne({ companyCode, leadCompanyName })
         .sort({ versionNo: -1, createdAt: -1 })
@@ -97,13 +98,19 @@ router.post('/', async (req, res) => {
   
   try {
     const companyCode = normalize(req.body.companyCode);
+    const brandingCompanyCode = normalize(req.body.brandingCompanyCode) || companyCode;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode is required.' });
 
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne({ companyCode: brandingCompanyCode });
     if (!user) return res.status(404).json({ success: false, message: 'Company settings not found.' });
 
+    const { getClientByClientId } = require('../../../services/clientService');
     const lead = await findLead(req, req.body);
-    if (!lead) return res.status(404).json({ success: false, message: 'req.models.Lead not found for quotation.' });
+    let client = null;
+    if (!lead && req.body.clientId) {
+      client = await getClientByClientId({ ClientModel: req.models.Client }, companyCode, req.body.clientId);
+    }
+    if (!lead && !client) return res.status(404).json({ success: false, message: 'req.models.Lead or Client not found for quotation.' });
 
     const gstPercentage = Number(req.body.gstPercentage ?? user.gstPercentage ?? 18);
     const items = buildItems(req.body.items, gstPercentage);
@@ -116,20 +123,34 @@ router.post('/', async (req, res) => {
     let lastError = null;
     let retries = 5;
 
+    const resolveEmployeeId = async (val) => {
+      const v = normalize(val);
+      if (!v) return null;
+      if (mongoose.Types.ObjectId.isValid(v)) return v;
+      const emp = await Employee.findOne({ companyCode, phone: v }).lean() || await Employee.findOne({ companyCode, mobile: v }).lean();
+      return emp ? emp._id : null;
+    };
+
+    const resolvedEmployeeId = await resolveEmployeeId(req.body.employeeId || lead?.assignedEmployeePhone || lead?.assignedEmployeeId || client?.assignedEmployeePhones?.[0]);
+    const resolvedCreatedById = await resolveEmployeeId(req.body.createdById || req.body.employeeId);
+
     while (retries > 0) {
       try {
         const quotationDate = req.body.quotationDate ? new Date(req.body.quotationDate) : new Date();
-        const { quotationNumber, versionNo } = await generateQuotationNumber(req, companyCode, lead, quotationDate);
+        const { quotationNumber, versionNo } = await generateQuotationNumber(req, companyCode, lead, quotationDate, client);
+
+        const clientCompanyName = client?.companyName || lead?.leadCompanyName || 'Client Company';
 
         quotation = await req.models.Quotation.create({
           companyCode,
-          employeeId: normalize(req.body.employeeId || lead.assignedEmployeePhone),
+          clientId: client?.clientId || '',
+          employeeId: resolvedEmployeeId,
           employeeName: normalize(req.body.employeeName),
-          leadId: lead._id,
-          leadCompanyName: lead.leadCompanyName,
-          contactName: lead.contactName,
-          contactNumber: lead.contactNumber,
-          directorEmailAddress: lead.directorEmailAddress,
+          leadId: lead?._id || null,
+          leadCompanyName: clientCompanyName,
+          contactName: client?.primaryContactName || lead?.contactName || '',
+          contactNumber: client?.primaryPhone || lead?.contactNumber || '',
+          directorEmailAddress: client?.primaryEmail || lead?.directorEmailAddress || '',
           quotationNumber,
           versionNo,
           kindNote: normalize(req.body.kindNote || user.invoiceFooter || 'We aim to provide the best software to automate your business with high quality at affordable cost.'),
@@ -141,7 +162,7 @@ router.post('/', async (req, res) => {
           quotationDate,
           createdByRole: req.body.createdByRole === 'admin' ? 'admin' : 'employee',
           createdByName: normalize(req.body.createdByName || req.body.employeeName),
-          createdById: normalize(req.body.createdById || req.body.employeeId),
+          createdById: resolvedCreatedById,
           companySnapshot: {
             name: user.showCompanyNameOnInvoice === false ? '' : user.companyName,
             logo: user.invoiceLogo || '',

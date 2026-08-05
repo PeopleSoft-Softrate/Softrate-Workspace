@@ -818,6 +818,20 @@ export abstract class AdminWorkspaceController implements OnInit {
   customFrom = new Date().toISOString().split('T')[0];
   customTo = new Date().toISOString().split('T')[0];
   readonly periods = DASHBOARD_PERIODS;
+
+  documentCompanyCode: string = '';
+
+  onDocumentCompanyChange(newCode: string): void {
+    this.documentCompanyCode = newCode;
+    // Reload clients from the new company
+    this.invoiceQuotationWorkflow.fetchAdminInvoiceClients(this, true);
+    this.invoiceQuotationWorkflow.fetchAdminQuotationClients(this, true);
+    // Refresh branding (logo/address/bank) for the new company
+    this.adminSettingsWorkflow.fetchSettingsForDocument(this, newCode, () => {
+      this.invoiceQuotationWorkflow.triggerInvoicePreviewRefresh(this);
+    });
+  }
+
   get todayIso(): string {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

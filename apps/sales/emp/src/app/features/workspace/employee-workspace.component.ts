@@ -3239,6 +3239,8 @@ invoiceSeal: string = '';
       setLabel: '',
       gstNumber: record.clientSnapshot?.gstNumber || (record as any).gstNumber || '',
     };
+    this.invoiceAmountPaid = Number(record.amountPaid || 0);
+    this.invoiceIsInclusiveGst = Boolean(record.isInclusiveGst);
     this.invoiceItems = this.mapSavedDocumentItems(record.items);
     this.refreshInvoiceItemGstFromSelection();
     this.showInvoiceModal = true;

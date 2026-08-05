@@ -128,14 +128,6 @@ async function getCachedEmployeeCompanyContacts({ LeadModel, companyCode, employ
   delete contactQuery.includeContacts;
   delete contactQuery.contactPageSize;
   delete contactQuery.includeFacets;
-  delete contactQuery.search;
-  delete contactQuery.status;
-  delete contactQuery.statuses;
-  delete contactQuery.isFavourite;
-  delete contactQuery.updatedFrom;
-  delete contactQuery.updatedTo;
-  delete contactQuery.setLabel;
-  delete contactQuery.division;
 
   const { value } = await getOrSet(cacheKey, LEAD_CACHE_TTLS.companyContacts, async () => {
     const requestedCompanies = companyNames
@@ -149,7 +141,7 @@ async function getCachedEmployeeCompanyContacts({ LeadModel, companyCode, employ
     const { mongoQuery } = buildLeadSearchQuery({
       companyCode,
       employeeId,
-      query: contactQuery,
+      query: {},
     });
     mongoQuery.leadCompanyNameLower = { $in: companyKeys };
 
@@ -444,16 +436,18 @@ router.get('/employee/companies', async (req, res) => {
       });
     }
 
+    const finalNames = fuzzyResults.length ? fuzzyResults.map(r => r.name) : payload.names;
+
     const contactsByCompany = shouldIncludeCompanyContacts(req.query)
       ? await getCachedEmployeeCompanyContacts({
           LeadModel: req.models.Lead,
           companyCode,
           employeeId: employeeId,
           query: req.query,
-          companyNames: payload.names,
+          companyNames: finalNames,
           cacheKey: buildEmployeeCompanyContactsKey(companyCode, employeeId, {
             query: req.query,
-            companyNames: payload.names,
+            companyNames: finalNames,
             contactPageSize: parseContactPageSize(req.query.contactPageSize),
           }),
         })

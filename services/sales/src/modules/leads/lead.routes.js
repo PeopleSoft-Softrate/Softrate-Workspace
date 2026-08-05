@@ -128,6 +128,14 @@ async function getCachedEmployeeCompanyContacts({ LeadModel, companyCode, employ
   delete contactQuery.includeContacts;
   delete contactQuery.contactPageSize;
   delete contactQuery.includeFacets;
+  delete contactQuery.search;
+  delete contactQuery.status;
+  delete contactQuery.statuses;
+  delete contactQuery.isFavourite;
+  delete contactQuery.updatedFrom;
+  delete contactQuery.updatedTo;
+  delete contactQuery.setLabel;
+  delete contactQuery.division;
 
   const { value } = await getOrSet(cacheKey, LEAD_CACHE_TTLS.companyContacts, async () => {
     const requestedCompanies = companyNames

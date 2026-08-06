@@ -600,9 +600,18 @@
         <div class="lead-detail-panel company-full-content" #companyFullScrollContent
           (scroll)="vm.onCompanyFullContentScroll($event)">
           <section class="company-full-card" [id]="vm.companyFullSectionId('overview')">
-            <div class="company-full-card-head">
-              <h4>Overview</h4>
-              <span class="company-full-card-meta" *ngIf="vm.companyFullLoading">Loading company details...</span>
+            <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <h4 style="margin: 0;">Overview</h4>
+                <span class="company-full-card-meta" *ngIf="vm.companyFullLoading" style="margin: 0;">Loading company details...</span>
+              </div>
+              <button class="icon-button" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="vm.openOverviewEditModal()">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit Overview
+              </button>
             </div>
 
             <div class="lead-detail-summary company-full-overview-grid"
@@ -649,25 +658,125 @@
                       vm.companyFullPrimaryStatus() }}</strong>
                   </div>
                   <div class="lead-detail-field">
-                    <span>Company Code</span>
-                    <strong class="nowrap-value">{{ vm.companyFullCompanyCode() }}</strong>
-                  </div>
-                  <div class="lead-detail-field lead-detail-field-wide">
                     <span>Alternate Phone</span>
-                    <strong class="nowrap-value">{{ vm.companyFullAlternatePhoneValue() }}</strong>
+                    <strong class="nowrap-value" [title]="vm.companyFullAlternatePhoneValue()">{{ vm.companyFullAlternatePhoneValue() }}</strong>
                   </div>
-                  <div class="lead-detail-field lead-detail-field-wide">
+                  <div class="lead-detail-field">
                     <span>Alternate Email</span>
-                    <strong [title]="vm.companyFullAlternateEmailValue()">{{ vm.companyFullAlternateEmailValue()
-                      }}</strong>
+                    <strong class="nowrap-value" [title]="vm.companyFullAlternateEmailValue()">{{ vm.companyFullAlternateEmailValue() }}</strong>
                   </div>
+                </div>
+              </div>
+
+              <!-- Full-width Section Divider -->
+              <div style="grid-column: span 2; border-top: 1px solid #e2e8f0; margin: 16px 0 8px 0;"></div>
+
+              <!-- Full-width Detailed Fields Grid (3-column layout aligning from the left) -->
+              <div style="grid-column: span 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px; min-width: 0;">
+                
+                <!-- Section 1: Company Profile -->
+                <div style="grid-column: span 3; font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Company Registration</div>
+                
+                <div class="lead-detail-field" *ngIf="companyLead.cin">
+                  <span>CIN</span>
+                  <strong class="nowrap-value" [title]="companyLead.cin">{{ companyLead.cin }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.dateOfIncorporation">
+                  <span>Incorporation Date</span>
+                  <strong class="nowrap-value" [title]="companyLead.dateOfIncorporation">{{ companyLead.dateOfIncorporation }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.companyEmail">
+                  <span>Company Email</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyEmail">{{ companyLead.companyEmail }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.roc">
+                  <span>ROC</span>
+                  <strong class="nowrap-value" [title]="companyLead.roc">{{ companyLead.roc }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.registrationNumber">
+                  <span>Registration No.</span>
+                  <strong class="nowrap-value" [title]="companyLead.registrationNumber">{{ companyLead.registrationNumber }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.companyOrigin">
+                  <span>Company Origin</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyOrigin">{{ companyLead.companyOrigin }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.companyType">
+                  <span>Company Type</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyType">{{ companyLead.companyType }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.classOfCompany">
+                  <span>Class of Company</span>
+                  <strong class="nowrap-value" [title]="companyLead.classOfCompany">{{ companyLead.classOfCompany }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.companyCategory">
+                  <span>Company Category</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyCategory">{{ companyLead.companyCategory }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.companySubcategory">
+                  <span>Subcategory</span>
+                  <strong class="nowrap-value" [title]="companyLead.companySubcategory">{{ companyLead.companySubcategory }}</strong>
+                </div>
+
+                <!-- Divider -->
+                <div style="grid-column: span 3; border-top: 1px solid #e2e8f0; margin: 8px 0 4px 0;"></div>
+
+                <!-- Section 2: Financial Info -->
+                <div style="grid-column: span 3; font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Financials</div>
+
+                <div class="lead-detail-field" *ngIf="companyLead.authorisedCapital">
+                  <span>Auth. Capital</span>
+                  <strong class="nowrap-value" [title]="companyLead.authorisedCapital">{{ companyLead.authorisedCapital }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.paidUpCapital">
+                  <span>Paid-Up Capital</span>
+                  <strong class="nowrap-value" [title]="companyLead.paidUpCapital">{{ companyLead.paidUpCapital }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.totalObligationOfContribution">
+                  <span>Total Obligation</span>
+                  <strong class="nowrap-value" [title]="companyLead.totalObligationOfContribution">{{ companyLead.totalObligationOfContribution }}</strong>
+                </div>
+
+                <!-- Divider -->
+                <div style="grid-column: span 3; border-top: 1px solid #e2e8f0; margin: 8px 0 4px 0;"></div>
+
+                <!-- Section 3: Address Details -->
+                <div style="grid-column: span 3; font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Address Details</div>
+
+                <div class="lead-detail-field" *ngIf="companyLead.addressType">
+                  <span>Address Type</span>
+                  <strong class="nowrap-value" [title]="companyLead.addressType">{{ companyLead.addressType }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.mainDivisionNo">
+                  <span>Division No</span>
+                  <strong class="nowrap-value" [title]="companyLead.mainDivisionNo">{{ companyLead.mainDivisionNo }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.streetAddressLine1">
+                  <span>Street Address 1</span>
+                  <strong class="nowrap-value" [title]="companyLead.streetAddressLine1">{{ companyLead.streetAddressLine1 }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.streetAddressLine2">
+                  <span>Street Address 2</span>
+                  <strong class="nowrap-value" [title]="companyLead.streetAddressLine2">{{ companyLead.streetAddressLine2 }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.city">
+                  <span>City</span>
+                  <strong class="nowrap-value" [title]="companyLead.city">{{ companyLead.city }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.state">
+                  <span>State</span>
+                  <strong class="nowrap-value" [title]="companyLead.state">{{ companyLead.state }}</strong>
+                </div>
+                <div class="lead-detail-field" *ngIf="companyLead.postalCode">
+                  <span>Postal Code</span>
+                  <strong class="nowrap-value" [title]="companyLead.postalCode">{{ companyLead.postalCode }}</strong>
                 </div>
               </div>
             </div>
 
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                Directors / Contacts
+            <div class="lead-detail-section" style="margin-top: 16px;">
+              <div class="lead-detail-section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #1e293b;">Directors / Contacts</h4>
                 <button class="icon-button" style="padding: 2px 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="vm.openContactAddModal()">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -676,17 +785,17 @@
                   Add Contact
                 </button>
               </div>
-              <div class="company-full-scroll-card company-full-contact-list"
-                *ngIf="vm.companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
-                <article class="company-full-contact-row"
-                  *ngFor="let lead of vm.companyFullOverviewContacts(); trackBy: vm.trackByLeadIdentity">
-                  <div class="company-full-contact-main">
-                    <strong style="display: flex; align-items: center; gap: 6px;">
-                      {{ lead.contactName || 'Primary Contact' }}
-                      <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px;">SPOC</span>
-                    </strong>
-                    <span [title]="vm.companyFullContactEmail(lead)">{{ vm.companyFullContactEmail(lead) }}</span>
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+
+              <div *ngIf="vm.companyFullOverviewContacts().length > 0; else emptyCompanyFullView" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px;">
+                <ng-container *ngFor="let lead of vm.companyFullOverviewContacts(); let i = index; trackBy: vm.trackByLeadIdentity">
+                  
+                  <!-- Divider before each director (except the first one) -->
+                  <div *ngIf="i > 0" style="grid-column: span 3; border-top: 1px solid #e2e8f0; margin: 12px 0 4px 0;"></div>
+
+                  <!-- Director Header & Actions -->
+                  <div style="grid-column: span 3; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em;">Director {{ i + 1 }}</span>
+                    <div style="display: flex; gap: 8px;">
                       <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px;" (click)="vm.openDirectorEditModal(lead)">Edit</button>
                       <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px;" [style.color]="lead.isStarred ? '#eab308' : '#64748b'" [style.border-color]="lead.isStarred ? '#fef08a' : '#e2e8f0'" [style.background]="lead.isStarred ? '#fef9c3' : '#fff'" (click)="vm.toggleStar(lead)">
                         <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
@@ -696,16 +805,58 @@
                       </button>
                     </div>
                   </div>
-                  <div class="company-full-contact-field">
-                    <span>Phone</span>
-                    <strong class="nowrap-value" [title]="vm.companyFullContactPhone(lead)">{{
-                      vm.companyFullContactPhone(lead) }}</strong>
+
+                  <!-- Name, Mail, Phone, DIN, Dir Mobile, Status fields -->
+                  <div class="lead-detail-field">
+                    <span>Name</span>
+                    <strong style="display: flex; align-items: center; gap: 6px;">
+                      {{ lead.contactName || '—' }}
+                      <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px;">SPOC</span>
+                    </strong>
                   </div>
-                  <div class="company-full-contact-field">
+
+                  <div class="lead-detail-field">
+                    <span>Mail</span>
+                    <strong class="nowrap-value" [title]="vm.companyFullContactEmail(lead)">{{ vm.companyFullContactEmail(lead) || '—' }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field">
+                    <span>Phone</span>
+                    <strong class="nowrap-value" [title]="vm.companyFullContactPhone(lead)">{{ vm.companyFullContactPhone(lead) || '—' }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="lead.directorDin">
+                    <span>DIN</span>
+                    <strong class="nowrap-value" [title]="lead.directorDin">{{ lead.directorDin }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="lead.directorMobileNumber && lead.directorMobileNumber !== lead.contactNumber">
+                    <span>Dir. Mobile</span>
+                    <strong class="nowrap-value" [title]="lead.directorMobileNumber">{{ lead.directorMobileNumber }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field">
                     <span>Status</span>
                     <strong [style.color]="vm.leadStatusColor(lead.status)">{{ lead.status || 'New' }}</strong>
                   </div>
-                </article>
+
+                  <!-- Permanent Address (Full Width) -->
+                  <div class="lead-detail-field" style="grid-column: span 3;" *ngIf="lead.directorPermanentAddressLine1 || lead.directorPermanentCity">
+                    <span>Permanent Address</span>
+                    <strong style="font-weight: 500;">
+                      {{ vm.formatDirectorAddress(lead.directorPermanentAddressLine1, lead.directorPermanentAddressLine2, lead.directorPermanentCity, lead.directorPermanentState, lead.directorPermanentPincode) }}
+                    </strong>
+                  </div>
+
+                  <!-- Present Address (Full Width) -->
+                  <div class="lead-detail-field" style="grid-column: span 3;" *ngIf="lead.directorPresentAddressLine1 || lead.directorPresentCity">
+                    <span>Present Address</span>
+                    <strong style="font-weight: 500;">
+                      {{ vm.formatDirectorAddress(lead.directorPresentAddressLine1, lead.directorPresentAddressLine2, lead.directorPresentCity, lead.directorPresentState, lead.directorPresentPincode) }}
+                    </strong>
+                  </div>
+
+                </ng-container>
               </div>
             </div>
           </section>
@@ -1901,74 +2052,319 @@
 
 <!-- Director Edit Modal -->
 <div class="invoice-overlay" *ngIf="vm.directorEditOpen" (click)="vm.closeDirectorEditModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(560px, calc(100vw - 32px)); max-width: 560px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(720px, calc(100vw - 32px)); max-width: 720px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
     <button class="modal-close" type="button" (click)="vm.closeDirectorEditModal()"
       aria-label="Close edit director">✕</button>
       
     <h2 class="client-onboarding-modal-title">Edit Director / Contact</h2>
-    <p class="client-onboarding-modal-subtitle">Update contact details for this lead.</p>
+    <p class="client-onboarding-modal-subtitle">Update contact details and address information for this director.</p>
     
-    <div class="client-onboarding-form client-onboarding-modal-form">
-      <div class="form-group">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
-        <input class="field-input" type="text" placeholder="Enter contact name" [(ngModel)]="vm.directorEditDraft.contactName" />
+    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        
+        <!-- Primary Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Director Information</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Contact Name</label>
+          <input class="field-input" type="text" placeholder="Enter contact name" [(ngModel)]="vm.directorEditDraft.contactName" />
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Phone Number</label>
+          <input class="field-input" type="tel" placeholder="Enter phone number" [(ngModel)]="vm.directorEditDraft.contactNumber" />
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Email Address</label>
+          <input class="field-input" type="email" placeholder="Enter email address" [(ngModel)]="vm.directorEditDraft.directorEmailAddress" />
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">DIN</label>
+          <input class="field-input" type="text" placeholder="Enter DIN" [(ngModel)]="vm.directorEditDraft.directorDin" />
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Director Mobile</label>
+          <input class="field-input" type="tel" placeholder="Enter mobile number" [(ngModel)]="vm.directorEditDraft.directorMobileNumber" />
+        </div>
+        
+        <!-- Permanent Address -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Permanent Address</div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 1</label>
+          <input class="field-input" type="text" placeholder="Street Address 1" [(ngModel)]="vm.directorEditDraft.directorPermanentAddressLine1" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 2</label>
+          <input class="field-input" type="text" placeholder="Street Address 2" [(ngModel)]="vm.directorEditDraft.directorPermanentAddressLine2" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">City</label>
+          <input class="field-input" type="text" placeholder="City" [(ngModel)]="vm.directorEditDraft.directorPermanentCity" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">State</label>
+          <input class="field-input" type="text" placeholder="State" [(ngModel)]="vm.directorEditDraft.directorPermanentState" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Pincode</label>
+          <input class="field-input" type="text" placeholder="Pincode" [(ngModel)]="vm.directorEditDraft.directorPermanentPincode" />
+        </div>
+
+        <!-- Present Address -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Present Address</div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 1</label>
+          <input class="field-input" type="text" placeholder="Street Address 1" [(ngModel)]="vm.directorEditDraft.directorPresentAddressLine1" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 2</label>
+          <input class="field-input" type="text" placeholder="Street Address 2" [(ngModel)]="vm.directorEditDraft.directorPresentAddressLine2" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">City</label>
+          <input class="field-input" type="text" placeholder="City" [(ngModel)]="vm.directorEditDraft.directorPresentCity" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">State</label>
+          <input class="field-input" type="text" placeholder="State" [(ngModel)]="vm.directorEditDraft.directorPresentState" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Pincode</label>
+          <input class="field-input" type="text" placeholder="Pincode" [(ngModel)]="vm.directorEditDraft.directorPresentPincode" />
+        </div>
       </div>
-      
-      <div class="form-group" style="margin-top: 1rem;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number</label>
-        <input class="field-input" type="tel" placeholder="Enter phone number" [(ngModel)]="vm.directorEditDraft.contactNumber" />
-      </div>
-      
-      <div class="form-group" style="margin-top: 1rem;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
-        <input class="field-input" type="email" placeholder="Enter email address" [(ngModel)]="vm.directorEditDraft.directorEmailAddress" />
-      </div>
-      
-      <div class="client-onboarding-actions" style="margin-top: 2rem;">
-        <button class="secondary-action" type="button" (click)="vm.closeDirectorEditModal()"
-          [disabled]="vm.directorEditSaving">Cancel</button>
-        <button class="primary-action" type="button" (click)="vm.saveDirectorEdit()" [disabled]="vm.directorEditSaving">
-          <span *ngIf="!vm.directorEditSaving">Save Changes</span>
-          <span *ngIf="vm.directorEditSaving" class="button-spinner"></span>
-        </button>
-      </div>
+    </div>
+    
+    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+      <button class="secondary-action" type="button" (click)="vm.closeDirectorEditModal()"
+        [disabled]="vm.directorEditSaving">Cancel</button>
+      <button class="primary-action" type="button" (click)="vm.saveDirectorEdit()" [disabled]="vm.directorEditSaving">
+        <span *ngIf="!vm.directorEditSaving">Save Changes</span>
+        <span *ngIf="vm.directorEditSaving" class="button-spinner"></span>
+      </button>
     </div>
   </div>
 </div>
 
 <!-- Contact Add Modal -->
 <div class="invoice-overlay" *ngIf="vm.contactAddOpen" (click)="vm.closeContactAddModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(560px, calc(100vw - 32px)); max-width: 560px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(720px, calc(100vw - 32px)); max-width: 720px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
     <button class="modal-close" type="button" (click)="vm.closeContactAddModal()"
       aria-label="Close add contact">✕</button>
       
     <h2 class="client-onboarding-modal-title">Add New Contact</h2>
     <p class="client-onboarding-modal-subtitle">Add a new director or contact for this company.</p>
     
-    <div class="client-onboarding-form client-onboarding-modal-form">
-      <div class="form-group">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
-        <input class="field-input" type="text" name="newContactName_rand" autocomplete="new-password" placeholder="Enter contact name" [(ngModel)]="vm.contactAddDraft.contactName" />
+    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        
+        <!-- Primary Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Director Information</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Contact Name</label>
+          <input class="field-input" type="text" name="newContactName_rand" autocomplete="new-password" placeholder="Enter contact name" [(ngModel)]="vm.contactAddDraft.contactName" />
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Phone Number <span style="color: #ef4444;">*</span></label>
+          <input class="field-input" type="tel" name="newContactPhone_rand" autocomplete="new-password" placeholder="Enter phone number" [(ngModel)]="vm.contactAddDraft.contactNumber" />
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Email Address</label>
+          <input class="field-input" type="email" name="newContactEmail_rand" autocomplete="new-password" placeholder="Enter email address" [(ngModel)]="vm.contactAddDraft.directorEmailAddress" />
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">DIN</label>
+          <input class="field-input" type="text" placeholder="Enter DIN" [(ngModel)]="vm.contactAddDraft.directorDin" />
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Director Mobile</label>
+          <input class="field-input" type="tel" placeholder="Enter mobile number" [(ngModel)]="vm.contactAddDraft.directorMobileNumber" />
+        </div>
+        
+        <!-- Permanent Address -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Permanent Address</div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 1</label>
+          <input class="field-input" type="text" placeholder="Street Address 1" [(ngModel)]="vm.contactAddDraft.directorPermanentAddressLine1" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 2</label>
+          <input class="field-input" type="text" placeholder="Street Address 2" [(ngModel)]="vm.contactAddDraft.directorPermanentAddressLine2" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">City</label>
+          <input class="field-input" type="text" placeholder="City" [(ngModel)]="vm.contactAddDraft.directorPermanentCity" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">State</label>
+          <input class="field-input" type="text" placeholder="State" [(ngModel)]="vm.contactAddDraft.directorPermanentState" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Pincode</label>
+          <input class="field-input" type="text" placeholder="Pincode" [(ngModel)]="vm.contactAddDraft.directorPermanentPincode" />
+        </div>
+
+        <!-- Present Address -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Present Address</div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 1</label>
+          <input class="field-input" type="text" placeholder="Street Address 1" [(ngModel)]="vm.contactAddDraft.directorPresentAddressLine1" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 2</label>
+          <input class="field-input" type="text" placeholder="Street Address 2" [(ngModel)]="vm.contactAddDraft.directorPresentAddressLine2" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">City</label>
+          <input class="field-input" type="text" placeholder="City" [(ngModel)]="vm.contactAddDraft.directorPresentCity" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">State</label>
+          <input class="field-input" type="text" placeholder="State" [(ngModel)]="vm.contactAddDraft.directorPresentState" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Pincode</label>
+          <input class="field-input" type="text" placeholder="Pincode" [(ngModel)]="vm.contactAddDraft.directorPresentPincode" />
+        </div>
       </div>
+    </div>
+    
+    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+      <button class="secondary-action" type="button" (click)="vm.closeContactAddModal()"
+        [disabled]="vm.contactAddSaving">Cancel</button>
+      <button class="primary-action" type="button" (click)="vm.saveContactAdd()" [disabled]="vm.contactAddSaving || !vm.contactAddDraft.contactNumber">
+        <span *ngIf="!vm.contactAddSaving">Save Contact</span>
+        <span *ngIf="vm.contactAddSaving" class="button-spinner"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Overview Edit Modal -->
+<div class="invoice-overlay" *ngIf="vm.overviewEditOpen" (click)="vm.closeOverviewEditModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(800px, calc(100vw - 32px)); max-width: 800px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+    <button class="modal-close" type="button" (click)="vm.closeOverviewEditModal()"
+      aria-label="Close edit overview">✕</button>
       
-      <div class="form-group" style="margin-top: 1rem;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number <span style="color: #ef4444;">*</span></label>
-        <input class="field-input" type="tel" name="newContactPhone_rand" autocomplete="new-password" placeholder="Enter phone number" [(ngModel)]="vm.contactAddDraft.contactNumber" />
+    <h2 class="client-onboarding-modal-title">Edit Company Details</h2>
+    <p class="client-onboarding-modal-subtitle">Update registration, financials, and address details.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        
+        <!-- Registration Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Company Registration</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">CIN</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.cin" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Incorporation Date</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.dateOfIncorporation" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Email</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.companyEmail" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ROC</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.roc" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Registration Number</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.registrationNumber" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Origin</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.companyOrigin" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Type</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.companyType" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Class of Company</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.classOfCompany" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Category</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.companyCategory" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Subcategory</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.companySubcategory" />
+        </div>
+
+        <!-- Financials Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Financials</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Auth. Capital</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.authorisedCapital" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Paid-Up Capital</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.paidUpCapital" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Total Obligation</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.totalObligationOfContribution" />
+        </div>
+
+        <!-- Address Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Address Details</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Address Type</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.addressType" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Division No</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.mainDivisionNo" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 1</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.streetAddressLine1" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Street Address 2</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.streetAddressLine2" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">City</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.city" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">State</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.state" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Postal Code</label>
+          <input class="field-input" type="text" [(ngModel)]="vm.overviewEditDraft.postalCode" />
+        </div>
       </div>
-      
-      <div class="form-group" style="margin-top: 1rem;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
-        <input class="field-input" type="email" name="newContactEmail_rand" autocomplete="new-password" placeholder="Enter email address" [(ngModel)]="vm.contactAddDraft.directorEmailAddress" />
-      </div>
-      
-      <div class="client-onboarding-actions" style="margin-top: 2rem;">
-        <button class="secondary-action" type="button" (click)="vm.closeContactAddModal()"
-          [disabled]="vm.contactAddSaving">Cancel</button>
-        <button class="primary-action" type="button" (click)="vm.saveContactAdd()" [disabled]="vm.contactAddSaving || !vm.contactAddDraft.contactNumber">
-          <span *ngIf="!vm.contactAddSaving">Save Contact</span>
-          <span *ngIf="vm.contactAddSaving" class="button-spinner"></span>
-        </button>
-      </div>
+    </div>
+    
+    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+      <button class="secondary-action" type="button" (click)="vm.closeOverviewEditModal()"
+        [disabled]="vm.overviewEditSaving">Cancel</button>
+      <button class="primary-action" type="button" (click)="vm.saveOverviewEdit()" [disabled]="vm.overviewEditSaving">
+        <span *ngIf="!vm.overviewEditSaving">Save Changes</span>
+        <span *ngIf="vm.overviewEditSaving" class="button-spinner"></span>
+      </button>
     </div>
   </div>
 </div>

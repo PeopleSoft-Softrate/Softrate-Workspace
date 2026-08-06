@@ -16,6 +16,30 @@ export interface Lead {
   sheetOrder?: number;
   createdAt: string;
   updatedAt: string;
+  dateOfIncorporation?: string;
+  companyEmail?: string;
+  authorisedCapital?: string;
+  paidUpCapital?: string;
+  companyType?: string;
+  classOfCompany?: string;
+  companyOrigin?: string;
+  roc?: string;
+  directorFirstName?: string;
+  directorLastName?: string;
+  directorMobileNumber?: string;
+  directorEmailAddress?: string;
+  cin?: string;
+  totalObligationOfContribution?: string;
+  addressType?: string;
+  streetAddressLine1?: string;
+  streetAddressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  mainDivisionNo?: string;
+  companyCategory?: string;
+  companySubcategory?: string;
+  registrationNumber?: string;
 }
 
 export interface LeadCompany {

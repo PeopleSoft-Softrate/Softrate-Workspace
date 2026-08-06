@@ -6,6 +6,7 @@ export interface Lead {
   _id?: string;
   companyCode: string;
   assignedEmployeeId: string;
+  assignedEmployeePhone?: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;
@@ -19,6 +20,40 @@ export interface Lead {
   isFavourite?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  cin?: string;
+  dateOfIncorporation?: string;
+  companyEmail?: string;
+  authorisedCapital?: string;
+  paidUpCapital?: string;
+  totalObligationOfContribution?: string;
+  addressType?: string;
+  streetAddressLine1?: string;
+  streetAddressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  directorDin?: string;
+  directorFirstName?: string;
+  directorLastName?: string;
+  directorMobileNumber?: string;
+  directorPermanentAddressLine1?: string;
+  directorPermanentAddressLine2?: string;
+  directorPermanentCity?: string;
+  directorPermanentState?: string;
+  directorPermanentPincode?: string;
+  directorPresentAddressLine1?: string;
+  directorPresentAddressLine2?: string;
+  directorPresentCity?: string;
+  directorPresentState?: string;
+  directorPresentPincode?: string;
+  mainDivisionNo?: string;
+  companyType?: string;
+  classOfCompany?: string;
+  companyCategory?: string;
+  companySubcategory?: string;
+  registrationNumber?: string;
+  companyOrigin?: string;
+  roc?: string;
 }
 
 export interface LeadListQuery {

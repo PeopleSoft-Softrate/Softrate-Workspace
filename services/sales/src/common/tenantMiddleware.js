@@ -156,7 +156,7 @@ function adminOnly(req, res, next) {
  * No JWT required. Attaches req.db and req.models.
  */
 function companyMiddleware(req, res, next) {
-  const companyCode = req.query.companyCode || req.body?.companyCode;
+  const companyCode = req.query.companyCode || req.body?.companyCode || req.headers['x-active-company-code'];
   if (!companyCode) {
     return next(); // let route handler return 400 if it needs companyCode
   }

@@ -71,6 +71,29 @@ interface Lead {
   gstNumber?: string;
   createdAt?: string;
   updatedAt?: string;
+  dateOfIncorporation?: string;
+  companyEmail?: string;
+  authorisedCapital?: string;
+  paidUpCapital?: string;
+  companyType?: string;
+  classOfCompany?: string;
+  companyOrigin?: string;
+  roc?: string;
+  directorFirstName?: string;
+  directorLastName?: string;
+  directorMobileNumber?: string;
+  cin?: string;
+  totalObligationOfContribution?: string;
+  addressType?: string;
+  streetAddressLine1?: string;
+  streetAddressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  mainDivisionNo?: string;
+  companyCategory?: string;
+  companySubcategory?: string;
+  registrationNumber?: string;
 }
 
 interface Bookmark {
@@ -1802,7 +1825,23 @@ invoiceSeal: string = '';
   directorEditOpen = false;
   directorEditLeadId = '';
   directorEditSaving = false;
-  directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  directorEditDraft = {
+    contactName: '',
+    contactNumber: '',
+    directorEmailAddress: '',
+    directorFirstName: '',
+    directorLastName: '',
+    directorMobileNumber: ''
+  };
+
+  // Overview Edit State
+  overviewEditOpen = false;
+  overviewEditSaving = false;
+  overviewEditLeadId = '';
+  overviewEditDraft = {
+    dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '',
+    companyType: '', classOfCompany: '', companyOrigin: '', roc: ''
+  };
   
   // Contact Add State
   contactAddOpen = false;
@@ -4937,7 +4976,10 @@ invoiceSeal: string = '';
     this.directorEditDraft = {
       contactName: String(lead.contactName || '').trim(),
       contactNumber: String(lead.contactNumber || '').trim(),
-      directorEmailAddress: String(lead.directorEmailAddress || '').trim()
+      directorEmailAddress: String(lead.directorEmailAddress || '').trim(),
+      directorFirstName: String(lead.directorFirstName || '').trim(),
+      directorLastName: String(lead.directorLastName || '').trim(),
+      directorMobileNumber: String(lead.directorMobileNumber || '').trim()
     };
     this.directorEditOpen = true;
   }
@@ -4945,7 +4987,14 @@ invoiceSeal: string = '';
   closeDirectorEditModal(): void {
     this.directorEditOpen = false;
     this.directorEditLeadId = '';
-    this.directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+    this.directorEditDraft = {
+      contactName: '',
+      contactNumber: '',
+      directorEmailAddress: '',
+      directorFirstName: '',
+      directorLastName: '',
+      directorMobileNumber: ''
+    };
   }
 
   async saveDirectorEdit(): Promise<void> {
@@ -4953,22 +5002,47 @@ invoiceSeal: string = '';
     this.directorEditSaving = true;
 
     try {
-      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, {
-        contactName: this.directorEditDraft.contactName,
-        contactNumber: this.directorEditDraft.contactNumber,
-        directorEmailAddress: this.directorEditDraft.directorEmailAddress
-      }));
+      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, this.directorEditDraft));
       
       if (response && response.lead) {
         const updatedLead = response.lead;
+        
+        // Update currentDrawerLead
         if (this.currentDrawerLead && this.currentDrawerLead._id === this.directorEditLeadId) {
           this.currentDrawerLead.contactName = updatedLead.contactName;
           this.currentDrawerLead.contactNumber = updatedLead.contactNumber;
           this.currentDrawerLead.directorEmailAddress = updatedLead.directorEmailAddress;
+          this.currentDrawerLead.directorFirstName = updatedLead.directorFirstName;
+          this.currentDrawerLead.directorLastName = updatedLead.directorLastName;
+          this.currentDrawerLead.directorMobileNumber = updatedLead.directorMobileNumber;
         }
+
+        // Update currentSelectedFollowup
         if (this.currentSelectedFollowup && this.currentSelectedFollowup._id === this.directorEditLeadId) {
           this.currentSelectedFollowup.contactName = updatedLead.contactName;
           this.currentSelectedFollowup.contactNumber = updatedLead.contactNumber;
+        }
+
+        // Update allLeads
+        const index = this.allLeads.findIndex(l => l._id === this.directorEditLeadId);
+        if (index !== -1) {
+          this.allLeads[index].contactName = updatedLead.contactName;
+          this.allLeads[index].contactNumber = updatedLead.contactNumber;
+          this.allLeads[index].directorEmailAddress = updatedLead.directorEmailAddress;
+          this.allLeads[index].directorFirstName = updatedLead.directorFirstName;
+          this.allLeads[index].directorLastName = updatedLead.directorLastName;
+          this.allLeads[index].directorMobileNumber = updatedLead.directorMobileNumber;
+          this.allLeads = [...this.allLeads];
+        }
+
+        // Update companyFullContextLead
+        if (this.companyFullContextLead && this.companyFullContextLead._id === this.directorEditLeadId) {
+          this.companyFullContextLead.contactName = updatedLead.contactName;
+          this.companyFullContextLead.contactNumber = updatedLead.contactNumber;
+          this.companyFullContextLead.directorEmailAddress = updatedLead.directorEmailAddress;
+          this.companyFullContextLead.directorFirstName = updatedLead.directorFirstName;
+          this.companyFullContextLead.directorLastName = updatedLead.directorLastName;
+          this.companyFullContextLead.directorMobileNumber = updatedLead.directorMobileNumber;
         }
       }
       this.closeDirectorEditModal();
@@ -4978,6 +5052,69 @@ invoiceSeal: string = '';
       alert('Failed to update director details');
     } finally {
       this.directorEditSaving = false;
+    }
+  }
+
+  // Overview Edit Methods
+  openOverviewEditModal(): void {
+    const lead = this.companyFullViewLead();
+    if (!lead || !lead._id) return;
+    this.overviewEditLeadId = lead._id;
+
+    this.overviewEditDraft = {
+      dateOfIncorporation: String(lead.dateOfIncorporation || '').trim(),
+      companyEmail: String(lead.companyEmail || '').trim(),
+      authorisedCapital: String(lead.authorisedCapital || '').trim(),
+      paidUpCapital: String(lead.paidUpCapital || '').trim(),
+      companyType: String(lead.companyType || '').trim(),
+      classOfCompany: String(lead.classOfCompany || '').trim(),
+      companyOrigin: String(lead.companyOrigin || '').trim(),
+      roc: String(lead.roc || '').trim()
+    };
+    this.overviewEditOpen = true;
+  }
+
+  closeOverviewEditModal(): void {
+    this.overviewEditOpen = false;
+    this.overviewEditLeadId = '';
+    this.overviewEditDraft = {
+      dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '',
+      companyType: '', classOfCompany: '', companyOrigin: '', roc: ''
+    };
+  }
+
+  async saveOverviewEdit(): Promise<void> {
+    if (!this.overviewEditLeadId || this.overviewEditSaving) return;
+    this.overviewEditSaving = true;
+
+    try {
+      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.overviewEditLeadId}/overview`, this.overviewEditDraft));
+      if (response && response.lead) {
+        const updatedLead = response.lead;
+        
+        // Update in-memory allLeads array
+        const index = this.allLeads.findIndex(l => l._id === this.overviewEditLeadId);
+        if (index !== -1) {
+          Object.keys(this.overviewEditDraft).forEach(key => {
+            (this.allLeads[index] as any)[key] = (updatedLead as any)[key];
+          });
+          this.allLeads = [...this.allLeads];
+        }
+
+        // Also update companyFullContextLead
+        if (this.companyFullContextLead && this.companyFullContextLead._id === this.overviewEditLeadId) {
+          Object.keys(this.overviewEditDraft).forEach(key => {
+            (this.companyFullContextLead as any)[key] = (updatedLead as any)[key];
+          });
+        }
+      }
+      this.closeOverviewEditModal();
+      alert('Company details updated successfully');
+    } catch (error) {
+      console.error('Failed to update company overview', error);
+      alert('Failed to update company details');
+    } finally {
+      this.overviewEditSaving = false;
     }
   }
 
@@ -5279,6 +5416,29 @@ invoiceSeal: string = '';
       sheetOrder: lead.sheetOrder,
       createdAt: lead.createdAt,
       updatedAt: lead.updatedAt,
+      dateOfIncorporation: lead.dateOfIncorporation,
+      companyEmail: lead.companyEmail,
+      authorisedCapital: lead.authorisedCapital,
+      paidUpCapital: lead.paidUpCapital,
+      companyType: lead.companyType,
+      classOfCompany: lead.classOfCompany,
+      companyOrigin: lead.companyOrigin,
+      roc: lead.roc,
+      directorFirstName: lead.directorFirstName,
+      directorLastName: lead.directorLastName,
+      directorMobileNumber: lead.directorMobileNumber,
+      cin: lead.cin,
+      totalObligationOfContribution: lead.totalObligationOfContribution,
+      addressType: lead.addressType,
+      streetAddressLine1: lead.streetAddressLine1,
+      streetAddressLine2: lead.streetAddressLine2,
+      city: lead.city,
+      state: lead.state,
+      postalCode: lead.postalCode,
+      mainDivisionNo: lead.mainDivisionNo,
+      companyCategory: lead.companyCategory,
+      companySubcategory: lead.companySubcategory,
+      registrationNumber: lead.registrationNumber,
     };
   }
 
@@ -5301,6 +5461,30 @@ invoiceSeal: string = '';
       sheetOrder: lead.sheetOrder,
       createdAt: lead.createdAt || '',
       updatedAt: lead.updatedAt || '',
+      dateOfIncorporation: lead.dateOfIncorporation,
+      companyEmail: lead.companyEmail,
+      authorisedCapital: lead.authorisedCapital,
+      paidUpCapital: lead.paidUpCapital,
+      companyType: lead.companyType,
+      classOfCompany: lead.classOfCompany,
+      companyOrigin: lead.companyOrigin,
+      roc: lead.roc,
+      directorFirstName: lead.directorFirstName,
+      directorLastName: lead.directorLastName,
+      directorMobileNumber: lead.directorMobileNumber,
+      directorEmailAddress: lead.directorEmailAddress,
+      cin: lead.cin,
+      totalObligationOfContribution: lead.totalObligationOfContribution,
+      addressType: lead.addressType,
+      streetAddressLine1: lead.streetAddressLine1,
+      streetAddressLine2: lead.streetAddressLine2,
+      city: lead.city,
+      state: lead.state,
+      postalCode: lead.postalCode,
+      mainDivisionNo: lead.mainDivisionNo,
+      companyCategory: lead.companyCategory,
+      companySubcategory: lead.companySubcategory,
+      registrationNumber: lead.registrationNumber,
     };
   }
 

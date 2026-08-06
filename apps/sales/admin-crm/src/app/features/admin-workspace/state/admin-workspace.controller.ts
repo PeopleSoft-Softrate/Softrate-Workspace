@@ -725,12 +725,34 @@ export abstract class AdminWorkspaceController implements OnInit {
   directorEditOpen = false;
   directorEditLeadId = '';
   directorEditSaving = false;
-  directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  directorEditDraft: any = {
+    contactName: '', contactNumber: '', directorEmailAddress: '',
+    directorDin: '', directorMobileNumber: '',
+    directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+    directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: ''
+  };
   
   // Contact Add State
   contactAddOpen = false;
   contactAddSaving = false;
-  contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  contactAddDraft: any = {
+    contactName: '', contactNumber: '', directorEmailAddress: '',
+    directorDin: '', directorMobileNumber: '',
+    directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+    directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: ''
+  };
+  
+  // Overview Edit State
+  overviewEditOpen = false;
+  overviewEditSaving = false;
+  overviewEditLeadId = '';
+  overviewEditDraft: any = {
+    cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '',
+    totalObligationOfContribution: '', addressType: '', streetAddressLine1: '', streetAddressLine2: '',
+    city: '', state: '', postalCode: '', mainDivisionNo: '', companyType: '', classOfCompany: '',
+    companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+  };
+  
   rmCountdown = '';
 
   openLogin(): void { this.authPaymentWorkflow.openLogin(this); }
@@ -958,9 +980,25 @@ export abstract class AdminWorkspaceController implements OnInit {
   leadUploadStep: 'idle' | 'mapping' | 'uploading' = 'idle';
   parsedExcelData: any[] = [];
   excelHeaders: string[] = [];
-  leadColumnMapping = { firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '' };
+  leadColumnMapping = { 
+    firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '',
+    cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '', totalObligationOfContribution: '',
+    addressType: '', streetAddressLine1: '', streetAddressLine2: '', city: '', state: '', postalCode: '',
+    directorDin: '', directorFirstName: '', directorLastName: '', directorMobileNumber: '',
+    directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+    directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: '',
+    mainDivisionNo: '', companyType: '', classOfCompany: '', companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+  };
   batchDefaultStatus = 'New';
-  newSingleLead = { firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', status: 'New', companyDescription: '' };
+  newSingleLead = { 
+    firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', status: 'New', companyDescription: '',
+    cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '', totalObligationOfContribution: '',
+    addressType: '', streetAddressLine1: '', streetAddressLine2: '', city: '', state: '', postalCode: '',
+    directorDin: '', directorFirstName: '', directorLastName: '', directorMobileNumber: '',
+    directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+    directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: '',
+    mainDivisionNo: '', companyType: '', classOfCompany: '', companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+  };
   addLeadLoading = false;
   addLeadError = '';
   addLeadSuccess = '';
@@ -5156,6 +5194,13 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   formatInvoiceMoney(value: number): string { return this.invoiceQuotationWorkflow.formatInvoiceMoney(this, value); }
   
+  formatDirectorAddress(addr1?: string, addr2?: string, city?: string, state?: string, pin?: string): string {
+    return [addr1, addr2, city, state, pin]
+      .map(v => v ? String(v).trim() : '')
+      .filter(Boolean)
+      .join(', ');
+  }
+
   parseMoneyInput(value: string | number): number {
     if (typeof value === 'number') return value;
     return Number(value.replace(/,/g, '')) || 0;
@@ -5269,6 +5314,12 @@ export abstract class AdminWorkspaceController implements OnInit {
       return this.crmClientContacts(this.selectedCrmClient)[0] || null;
     }
 
+    if (this.selectedLeadCompany) {
+      return this.leadsInSelectedCompany[0]
+        || this.allLeads.find((lead) => this.normalizeCompanyName(lead?.leadCompanyName) === this.normalizeCompanyName(this.selectedLeadCompany))
+        || null;
+    }
+
     return this.companyFullViewLead();
   }
 
@@ -5300,14 +5351,12 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   closeCompanyFullView(): void {
     this.companyFullViewOpen = false;
+    this.resetCompanyFullViewState();
     this.companyRemarkLead = null;
     this.companyFullContextLead = null;
     this.companyFullActiveSection = 'overview';
     this.adminCompanyFullSection = 'overview';
     this.clearCompanyFullRemarkMenuClose();
-    this.companyFullRemarkMenuOpen = false;
-    this.companyFullRemarkDraft = '';
-    this.companyFullNoteDraft = '';
   }
 
   openCompanyRemarkHistory(lead: Lead): void {
@@ -7151,6 +7200,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const payload: Partial<Lead> = {
       companyCode: this.dashboardCode,
       assignedEmployeeId: this.selectedEmployee!._id!,
+      assignedEmployeePhone: this.selectedEmployee!.mobile,
       leadCompanyName: this.newSingleLead.leadCompanyName.trim(),
       contactName: contactName,
       contactNumber: this.newSingleLead.contactNumber.trim(),
@@ -7160,6 +7210,40 @@ export abstract class AdminWorkspaceController implements OnInit {
       remarks: this.newSingleLead.remarks ? [this.newSingleLead.remarks.trim()] : [],
       status: this.newSingleLead.status,
       companyDescription: this.newSingleLead.companyDescription.trim(),
+      cin: this.newSingleLead.cin.trim(),
+      dateOfIncorporation: this.newSingleLead.dateOfIncorporation.trim(),
+      companyEmail: this.newSingleLead.companyEmail.trim(),
+      authorisedCapital: this.newSingleLead.authorisedCapital.trim(),
+      paidUpCapital: this.newSingleLead.paidUpCapital.trim(),
+      totalObligationOfContribution: this.newSingleLead.totalObligationOfContribution.trim(),
+      addressType: this.newSingleLead.addressType.trim(),
+      streetAddressLine1: this.newSingleLead.streetAddressLine1.trim(),
+      streetAddressLine2: this.newSingleLead.streetAddressLine2.trim(),
+      city: this.newSingleLead.city.trim(),
+      state: this.newSingleLead.state.trim(),
+      postalCode: this.newSingleLead.postalCode.trim(),
+      directorDin: this.newSingleLead.directorDin.trim(),
+      directorFirstName: this.newSingleLead.directorFirstName.trim(),
+      directorLastName: this.newSingleLead.directorLastName.trim(),
+      directorMobileNumber: this.newSingleLead.directorMobileNumber.trim(),
+      directorPermanentAddressLine1: this.newSingleLead.directorPermanentAddressLine1.trim(),
+      directorPermanentAddressLine2: this.newSingleLead.directorPermanentAddressLine2.trim(),
+      directorPermanentCity: this.newSingleLead.directorPermanentCity.trim(),
+      directorPermanentState: this.newSingleLead.directorPermanentState.trim(),
+      directorPermanentPincode: this.newSingleLead.directorPermanentPincode.trim(),
+      directorPresentAddressLine1: this.newSingleLead.directorPresentAddressLine1.trim(),
+      directorPresentAddressLine2: this.newSingleLead.directorPresentAddressLine2.trim(),
+      directorPresentCity: this.newSingleLead.directorPresentCity.trim(),
+      directorPresentState: this.newSingleLead.directorPresentState.trim(),
+      directorPresentPincode: this.newSingleLead.directorPresentPincode.trim(),
+      mainDivisionNo: this.newSingleLead.mainDivisionNo.trim(),
+      companyType: this.newSingleLead.companyType.trim(),
+      classOfCompany: this.newSingleLead.classOfCompany.trim(),
+      companyCategory: this.newSingleLead.companyCategory.trim(),
+      companySubcategory: this.newSingleLead.companySubcategory.trim(),
+      registrationNumber: this.newSingleLead.registrationNumber.trim(),
+      companyOrigin: this.newSingleLead.companyOrigin.trim(),
+      roc: this.newSingleLead.roc.trim(),
     };
 
     this.leadService.addSingleLead(payload).subscribe({
@@ -7168,7 +7252,15 @@ export abstract class AdminWorkspaceController implements OnInit {
         if (res.success) {
           this.invalidateAdminDashboardCaches();
           this.addLeadSuccess = 'Lead added successfully!';
-          this.newSingleLead = { firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', status: 'New', companyDescription: '' };
+          this.newSingleLead = { 
+            firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', status: 'New', companyDescription: '',
+            cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '', totalObligationOfContribution: '',
+            addressType: '', streetAddressLine1: '', streetAddressLine2: '', city: '', state: '', postalCode: '',
+            directorDin: '', directorFirstName: '', directorLastName: '', directorMobileNumber: '',
+            directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+            directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: '',
+            mainDivisionNo: '', companyType: '', classOfCompany: '', companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+          };
           this.fetchEmpLeads();
           setTimeout(() => this.addLeadSuccess = '', 3000);
         } else {
@@ -7192,7 +7284,15 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.leadUploadStep = 'mapping';
     this.parsedExcelData = [];
     this.excelHeaders = [];
-    this.leadColumnMapping = { firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '' };
+    this.leadColumnMapping = { 
+      firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '',
+      cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '', totalObligationOfContribution: '',
+      addressType: '', streetAddressLine1: '', streetAddressLine2: '', city: '', state: '', postalCode: '',
+      directorDin: '', directorFirstName: '', directorLastName: '', directorMobileNumber: '',
+      directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+      directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: '',
+      mainDivisionNo: '', companyType: '', classOfCompany: '', companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+    };
     this.batchDefaultStatus = 'New';
 
     const reader = new FileReader();
@@ -7229,15 +7329,53 @@ export abstract class AdminWorkspaceController implements OnInit {
           this.parsedExcelData.push(rowData);
         }
 
-        // Auto-attempt mapping if headers match standard names
-        this.leadColumnMapping.firstName = this.excelHeaders.find(h => ['first name', 'firstname', 'name', 'contact name', 'directorfirstname'].includes(h.toLowerCase())) || this.excelHeaders[0];
-        this.leadColumnMapping.lastName = this.excelHeaders.find(h => ['last name', 'lastname', 'surname', 'second name'].includes(h.toLowerCase())) || '';
-        this.leadColumnMapping.contactNumber = this.excelHeaders.find(h => ['number', 'phone', 'mobile', 'contact number', 'directormobilenumber'].includes(h.toLowerCase())) || this.excelHeaders[1] || '';
-        this.leadColumnMapping.leadCompanyName = this.excelHeaders.find(h => ['company', 'company name', 'business'].includes(h.toLowerCase())) || this.excelHeaders[2] || '';
-        this.leadColumnMapping.mainDivisionDescription = this.excelHeaders.find(h => ['maindivisiondescription', 'division'].includes(h.toLowerCase())) || '';
-        this.leadColumnMapping.directorEmailAddress = this.excelHeaders.find(h => ['directoremailaddress', 'email'].includes(h.toLowerCase())) || '';
-        this.leadColumnMapping.remarks = this.excelHeaders.find(h => ['remarks', 'notes'].includes(h.toLowerCase())) || '';
-        this.leadColumnMapping.companyDescription = this.excelHeaders.find(h => ['company description', 'description'].includes(h.toLowerCase())) || '';
+        const tryMap = (keys: string[]) => this.excelHeaders.find(h => {
+          const cleanHeader = h.toLowerCase().replace(/\*/g, '').trim();
+          return keys.includes(cleanHeader);
+        }) || '';
+        
+        this.leadColumnMapping.firstName = tryMap(['first name', 'firstname', 'name', 'contact name', 'director first name', 'directorfirstname']);
+        this.leadColumnMapping.lastName = tryMap(['last name', 'lastname', 'surname', 'second name']);
+        this.leadColumnMapping.contactNumber = tryMap(['contact number', 'number', 'phone', 'mobile', 'directormobilenumber', 'director mobile number']);
+        this.leadColumnMapping.leadCompanyName = tryMap(['company name', 'company', 'business', 'lead company name']);
+        this.leadColumnMapping.mainDivisionDescription = tryMap(['main division', 'main division description', 'division']);
+        this.leadColumnMapping.directorEmailAddress = tryMap(['email', 'email address', 'directoremailaddress', 'director email address']);
+        this.leadColumnMapping.remarks = tryMap(['remarks', 'notes']);
+        this.leadColumnMapping.companyDescription = tryMap(['company description', 'description']);
+        this.leadColumnMapping.cin = tryMap(['cin', 'company identification number']);
+        this.leadColumnMapping.dateOfIncorporation = tryMap(['date of incorporation', 'incorporation date', 'doi']);
+        this.leadColumnMapping.companyEmail = tryMap(['company email', 'company email address']);
+        this.leadColumnMapping.authorisedCapital = tryMap(['authorised capital', 'authorized capital']);
+        this.leadColumnMapping.paidUpCapital = tryMap(['paidup capital', 'paid up capital']);
+        this.leadColumnMapping.totalObligationOfContribution = tryMap(['total obligation of contribution', 'total obligation']);
+        this.leadColumnMapping.addressType = tryMap(['address type']);
+        this.leadColumnMapping.streetAddressLine1 = tryMap(['street address line 1', 'address line 1', 'address 1']);
+        this.leadColumnMapping.streetAddressLine2 = tryMap(['street address line 2', 'address line 2', 'address 2']);
+        this.leadColumnMapping.city = tryMap(['city']);
+        this.leadColumnMapping.state = tryMap(['state']);
+        this.leadColumnMapping.postalCode = tryMap(['postal code', 'pincode', 'zip code', 'zip']);
+        this.leadColumnMapping.directorDin = tryMap(['director din', 'din']);
+        this.leadColumnMapping.directorFirstName = tryMap(['director first name']);
+        this.leadColumnMapping.directorLastName = tryMap(['director last name']);
+        this.leadColumnMapping.directorMobileNumber = tryMap(['director mobile number', 'director mobile']);
+        this.leadColumnMapping.directorPermanentAddressLine1 = tryMap(['dir. perm address line 1', 'director permanent address line 1']);
+        this.leadColumnMapping.directorPermanentAddressLine2 = tryMap(['dir. perm address line 2', 'director permanent address line 2']);
+        this.leadColumnMapping.directorPermanentCity = tryMap(['dir. perm city', 'director permanent city']);
+        this.leadColumnMapping.directorPermanentState = tryMap(['dir. perm state', 'director permanent state']);
+        this.leadColumnMapping.directorPermanentPincode = tryMap(['dir. perm pincode', 'director permanent pincode']);
+        this.leadColumnMapping.directorPresentAddressLine1 = tryMap(['dir. pres address line 1', 'director present address line 1']);
+        this.leadColumnMapping.directorPresentAddressLine2 = tryMap(['dir. pres address line 2', 'director present address line 2']);
+        this.leadColumnMapping.directorPresentCity = tryMap(['dir. pres city', 'director present city']);
+        this.leadColumnMapping.directorPresentState = tryMap(['dir. pres state', 'director present state']);
+        this.leadColumnMapping.directorPresentPincode = tryMap(['dir. pres pincode', 'director present pincode']);
+        this.leadColumnMapping.mainDivisionNo = tryMap(['main division no', 'division no']);
+        this.leadColumnMapping.companyType = tryMap(['company type']);
+        this.leadColumnMapping.classOfCompany = tryMap(['class of company']);
+        this.leadColumnMapping.companyCategory = tryMap(['company category']);
+        this.leadColumnMapping.companySubcategory = tryMap(['company subcategory']);
+        this.leadColumnMapping.registrationNumber = tryMap(['registration number', 'reg no']);
+        this.leadColumnMapping.companyOrigin = tryMap(['company origin', 'origin']);
+        this.leadColumnMapping.roc = tryMap(['roc']);
 
       } catch (err) {
         this.addLeadError = 'Invalid Excel format.';
@@ -7254,7 +7392,15 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.parsedExcelData = [];
     this.excelHeaders = [];
     this.leadImportRowErrors = [];
-    this.leadColumnMapping = { firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '' };
+    this.leadColumnMapping = { 
+      firstName: '', lastName: '', contactNumber: '', leadCompanyName: '', mainDivisionDescription: '', directorEmailAddress: '', remarks: '', companyDescription: '',
+      cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '', totalObligationOfContribution: '',
+      addressType: '', streetAddressLine1: '', streetAddressLine2: '', city: '', state: '', postalCode: '',
+      directorDin: '', directorFirstName: '', directorLastName: '', directorMobileNumber: '',
+      directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+      directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: '',
+      mainDivisionNo: '', companyType: '', classOfCompany: '', companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+    };
     this.batchDefaultStatus = 'New';
   }
 
@@ -7295,10 +7441,24 @@ export abstract class AdminWorkspaceController implements OnInit {
         const remarks = this.leadColumnMapping.remarks ? (row[this.leadColumnMapping.remarks]?.toString().trim() || '') : '';
         const status = this.batchDefaultStatus;
         const companyDescription = this.leadColumnMapping.companyDescription ? (row[this.leadColumnMapping.companyDescription]?.toString().trim() || '') : '';
+        
+        // Extract new fields safely
+        const extractField = (key: keyof typeof this.leadColumnMapping) => 
+          this.leadColumnMapping[key] ? (row[this.leadColumnMapping[key]]?.toString().trim() || '') : '';
+
+        // Excel stores dates as serial numbers (e.g. 45658). Convert to readable string.
+        const parseExcelDate = (val: string): string => {
+          if (!val) return '';
+          const num = Number(val);
+          if (isNaN(num) || num < 10000) return val;
+          const date = new Date((num - 25569) * 86400 * 1000);
+          return isNaN(date.getTime()) ? val : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        };
 
         mappedLeads.push({
           companyCode: this.dashboardCode,
           assignedEmployeeId: this.selectedEmployee!._id!,
+          assignedEmployeePhone: this.selectedEmployee!.mobile,
           contactNumber,
           leadCompanyName,
           contactName,
@@ -7308,6 +7468,40 @@ export abstract class AdminWorkspaceController implements OnInit {
           remarks: remarks ? [remarks] : [],
           status,
           companyDescription,
+          cin: extractField('cin'),
+          dateOfIncorporation: parseExcelDate(extractField('dateOfIncorporation')),
+          companyEmail: extractField('companyEmail'),
+          authorisedCapital: extractField('authorisedCapital'),
+          paidUpCapital: extractField('paidUpCapital'),
+          totalObligationOfContribution: extractField('totalObligationOfContribution'),
+          addressType: extractField('addressType'),
+          streetAddressLine1: extractField('streetAddressLine1'),
+          streetAddressLine2: extractField('streetAddressLine2'),
+          city: extractField('city'),
+          state: extractField('state'),
+          postalCode: extractField('postalCode'),
+          directorDin: extractField('directorDin'),
+          directorFirstName: extractField('directorFirstName'),
+          directorLastName: extractField('directorLastName'),
+          directorMobileNumber: extractField('directorMobileNumber'),
+          directorPermanentAddressLine1: extractField('directorPermanentAddressLine1'),
+          directorPermanentAddressLine2: extractField('directorPermanentAddressLine2'),
+          directorPermanentCity: extractField('directorPermanentCity'),
+          directorPermanentState: extractField('directorPermanentState'),
+          directorPermanentPincode: extractField('directorPermanentPincode'),
+          directorPresentAddressLine1: extractField('directorPresentAddressLine1'),
+          directorPresentAddressLine2: extractField('directorPresentAddressLine2'),
+          directorPresentCity: extractField('directorPresentCity'),
+          directorPresentState: extractField('directorPresentState'),
+          directorPresentPincode: extractField('directorPresentPincode'),
+          mainDivisionNo: extractField('mainDivisionNo'),
+          companyType: extractField('companyType'),
+          classOfCompany: extractField('classOfCompany'),
+          companyCategory: extractField('companyCategory'),
+          companySubcategory: extractField('companySubcategory'),
+          registrationNumber: extractField('registrationNumber'),
+          companyOrigin: extractField('companyOrigin'),
+          roc: extractField('roc'),
           isStarred: false,
           isFavourite: false,
           createdAt: new Date().toISOString()
@@ -7439,7 +7633,19 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.directorEditDraft = {
       contactName: String(lead.contactName || '').trim(),
       contactNumber: String(lead.contactNumber || '').trim(),
-      directorEmailAddress: String(lead.directorEmailAddress || '').trim()
+      directorEmailAddress: String(lead.directorEmailAddress || '').trim(),
+      directorDin: String(lead.directorDin || '').trim(),
+      directorMobileNumber: String(lead.directorMobileNumber || '').trim(),
+      directorPermanentAddressLine1: String(lead.directorPermanentAddressLine1 || '').trim(),
+      directorPermanentAddressLine2: String(lead.directorPermanentAddressLine2 || '').trim(),
+      directorPermanentCity: String(lead.directorPermanentCity || '').trim(),
+      directorPermanentState: String(lead.directorPermanentState || '').trim(),
+      directorPermanentPincode: String(lead.directorPermanentPincode || '').trim(),
+      directorPresentAddressLine1: String(lead.directorPresentAddressLine1 || '').trim(),
+      directorPresentAddressLine2: String(lead.directorPresentAddressLine2 || '').trim(),
+      directorPresentCity: String(lead.directorPresentCity || '').trim(),
+      directorPresentState: String(lead.directorPresentState || '').trim(),
+      directorPresentPincode: String(lead.directorPresentPincode || '').trim()
     };
     this.directorEditOpen = true;
   }
@@ -7447,7 +7653,87 @@ export abstract class AdminWorkspaceController implements OnInit {
   closeDirectorEditModal(): void {
     this.directorEditOpen = false;
     this.directorEditLeadId = '';
-    this.directorEditDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+    this.directorEditDraft = {
+      contactName: '', contactNumber: '', directorEmailAddress: '',
+      directorDin: '', directorMobileNumber: '',
+      directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+      directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: ''
+    };
+  }
+
+  // Overview Edit Methods
+  openOverviewEditModal(): void {
+    const lead = this.companyFullViewLead();
+    if (!lead || !lead._id) return;
+    this.overviewEditLeadId = lead._id;
+    
+    this.overviewEditDraft = {
+      cin: String(lead.cin || '').trim(),
+      dateOfIncorporation: String(lead.dateOfIncorporation || '').trim(),
+      companyEmail: String(lead.companyEmail || '').trim(),
+      authorisedCapital: String(lead.authorisedCapital || '').trim(),
+      paidUpCapital: String(lead.paidUpCapital || '').trim(),
+      totalObligationOfContribution: String(lead.totalObligationOfContribution || '').trim(),
+      addressType: String(lead.addressType || '').trim(),
+      streetAddressLine1: String(lead.streetAddressLine1 || '').trim(),
+      streetAddressLine2: String(lead.streetAddressLine2 || '').trim(),
+      city: String(lead.city || '').trim(),
+      state: String(lead.state || '').trim(),
+      postalCode: String(lead.postalCode || '').trim(),
+      mainDivisionNo: String(lead.mainDivisionNo || '').trim(),
+      companyType: String(lead.companyType || '').trim(),
+      classOfCompany: String(lead.classOfCompany || '').trim(),
+      companyCategory: String(lead.companyCategory || '').trim(),
+      companySubcategory: String(lead.companySubcategory || '').trim(),
+      registrationNumber: String(lead.registrationNumber || '').trim(),
+      companyOrigin: String(lead.companyOrigin || '').trim(),
+      roc: String(lead.roc || '').trim()
+    };
+    this.overviewEditOpen = true;
+  }
+
+  closeOverviewEditModal(): void {
+    this.overviewEditOpen = false;
+    this.overviewEditLeadId = '';
+    this.overviewEditDraft = {
+      cin: '', dateOfIncorporation: '', companyEmail: '', authorisedCapital: '', paidUpCapital: '',
+      totalObligationOfContribution: '', addressType: '', streetAddressLine1: '', streetAddressLine2: '',
+      city: '', state: '', postalCode: '', mainDivisionNo: '', companyType: '', classOfCompany: '',
+      companyCategory: '', companySubcategory: '', registrationNumber: '', companyOrigin: '', roc: ''
+    };
+  }
+
+  async saveOverviewEdit(): Promise<void> {
+    if (!this.overviewEditLeadId || this.overviewEditSaving) return;
+    this.overviewEditSaving = true;
+
+    try {
+      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.overviewEditLeadId}/overview`, this.overviewEditDraft));
+      if (response && response.lead) {
+        const updatedLead = response.lead;
+        
+        // Update the cache/in-memory leads for the active company
+        this.companyFullRows.forEach(row => {
+          Object.keys(this.overviewEditDraft).forEach(key => {
+            (row as any)[key] = (updatedLead as any)[key];
+          });
+        });
+
+        // Also update companyFullContextLead
+        if (this.companyFullContextLead) {
+          Object.keys(this.overviewEditDraft).forEach(key => {
+            (this.companyFullContextLead as any)[key] = (updatedLead as any)[key];
+          });
+        }
+      }
+      this.closeOverviewEditModal();
+      alert('Company details updated successfully');
+    } catch (error) {
+      console.error('Failed to update company overview details', error);
+      alert('Failed to update company details');
+    } finally {
+      this.overviewEditSaving = false;
+    }
   }
 
   async saveDirectorEdit(): Promise<void> {
@@ -7455,19 +7741,15 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.directorEditSaving = true;
 
     try {
-      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, {
-        contactName: this.directorEditDraft.contactName,
-        contactNumber: this.directorEditDraft.contactNumber,
-        directorEmailAddress: this.directorEditDraft.directorEmailAddress
-      }));
+      const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, this.directorEditDraft));
       if (response && response.lead) {
         const updatedLead = response.lead;
         // If updating within company full rows
         const rowIndex = this.companyFullRows.findIndex(r => r._id === this.directorEditLeadId);
         if (rowIndex !== -1) {
-          this.companyFullRows[rowIndex].contactName = updatedLead.contactName;
-          this.companyFullRows[rowIndex].contactNumber = updatedLead.contactNumber;
-          this.companyFullRows[rowIndex].directorEmailAddress = updatedLead.directorEmailAddress;
+          Object.keys(this.directorEditDraft).forEach(key => {
+            (this.companyFullRows[rowIndex] as any)[key] = (updatedLead as any)[key];
+          });
         }
       }
       this.closeDirectorEditModal();
@@ -7481,13 +7763,23 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   openContactAddModal(): void {
-    this.contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+    this.contactAddDraft = {
+      contactName: '', contactNumber: '', directorEmailAddress: '',
+      directorDin: '', directorMobileNumber: '',
+      directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+      directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: ''
+    };
     this.contactAddOpen = true;
   }
 
   closeContactAddModal(): void {
     this.contactAddOpen = false;
-    this.contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+    this.contactAddDraft = {
+      contactName: '', contactNumber: '', directorEmailAddress: '',
+      directorDin: '', directorMobileNumber: '',
+      directorPermanentAddressLine1: '', directorPermanentAddressLine2: '', directorPermanentCity: '', directorPermanentState: '', directorPermanentPincode: '',
+      directorPresentAddressLine1: '', directorPresentAddressLine2: '', directorPresentCity: '', directorPresentState: '', directorPresentPincode: ''
+    };
   }
 
   async saveContactAdd(): Promise<void> {
@@ -7507,9 +7799,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         companyCode,
         assignedEmployeeId,
         leadCompanyName,
-        contactName: this.contactAddDraft.contactName,
-        contactNumber: this.contactAddDraft.contactNumber,
-        directorEmailAddress: this.contactAddDraft.directorEmailAddress
+        ...this.contactAddDraft
       }));
       
       if (response && response.lead) {

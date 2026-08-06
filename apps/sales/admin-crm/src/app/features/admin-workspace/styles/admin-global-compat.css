@@ -2046,6 +2046,8 @@
 .admin-company-full-modal .company-full-contact-main span,
 .admin-company-full-modal .company-full-record-main span,
 .admin-company-full-modal .company-full-record-meta span {
+  display: block !important;
+  max-width: 100% !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;

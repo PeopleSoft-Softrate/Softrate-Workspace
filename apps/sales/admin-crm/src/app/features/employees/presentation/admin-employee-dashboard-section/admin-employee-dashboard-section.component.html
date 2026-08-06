@@ -563,6 +563,244 @@
                     <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
                   </select>
                 </label>
+                <label class="mini-field">
+                  <span>CIN</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.cin">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Date Of Incorporation</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.dateOfIncorporation">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Company Email</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.companyEmail">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Authorised Capital</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.authorisedCapital">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>PaidUp Capital</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.paidUpCapital">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Total Obligation Of Contribution</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.totalObligationOfContribution">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Address Type</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.addressType">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Street Address Line 1</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.streetAddressLine1">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Street Address Line 2</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.streetAddressLine2">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>City</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.city">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>State</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.state">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Postal Code</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.postalCode">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Director DIN</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorDin">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Director First Name</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorFirstName">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Director Last Name</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorLastName">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Director Mobile Number</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorMobileNumber">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm Address Line 1</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPermanentAddressLine1">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm Address Line 2</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPermanentAddressLine2">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm City</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPermanentCity">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm State</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPermanentState">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm Pincode</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPermanentPincode">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres Address Line 1</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPresentAddressLine1">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres Address Line 2</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPresentAddressLine2">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres City</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPresentCity">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres State</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPresentState">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres Pincode</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.directorPresentPincode">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Main Division No</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.mainDivisionNo">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Company Type</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.companyType">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Class Of Company</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.classOfCompany">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Company Category</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.companyCategory">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Company Subcategory</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.companySubcategory">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Registration Number</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.registrationNumber">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>Company Origin</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.companyOrigin">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
+                <label class="mini-field">
+                  <span>ROC</span>
+                  <select class="field-select" [(ngModel)]="leadColumnMapping.roc">
+                    <option value="">Select column</option>
+                    <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+                  </select>
+                </label>
               </div>
 
               <div class="admin-employee-modal-actions">
@@ -623,6 +861,142 @@
                 <label class="mini-field admin-employee-modal-grid-span">
                   <span>Company Description</span>
                   <textarea class="field-input admin-employee-modal-textarea" [(ngModel)]="newSingleLead.companyDescription" placeholder="Company description"></textarea>
+                </label>
+                <label class="mini-field">
+                  <span>CIN</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.cin">
+                </label>
+                <label class="mini-field">
+                  <span>Date Of Incorporation</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.dateOfIncorporation">
+                </label>
+                <label class="mini-field">
+                  <span>Company Email</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.companyEmail">
+                </label>
+                <label class="mini-field">
+                  <span>Authorised Capital</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.authorisedCapital">
+                </label>
+                <label class="mini-field">
+                  <span>PaidUp Capital</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.paidUpCapital">
+                </label>
+                <label class="mini-field">
+                  <span>Total Obligation</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.totalObligationOfContribution">
+                </label>
+                <label class="mini-field">
+                  <span>Address Type</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.addressType">
+                </label>
+                <label class="mini-field">
+                  <span>Street Address Line 1</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.streetAddressLine1">
+                </label>
+                <label class="mini-field">
+                  <span>Street Address Line 2</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.streetAddressLine2">
+                </label>
+                <label class="mini-field">
+                  <span>City</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.city">
+                </label>
+                <label class="mini-field">
+                  <span>State</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.state">
+                </label>
+                <label class="mini-field">
+                  <span>Postal Code</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.postalCode">
+                </label>
+                <label class="mini-field">
+                  <span>Director DIN</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorDin">
+                </label>
+                <label class="mini-field">
+                  <span>Director First Name</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorFirstName">
+                </label>
+                <label class="mini-field">
+                  <span>Director Last Name</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorLastName">
+                </label>
+                <label class="mini-field">
+                  <span>Director Mobile Number</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorMobileNumber">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm Address Line 1</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPermanentAddressLine1">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm Address Line 2</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPermanentAddressLine2">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm City</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPermanentCity">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm State</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPermanentState">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Perm Pincode</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPermanentPincode">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres Address Line 1</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPresentAddressLine1">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres Address Line 2</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPresentAddressLine2">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres City</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPresentCity">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres State</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPresentState">
+                </label>
+                <label class="mini-field">
+                  <span>Dir. Pres Pincode</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.directorPresentPincode">
+                </label>
+                <label class="mini-field">
+                  <span>Main Division No</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.mainDivisionNo">
+                </label>
+                <label class="mini-field">
+                  <span>Company Type</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.companyType">
+                </label>
+                <label class="mini-field">
+                  <span>Class Of Company</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.classOfCompany">
+                </label>
+                <label class="mini-field">
+                  <span>Company Category</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.companyCategory">
+                </label>
+                <label class="mini-field">
+                  <span>Company Subcategory</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.companySubcategory">
+                </label>
+                <label class="mini-field">
+                  <span>Registration Number</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.registrationNumber">
+                </label>
+                <label class="mini-field">
+                  <span>Company Origin</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.companyOrigin">
+                </label>
+                <label class="mini-field">
+                  <span>ROC</span>
+                  <input class="field-input" type="text" [(ngModel)]="newSingleLead.roc">
                 </label>
               </div>
 

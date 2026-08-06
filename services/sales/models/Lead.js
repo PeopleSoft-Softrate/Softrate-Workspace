@@ -23,6 +23,47 @@ const leadSchema = new mongoose.Schema({
   setLabelLower:       { type: String, default: '' },
   isArchived:          { type: Boolean, default: false, index: true },
   importBatchId:       { type: mongoose.Schema.Types.ObjectId, ref: 'LeadImportBatch', default: null },
+  
+  // New Fields
+  cin: { type: String, default: '' },
+  dateOfIncorporation: { type: String, default: '' },
+  companyEmail: { type: String, default: '' },
+  authorisedCapital: { type: String, default: '' },
+  paidUpCapital: { type: String, default: '' },
+  totalObligationOfContribution: { type: String, default: '' },
+  
+  addressType: { type: String, default: '' },
+  streetAddressLine1: { type: String, default: '' },
+  streetAddressLine2: { type: String, default: '' },
+  city: { type: String, default: '' },
+  state: { type: String, default: '' },
+  postalCode: { type: String, default: '' },
+  
+  directorDin: { type: String, default: '' },
+  directorFirstName: { type: String, default: '' },
+  directorLastName: { type: String, default: '' },
+  directorMobileNumber: { type: String, default: '' },
+  
+  directorPermanentAddressLine1: { type: String, default: '' },
+  directorPermanentAddressLine2: { type: String, default: '' },
+  directorPermanentCity: { type: String, default: '' },
+  directorPermanentState: { type: String, default: '' },
+  directorPermanentPincode: { type: String, default: '' },
+  
+  directorPresentAddressLine1: { type: String, default: '' },
+  directorPresentAddressLine2: { type: String, default: '' },
+  directorPresentCity: { type: String, default: '' },
+  directorPresentState: { type: String, default: '' },
+  directorPresentPincode: { type: String, default: '' },
+  
+  mainDivisionNo: { type: String, default: '' },
+  companyType: { type: String, default: '' },
+  classOfCompany: { type: String, default: '' },
+  companyCategory: { type: String, default: '' },
+  companySubcategory: { type: String, default: '' },
+  registrationNumber: { type: String, default: '' },
+  companyOrigin: { type: String, default: '' },
+  roc: { type: String, default: '' },
 }, { timestamps: true });
 
 leadSchema.pre('save', async function normalizeLead() {

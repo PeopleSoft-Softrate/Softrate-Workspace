@@ -1852,9 +1852,18 @@
         <div class="lead-detail-panel company-full-content" #companyFullScrollContent
           (scroll)="onCompanyFullContentScroll($event)">
           <section class="company-full-card" [id]="companyFullSectionId('overview')">
-            <div class="company-full-card-head">
-              <h4>Overview</h4>
-              <span class="company-full-card-meta" *ngIf="companyFullLoading">Loading company details...</span>
+            <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <h4 style="margin: 0;">Overview</h4>
+                <span class="company-full-card-meta" *ngIf="companyFullLoading" style="margin: 0;">Loading company details...</span>
+              </div>
+              <button class="icon-button" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="openOverviewEditModal()">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit Overview
+              </button>
             </div>
 
             <div class="lead-detail-summary company-full-overview-grid"
@@ -1901,24 +1910,78 @@
                       }}</strong>
                   </div>
                   <div class="lead-detail-field">
-                    <span>Company Code</span>
-                    <strong class="nowrap-value">{{ companyFullCompanyCode() }}</strong>
-                  </div>
-                  <div class="lead-detail-field lead-detail-field-wide">
                     <span>Alternate Phone</span>
                     <strong class="nowrap-value">{{ companyFullAlternatePhoneValue() }}</strong>
                   </div>
-                  <div class="lead-detail-field lead-detail-field-wide">
+                  <div class="lead-detail-field">
                     <span>Alternate Email</span>
                     <strong [title]="companyFullAlternateEmailValue()">{{ companyFullAlternateEmailValue() }}</strong>
                   </div>
                 </div>
               </div>
+
+              <!-- Full-width Section Divider -->
+              <div style="grid-column: span 2; border-top: 1px solid #e2e8f0; margin: 16px 0 8px 0;"></div>
+
+              <!-- Full-width Detailed Fields Grid (3-column layout aligning from the left) -->
+              <div style="grid-column: span 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px; min-width: 0;">
+                
+                <!-- Section 1: Company Profile -->
+                <div style="grid-column: span 3; font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Company Registration</div>
+                
+                <div class="lead-detail-field">
+                  <span>Company Name</span>
+                  <strong class="nowrap-value" [title]="companyLead.leadCompanyName || '—'">{{ companyLead.leadCompanyName || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Main Division</span>
+                  <strong class="nowrap-value" [title]="companyLead.mainDivisionDescription || '—'">{{ companyLead.mainDivisionDescription || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Incorporation Date</span>
+                  <strong class="nowrap-value" [title]="companyLead.dateOfIncorporation || '—'">{{ companyLead.dateOfIncorporation || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Company Email</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyEmail || '—'">{{ companyLead.companyEmail || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Company Type</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyType || '—'">{{ companyLead.companyType || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Company Class</span>
+                  <strong class="nowrap-value" [title]="companyLead.classOfCompany || '—'">{{ companyLead.classOfCompany || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Company Origin</span>
+                  <strong class="nowrap-value" [title]="companyLead.companyOrigin || '—'">{{ companyLead.companyOrigin || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>RoC</span>
+                  <strong class="nowrap-value" [title]="companyLead.roc || '—'">{{ companyLead.roc || '—' }}</strong>
+                </div>
+
+                <!-- Divider -->
+                <div style="grid-column: span 3; border-top: 1px solid #e2e8f0; margin: 8px 0 4px 0;"></div>
+
+                <!-- Section 2: Financial Info -->
+                <div style="grid-column: span 3; font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Financials</div>
+
+                <div class="lead-detail-field">
+                  <span>Authorised Capital</span>
+                  <strong class="nowrap-value" [title]="companyLead.authorisedCapital || '—'">{{ companyLead.authorisedCapital || '—' }}</strong>
+                </div>
+                <div class="lead-detail-field">
+                  <span>Paid Up Capital</span>
+                  <strong class="nowrap-value" [title]="companyLead.paidUpCapital || '—'">{{ companyLead.paidUpCapital || '—' }}</strong>
+                </div>
+              </div>
             </div>
 
-            <div class="lead-detail-section">
-              <div class="lead-detail-section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                Directors / Contacts
+            <div class="lead-detail-section" style="margin-top: 16px;">
+              <div class="lead-detail-section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #1e293b;">Directors / Contacts</h4>
                 <button class="icon-button" style="padding: 2px 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="openContactAddModal()">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1927,16 +1990,17 @@
                   Add Contact
                 </button>
               </div>
-              <div class="company-full-scroll-card company-full-contact-list"
-                *ngIf="companyFullOverviewContacts().length > 0; else emptyCompanyFullView">
-                <article class="company-full-contact-row" *ngFor="let lead of companyFullOverviewContacts()">
-                  <div class="company-full-contact-main">
-                    <strong style="display: flex; align-items: center; gap: 6px;">
-                      {{ lead.contactName || 'Primary Contact' }}
-                      <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px;">SPOC</span>
-                    </strong>
-                    <span [title]="companyFullContactEmail(lead)">{{ companyFullContactEmail(lead) }}</span>
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+
+              <div *ngIf="companyFullOverviewContacts().length > 0; else emptyCompanyFullView" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px;">
+                <ng-container *ngFor="let lead of companyFullOverviewContacts(); let i = index">
+                  
+                  <!-- Divider before each director (except the first one) -->
+                  <div *ngIf="i > 0" style="grid-column: span 3; border-top: 1px solid #e2e8f0; margin: 12px 0 4px 0;"></div>
+
+                  <!-- Director Header & Actions -->
+                  <div style="grid-column: span 3; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em;">Director {{ i + 1 }}</span>
+                    <div style="display: flex; gap: 8px;">
                       <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px;" (click)="openDirectorEditModal(lead)">Edit</button>
                       <button class="icon-button" style="padding: 2px 6px; font-size: 11px; width: fit-content; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px;" [style.color]="lead.isStarred ? '#eab308' : '#64748b'" [style.border-color]="lead.isStarred ? '#fef08a' : '#e2e8f0'" [style.background]="lead.isStarred ? '#fef9c3' : '#fff'" (click)="toggleStar(lead)">
                         <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
@@ -1946,16 +2010,52 @@
                       </button>
                     </div>
                   </div>
-                  <div class="company-full-contact-field">
-                    <span>Phone</span>
-                    <strong class="nowrap-value" [title]="companyFullContactPhone(lead)">{{
-                      companyFullContactPhone(lead) }}</strong>
+
+                  <!-- Fields -->
+                  <div class="lead-detail-field">
+                    <span>Contact Name</span>
+                    <strong style="display: flex; align-items: center; gap: 6px;">
+                      {{ lead.contactName || '—' }}
+                      <span *ngIf="lead.isStarred" style="font-size: 10px; background: var(--primary-main); color: white; padding: 2px 6px; border-radius: 4px;">SPOC</span>
+                    </strong>
                   </div>
-                  <div class="company-full-contact-field">
+
+                  <div class="lead-detail-field">
+                    <span>Phone</span>
+                    <strong class="nowrap-value" [title]="companyFullContactPhone(lead)">{{ companyFullContactPhone(lead) || '—' }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="companyFullContactEmail(lead)">
+                    <span>Email Address</span>
+                    <strong class="nowrap-value" [title]="companyFullContactEmail(lead)">{{ companyFullContactEmail(lead) }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="lead.directorFirstName">
+                    <span>Dir First Name</span>
+                    <strong class="nowrap-value" [title]="lead.directorFirstName">{{ lead.directorFirstName }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="lead.directorLastName">
+                    <span>Dir Last Name</span>
+                    <strong class="nowrap-value" [title]="lead.directorLastName">{{ lead.directorLastName }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="lead.directorMobileNumber">
+                    <span>Dir Mobile Number</span>
+                    <strong class="nowrap-value" [title]="lead.directorMobileNumber">{{ lead.directorMobileNumber }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field" *ngIf="lead.directorEmailAddress">
+                    <span>Dir Email Address</span>
+                    <strong class="nowrap-value" [title]="lead.directorEmailAddress">{{ lead.directorEmailAddress }}</strong>
+                  </div>
+
+                  <div class="lead-detail-field">
                     <span>Status</span>
                     <strong [style.color]="leadStatusColor(lead.status)">{{ lead.status || 'New' }}</strong>
                   </div>
-                </article>
+
+                </ng-container>
               </div>
             </div>
           </section>
@@ -2983,22 +3083,46 @@
     <h2 class="client-onboarding-modal-title">Edit Director / Contact</h2>
     <p class="client-onboarding-modal-subtitle">Update contact details for this lead.</p>
     
-    <div class="client-onboarding-form client-onboarding-modal-form">
-      <div class="form-group">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
-        <input class="field-input" type="text" placeholder="Enter contact name" [(ngModel)]="directorEditDraft.contactName" />
+    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        
+        <!-- Primary Contact -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Primary Contact Details</div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Name</label>
+          <input class="field-input" type="text" placeholder="Enter contact name" [(ngModel)]="directorEditDraft.contactName" />
+        </div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number</label>
+          <input class="field-input" type="tel" placeholder="Enter phone number" [(ngModel)]="directorEditDraft.contactNumber" />
+        </div>
+
+        <!-- Director Details -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Director Profile</div>
+
+        <div class="form-group">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Director First Name</label>
+          <input class="field-input" type="text" placeholder="First Name" [(ngModel)]="directorEditDraft.directorFirstName" />
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Director Last Name</label>
+          <input class="field-input" type="text" placeholder="Last Name" [(ngModel)]="directorEditDraft.directorLastName" />
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Director Mobile Number</label>
+          <input class="field-input" type="tel" placeholder="Mobile Number" [(ngModel)]="directorEditDraft.directorMobileNumber" />
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Director Email Address</label>
+          <input class="field-input" type="email" placeholder="Email Address" [(ngModel)]="directorEditDraft.directorEmailAddress" />
+        </div>
       </div>
-      
-      <div class="form-group" style="margin-top: 1rem;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Phone Number</label>
-        <input class="field-input" type="tel" placeholder="Enter phone number" [(ngModel)]="directorEditDraft.contactNumber" />
-      </div>
-      
-      <div class="form-group" style="margin-top: 1rem;">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
-        <input class="field-input" type="email" placeholder="Enter email address" [(ngModel)]="directorEditDraft.directorEmailAddress" />
-      </div>
-      
+    </div>
       <div class="client-onboarding-actions" style="margin-top: 2rem;">
         <button class="secondary-action" type="button" (click)="closeDirectorEditModal()"
           [disabled]="directorEditSaving">Cancel</button>
@@ -3007,8 +3131,7 @@
           <span *ngIf="directorEditSaving" class="button-spinner"></span>
         </button>
       </div>
-    </div>
-</div>
+  </div>
 </div>
 
 <div class="invoice-overlay" *ngIf="contactAddOpen" (click)="closeContactAddModal()" style="z-index: 10000;">
@@ -3043,6 +3166,71 @@
           <span *ngIf="contactAddSaving" class="button-spinner"></span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overview Edit Modal -->
+<div class="invoice-overlay" *ngIf="overviewEditOpen" (click)="closeOverviewEditModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(800px, calc(100vw - 32px)); max-width: 800px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="closeOverviewEditModal()"
+      aria-label="Close edit overview">✕</button>
+      
+    <h2 class="client-onboarding-modal-title">Edit Company Details</h2>
+    <p class="client-onboarding-modal-subtitle">Update registration and financials details.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        
+        <!-- Registration Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Company Registration</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Incorporation Date</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.dateOfIncorporation" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Email</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.companyEmail" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">ROC</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.roc" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Origin</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.companyOrigin" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Company Type</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.companyType" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Class of Company</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.classOfCompany" />
+        </div>
+
+        <!-- Financials Fields -->
+        <div style="grid-column: span 2; font-size: 0.8rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; margin-top: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Financials</div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Auth. Capital</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.authorisedCapital" />
+        </div>
+        <div class="form-group">
+          <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Paid-Up Capital</label>
+          <input class="field-input" type="text" [(ngModel)]="overviewEditDraft.paidUpCapital" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+      <button class="secondary-action" type="button" (click)="closeOverviewEditModal()"
+        [disabled]="overviewEditSaving">Cancel</button>
+      <button class="primary-action" type="button" (click)="saveOverviewEdit()" [disabled]="overviewEditSaving">
+        <span *ngIf="!overviewEditSaving">Save Changes</span>
+        <span *ngIf="overviewEditSaving" class="button-spinner"></span>
+      </button>
     </div>
   </div>
 </div>

@@ -31,7 +31,7 @@ const {
   fuzzySearchLeads,
   parsePagination,
 } = require('../../../services/leadQueryService');
-const { enrichLeadForStorage, normalizeRemarks, normalizeText } = require('../../../services/leadNormalization');
+const { enrichLeadForStorage, normalizePhone, normalizeRemarks, normalizeText } = require('../../../services/leadNormalization');
 const { ensureClientForLead } = require('../../../services/clientService');
 const { getAiBriefForLead } = require('../../../services/ai/researchWorkflow');
 const { getAiSuggestionForLead } = require('../../../services/ai/suggestionWorkflow');
@@ -815,6 +815,46 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PATCH — update lead overview details
+router.patch('/:id/overview', async (req, res) => {
+  try {
+    const lead = await req.models.Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found.' });
+    }
+
+    const fields = [
+      'cin', 'dateOfIncorporation', 'companyEmail', 'authorisedCapital', 'paidUpCapital',
+      'totalObligationOfContribution', 'addressType', 'streetAddressLine1', 'streetAddressLine2',
+      'city', 'state', 'postalCode', 'mainDivisionNo', 'companyType', 'classOfCompany',
+      'companyCategory', 'companySubcategory', 'registrationNumber', 'companyOrigin', 'roc'
+    ];
+
+    const updates = {};
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = String(req.body[field] || '').trim();
+      }
+    });
+
+    const updatedLead = await req.models.Lead.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
+    const responseLead = normalizeLeadForResponse(updatedLead.toObject());
+    await invalidateLeadScope(updatedLead.companyCode, updatedLead.assignedEmployeeId);
+
+    eventBus.emitToEmployee(updatedLead.companyCode, updatedLead.assignedEmployeeId, {
+      type: 'LEAD_UPDATED',
+      lead: responseLead,
+      isOverviewUpdate: true
+    });
+
+    return res.status(200).json({ success: true, lead: responseLead });
+  } catch (err) {
+    console.error('[patch lead overview]', err);
+    return res.status(500).json({ success: false, message: 'Server error updating lead overview.' });
+  }
+});
+
+// PATCH — update lead director details
 // PATCH — update lead director details
 router.patch('/:id/director', async (req, res) => {
   try {
@@ -836,18 +876,28 @@ router.patch('/:id/director', async (req, res) => {
       updates.directorEmailLower = normalizeText(updates.directorEmailAddress);
     }
 
+    const fields = [
+      'directorDin', 'directorMobileNumber', 'directorFirstName', 'directorLastName',
+      'directorPermanentAddressLine1', 'directorPermanentAddressLine2', 'directorPermanentCity', 'directorPermanentState', 'directorPermanentPincode',
+      'directorPresentAddressLine1', 'directorPresentAddressLine2', 'directorPresentCity', 'directorPresentState', 'directorPresentPincode'
+    ];
+
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = String(req.body[field] || '').trim();
+      }
+    });
+
     const lead = await req.models.Lead.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
     
     const responseLead = normalizeLeadForResponse(lead.toObject());
     await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
     
-    if (eventBus.canEmitToEmployee()) {
-      eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, {
-        type: 'LEAD_UPDATED',
-        lead: responseLead,
-        isContactUpdate: true
-      });
-    }
+    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, {
+      type: 'LEAD_UPDATED',
+      lead: responseLead,
+      isContactUpdate: true
+    });
 
     return res.status(200).json({ success: true, lead: responseLead });
   } catch (err) {

@@ -553,7 +553,10 @@
                     <th>Invoice</th>
                     <th>Company</th>
                     <th>Contact</th>
+                    <th>Status</th>
                     <th>Total</th>
+                    <th>Paid</th>
+                    <th>Balance</th>
                     <th>Date</th>
                   </tr>
                 </thead>
@@ -562,14 +565,19 @@
                     <td>{{ invoice.invoiceNumber }}</td>
                     <td>{{ invoice.leadCompanyName }}</td>
                     <td>{{ invoice.contactName || invoice.contactNumber }}</td>
+                    <td><span class="invoice-status-chip"
+                        [class.invoice-status-chip-paid]="formatInvoicePaymentStatus(invoice.paymentStatus)==='Paid'">{{
+                        formatInvoicePaymentStatus(invoice.paymentStatus) }}</span></td>
                     <td>{{ formatInvoiceMoney(invoice.total) }}</td>
+                    <td style="color: #10b981;">{{ formatInvoiceMoney(invoice.amountPaid || 0) }}</td>
+                    <td style="color: #ef4444;">{{ formatInvoiceMoney(invoice.balanceDue || 0) }}</td>
                     <td>{{ invoice.invoiceDate | date:'dd MMM yyyy' }}</td>
                   </tr>
                   <tr *ngIf="!invoiceRecordsLoading && filteredInvoiceRecords.length===0">
-                    <td colspan="5" class="empty-cell">No invoices saved yet.</td>
+                    <td colspan="9" class="empty-cell">No invoices saved yet.</td>
                   </tr>
                   <tr *ngIf="invoiceRecordsLoading">
-                    <td colspan="5" class="empty-cell">Loading invoices...</td>
+                    <td colspan="9" class="empty-cell">Loading invoices...</td>
                   </tr>
                 </tbody>
               </table>
@@ -1918,7 +1926,11 @@
             <span>SGST / UTGST</span>
             <strong>{{ formatInvoiceMoney(invoiceSgstAmount) }}</strong>
             <span>Amount received</span>
-            <strong>{{ formatInvoiceMoney(invoiceTotal) }}</strong>
+            <strong>{{ formatInvoiceMoney(invoiceAmountReceived) }}</strong>
+            <ng-container *ngIf="!quoteMode && invoiceBalanceDue > 0">
+              <span style="color: #ef4444;">Balance due</span>
+              <strong style="color: #ef4444;">{{ formatInvoiceMoney(invoiceBalanceDue) }}</strong>
+            </ng-container>
             <span class="invoice-net-total-label">{{ quoteMode ? 'Grand total' : 'Net total' }}</span>
             <strong class="invoice-net-total">{{ formatInvoiceMoney(invoiceTotal) }}</strong>
           </div>

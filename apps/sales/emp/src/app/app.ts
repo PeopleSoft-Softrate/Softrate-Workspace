@@ -80,6 +80,10 @@ interface InvoiceRecord {
   gstPercentage?: number;
   gstAmount?: number;
   companySnapshot?: any;
+  paymentStatus?: string;
+  amountPaid?: number;
+  balanceDue?: number;
+  isInclusiveGst?: boolean;
 }
 
 interface QuotationRecord {
@@ -1237,6 +1241,9 @@ export class App implements OnInit, OnDestroy {
   invoiceLead: Lead | null = null;
   invoiceSaving = false;
   currentInvoiceNumber = '';
+  openedInvoiceRecord: InvoiceRecord | null = null;
+  invoiceAmountPaid = 0;
+  invoicePaymentStatus = '';
   documentCompanyCode = '';
 
   quotationTerms = [
@@ -1397,6 +1404,31 @@ export class App implements OnInit, OnDestroy {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  }
+
+  normalizeInvoicePaymentStatus(status?: string): string {
+    const s = String(status || '').trim().toLowerCase();
+    if (!s || s === 'unpaid') return 'unpaid';
+    if (s === 'paid' || s === 'fully paid') return 'paid';
+    return 'partially paid';
+  }
+
+  formatInvoicePaymentStatus(status?: string): string {
+    const normalized = this.normalizeInvoicePaymentStatus(status);
+    if (normalized === 'paid') return 'Paid';
+    if (normalized === 'unpaid') return 'Unpaid';
+    return 'Partially Paid';
+  }
+
+  get invoiceAmountReceived(): number {
+    return this.normalizeInvoicePaymentStatus(this.invoicePaymentStatus) === 'paid' ? this.invoiceTotal : this.invoiceAmountPaid;
+  }
+
+  get invoiceBalanceDue(): number {
+    if (this.viewingSavedDocument && !this.quoteMode && this.openedInvoiceRecord?.balanceDue !== undefined) {
+      return Number(this.openedInvoiceRecord.balanceDue || 0);
+    }
+    return Math.max(0, this.invoiceTotal - (this.invoiceAmountPaid || 0));
   }
 
   private _cachedBankDetails: any = null;
@@ -1725,6 +1757,9 @@ export class App implements OnInit, OnDestroy {
       status: '',
       setLabel: '',
     };
+    this.openedInvoiceRecord = record;
+    this.invoiceAmountPaid = Number(record.amountPaid || 0);
+    this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(record.paymentStatus);
     this.invoiceItems = this.mapSavedDocumentItems(record.items);
     this.showInvoiceModal = true;
   }

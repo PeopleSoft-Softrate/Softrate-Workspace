@@ -146,7 +146,7 @@ export class CrmService {
   }
 
   getClientOnboardRequests(weCrmUrl: string, params: { search?: string; companyCode?: string; company_id?: string } = {}): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/users/client-onboard-requests${this.query(params)}`, {
+    return this.http.get<any>(`${weCrmUrl}/users/client-onboard-requests${this.query(params)}`, {
       headers: this.headers(),
     });
   }

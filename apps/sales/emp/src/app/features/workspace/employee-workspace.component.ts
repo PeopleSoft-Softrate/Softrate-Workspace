@@ -47,6 +47,7 @@ interface Employee {
   countryCode?: string;
   profilePhoto?: string;
   tags?: string[];
+  allowedCompanies?: string[];
   lastSyncTime?: string;
   lastCallTime?: string;
 }
@@ -140,6 +141,7 @@ interface CachedLeadCompanyPage {
 
 interface InvoiceRecord {
   _id: string;
+  companyCode?: string;
   invoiceNumber: string;
   publicToken?: string;
   publicUrl?: string;
@@ -171,6 +173,7 @@ interface InvoiceRecord {
 
 interface QuotationRecord {
   _id: string;
+  companyCode?: string;
   quotationNumber: string;
   leadCompanyName: string;
   contactName: string;
@@ -1761,12 +1764,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   gstPercentage: number = 18;
   invoiceRegisteredAddress: string = '';
   invoiceFooter: string = '';
-  invoiceSeal: string = '';
+invoiceSeal: string = '';
   invoiceTerms: string = '';
   bankDetails: any = null;
   bankDetails2: any = null;
   contactDetails: any = null;
   companyAddress: string = '';
+  documentCompanyCode: string = '';
+  historyCompanyCode: string = '';
+
   products: any[] = [];
   readonly currentYear = new Date().getFullYear();
   readonly quotationTerms = DEFAULT_QUOTATION_TERMS;
@@ -1923,6 +1929,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.openedQuotationRecord = null;
     this.invoiceLead = lead;
     this.selectedInvoiceClient = null;
+    this.documentCompanyCode = this.employee?.companyCode || '';
+    this.loadCompanySettings(this.documentCompanyCode);
     this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
     this.invoicePaymentStatus = 'unpaid';
@@ -1944,6 +1952,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.openedQuotationRecord = null;
     this.invoiceLead = lead;
     this.selectedInvoiceClient = null;
+    this.documentCompanyCode = this.employee?.companyCode || '';
+    this.loadCompanySettings(this.documentCompanyCode);
     this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
     this.quotationKindNoteDraft = this.defaultQuotationKindNote();
@@ -2145,6 +2155,23 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   removeInvoiceItem(index: number): void {
     this.invoiceItems.splice(index, 1);
+  }
+
+  onDocumentCompanyChange(newCode: string): void {
+    this.documentCompanyCode = newCode;
+    this.loadCompanySettings(newCode);
+  }
+
+  onHistoryCompanyChange(newCode: string): void {
+    this.historyCompanyCode = newCode;
+    this.onQuotationHistoryQueryChange();
+    this.onInvoiceHistoryQueryChange();
+  }
+
+  calculateTotalGST(): number {
+    const savedRecord = this.savedFinancialRecord();
+    if (savedRecord && savedRecord.subtotal !== undefined) return Number(savedRecord.subtotal || 0);
+    return this.invoiceItems.reduce((sum, item) => sum + Number((item as any).taxable ?? (item.price * item.quantity)), 0);
   }
 
   get invoiceSubtotal(): number {
@@ -2731,6 +2758,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const payload = {
       companyCode: this.employee.companyCode,
+      brandingCompanyCode: this.documentCompanyCode || this.employee.companyCode,
       employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
@@ -2832,12 +2860,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
       companyCode: this.employee.companyCode,
+      brandingCompanyCode: this.documentCompanyCode || this.employee.companyCode,
       employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
       createdByName: this.employee.name,
       createdByPhone: this.employee.mobile,
-      leadId: this.invoiceLead._id,
+      clientId: this.selectedInvoiceClient?.clientId || undefined,
+      leadId: this.selectedInvoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id,
       contactNumber: this.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(),
       quotationDate: this.invoiceIssuedAt,
@@ -3185,6 +3215,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.openedInvoiceRecord = record;
     this.openedQuotationRecord = null;
     this.selectedInvoiceClient = null;
+    this.documentCompanyCode = (record as any).companyCode || this.employee?.companyCode || '';
+    this.loadCompanySettings(this.documentCompanyCode);
     this.resetDocumentGstSelection();
     this.invoiceTransferredFromQuotation = false;
     this.quotationTransferLoading = false;
@@ -3197,7 +3229,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.dueDate = record.dueDate ? new Date(record.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
     this.invoiceLead = {
       _id: record._id,
-      companyCode: this.employee?.companyCode || '',
+      companyCode: (record as any).companyCode || this.employee?.companyCode || '',
       assignedEmployeeId: this.employee?._id || '',
       leadCompanyName: record.leadCompanyName,
       contactName: record.contactName,
@@ -3208,6 +3240,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       setLabel: '',
       gstNumber: record.clientSnapshot?.gstNumber || (record as any).gstNumber || '',
     };
+    this.invoiceAmountPaid = Number(record.amountPaid || 0);
+    this.invoiceIsInclusiveGst = Boolean(record.isInclusiveGst);
     this.invoiceItems = this.mapSavedDocumentItems(record.items);
     this.refreshInvoiceItemGstFromSelection();
     this.showInvoiceModal = true;
@@ -3218,6 +3252,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.viewingSavedDocument = true;
     this.openedInvoiceRecord = null;
     this.openedQuotationRecord = record;
+    this.documentCompanyCode = (record as any).companyCode || this.employee?.companyCode || '';
+    this.loadCompanySettings(this.documentCompanyCode);
     this.resetDocumentGstSelection();
     this.invoiceTransferredFromQuotation = false;
     this.quotationTransferLoading = false;
@@ -3229,7 +3265,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.quotationKindNoteDraft = String(record.kindNote || record.companySnapshot?.footer || this.defaultQuotationKindNote());
     this.invoiceLead = {
       _id: record._id,
-      companyCode: this.employee?.companyCode || '',
+      companyCode: (record as any).companyCode || this.employee?.companyCode || '',
       assignedEmployeeId: this.employee?._id || '',
       leadCompanyName: record.leadCompanyName,
       contactName: record.contactName,
@@ -5275,6 +5311,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private toWorkspaceInvoiceRecord(record: any): InvoiceRecord {
     return {
       _id: String(record?._id || record?.id || ''),
+      companyCode: record?.companyCode || '',
       invoiceNumber: String(record?.invoiceNumber || ''),
       publicToken: String(record?.publicToken || ''),
       publicUrl: String(record?.publicUrl || ''),
@@ -5305,6 +5342,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   private toWorkspaceQuotationRecord(record: any): QuotationRecord {
     return {
       _id: String(record?._id || record?.id || ''),
+      companyCode: record?.companyCode || '',
       quotationNumber: String(record?.quotationNumber || ''),
       leadCompanyName: String(record?.leadCompanyName || record?.companyName || ''),
       contactName: String(record?.contactName || ''),
@@ -6129,9 +6167,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     try {
+      const targetCompanyCode = this.historyCompanyCode || this.employee.companyCode;
+      const isCrossCompany = !!(this.historyCompanyCode && this.historyCompanyCode !== this.employee.companyCode);
       const pageResult = await firstValueFrom(this.invoicesRepository.history({
-        companyCode: this.employee.companyCode,
-        employeeId: this.employee._id,
+        companyCode: targetCompanyCode,
+        employeeId: isCrossCompany ? undefined : this.employee._id,
         search: this.invoiceHistorySearch.trim(),
         dateFrom: this.invoiceDateFrom || undefined,
         dateTo: this.invoiceDateTo || undefined,
@@ -6183,9 +6223,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     try {
+      const targetCompanyCode = this.historyCompanyCode || this.employee.companyCode;
+      const isCrossCompany = !!(this.historyCompanyCode && this.historyCompanyCode !== this.employee.companyCode);
       const pageResult = await firstValueFrom(this.quotationsRepository.history({
-        companyCode: this.employee.companyCode,
-        employeeId: this.employee._id,
+        companyCode: targetCompanyCode,
+        employeeId: isCrossCompany ? undefined : this.employee._id,
         search: this.quotationHistorySearch.trim(),
         dateFrom: this.quotationDateFrom || undefined,
         dateTo: this.quotationDateTo || undefined,
@@ -6284,13 +6326,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     this.loadCompanySettings();
   }
 
-  private async loadCompanySettings(): Promise<void> {
+  private async loadCompanySettings(companyCode?: string): Promise<void> {
     if (!this.employee) return;
+    const targetCode = companyCode || this.employee.companyCode;
     try {
-      const res = await firstValueFrom(this.api.get<any>(`/api/auth/company/${this.employee.companyCode}/settings`));
+      const res = await firstValueFrom(this.api.get<any>(`/api/auth/company/${targetCode}/settings`));
       if (res.success && res.settings) {
         this.applyCompanySettings(res.settings);
-        await this.loadCompanyInvoiceProfile();
+        await this.loadCompanyInvoiceProfile(targetCode);
       }
     } catch {}
   }
@@ -6343,10 +6386,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       .sort((left, right) => String(left?.name || '').localeCompare(String(right?.name || ''), undefined, { sensitivity: 'base' }));
   }
 
-  private async loadCompanyInvoiceProfile(): Promise<void> {
+  private async loadCompanyInvoiceProfile(companyCode?: string): Promise<void> {
     if (!this.employee?.companyCode) return;
+    const targetCode = companyCode || this.employee.companyCode;
     try {
-      const res = await firstValueFrom(this.api.get<any>(`/api/auth/company/${this.employee.companyCode}`));
+      const res = await firstValueFrom(this.api.get<any>(`/api/auth/company/${targetCode}`));
       if (res.success && res.company) {
         this.companyAddress = res.company.companyAddress || '';
         if (!this.companyName) this.companyName = res.company.companyName || '';

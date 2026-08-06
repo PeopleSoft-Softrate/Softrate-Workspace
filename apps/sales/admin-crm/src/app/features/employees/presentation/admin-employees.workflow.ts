@@ -5,6 +5,7 @@ import { BookmarkService, Bookmark } from '../../../services/bookmark.service';
 import { CallLogService } from '../../../services/calllog.service';
 import { EmployeeService, Employee } from '../../../services/employee.service';
 import { LeadService, Lead } from '../../../services/lead.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface EmployeeLeadCompanyCachePayload {
   companies: Array<{ name: string; count: number }>;
@@ -35,6 +36,7 @@ export class AdminEmployeesWorkflow {
     private leadService: LeadService,
     private bookmarkService: BookmarkService,
     private dashboardCache: DashboardCacheService,
+    private authService: AuthService,
   ) {}
 
   filteredEmployeesForTable(vm: any): Employee[] {
@@ -296,6 +298,20 @@ export class AdminEmployeesWorkflow {
     vm.isEditEmployeeOpen = true;
     vm.editEmployeeError = '';
     vm.updateScrollLock();
+
+    // Ensure collaborating companies are loaded (in case admin never visited Settings page)
+    if (!vm.settingsCollaboratingCompanies || vm.settingsCollaboratingCompanies.length === 0) {
+      if (vm.dashboardCode) {
+        this.authService.getCompanySettings(vm.dashboardCode).subscribe({
+          next: (res: any) => {
+            if (res.success) {
+              vm.settingsCollaboratingCompanies = res.settings.collaboratingCompanies || [];
+            }
+          },
+          error: () => {}
+        });
+      }
+    }
   }
 
   closeEditEmployee(vm: any): void {
@@ -315,6 +331,7 @@ export class AdminEmployeesWorkflow {
       mobile: vm.editingEmployee.mobile,
       countryCode: vm.editingEmployee.countryCode,
       tags: vm.editingEmployee.tags,
+      allowedCompanies: vm.editingEmployee.allowedCompanies || [],
     }).subscribe({
       next: (res: any) => {
         vm.editEmployeeLoading = false;
@@ -338,6 +355,18 @@ export class AdminEmployeesWorkflow {
       vm.editingEmployee.tags.splice(idx, 1);
     } else {
       vm.editingEmployee.tags.push(tag);
+    }
+  }
+
+  toggleEditAllowedCompany(vm: any, companyCode: string): void {
+    if (!vm.editingEmployee.allowedCompanies) {
+      vm.editingEmployee.allowedCompanies = [];
+    }
+    const idx = vm.editingEmployee.allowedCompanies.indexOf(companyCode);
+    if (idx > -1) {
+      vm.editingEmployee.allowedCompanies.splice(idx, 1);
+    } else {
+      vm.editingEmployee.allowedCompanies.push(companyCode);
     }
   }
 

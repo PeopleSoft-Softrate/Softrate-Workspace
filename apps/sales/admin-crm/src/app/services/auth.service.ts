@@ -96,6 +96,7 @@ export class AuthService {
     interestedPageStatuses?: string[];
     dnpPageStatuses?: string[];
     convertedPageStatuses?: string[];
+    collaboratingCompanies?: string[];
     invoiceLogo?: string;
     invoiceSeal?: string;
     invoiceTerms?: string;
@@ -134,5 +135,17 @@ export class AuthService {
 
   getBreaklogToday(companyCode: string): Observable<any> {
     return this.api.get(`/api/breaklog/today?companyCode=${encodeURIComponent(companyCode)}`);
+  }
+
+  sendCollaborationInvite(fromCompanyCode: string, toCompanyCode: string): Observable<any> {
+    return this.api.post('/api/auth/collaboration/invite', { fromCompanyCode, toCompanyCode });
+  }
+
+  getCollaborationInvites(companyCode: string): Observable<any> {
+    return this.api.get(`/api/auth/company/${encodeURIComponent(companyCode)}/collaboration/invites`);
+  }
+
+  respondToCollaborationInvite(companyCode: string, fromCompanyCode: string, action: 'accept' | 'decline'): Observable<any> {
+    return this.api.put(`/api/auth/company/${encodeURIComponent(companyCode)}/collaboration/respond`, { fromCompanyCode, action });
   }
 }

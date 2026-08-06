@@ -80,7 +80,8 @@ const EmployeeSchema = new mongoose.Schema({
     contentType: { type: String },
     size: { type: Number },
     updatedAt: { type: Date }
-  }
+  },
+  allowedCompanies: [{ type: String, trim: true }]
 });
 
 // Indexes — login lookups, attendance export, and aggregation match filters

@@ -75,6 +75,39 @@
         </button>
       </ng-container>
 
+      <div class="company-switch-dropdown" *ngIf="(vm.adminCollaboratingCompanies?.length || 0) > 0" style="position: relative;">
+        <button
+          class="cta-secondary"
+          type="button"
+          (click)="vm.switchCompanyMenuOpen = !vm.switchCompanyMenuOpen"
+          style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; display: flex; align-items: center; gap: 8px; background: var(--bg-card-2); border: 1px solid var(--border);"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span style="font-weight: 600;">{{ vm.dashboardCode }}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+
+        <div class="profile-menu" [class.open]="vm.switchCompanyMenuOpen" style="top: calc(100% + 8px); right: 0; min-width: 200px;">
+          <div class="profile-menu-header" style="padding: 0.75rem 1rem;">
+            <div class="profile-name" style="font-size: 0.85rem; font-weight: 600;">Switch Company</div>
+          </div>
+          
+          <!-- Base Company -->
+          <button class="profile-menu-item" (click)="vm.switchDashboardCompany(vm.baseCompanyCode)" [class.active]="vm.dashboardCode === vm.baseCompanyCode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            {{ vm.baseCompanyCode }} (Main)
+            <svg *ngIf="vm.dashboardCode === vm.baseCompanyCode" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-left: auto;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+
+          <!-- Collaborating Companies -->
+          <button class="profile-menu-item" *ngFor="let code of vm.adminCollaboratingCompanies" (click)="vm.switchDashboardCompany(code)" [class.active]="vm.dashboardCode === code">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            {{ code }}
+            <svg *ngIf="vm.dashboardCode === code" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-left: auto;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+        </div>
+      </div>
+
       <div class="profile-dropdown" [class.open]="vm.profileMenuOpen">
         <input
           #adminProfilePhotoInput

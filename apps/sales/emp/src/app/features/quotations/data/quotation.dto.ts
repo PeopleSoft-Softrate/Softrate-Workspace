@@ -1,5 +1,6 @@
 export interface QuotationDto {
   _id?: string;
+  companyCode?: string;
   quotationNumber?: string;
   leadCompanyName?: string;
   contactName?: string;

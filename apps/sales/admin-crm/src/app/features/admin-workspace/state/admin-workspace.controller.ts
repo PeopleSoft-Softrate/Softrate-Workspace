@@ -208,10 +208,14 @@ export abstract class AdminWorkspaceController implements OnInit {
   userRole: 'admin' | 'crm_admin' | 'project_manager' = 'admin';
   dashboardCompany = '';
   dashboardCode = '';
+  baseCompanyCode = '';
+  adminCollaboratingCompanies: string[] = [];
   dashboardTeamSize = 0;
 
   // ── UI panels ──────────────────────────────────────────────
   isMobileMenuOpen = false;
+  profileMenuOpen = false;
+  switchCompanyMenuOpen = false;
   isLoginOpen = false;
   isSignupOpen = false;
   isForgotPwdOpen = false;
@@ -814,6 +818,20 @@ export abstract class AdminWorkspaceController implements OnInit {
   customFrom = new Date().toISOString().split('T')[0];
   customTo = new Date().toISOString().split('T')[0];
   readonly periods = DASHBOARD_PERIODS;
+
+  documentCompanyCode: string = '';
+
+  onDocumentCompanyChange(newCode: string): void {
+    this.documentCompanyCode = newCode;
+    // Reload clients from the new company
+    this.invoiceQuotationWorkflow.fetchAdminInvoiceClients(this, true);
+    this.invoiceQuotationWorkflow.fetchAdminQuotationClients(this, true);
+    // Refresh branding (logo/address/bank) for the new company
+    this.adminSettingsWorkflow.fetchSettingsForDocument(this, newCode, () => {
+      this.invoiceQuotationWorkflow.triggerInvoicePreviewRefresh(this);
+    });
+  }
+
   get todayIso(): string {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -836,6 +854,14 @@ export abstract class AdminWorkspaceController implements OnInit {
   settingsInterestedPageStatuses: string[] = [];
   settingsDnpPageStatuses: string[] = [];
   settingsConvertedPageStatuses: string[] = [];
+  settingsCollaboratingCompanies: string[] = [];
+  sentInvites: Array<{companyCode: string; companyName: string; status: string; sentAt: string}> = [];
+  receivedInvites: Array<{fromCompanyCode: string; fromCompanyName: string; status: string; receivedAt: string}> = [];
+  inviteCodeInput = '';
+  inviteLoading = false;
+  inviteError = '';
+  inviteSuccess = '';
+  inviteRespondLoading = '';
   newLeadStatusInput: string = '';
   settingsLoading = false;
   settingsSaveError = '';
@@ -880,7 +906,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   showBreakNotifPanel = false;
   private breakPollInterval: any;
 
-  profileMenuOpen = false;
+
   readonly profilePhotoMaxFileSizeMb = 5;
   adminProfilePhoto = '';
   profilePhotoError = '';
@@ -1297,6 +1323,8 @@ export abstract class AdminWorkspaceController implements OnInit {
         this.userRole = user.role === 'crm_admin' || user.role === 'project_manager' ? user.role : 'admin';
         this.dashboardCompany = user.companyName || 'Your Company';
         this.dashboardCode = this.userRole === 'crm_admin' ? this.resolveCrmSalesCompanyCode(user) : (user.companyCode || '');
+        this.baseCompanyCode = user.baseCompanyCode || user.companyCode || '';
+        this.adminCollaboratingCompanies = user.collaboratingCompanies || [];
         this.dashboardTeamSize = parseInt(user.teamSize) || 0;
         if (this.userRole === 'crm_admin' && user.companyCode !== this.dashboardCode) {
           localStorage.setItem('tracecall_user', JSON.stringify({
@@ -4711,6 +4739,30 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   closeLogoutConfirm(): void { this.authPaymentWorkflow.closeLogoutConfirm(this); }
 
+  switchDashboardCompany(code: string): void {
+    if (this.dashboardCode === code) return;
+    this.dashboardCode = code;
+    this.switchCompanyMenuOpen = false;
+    const raw = localStorage.getItem('tracecall_user');
+    if (raw) {
+      try {
+        const user = JSON.parse(raw);
+        localStorage.setItem('tracecall_user', JSON.stringify({
+          ...user,
+          companyCode: code,
+          baseCompanyCode: this.baseCompanyCode
+        }));
+      } catch (e) {}
+    }
+    
+    // Reload dashboard to apply new context
+    this.loadAdminProfilePhoto();
+    if (this.userRole === 'crm_admin') {
+      this.loadCrmDashboard();
+    }
+    this._loadDashboard();
+  }
+
   logout(): void { this.authPaymentWorkflow.logout(this); }
 
   openAddEmployee(): void { return this.adminEmployeesWorkflow.openAddEmployee(this); }
@@ -4726,6 +4778,11 @@ export abstract class AdminWorkspaceController implements OnInit {
   onEditEmployeeSubmit(event: Event): void { return this.adminEmployeesWorkflow.onEditEmployeeSubmit(this, event); }
 
   toggleEditTag(tag: string): void { return this.adminEmployeesWorkflow.toggleEditTag(this, tag); }
+  toggleEditAllowedCompany(companyCode: string): void { return this.adminEmployeesWorkflow.toggleEditAllowedCompany(this, companyCode); }
+  addCollaboratingCompany(code: string): void { return this.adminSettingsWorkflow.addCollaboratingCompany(this, code); }
+  removeCollaboratingCompany(code: string): void { return this.adminSettingsWorkflow.removeCollaboratingCompany(this, code); }
+  sendCollaborationInvite(): void { return this.adminSettingsWorkflow.sendCollaborationInvite(this); }
+  respondToInvite(fromCompanyCode: string, action: 'accept' | 'decline'): void { return this.adminSettingsWorkflow.respondToInvite(this, fromCompanyCode, action); }
 
   // ── Employee Tagging (Inline) ─────────────────────────────────
 

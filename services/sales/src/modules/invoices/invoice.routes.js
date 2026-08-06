@@ -261,11 +261,12 @@ router.post('/', async (req, res) => {
   
   try {
     const companyCode = normalize(req.body.companyCode);
+    const brandingCompanyCode = normalize(req.body.brandingCompanyCode) || companyCode;
     if (!companyCode) {
       return res.status(400).json({ success: false, message: 'companyCode is required.' });
     }
 
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne({ companyCode: brandingCompanyCode });
     if (!user) {
       return res.status(404).json({ success: false, message: 'Company settings not found.' });
     }
@@ -310,7 +311,7 @@ router.post('/', async (req, res) => {
       const v = normalize(val);
       if (!v) return null;
       if (mongoose.Types.ObjectId.isValid(v)) return v;
-      const emp = await Employee.findOne({ companyCode, phone: v }).lean();
+      const emp = await Employee.findOne({ companyCode, phone: v }).lean() || await Employee.findOne({ companyCode, mobile: v }).lean();
       return emp ? emp._id : null;
     };
     

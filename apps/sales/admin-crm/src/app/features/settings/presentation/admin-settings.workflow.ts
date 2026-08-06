@@ -174,6 +174,7 @@ export class AdminSettingsWorkflow {
           vm.settingsInterestedPageStatuses = res.settings.interestedPageStatuses || [];
           vm.settingsDnpPageStatuses = res.settings.dnpPageStatuses || [];
           vm.settingsConvertedPageStatuses = res.settings.convertedPageStatuses || [];
+          vm.settingsCollaboratingCompanies = res.settings.collaboratingCompanies || [];
           vm.settingsCompanyName = res.settings.companyName || '';
           vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(res.settings.invoiceLogo || DEFAULT_INVOICE_LOGO);
           vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(res.settings.invoiceSeal || '');
@@ -194,6 +195,87 @@ export class AdminSettingsWorkflow {
         }
       },
       error: () => { vm.settingsLoading = false; },
+    });
+    // Also fetch collaboration invites
+    this.loadCollaborationInvites(vm);
+  }
+
+  fetchSettingsForDocument(vm: any, code: string, onComplete?: () => void): void {
+    if (!code) return;
+    this.authService.getCompanySettings(code).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          vm.settingsCompanyName = res.settings.companyName || '';
+          vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(res.settings.invoiceLogo || '/assets/logos/softrate-logo-dark.png');
+          vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(res.settings.invoiceSeal || '');
+          vm.settingsInvoiceTerms = res.settings.invoiceTerms || '';
+          vm.settingsShowCompanyNameOnInvoice = res.settings.showCompanyNameOnInvoice ?? true;
+          vm.settingsGstNumber = res.settings.gstNumber || '';
+          vm.settingsGstPercentage = res.settings.gstPercentage ?? 18;
+          vm.settingsInvoiceRegisteredAddress = res.settings.invoiceRegisteredAddress || '';
+          vm.settingsInvoiceFooter = res.settings.invoiceFooter || '';
+          vm.settingsBankDetails = res.settings.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+          vm.settingsBankDetails2 = res.settings.bankDetails2 || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+          vm.settingsContactDetails = res.settings.contactDetails || { website: '', email: '', phone: '' };
+          vm.settingsProducts = res.settings.products || [];
+          vm.settingsProductRemarks = res.settings.productRemarks || [];
+          // Refresh invoice preview caches so logo/address/bank update immediately
+          onComplete?.();
+        }
+      },
+      error: () => {},
+    });
+  }
+
+  loadCollaborationInvites(vm: any): void {
+    if (!vm.dashboardCode) return;
+    this.authService.getCollaborationInvites(vm.dashboardCode).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          vm.sentInvites = res.sentInvites || [];
+          vm.receivedInvites = res.receivedInvites || [];
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  sendCollaborationInvite(vm: any): void {
+    const toCode = (vm.inviteCodeInput || '').trim().toUpperCase();
+    if (!toCode) return;
+    vm.inviteLoading = true;
+    vm.inviteError = '';
+    vm.inviteSuccess = '';
+    this.authService.sendCollaborationInvite(vm.dashboardCode, toCode).subscribe({
+      next: (res: any) => {
+        vm.inviteLoading = false;
+        if (res.success) {
+          vm.inviteSuccess = res.message;
+          vm.inviteCodeInput = '';
+          this.loadCollaborationInvites(vm);
+        } else {
+          vm.inviteError = res.message;
+        }
+      },
+      error: (err: any) => {
+        vm.inviteLoading = false;
+        vm.inviteError = err?.error?.message || 'Failed to send invite.';
+      }
+    });
+  }
+
+  respondToInvite(vm: any, fromCompanyCode: string, action: 'accept' | 'decline'): void {
+    vm.inviteRespondLoading = fromCompanyCode + '_' + action;
+    this.authService.respondToCollaborationInvite(vm.dashboardCode, fromCompanyCode, action).subscribe({
+      next: (res: any) => {
+        vm.inviteRespondLoading = '';
+        if (res.success) {
+          // Reload both invites and settings to update collaboratingCompanies
+          this.loadCollaborationInvites(vm);
+          this.fetchSettings(vm);
+        }
+      },
+      error: () => { vm.inviteRespondLoading = ''; }
     });
   }
 
@@ -271,6 +353,18 @@ export class AdminSettingsWorkflow {
     this.saveSettings(vm);
   }
 
+  addCollaboratingCompany(vm: any, code: string): void {
+    if (code && !vm.settingsCollaboratingCompanies.includes(code)) {
+      vm.settingsCollaboratingCompanies.push(code);
+      this.saveSettings(vm);
+    }
+  }
+
+  removeCollaboratingCompany(vm: any, code: string): void {
+    vm.settingsCollaboratingCompanies = vm.settingsCollaboratingCompanies.filter((item: string) => item !== code);
+    this.saveSettings(vm);
+  }
+
   saveSettings(vm: any): void {
     if (!vm.dashboardCode) return;
     vm.settingsLoading = true;
@@ -285,6 +379,7 @@ export class AdminSettingsWorkflow {
       interestedPageStatuses: vm.settingsInterestedPageStatuses,
       dnpPageStatuses: vm.settingsDnpPageStatuses,
       convertedPageStatuses: vm.settingsConvertedPageStatuses,
+      collaboratingCompanies: vm.settingsCollaboratingCompanies,
       invoiceLogo: vm.settingsInvoiceLogo,
       invoiceSeal: vm.settingsInvoiceSeal,
       invoiceTerms: vm.settingsInvoiceTerms,

@@ -15,6 +15,7 @@ const employeeSchema = new mongoose.Schema({
   lastCallTime: { type: Date, default: null },
   lastSyncTime: { type: Date, default: null },
   forceSync:    { type: Boolean, default: false },
+  allowedCompanies: [{ type: String, trim: true }],
   createdAt:    { type: Date, default: Date.now },
 });
 

@@ -177,6 +177,22 @@ const userSchema = new mongoose.Schema(
       sacHsn: { type: String, trim: true },
     }],
     productRemarks: [String],
+    // Active accepted collaboration partners (company codes)
+    collaboratingCompanies: [{ type: String, trim: true }],
+    // Invites this company has SENT
+    sentInvites: [{
+      companyCode: { type: String, trim: true, uppercase: true },
+      companyName: { type: String, trim: true },
+      status: { type: String, enum: ['pending', 'accepted', 'declined'], default: 'pending' },
+      sentAt: { type: Date, default: Date.now }
+    }],
+    // Invites this company has RECEIVED
+    receivedInvites: [{
+      fromCompanyCode: { type: String, trim: true, uppercase: true },
+      fromCompanyName: { type: String, trim: true },
+      status: { type: String, enum: ['pending', 'accepted', 'declined'], default: 'pending' },
+      receivedAt: { type: Date, default: Date.now }
+    }],
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },

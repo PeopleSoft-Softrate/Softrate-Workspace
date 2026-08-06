@@ -19,6 +19,7 @@ interface Employee {
   companyCode: string;
   countryCode?: string;
   tags?: string[];
+  allowedCompanies?: string[];
   lastSyncTime?: string;
   lastCallTime?: string;
 }
@@ -1223,6 +1224,8 @@ export class App implements OnInit, OnDestroy {
   bankDetails: any = null;
   contactDetails: any = null;
   companyAddress: string = '';
+  companyEmail: string = '';
+  companyMobile: string = '';
   products: any[] = [];
 
   invoiceItems: any[] = [];
@@ -1234,6 +1237,7 @@ export class App implements OnInit, OnDestroy {
   invoiceLead: Lead | null = null;
   invoiceSaving = false;
   currentInvoiceNumber = '';
+  documentCompanyCode = '';
 
   quotationTerms = [
     'All rates quoted are valid for 14 days.',
@@ -1283,6 +1287,10 @@ export class App implements OnInit, OnDestroy {
     this.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     this.invoiceIssuedAt = new Date();
     this.currentInvoiceNumber = '';
+    
+    // Reset to employee's main company and fetch its settings
+    this.documentCompanyCode = this.employee?.companyCode || '';
+    this.fetchCompanySettings(this.documentCompanyCode);
   }
 
   openQuotationModal(lead: any): void {
@@ -1296,6 +1304,10 @@ export class App implements OnInit, OnDestroy {
     this.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     this.invoiceIssuedAt = new Date();
     this.currentQuotationNumber = '';
+    
+    // Reset to employee's main company and fetch its settings
+    this.documentCompanyCode = this.employee?.companyCode || '';
+    this.fetchCompanySettings(this.documentCompanyCode);
   }
 
   closeInvoiceModal(): void {
@@ -1335,6 +1347,17 @@ export class App implements OnInit, OnDestroy {
 
   removeInvoiceItem(index: number): void {
     this.invoiceItems.splice(index, 1);
+  }
+
+  onDocumentCompanyChange(companyCode: string): void {
+    this.documentCompanyCode = companyCode;
+    // Clear items and selected products because they belong to the previous company
+    this.invoiceItems = [];
+    this.selectedInvoiceProduct = null;
+    this.invoicePrice = 0;
+    this.invoiceQuantity = 1;
+    // Fetch settings for the newly selected company
+    this.fetchCompanySettings(companyCode);
   }
 
   get invoiceSubtotal(): number {
@@ -1446,7 +1469,7 @@ export class App implements OnInit, OnDestroy {
 
     this.invoiceSaving = true;
     this.api.post<any>('/api/invoices', {
-      companyCode: this.employee.companyCode,
+      companyCode: this.documentCompanyCode || this.employee.companyCode,
       employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
@@ -1464,6 +1487,8 @@ export class App implements OnInit, OnDestroy {
         quantity: item.quantity,
         sacHsn: item.product?.sacHsn || '',
       })),
+    }, {
+      'x-active-company-code': this.documentCompanyCode || this.employee.companyCode
     }).subscribe({
       next: (res) => {
         this.invoiceSaving = false;
@@ -1486,7 +1511,7 @@ export class App implements OnInit, OnDestroy {
     if (!this.invoiceLead || !this.employee || this.quotationSaving) return;
     this.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
-      companyCode: this.employee.companyCode,
+      companyCode: this.documentCompanyCode || this.employee.companyCode,
       employeeId: this.employee._id,
       employeeName: this.employee.name,
       createdByRole: 'employee',
@@ -1502,6 +1527,8 @@ export class App implements OnInit, OnDestroy {
         rate: item.price,
         quantity: item.quantity,
       })),
+    }, {
+      'x-active-company-code': this.documentCompanyCode || this.employee.companyCode
     }).subscribe({
       next: (res) => {
         this.quotationSaving = false;
@@ -2409,9 +2436,10 @@ export class App implements OnInit, OnDestroy {
   }
 
   // ── Company Settings (lead statuses, break limit) ──
-  fetchCompanySettings(): void {
+  fetchCompanySettings(targetCompanyCode?: string): void {
     if (!this.employee) return;
-    this.api.get<any>(`/api/auth/company/${this.employee.companyCode}/settings`).subscribe({
+    const codeToFetch = targetCompanyCode || this.employee.companyCode;
+    this.api.get<any>(`/api/auth/company/${codeToFetch}/settings`).subscribe({
       next: res => {
         if (res.success && res.settings) {
           if (res.settings.leadStatuses?.length) {
@@ -2437,21 +2465,27 @@ export class App implements OnInit, OnDestroy {
           this.invoiceFooter = res.settings.invoiceFooter || '';
           this.bankDetails = res.settings.bankDetails;
           this.contactDetails = res.settings.contactDetails;
+          
+          // Re-populate the products list so the employee can select products from the new company
           this.products = res.settings.products || [];
           this.productRemarks = res.settings.productRemarks || [];
-          this.fetchCompanyInvoiceProfile();
+          
+          this.fetchCompanyInvoiceProfile(codeToFetch);
         }
       },
       error: () => {}
     });
   }
 
-  fetchCompanyInvoiceProfile(): void {
+  fetchCompanyInvoiceProfile(targetCompanyCode?: string): void {
     if (!this.employee?.companyCode) return;
-    this.api.get<any>(`/api/auth/company/${this.employee.companyCode}`).subscribe({
+    const codeToFetch = targetCompanyCode || this.employee.companyCode;
+    this.api.get<any>(`/api/auth/company/${codeToFetch}`).subscribe({
       next: res => {
         if (res.success && res.company) {
           this.companyAddress = res.company.companyAddress || '';
+          this.companyEmail = res.company.email || '';
+          this.companyMobile = res.company.mobile || '';
           if (!this.companyName) this.companyName = res.company.companyName || '';
         }
       },

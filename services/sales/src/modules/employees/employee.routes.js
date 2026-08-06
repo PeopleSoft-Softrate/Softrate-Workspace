@@ -56,6 +56,28 @@ router.patch('/:id/code', async (req, res) => {
   }
 });
 
+// PATCH employee allowedCompanies
+router.patch('/:id/allowed-companies', async (req, res) => {
+  try {
+    const { allowedCompanies } = req.body;
+    if (!Array.isArray(allowedCompanies)) {
+      return res.status(400).json({ success: false, message: 'allowedCompanies must be an array.' });
+    }
+    const employee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      { allowedCompanies },
+      { returnDocument: 'after' },
+    );
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found.' });
+    }
+    return res.status(200).json({ success: true, employee });
+  } catch (err) {
+    console.error('[patch employee allowedCompanies]', err);
+    return res.status(500).json({ success: false, message: 'Server error updating allowed companies.' });
+  }
+});
+
 // PATCH employee tags (update employee and add tag to company)
 router.patch('/:id/tags', async (req, res) => {
   try {
@@ -92,12 +114,14 @@ router.patch('/:id/tags', async (req, res) => {
 // PUT update employee details
 router.put('/:id', async (req, res) => {
   try {
-    const { name, mobile, countryCode, tags } = req.body;
+    const { name, mobile, countryCode, tags, allowedCompanies } = req.body;
+    console.log("UPDATE EMPLOYEE BODY:", req.body);
     const updateData = {};
     if (name) updateData.name = name;
     if (mobile) updateData.mobile = mobile;
     if (countryCode) updateData.countryCode = countryCode;
     if (tags && Array.isArray(tags)) updateData.tags = tags;
+    if (allowedCompanies && Array.isArray(allowedCompanies)) updateData.allowedCompanies = allowedCompanies;
 
     const employee = await Employee.findByIdAndUpdate(
       req.params.id,

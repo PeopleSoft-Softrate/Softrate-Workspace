@@ -45,7 +45,7 @@ class _BookmarkTabState extends State<BookmarkTab> {
 
   Future<void> _fetchBookmarks() async {
     if (_companyCode.isEmpty || _employeeId.isEmpty) {
-      setState(() { _loading = false; _error = 'Not logged in. (code: "$_companyCode", phone: "$_mobileNumber")'; });
+      setState(() { _loading = false; _error = 'Not logged in. (code: "$_companyCode", empId: "$_employeeId")'; });
       return;
     }
     setState(() { _loading = true; _error = ''; });

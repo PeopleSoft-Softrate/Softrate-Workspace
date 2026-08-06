@@ -196,6 +196,21 @@
         </div>
       </div>
 
+      <!-- Allowed Companies (Multi-Select) -->
+      <div class="form-group" *ngIf="(vm.settingsCollaboratingCompanies?.length || 0) > 0">
+        <label>Allowed Collaborating Companies</label>
+        <p style="font-size:0.75rem; color:var(--text-3); margin-top:-2px; margin-bottom:6px;">Select companies this employee can generate quotes/invoices for.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <div *ngFor="let c of vm.settingsCollaboratingCompanies" (click)="vm.toggleEditAllowedCompany(c)"
+            [style.background]="vm.editingEmployee.allowedCompanies?.includes(c) ? 'rgba(99, 102, 241, 0.15)' : 'transparent'"
+            [style.color]="vm.editingEmployee.allowedCompanies?.includes(c) ? 'var(--purple)' : 'var(--text-3)'"
+            [style.border-color]="vm.editingEmployee.allowedCompanies?.includes(c) ? 'var(--purple)' : 'var(--border)'"
+            style="padding: 4px 10px; border: 1px solid; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: 600;">
+            {{ c }}
+          </div>
+        </div>
+      </div>
+
       <button type="submit" class="cta-primary" [disabled]="vm.editEmployeeLoading"
         style="margin-top: 1rem; width: 100%;">
         {{ vm.editEmployeeLoading ? 'Updating...' : 'Save Changes' }}
@@ -1087,7 +1102,13 @@
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
           <button class="secondary-action" type="button" (click)="vm.closeInvoiceModal()">Close</button>
           <div *ngIf="!vm.viewingSavedDocument" style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">Company</label>
+              <select class="glass-input" [ngModel]="vm.documentCompanyCode || vm.dashboardCode" (ngModelChange)="vm.onDocumentCompanyChange($event)" style="min-width: 120px; height: 32px; padding: 4px 8px; font-size: 0.85rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer;">
+                <option [value]="vm.baseCompanyCode">{{ vm.baseCompanyCode }} (Home)</option>
+                <option *ngFor="let code of vm.settingsCollaboratingCompanies" [value]="code">{{ code }}</option>
+              </select>
+            </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">{{ vm.quoteMode ? 'Quote' : 'Invoice' }} Date</label>
               <input type="date" class="glass-input" style="padding: 4px 8px; font-size: 0.85rem; width: auto; height: 32px;" 

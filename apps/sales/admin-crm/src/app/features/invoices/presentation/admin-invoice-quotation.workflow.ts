@@ -299,6 +299,10 @@ export class AdminInvoiceQuotationWorkflow {
     return Number(vm.settingsGstPercentage || 0);
   }
 
+  triggerInvoicePreviewRefresh(vm: any): void {
+    this.refreshInvoicePreviewCaches(vm);
+  }
+
   private refreshInvoicePreviewCaches(vm: any): void {
     const snapshotName = String(this.activeInvoiceCompanySnapshot(vm)?.name || '').trim();
     const companyName = (snapshotName || (vm.settingsShowCompanyNameOnInvoice ? (vm.settingsCompanyName || vm.dashboardCompany) : '') || 'DealVoice').trim();
@@ -862,8 +866,10 @@ export class AdminInvoiceQuotationWorkflow {
       }
     }
 
+    // Use documentCompanyCode if set (admin switched company in modal), else dashboardCode
+    const activeCode = (vm.showInvoiceModal && vm.documentCompanyCode) ? vm.documentCompanyCode : vm.dashboardCode;
     const params = new URLSearchParams({
-      companyCode: vm.dashboardCode,
+      companyCode: activeCode,
       search: vm.invoiceSearch.trim(),
       page: String(page),
       pageSize: String(OPERATIONAL_PAGE_SIZE),
@@ -922,8 +928,10 @@ export class AdminInvoiceQuotationWorkflow {
       }
     }
 
+    // Use documentCompanyCode if set (admin switched company in modal), else dashboardCode
+    const activeCode = (vm.showInvoiceModal && vm.documentCompanyCode) ? vm.documentCompanyCode : vm.dashboardCode;
     const params = new URLSearchParams({
-      companyCode: vm.dashboardCode,
+      companyCode: activeCode,
       search: vm.quotationSearch.trim(),
       page: String(page),
       pageSize: String(OPERATIONAL_PAGE_SIZE),
@@ -1150,7 +1158,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.clientOnboardingError = '';
     vm.clientOnboardingSuccess = '';
     this.api.post<any>('/api/clients', {
-      companyCode: vm.dashboardCode,
+      companyCode: (vm.showInvoiceModal && vm.documentCompanyCode) ? vm.documentCompanyCode : vm.dashboardCode,
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
       companyName,
@@ -1445,6 +1453,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
+    vm.documentCompanyCode = vm.dashboardCode;
     this.resetInvoicePublicLink(vm);
     this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
@@ -1469,6 +1478,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentInvoiceNumber = '';
+    vm.documentCompanyCode = vm.dashboardCode;
     this.resetInvoicePublicLink(vm);
     this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
@@ -1493,6 +1503,7 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIssuedAt = new Date();
     vm.quoteNumber = Math.floor(100000 + Math.random() * 900000);
     vm.currentQuotationNumber = '';
+    vm.documentCompanyCode = vm.dashboardCode;
     this.resetInvoicePublicLink(vm);
     this.refreshInvoicePreviewCaches(vm);
     vm.showInvoiceModal = true;
@@ -1512,6 +1523,8 @@ export class AdminInvoiceQuotationWorkflow {
     vm.invoiceIsInclusiveGst = false;
     vm.quotationKindNoteDraft = this.defaultQuotationKindNote(vm);
     this.refreshInvoicePreviewCaches(vm);
+    vm.documentCompanyCode = '';
+    vm.fetchSettings();
   }
 
   onProductSelect(vm: any): void {
@@ -1687,8 +1700,10 @@ export class AdminInvoiceQuotationWorkflow {
     const invoiceClient = vm.selectedInvoiceClient;
     const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || vm.invoiceLead._id;
     vm.invoiceSaving = true;
+
     const payload = {
       companyCode: vm.dashboardCode,
+      brandingCompanyCode: vm.documentCompanyCode || vm.dashboardCode,
       employeeId: vm.invoiceLead.assignedEmployeeId,
       employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeeId),
       createdByRole: 'admin',
@@ -1764,11 +1779,13 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
       companyCode: vm.dashboardCode,
+      brandingCompanyCode: vm.documentCompanyCode || vm.dashboardCode,
       employeeId: vm.invoiceLead.assignedEmployeeId,
       employeeName: vm.getEmployeeName(vm.invoiceLead.assignedEmployeeId),
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
-      leadId: vm.invoiceLead._id,
+      clientId: vm.selectedInvoiceClient?.clientId || undefined,
+      leadId: vm.selectedInvoiceClient?.sourceLeadIds?.[0] || vm.invoiceLead._id,
       contactNumber: vm.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(vm),
       quotationDate: vm.invoiceIssuedAt,
@@ -1808,7 +1825,7 @@ export class AdminInvoiceQuotationWorkflow {
 
     vm.invoiceSavingLeadId = lead._id;
     this.api.post<any>('/api/invoices', {
-      companyCode: vm.dashboardCode,
+      companyCode: vm.documentCompanyCode || vm.dashboardCode,
       employeeId: lead.assignedEmployeeId,
       employeeName: vm.employees.find((emp: any) => emp.mobile === lead.assignedEmployeeId)?.name || '',
       createdByRole: 'admin',

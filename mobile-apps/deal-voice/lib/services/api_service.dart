@@ -76,7 +76,7 @@ class ApiService {
   static Future<Map<String, dynamic>> checkSyncStatus(String companyCode, String employeeId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/employees/sync-status?companyCode=$companyCode&mobile=$mobile'),
+        Uri.parse('$baseUrl/employees/sync-status?companyCode=$companyCode&employeeId=$employeeId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -89,7 +89,7 @@ class ApiService {
   }
   static Future<Map<String, dynamic>> syncCallLogs({
     required String companyCode,
-    required String phone,
+    required String employeeId,
     required String date,
     required int incoming,
     required int outgoing,
@@ -136,12 +136,12 @@ class ApiService {
   // ── Fetch Call Log Details ─────────────────────────────────
   static Future<Map<String, dynamic>> fetchCallLogDetails({
     required String companyCode,
-    required String phone,
+    required String employeeId,
     required String fromDate,
     required String toDate,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/calllogs/details?companyCode=$companyCode&phone=$phone&from=$fromDate&to=$toDate');
+      final uri = Uri.parse('$baseUrl/calllogs/details?companyCode=$companyCode&employeeId=$employeeId&from=$fromDate&to=$toDate');
       final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return jsonDecode(response.body);
@@ -174,7 +174,7 @@ class ApiService {
   // ── Bookmarks / Follow-Ups ─────────────────────────────────
   static Future<Map<String, dynamic>> addBookmark({
     required String companyCode,
-    required String employeePhone,
+    required String employeeId,
     required String contactNumber,
     String contactName = '',
     String description = '',
@@ -193,7 +193,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'companyCode': companyCode,
-          'employeePhone': employeePhone,
+          'employeeId': employeeId,
           'contactNumber': contactNumber,
           'contactName': contactName,
           'description': description,
@@ -225,10 +225,10 @@ class ApiService {
 
   static Future<Map<String, dynamic>> getBookmarks({
     required String companyCode,
-    required String phone,
+    required String employeeId,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/bookmarks?companyCode=$companyCode&phone=$phone');
+      final uri = Uri.parse('$baseUrl/bookmarks?companyCode=$companyCode&employeeId=$employeeId');
       final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return jsonDecode(response.body);
@@ -304,7 +304,7 @@ class ApiService {
   // ── Leads ─────────────────────────────────────────────────
   static Future<Map<String, dynamic>> getLeads({
     required String companyCode,
-    required String phone,
+    required String employeeId,
     String? setLabel,
   }) async {
     try {
@@ -312,11 +312,7 @@ class ApiService {
       if (setLabel != null && setLabel.isNotEmpty) {
         queryParams['setLabel'] = setLabel;
       }
-      final uri = Uri.https(
-        'softrate-call.onrender.com', 
-        '/api/leads/employee',
-        queryParams,
-      );
+      final uri = Uri.parse('$baseUrl/leads/employee').replace(queryParameters: queryParams);
       final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
       
       try {

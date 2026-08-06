@@ -708,6 +708,13 @@
                   <input id="invoiceHistorySearch" class="topbar-input" type="text" placeholder="Search invoices..."
                     [(ngModel)]="invoiceHistorySearch" (ngModelChange)="onInvoiceHistoryQueryChange()" />
                 </label>
+                <div class="invoice-history-company-filter" *ngIf="employee?.allowedCompanies?.length">
+                  <select class="field-input" style="height: 36px; padding: 0 12px; border-radius: 6px; font-size: 13px;"
+                    [ngModel]="historyCompanyCode" (ngModelChange)="onHistoryCompanyChange($event)">
+                    <option [value]="employee?.companyCode">My Company</option>
+                    <option *ngFor="let c of employee?.allowedCompanies" [value]="c">{{ c }}</option>
+                  </select>
+                </div>
                 <button class="toolbar-button invoice-date-filter-button" type="button"
                   (click)="invoiceDateFilterOpen=!invoiceDateFilterOpen">
                   Date Filter
@@ -913,6 +920,13 @@
                   <input id="quotationHistorySearch" class="topbar-input" type="text" placeholder="Search quotations..."
                     [(ngModel)]="quotationHistorySearch" (ngModelChange)="onQuotationHistoryQueryChange()" />
                 </label>
+                <div class="invoice-history-company-filter" *ngIf="employee?.allowedCompanies?.length">
+                  <select class="field-input" style="height: 36px; padding: 0 12px; border-radius: 6px; font-size: 13px;"
+                    [ngModel]="historyCompanyCode" (ngModelChange)="onHistoryCompanyChange($event)">
+                    <option [value]="employee?.companyCode">My Company</option>
+                    <option *ngFor="let c of employee?.allowedCompanies" [value]="c">{{ c }}</option>
+                  </select>
+                </div>
                 <button class="toolbar-button invoice-date-filter-button" type="button"
                   (click)="quotationDateFilterOpen=!quotationDateFilterOpen">Date Filter</button>
               </div>
@@ -2406,7 +2420,16 @@
           </div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
-          <button class="secondary-action" (click)="closeInvoiceModal()">Close</button>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;" *ngIf="!viewingSavedDocument && (employee?.allowedCompanies?.length || 0) > 0">
+              <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin: 0;">Company</label>
+              <select class="glass-input" [ngModel]="documentCompanyCode" (ngModelChange)="onDocumentCompanyChange($event)" style="min-width: 120px; height: 32px; padding: 4px 8px; font-size: 0.85rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer;">
+                <option [value]="employee?.companyCode">{{ employee?.companyCode }} (Main)</option>
+                <option *ngFor="let comp of employee?.allowedCompanies" [value]="comp">{{ comp }}</option>
+              </select>
+            </div>
+            <button class="secondary-action" (click)="closeInvoiceModal()">Close</button>
+          </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase;">{{ quoteMode
               ? 'Quote' : 'Invoice' }} Date</label>

@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe, TitleCasePipe } from '@angular/common';
+import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe, TitleCasePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../environments/environment';
 import { Chart, registerables } from 'chart.js';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { RealtimeService, SSEEvent } from '../../realtime.service';
@@ -25,7 +26,6 @@ import { InvoicesRepository } from '../invoices/data/invoices.repository';
 import { QuotationsRepository } from '../quotations/data/quotations.repository';
 import { EmployeeLeadCardComponent } from '../leads/presentation/employee-lead-card.component';
 import { EmployeeLeadDetailComponent } from '../leads/presentation/employee-lead-detail.component';
-import { EmployeeEmailIntegrationSectionComponent } from '../settings/presentation/employee-email-integration-section/employee-email-integration-section';
 import { Lead as EmployeeLeadModel, LeadDrawerSection, LeadHistoryLog } from '../leads/domain/lead.model';
 
 type EmployeeLeadScope = Partial<Pick<EmployeeLeadsState, 'search' | 'status' | 'statuses' | 'isFavourite' | 'updatedFrom' | 'updatedTo' | 'setLabel' | 'division'>>;
@@ -42,6 +42,7 @@ export interface ActivityItem {
 interface Employee {
   _id: string;
   name: string;
+  email?: string;
   mobile: string;
   companyCode: string;
   countryCode?: string;
@@ -322,7 +323,7 @@ import { CompanyTimelineComponent } from '../../shared/ui/company-timeline/compa
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, EmployeeEmailIntegrationSectionComponent],
+  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -596,6 +597,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   };
   companyFullHistoryLogs: LeadHistoryLog[] = [];
   companyFullRemarksHistory: LeadHistoryLog[] = [];
+  companyFullEmailHistory: LeadHistoryLog[] = [];
   companyFullInvoiceItems: InvoiceRecord[] = [];
   companyFullQuotationItems: QuotationRecord[] = [];
   companyFullFollowups: Bookmark[] = [];
@@ -1297,6 +1299,13 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     await this.openCompanyFullViewForLeadContext(sourceLead, 'overview');
   }
 
+  async handleActivityClick(event: {leadId: string, section: string}): Promise<void> {
+    const lead = this.allLeads.find(l => l._id === event.leadId);
+    if (lead) {
+      await this.openCompanyFullViewForLeadContext(lead, event.section as CompanyFullSection);
+    }
+  }
+
   private async openCompanyFullViewForLeadContext(sourceLead: Lead, initialSection: CompanyFullSection = 'overview'): Promise<void> {
     this.closeAiBriefPopup();
     this.companyRemarkLead = null;
@@ -1909,7 +1918,7 @@ invoiceSeal: string = '';
   private invoiceSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   private clientOnboardingSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   private quotationSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
-
+  emailIntegrationStatus: { connected: boolean; provider: string; email: string } = { connected: false, provider: '', email: '' };
   get todayInputDate(): string {
     return new Date().toLocaleDateString('en-CA');
   }
@@ -4020,6 +4029,10 @@ invoiceSeal: string = '';
     return String(log?.action || '').toLowerCase().includes('remark');
   }
 
+  private isCompanyEmailHistoryLog(log: LeadHistoryLog): boolean {
+    return String(log?.action || '') === 'Email Sent';
+  }
+
   private isCompanyFollowupHistoryLog(log: LeadHistoryLog): boolean {
     const action = String(log?.action || '').toLowerCase();
     return action.includes('follow-up') || action.includes('bookmarked');
@@ -4029,9 +4042,14 @@ invoiceSeal: string = '';
     return logs.filter((log: LeadHistoryLog) => this.isCompanyRemarkHistoryLog(log));
   }
 
+  private filterCompanyEmailHistory(logs: LeadHistoryLog[]): LeadHistoryLog[] {
+    return logs.filter((log: LeadHistoryLog) => this.isCompanyEmailHistoryLog(log));
+  }
+
   private applyCompanyFullHistoryLogs(logs: LeadHistoryLog[]): void {
     this.companyFullHistoryLogs = [...logs];
     this.companyFullRemarksHistory = this.filterCompanyRemarkHistory(logs);
+    this.companyFullEmailHistory = this.filterCompanyEmailHistory(logs);
   }
 
   private async reloadCompanyFullRemarkHistory(): Promise<void> {
@@ -4593,12 +4611,16 @@ invoiceSeal: string = '';
   isMailModalFullScreen = false;
   mailLead: Lead | null = null;
   mailSubject: string = '';
+  mailCc: string = '';
+  mailBcc: string = '';
   mailBody: string = '';
   mailAttachments: File[] = [];
 
   openMailModal(lead: Lead) {
     this.mailLead = lead;
     this.mailSubject = '';
+    this.mailCc = '';
+    this.mailBcc = '';
     this.mailBody = '';
     this.mailAttachments = [];
     this.isMailModalFullScreen = false;
@@ -4616,7 +4638,7 @@ invoiceSeal: string = '';
   async fetchEmailTemplates() {
     if (!this.employee?.companyCode) return;
     try {
-      const response = await fetch(`/api/templates/${this.employee.companyCode}`);
+      const response = await fetch(`${environment.apiBaseUrl}/api/templates/${this.employee.companyCode}`);
       const data = await response.json();
       if (data.success) {
         this.emailTemplates = data.data;
@@ -4704,6 +4726,11 @@ invoiceSeal: string = '';
       formData.append('subject', this.mailSubject);
       formData.append('html', finalBody);
       
+      // Pass lead details for history logging
+      formData.append('contactNumber', this.mailLead.contactNumber || '');
+      formData.append('contactName', this.mailLead.contactName || '');
+      formData.append('companyName', this.mailLead.leadCompanyName || '');
+      
       this.mailAttachments.forEach(file => {
         formData.append('attachments', file);
       });
@@ -4764,6 +4791,8 @@ invoiceSeal: string = '';
 
   ngOnInit(): void {
     Chart.register(...registerables);
+    
+
     this.leadVmSub = this.employeeLeadsVm.state$.subscribe((state) => this.applyEmployeeLeadViewModelState(state));
     const raw = localStorage.getItem('dv_employee');
     let restoredSession = false;
@@ -4958,6 +4987,7 @@ invoiceSeal: string = '';
 
     try {
       const response = await firstValueFrom(this.api.patch<any>(`/api/leads/${this.directorEditLeadId}/director`, {
+        companyCode: this.employee?.companyCode,
         contactName: this.directorEditDraft.contactName,
         contactNumber: this.directorEditDraft.contactNumber,
         directorEmailAddress: this.directorEditDraft.directorEmailAddress
@@ -5517,6 +5547,22 @@ invoiceSeal: string = '';
     this.startupWarmupDone = false;
     this.armStartupSplashFallback(runId);
     this.startupWarmupPromise = this.runStartupWarmup(runId);
+    this.fetchEmailIntegrationStatus();
+  }
+
+  private fetchEmailIntegrationStatus(): void {
+    this.api.get<any>('/api/email/status').subscribe({
+      next: (res) => {
+        if (res.success && res.connected) {
+          this.emailIntegrationStatus = {
+            connected: res.connected,
+            provider: res.provider,
+            email: res.email
+          };
+        }
+      },
+      error: (err) => console.error('Failed to fetch email status', err)
+    });
   }
 
   private async runStartupWarmup(runId: number): Promise<void> {
@@ -7930,6 +7976,14 @@ invoiceSeal: string = '';
     return this.getWorkspaceState().followupsInActiveCompany;
   }
 
+  getSenderEmailDisplay(): string {
+    if (!this.employee) return 'support@support.softrateglobal.com';
+    const alias = this.employee.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // This perfectly mimics the backend's dynamic email generation!
+    return `${alias}@support.softrateglobal.com`;
+  }
+
+  // ── Modals & Drawers ──────────────────────────────────────────
   get currentSelectedFollowup(): Bookmark | null {
     return this.getWorkspaceState().currentSelectedFollowup;
   }

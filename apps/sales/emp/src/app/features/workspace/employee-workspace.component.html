@@ -55,7 +55,7 @@
 </div>
 
 <div class="crm-shell" *ngIf="loggedIn" [class.sidebar-minimized]="sidebarMinimized">
-  <div class="crm-sidebar-overlay" [class.active]="sidebarOpen" (click)="sidebarOpen = false"></div>
+  <div class="crm-sidebar-overlay" [class.active]="sidebarOpen" (mousedown)="sidebarOpen = false"></div>
 
   <aside class="crm-sidebar" [class.open]="sidebarOpen" [class.minimized]="sidebarMinimized">
     <div class="sidebar-brand">
@@ -131,16 +131,7 @@
         <span class="sidebar-label">Quotation</span>
       </button>
 
-      <button class="sidebar-link sidebar-link-email-accounts" [class.active]="dashTab==='email_accounts'"
-        (click)="switchTab('email_accounts')" [title]="sidebarMinimized ? 'Email Accounts' : ''">
-        <span class="sidebar-icon sidebar-icon-email-accounts" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-            <polyline points="22,6 12,13 2,6"></polyline>
-          </svg>
-        </span>
-        <span class="sidebar-label">Email Accounts</span>
-      </button>
+
 
       <div class="sidebar-group-label"
         *ngIf="sidebarSectionHas(['My Leads', 'Interested', 'Not Connected', 'Converted', 'Favorites'])">Lead Views
@@ -427,14 +418,9 @@
     </div>
 
     <main class="crm-main">
-      <!-- ── Email Accounts Workspace ──────────────────────────────────── -->
-      <section class="workspace email-accounts-workspace" *ngIf="dashTab==='email_accounts'" style="padding: 24px; background: #f8fafc; height: 100%; overflow-y: auto;">
-        <app-employee-email-integration-section></app-employee-email-integration-section>
-      </section>
-
       <!-- ── Activities Workspace ──────────────────────────────────── -->
       <section class="workspace activities-workspace" *ngIf="dashTab==='activities'">
-        <app-activities-calendar [employee]="employee" [allLeads]="allLeads"></app-activities-calendar>
+        <app-activities-calendar [employee]="employee" [allLeads]="allLeads" [searchQuery]="leadSearch" (activityClicked)="handleActivityClick($event)"></app-activities-calendar>
       </section>
 
       <div class="overview-greeting-wrap" *ngIf="dashTab==='overview'">
@@ -1836,8 +1822,8 @@
   </section>
 </ng-template>
 
-<div class="invoice-overlay" *ngIf="companyFullViewOpen" (click)="closeCompanyFullView()">
-  <div class="invoice-modal company-full-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="companyFullViewOpen" (mousedown)="closeCompanyFullView()">
+  <div class="invoice-modal company-full-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <section class="company-full-shell lead-detail-workspace">
       <aside class="lead-detail-sidebar company-full-sidebar">
         <button class="lead-detail-back" type="button" (click)="closeCompanyFullView()">
@@ -1977,7 +1963,7 @@
           </section>
 
           <section class="company-full-card" [id]="companyFullSectionId('followups')">
-            <app-activities-calendar [employee]="employee" [allLeads]="allLeads" [filterCompanyId]="companyFullViewLead()?._id" [filterCompanyName]="companyFullViewLead()?.leadCompanyName" [embedded]="true"></app-activities-calendar>
+            <app-activities-calendar [employee]="employee" [allLeads]="allLeads" [filterCompanyId]="companyFullViewLead()?._id" [filterCompanyName]="companyFullViewLead()?.leadCompanyName" [embedded]="true" [searchQuery]="leadSearch" (activityClicked)="handleActivityClick($event)"></app-activities-calendar>
           </section>
 
           <section class="company-full-card" [id]="companyFullSectionId('timeline')">
@@ -1985,7 +1971,8 @@
               [lead]="companyFullViewLead()" 
               [remarks]="companyFullRemarksHistory" 
               [invoices]="companyFullInvoiceItems" 
-              [quotations]="companyFullQuotationItems">
+              [quotations]="companyFullQuotationItems"
+              [emails]="companyFullEmailHistory">
             </app-company-timeline>
           </section>
 
@@ -2068,8 +2055,8 @@
   <div class="empty-state-inline empty-state-inline-minimal">No contact data loaded for this company.</div>
 </ng-template>
 
-<div class="invoice-overlay company-remarks-overlay" *ngIf="companyRemarkLead" (click)="closeCompanyRemarkHistory()">
-  <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay company-remarks-overlay" *ngIf="companyRemarkLead" (mousedown)="closeCompanyRemarkHistory()">
+  <div class="invoice-modal followup-modal company-remarks-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">Remark History</div>
@@ -2089,8 +2076,8 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="aiBriefFullViewOpen" (click)="closeAiBriefFullView()">
-  <div class="invoice-modal followup-modal ai-summary-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="aiBriefFullViewOpen" (mousedown)="closeAiBriefFullView()">
+  <div class="invoice-modal followup-modal ai-summary-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">AI Summary</div>
@@ -2112,8 +2099,8 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="clientOnboardingCreateOpen" (click)="closeClientOnboardingCreateModal()">
-  <div class="invoice-modal client-onboarding-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="clientOnboardingCreateOpen" (mousedown)="closeClientOnboardingCreateModal()">
+  <div class="invoice-modal client-onboarding-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="client-onboarding-modal-close" type="button" (click)="closeClientOnboardingCreateModal()"
       aria-label="Close create client">✕</button>
     <div class="client-onboarding-modal-brand">
@@ -2180,21 +2167,59 @@
     border: none !important;
     box-sizing: border-box !important;
   }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .mail-sidebar-panel {
+    background: #ffffff;
+    height: 100vh;
+    width: 550px;
+    max-width: 100vw;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    z-index: 1000;
+  }
+  .mail-header-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  .mail-header-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .mail-header-btn-close:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
 </style>
-<div class="invoice-overlay" *ngIf="showMailModal" (click)="closeMailModal()" [style.padding]="isMailModalFullScreen ? '0' : '24px'">
-  <div class="invoice-modal client-onboarding-modal" 
+<div class="invoice-overlay" *ngIf="showMailModal" (mousedown)="closeMailModal()" style="padding: 0; display: flex; justify-content: flex-end; align-items: flex-start; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px);">
+  <div class="mail-sidebar-panel" 
        [class.full-screen-modal]="isMailModalFullScreen"
-       style="max-width: 800px; padding: 0; transition: all 0.2s ease-in-out; width: 100%; display: flex; flex-direction: column;" 
+       (mousedown)="$event.stopPropagation()"
        (click)="$event.stopPropagation()">
-    <div style="background-color: #5558ff; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;" [style.border-radius]="isMailModalFullScreen ? '0' : '8px 8px 0 0'">
-      <h2 style="margin: 0; font-size: 16px; font-weight: 500;">New Mail</h2>
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <button type="button" (click)="isMailModalFullScreen = !isMailModalFullScreen; $event.stopPropagation(); $event.preventDefault();" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Toggle Full Screen">
-          <svg *ngIf="!isMailModalFullScreen" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-          <svg *ngIf="isMailModalFullScreen" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+    <div style="background-color: #ffffff; color: #0f172a; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="color: #5558ff;"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        New Mail
+      </h2>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button type="button" class="mail-header-btn" (click)="isMailModalFullScreen = !isMailModalFullScreen; $event.stopPropagation(); $event.preventDefault();" title="Toggle Full Screen">
+          <svg *ngIf="!isMailModalFullScreen" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          <svg *ngIf="isMailModalFullScreen" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
         </button>
-        <button type="button" (click)="closeMailModal()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        <button type="button" class="mail-header-btn mail-header-btn-close" (click)="closeMailModal()" title="Close">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </div>
     </div>
@@ -2203,7 +2228,9 @@
         <span style="background: #e2e8f0; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="#64748b"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </span>
-        <span style="font-size: 14px; color: #333;">{{ employee?.name || 'Varun' }} &lt;wealthempiresoffice@gmail.com&gt;</span>
+        <span style="font-size: 14px; color: #333;">
+          {{ employee?.name || 'Varun' }} &lt;{{ getSenderEmailDisplay() }}&gt;
+        </span>
       </div>
       <div style="position: relative;">
         <button type="button" (click)="insertMailTemplate()" style="background: white; border: 1px solid #5558ff; color: #5558ff; padding: 4px 12px; border-radius: 4px; font-size: 13px; cursor: pointer;">Insert Template &nbsp;&#9662;</button>
@@ -2218,7 +2245,7 @@
       </div>
     </div>
 
-    <div style="padding: 12px 16px; background-color: #fffbdd; font-size: 13px; color: #666; border-bottom: 1px solid #eee;">
+    <div *ngIf="!emailIntegrationStatus?.connected" style="padding: 12px 16px; background-color: #fffbdd; font-size: 13px; color: #666; border-bottom: 1px solid #eee;">
       Sender email changed : To improve email deliverability, the system will avoid sending emails from public email addresses and use our own authenticated domain. <a href="#" style="color: #0066cc;">Learn More</a>
     </div>
 
@@ -2232,6 +2259,16 @@
           {{ mailLead?.contactName }} &lt;{{ mailLead?.directorEmailAddress || 'No Email Found' }}&gt;
           <span style="margin-left: 8px; cursor: pointer; color: #94a3b8;">&times;</span>
         </div>
+      </div>
+
+      <div style="display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+        <span style="width: 40px; color: #666; font-size: 14px;">Cc</span>
+        <input type="text" [(ngModel)]="mailCc" name="mailCc" placeholder="Cc" style="width: 100%; border: none; outline: none; font-size: 14px; font-family: inherit;">
+      </div>
+
+      <div style="display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+        <span style="width: 40px; color: #666; font-size: 14px;">Bcc</span>
+        <input type="text" [(ngModel)]="mailBcc" name="mailBcc" placeholder="Bcc" style="width: 100%; border: none; outline: none; font-size: 14px; font-family: inherit;">
       </div>
 
       <div style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
@@ -2287,8 +2324,8 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="clientOnboardingEditOpen" (click)="closeClientOnboardingEditModal()">
-  <div class="invoice-modal client-onboarding-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="clientOnboardingEditOpen" (mousedown)="closeClientOnboardingEditModal()">
+  <div class="invoice-modal client-onboarding-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="client-onboarding-modal-close" type="button" (click)="closeClientOnboardingEditModal()"
       aria-label="Close edit client">✕</button>
     <div class="client-onboarding-modal-brand">
@@ -2343,8 +2380,8 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="showFollowupModal && dashTab !== 'followups'" (click)="closeFollowupModal()">
-  <div class="invoice-modal followup-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="showFollowupModal && dashTab !== 'followups'" (mousedown)="closeFollowupModal()">
+  <div class="invoice-modal followup-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">Follow-up</div>
@@ -2406,9 +2443,9 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="showInvoiceModal" (click)="closeInvoiceModal()">
+<div class="invoice-overlay" *ngIf="showInvoiceModal" (mousedown)="closeInvoiceModal()">
   <div class="invoice-modal invoice-modal-billing"
-    [class.invoice-modal-billing--side-by-side]="quoteMode && !viewingSavedDocument" (click)="$event.stopPropagation()">
+    [class.invoice-modal-billing--side-by-side]="quoteMode && !viewingSavedDocument" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="invoice-builder" [class.invoice-builder-readonly]="viewingSavedDocument">
       <div class="section-header invoice-builder-header">
         <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -2991,8 +3028,8 @@
 </ng-template>
 
 <!-- Director Edit Modal -->
-<div class="invoice-overlay" *ngIf="directorEditOpen" (click)="closeDirectorEditModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff;" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="directorEditOpen" (mousedown)="closeDirectorEditModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="client-onboarding-modal-close" type="button" (click)="closeDirectorEditModal()"
       aria-label="Close edit director">✕</button>
       
@@ -3027,8 +3064,8 @@
 </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="contactAddOpen" (click)="closeContactAddModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff;" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="contactAddOpen" (mousedown)="closeContactAddModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="client-onboarding-modal-close" type="button" (click)="closeContactAddModal()"
       aria-label="Close add contact">✕</button>
       

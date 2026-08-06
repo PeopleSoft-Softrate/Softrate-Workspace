@@ -1624,8 +1624,8 @@
   </section>
 </ng-template>
 
-<div class="invoice-overlay" *ngIf="(dashTab==='leads' || dashTab==='followups') && isAiBriefPopupOpen(currentAiSummaryTargetKey())" (click)="closeAiBriefPopup()">
-  <div class="invoice-modal followup-modal ai-summary-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="(dashTab==='leads' || dashTab==='followups') && isAiBriefPopupOpen(currentAiSummaryTargetKey())" (mousedown)="closeAiBriefPopup()">
+  <div class="invoice-modal followup-modal ai-summary-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">AI Summary</div>
@@ -1647,8 +1647,8 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="showFollowupModal && dashTab !== 'followups'" (click)="closeFollowupModal()">
-  <div class="invoice-modal followup-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="showFollowupModal && dashTab !== 'followups'" (mousedown)="closeFollowupModal()">
+  <div class="invoice-modal followup-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">Follow-up</div>
@@ -1701,8 +1701,8 @@
   </div>
 </div>
 
-<div class="invoice-overlay" *ngIf="showInvoiceModal" (click)="closeInvoiceModal()">
-  <div class="invoice-modal invoice-modal-billing" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="showInvoiceModal" (mousedown)="closeInvoiceModal()">
+  <div class="invoice-modal invoice-modal-billing" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="invoice-builder" [class.invoice-builder-readonly]="viewingSavedDocument">
       <div class="section-header invoice-builder-header">
         <div>

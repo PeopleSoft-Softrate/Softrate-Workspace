@@ -516,7 +516,7 @@ router.post('/reset-password', async (req, res) => {
 router.get('/company/:companyCode/settings', async (req, res) => {
   try {
     const { companyCode } = req.params;
-    const user = await User.findOne({ companyCode }, 'companyName breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies');
+    const user = await User.findOne({ companyCode }, 'companyName breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies resendApiKey resendSenderDomain');
     if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
     const leadStatuses = user.leadStatuses || [];
     const valid = new Set(leadStatuses);
@@ -546,6 +546,8 @@ router.get('/company/:companyCode/settings', async (req, res) => {
         products: user.products || [],
         productRemarks: user.productRemarks || [],
         collaboratingCompanies: user.collaboratingCompanies || [],
+        resendApiKey: user.resendApiKey || '',
+        resendSenderDomain: user.resendSenderDomain || '',
         weCrmAccessEnabled: process.env.WE_CRM_ACCESS && companyCode === process.env.WE_CRM_ACCESS,
         weCrmUrl: process.env.WE_CRM_URL || 'http://localhost:5001/api',
         weCrmCompanyId: process.env.WE_CRM_COMPANYID || null
@@ -600,6 +602,10 @@ router.put('/company/:companyCode/settings', async (req, res) => {
     if (contactDetails !== undefined) update.contactDetails = contactDetails;
     if (products !== undefined) update.products = normalizeProducts(products);
     
+    // Email Integration Keys
+    if (req.body.resendApiKey !== undefined) update.resendApiKey = req.body.resendApiKey.trim();
+    if (req.body.resendSenderDomain !== undefined) update.resendSenderDomain = req.body.resendSenderDomain.trim();
+    
     // Explicitly handle productRemarks to ensure they are saved
     if (productRemarks !== undefined) {
       update.productRemarks = Array.isArray(productRemarks) ? productRemarks : [];
@@ -644,7 +650,9 @@ router.put('/company/:companyCode/settings', async (req, res) => {
         bankDetails2: user.bankDetails2,
         contactDetails: user.contactDetails,
         products: user.products,
-        productRemarks: user.productRemarks
+        productRemarks: user.productRemarks,
+        resendApiKey: user.resendApiKey,
+        resendSenderDomain: user.resendSenderDomain
       }
     });
   } catch (err) {

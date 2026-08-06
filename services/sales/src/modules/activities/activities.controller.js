@@ -45,30 +45,47 @@ exports.getEmployeeActivities = async (req, res) => {
 
     let activities = await Activity.find(query).sort({ activityDate: 1 }).lean();
     
-    // Manually fetch Lead data to attach client name
+    // Manually fetch Lead and Client data to attach company name
     const Lead = require('../../../models/Lead');
+    const Client = require('../../../models/Client');
     const leadIds = activities.map(a => a.leadId).filter(Boolean);
     
     if (leadIds.length > 0) {
-      // Find matching leads. Since leadId is string, but Lead._id might be ObjectId,
-      // mongoose handles casting automatically if they are valid ObjectIds.
-      // If some leadIds are not valid ObjectIds, this query might fail. We should be safe if they are valid.
       try {
-        const leads = await Lead.find({ _id: { $in: leadIds } }, 'companyName primaryContactName');
-        const leadMap = {};
+        const LeadModel = req.models?.Lead || require('../../../models/Lead');
+        const ClientModel = req.models?.Client || require('../../../models/Client');
+        
+        const leads = await LeadModel.find({ _id: { $in: leadIds } }, 'companyCode leadCompanyName contactName');
+        const clients = await ClientModel.find({ _id: { $in: leadIds } }, 'companyCode companyName primaryContactName');
+        
+        const entityMap = {};
         leads.forEach(l => {
-          leadMap[l._id.toString()] = l;
+          entityMap[l._id.toString()] = {
+            companyName: l.leadCompanyName,
+            contactName: l.contactName,
+            companyCode: l.companyCode
+          };
+        });
+        clients.forEach(c => {
+          entityMap[c._id.toString()] = {
+            companyName: c.companyName,
+            contactName: c.primaryContactName,
+            companyCode: c.companyCode
+          };
         });
         
         activities = activities.map(a => {
-          if (a.leadId && leadMap[a.leadId]) {
-            const l = leadMap[a.leadId];
-            a.leadName = `${l.companyName} (${l.primaryContactName || 'No Name'})`;
+          if (a.leadId && entityMap[a.leadId]) {
+            const ent = entityMap[a.leadId];
+            a.companyName = ent.companyName || 'No Name';
+            a.contactName = ent.contactName || '';
+            a.leadName = `${a.companyName}${a.contactName ? ' (' + a.contactName + ')' : ''}`;
+            a.companyCode = ent.companyCode;
           }
           return a;
         });
       } catch (err) {
-        console.error('Error fetching leads for activities:', err.message);
+        console.error('Error fetching leads/clients for activities:', err.message);
       }
     }
     
@@ -87,5 +104,27 @@ exports.getLeadActivities = async (req, res) => {
   } catch (error) {
     console.error('Error fetching lead activities:', error);
     res.status(500).json({ success: false, message: 'Server error fetching lead activities' });
+  }
+};
+
+exports.updateActivity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const updatedActivity = await Activity.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    );
+    
+    if (!updatedActivity) {
+      return res.status(404).json({ success: false, message: 'Activity not found' });
+    }
+    
+    res.status(200).json({ success: true, data: updatedActivity });
+  } catch (error) {
+    console.error('Error updating activity:', error);
+    res.status(500).json({ success: false, message: 'Server error updating activity' });
   }
 };

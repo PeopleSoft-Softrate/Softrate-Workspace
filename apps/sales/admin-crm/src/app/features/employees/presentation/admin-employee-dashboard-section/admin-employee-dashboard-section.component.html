@@ -456,8 +456,8 @@
         </section>
       </div>
 
-      <div *ngIf="showAddLeadForm && dashTab==='emp_dashboard' && selectedEmployee" class="invoice-overlay admin-employee-add-modal-overlay" (click)="cancelLeadMapping(); showAddLeadForm = false">
-        <div class="invoice-modal admin-employee-add-modal" (click)="$event.stopPropagation()">
+      <div *ngIf="showAddLeadForm && dashTab==='emp_dashboard' && selectedEmployee" class="invoice-overlay admin-employee-add-modal-overlay" (mousedown)="cancelLeadMapping(); showAddLeadForm = false">
+        <div class="invoice-modal admin-employee-add-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
           <div class="followup-modal-head admin-employee-add-modal-head">
             <div class="followup-modal-title">
               <div class="section-kicker">Assign Leads</div>

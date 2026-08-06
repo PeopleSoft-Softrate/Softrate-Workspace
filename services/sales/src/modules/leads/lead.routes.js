@@ -31,7 +31,7 @@ const {
   fuzzySearchLeads,
   parsePagination,
 } = require('../../../services/leadQueryService');
-const { enrichLeadForStorage, normalizeRemarks, normalizeText } = require('../../../services/leadNormalization');
+const { enrichLeadForStorage, normalizeRemarks, normalizeText, normalizePhone } = require('../../../services/leadNormalization');
 const { ensureClientForLead } = require('../../../services/clientService');
 const { getAiBriefForLead } = require('../../../services/ai/researchWorkflow');
 const { getAiSuggestionForLead } = require('../../../services/ai/suggestionWorkflow');
@@ -841,13 +841,11 @@ router.patch('/:id/director', async (req, res) => {
     const responseLead = normalizeLeadForResponse(lead.toObject());
     await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
     
-    if (eventBus.canEmitToEmployee()) {
-      eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, {
-        type: 'LEAD_UPDATED',
-        lead: responseLead,
-        isContactUpdate: true
-      });
-    }
+    eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, {
+      type: 'LEAD_UPDATED',
+      lead: responseLead,
+      isContactUpdate: true
+    });
 
     return res.status(200).json({ success: true, lead: responseLead });
   } catch (err) {

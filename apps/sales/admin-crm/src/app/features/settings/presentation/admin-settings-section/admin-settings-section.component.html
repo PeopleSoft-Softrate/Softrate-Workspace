@@ -111,6 +111,51 @@
             </div>
           </div>
 
+          <!-- Email Integration Configuration Card -->
+          <div class="company-card" style="display: flex; flex-direction: column; grid-column: 1 / -1;">
+            <h3 class="cc-title" style="margin-bottom:0.5rem;">Email Integration Settings</h3>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:1.5rem;line-height:1.5;">Configure your custom Resend API key and Verified Sender Domain to send emails directly from your own domain.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+              <div class="form-group">
+                <label style="font-size:0.75rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Resend API Key</label>
+                <div style="position: relative;">
+                  <input id="resendApiKeyInput" [type]="showResendApiKey ? 'text' : 'password'" placeholder="re_xxxxxxxxxxxxxxxx"
+                    style="width:100%;padding:0.65rem 2.5rem 0.65rem 1rem;border:1px solid var(--border);border-radius:10px;background:var(--bg-card-2);font-size:0.9rem;"
+                    [(ngModel)]="resendApiKey">
+                  <button type="button" (click)="showResendApiKey = !showResendApiKey" title="Toggle visibility"
+                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-3); display: flex; align-items: center; justify-content: center; padding: 4px;">
+                    <svg *ngIf="!showResendApiKey" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <svg *ngIf="showResendApiKey" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                      <line x1="2" y1="2" x2="22" y2="22" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label style="font-size:0.75rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Verified Sender Domain</label>
+                <input id="resendSenderDomainInput" type="text" placeholder="e.g. support.yourcompany.com"
+                  style="width:100%;padding:0.65rem 1rem;border:1px solid var(--border);border-radius:10px;background:var(--bg-card-2);font-size:0.9rem;"
+                  [(ngModel)]="resendSenderDomain">
+              </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+              <button (click)="saveSettings()" class="cta-primary" [disabled]="settingsLoading"
+                style="padding: 0.6rem 1.5rem; border-radius: 10px; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                <span *ngIf="settingsLoading" class="btn-spinner"></span>
+                {{ settingsLoading ? 'Saving...' : 'Save Email Configuration' }}
+              </button>
+            </div>
+          </div>
+
           <!-- Email Templates Management Card -->
           <div class="company-card" style="display: flex; flex-direction: column; grid-column: 1 / -1;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
@@ -381,8 +426,8 @@
       </div>
 
       <!-- Email Template Modal -->
-      <div class="modal-overlay open" *ngIf="showEmailTemplateModal" (click)="closeEmailTemplateModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 600px; width: 90%; border-radius: 12px; padding: 24px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <div class="modal-overlay open" *ngIf="showEmailTemplateModal" (mousedown)="closeEmailTemplateModal()">
+        <div class="modal-content" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()" style="max-width: 600px; width: 90%; border-radius: 12px; padding: 24px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0;">{{ emailTemplateEditId ? 'Edit Email Template' : 'Create Email Template' }}</h2>
             <button (click)="closeEmailTemplateModal()" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; padding: 0;">&times;</button>

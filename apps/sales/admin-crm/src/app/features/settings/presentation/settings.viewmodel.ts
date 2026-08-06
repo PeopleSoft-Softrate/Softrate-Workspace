@@ -26,6 +26,9 @@ export class SettingsViewModel {
 
   readonly state$ = this.stateSubject.asObservable();
 
+  resendApiKey: string = '';
+  resendSenderDomain: string = '';
+
   constructor(private repository: SettingsRepository) {}
 
   selectSection(activeSectionId: SettingsState['activeSectionId']): void {

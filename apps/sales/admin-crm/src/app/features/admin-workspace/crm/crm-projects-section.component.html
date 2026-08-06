@@ -94,7 +94,7 @@
   </section>
 
   <div class="crm-modal-backdrop" *ngIf="vm.crmProjectMappingOpen" (click)="vm.closeCrmProjectMappingModal()">
-    <div class="invoice-modal followup-modal crm-map-modal crm-project-map-modal" (click)="$event.stopPropagation()">
+    <div class="invoice-modal followup-modal crm-map-modal crm-project-map-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
       <div class="followup-modal-head">
         <div class="followup-modal-title">
           <h3>Map Project Manager</h3>

@@ -164,16 +164,99 @@
   cursor: pointer;
   border-radius: 4px;
 }
-.view-toggle:first-child {
+.view-toggle.active {
   background: #fff;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   color: var(--text-primary);
 }
+.calendar-day-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.day-view-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+.day-view-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+.day-view-events {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.day-event {
+  display: flex;
+  margin-bottom: 24px;
+}
+.day-event:last-child {
+  margin-bottom: 0;
+}
+.day-event-time {
+  width: 80px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  text-align: right;
+  padding-right: 16px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.day-event-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+.day-event-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  margin-top: 4px;
+}
+.day-event-dot.task-bg { background: #f97316; }
+.day-event-dot.meeting-bg { background: #22c55e; }
+.day-event-dot.call-bg { background: #64748b; }
+.day-event-line-strut {
+  flex: 1;
+  width: 2px;
+  background: #e2e8f0;
+  margin-top: 4px;
+  min-height: 40px;
+}
+.day-event:last-child .day-event-line-strut {
+  display: none;
+}
+.day-event-details {
+  flex: 1;
+  padding-left: 20px;
+  padding-bottom: 8px;
+}
+.day-event-desc {
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 8px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: minmax(100px, 1fr);
-  flex: 1;
+  grid-auto-rows: auto;
 }
 .calendar-day-header {
   padding: 12px;
@@ -190,16 +273,16 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 100px;
+  min-height: 0;
 }
 .calendar-day:nth-child(7n) {
   border-right: none;
 }
-.calendar-day.out-of-month {
+.calendar-day.is-past {
   background-color: #f8fafc;
 }
-.calendar-day.out-of-month .day-number {
-  color: #cbd5e1;
+.calendar-day.is-past .day-number {
+  color: #94a3b8;
 }
 .calendar-day.is-today .day-number {
   background: var(--primary-500);
@@ -324,15 +407,34 @@
   display: none;
 }
 .checkbox-box {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1.5px solid var(--border-light);
+  box-sizing: border-box;
 }
-.filter-checkbox input:checked + .checkbox-box.task-box { background: #f97316; }
-.filter-checkbox input:checked + .checkbox-box.meeting-box { background: #22c55e; }
-.filter-checkbox input:checked + .checkbox-box.call-box { background: #64748b; }
-.filter-checkbox input:not(:checked) + .checkbox-box { border: 1px solid var(--border-light); background: #fff; }
+.filter-checkbox input:checked + .checkbox-box.task-box { background: #fff7ed; border-color: #f97316; }
+.filter-checkbox input:checked + .checkbox-box.task-box::after { border-color: #c2410c; }
+
+.filter-checkbox input:checked + .checkbox-box.meeting-box { background: #f0fdf4; border-color: #22c55e; }
+.filter-checkbox input:checked + .checkbox-box.meeting-box::after { border-color: #15803d; }
+
+.filter-checkbox input:checked + .checkbox-box.call-box { background: #f1f5f9; border-color: #64748b; }
+.filter-checkbox input:checked + .checkbox-box.call-box::after { border-color: #475569; }
+
+.filter-checkbox input:not(:checked) + .checkbox-box { border-color: #cbd5e1; background: #fff; }
+.filter-checkbox input:checked + .checkbox-box::after {
+  content: '';
+  width: 4px;
+  height: 9px;
+  border: solid;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -2px);
+}
 .activities-placeholder-layout {
   display: flex;
   align-items: center;
@@ -345,6 +447,12 @@
 .placeholder-content {
   text-align: center;
   color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
 }
 .placeholder-content h3 {
   color: var(--text-primary);
@@ -451,8 +559,8 @@
 
 /* Activity List Views */
 .activities-list-layout {
-  padding: 1.5rem;
-  background: var(--bg-primary);
+  padding: 0;
+  background: white;
   height: 100%;
   overflow-y: auto;
 }
@@ -460,8 +568,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
 }
 .activity-list-item {
   display: flex;

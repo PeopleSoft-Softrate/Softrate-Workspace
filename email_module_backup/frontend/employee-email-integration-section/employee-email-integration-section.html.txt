@@ -19,7 +19,7 @@
     <div class="provider-card">
       <div class="provider-header">
         <div class="provider-brand">
-          <img src="assets/icon/google_logo.svg" alt="Google Workspace" style="width: 24px; height: 24px;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Workspace" style="width: 24px; height: 24px;">
           <h3>Google Workspace</h3>
         </div>
         <div class="status-badge" [class.connected]="vm.emailIntegrationStatus.connected">

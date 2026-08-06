@@ -80,7 +80,7 @@ export class EmployeeEmailIntegrationSectionComponent implements OnInit {
     this.vm.loading = true;
     this.vm.errorMessage = '';
     
-    this.api.get<any>('/api/email/google/connect').subscribe({
+    this.api.get<any>(`/api/email/google/connect?origin=${encodeURIComponent(window.location.origin)}`).subscribe({
       next: (res) => {
         if (res.success && res.authUrl) {
           // Redirect the employee to Google's OAuth consent screen

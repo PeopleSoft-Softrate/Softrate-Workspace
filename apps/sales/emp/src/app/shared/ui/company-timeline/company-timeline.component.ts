@@ -5,7 +5,7 @@ import { ApiService } from '../../../api.service';
 
 export interface TimelineItem {
   id: string;
-  type: 'activity' | 'remark' | 'invoice' | 'quotation';
+  type: 'activity' | 'remark' | 'invoice' | 'quotation' | 'email';
   date: Date;
   title: string;
   description: string;
@@ -24,17 +24,18 @@ export class CompanyTimelineComponent implements OnChanges {
   @Input() remarks: any[] = [];
   @Input() invoices: any[] = [];
   @Input() quotations: any[] = [];
+  @Input() emails: any[] = [];
 
   timelineItems: TimelineItem[] = [];
   filteredItems: TimelineItem[] = [];
   loading = false;
   
-  filterType: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' = 'all';
+  filterType: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' | 'email' = 'all';
 
   constructor(private api: ApiService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['lead'] || changes['remarks'] || changes['invoices'] || changes['quotations']) {
+    if (changes['lead'] || changes['remarks'] || changes['invoices'] || changes['quotations'] || changes['emails']) {
       this.buildTimeline();
     }
   }
@@ -139,12 +140,24 @@ export class CompanyTimelineComponent implements OnChanges {
       // Add quotations
       (this.quotations || []).forEach((quo: any) => {
         items.push({
-          id: quo._id || quo.quoteNumber || Math.random().toString(),
+          id: quo._id || quo.quotationNumber || Math.random().toString(),
           type: 'quotation',
           date: new Date(quo.date || quo.createdAt || new Date()),
-          title: `Quotation Sent (${quo.quoteNumber || 'Unknown'})`,
-          description: `Total: $${quo.totalAmount || quo.amount || 0} - Status: ${quo.status || 'Pending'}`,
+          title: `Quotation: ${quo.quotationNumber || 'N/A'}`,
+          description: `Amount: ₹${quo.grandTotal || quo.totalAmount || 0} • Status: ${quo.status || 'Draft'}`,
           meta: quo
+        });
+      });
+
+      // Add emails
+      (this.emails || []).forEach((email: any) => {
+        items.push({
+          id: Math.random().toString(),
+          type: 'email',
+          date: new Date(email.timestamp || email.createdAt || new Date()),
+          title: 'Email Sent',
+          description: email.details || 'Email communication',
+          meta: email
         });
       });
 
@@ -160,7 +173,7 @@ export class CompanyTimelineComponent implements OnChanges {
     }
   }
 
-  setFilter(type: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation') {
+  setFilter(type: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' | 'email') {
     this.filterType = type;
     this.applyFilter();
   }

@@ -58,9 +58,19 @@ function serializeInvoice(invoice, req, publicOnly = false) {
   const source = typeof invoice?.toObject === 'function' ? invoice.toObject() : invoice;
   if (!source) return source;
   const publicToken = normalize(source.publicToken);
+  let computedAmountPaid = Number(source.amountPaid || 0);
+  let computedBalanceDue = source.balanceDue !== undefined ? Number(source.balanceDue) : (Number(source.total || 0) - computedAmountPaid);
+  
+  if (source.paymentStatus === 'paid' && computedAmountPaid === 0 && Number(source.total || 0) > 0) {
+    computedAmountPaid = Number(source.total || 0);
+    computedBalanceDue = 0;
+  }
+
   const serialized = {
     ...source,
     publicToken,
+    amountPaid: computedAmountPaid,
+    balanceDue: computedBalanceDue,
     publicUrl: publicToken ? publicInvoiceUrl(req, publicToken) : '',
   };
   if (!publicOnly) return serialized;
@@ -79,8 +89,8 @@ function serializeInvoice(invoice, req, publicOnly = false) {
     sgst: Number(serialized.sgst || 0),
     gstAmount: Number(serialized.gstAmount || 0),
     total: Number(serialized.total || 0),
-    amountPaid: Number(serialized.amountPaid || 0),
-    balanceDue: Number(serialized.balanceDue || 0),
+    amountPaid: serialized.amountPaid,
+    balanceDue: serialized.balanceDue,
     isInclusiveGst: Boolean(serialized.isInclusiveGst),
     invoiceDate: serialized.invoiceDate || serialized.createdAt || null,
     dueDate: serialized.dueDate || null,

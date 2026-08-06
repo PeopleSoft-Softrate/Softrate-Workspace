@@ -5305,6 +5305,11 @@ invoiceSeal: string = '';
   }
 
   private toWorkspaceInvoiceRecord(record: any): InvoiceRecord {
+    const total = Number(record?.total || 0);
+    const amountPaid = Number(record?.amountPaid || 0);
+    const balanceDue = record?.balanceDue !== undefined && record?.balanceDue !== null
+      ? Number(record.balanceDue)
+      : Math.max(0, total - amountPaid);
     return {
       _id: String(record?._id || record?.id || ''),
       companyCode: record?.companyCode || '',
@@ -5318,12 +5323,15 @@ invoiceSeal: string = '';
       directorEmailAddress: String(record?.directorEmailAddress || ''),
       employeeId: String(record?.employeeId || ''),
       employeeName: String(record?.employeeName || ''),
-      total: Number(record?.total || 0),
+      total,
       invoiceDate: String(record?.invoiceDate || ''),
       createdAt: String(record?.createdAt || ''),
       dueDate: String(record?.dueDate || ''),
       versionNo: Number(record?.versionNo || 0),
       paymentStatus: this.normalizeInvoicePaymentStatus(record?.paymentStatus),
+      amountPaid,
+      balanceDue,
+      isInclusiveGst: Boolean(record?.isInclusiveGst),
       items: Array.isArray(record?.items) ? record.items : [],
       subtotal: Number(record?.subtotal || 0),
       gstPercentage: Number(record?.gstPercentage || 0),

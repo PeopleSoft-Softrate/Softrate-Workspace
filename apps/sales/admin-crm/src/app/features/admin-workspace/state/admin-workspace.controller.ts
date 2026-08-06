@@ -885,6 +885,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   inviteSuccess = '';
   inviteRespondLoading = '';
   newLeadStatusInput: string = '';
+  resendApiKey: string = '';
+  showResendApiKey: boolean = false;
+  resendSenderDomain: string = '';
   settingsLoading = false;
   settingsSaveError = '';
   settingsSaveSuccess = '';

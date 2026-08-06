@@ -189,6 +189,8 @@ export class AdminSettingsWorkflow {
           vm.settingsContactDetails = res.settings.contactDetails || { website: '', email: '', phone: '' };
           vm.settingsProducts = res.settings.products || [];
           vm.settingsProductRemarks = res.settings.productRemarks || [];
+          vm.resendApiKey = res.settings.resendApiKey || '';
+          vm.resendSenderDomain = res.settings.resendSenderDomain || '';
           vm.weCrmAccessEnabled = res.settings.weCrmAccessEnabled || false;
           vm.weCrmUrl = res.settings.weCrmUrl || 'http://localhost:5001/api';
           vm.weCrmCompanyId = res.settings.weCrmCompanyId || null;
@@ -393,6 +395,8 @@ export class AdminSettingsWorkflow {
       contactDetails: vm.settingsContactDetails,
       products: vm.settingsProducts,
       productRemarks: vm.settingsProductRemarks,
+      resendApiKey: vm.resendApiKey,
+      resendSenderDomain: vm.resendSenderDomain,
     }).subscribe({
       next: (res: any) => {
         vm.settingsLoading = false;

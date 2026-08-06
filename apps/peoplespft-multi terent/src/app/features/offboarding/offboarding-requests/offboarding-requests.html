@@ -76,7 +76,7 @@
   </ng-template>
 
   <!-- Review Modal -->
-  <div class="overlay" *ngIf="showReviewModal()" (click)="closeModal()">
+  <div class="overlay" *ngIf="showReviewModal()" (mousedown)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ reviewAction() === 'approved' || reviewAction() === 'accept' ? 'Approve' : 'Reject' }} Offboarding</h2>

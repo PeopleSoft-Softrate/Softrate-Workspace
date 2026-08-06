@@ -187,8 +187,8 @@
 </div>
 
 <!-- Activity Modal Overlay -->
-<div class="modal-overlay" *ngIf="showActivityModal" (click)="closeActivityModal()" style="z-index: 100000;">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<div class="modal-overlay" *ngIf="showActivityModal" (mousedown)="closeActivityModal()" style="z-index: 100000;">
+  <div class="modal-content" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Schedule Activity</h3>
       <button class="modal-close" (click)="closeActivityModal()">&times;</button>

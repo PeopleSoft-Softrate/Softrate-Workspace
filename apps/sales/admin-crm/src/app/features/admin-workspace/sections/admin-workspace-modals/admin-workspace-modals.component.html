@@ -1,5 +1,5 @@
 <!-- ========== ADD EMPLOYEE MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.isAddEmployeeOpen" (click)="vm.closeAddEmployee()">
+<div class="modal-overlay" [class.open]="vm.isAddEmployeeOpen" (mousedown)="vm.closeAddEmployee()">
   <div class="modal" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeAddEmployee()">&#x2715;</button>
     <div class="modal-brand">
@@ -36,7 +36,7 @@
 </div>
 
 <!-- ========== VIEW ALL CALLS MODAL (Detailed & Professional) ========== -->
-<div class="modal-overlay" [class.open]="vm.showAllCallsModal" (click)="vm.closeAllCallsModal()">
+<div class="modal-overlay" [class.open]="vm.showAllCallsModal" (mousedown)="vm.closeAllCallsModal()">
   <div class="modal history-modal-wide" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeAllCallsModal()">&#x2715;</button>
 
@@ -113,7 +113,7 @@
 </div>
 
 <!-- ========== SHARE MESSAGE MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.showShareModal" (click)="vm.showShareModal = false">
+<div class="modal-overlay" [class.open]="vm.showShareModal" (mousedown)="vm.showShareModal = false">
   <div class="modal" style="max-width: 500px; width: 90%;" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.showShareModal = false">&#x2715;</button>
     <div class="modal-brand" style="justify-content:flex-start;margin-bottom:1rem;">
@@ -140,7 +140,7 @@
 </div>
 
 <!-- ========== EDIT EMPLOYEE MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.isEditEmployeeOpen" (click)="vm.closeEditEmployee()">
+<div class="modal-overlay" [class.open]="vm.isEditEmployeeOpen" (mousedown)="vm.closeEditEmployee()">
   <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">
     <button class="modal-close" (click)="vm.closeEditEmployee()">&#x2715;</button>
     <div class="modal-brand">
@@ -220,8 +220,8 @@
 </div>
 
 <!-- ========== CREATE CLIENT MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.clientOnboardingCreateOpen" (click)="vm.closeClientOnboardingCreateModal()">
-  <div class="modal admin-client-onboarding-modal" (click)="$event.stopPropagation()" style="max-width: 560px;">
+<div class="modal-overlay" [class.open]="vm.clientOnboardingCreateOpen" (mousedown)="vm.closeClientOnboardingCreateModal()">
+  <div class="modal admin-client-onboarding-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()" style="max-width: 560px;">
     <button class="modal-close" (click)="vm.closeClientOnboardingCreateModal()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -284,7 +284,7 @@
 </div>
 
 <!-- ========== EDIT CLIENT MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.isEditCrmClientOpen" (click)="vm.closeEditCrmClient()">
+<div class="modal-overlay" [class.open]="vm.isEditCrmClientOpen" (mousedown)="vm.closeEditCrmClient()">
   <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">
     <button class="modal-close" (click)="vm.closeEditCrmClient()">✕</button>
     <div class="modal-brand">
@@ -349,7 +349,7 @@
 </div>
 
 <!-- ========== LOGOUT CONFIRMATION MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.isLogoutConfirmOpen" (click)="vm.closeLogoutConfirm()">
+<div class="modal-overlay" [class.open]="vm.isLogoutConfirmOpen" (mousedown)="vm.closeLogoutConfirm()">
   <div class="modal vm.logout-confirm-modal" (click)="$event.stopPropagation()" style="max-width: 400px;">
     <button class="modal-close" (click)="vm.closeLogoutConfirm()">✕</button>
     <div class="modal-brand" style="margin-bottom: 1.5rem;">
@@ -372,8 +372,8 @@
 </div>
 <!-- ========== ALL REMARKS MODAL ========== -->
 <div class="invoice-overlay company-remarks-overlay" *ngIf="vm.showAllRemarksModal && vm.selectedBookmarkForRemarks"
-  (click)="vm.closeAllRemarksModal()">
-  <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
+  (mousedown)="vm.closeAllRemarksModal()">
+  <div class="invoice-modal followup-modal company-remarks-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">Remark History</div>
@@ -396,8 +396,8 @@
 </div>
 
 <!-- ========== SAVE FOLLOW-UP MODAL (Employee UI parity) ========== -->
-<div class="modal-overlay admin-followup-overlay" *ngIf="vm.showFollowupModal" (click)="vm.closeFollowupModal()">
-  <div class="invoice-modal followup-modal admin-followup-modal" (click)="$event.stopPropagation()">
+<div class="modal-overlay admin-followup-overlay" *ngIf="vm.showFollowupModal" (mousedown)="vm.closeFollowupModal()">
+  <div class="invoice-modal followup-modal admin-followup-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">Follow-up</div>
@@ -568,8 +568,8 @@
 
 <!-- ══ ADMIN COMPANY FULL VIEW ══ -->
 <div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.companyFullViewOpen"
-  (click)="vm.closeCompanyFullView()">
-  <div class="invoice-modal company-full-modal admin-company-full-modal" (click)="$event.stopPropagation()">
+  (mousedown)="vm.closeCompanyFullView()">
+  <div class="invoice-modal company-full-modal admin-company-full-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <section class="company-full-shell lead-detail-workspace admin-company-full-detail">
       <aside class="lead-detail-sidebar company-full-sidebar">
         <button class="lead-detail-back" type="button" (click)="vm.closeCompanyFullView()">
@@ -1060,8 +1060,8 @@
 
 <!-- ══ ADMIN REMARK HISTORY ══ -->
 <div class="invoice-overlay company-remarks-overlay" *ngIf="vm.companyRemarkLead"
-  (click)="vm.closeCompanyRemarkHistory()">
-  <div class="invoice-modal followup-modal company-remarks-modal" (click)="$event.stopPropagation()">
+  (mousedown)="vm.closeCompanyRemarkHistory()">
+  <div class="invoice-modal followup-modal company-remarks-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">Remark History</div>
@@ -1084,8 +1084,8 @@
 
 <!-- ══ ADMIN AI SUMMARY ══ -->
 <div class="invoice-overlay company-remarks-overlay admin-ai-overlay" *ngIf="vm.adminAiSummaryOpen"
-  (click)="vm.closeAdminAiSummary()">
-  <div class="invoice-modal followup-modal ai-summary-modal admin-ai-modal" (click)="$event.stopPropagation()">
+  (mousedown)="vm.closeAdminAiSummary()">
+  <div class="invoice-modal followup-modal ai-summary-modal admin-ai-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="followup-modal-head">
       <div class="followup-modal-title">
         <div class="section-kicker">AI Summary</div>
@@ -1110,10 +1110,10 @@
 </div>
 
 <!-- ══ ADMIN QUOTATION BUILDER ══ -->
-<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.showInvoiceModal" (click)="vm.closeInvoiceModal()">
+<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.showInvoiceModal" (mousedown)="vm.closeInvoiceModal()">
   <div class="invoice-modal invoice-modal-billing admin-quote-modal"
     [class.admin-quote-modal--side-by-side]="vm.quoteMode && !vm.viewingSavedDocument"
-    (click)="$event.stopPropagation()">
+    (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <div class="invoice-builder" [class.invoice-builder-readonly]="vm.viewingSavedDocument"
       [class.invoice-builder--side-by-side]="vm.quoteMode && !vm.viewingSavedDocument">
       <ng-template #adminInvoicePrintHeader>
@@ -1786,7 +1786,7 @@
   </div>
 </div>
 <!-- ══ HISTORY MODAL ══ -->
-<div class="modal-overlay" [class.open]="vm.showHistoryModal" (click)="vm.closeHistoryModal()">
+<div class="modal-overlay" [class.open]="vm.showHistoryModal" (mousedown)="vm.closeHistoryModal()">
   <div class="modal history-modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
     <button class="modal-close" (click)="vm.closeHistoryModal()">×</button>
     <div style="margin-bottom: 1.5rem;">
@@ -1864,8 +1864,8 @@
 
 <!-- ══ CLIENT PROFILE MODAL ══ -->
 <!-- ══ CLIENT PROFILE FULL VIEW ══ -->
-<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.clientProfileModalOpen" (click)="vm.closeClientProfile()">
-  <div class="invoice-modal company-full-modal admin-company-full-modal" (click)="$event.stopPropagation()">
+<div class="invoice-overlay admin-employee-modal-overlay" *ngIf="vm.clientProfileModalOpen" (mousedown)="vm.closeClientProfile()">
+  <div class="invoice-modal company-full-modal admin-company-full-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <section class="company-full-shell lead-detail-workspace admin-company-full-detail">
       <!-- SIDEBAR -->
       <aside class="lead-detail-sidebar company-full-sidebar">
@@ -2051,8 +2051,8 @@
 </div>
 
 <!-- Director Edit Modal -->
-<div class="invoice-overlay" *ngIf="vm.directorEditOpen" (click)="vm.closeDirectorEditModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(720px, calc(100vw - 32px)); max-width: 720px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="vm.directorEditOpen" (mousedown)="vm.closeDirectorEditModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(720px, calc(100vw - 32px)); max-width: 720px; padding: 40px; border-radius: 14px; position: relative;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" type="button" (click)="vm.closeDirectorEditModal()"
       aria-label="Close edit director">✕</button>
       
@@ -2152,8 +2152,8 @@
 </div>
 
 <!-- Contact Add Modal -->
-<div class="invoice-overlay" *ngIf="vm.contactAddOpen" (click)="vm.closeContactAddModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(720px, calc(100vw - 32px)); max-width: 720px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+<div class="invoice-overlay" *ngIf="vm.contactAddOpen" (mousedown)="vm.closeContactAddModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(720px, calc(100vw - 32px)); max-width: 720px; padding: 40px; border-radius: 14px; position: relative;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" type="button" (click)="vm.closeContactAddModal()"
       aria-label="Close add contact">✕</button>
       

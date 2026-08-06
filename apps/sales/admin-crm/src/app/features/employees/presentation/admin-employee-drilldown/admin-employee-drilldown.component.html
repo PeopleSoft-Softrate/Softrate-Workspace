@@ -1,6 +1,6 @@
   <!-- Employee drilldown panel (Legacy - disabled when using new emp_dashboard) -->
   <div class="drilldown-overlay" [class.open]="!!selectedEmployee && dashTab !== 'emp_dashboard'"
-    (click)="closeEmployee()">
+    (mousedown)="closeEmployee()">
     <div class="drilldown-panel" (click)="$event.stopPropagation()"
       *ngIf="selectedEmployee && dashTab !== 'emp_dashboard'">
       <button class="drilldown-close" (click)="closeEmployee()">&#x2715;</button>

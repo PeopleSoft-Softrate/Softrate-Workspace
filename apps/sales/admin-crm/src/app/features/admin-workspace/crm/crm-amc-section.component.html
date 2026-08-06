@@ -100,7 +100,7 @@
   </section>
 
   <div class="crm-modal-backdrop" *ngIf="vm.crmHostingerMappingOpen" (click)="vm.closeCrmHostingerMappingModal()">
-    <div class="invoice-modal followup-modal crm-map-modal" (click)="$event.stopPropagation()">
+    <div class="invoice-modal followup-modal crm-map-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
       <div class="followup-modal-head">
         <div class="followup-modal-title">
           <h3>Map Domain</h3>

@@ -221,7 +221,7 @@
 
 <!-- Edit Salary Structure Modal Overlay -->
 <div class="modal-backdrop" *ngIf="showEditModal()" (click)="closeEditModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
+  <div class="modal-container" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div class="modal-header-desc">

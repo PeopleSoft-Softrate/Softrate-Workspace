@@ -103,8 +103,8 @@
       </section>
     </div>
 
-    <div class="invoice-overlay crm-nda-workspace-overlay" *ngIf="vm.ndaWorkspaceOpen" (click)="vm.closeNdaWorkspace()">
-      <div class="invoice-modal crm-nda-workspace-modal" (click)="$event.stopPropagation()">
+    <div class="invoice-overlay crm-nda-workspace-overlay" *ngIf="vm.ndaWorkspaceOpen" (mousedown)="vm.closeNdaWorkspace()">
+      <div class="invoice-modal crm-nda-workspace-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
         <section class="crm-nda-builder crm-nda-modal-shell">
           <div class="crm-nda-builder-head crm-nda-modal-head">
             <div>

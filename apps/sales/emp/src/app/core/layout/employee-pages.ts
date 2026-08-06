@@ -27,7 +27,7 @@ export const EMPLOYEE_PAGES: readonly EmployeePageId[] = [
   'invoices',
   'client-onboarding',
   'quotations',
-  'activities',
+  'activities'
 ];
 
 export const EMPLOYEE_ROUTES: Routes = [

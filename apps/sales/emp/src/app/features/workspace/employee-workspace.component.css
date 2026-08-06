@@ -3150,7 +3150,7 @@ body.column-resizing * {
 .company-full-modal {
   width: min(1420px, calc(100vw - 48px));
   max-height: calc(100vh - 40px);
-  overflow: hidden;
+  overflow: hidden !important;
   border-radius: 0;
   background: #f3f5fb;
 }
@@ -3184,7 +3184,7 @@ body.column-resizing * {
 .company-full-main {
   min-height: 0;
   display: block;
-  overflow: auto;
+  overflow: hidden;
   background: #f3f5fb;
 }
 
@@ -8376,6 +8376,10 @@ body.column-resizing * {
   display: flex;
   flex-direction: column;
   height: 100%;
+  margin: -24px;
+  min-height: calc(100vh - 72px);
+  border: none;
+  background: white;
 }
 .activities-tabs {
   display: flex;
@@ -8748,8 +8752,8 @@ body.column-resizing * {
 
 /* Activity List Views */
 .activities-list-layout {
-  padding: 1.5rem;
-  background: var(--bg-primary);
+  padding: 0;
+  background: white;
   height: 100%;
   overflow-y: auto;
 }
@@ -8757,8 +8761,7 @@ body.column-resizing * {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
 }
 .activity-list-item {
   display: flex;

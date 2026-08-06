@@ -129,6 +129,8 @@ export class AuthService {
       tags?: string[];
     }>;
     productRemarks?: string[];
+    resendApiKey?: string;
+    resendSenderDomain?: string;
   }): Observable<any> {
     return this.api.put(`/api/auth/company/${encodeURIComponent(companyCode)}/settings`, settings);
   }

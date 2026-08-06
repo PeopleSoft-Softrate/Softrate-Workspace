@@ -1,7 +1,7 @@
 <ng-container *ngIf="auth.state$ | async as authState">
   <ng-container *ngIf="tickets.view$ | async as ticketView">
     <div class="client-shell" [class.sidebar-minimized]="vm.sidebarMinimized">
-      <div class="crm-sidebar-overlay" [class.active]="vm.sidebarOpen" (click)="vm.closeSidebar()"></div>
+      <div class="crm-sidebar-overlay" [class.active]="vm.sidebarOpen" (mousedown)="vm.closeSidebar()"></div>
 
       <aside class="crm-sidebar" [class.open]="vm.sidebarOpen" [class.minimized]="vm.sidebarMinimized">
         <div class="sidebar-brand">

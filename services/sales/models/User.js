@@ -93,6 +93,13 @@ const userSchema = new mongoose.Schema(
     rmRequestTime: {
       type: Date
     },
+    // ── Email Integration ──
+    emailIntegration: {
+      provider: { type: String, default: 'resend' },
+      resendApiKey: { type: String, trim: true, default: '' },
+      resendSenderDomain: { type: String, trim: true, default: '' },
+      isActive: { type: Boolean, default: false }
+    },
     // ── Company-level App Settings ──
     breakHourLimit: {
       type: Number,
@@ -195,6 +202,8 @@ const userSchema = new mongoose.Schema(
     }],
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    resendApiKey: { type: String, trim: true },
+    resendSenderDomain: { type: String, trim: true },
   },
   {
     timestamps: true, 

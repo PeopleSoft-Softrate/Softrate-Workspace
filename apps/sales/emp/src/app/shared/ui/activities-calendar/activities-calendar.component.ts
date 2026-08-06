@@ -1,6 +1,7 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 
 interface ActivityItem {
   _id: string;
@@ -31,8 +32,11 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
   @Input() filterCompanyId?: string;
   @Input() filterCompanyName?: string;
   @Input() embedded = false;
+  
+  @Output() activityClicked = new EventEmitter<{leadId: string, section: string}>();
 
   activitiesSubTab: 'calendar' | 'tasks' | 'meetings' | 'calls' = 'calendar';
+  calendarView: 'month' | 'week' | 'day' = 'month';
   currentCalendarDate = new Date();
   activitiesFilter = {
     tasks: true,
@@ -59,11 +63,22 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
     date: Date; 
     isCurrentMonth: boolean; 
     isToday: boolean;
+    isPast: boolean;
     events: any[];
     taskCount: number; 
     meetingCount: number; 
     callCount: number; 
   }> = [];
+
+  onActivityClick(ev: any) {
+    if (ev.type === 'task') this.activitiesSubTab = 'tasks';
+    else if (ev.type === 'meeting') this.activitiesSubTab = 'meetings';
+    else if (ev.type === 'call') this.activitiesSubTab = 'calls';
+  }
+
+  onOverflowClick() {
+    this.activitiesSubTab = 'tasks';
+  }
 
   ngOnInit() {
     this.generateCalendarDays();
@@ -95,6 +110,8 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
     this.showActivityClientDropdown = false;
   }
 
+  @Input() searchQuery: string = '';
+
   get activitiesForCurrentTab(): any[] {
     if (this.activitiesSubTab === 'calendar') return [];
     
@@ -105,20 +122,69 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
     };
     const filterType = typeMapping[this.activitiesSubTab];
     
-    return this.mockActivities
-      .filter(a => a.type === filterType)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    let filtered = this.mockActivities.filter(a => a.type === filterType);
+    
+    if (this.searchQuery?.trim()) {
+      const query = this.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(a => 
+        (a.companyName && a.companyName.toLowerCase().includes(query)) ||
+        (a.clientName && a.clientName.toLowerCase().includes(query)) ||
+        (a.contactName && a.contactName.toLowerCase().includes(query)) ||
+        (a.title && a.title.toLowerCase().includes(query)) ||
+        (a.description && a.description.toLowerCase().includes(query))
+      );
+    }
+    
+    return filtered.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  filterEvents(events: any[]): any[] {
+    if (!events) return [];
+    return events.filter(ev => 
+      (ev.type === 'task' && this.activitiesFilter.tasks) ||
+      (ev.type === 'meeting' && this.activitiesFilter.meetings) ||
+      (ev.type === 'call' && this.activitiesFilter.calls)
+    );
   }
 
   async generateCalendarDays() {
     if (this.employee?._id) {
       try {
-        const firstDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth(), 1);
-        const lastDayOfMonth = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 0);
-        
-        let url = `/api/activities/employee/${this.employee._id}?start=${firstDayOfMonth.toISOString()}&end=${lastDayOfMonth.toISOString()}`;
+        let fetchStart: Date;
+        let fetchEnd: Date;
+        const year = this.currentCalendarDate.getFullYear();
+        const month = this.currentCalendarDate.getMonth();
 
-        const response = await fetch(url);
+        if (this.calendarView === 'month') {
+          const firstDay = new Date(year, month, 1);
+          const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+          const prevMonthLastDay = new Date(year, month, 0).getDate();
+          fetchStart = new Date(year, month - 1, prevMonthLastDay - startingDayOfWeek + 1);
+          
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const remainingSlots = 42 - (startingDayOfWeek + daysInMonth);
+          fetchEnd = new Date(year, month + 1, remainingSlots);
+        } else if (this.calendarView === 'week') {
+          const date = new Date(this.currentCalendarDate);
+          const day = date.getDay();
+          const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+          fetchStart = new Date(date.setDate(diff));
+          fetchEnd = new Date(fetchStart);
+          fetchEnd.setDate(fetchStart.getDate() + 6);
+        } else {
+          fetchStart = new Date(this.currentCalendarDate);
+          fetchEnd = new Date(this.currentCalendarDate);
+        }
+        
+        fetchStart.setHours(0, 0, 0, 0);
+        fetchEnd.setHours(23, 59, 59, 999);
+        
+        let url = `/api/activities/employee/${this.employee._id}?start=${fetchStart.toISOString()}&end=${fetchEnd.toISOString()}`;
+        if (this.employee.companyCode) {
+          url += `&companyCode=${this.employee.companyCode}`;
+        }
+
+        const response = await fetch(environment.apiBaseUrl + url);
         const result = await response.json();
         
         if (result.success) {
@@ -138,69 +204,109 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
       }
     }
 
-    const year = this.currentCalendarDate.getFullYear();
-    const month = this.currentCalendarDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; 
-    
-    this.calendarDays = [];
-    
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      this.calendarDays.push({
-        date: new Date(year, month - 1, prevMonthLastDay - i),
-        isCurrentMonth: false,
-        isToday: false,
-        events: [],
-        taskCount: 0,
-        meetingCount: 0,
-        callCount: 0
-      });
-    }
-
     const today = new Date();
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      const d = new Date(year, month, i);
+    this.calendarDays = [];
+
+    if (this.calendarView === 'month') {
+      const year = this.currentCalendarDate.getFullYear();
+      const month = this.currentCalendarDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; 
       
-      const dayActivities = this.mockActivities.filter(a => 
-        a.date.getFullYear() === d.getFullYear() &&
-        a.date.getMonth() === d.getMonth() &&
-        a.date.getDate() === d.getDate()
-      );
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+        this.calendarDays.push(this.createCalendarDay(new Date(year, month - 1, prevMonthLastDay - i), false, today));
+      }
 
-      this.calendarDays.push({
-        date: d,
-        isCurrentMonth: true,
-        isToday: d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(),
-        events: dayActivities,
-        taskCount: dayActivities.filter(a => a.type === 'task').length,
-        meetingCount: dayActivities.filter(a => a.type === 'meeting').length,
-        callCount: dayActivities.filter(a => a.type === 'call').length
-      });
-    }
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        this.calendarDays.push(this.createCalendarDay(new Date(year, month, i), true, today));
+      }
 
-    const remainingSlots = 42 - this.calendarDays.length; 
-    for (let i = 1; i <= remainingSlots; i++) {
-      this.calendarDays.push({
-        date: new Date(year, month + 1, i),
-        isCurrentMonth: false,
-        isToday: false,
-        events: [],
-        taskCount: 0,
-        meetingCount: 0,
-        callCount: 0
-      });
+      const remainingSlots = 42 - this.calendarDays.length; 
+      for (let i = 1; i <= remainingSlots; i++) {
+        this.calendarDays.push(this.createCalendarDay(new Date(year, month + 1, i), false, today));
+      }
+    } else if (this.calendarView === 'week') {
+      const date = new Date(this.currentCalendarDate);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      const startOfWeek = new Date(date.setDate(diff));
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(d.getDate() + i);
+        this.calendarDays.push(this.createCalendarDay(d, true, today));
+      }
+    } else if (this.calendarView === 'day') {
+      this.calendarDays.push(this.createCalendarDay(new Date(this.currentCalendarDate), true, today));
     }
   }
 
-  prevCalendarMonth() {
-    this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() - 1, 1);
+  createCalendarDay(d: Date, isCurrentMonth: boolean, today: Date) {
+    const dayActivities = this.mockActivities.filter(a => 
+      a.date.getFullYear() === d.getFullYear() &&
+      a.date.getMonth() === d.getMonth() &&
+      a.date.getDate() === d.getDate()
+    );
+
+    const pastDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    return {
+      date: d,
+      isCurrentMonth: isCurrentMonth,
+      isToday: d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(),
+      isPast: d.getTime() < pastDate.getTime(),
+      events: dayActivities,
+      taskCount: dayActivities.filter(a => a.type === 'task').length,
+      meetingCount: dayActivities.filter(a => a.type === 'meeting').length,
+      callCount: dayActivities.filter(a => a.type === 'call').length
+    };
+  }
+
+  get calendarTitle() {
+    if (this.calendarView === 'month') {
+      return this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } else if (this.calendarView === 'week') {
+      const date = new Date(this.currentCalendarDate);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      const startOfWeek = new Date(date.setDate(diff));
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      
+      const startStr = startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endStr = endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `${startStr} - ${endStr}`;
+    } else {
+      return this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+  }
+
+  prevCalendarPeriod() {
+    if (this.calendarView === 'month') {
+      this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() - 1, 1);
+    } else if (this.calendarView === 'week') {
+      this.currentCalendarDate = new Date(this.currentCalendarDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else {
+      this.currentCalendarDate = new Date(this.currentCalendarDate.getTime() - 24 * 60 * 60 * 1000);
+    }
     this.generateCalendarDays();
   }
 
-  nextCalendarMonth() {
-    this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 1);
+  nextCalendarPeriod() {
+    if (this.calendarView === 'month') {
+      this.currentCalendarDate = new Date(this.currentCalendarDate.getFullYear(), this.currentCalendarDate.getMonth() + 1, 1);
+    } else if (this.calendarView === 'week') {
+      this.currentCalendarDate = new Date(this.currentCalendarDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else {
+      this.currentCalendarDate = new Date(this.currentCalendarDate.getTime() + 24 * 60 * 60 * 1000);
+    }
+    this.generateCalendarDays();
+  }
+
+  setCalendarView(view: 'month' | 'week' | 'day') {
+    this.calendarView = view;
     this.generateCalendarDays();
   }
 
@@ -247,11 +353,12 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
       const activityDate = new Date(this.selectedActivityDate);
       activityDate.setHours(hours, minutes, 0, 0);
       
-      const response = await fetch('/api/activities', {
+      const response = await fetch(`${environment.apiBaseUrl}/api/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           employeeId: this.employee._id,
+          companyCode: this.employee.companyCode,
           leadId: this.activityForm.leadId || undefined,
           type: this.activityForm.type,
           title: this.activityForm.title,
@@ -282,7 +389,7 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
   async markActivityComplete(activity: any, event: Event) {
     event.stopPropagation();
     try {
-      const response = await fetch(`/api/activities/${activity._id}`, {
+      const response = await fetch(`${environment.apiBaseUrl}/api/activities/${activity._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed' })

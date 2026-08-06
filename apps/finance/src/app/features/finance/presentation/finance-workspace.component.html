@@ -68,7 +68,7 @@
   </nav>
 
   <div class="dash-body">
-    <div class="crm-sidebar-overlay dash-sidebar-overlay" [class.active]="vm.sidebarOpen" (click)="vm.sidebarOpen = false"></div>
+    <div class="crm-sidebar-overlay dash-sidebar-overlay" [class.active]="vm.sidebarOpen" (mousedown)="vm.sidebarOpen = false"></div>
 
     <aside class="crm-sidebar dash-sidebar" [class.open]="vm.sidebarOpen" [class.minimized]="vm.sidebarMinimized">
       <div class="sidebar-brand">

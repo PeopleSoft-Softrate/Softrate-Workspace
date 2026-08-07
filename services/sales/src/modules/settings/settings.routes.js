@@ -661,4 +661,70 @@ router.put('/company/:companyCode/settings', async (req, res) => {
   }
 });
 
+// ── Proposal Templates CRUD ────────────────────────────────────────────────
+
+// List all templates for a company
+router.get('/proposals', async (req, res) => {
+  try {
+    const companyCode = req.query.companyCode || req.user?.companyCode;
+    if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
+    const user = await User.findOne({ companyCode }).lean();
+    if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
+    return res.json({ success: true, templates: user.proposalTemplates || [] });
+  } catch (err) {
+    console.error('[proposals GET]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// Create a new template
+router.post('/proposals', async (req, res) => {
+  try {
+    const { companyCode, name, pages } = req.body;
+    if (!companyCode || !name) return res.status(400).json({ success: false, message: 'companyCode and name required.' });
+    const template = { _id: require('crypto').randomUUID(), name: String(name).trim(), pages: pages || [], createdAt: new Date() };
+    await User.findOneAndUpdate({ companyCode }, { $push: { proposalTemplates: template } });
+    return res.json({ success: true, template });
+  } catch (err) {
+    console.error('[proposals POST]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// Update an existing template
+router.patch('/proposals/:id', async (req, res) => {
+  try {
+    const { companyCode, name, pages } = req.body;
+    if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
+    const update = {};
+    if (name) update['proposalTemplates.$.name'] = String(name).trim();
+    if (pages) update['proposalTemplates.$.pages'] = pages;
+    update['proposalTemplates.$.updatedAt'] = new Date();
+    const result = await User.findOneAndUpdate(
+      { companyCode, 'proposalTemplates._id': req.params.id },
+      { $set: update },
+      { new: true }
+    ).lean();
+    if (!result) return res.status(404).json({ success: false, message: 'Template not found.' });
+    const template = (result.proposalTemplates || []).find(t => t._id === req.params.id);
+    return res.json({ success: true, template });
+  } catch (err) {
+    console.error('[proposals PATCH]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// Delete a template
+router.delete('/proposals/:id', async (req, res) => {
+  try {
+    const companyCode = req.query.companyCode || req.user?.companyCode;
+    if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
+    await User.findOneAndUpdate({ companyCode }, { $pull: { proposalTemplates: { _id: req.params.id } } });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[proposals DELETE]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
 module.exports = router;

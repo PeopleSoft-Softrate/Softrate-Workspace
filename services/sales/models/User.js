@@ -204,6 +204,14 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: Date,
     resendApiKey: { type: String, trim: true },
     resendSenderDomain: { type: String, trim: true },
+    // ── Proposal Templates ──
+    proposalTemplates: [{
+      _id: { type: String },
+      name: { type: String, trim: true },
+      pages: { type: Array, default: [] },
+      createdAt: { type: Date },
+      updatedAt: { type: Date },
+    }],
   },
   {
     timestamps: true, 

@@ -1,0 +1,95 @@
+<div class="invoice-overlay" *ngIf="show">
+  <div class="invoice-modal invoice-modal-billing invoice-modal-billing--side-by-side" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <div class="invoice-builder">
+      
+      <div class="section-header invoice-builder-header">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div class="section-kicker">Proposal Builder</div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <h3 style="margin: 0;">Generate Proposal</h3>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+          <button class="secondary-action" (click)="closeModal()">Close</button>
+        </div>
+      </div>
+
+      <div class="quotation-builder-layout">
+        <!-- LEFT: Controls -->
+        <div class="quotation-builder-controls">
+          <div class="invoice-control-card">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Select Template</label>
+              <select class="field-select" [(ngModel)]="selectedTemplateId" (change)="onTemplateSelect()">
+                <option value="">Select a template...</option>
+                <option *ngFor="let t of templates" [value]="t._id">{{ t.name }}</option>
+              </select>
+            </div>
+            
+            <div class="loading-state" *ngIf="loadingTemplates" style="padding-top: 16px; font-size: 13px; color: #64748b;">
+              Loading templates...
+            </div>
+            <div class="error-message" *ngIf="error" style="padding-top: 16px; font-size: 13px; color: #ef4444;">
+              {{ error }}
+            </div>
+            <div *ngIf="!loadingTemplates && templates.length === 0 && !error" style="padding-top: 16px; font-size: 13px; color: #64748b;">
+              No proposal templates found. Ask your admin to create one.
+            </div>
+          </div>
+
+          <div class="invoice-control-card" *ngIf="customPlaceholders.length > 0">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Custom Fields Required</h3>
+            
+            <div class="form-group" *ngFor="let cp of customPlaceholders" style="margin-bottom: 12px;">
+              <label>{{ cp.label }}</label>
+              <input type="text" class="field-input" [(ngModel)]="cp.value" [placeholder]="'Enter ' + cp.label + '...'" (ngModelChange)="triggerPreview()" />
+            </div>
+          </div>
+          
+          <div class="invoice-control-card" *ngIf="standardPlaceholders.length > 0">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Auto-filled Fields</h3>
+            <p style="font-size: 12px; color: #64748b; margin: 0 0 16px 0;">
+              These fields were pre-filled from the lead record. You can edit them below before generating the proposal.
+            </p>
+            
+            <div class="form-group" *ngFor="let sp of standardPlaceholders" style="margin-bottom: 12px;">
+              <label>{{ sp.label }}</label>
+              <input type="text" class="field-input" [(ngModel)]="sp.value" [placeholder]="'Enter ' + sp.label + '...'" (ngModelChange)="triggerPreview()" />
+            </div>
+          </div>
+
+          <div class="action-row" *ngIf="selectedTemplateId" style="margin-top: 16px;">
+            <button class="secondary-action" (click)="generatePdf('send')" [disabled]="generating">
+              {{ generating ? 'Generating...' : 'Send as Email' }}
+            </button>
+            <button class="primary-action" (click)="generatePdf('download')" [disabled]="generating">
+              {{ generating ? 'Generating...' : 'Download PDF' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT: Preview -->
+        <div class="quotation-builder-preview">
+          <div class="invoice-preview" style="height: 100%; display: flex; align-items: center; justify-content: center; background: #f1f5f9; padding: 16px;">
+            <ng-container *ngIf="previewPdfUrl; else noPreview">
+              <iframe [src]="previewPdfUrl" type="application/pdf" style="width: 100%; height: 100%; border: none; border-radius: 8px; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></iframe>
+            </ng-container>
+            <ng-template #noPreview>
+              <div style="color: #94a3b8; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <p>Select a template to view the preview</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

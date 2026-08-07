@@ -414,6 +414,25 @@
     </button>
 
     <button
+      class="sidebar-link"
+      type="button"
+      [class.active]="vm.dashTab==='proposal_settings'"
+      (click)="vm.switchTab('proposal_settings')"
+      *ngIf="vm.sidebarFeatureMatches('Proposal Settings')"
+      [title]="vm.sidebarMinimized ? 'Proposal Settings' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <line x1="8" y1="10" x2="16" y2="10"/>
+          <line x1="8" y1="14" x2="16" y2="14"/>
+          <circle cx="7" cy="7" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <span class="sidebar-label">Proposal Settings</span>
+    </button>
+
+    <button
       class="sidebar-link sidebar-link-settings"
       type="button"
       [class.active]="vm.dashTab==='settings'"

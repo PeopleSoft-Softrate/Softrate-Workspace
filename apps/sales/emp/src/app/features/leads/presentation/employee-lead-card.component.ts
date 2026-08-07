@@ -33,6 +33,7 @@ export class EmployeeLeadCardComponent {
   @Output() remarkValueChange = new EventEmitter<string>();
   @Output() starToggle = new EventEmitter<EmployeeLeadCardLead>();
   @Output() quotationOpen = new EventEmitter<EmployeeLeadCardLead>();
+  @Output() proposalOpen = new EventEmitter<EmployeeLeadCardLead>();
   @Output() invoiceOpen = new EventEmitter<EmployeeLeadCardLead>();
   @Output() remarkAdd = new EventEmitter<EmployeeLeadCardLead>();
   @Output() statusChange = new EventEmitter<string>();

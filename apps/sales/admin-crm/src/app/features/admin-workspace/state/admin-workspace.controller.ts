@@ -247,6 +247,16 @@ export abstract class AdminWorkspaceController implements OnInit {
   isLogoutConfirmOpen = false;
   employeeSearchQuery = '';
 
+  // ── Proposal Settings ──────────────────────────────────────
+  proposalTemplates: any[] = [];
+  proposalTemplatesLoading = false;
+  proposalTemplatesSaving = false;
+  proposalTemplatesError = '';
+  proposalTemplatesSuccess = '';
+  proposalEditorOpen = false;
+  proposalEditorTemplate: any = null; // currently editing template
+
+
   // ── Follow-ups Filters ─────────────────────────────────────
   followupSelectedEmps: string[] = [];
   followupSelectedCompanyTags: string[] = [];
@@ -1459,6 +1469,10 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (tab === 'settings' || tab === 'remarks_filter' || tab === 'invoice_settings') {
       this.fetchSettings();
     }
+    if (tab === 'proposal_settings') {
+      this.fetchSettings();
+      this.fetchProposalTemplates();
+    }
     if (tab === 'invoice') {
       this.fetchSettings();
       this.fetchInvoiceRecords();
@@ -1490,6 +1504,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'client_onboarding': return 'Client Onboarding';
       case 'invoice_settings': return 'Invoice Settings';
       case 'quotation': return 'Quotation';
+      case 'proposal_settings': return 'Proposal Settings';
       case 'crm_clients': return 'CRM Clients';
       case 'crm_sla': return 'SLA';
       case 'crm_nda': return 'NDA';
@@ -1510,6 +1525,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'invoice': return 'Search onboarded clients...';
       case 'client_onboarding': return 'Search onboarded clients...';
       case 'invoice_settings': return 'Search invoice settings...';
+      case 'proposal_settings': return 'Search proposal templates...';
       case 'employees': return 'Search employees, phone, or tag...';
       case 'emp_dashboard': return 'Search assigned leads or follow-ups...';
       case 'crm_clients': return 'Search CRM clients, contacts, or managers...';
@@ -7816,6 +7832,87 @@ export abstract class AdminWorkspaceController implements OnInit {
       alert('Failed to add contact');
     } finally {
       this.contactAddSaving = false;
+    }
+  }
+
+  // ── Proposal Template CRUD ─────────────────────────────────────────────
+
+  fetchProposalTemplates(): void {
+    if (!this.dashboardCode) return;
+    this.proposalTemplatesLoading = true;
+    this.proposalTemplatesError = '';
+    this.api.get<any>(`/api/auth/proposals?companyCode=${this.dashboardCode}`).subscribe({
+      next: (res: any) => {
+        this.proposalTemplatesLoading = false;
+        this.proposalTemplates = res?.templates || [];
+      },
+      error: (err: any) => {
+        this.proposalTemplatesLoading = false;
+        this.proposalTemplatesError = err?.error?.message || 'Failed to load templates.';
+      }
+    });
+  }
+
+  openProposalEditor(template?: any): void {
+    this.proposalEditorTemplate = template ? JSON.parse(JSON.stringify(template)) : {
+      _id: null,
+      name: 'Untitled Proposal',
+      pages: [{
+        id: 'page_1',
+        layers: []
+      }]
+    };
+    this.proposalEditorOpen = true;
+  }
+
+  closeProposalEditor(): void {
+    this.proposalEditorOpen = false;
+    this.proposalEditorTemplate = null;
+  }
+
+  async saveProposalTemplate(templateData: any): Promise<void> {
+    if (!this.dashboardCode || this.proposalTemplatesSaving) return;
+    this.proposalTemplatesSaving = true;
+    this.proposalTemplatesError = '';
+    this.proposalTemplatesSuccess = '';
+
+    const isNew = !templateData._id;
+    const endpoint = isNew
+      ? '/api/auth/proposals'
+      : `/api/auth/proposals/${templateData._id}`;
+    const req = isNew
+      ? this.api.post<any>(endpoint, { companyCode: this.dashboardCode, ...templateData })
+      : this.api.patch<any>(endpoint, { companyCode: this.dashboardCode, ...templateData });
+
+    try {
+      const res = await firstValueFrom(req);
+      if (res?.template) {
+        if (isNew) {
+          this.proposalTemplates = [...this.proposalTemplates, res.template];
+        } else {
+          this.proposalTemplates = this.proposalTemplates.map(t =>
+            t._id === res.template._id ? res.template : t
+          );
+        }
+        this.proposalTemplatesSuccess = 'Template saved successfully!';
+        setTimeout(() => this.proposalTemplatesSuccess = '', 3000);
+      }
+    } catch (err: any) {
+      this.proposalTemplatesError = err?.error?.message || 'Failed to save template.';
+    } finally {
+      this.proposalTemplatesSaving = false;
+    }
+  }
+
+  async deleteProposalTemplate(templateId: string): Promise<void> {
+    if (!this.dashboardCode || !templateId) return;
+    if (!confirm('Delete this proposal template? This cannot be undone.')) return;
+
+    try {
+      await firstValueFrom(this.api.delete<any>(`/api/auth/proposals/${templateId}?companyCode=${this.dashboardCode}`));
+      this.proposalTemplates = this.proposalTemplates.filter(t => t._id !== templateId);
+    } catch (err: any) {
+      alert(err?.error?.message || 'Failed to delete template.');
     }
   }
 }

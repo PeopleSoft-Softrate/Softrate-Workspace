@@ -342,11 +342,12 @@ interface PagedResponse<T> {
 
 import { ActivitiesCalendarComponent } from '../../shared/ui/activities-calendar/activities-calendar.component';
 import { CompanyTimelineComponent } from '../../shared/ui/company-timeline/company-timeline.component';
+import { ProposalGeneratorModalComponent } from './proposal-generator-modal/proposal-generator-modal.component';
 
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent],
+  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -1823,6 +1824,28 @@ invoiceSeal: string = '';
   dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   quoteNumber = Math.floor(100000 + Math.random() * 900000);
   showInvoiceModal = false;
+  showProposalModal = false;
+  proposalModalLead: any = null;
+
+  openProposalModal(lead: any) {
+    this.proposalModalLead = lead;
+    this.showProposalModal = true;
+  }
+
+  closeProposalModal() {
+    this.showProposalModal = false;
+    this.proposalModalLead = null;
+  }
+
+  onProposalSentFromModal() {
+    this.closeProposalModal();
+    if (this.proposalModalLead) {
+      this.proposalModalLead.proposalSent = true;
+      // We could optionally trigger a save of the lead right here.
+      // But typically it requires updating bookmark or lead directly.
+    }
+  }
+
   invoiceEditMode = false;
   invoiceLead: Lead | null = null;
   selectedInvoiceClient: ClientRecord | null = null;

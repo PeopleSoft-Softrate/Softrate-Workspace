@@ -17,6 +17,7 @@ import { AdminReportsSectionComponent } from '../../../reports/presentation/admi
 import { AdminSettingsSectionComponent } from '../../../settings/presentation/admin-settings-section/admin-settings-section.component';
 import { AdminSupportSectionComponent } from '../../../settings/presentation/admin-support-section/admin-support-section.component';
 import { CrmAdminSectionComponent } from '../../crm/crm-admin-section.component';
+import { ProposalSettingsSectionComponent } from '../../sections/proposal-settings-section/proposal-settings-section.component';
 
 
 @Component({
@@ -38,6 +39,7 @@ import { CrmAdminSectionComponent } from '../../crm/crm-admin-section.component'
     AdminInvoiceSectionComponent,
     AdminQuotationSectionComponent,
     CrmAdminSectionComponent,
+    ProposalSettingsSectionComponent,
 
     AdminEmployeeDrilldownComponent
   ],

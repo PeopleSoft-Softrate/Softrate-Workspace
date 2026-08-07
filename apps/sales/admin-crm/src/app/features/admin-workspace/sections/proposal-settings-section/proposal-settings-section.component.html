@@ -1,0 +1,346 @@
+<!-- Proposal Settings Section -->
+<div *ngIf="dashTab === 'proposal_settings'" class="proposal-settings-root">
+
+  <!-- Template Library View -->
+  <div *ngIf="!editorOpen" class="plib-view">
+    <div class="plib-header">
+      <div>
+        <h2 class="plib-title">Proposal Templates</h2>
+        <p class="plib-sub">Design reusable proposal templates. Employees fill in placeholders when generating proposals for clients.</p>
+      </div>
+      <button class="psb-btn-primary" (click)="enterEditor()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Template
+      </button>
+    </div>
+
+    <div *ngIf="proposalTemplatesLoading" class="plib-loading">
+      <div class="psb-spinner"></div><span>Loading templates…</span>
+    </div>
+    <div *ngIf="proposalTemplatesError" class="plib-error">{{ proposalTemplatesError }}</div>
+    <div *ngIf="proposalTemplatesSuccess" class="plib-success">{{ proposalTemplatesSuccess }}</div>
+
+    <div *ngIf="!proposalTemplatesLoading && proposalTemplates.length === 0" class="plib-empty">
+      <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#94a3b8" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+      <p>No proposal templates yet.</p>
+      <button class="psb-btn-secondary" (click)="enterEditor()">Create your first template</button>
+    </div>
+
+    <div *ngIf="!proposalTemplatesLoading && proposalTemplates.length > 0" class="plib-grid">
+      <div class="plib-card" *ngFor="let tpl of proposalTemplates">
+        <div class="plib-card-preview" (click)="enterEditor(tpl)">
+          <ng-container *ngIf="getPageThumbnail((tpl.pages || [])[0]) as thumbSrc; else placeholderSvg">
+            <img [src]="thumbSrc" class="plib-card-preview-img" />
+          </ng-container>
+          <ng-template #placeholderSvg>
+            <svg viewBox="0 0 60 80" width="60" height="80">
+              <rect width="60" height="80" rx="4" fill="#f8fafc"/>
+              <rect x="6" y="8" width="48" height="6" rx="2" fill="#4f46e5" opacity=".7"/>
+              <rect x="6" y="20" width="36" height="3" rx="1" fill="#94a3b8"/>
+              <rect x="6" y="26" width="28" height="3" rx="1" fill="#94a3b8"/>
+              <rect x="6" y="38" width="48" height="20" rx="2" fill="#e2e8f0"/>
+            </svg>
+          </ng-template>
+        </div>
+        <div class="plib-card-info">
+          <span class="plib-card-name">{{ tpl.name }}</span>
+          <span class="plib-card-pages">{{ (tpl.pages || []).length }} page{{ (tpl.pages || []).length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="plib-card-actions">
+          <button class="psb-btn-icon" (click)="enterEditor(tpl)" title="Edit">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="psb-btn-icon danger" (click)="deleteProposalTemplate(tpl._id)" title="Delete">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Editor View -->
+  <div *ngIf="editorOpen" class="pce-root">
+
+    <!-- Topbar -->
+    <div class="pce-topbar">
+      <button class="psb-btn-ghost pce-back" (click)="exitEditor()">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Templates
+      </button>
+
+      <input class="pce-name-input" type="text" [(ngModel)]="templateName" placeholder="Template name…" />
+
+      <div class="pce-toolbar">
+        <button class="pce-tool" (click)="addTextLayer(false)" title="Add Text">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          Text
+        </button>
+        <button class="pce-tool pce-tool-placeholder" (click)="addTextLayer(true)" title="Add employee placeholder">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="12" x2="17" y2="12" stroke-dasharray="2 2"/></svg>
+          Placeholder
+        </button>
+        <label class="pce-tool" title="Upload Image">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Image
+          <input type="file" accept="image/*" (change)="onImageUpload($event)" style="display:none">
+        </label>
+        <button class="pce-tool" (click)="useCompanyLogo()" title="Use company logo">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+          Logo
+        </button>
+        <div class="pce-tool-group">
+          <button class="pce-tool" (click)="addShapeLayer()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            Shape
+          </button>
+          <select class="pce-shape-select" [(ngModel)]="shapeSubtype">
+            <option value="rect">Rect</option>
+            <option value="circle">Circle</option>
+            <option value="line">Line</option>
+          </select>
+        </div>
+        <label class="pce-tool" title="Import PDF">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF
+          <input type="file" accept=".pdf" (change)="onPdfImport($event)" style="display:none">
+        </label>
+
+        <div class="pce-toolbar-sep"></div>
+
+        <button class="pce-tool pce-icon-only" (click)="undo()" [disabled]="historyIndex <= 0" title="Undo">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+        </button>
+        <button class="pce-tool pce-icon-only" (click)="redo()" [disabled]="historyIndex >= history.length - 1" title="Redo">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+        </button>
+
+        <div class="pce-toolbar-sep"></div>
+
+        <button class="pce-tool pce-tool-export" (click)="exportToPdf()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="pce-tool pce-tool-save" (click)="saveTemplate()" [disabled]="proposalTemplatesSaving">
+          <span *ngIf="proposalTemplatesSaving" class="psb-spinner psb-spinner-sm"></span>
+          <svg *ngIf="!proposalTemplatesSaving" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          {{ proposalTemplatesSaving ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="pce-body">
+
+      <!-- Pages Strip -->
+      <div class="pce-pages-strip">
+        <!-- Top drop target (before page 1) -->
+        <div class="pce-drop-indicator"
+             [class.active]="dragOverPageIndex === 0"
+             (dragover)="onPageDragOver($event, 0)"
+             (dragleave)="onPageDragLeave()"
+             (drop)="onPageDrop($event, 0)"></div>
+
+        <ng-container *ngFor="let pg of pages; let i = index">
+          <div class="pce-page-thumb"
+            [class.active]="i === activePageIndex"
+            draggable="true"
+            (dragstart)="onPageDragStart($event, i)"
+            (click)="switchPage(i)">
+            <!-- Page Thumbnail Image Preview -->
+            <img *ngIf="getPageThumbnail(pg) as thumbSrc" [src]="thumbSrc" class="pce-page-thumb-img" />
+            <span class="pce-page-num" [class.has-thumb]="getPageThumbnail(pg)">{{ i + 1 }}</span>
+            <button *ngIf="pages.length > 1" class="pce-page-del" (click)="$event.stopPropagation(); deletePage(i)" title="Delete Page">
+              <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Drop target after index i -->
+          <div class="pce-drop-indicator"
+               [class.active]="dragOverPageIndex === i + 1"
+               (dragover)="onPageDragOver($event, i + 1)"
+               (dragleave)="onPageDragLeave()"
+               (drop)="onPageDrop($event, i + 1)"></div>
+        </ng-container>
+
+        <button class="pce-page-add" (click)="addPage()">+</button>
+      </div>
+
+      <!-- Canvas -->
+      <div class="pce-canvas-wrap">
+        <div class="pce-canvas-bg">
+          <div #konvaContainer class="pce-canvas-stage"></div>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="pce-right-panel">
+        <div class="pce-panel-tabs">
+          <button class="pce-panel-tab" [class.active]="sidePanel === 'layers'" (click)="sidePanel = 'layers'">Layers</button>
+          <button class="pce-panel-tab" [class.active]="sidePanel === 'properties'" (click)="sidePanel = 'properties'">Properties</button>
+        </div>
+
+        <!-- Layers -->
+        <div *ngIf="sidePanel === 'layers'" class="pce-layers-panel">
+          <div *ngIf="sortedLayers.length === 0" class="pce-panel-empty">No layers. Use the toolbar to add content.</div>
+          <div *ngFor="let layer of sortedLayers"
+            class="pce-layer-row"
+            [class.selected]="layer.id === selectedLayerId"
+            [class.locked]="layer.locked"
+            [class.hidden-layer]="layer.hidden"
+            draggable="true"
+            (dragstart)="onLayerDragStart($event, layer.id)"
+            (dragover)="onLayerDragOver($event)"
+            (drop)="onLayerDrop($event, layer.id)"
+            (click)="selectLayer(layer.id)">
+            <span class="pce-layer-label" style="display:flex; align-items:center; gap:6px;">
+              <svg *ngIf="layer.type === 'text' && layer.isPlaceholder" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <svg *ngIf="layer.type === 'text' && !layer.isPlaceholder" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              <svg *ngIf="layer.type === 'image'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <svg *ngIf="layer.type === 'pdf_page'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <svg *ngIf="layer.type === 'shape' && layer.shapeType === 'rect'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+              <svg *ngIf="layer.type === 'shape' && layer.shapeType !== 'rect'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+              {{ layerLabel(layer) }}
+            </span>
+            <div class="pce-layer-btns">
+              <button class="pce-lbtn" (click)="$event.stopPropagation(); toggleLayerHidden(layer.id)" [title]="layer.hidden ? 'Show' : 'Hide'" style="display:flex;align-items:center;justify-content:center;">
+                <svg *ngIf="!layer.hidden" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg *ngIf="layer.hidden" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+              <button class="pce-lbtn" (click)="$event.stopPropagation(); toggleLayerLocked(layer.id)" [title]="layer.locked ? 'Unlock' : 'Lock'" style="display:flex;align-items:center;justify-content:center;">
+                <svg *ngIf="!layer.locked" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                <svg *ngIf="layer.locked" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </button>
+              <button class="pce-lbtn danger" *ngIf="!layer.locked" (click)="$event.stopPropagation(); selectedLayerId = layer.id; deleteSelectedLayer()" title="Delete" style="display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Properties -->
+        <div *ngIf="sidePanel === 'properties'" class="pce-props-panel">
+          <div *ngIf="!selectedLayer" class="pce-panel-empty">Click a layer to edit its properties.</div>
+
+          <!-- Text Properties -->
+          <ng-container *ngIf="selectedLayer?.type === 'text'">
+            <div class="pce-prop-section-title">Content</div>
+            <div class="pce-prop-group">
+              <textarea class="pce-prop-textarea" [(ngModel)]="propContent" (ngModelChange)="applyProps()" rows="3" placeholder="Text content…" [disabled]="propIsPlaceholder"></textarea>
+            </div>
+            <div class="pce-prop-group">
+              <label class="pce-prop-check">
+                <input type="checkbox" [(ngModel)]="propIsPlaceholder" (ngModelChange)="applyProps()">
+                Employee placeholder
+              </label>
+            </div>
+            <div class="pce-prop-group" *ngIf="propIsPlaceholder">
+              <label class="pce-prop-label">Placeholder Field</label>
+              <select class="pce-prop-select" [(ngModel)]="propPlaceholderMode" (ngModelChange)="onPlaceholderModeChange()">
+                <option value="" disabled selected>Select a field...</option>
+                <optgroup label="Lead Database">
+                  <option *ngFor="let field of leadDbFields" [value]="field">{{ field }}</option>
+                </optgroup>
+                <optgroup label="Custom">
+                  <option value="custom">Other (Custom Placeholder)...</option>
+                </optgroup>
+              </select>
+              
+              <div *ngIf="propPlaceholderMode === 'custom'" style="margin-top: 8px;">
+                <input class="pce-prop-input" type="text" [(ngModel)]="propPlaceholderLabel" (ngModelChange)="applyProps()" placeholder="Enter custom label">
+              </div>
+            </div>
+
+            <div class="pce-prop-section-title" style="margin-top:12px">Typography</div>
+            <div class="pce-prop-row">
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Font Size</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propFontSize" (ngModelChange)="applyProps()" min="6" max="200">
+              </div>
+              <div class="pce-prop-group">
+                <label class="pce-prop-label">Color</label>
+                <input class="pce-prop-color" type="color" [(ngModel)]="propColor" (ngModelChange)="applyProps()">
+              </div>
+            </div>
+            <div class="pce-prop-group">
+              <label class="pce-prop-label">Font Family</label>
+              <select class="pce-prop-select" [(ngModel)]="propFontFamily" (ngModelChange)="applyProps()">
+                <option *ngFor="let ff of fontFamilies" [value]="ff">{{ ff }}</option>
+              </select>
+            </div>
+            <div class="pce-prop-row pce-style-row">
+              <button class="pce-style-btn" [class.on]="propBold" (click)="propBold=!propBold;applyProps()"><b>B</b></button>
+              <button class="pce-style-btn" [class.on]="propItalic" (click)="propItalic=!propItalic;applyProps()"><i>I</i></button>
+              <button class="pce-style-btn" [class.on]="propUnderline" (click)="propUnderline=!propUnderline;applyProps()"><u>U</u></button>
+              <div style="width:1px;background:#e2e8f0;margin:0 4px"></div>
+              <button class="pce-style-btn" [class.on]="propAlign==='left'" (click)="propAlign='left';applyProps()">≡L</button>
+              <button class="pce-style-btn" [class.on]="propAlign==='center'" (click)="propAlign='center';applyProps()">≡C</button>
+              <button class="pce-style-btn" [class.on]="propAlign==='right'" (click)="propAlign='right';applyProps()">≡R</button>
+            </div>
+            
+            <button style="width:100%; margin-top:12px; padding:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; color:#334155; font-size:13px; font-weight:500; transition: background 0.2s;" (click)="autoFitText()" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+              ⤢ Auto-Fit Box to Text
+            </button>
+            
+            <div class="pce-prop-section-title" style="margin-top:12px; display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" [(ngModel)]="propHasBackground" (ngModelChange)="applyProps()" id="bg-spacing-toggle">
+              <label for="bg-spacing-toggle" style="cursor:pointer; margin:0;">Background & Spacing</label>
+            </div>
+            <div class="pce-prop-row" *ngIf="propHasBackground">
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Color</label>
+                <input class="pce-prop-color" type="color" [(ngModel)]="propFillColor" (ngModelChange)="applyProps()">
+              </div>
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Padding</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propPadding" (ngModelChange)="applyProps()" min="0" max="100">
+              </div>
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Radius</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propBorderRadius" (ngModelChange)="applyProps()" min="0" max="100">
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Shape Properties -->
+          <ng-container *ngIf="selectedLayer?.type === 'shape'">
+            <div class="pce-prop-section-title">Shape Style</div>
+            <div class="pce-prop-row">
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">
+                  <input type="checkbox" [(ngModel)]="propHasBackground" (ngModelChange)="applyProps()" style="margin-right: 4px;"> Fill Color
+                </label>
+                <input *ngIf="propHasBackground" class="pce-prop-color" type="color" [(ngModel)]="propFillColor" (ngModelChange)="applyProps()">
+              </div>
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Stroke Color</label>
+                <input class="pce-prop-color" type="color" [(ngModel)]="propStrokeColor" (ngModelChange)="applyProps()">
+              </div>
+            </div>
+            <div class="pce-prop-row">
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Stroke Width</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propStrokeWidth" (ngModelChange)="applyProps()" min="0" max="20">
+              </div>
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Corner Radius</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propBorderRadius" (ngModelChange)="applyProps()" min="0" max="100">
+              </div>
+            </div>
+          </ng-container>
+
+          <div *ngIf="selectedLayer?.type === 'image'" class="pce-panel-empty">Image layer — drag to reposition, use handles to resize.</div>
+          <div *ngIf="selectedLayer?.type === 'pdf_page'" class="pce-panel-empty" style="color:#d97706">📄 PDF background (locked). Add layers on top.</div>
+
+          <button *ngIf="selectedLayer && !selectedLayer.locked" class="psb-btn-danger pce-delete-btn" (click)="deleteSelectedLayer()">Delete Layer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast feedback -->
+    <div *ngIf="proposalTemplatesSuccess" class="pce-toast success">✓ {{ proposalTemplatesSuccess }}</div>
+    <div *ngIf="proposalTemplatesError" class="pce-toast error">⚠ {{ proposalTemplatesError }}</div>
+  </div>
+</div>

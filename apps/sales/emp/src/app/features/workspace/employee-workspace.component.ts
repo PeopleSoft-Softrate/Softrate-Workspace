@@ -1,4 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+// @ts-ignore
 import * as html2pdfImport from 'html2pdf.js';
 const html2pdf: any = (html2pdfImport as any).default || html2pdfImport;
 import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe, TitleCasePipe, CommonModule } from '@angular/common';
@@ -1842,21 +1843,35 @@ invoiceSeal: string = '';
     this.proposalModalLead = null;
   }
 
-  onProposalSentFromModal() {
+  onProposalSentFromModal(event?: { action: 'download' | 'send', file?: File, templateName?: string }) {
+    const targetLead = this.proposalModalLead;
     this.closeProposalModal();
-    if (this.proposalModalLead) {
-      this.proposalModalLead.proposalSent = true;
+    if (targetLead) {
+      targetLead.proposalSent = true;
       // We could optionally trigger a save of the lead right here.
       // But typically it requires updating bookmark or lead directly.
-      this.employeeLeadsVm.logProposalGenerated(this.toEmployeeLeadModel(this.proposalModalLead));
-      
-      // Also refresh the overall timeline if we're on it
-      if (this.drawerSection === 'history') {
-        this.employeeLeadsVm.openHistory(this.toEmployeeLeadModel(this.proposalModalLead));
-      }
-      if (this.companyFullViewOpen) {
-        this.loadCompanyFullViewData();
-      }
+      this.employeeLeadsVm.logProposalGenerated(this.toEmployeeLeadModel(targetLead)).subscribe({
+        next: () => {
+          // Also refresh the overall timeline if we're on it
+          if (this.drawerSection === 'history') {
+            this.employeeLeadsVm.openHistory(this.toEmployeeLeadModel(targetLead));
+          }
+          if (this.companyFullViewOpen) {
+            this.loadCompanyFullViewData();
+          }
+
+          // If action was send, open the mail modal with the attachment
+          if (event && event.action === 'send' && event.file) {
+            this.openMailModalWithAttachment(
+              targetLead,
+              event.file,
+              `Proposal: ${event.templateName} from ${this.employee?.companyCode || ''}`,
+              `<p>Dear ${(targetLead as any).contactName || (targetLead as any).clientName || 'Client'},</p><p>Please find attached the Proposal (${event.templateName}).</p><p>Best regards,<br>${this.employee?.name || ''}</p>`
+            );
+          }
+        },
+        error: (err) => console.error('Failed to log proposal history', err)
+      });
     }
   }
 

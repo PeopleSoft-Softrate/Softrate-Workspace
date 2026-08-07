@@ -412,24 +412,23 @@ export class EmployeeLeadsViewModel {
     });
   }
 
-  logProposalGenerated(lead: Lead): void {
-    if (!lead || !lead.companyCode) return;
-    this.repository.postHistory({
+  logProposalGenerated(lead: Lead): Observable<any> {
+    if (!lead || !lead.companyCode) return of(null);
+    return this.repository.postHistory({
       companyCode: lead.companyCode,
       contactNumber: lead.contactNumber || '',
       companyName: lead.companyName || '',
       contactName: lead.contactName || '',
       action: 'PROPOSAL_GENERATED',
       details: 'A proposal PDF was generated and downloaded.'
-    }).subscribe({
-      next: () => {
+    }).pipe(
+      tap(() => {
         // Reload history to reflect the new log
         this.repository.history(lead.companyCode, lead.companyName).subscribe(logs => {
           this.stateSubject.next({ ...this.stateSubject.value, historyLogs: logs });
         });
-      },
-      error: (e) => console.error('Failed to log proposal history:', e)
-    });
+      })
+    );
   }
 
   reloadCompaniesAndLeads(options: { allowCachedRestore?: boolean; silent?: boolean; forceRefresh?: boolean } = {}): Observable<unknown> {

@@ -147,7 +147,7 @@ async function getCachedEmployeeCompanyContacts({ LeadModel, companyCode, employ
 
     const rows = await LeadModel.aggregate([
       { $match: mongoQuery },
-      { $sort: { leadCompanyNameLower: 1, sheetOrder: 1, createdAt: 1, _id: 1 } },
+      { $sort: { sheetOrder: 1, createdAt: 1, _id: 1 } },
       { $group: { _id: '$leadCompanyName', contacts: { $push: '$$ROOT' } } },
       { $project: { contacts: { $slice: ['$contacts', contactPageSize] } } },
     ]);

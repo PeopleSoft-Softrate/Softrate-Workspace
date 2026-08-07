@@ -3387,5 +3387,5 @@
   [lead]="proposalModalLead"
   [companyCode]="documentCompanyCode || employee?.companyCode || ''"
   (close)="closeProposalModal()"
-  (onProposalSent)="onProposalSentFromModal()"
+  (onProposalSent)="onProposalSentFromModal($event)"
 ></app-proposal-generator-modal>

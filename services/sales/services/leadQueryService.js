@@ -330,7 +330,7 @@ async function getLeadCompanies({ LeadModel, companyCode, employeeId, query = {}
       ...baseSecurityQuery,
       leadCompanyName: { $in: names },
     })
-      .sort({ leadCompanyNameLower: 1, sheetOrder: 1, createdAt: 1, _id: 1 })
+      .sort({ sheetOrder: 1, createdAt: 1, _id: 1 })
       .lean();
 
     contactsByCompany = contacts.reduce((grouped, lead) => {

@@ -20,7 +20,7 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
   @Input() show: boolean = false;
   
   @Output() close = new EventEmitter<void>();
-  @Output() onProposalSent = new EventEmitter<void>();
+  @Output() onProposalSent = new EventEmitter<{ action: 'download' | 'send', file?: File, templateName?: string }>();
 
   templates: any[] = [];
   selectedTemplateId: string = '';
@@ -184,12 +184,11 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        this.onProposalSent.emit();
+        this.onProposalSent.emit({ action: 'download', templateName: tpl.name });
       } else if (action === 'send') {
-        // Send via email API (we can use the same API used for invoices/quotes if one exists,
-        // or just mock it / alert for now based on requirement)
-        alert('Sending as email is not fully wired to a specific mail endpoint in this demo. Downloading instead.');
-        this.generatePdf('download');
+        const fileName = `${tpl.name}_${this.lead?.name || 'Lead'}.pdf`;
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+        this.onProposalSent.emit({ action: 'send', file, templateName: tpl.name });
       }
 
     } catch (e: any) {

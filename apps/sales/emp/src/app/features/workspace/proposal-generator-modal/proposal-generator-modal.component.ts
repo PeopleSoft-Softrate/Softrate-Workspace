@@ -25,10 +25,10 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
   templates: any[] = [];
   selectedTemplateId: string = '';
   
-  // Array of { key, label, value } for custom placeholders
-  customPlaceholders: { key: string, label: string, value: string }[] = [];
-  // Array of { key, label, value } for standard auto-filled placeholders
-  standardPlaceholders: { key: string, label: string, value: string }[] = [];
+  // Array of { key, label, value, maxChars } for custom placeholders
+  customPlaceholders: { key: string, label: string, value: string, maxChars?: number }[] = [];
+  // Array of { key, label, value, maxChars } for standard auto-filled placeholders
+  standardPlaceholders: { key: string, label: string, value: string, maxChars?: number }[] = [];
   
   loadingTemplates = false;
   generating = false;
@@ -96,10 +96,11 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
           const key = layer.placeholderLabel;
           if (key && !seen.has(key)) {
             seen.add(key);
+            const maxChars = layer.placeholderMaxChars;
             if (this.isStandardField(key)) {
-              this.standardPlaceholders.push({ key, label: key, value: this.getStandardFieldValue(key) });
+              this.standardPlaceholders.push({ key, label: key, value: this.getStandardFieldValue(key), maxChars });
             } else {
-              this.customPlaceholders.push({ key, label: key, value: '' });
+              this.customPlaceholders.push({ key, label: key, value: '', maxChars });
             }
           }
         }
@@ -120,7 +121,6 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    try {
     try {
       const dynamicData: Record<string, string> = {};
       for (const sp of this.standardPlaceholders) {

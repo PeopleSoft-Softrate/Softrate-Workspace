@@ -45,13 +45,6 @@ export class PdfGeneratorService {
         const lh  = layer.h * SCALE_Y;
 
         if (layer.type === 'text') {
-          if (layer.fillColor && layer.fillColor !== 'transparent') {
-            pdfPage.drawRectangle({
-              x: lx, y: ly, width: lw, height: lh,
-              color: this.hexToRgbPdf(layer.fillColor)
-            });
-          }
-          
           const family = (layer.fontFamily || '').toLowerCase();
           const bold   = layer.bold;
           const italic = layer.italic;
@@ -88,9 +81,45 @@ export class PdfGeneratorService {
           const maxW = lw - padX * 2;
           const lines = this.wrapTextForPdf(text, font, fontSize, maxW);
           const lineH = fontSize * 1.3;
-          let textY   = ly + lh - padY - fontSize; 
+          
+          let actualTextWidth = 0;
           for (const line of lines) {
-            if (textY < ly) break;
+             const w = font.widthOfTextAtSize(line, fontSize);
+             if (w > actualTextWidth) actualTextWidth = w;
+          }
+          const actualTextHeight = lines.length * lineH;
+          
+          let bgX = lx;
+          let bgY = ly;
+          let bgW = lw;
+          let bgH = lh;
+          
+          if (layer.isPlaceholder) {
+            bgW = actualTextWidth + padX * 2;
+            bgH = actualTextHeight + padY * 2;
+            bgY = ly + lh - bgH; // Keep top edge fixed
+            
+            if (layer.align === 'center') {
+              bgX = lx + (lw - bgW) / 2;
+            } else if (layer.align === 'right') {
+              bgX = lx + lw - bgW;
+            }
+          }
+
+          if (layer.fillColor && layer.fillColor !== 'transparent') {
+            const r = layer.borderRadius ? layer.borderRadius * Math.min(SCALE_X, SCALE_Y) : 0;
+            if (r > 0) {
+              this.drawRoundedRect(pdfPage, bgX, bgY, bgW, bgH, r, this.hexToRgbPdf(layer.fillColor));
+            } else {
+              pdfPage.drawRectangle({
+                x: bgX, y: bgY, width: bgW, height: bgH,
+                color: this.hexToRgbPdf(layer.fillColor)
+              });
+            }
+          }
+          const baselineOffset = font.heightAtSize(fontSize, { descender: false });
+          let textY = ly + lh - padY - baselineOffset; 
+          for (const line of lines) {
             let drawX = lx + padX;
             if (layer.align === 'center') drawX = lx + (lw - font.widthOfTextAtSize(line, fontSize)) / 2;
             if (layer.align === 'right')  drawX = lx + lw - font.widthOfTextAtSize(line, fontSize) - padX;
@@ -107,7 +136,12 @@ export class PdfGeneratorService {
           } else if (layer.shapeType === 'line') {
             pdfPage.drawLine({ start: { x: lx, y: ly + lh/2 }, end: { x: lx + lw, y: ly + lh/2 }, thickness: sw, color: stroke });
           } else {
-            pdfPage.drawRectangle({ x: lx, y: ly, width: lw, height: lh, color: fill, borderColor: stroke, borderWidth: sw, opacity: fill ? 1 : 0, borderOpacity: 1 });
+            const r = layer.borderRadius ? layer.borderRadius * Math.min(SCALE_X, SCALE_Y) : 0;
+            if (r > 0) {
+              this.drawRoundedRect(pdfPage, lx, ly, lw, lh, r, fill, stroke, sw);
+            } else {
+              pdfPage.drawRectangle({ x: lx, y: ly, width: lw, height: lh, color: fill, borderColor: stroke, borderWidth: sw, opacity: fill ? 1 : 0, borderOpacity: 1 });
+            }
           }
 
         } else if (layer.type === 'image' && layer.src) {
@@ -136,6 +170,18 @@ export class PdfGeneratorService {
     const g = parseInt(clean.substring(2, 4), 16) / 255;
     const b = parseInt(clean.substring(4, 6), 16) / 255;
     return { type: 'RGB', red: isNaN(r) ? 0 : r, green: isNaN(g) ? 0 : g, blue: isNaN(b) ? 0 : b };
+  }
+
+  private drawRoundedRect(page: any, x: number, y: number, w: number, h: number, r: number, color?: any, borderColor?: any, borderWidth?: number) {
+    const cr = Math.max(0, Math.min(r, w / 2, h / 2));
+    const k = 0.5522847498;
+    const kr = k * cr;
+    const path = `M ${cr},0 L ${w-cr},0 C ${w-cr+kr},0 ${w},${cr-kr} ${w},${cr} L ${w},${h-cr} C ${w},${h-cr+kr} ${w-cr+kr},${h} ${w-cr},${h} L ${cr},${h} C ${cr-kr},${h} 0,${h-cr+kr} 0,${h-cr} L 0,${cr} C 0,${cr-kr} ${cr-kr},0 ${cr},0 Z`;
+    const options: any = { x, y: y + h };
+    if (color) options.color = color;
+    if (borderColor) options.borderColor = borderColor;
+    if (borderWidth) options.borderWidth = borderWidth;
+    page.drawSvgPath(path, options);
   }
 
   private wrapTextForPdf(text: string, font: any, fontSize: number, maxWidth: number): string[] {

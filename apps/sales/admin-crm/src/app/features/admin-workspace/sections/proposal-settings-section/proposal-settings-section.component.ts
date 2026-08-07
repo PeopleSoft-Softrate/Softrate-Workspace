@@ -13,7 +13,7 @@ export interface ProposalLayer {
   zIndex: number; locked: boolean; hidden: boolean;
   content?: string; fontSize?: number; fontFamily?: string; color?: string;
   bold?: boolean; italic?: boolean; underline?: boolean; align?: 'left' | 'center' | 'right';
-  isPlaceholder?: boolean; placeholderLabel?: string;
+  isPlaceholder?: boolean; placeholderLabel?: string; placeholderMaxChars?: number;
   src?: string;        // display-size preview PNG (for Konva editor only)
   shapeType?: 'rect' | 'circle' | 'line';
   fillColor?: string; strokeColor?: string; strokeWidth?: number; borderRadius?: number; padding?: number;
@@ -70,7 +70,7 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
   propContent = ''; propFontSize = 16; propFontFamily = 'Inter'; propColor = '#000000';
   propBold = false; propItalic = false; propUnderline = false; propAlign: 'left' | 'center' | 'right' = 'left';
   propFillColor = '#e2e8f0'; propStrokeColor = '#475569'; propStrokeWidth = 2; propBorderRadius = 0; propPadding = 4;
-  propHasBackground = false; propIsPlaceholder = false; propPlaceholderLabel = ''; propPlaceholderMode = '';
+  propHasBackground = false; propIsPlaceholder = false; propPlaceholderLabel = ''; propPlaceholderMode = ''; propPlaceholderMaxChars: number | null = null;
   fontFamilies = ['Inter', 'Arial', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana'];
 
   leadDbFields = [
@@ -133,6 +133,7 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
   private addKonvaNode(layer: ProposalLayer): void {
     let node: any;
     if (layer.type === 'text') {
+      const pad = layer.padding !== undefined ? layer.padding : 4;
       node = new Konva.Group({ id: layer.id, x: layer.x, y: layer.y, width: layer.w, height: layer.h, draggable: !layer.locked });
       node.add(new Konva.Rect({
         name: 'bg', width: layer.w, height: layer.h,
@@ -199,7 +200,9 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     this.propStrokeWidth = l.strokeWidth !== undefined ? l.strokeWidth : 2; 
     this.propBorderRadius = l.borderRadius !== undefined ? l.borderRadius : 0;
     this.propPadding = l.padding !== undefined ? l.padding : 4;
-    this.propIsPlaceholder = l.isPlaceholder || false; this.propPlaceholderLabel = l.placeholderLabel || '';
+    this.propIsPlaceholder = l.isPlaceholder || false; 
+    this.propPlaceholderLabel = l.placeholderLabel || '';
+    this.propPlaceholderMaxChars = l.placeholderMaxChars || null;
     if (this.propPlaceholderLabel) {
       this.propPlaceholderMode = this.leadDbFields.includes(this.propPlaceholderLabel) ? this.propPlaceholderLabel : 'custom';
     } else {
@@ -221,7 +224,11 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     this.pushHistory();
     const finalFillColor = this.propHasBackground ? this.propFillColor : 'transparent';
     if (l.type === 'text') {
-      Object.assign(l, { content: this.propContent, fontSize: this.propFontSize, fontFamily: this.propFontFamily, color: this.propColor, bold: this.propBold, italic: this.propItalic, underline: this.propUnderline, align: this.propAlign, isPlaceholder: this.propIsPlaceholder, placeholderLabel: this.propPlaceholderLabel, fillColor: finalFillColor, borderRadius: this.propBorderRadius, padding: this.propPadding });
+      Object.assign(l, { content: this.propContent, fontSize: this.propFontSize, fontFamily: this.propFontFamily, color: this.propColor, bold: this.propBold, italic: this.propItalic, underline: this.propUnderline, align: this.propAlign, isPlaceholder: this.propIsPlaceholder, placeholderLabel: this.propPlaceholderLabel, placeholderMaxChars: this.propPlaceholderMaxChars, fillColor: finalFillColor, borderRadius: this.propBorderRadius, padding: this.propPadding });
+      if (l.isPlaceholder) {
+        this.autoFitText();
+        return; // autoFitText already calls renderCurrentPage
+      }
     } else if (l.type === 'shape') {
       Object.assign(l, { fillColor: finalFillColor, strokeColor: this.propStrokeColor, strokeWidth: this.propStrokeWidth, borderRadius: this.propBorderRadius });
     }

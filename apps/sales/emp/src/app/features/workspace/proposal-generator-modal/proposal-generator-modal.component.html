@@ -41,8 +41,13 @@
             <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Custom Fields Required</h3>
             
             <div class="form-group" *ngFor="let cp of customPlaceholders" style="margin-bottom: 12px;">
-              <label>{{ cp.label }}</label>
-              <input type="text" class="field-input" [(ngModel)]="cp.value" [placeholder]="'Enter ' + cp.label + '...'" (ngModelChange)="triggerPreview()" />
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <label>{{ cp.label }}</label>
+                <span *ngIf="cp.maxChars" style="font-size: 11px; color: #94a3b8;">
+                  {{ cp.value.length || 0 }} / {{ cp.maxChars }}
+                </span>
+              </div>
+              <input type="text" class="field-input" [(ngModel)]="cp.value" [placeholder]="'Enter ' + cp.label + '...'" (ngModelChange)="triggerPreview()" [attr.maxlength]="cp.maxChars || null" />
             </div>
           </div>
           
@@ -53,8 +58,13 @@
             </p>
             
             <div class="form-group" *ngFor="let sp of standardPlaceholders" style="margin-bottom: 12px;">
-              <label>{{ sp.label }}</label>
-              <input type="text" class="field-input" [(ngModel)]="sp.value" [placeholder]="'Enter ' + sp.label + '...'" (ngModelChange)="triggerPreview()" />
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <label>{{ sp.label }}</label>
+                <span *ngIf="sp.maxChars" style="font-size: 11px; color: #94a3b8;">
+                  {{ sp.value.length || 0 }} / {{ sp.maxChars }}
+                </span>
+              </div>
+              <input type="text" class="field-input" [(ngModel)]="sp.value" [placeholder]="'Enter ' + sp.label + '...'" (ngModelChange)="triggerPreview()" [attr.maxlength]="sp.maxChars || null" />
             </div>
           </div>
 

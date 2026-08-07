@@ -103,6 +103,10 @@ export class EmployeeLeadsRepository {
     );
   }
 
+  postHistory(data: { companyCode: string; contactNumber?: string; companyName?: string; contactName?: string; action: string; details?: string }): Observable<any> {
+    return this.api.post<any>('/api/history', data);
+  }
+
   private queryString(params: Record<string, string | number | boolean | undefined>): string {
     const search = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {

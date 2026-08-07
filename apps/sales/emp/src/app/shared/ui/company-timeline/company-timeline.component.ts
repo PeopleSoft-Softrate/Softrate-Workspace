@@ -5,7 +5,7 @@ import { ApiService } from '../../../api.service';
 
 export interface TimelineItem {
   id: string;
-  type: 'activity' | 'remark' | 'invoice' | 'quotation' | 'email';
+  type: 'activity' | 'remark' | 'invoice' | 'quotation' | 'email' | 'proposal';
   date: Date;
   title: string;
   description: string;
@@ -25,17 +25,18 @@ export class CompanyTimelineComponent implements OnChanges {
   @Input() invoices: any[] = [];
   @Input() quotations: any[] = [];
   @Input() emails: any[] = [];
+  @Input() proposals: any[] = [];
 
   timelineItems: TimelineItem[] = [];
   filteredItems: TimelineItem[] = [];
   loading = false;
   
-  filterType: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' | 'email' = 'all';
+  filterType: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' | 'email' | 'proposal' = 'all';
 
   constructor(private api: ApiService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['lead'] || changes['remarks'] || changes['invoices'] || changes['quotations'] || changes['emails']) {
+    if (changes['lead'] || changes['remarks'] || changes['invoices'] || changes['quotations'] || changes['emails'] || changes['proposals']) {
       this.buildTimeline();
     }
   }
@@ -161,6 +162,18 @@ export class CompanyTimelineComponent implements OnChanges {
         });
       });
 
+      // Add proposals
+      (this.proposals || []).forEach((prop: any) => {
+        items.push({
+          id: Math.random().toString(),
+          type: 'proposal',
+          date: new Date(prop.timestamp || prop.createdAt || new Date()),
+          title: 'Proposal Generated',
+          description: prop.details || 'Proposal was generated and downloaded',
+          meta: prop
+        });
+      });
+
       // Sort by date descending
       items.sort((a, b) => b.date.getTime() - a.date.getTime());
       
@@ -173,7 +186,7 @@ export class CompanyTimelineComponent implements OnChanges {
     }
   }
 
-  setFilter(type: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' | 'email') {
+  setFilter(type: 'all' | 'activity' | 'remark' | 'invoice' | 'quotation' | 'email' | 'proposal') {
     this.filterType = type;
     this.applyFilter();
   }

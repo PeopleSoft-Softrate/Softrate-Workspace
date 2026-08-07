@@ -349,7 +349,7 @@ import { ProposalGeneratorModalComponent } from './proposal-generator-modal/prop
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, TitleCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent],
+  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -1847,6 +1847,15 @@ invoiceSeal: string = '';
       this.proposalModalLead.proposalSent = true;
       // We could optionally trigger a save of the lead right here.
       // But typically it requires updating bookmark or lead directly.
+      this.employeeLeadsVm.logProposalGenerated(this.toEmployeeLeadModel(this.proposalModalLead));
+      
+      // Also refresh the overall timeline if we're on it
+      if (this.drawerSection === 'history') {
+        this.employeeLeadsVm.openHistory(this.toEmployeeLeadModel(this.proposalModalLead));
+      }
+      if (this.companyFullViewOpen) {
+        this.loadCompanyFullViewData();
+      }
     }
   }
 

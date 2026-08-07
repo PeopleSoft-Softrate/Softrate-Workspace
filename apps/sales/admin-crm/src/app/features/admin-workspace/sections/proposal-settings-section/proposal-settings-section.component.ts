@@ -551,7 +551,8 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
             const maxW = lw - padX * 2;
             const lines = this.wrapTextForPdf(text, font, fontSize, maxW);
             const lineH = fontSize * 1.3;
-            let textY   = ly + lh - padY - fontSize; // top-down inside box
+            const baselineOffset = font.heightAtSize(fontSize, { descender: false });
+            let textY   = ly + lh - padY - baselineOffset; // top-down inside box
             for (const line of lines) {
               if (textY < ly) break;
               let drawX = lx + padX;
@@ -590,7 +591,7 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
       }
 
       const bytes = await doc.save();
-      const blob  = new Blob([bytes], { type: 'application/pdf' });
+      const blob  = new Blob([bytes as any], { type: 'application/pdf' });
       const url   = URL.createObjectURL(blob);
       const a     = document.createElement('a');
       a.href = url; a.download = `${this.templateName || 'proposal'}.pdf`;

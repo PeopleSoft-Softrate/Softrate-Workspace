@@ -30,4 +30,32 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST — add a new history log entry manually
+router.post('/', async (req, res) => {
+  const { History } = req.models;
+  try {
+    const { companyCode, contactNumber, companyName, action, details, contactName: cName } = req.body;
+    if (!companyCode || !action) {
+      return res.status(400).json({ success: false, message: 'companyCode and action are required.' });
+    }
+
+    const log = new History({
+      companyCode,
+      contactNumber: contactNumber || '',
+      companyName: companyName || '',
+      contactName: cName || '',
+      action,
+      details: details || '',
+      changedBy: req.user ? req.user._id : null,
+      timestamp: new Date()
+    });
+    
+    await log.save();
+    return res.status(201).json({ success: true, log });
+  } catch (err) {
+    console.error('[post history]', err);
+    return res.status(500).json({ success: false, message: 'Server error creating history log.' });
+  }
+});
+
 module.exports = router;

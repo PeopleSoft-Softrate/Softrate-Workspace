@@ -31,7 +31,8 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "qrcode"
+              "qrcode",
+              "pako"
             ]
           },
           "configurations": {

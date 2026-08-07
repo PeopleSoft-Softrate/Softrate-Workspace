@@ -408,7 +408,27 @@ export class EmployeeLeadsViewModel {
     if (!lead.id || remarkIndex < 0) return;
     this.repository.deleteRemark(lead.id, remarkIndex).subscribe({
       next: (updated) => this.replaceLead(updated),
-      error: () => this.patch({ error: 'Failed to delete remark.' }),
+      error: (e) => console.error('Failed to delete remark:', e),
+    });
+  }
+
+  logProposalGenerated(lead: Lead): void {
+    if (!lead || !lead.companyCode) return;
+    this.repository.postHistory({
+      companyCode: lead.companyCode,
+      contactNumber: lead.contactNumber || '',
+      companyName: lead.companyName || '',
+      contactName: lead.contactName || '',
+      action: 'PROPOSAL_GENERATED',
+      details: 'A proposal PDF was generated and downloaded.'
+    }).subscribe({
+      next: () => {
+        // Reload history to reflect the new log
+        this.repository.history(lead.companyCode, lead.companyName).subscribe(logs => {
+          this.stateSubject.next({ ...this.stateSubject.value, historyLogs: logs });
+        });
+      },
+      error: (e) => console.error('Failed to log proposal history:', e)
     });
   }
 

@@ -2871,8 +2871,10 @@ invoiceSeal: string = '';
     };
 
     try {
-      // Create pdf blob
-      const pdfBlob = await html2pdf().set(opt).from(preview).outputPdf('blob');
+      const worker = html2pdf().set(opt).from(preview).toPdf();
+      const pdf = await worker.get('pdf');
+      pdf.setProperties({ title: filename });
+      const pdfBlob = pdf.output('blob');
       const file = new File([pdfBlob], filename, { type: 'application/pdf' });
       
       const targetLead = this.invoiceLead || this.selectedInvoiceClient || this.companyFullViewLead();
@@ -3055,7 +3057,11 @@ invoiceSeal: string = '';
         this.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText());
         this.invalidateQuotationCaches();
         this.fetchQuotationRecords(true);
-        this.printCurrentDocument(String(res.quotation.quotationNumber || 'Quotation'));
+        if (action === 'email') {
+          this.emailCurrentDocument();
+        } else {
+          this.printCurrentDocument(String(res.quotation.quotationNumber || 'Quotation'));
+        }
       },
       error: (err) => {
         this.quotationSaving = false;
@@ -4770,6 +4776,7 @@ invoiceSeal: string = '';
   // ── Mail Modal State ──────────────────────────────────────────
   showMailModal = false;
   isMailModalFullScreen = false;
+  isSendingMail = false;
   mailLead: Lead | null = null;
   mailSubject: string = '';
   mailCc: string = '';
@@ -4888,7 +4895,23 @@ invoiceSeal: string = '';
 
   viewMailAttachment(file: File) {
     const url = URL.createObjectURL(file);
-    window.open(url, '_blank');
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.title = file.name || 'Document';
+      win.document.body.style.margin = '0';
+      win.document.body.style.height = '100vh';
+      win.document.body.style.overflow = 'hidden';
+      
+      const iframe = win.document.createElement('iframe');
+      iframe.style.border = 'none';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.src = url;
+      
+      win.document.body.appendChild(iframe);
+    } else {
+      window.open(url, '_blank');
+    }
   }
 
   removeMailAttachment(index: number) {
@@ -4896,7 +4919,8 @@ invoiceSeal: string = '';
   }
 
   async sendMail() {
-    if (!this.mailLead) return;
+    if (!this.mailLead || this.isSendingMail) return;
+    this.isSendingMail = true;
     const editor = document.getElementById('mailBodyEditor');
     const finalBody = editor ? editor.innerHTML : this.mailBody;
     
@@ -4917,9 +4941,12 @@ invoiceSeal: string = '';
 
       this.api.post<any>('/api/email/send', formData).subscribe({
         next: (result) => {
+          this.isSendingMail = false;
           if (result.success) {
-            alert('Email sent successfully via Google Workspace!');
+            alert('Email sent successfully');
+            this.closeMailModal();
           } else {
+            this.isSendingMail = false;
             alert('Failed to send email: ' + result.message);
           }
         },

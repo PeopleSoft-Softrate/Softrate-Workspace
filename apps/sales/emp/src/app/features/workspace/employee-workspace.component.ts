@@ -624,6 +624,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   };
   companyFullHistoryLogs: LeadHistoryLog[] = [];
   companyFullRemarksHistory: LeadHistoryLog[] = [];
+  companyFullProposalsHistory: LeadHistoryLog[] = [];
   companyFullDocuments: Array<{ id: string; name: string; url: string; size: number; uploadedAt: string }> = [];
   companyFullEmailHistory: LeadHistoryLog[] = [];
   companyFullInvoiceItems: InvoiceRecord[] = [];
@@ -4034,6 +4035,8 @@ invoiceSeal: string = '';
     };
     this.companyFullHistoryLogs = [];
     this.companyFullRemarksHistory = [];
+    this.companyFullEmailHistory = [];
+    this.companyFullProposalsHistory = [];
     this.companyFullDocuments = [];
     this.companyFullInvoiceItems = [];
     this.companyFullQuotationItems = [];
@@ -4192,6 +4195,7 @@ invoiceSeal: string = '';
     this.companyFullHistoryLogs = [...logs];
     this.companyFullRemarksHistory = this.filterCompanyRemarkHistory(logs);
     this.companyFullEmailHistory = this.filterCompanyEmailHistory(logs);
+    this.companyFullProposalsHistory = logs.filter(log => String(log?.action || '') === 'PROPOSAL_GENERATED');
   }
 
   private async reloadCompanyFullRemarkHistory(): Promise<void> {

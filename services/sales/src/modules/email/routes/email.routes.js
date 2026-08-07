@@ -8,6 +8,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 
 
+// Get email integration status for the tenant
+router.get('/status', requireEmployee, tenantMiddleware, require('../controller/email.controller').getEmailStatus);
+
 // Send email from CRM (used by employees)
 router.post('/send', requireEmployee, tenantMiddleware, upload.array('attachments'), require('../controller/email.controller').sendEmailFromCRMController);
 

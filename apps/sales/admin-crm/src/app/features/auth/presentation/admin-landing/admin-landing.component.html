@@ -871,7 +871,7 @@
 
 <!-- ========== LOGIN MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isLoginOpen" (mousedown)="vm.closeModals()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeModals()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -903,7 +903,7 @@
 
 <!-- ========== FORGOT PASSWORD MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isForgotPwdOpen" (mousedown)="vm.closeModals()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeModals()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -940,7 +940,7 @@
 
 <!-- ========== RESET PASSWORD MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isResetPwdOpen" (mousedown)="vm.closeModals()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeModals()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -986,7 +986,7 @@
 
 <!-- ========== SIGNUP MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isSignupOpen" (mousedown)="vm.closeModals()">
-  <div class="modal modal-wide" (click)="$event.stopPropagation()">
+  <div class="modal modal-wide" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeModals()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">

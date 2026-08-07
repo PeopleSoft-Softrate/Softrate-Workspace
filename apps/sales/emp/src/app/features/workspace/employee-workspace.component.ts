@@ -1,4 +1,6 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import * as html2pdfImport from 'html2pdf.js';
+const html2pdf: any = (html2pdfImport as any).default || html2pdfImport;
 import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe, TitleCasePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
@@ -234,7 +236,7 @@ interface CompanyFullViewProfile {
   createdAt?: string;
 }
 
-type CompanyFullSection = 'overview' | 'followups' | 'timeline' | 'alternate' | 'notes';
+type CompanyFullSection = 'overview' | 'followups' | 'timeline' | 'alternate' | 'notes' | 'documents';
 
 interface CallStats {
   incoming: number;
@@ -592,6 +594,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     { id: 'timeline', label: 'Overall History' },
     { id: 'alternate', label: 'Alternate Info' },
     { id: 'notes', label: 'Notes' },
+    { id: 'documents', label: 'Documents' },
   ];
   companyFullLoading = false;
   companyFullProfileLoading = false;
@@ -621,6 +624,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   };
   companyFullHistoryLogs: LeadHistoryLog[] = [];
   companyFullRemarksHistory: LeadHistoryLog[] = [];
+  companyFullDocuments: Array<{ id: string; name: string; url: string; size: number; uploadedAt: string }> = [];
   companyFullEmailHistory: LeadHistoryLog[] = [];
   companyFullInvoiceItems: InvoiceRecord[] = [];
   companyFullQuotationItems: QuotationRecord[] = [];
@@ -2807,19 +2811,79 @@ invoiceSeal: string = '';
     return `QT-${yy}${mm}${sequence}`;
   }
 
-  printInvoice(): void {
+  async emailCurrentDocument(): Promise<void> {
+    if (this.invoiceItems.length === 0) {
+      alert(`Please add at least one product to the ${this.quoteMode ? 'quotation' : 'invoice'}.`);
+      return;
+    }
+    const preview = document.getElementById('invoice-preview');
+    if (!preview) {
+      alert('Could not find document preview to attach.');
+      return;
+    }
+
+    // Wait for the QR code to be generated before taking the snapshot
+    if (!this.quoteMode) {
+      try {
+        await this.ensureInvoiceQr();
+        // Wait a brief moment to allow Angular's change detection to update the DOM
+        await new Promise(resolve => setTimeout(resolve, 150));
+      } catch (err) {
+        console.warn('Failed to load QR code before PDF generation', err);
+      }
+    }
+
+    const docType = this.quoteMode ? 'Quotation' : 'Invoice';
+    const docNumber = this.quoteMode ? this.quotationNumber() : String(this.currentInvoiceNumber || 'Draft');
+    const filename = `${docType}_${docNumber}.pdf`;
+
+    const opt = {
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: 'px', format: [preview.offsetWidth || 800, preview.offsetHeight || 1120], orientation: 'portrait' }
+    };
+
+    try {
+      // Create pdf blob
+      const pdfBlob = await html2pdf().set(opt).from(preview).outputPdf('blob');
+      const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+      
+      const targetLead = this.invoiceLead || this.selectedInvoiceClient || this.companyFullViewLead();
+      if (!targetLead) {
+        alert('Could not identify the client to send the email to.');
+        return;
+      }
+      
+      this.openMailModalWithAttachment(
+        targetLead, 
+        file, 
+        `${docType} ${docNumber} from ${this.employee?.companyCode || ''}`,
+        `<p>Dear ${(targetLead as any).contactName || (targetLead as any).clientName || 'Client'},</p><p>Please find attached the ${docType} (${docNumber}).</p><p>Best regards,<br>${this.employee?.name || ''}</p>`
+      );
+    } catch(e) {
+      console.error('PDF Generation failed:', e);
+      alert('Failed to generate PDF for email.');
+    }
+  }
+
+  printInvoice(action: 'print' | 'email' = 'print'): void {
     if (this.invoiceItems.length === 0) {
       alert(`Please add at least one product to the ${this.quoteMode ? 'quotation' : 'invoice'}.`);
       return;
     }
     if (this.viewingSavedDocument) {
       const invNum = String(this.currentInvoiceNumber || 'Invoice');
-      void this.ensureInvoiceQr().finally(() => this.printCurrentDocument(invNum));
+      void this.ensureInvoiceQr().finally(() => {
+        if (action === 'email') this.emailCurrentDocument();
+        else this.printCurrentDocument(invNum);
+      });
       return;
     }
 
     if (this.quoteMode) {
-      this.saveAndPrintQuotation();
+      this.saveAndPrintQuotation(action);
       return;
     }
     if (!this.invoiceLead || !this.employee || this.invoiceSaving) return;
@@ -2878,7 +2942,10 @@ invoiceSeal: string = '';
           this.openedInvoiceRecord = res.invoice;
           this.invalidateInvoiceCaches();
           this.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
+          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => {
+            if (action === 'email') this.emailCurrentDocument();
+            else this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice'));
+          });
         },
         error: (err) => {
           this.invoiceSaving = false;
@@ -2898,7 +2965,10 @@ invoiceSeal: string = '';
           this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(res.invoice.paymentStatus);
           this.invalidateInvoiceCaches();
           this.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
+          void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => {
+            if (action === 'email') this.emailCurrentDocument();
+            else this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice'));
+          });
         },
         error: (err) => {
           this.invoiceSaving = false;
@@ -2926,7 +2996,7 @@ invoiceSeal: string = '';
   }
 
 
-  saveAndPrintQuotation(): void {
+  saveAndPrintQuotation(action: 'print' | 'email' = 'print'): void {
     if (!this.invoiceLead || !this.employee || this.quotationSaving) return;
     this.quotationSaving = true;
     this.api.post<any>('/api/quotations', {
@@ -3955,6 +4025,7 @@ invoiceSeal: string = '';
     };
     this.companyFullHistoryLogs = [];
     this.companyFullRemarksHistory = [];
+    this.companyFullDocuments = [];
     this.companyFullInvoiceItems = [];
     this.companyFullQuotationItems = [];
     this.companyFullFollowups = [];
@@ -4678,8 +4749,11 @@ invoiceSeal: string = '';
   mailBody: string = '';
   mailAttachments: File[] = [];
 
+  mailToAddress: string = '';
+
   openMailModal(lead: Lead) {
     this.mailLead = lead;
+    this.mailToAddress = lead?.directorEmailAddress || '';
     this.mailSubject = '';
     this.mailCc = '';
     this.mailBcc = '';
@@ -4688,6 +4762,17 @@ invoiceSeal: string = '';
     this.isMailModalFullScreen = false;
     this.showMailModal = true;
     this.fetchEmailTemplates();
+  }
+
+  openMailModalWithAttachment(lead: any, attachment: File, subject: string, body: string) {
+    this.openMailModal(lead);
+    this.mailAttachments = [attachment];
+    this.mailSubject = subject;
+    this.mailBody = body;
+    setTimeout(() => {
+      const editor = document.getElementById('mailBodyEditor');
+      if (editor) editor.innerHTML = body;
+    }, 100);
   }
 
   toggleMailModalFullScreen() {
@@ -4773,6 +4858,11 @@ invoiceSeal: string = '';
     event.target.value = '';
   }
 
+  viewMailAttachment(file: File) {
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank');
+  }
+
   removeMailAttachment(index: number) {
     this.mailAttachments.splice(index, 1);
   }
@@ -4784,7 +4874,7 @@ invoiceSeal: string = '';
     
     try {
       const formData = new FormData();
-      formData.append('to', this.mailLead.directorEmailAddress || 'test@example.com');
+      formData.append('to', this.mailToAddress || 'test@example.com');
       formData.append('subject', this.mailSubject);
       formData.append('html', finalBody);
       
@@ -8186,10 +8276,10 @@ invoiceSeal: string = '';
   }
 
   getSenderEmailDisplay(): string {
-    if (!this.employee) return 'support@support.softrateglobal.com';
+    const domain = this.emailIntegrationStatus?.email || 'support.softrateglobal.com';
+    if (!this.employee) return `support@${domain}`;
     const alias = this.employee.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    // This perfectly mimics the backend's dynamic email generation!
-    return `${alias}@support.softrateglobal.com`;
+    return `${alias}@${domain}`;
   }
 
   // ── Modals & Drawers ──────────────────────────────────────────
@@ -8298,6 +8388,33 @@ invoiceSeal: string = '';
           this.copiedField = null;
         }
       }, 2000);
+    }
+  }
+
+  async onCompanyDocumentUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    for (let i = 0; i < input.files.length; i++) {
+      const file = input.files[i];
+      const url = URL.createObjectURL(file);
+      this.companyFullDocuments.unshift({
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        url,
+        size: file.size,
+        uploadedAt: new Date().toISOString()
+      });
+    }
+    
+    input.value = '';
+  }
+
+  removeCompanyDocument(id: string) {
+    const doc = this.companyFullDocuments.find(d => d.id === id);
+    if (doc) {
+      URL.revokeObjectURL(doc.url);
+      this.companyFullDocuments = this.companyFullDocuments.filter(d => d.id !== id);
     }
   }
 }

@@ -1,4 +1,5 @@
 const { sendEmailFromCRM } = require('../service/email-sender.service');
+const User = require('../../../../models/User');
 
 /**
  * Controller to handle email sending logic.
@@ -63,6 +64,29 @@ async function sendEmailFromCRMController(req, res) {
   }
 }
 
+async function getEmailStatus(req, res) {
+  try {
+    const user = await User.findOne({ companyCode: req.companyCode });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Company not found' });
+    }
+    const connected = !!user.resendApiKey;
+    let domain = user.resendSenderDomain || 'support.softrateglobal.com';
+    if (domain.includes('@')) domain = domain.split('@')[1];
+
+    return res.status(200).json({
+      success: true,
+      connected,
+      provider: 'resend',
+      email: domain
+    });
+  } catch (error) {
+    console.error('[getEmailStatus] Error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to fetch email status' });
+  }
+}
+
 module.exports = {
-  sendEmailFromCRMController
+  sendEmailFromCRMController,
+  getEmailStatus
 };

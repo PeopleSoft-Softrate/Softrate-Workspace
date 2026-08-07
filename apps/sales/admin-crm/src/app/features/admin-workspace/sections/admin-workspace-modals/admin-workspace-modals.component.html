@@ -1,6 +1,6 @@
 <!-- ========== ADD EMPLOYEE MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isAddEmployeeOpen" (mousedown)="vm.closeAddEmployee()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeAddEmployee()">&#x2715;</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -37,7 +37,7 @@
 
 <!-- ========== VIEW ALL CALLS MODAL (Detailed & Professional) ========== -->
 <div class="modal-overlay" [class.open]="vm.showAllCallsModal" (mousedown)="vm.closeAllCallsModal()">
-  <div class="modal history-modal-wide" (click)="$event.stopPropagation()">
+  <div class="modal history-modal-wide" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeAllCallsModal()">&#x2715;</button>
 
     <div class="detailed-history-header">
@@ -114,7 +114,7 @@
 
 <!-- ========== SHARE MESSAGE MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.showShareModal" (mousedown)="vm.showShareModal = false">
-  <div class="modal" style="max-width: 500px; width: 90%;" (click)="$event.stopPropagation()">
+  <div class="modal" style="max-width: 500px; width: 90%;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.showShareModal = false">&#x2715;</button>
     <div class="modal-brand" style="justify-content:flex-start;margin-bottom:1rem;">
       <h2 class="modal-title" style="margin:0;">Share Registration Link</h2>
@@ -141,7 +141,7 @@
 
 <!-- ========== EDIT EMPLOYEE MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isEditEmployeeOpen" (mousedown)="vm.closeEditEmployee()">
-  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()" style="max-width: 450px;">
     <button class="modal-close" (click)="vm.closeEditEmployee()">&#x2715;</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -285,7 +285,7 @@
 
 <!-- ========== EDIT CLIENT MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isEditCrmClientOpen" (mousedown)="vm.closeEditCrmClient()">
-  <div class="modal" (click)="$event.stopPropagation()" style="max-width: 450px;">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()" style="max-width: 450px;">
     <button class="modal-close" (click)="vm.closeEditCrmClient()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -350,7 +350,7 @@
 
 <!-- ========== LOGOUT CONFIRMATION MODAL ========== -->
 <div class="modal-overlay" [class.open]="vm.isLogoutConfirmOpen" (mousedown)="vm.closeLogoutConfirm()">
-  <div class="modal vm.logout-confirm-modal" (click)="$event.stopPropagation()" style="max-width: 400px;">
+  <div class="modal vm.logout-confirm-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()" style="max-width: 400px;">
     <button class="modal-close" (click)="vm.closeLogoutConfirm()">✕</button>
     <div class="modal-brand" style="margin-bottom: 1.5rem;">
       <div class="brand-icon">
@@ -1787,7 +1787,7 @@
 </div>
 <!-- ══ HISTORY MODAL ══ -->
 <div class="modal-overlay" [class.open]="vm.showHistoryModal" (mousedown)="vm.closeHistoryModal()">
-  <div class="modal history-modal" (click)="$event.stopPropagation()" style="max-width: 500px;">
+  <div class="modal history-modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()" style="max-width: 500px;">
     <button class="modal-close" (click)="vm.closeHistoryModal()">×</button>
     <div style="margin-bottom: 1.5rem;">
       <h3
@@ -2254,7 +2254,7 @@
 
 <!-- Overview Edit Modal -->
 <div class="invoice-overlay" *ngIf="vm.overviewEditOpen" (click)="vm.closeOverviewEditModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(800px, calc(100vw - 32px)); max-width: 800px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(800px, calc(100vw - 32px)); max-width: 800px; padding: 40px; border-radius: 14px; position: relative;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" type="button" (click)="vm.closeOverviewEditModal()"
       aria-label="Close edit overview">✕</button>
       

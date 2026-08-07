@@ -2156,6 +2156,41 @@
               </ng-template>
             </div>
           </section>
+
+          <section class="company-full-card" [id]="companyFullSectionId('documents')">
+            <div class="company-full-card-head">
+              <h4>Documents</h4>
+            </div>
+            <div class="company-full-note-composer" style="margin-bottom: 16px;">
+              <label class="primary-action company-full-note-button" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; margin: 0; min-height: 40px; box-sizing: border-box;">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span style="color: white; font-weight: 500;">Upload Document</span>
+                <input type="file" style="display: none;" multiple (change)="onCompanyDocumentUpload($event)">
+              </label>
+            </div>
+            <div class="company-full-scroll-card company-full-note-list">
+              <ng-container *ngIf="companyFullDocuments.length > 0; else emptyCompanyFullDocuments">
+                <article class="company-full-note-row" *ngFor="let doc of companyFullDocuments" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                      <a [href]="doc.url" target="_blank" style="color: #3b82f6; text-decoration: none; word-break: break-all; max-width: 300px;">{{ doc.name }}</a>
+                    </div>
+                    <div class="company-full-note-date" style="font-size: 12px; color: #64748b; margin: 0;">
+                      {{ (doc.size / 1024).toFixed(1) }} KB &bull; Uploaded {{ fmtDateTime(doc.uploadedAt) }}
+                    </div>
+                  </div>
+                  <button type="button" (click)="removeCompanyDocument(doc.id)" class="secondary-action" style="color: #ef4444; border: 1px solid #fee2e2; background: #fff5f5; padding: 4px 12px; font-size: 13px; margin: 0; min-height: unset; white-space: nowrap;">Remove</button>
+                </article>
+              </ng-container>
+              <ng-template #emptyCompanyFullDocuments>
+                <div class="empty-state-inline empty-state-inline-minimal">No documents uploaded for this company.</div>
+              </ng-template>
+            </div>
+          </section>
         </div>
       </div>
     </section>
@@ -2318,7 +2353,7 @@
     color: #ef4444;
   }
 </style>
-<div class="invoice-overlay" *ngIf="showMailModal" (mousedown)="closeMailModal()" style="padding: 0; display: flex; justify-content: flex-end; align-items: flex-start; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px);">
+<div class="invoice-overlay" *ngIf="showMailModal" (mousedown)="closeMailModal()" style="padding: 0; display: flex; justify-content: flex-end; align-items: flex-start; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); z-index: 10001;">
   <div class="mail-sidebar-panel" 
        [class.full-screen-modal]="isMailModalFullScreen"
        (mousedown)="$event.stopPropagation()"
@@ -2364,15 +2399,11 @@
       Sender email changed : To improve email deliverability, the system will avoid sending emails from public email addresses and use our own authenticated domain. <a href="#" style="color: #0066cc;">Learn More</a>
     </div>
 
-    <form (ngSubmit)="sendMail()" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;" [style.flex-grow]="isMailModalFullScreen ? '1' : '0'">
+    <form (ngSubmit)="sendMail()" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1;">
       <div style="display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px;">
         <span style="width: 40px; color: #666; font-size: 14px;">To</span>
-        <div style="background: #f1f5f9; padding: 4px 8px; border-radius: 16px; display: inline-flex; align-items: center; font-size: 13px;">
-          <span style="background: #e2e8f0; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; margin-right: 6px;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="#64748b"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          </span>
-          {{ mailLead?.contactName }} &lt;{{ mailLead?.directorEmailAddress || 'No Email Found' }}&gt;
-          <span style="margin-left: 8px; cursor: pointer; color: #94a3b8;">&times;</span>
+        <div style="display: flex; flex-grow: 1; align-items: center;">
+          <input type="email" [(ngModel)]="mailToAddress" name="mailToAddress" style="flex-grow: 1; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; font-size: 13px; outline: none;" placeholder="Enter email address">
         </div>
       </div>
 
@@ -2421,7 +2452,7 @@
 
       <div *ngIf="mailAttachments.length > 0" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
         <div *ngFor="let file of mailAttachments; let i = index" style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 6px; border: 1px solid #cbd5e1;">
-          {{ file.name }}
+          <a (click)="viewMailAttachment(file)" style="color: #0066cc; cursor: pointer; text-decoration: underline;">{{ file.name }}</a>
           <span style="cursor: pointer; color: #dc2626; font-weight: bold; padding: 0 4px;" (click)="removeMailAttachment(i)">&times;</span>
         </div>
       </div>
@@ -2841,6 +2872,9 @@
           <button class="secondary-action" type="button" *ngIf="viewingSavedDocument && !quoteMode"
             (click)="editSavedInvoice()">
             Edit Invoice
+          </button>
+          <button type="button" (click)="printInvoice('email')" style="background: transparent; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; padding: 10px 20px; font-weight: 500; cursor: pointer; flex: 1;">
+            Send Mail
           </button>
           <button class="primary-action" (click)="printInvoice()"
             [disabled]="invoiceItems.length===0 || invoiceSaving || quotationSaving">

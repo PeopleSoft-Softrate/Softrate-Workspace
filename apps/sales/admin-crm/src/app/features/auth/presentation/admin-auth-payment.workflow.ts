@@ -746,6 +746,7 @@ export class AdminAuthPaymentWorkflow {
     if (vm.donutChart) { vm.donutChart.destroy(); vm.donutChart = null; }
     localStorage.removeItem('tracecall_user');
     localStorage.removeItem('tracecall_crm_token');
+    localStorage.removeItem('tracecall_admin_token');
     window.scrollTo(0, 0);
   }
 

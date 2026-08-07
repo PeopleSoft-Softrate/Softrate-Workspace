@@ -3,10 +3,14 @@
     <h2 class="workspace-title">Activities</h2>
     <div class="workspace-controls">
       <div class="activities-tabs">
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'calendar'" (click)="setActivitiesSubTab('calendar')">Calendar</button>
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'tasks'" (click)="setActivitiesSubTab('tasks')">Tasks</button>
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'meetings'" (click)="setActivitiesSubTab('meetings')">Meetings</button>
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'calls'" (click)="setActivitiesSubTab('calls')">Calls</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'calendar'"
+          (click)="setActivitiesSubTab('calendar')">Calendar</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'tasks'"
+          (click)="setActivitiesSubTab('tasks')">Tasks</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'meetings'"
+          (click)="setActivitiesSubTab('meetings')">Meetings</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'calls'"
+          (click)="setActivitiesSubTab('calls')">Calls</button>
       </div>
       <button class="primary-action" style="margin-left: auto;" (click)="openActivityModal()">
         <span class="button-icon" aria-hidden="true">+</span>
@@ -18,10 +22,14 @@
   <div class="workspace-header embedded-header" *ngIf="embedded">
     <div class="workspace-controls" style="width: 100%;">
       <div class="activities-tabs" style="margin-right: auto;">
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'calendar'" (click)="setActivitiesSubTab('calendar')">Calendar</button>
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'tasks'" (click)="setActivitiesSubTab('tasks')">Tasks</button>
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'meetings'" (click)="setActivitiesSubTab('meetings')">Meetings</button>
-        <button class="activities-tab" [class.active]="activitiesSubTab === 'calls'" (click)="setActivitiesSubTab('calls')">Calls</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'calendar'"
+          (click)="setActivitiesSubTab('calendar')">Calendar</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'tasks'"
+          (click)="setActivitiesSubTab('tasks')">Tasks</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'meetings'"
+          (click)="setActivitiesSubTab('meetings')">Meetings</button>
+        <button class="activities-tab" [class.active]="activitiesSubTab === 'calls'"
+          (click)="setActivitiesSubTab('calls')">Calls</button>
       </div>
       <button class="primary-action" (click)="openActivityModal()">
         <span class="button-icon" aria-hidden="true">+</span>
@@ -41,12 +49,15 @@
             <h3 class="calendar-month-title">{{ calendarTitle }}</h3>
           </div>
           <div class="calendar-view-toggles">
-            <button class="view-toggle" [class.active]="calendarView === 'month'" (click)="setCalendarView('month')">Month</button>
-            <button class="view-toggle" [class.active]="calendarView === 'week'" (click)="setCalendarView('week')">Week</button>
-            <button class="view-toggle" [class.active]="calendarView === 'day'" (click)="setCalendarView('day')">Day</button>
+            <button class="view-toggle" [class.active]="calendarView === 'month'"
+              (click)="setCalendarView('month')">Month</button>
+            <button class="view-toggle" [class.active]="calendarView === 'week'"
+              (click)="setCalendarView('week')">Week</button>
+            <button class="view-toggle" [class.active]="calendarView === 'day'"
+              (click)="setCalendarView('day')">Day</button>
           </div>
         </div>
-        
+
         <div class="calendar-grid" *ngIf="calendarView === 'month' || calendarView === 'week'">
           <ng-container *ngIf="calendarView === 'month'">
             <div class="calendar-day-header">Mon</div>
@@ -60,25 +71,28 @@
           <ng-container *ngIf="calendarView === 'week'">
             <div class="calendar-day-header" *ngFor="let d of calendarDays">{{ d.date | date:'EEE, MMM d' }}</div>
           </ng-container>
-          
-          <div class="calendar-day" *ngFor="let day of calendarDays" 
-               [class.is-today]="day.isToday && day.isCurrentMonth"
-               [class.is-past]="day.isPast && day.isCurrentMonth"
-               style="position: relative; aspect-ratio: 1 / 1; overflow: hidden;">
+
+          <div class="calendar-day" *ngFor="let day of calendarDays"
+            [class.is-today]="day.isToday && day.isCurrentMonth" [class.is-past]="day.isPast && day.isCurrentMonth"
+            style="position: relative; aspect-ratio: 1 / 1; overflow: hidden;">
             <ng-container *ngIf="day.isCurrentMonth">
               <span class="day-number">{{ day.date | date:'d' }}</span>
-              <button *ngIf="!day.isPast" (click)="openActivityModal(day.date); $event.stopPropagation()" 
-                      style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #94a3b8; font-size: 16px; font-weight: 500; cursor: pointer; padding: 0; line-height: 1; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px;"
-                      onmouseover="this.style.color='#3b82f6'; this.style.backgroundColor='#f1f5f9';"
-                      onmouseout="this.style.color='#94a3b8'; this.style.backgroundColor='transparent';"
-                      title="Add Activity">+</button>
+              <button *ngIf="!day.isPast" (click)="openActivityModal(day.date); $event.stopPropagation()"
+                style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #94a3b8; font-size: 16px; font-weight: 500; cursor: pointer; padding: 0; line-height: 1; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px;"
+                onmouseover="this.style.color='#3b82f6'; this.style.backgroundColor='#f1f5f9';"
+                onmouseout="this.style.color='#94a3b8'; this.style.backgroundColor='transparent';"
+                title="Add Activity">+</button>
               <div class="day-indicators" style="display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
                 <ng-container *ngFor="let ev of filterEvents(day.events); let i = index">
-                  <div class="activity-pill {{ev.type}}-pill" *ngIf="calendarView === 'week' || i < 3" title="{{ ev.title }}" (click)="onActivityClick(ev); $event.stopPropagation()">
+                  <div class="activity-pill {{ev.type}}-pill" *ngIf="calendarView === 'week' || i < 3"
+                    title="{{ ev.title }}" (click)="onActivityClick(ev); $event.stopPropagation()">
                     {{ ev.date | date:'shortTime' }} {{ ev.title }}
                   </div>
                 </ng-container>
-                <div class="activity-pill overflow-pill" *ngIf="calendarView === 'month' && filterEvents(day.events).length > 3" (click)="onOverflowClick(); $event.stopPropagation()" style="cursor: pointer;" title="View all activities">
+                <div class="activity-pill overflow-pill"
+                  *ngIf="calendarView === 'month' && filterEvents(day.events).length > 3"
+                  (click)="onOverflowClick(); $event.stopPropagation()" style="cursor: pointer;"
+                  title="View all activities">
                   +{{ filterEvents(day.events).length - 3 }} more
                 </div>
               </div>
@@ -89,33 +103,35 @@
         <div class="calendar-day-view" *ngIf="calendarView === 'day'">
           <div class="day-view-header">
             <h4>{{ calendarDays[0].date | date:'EEEE, MMMM d, yyyy' }}</h4>
-            <button class="primary-action" (click)="openActivityModal(calendarDays[0].date)" style="font-size: 13px; padding: 6px 12px;">+ Add Activity</button>
+            <button class="primary-action" (click)="openActivityModal(calendarDays[0].date)"
+              style="font-size: 13px; padding: 6px 12px;">+ Add Activity</button>
           </div>
           <div class="day-view-events">
-             <div class="day-event" *ngFor="let ev of filterEvents(calendarDays[0].events)">
-                <div class="day-event-time">{{ ev.date | date:'shortTime' }}</div>
-                <div class="day-event-line">
-                   <div class="day-event-dot" [ngClass]="ev.type + '-bg'"></div>
-                   <div class="day-event-line-strut"></div>
+            <div class="day-event" *ngFor="let ev of filterEvents(calendarDays[0].events)">
+              <div class="day-event-time">{{ ev.date | date:'shortTime' }}</div>
+              <div class="day-event-line">
+                <div class="day-event-dot" [ngClass]="ev.type + '-bg'"></div>
+                <div class="day-event-line-strut"></div>
+              </div>
+              <div class="day-event-details">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <strong style="color: #0f172a; font-size: 15px;">{{ ev.title }}</strong>
+                  <span class="activity-type-badge {{ ev.type }}">{{ ev.type | titlecase }}</span>
                 </div>
-                <div class="day-event-details">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <strong style="color: #0f172a; font-size: 15px;">{{ ev.title }}</strong>
-                    <span class="activity-type-badge {{ ev.type }}">{{ ev.type | titlecase }}</span>
-                  </div>
-                  <div *ngIf="ev.companyName || ev.contactName" style="color: #475569; font-size: 13px; margin-top: 4px;">
-                    {{ ev.companyName }} <span *ngIf="ev.companyName && ev.contactName">&bull;</span> {{ ev.contactName }}
-                  </div>
-                  <div class="day-event-desc" *ngIf="ev.description">{{ ev.description }}</div>
+                <div *ngIf="ev.companyName || ev.contactName" style="color: #475569; font-size: 13px; margin-top: 4px;">
+                  {{ ev.companyName }} <span *ngIf="ev.companyName && ev.contactName">&bull;</span> {{ ev.contactName }}
                 </div>
-             </div>
-             <div *ngIf="filterEvents(calendarDays[0].events).length === 0" class="no-events-day">
-                <div style="color: #94a3b8; padding: 40px; text-align: center;">No activities scheduled for this day.</div>
-             </div>
+                <div class="day-event-desc" *ngIf="ev.description">{{ ev.description }}</div>
+              </div>
+            </div>
+            <div *ngIf="filterEvents(calendarDays[0].events).length === 0" class="no-events-day">
+              <div style="color: #94a3b8; padding: 40px; text-align: center;">No activities scheduled for this day.
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
+
       <aside class="calendar-sidebar">
         <div class="activity-filters">
           <h4 class="filter-heading">Activity Types</h4>
@@ -134,42 +150,58 @@
         </div>
       </aside>
     </div>
-    
+
     <!-- Dynamic List views for other tabs -->
     <div class="activities-list-layout" *ngIf="activitiesSubTab !== 'calendar'">
-      
-      <div class="activities-list-container" *ngIf="activitiesForCurrentTab.length > 0" style="overflow-x: auto; background: white;">
+
+      <div class="activities-list-container" *ngIf="activitiesForCurrentTab.length > 0"
+        style="overflow-x: auto; background: white;">
         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
           <thead>
             <tr style="border-bottom: 1px solid #e2e8f0;">
-              <th style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; vertical-align: bottom;">Date</th>
-              <th style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; vertical-align: bottom;">Company Name</th>
-              <th style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; vertical-align: bottom;">Client Name</th>
-              <th style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; text-align: right; vertical-align: bottom;">Status</th>
+              <th
+                style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; vertical-align: bottom;">
+                Date</th>
+              <th
+                style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; vertical-align: bottom;">
+                Company Name</th>
+              <th
+                style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; vertical-align: bottom;">
+                Client Name</th>
+              <th
+                style="padding: 16px 24px; font-weight: 600; color: #64748b; white-space: nowrap; text-align: right; vertical-align: bottom;">
+                Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let activity of activitiesForCurrentTab" style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
+            <tr *ngFor="let activity of activitiesForCurrentTab"
+              style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s;"
+              onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
               <td style="padding: 20px 24px; vertical-align: middle; white-space: nowrap;">
                 <div style="font-weight: 600; color: #1e293b;">{{ activity.date | date:'dd MMM, yyyy' }}</div>
               </td>
               <td style="padding: 20px 24px; vertical-align: middle; white-space: nowrap;">
-                <div style="color: #475569; font-weight: 500;">{{ activity.companyName || activity.companyCode || 'N/A' }}</div>
+                <div style="color: #475569; font-weight: 500;">{{ activity.companyName || activity.companyCode || 'N/A'
+                  }}</div>
               </td>
               <td style="padding: 20px 24px; vertical-align: middle; white-space: nowrap;">
-                <div style="font-weight: 600; color: #0f172a;">{{ activity.contactName || activity.clientName || activity.leadName || 'No Name' }}</div>
+                <div style="font-weight: 600; color: #0f172a;">{{ activity.contactName || activity.clientName ||
+                  activity.leadName || 'No Name' }}</div>
               </td>
               <td style="padding: 20px 24px; vertical-align: middle; text-align: right; white-space: nowrap;">
                 <div style="display: flex; justify-content: flex-end;">
-                  <button *ngIf="activity.status === 'pending'" (click)="markActivityComplete(activity, $event)" 
-                          style="background: #3b82f6; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"
-                          onmouseover="this.style.backgroundColor='#2563eb';"
-                          onmouseout="this.style.backgroundColor='#3b82f6';">
+                  <button *ngIf="activity.status === 'pending'" (click)="markActivityComplete(activity, $event)"
+                    style="background: #3b82f6; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"
+                    onmouseover="this.style.backgroundColor='#2563eb';"
+                    onmouseout="this.style.backgroundColor='#3b82f6';">
                     Complete
                   </button>
-                  <span *ngIf="activity.status === 'completed'" 
-                        style="background: #3b82f6; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"></path></svg>
+                  <span *ngIf="activity.status === 'completed'"
+                    style="background: #3b82f6; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <path d="M5 13l4 4L19 7"></path>
+                    </svg>
                     Completed
                   </span>
                 </div>
@@ -182,7 +214,10 @@
       <!-- Placeholder when list is empty -->
       <div class="placeholder-content" *ngIf="activitiesForCurrentTab.length === 0">
         <svg viewBox="0 0 24 24" width="48" height="48" stroke="#94a3b8" stroke-width="1.5" fill="none">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
         <h3>No {{ activitiesSubTab }} scheduled</h3>
         <p>You don't have any {{ activitiesSubTab }} for this time period.</p>
@@ -203,7 +238,7 @@
         <span>Date</span>
         <input type="text" class="field-input" [value]="selectedActivityDate | date:'fullDate'" disabled>
       </label>
-      
+
       <label class="field-label" style="margin-top: 12px;">
         <span>Time</span>
         <input type="time" class="field-input" [(ngModel)]="activityForm.time">
@@ -211,15 +246,12 @@
 
       <label class="field-label" style="margin-top: 12px; position: relative;">
         <span>Client / Lead (Optional)</span>
-        <input type="text" 
-               class="field-input" 
-               placeholder="Search for a client..." 
-               [(ngModel)]="activityClientSearchQuery"
-               (focus)="showActivityClientDropdown = true"
-               (blur)="showActivityClientDropdown = false"
-               [disabled]="!!filterCompanyId">
+        <input type="text" class="field-input" placeholder="Search for a client..."
+          [(ngModel)]="activityClientSearchQuery" (focus)="showActivityClientDropdown = true"
+          (blur)="showActivityClientDropdown = false" [disabled]="!!filterCompanyId">
         <div class="custom-dropdown-list" *ngIf="showActivityClientDropdown" (mousedown)="$event.preventDefault()">
-          <div class="dropdown-item" (click)="selectActivityClient({ _id: '', leadCompanyName: 'No specific client', contactName: '' })">
+          <div class="dropdown-item"
+            (click)="selectActivityClient({ _id: '', leadCompanyName: 'No specific client', contactName: '' })">
             -- No specific client --
           </div>
           <div class="dropdown-item" *ngFor="let lead of filteredModalClients" (click)="selectActivityClient(lead)">
@@ -242,12 +274,14 @@
 
       <label class="field-label" style="margin-top: 12px;">
         <span>Title</span>
-        <input type="text" class="field-input" placeholder="e.g. Discuss onboarding process" [(ngModel)]="activityForm.title">
+        <input type="text" class="field-input" placeholder="e.g. Discuss onboarding process"
+          [(ngModel)]="activityForm.title">
       </label>
 
       <label class="field-label" style="margin-top: 12px;">
         <span>Description / Notes (Optional)</span>
-        <textarea class="field-input" rows="3" placeholder="What is this scheduled for?" [(ngModel)]="activityForm.description"></textarea>
+        <textarea class="field-input" rows="3" placeholder="What is this scheduled for?"
+          [(ngModel)]="activityForm.description"></textarea>
       </label>
     </div>
     <div class="modal-footer" style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">

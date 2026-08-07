@@ -150,54 +150,20 @@ function isConvertedLead(lead, user) {
     .includes(normalize(lead?.status).toLowerCase());
 }
 
-function parseInvoiceSeries(invoiceNumber) {
-  const match = normalize(invoiceNumber).match(/^(Invoice_\d{4}\d{3})_v(\d+)$/);
-  if (!match) return null;
-  return {
-    base: match[1],
-    sequence: Number(match[1].slice(-3)),
-    version: Number(match[2] || 1),
-  };
-}
-
-function buildCompanyInvoiceFilter(companyCode, lead, client) {
-  const conditions = [];
-  if (client?.clientId) conditions.push({ clientId: client.clientId });
-  if (lead?._id) conditions.push({ leadId: lead._id });
-  const leadCompanyName = normalize(lead?.leadCompanyName || client?.companyName);
-  if (leadCompanyName) {
-    conditions.push({ leadCompanyName: new RegExp(`^${escapeRegex(leadCompanyName)}$`, 'i') });
-  }
-  return conditions.length ? { companyCode, $or: conditions } : { companyCode };
-}
 
 async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = null, req) {
-  const existingInvoice = await req.models.Invoice.findOne(buildCompanyInvoiceFilter(companyCode, lead, client))
-    .sort({ versionNo: -1, createdAt: -1 })
-    .select('invoiceNumber versionNo')
-    .lean();
-  const existingSeries = parseInvoiceSeries(existingInvoice?.invoiceNumber);
-  if (existingSeries) {
-    const nextVersion = Math.max(Number(existingInvoice?.versionNo || 0), existingSeries.version) + 1;
-    return {
-      invoiceNumber: `${existingSeries.base}_v${nextVersion}`,
-      versionNo: nextVersion,
-    };
-  }
-
   const date = invoiceDate ? new Date(invoiceDate) : new Date();
   const yy = String(date.getFullYear()).slice(-2);
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const prefix = `Invoice_${yy}${mm}`;
-  const existingMonthInvoices = await req.models.Invoice.find({
-    invoiceNumber: new RegExp(`^${prefix}\\d{3}_v\\d+$`),
-  }).select('invoiceNumber').lean();
-  const maxSequence = existingMonthInvoices.reduce((max, record) => {
-    const parsed = parseInvoiceSeries(record?.invoiceNumber);
-    return parsed ? Math.max(max, parsed.sequence) : max;
-  }, 0);
+  
+  const count = await req.models.Invoice.countDocuments({
+    companyCode,
+    invoiceNumber: new RegExp(`^${yy}\\d{3,}$`),
+  });
+  
+  const nextSeq = String(count + 1).padStart(3, '0');
+  
   return {
-    invoiceNumber: `${prefix}${String(maxSequence + 1).padStart(3, '0')}_v1`,
+    invoiceNumber: `${yy}${nextSeq}`,
     versionNo: 1,
   };
 }

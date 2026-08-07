@@ -26,48 +26,20 @@ async function findLead(req, body) {
   return null;
 }
 
-function parseQuotationNumber(value) {
-  const raw = normalize(value);
-  const match = raw.match(/^(.+?)(?:_v(\d+))?$/i);
-  return {
-    base: match ? match[1] : raw,
-    version: Number(match?.[2] || 1),
-  };
-}
 
 async function generateQuotationNumber(req, companyCode, lead, quotationDate, client = null) {
-  const leadCompanyName = normalize(client?.companyName || lead?.leadCompanyName);
-  const latestCompanyQuotation = leadCompanyName
-    ? await req.models.Quotation.findOne({ companyCode, leadCompanyName })
-        .sort({ versionNo: -1, createdAt: -1 })
-        .select('quotationNumber versionNo')
-        .lean()
-    : null;
-
-  if (latestCompanyQuotation?.quotationNumber) {
-    const parsed = parseQuotationNumber(latestCompanyQuotation.quotationNumber);
-    const nextVersion = Math.max(Number(latestCompanyQuotation.versionNo || 0), parsed.version) + 1;
-    return {
-      quotationNumber: `${parsed.base}_v${nextVersion}`,
-      versionNo: nextVersion,
-    };
-  }
-
   const date = quotationDate ? new Date(quotationDate) : new Date();
   const yy = String(date.getFullYear()).slice(-2);
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const prefix = `QT-${yy}${mm}`;
-  // NOTE: quotationNumber is unique across the entire database collection, so search globally
-  const existingQuotations = await req.models.Quotation.find({
-    quotationNumber: new RegExp(`^${prefix}\\d{3}(?:_v\\d+)?$`, 'i'),
-  }).select('quotationNumber').lean();
-  const maxSequence = existingQuotations.reduce((max, quotation) => {
-    const match = normalize(quotation.quotationNumber).match(new RegExp(`^${prefix}(\\d{3})(?:_v\\d+)?$`, 'i'));
-    return Math.max(max, Number(match?.[1] || 0));
-  }, 0);
-  const base = `${prefix}${String(maxSequence + 1).padStart(3, '0')}`;
+  
+  const count = await req.models.Quotation.countDocuments({
+    companyCode,
+    quotationNumber: new RegExp(`^QT-${yy}\\d{3,}$`, 'i'),
+  });
+  
+  const nextSeq = String(count + 1).padStart(3, '0');
+  
   return {
-    quotationNumber: `${base}_v1`,
+    quotationNumber: `QT-${yy}${nextSeq}`,
     versionNo: 1,
   };
 }

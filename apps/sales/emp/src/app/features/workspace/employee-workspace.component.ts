@@ -2822,18 +2822,14 @@ invoiceSeal: string = '';
     if (this.currentInvoiceNumber) return this.currentInvoiceNumber;
     const issued = this.invoiceIssuedAt || new Date();
     const yy = String(issued.getFullYear()).slice(-2);
-    const mm = String(issued.getMonth() + 1).padStart(2, '0');
-    const sequence = String(this.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `${yy}${mm}${sequence}`;
+    return `${yy}-Draft`;
   }
 
   quotationNumber(): string {
     if (this.currentQuotationNumber) return this.currentQuotationNumber;
     const issued = this.invoiceIssuedAt || new Date();
     const yy = String(issued.getFullYear()).slice(-2);
-    const mm = String(issued.getMonth() + 1).padStart(2, '0');
-    const sequence = String(this.quoteNumber % 1000 || 1).padStart(3, '0');
-    return `QT-${yy}${mm}${sequence}`;
+    return `QT-${yy}-Draft`;
   }
 
   async emailCurrentDocument(): Promise<void> {

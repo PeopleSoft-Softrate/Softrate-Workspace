@@ -111,15 +111,28 @@ const userSchema = new mongoose.Schema(
     },
     leadStatuses: {
       type: [String],
-      default: ['New', 'Interested', 'Not Connected', 'Converted', 'Follow Up', 'Not Interested'],
+      default: [
+        'New',
+        'Contacted',
+        'Converted',
+        'Follow Up',
+        'Details Shared',
+        'Future Needs',
+        'Call Later',
+        'Not Interested',
+        'DNP / Not Reachable',
+        'Busy',
+        'Switch off',
+        'Invalid'
+      ],
     },
     interestedPageStatuses: {
       type: [String],
-      default: ['Interested', 'Follow Up'],
+      default: ['Follow Up'],
     },
     dnpPageStatuses: {
       type: [String],
-      default: ['Not Connected'],
+      default: ['DNP / Not Reachable'],
     },
     convertedPageStatuses: {
       type: [String],

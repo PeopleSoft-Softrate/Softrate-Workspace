@@ -1292,14 +1292,7 @@
                 <input class="field-input" type="number" [(ngModel)]="vm.invoiceQuantity" />
               </label>
 
-              <label class="mini-field" *ngIf="!vm.quoteMode">
-                <span>Amount Paid</span>
-                <input class="field-input" type="number" [(ngModel)]="vm.invoiceAmountPaid" placeholder="0" />
-              </label>
-              <label class="mini-field checkbox-field" *ngIf="!vm.viewingSavedDocument" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
-                <input type="checkbox" [(ngModel)]="vm.invoiceIsInclusiveGst" (change)="vm.refreshInvoiceItemGstFromSelection()" />
-                <span style="margin: 0;">Inclusive of GST</span>
-              </label>
+
               <button class="primary-action" type="button" (click)="vm.addInvoiceItem()"
                 [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
             </div>
@@ -1331,6 +1324,16 @@
               </table>
             </div>
 
+            <div class="invoice-global-settings" *ngIf="!vm.viewingSavedDocument" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+              <label class="mini-field" *ngIf="!vm.quoteMode" style="flex: 1; max-width: 250px;">
+                <span style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Total Amount Paid (Global)</span>
+                <input class="field-input" type="number" [(ngModel)]="vm.invoiceAmountPaid" placeholder="0" />
+              </label>
+              <label class="mini-field checkbox-field" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
+                <input type="checkbox" [(ngModel)]="vm.invoiceIsInclusiveGst" (change)="vm.refreshInvoiceItemGstFromSelection()" />
+                <span style="margin: 0; font-weight: 600;">Prices are Inclusive of GST</span>
+              </label>
+            </div>
 
             <!-- Inline GST Rate Selector -->
             <div class="quotation-gst-selector invoice-control-card">
@@ -1457,14 +1460,7 @@
             <input class="field-input" type="number" [(ngModel)]="vm.invoiceQuantity" />
           </label>
 
-          <label class="mini-field" *ngIf="!vm.quoteMode">
-            <span>Amount Paid</span>
-            <input class="field-input" type="number" [(ngModel)]="vm.invoiceAmountPaid" placeholder="0" />
-          </label>
-          <label class="mini-field checkbox-field" *ngIf="!vm.viewingSavedDocument" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
-            <input type="checkbox" [(ngModel)]="vm.invoiceIsInclusiveGst" (change)="vm.refreshInvoiceItemGstFromSelection()" />
-            <span style="margin: 0;">Inclusive of GST</span>
-          </label>
+
           <button class="primary-action" type="button" (click)="vm.addInvoiceItem()"
             [disabled]="!vm.selectedInvoiceProduct">Add Item</button>
         </div>
@@ -1493,6 +1489,17 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="invoice-global-settings" *ngIf="!vm.viewingSavedDocument" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+          <label class="mini-field" *ngIf="!vm.quoteMode" style="flex: 1; max-width: 250px;">
+            <span style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Total Amount Paid (Global)</span>
+            <input class="field-input" type="number" [(ngModel)]="vm.invoiceAmountPaid" placeholder="0" />
+          </label>
+          <label class="mini-field checkbox-field" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
+            <input type="checkbox" [(ngModel)]="vm.invoiceIsInclusiveGst" (change)="vm.refreshInvoiceItemGstFromSelection()" />
+            <span style="margin: 0; font-weight: 600;">Prices are Inclusive of GST</span>
+          </label>
         </div>
 
         <label class="quotation-note-editor invoice-control-card" *ngIf="vm.quoteMode && !vm.viewingSavedDocument">
@@ -2368,3 +2375,13 @@
     </div>
   </div>
 </div>
+
+<!-- ========== PROPOSAL GENERATOR MODAL ========== -->
+<app-proposal-generator-modal
+  *ngIf="vm.showProposalModal"
+  [show]="vm.showProposalModal"
+  [companyCode]="vm.dashboardCode"
+  [lead]="vm.proposalModalLead"
+  (close)="vm.closeProposalModal()"
+  (onProposalSent)="vm.onProposalSentFromModal($event)"
+></app-proposal-generator-modal>

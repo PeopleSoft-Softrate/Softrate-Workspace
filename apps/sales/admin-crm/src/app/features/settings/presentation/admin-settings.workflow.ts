@@ -312,11 +312,19 @@ export class AdminSettingsWorkflow {
   }
 
   addProduct(vm: any): void {
-    if (!vm.newProductInput.name || vm.newProductInput.minPrice < 0 || vm.newProductInput.maxPrice < vm.newProductInput.minPrice) {
+    if (!vm.newProductInput.name || vm.newProductInput.minPrice < 0) {
       return;
     }
+    const minP = Number(vm.newProductInput.minPrice) || 0;
+    let maxP = Number(vm.newProductInput.maxPrice) || 0;
+    if (maxP < minP) {
+      maxP = minP;
+    }
+
     vm.settingsProducts.push({
       ...vm.newProductInput,
+      minPrice: minP,
+      maxPrice: maxP,
       tags: Array.isArray(vm.newProductInput.tags) ? [...vm.newProductInput.tags] : [],
     });
     vm.newProductInput = { name: '', minPrice: 0, maxPrice: 0, tags: [], sacHsn: '' };
@@ -443,7 +451,20 @@ export class AdminSettingsWorkflow {
   }
 
   removeLeadStatus(vm: any, status: string): void {
-    const protectedStatuses = ['New', 'Interested', 'Not Connected', 'Converted', 'Follow Up', 'Not Interested'];
+    const protectedStatuses = [
+      'New',
+      'Contacted',
+      'Converted',
+      'Follow Up',
+      'Details Shared',
+      'Future Needs',
+      'Call Later',
+      'Not Interested',
+      'DNP / Not Reachable',
+      'Busy',
+      'Switch off',
+      'Invalid'
+    ];
     if (protectedStatuses.includes(status)) {
       vm.settingsSaveError = `The status "${status}" is a core workflow stage and cannot be deleted.`;
       setTimeout(() => vm.settingsSaveError = '', 4000);

@@ -220,6 +220,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   isSignupOpen = false;
   isForgotPwdOpen = false;
   isResetPwdOpen = false;
+  
+  showProposalModal = false;
+  proposalModalLead: any = null;
 
   forgotEmail = '';
   forgotLoading = false;
@@ -5223,6 +5226,23 @@ export abstract class AdminWorkspaceController implements OnInit {
   parseMoneyInput(value: string | number): number {
     if (typeof value === 'number') return value;
     return Number(value.replace(/,/g, '')) || 0;
+  }
+
+  openProposalModal(lead: Lead): void {
+    this.proposalModalLead = lead;
+    this.showProposalModal = true;
+  }
+
+  closeProposalModal(): void {
+    this.showProposalModal = false;
+    this.proposalModalLead = null;
+  }
+
+  onProposalSentFromModal(event: { action: 'download' | 'send', file?: File, templateName?: string }): void {
+    this.closeProposalModal();
+    if (this.proposalModalLead && this.proposalModalLead._id) {
+      this.updateLeadStatus(this.proposalModalLead._id, 'Proposal Sent');
+    }
   }
 
   openQuotationModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openQuotationModal(this, lead); }

@@ -1,11 +1,11 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
-import { ApiService } from '../../../api.service';
+import { ApiService } from '../../../../services/api.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { PdfGeneratorService } from '../../../shared/utils/pdf-generator.service';
+import { PdfGeneratorService } from '../../../../shared/utils/pdf-generator.service';
 
 @Component({
   selector: 'app-proposal-generator-modal',

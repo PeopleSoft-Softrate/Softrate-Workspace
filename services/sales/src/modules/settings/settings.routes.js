@@ -569,7 +569,8 @@ router.put('/company/:companyCode/settings', async (req, res) => {
     const {
       companyName,
       breakHourLimit, connectedCallDuration, leadStatuses, interestedPageStatuses, dnpPageStatuses, convertedPageStatuses,
-      invoiceLogo, invoiceSeal, invoiceTerms, showCompanyNameOnInvoice, gstNumber, gstPercentage, invoiceRegisteredAddress, invoiceFooter, bankDetails, bankDetails2, contactDetails, products, productRemarks 
+      invoiceLogo, invoiceSeal, invoiceTerms, showCompanyNameOnInvoice, gstNumber, gstPercentage, invoiceRegisteredAddress, invoiceFooter, bankDetails, bankDetails2, contactDetails, products, productRemarks, collaboratingCompanies,
+      resendApiKey, resendSenderDomain
     } = req.body;
 
     const update = {};
@@ -603,8 +604,12 @@ router.put('/company/:companyCode/settings', async (req, res) => {
     if (products !== undefined) update.products = normalizeProducts(products);
     
     // Email Integration Keys
-    if (req.body.resendApiKey !== undefined) update.resendApiKey = req.body.resendApiKey.trim();
-    if (req.body.resendSenderDomain !== undefined) update.resendSenderDomain = req.body.resendSenderDomain.trim();
+    if (resendApiKey !== undefined) update.resendApiKey = resendApiKey.trim();
+    if (resendSenderDomain !== undefined) update.resendSenderDomain = resendSenderDomain.trim();
+
+    if (collaboratingCompanies !== undefined) {
+      update.collaboratingCompanies = Array.isArray(collaboratingCompanies) ? collaboratingCompanies : [];
+    }
     
     // Explicitly handle productRemarks to ensure they are saved
     if (productRemarks !== undefined) {

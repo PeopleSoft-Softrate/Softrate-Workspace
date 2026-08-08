@@ -81,8 +81,8 @@
         </button>
         <label class="pce-tool" title="Upload Image">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <input type="file" style="display:none" accept="image/*" (change)="onImageUpload($event)" />
           Image
-          <input type="file" accept="image/*" (change)="onImageUpload($event)" style="display:none">
         </label>
         <button class="pce-tool" (click)="useCompanyLogo()" title="Use company logo">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
@@ -245,11 +245,18 @@
                 </optgroup>
                 <optgroup label="Custom">
                   <option value="custom">Other (Custom Placeholder)...</option>
+                  <option value="dropdown">Dropdown (Pill Tags)...</option>
                 </optgroup>
               </select>
               
-              <div *ngIf="propPlaceholderMode === 'custom'" style="margin-top: 8px;">
+              <div *ngIf="propPlaceholderMode === 'custom' || propPlaceholderMode === 'dropdown'" style="margin-top: 8px;">
+                <label class="pce-prop-label">Label</label>
                 <input class="pce-prop-input" type="text" [(ngModel)]="propPlaceholderLabel" (ngModelChange)="applyProps()" placeholder="Enter custom label">
+              </div>
+              
+              <div *ngIf="propPlaceholderMode === 'dropdown'" style="margin-top: 8px;">
+                <label class="pce-prop-label">Options (Comma Separated)</label>
+                <textarea class="pce-prop-textarea" [(ngModel)]="propPlaceholderDropdownOptionsText" (ngModelChange)="applyProps()" rows="3" placeholder="e.g. Outdated UI, Slow Performance"></textarea>
               </div>
             </div>
             

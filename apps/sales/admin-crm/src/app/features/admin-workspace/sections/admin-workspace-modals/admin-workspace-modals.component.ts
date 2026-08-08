@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import type { AdminWorkspaceComponent } from '../../admin-workspace.component';
 import { CompanyTimelineComponent } from '../../../../shared/ui/company-timeline/company-timeline.component';
 import { ActivitiesCalendarComponent } from '../../../../shared/ui/activities-calendar/activities-calendar.component';
+import { ProposalGeneratorModalComponent } from '../proposal-generator-modal/proposal-generator-modal.component';
 
 @Component({
   selector: 'app-admin-workspace-modals',
-  imports: [CommonModule, FormsModule, CompanyTimelineComponent, ActivitiesCalendarComponent],
+  imports: [CommonModule, FormsModule, CompanyTimelineComponent, ActivitiesCalendarComponent, ProposalGeneratorModalComponent],
   templateUrl: './admin-workspace-modals.component.html'
 })
 export class AdminWorkspaceModalsComponent {

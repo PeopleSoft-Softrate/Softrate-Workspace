@@ -2882,7 +2882,7 @@ body.column-resizing * {
 
 .lead-record-card {
   display: grid;
-  grid-template-rows: 44px 28px 44px 28px 28px 168px 44px;
+  grid-template-rows: 44px 28px auto 28px 28px 168px 44px;
   gap: 12px;
   min-width: 0;
   min-height: 456px;
@@ -3037,6 +3037,11 @@ body.column-resizing * {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+.lead-card-invoice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .lead-card-invoice-action {

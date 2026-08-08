@@ -8,4 +8,22 @@ import { AdminWorkspaceSectionProxy } from '../../../admin-workspace/sections/ad
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-settings-section.component.html'
 })
-export class AdminSettingsSectionComponent extends AdminWorkspaceSectionProxy {}
+export class AdminSettingsSectionComponent extends AdminWorkspaceSectionProxy {
+  override newLeadStatusInput: string = '';
+  override newProductRemarkInput: string = '';
+
+  protectedStatuses = [
+    'New',
+    'Contacted',
+    'Converted',
+    'Follow Up',
+    'Details Shared',
+    'Future Needs',
+    'Call Later',
+    'Not Interested',
+    'DNP / Not Reachable',
+    'Busy',
+    'Switch off',
+    'Invalid'
+  ];
+}

@@ -2803,16 +2803,7 @@
             <input class="field-input" type="number" [(ngModel)]="invoiceQuantity" />
           </label>
 
-          <label class="mini-field" *ngIf="!viewingSavedDocument">
-            <span>Amount Paid</span>
-            <input class="field-input" type="number" [(ngModel)]="invoiceAmountPaid" placeholder="0" />
-          </label>
-          <label class="mini-field checkbox-field" *ngIf="!viewingSavedDocument"
-            style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
-            <input type="checkbox" [(ngModel)]="invoiceIsInclusiveGst"
-              (change)="refreshInvoiceItemGstFromSelection()" />
-            <span style="margin: 0;">Inclusive of GST</span>
-          </label>
+
           <button class="primary-action" (click)="addInvoiceItem()" [disabled]="!selectedInvoiceProduct"
             *ngIf="!viewingSavedDocument">Add Item</button>
           <div class="invoice-builder-transfer" *ngIf="!viewingSavedDocument">
@@ -2858,6 +2849,18 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="invoice-global-settings" *ngIf="!viewingSavedDocument" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+          <label class="mini-field" *ngIf="!quoteMode" style="flex: 1; max-width: 250px;">
+            <span style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Total Amount Paid (Global)</span>
+            <input class="field-input" type="number" [(ngModel)]="invoiceAmountPaid" placeholder="0" />
+          </label>
+          <label class="mini-field checkbox-field" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
+            <input type="checkbox" [(ngModel)]="invoiceIsInclusiveGst"
+              (change)="refreshInvoiceItemGstFromSelection()" />
+            <span style="margin: 0; font-weight: 600;">Prices are Inclusive of GST</span>
+          </label>
         </div>
 
         <section class="invoice-preview-wrapper mt-4">

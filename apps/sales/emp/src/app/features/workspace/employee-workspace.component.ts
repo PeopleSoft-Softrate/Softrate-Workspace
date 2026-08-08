@@ -1786,10 +1786,22 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Admin-configurable lead statuses (fetched from backend)
-  LEAD_STATUSES: string[] = ['New', 'Interested', 'Not Connected', 'Converted', 'Follow Up', 'Not Interested'];
-  INTERESTED_PAGE_STATUSES: string[] = ['Interested', 'Follow Up'];
-  DNP_PAGE_STATUSES: string[] = ['Not Connected'];
+  LEAD_STATUSES: string[] = [
+    'New',
+    'Contacted',
+    'Converted',
+    'Follow Up',
+    'Details Shared',
+    'Future Needs',
+    'Call Later',
+    'Not Interested',
+    'DNP / Not Reachable',
+    'Busy',
+    'Switch off',
+    'Invalid'
+  ];
+  INTERESTED_PAGE_STATUSES: string[] = ['Follow Up'];
+  DNP_PAGE_STATUSES: string[] = ['DNP / Not Reachable'];
   CONVERTED_PAGE_STATUSES: string[] = ['Converted'];
   selectedInterestedStatus: string = 'All';
   selectedDnpStatus: string = 'All';

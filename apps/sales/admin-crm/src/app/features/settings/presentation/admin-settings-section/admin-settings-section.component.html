@@ -325,11 +325,11 @@
                 style="display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;background:var(--bg-card-2);border:1px solid var(--border);font-size:0.85rem;font-weight:600;color:var(--text-1);">
                 <span style="color:var(--text-3);font-size:0.75rem;min-width:18px;">{{ i+1 }}</span>
                 {{ st }}
-                <button *ngIf="!['New', 'Interested', 'Not Connected', 'Converted', 'Follow Up', 'Not Interested'].includes(st)" (click)="removeLeadStatus(st)"
+                <button *ngIf="!protectedStatuses.includes(st)" (click)="removeLeadStatus(st)"
                   style="border:none;background:transparent;color:#8d8d8d;padding:0;display:flex;align-items:center;cursor:pointer;margin-left:4px;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
-                <div *ngIf="['New', 'Interested', 'Not Connected', 'Converted', 'Follow Up', 'Not Interested'].includes(st)" 
+                <div *ngIf="protectedStatuses.includes(st)" 
                   style="margin-left: 6px; color: var(--purple); opacity: 0.7;" title="Required Status">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </div>

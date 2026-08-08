@@ -149,6 +149,19 @@
         </span>
         <span class="sidebar-label">My Leads</span>
       </button>
+
+      <!-- Pipeline -->
+      <button class="sidebar-link sidebar-link-pipeline" [class.active]="dashTab==='pipeline'" (click)="switchTab('pipeline')"
+        [title]="sidebarMinimized ? 'Pipeline' : ''">
+        <span class="sidebar-icon sidebar-icon-pipeline" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+            <line x1="15" y1="3" x2="15" y2="21"></line>
+          </svg>
+        </span>
+        <span class="sidebar-label">Pipeline</span>
+      </button>
       <button class="sidebar-link sidebar-link-interested" [class.active]="dashTab==='interested'"
         (click)="switchTab('interested')" *ngIf="sidebarFeatureMatches('Interested')"
         [title]="sidebarMinimized ? 'Interested' : ''">
@@ -966,6 +979,9 @@
           </section>
         </div>
       </section>
+
+      <!-- Pipeline Workspace -->
+      <app-pipeline-section [vm]="this" *ngIf="dashTab==='pipeline'"></app-pipeline-section>
 
       <section class="workspace record-workspace lead-workspace"
         *ngIf="dashTab==='leads' || dashTab==='interested' || dashTab==='dnp' || dashTab==='converted' || dashTab==='favourite' || dashTab==='today-calls'">

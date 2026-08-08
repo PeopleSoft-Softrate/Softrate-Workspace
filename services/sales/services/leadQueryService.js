@@ -143,6 +143,11 @@ function buildBaseLeadQuery({ companyCode, employeeId, query = {} }) {
     mongoQuery.status = status;
   }
 
+  const pipelineStage = String(query.pipelineStage ?? '').trim();
+  if (pipelineStage) {
+    mongoQuery.pipelineStage = pipelineStage;
+  }
+
   if (String(query.isFavourite ?? '').trim() === 'true') {
     mongoQuery.isFavourite = true;
   }

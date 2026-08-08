@@ -13,9 +13,9 @@
 
               <label class="mini-field" *ngIf="dashTab !== 'our_clients'">
                 <span>Status</span>
-                <select class="field-select filter-select-field" [(ngModel)]="adminLeadStatusFilter" (change)="fetchAdminLeads()" aria-label="Status filter">
-                  <option value="">All Status</option>
-                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                <select class="field-select filter-select-field" [(ngModel)]="adminLeadPipelineStageFilter" (change)="fetchAdminLeads()" aria-label="Pipeline Stage filter">
+                  <option value="">All Stages</option>
+                  <option *ngFor="let st of PIPELINE_STAGES" [value]="st.code">{{ st.label }}</option>
                 </select>
               </label>
 

@@ -37,7 +37,7 @@ const quotationSchema = new mongoose.Schema({
     logo: { type: String, default: '' },
     registeredAddress: { type: String, default: '' },
     phone: { type: String, default: '' },
-    email: { type: String, default: '' },
+    email: { type: String, default: '' }, 
     website: { type: String, default: '' },
     gstNumber: { type: String, default: '' },
     footer: { type: String, default: '' },

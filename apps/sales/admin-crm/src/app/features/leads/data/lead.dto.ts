@@ -38,6 +38,7 @@ export interface LeadListQueryDto {
   search?: string;
   searchMode?: 'phone' | 'text';
   status?: string;
+  pipelineStage?: string;
   company?: string;
   sort?: string;
   page?: number;

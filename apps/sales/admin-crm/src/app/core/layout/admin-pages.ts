@@ -17,6 +17,7 @@ export type AdminPageId =
   | 'quotation'
   | 'remarks_filter'
   | 'our_clients'
+  | 'pipeline'
   | 'crm_clients'
   | 'crm_sla'
   | 'crm_nda'
@@ -44,6 +45,7 @@ export const ADMIN_PAGES: readonly AdminPageId[] = [
   'quotation',
   'remarks_filter',
   'our_clients',
+  'pipeline',
   'crm_clients',
   'crm_sla',
   'crm_nda',

@@ -347,10 +347,12 @@ import { ActivitiesCalendarComponent } from '../../shared/ui/activities-calendar
 import { CompanyTimelineComponent } from '../../shared/ui/company-timeline/company-timeline.component';
 import { ProposalGeneratorModalComponent } from './proposal-generator-modal/proposal-generator-modal.component';
 
+import { PipelineSectionComponent } from '../pipeline/presentation/pipeline-section/pipeline-section.component';
+
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent],
+  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent, PipelineSectionComponent],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,

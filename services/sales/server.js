@@ -97,6 +97,10 @@ app.use('/api/calllogs', require('./src/modules/reports/report.routes'));
 // Lead routes
 app.use('/api/leads', require('./src/modules/leads/lead.routes'));
 
+// Pipeline routes (Kanban board)
+app.use('/api/pipeline', require('./src/modules/pipeline/pipeline.routes'));
+
+
 // Invoice routes
 app.use('/api/invoices', require('./src/modules/invoices/invoice.routes'));
 

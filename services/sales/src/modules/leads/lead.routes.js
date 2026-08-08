@@ -3,6 +3,7 @@ const Lead = require('../../../models/Lead');
 const LeadCompanyProfile = require('../../../models/LeadCompanyProfile');
 const History = require('../../../models/History');
 const eventBus = require('../../../services/eventBus');
+const { statusToPipeline } = require('../pipeline/pipeline.mapper');
 const { getOrSet } = require('../../../services/cacheService');
 const {
   LEAD_CACHE_TTLS,
@@ -921,7 +922,15 @@ router.patch('/:id/status', async (req, res) => {
     }
 
     const oldStatus = oldLead.status;
-    const lead = await req.models.Lead.findByIdAndUpdate(req.params.id, { status: String(status).trim() }, { new: true });
+    const newStatus = String(status).trim();
+    const pipelineUpdates = statusToPipeline(newStatus);
+    
+    const updatePayload = { 
+      status: newStatus,
+      ...pipelineUpdates
+    };
+    
+    const lead = await req.models.Lead.findByIdAndUpdate(req.params.id, updatePayload, { new: true });
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found.' });
     }

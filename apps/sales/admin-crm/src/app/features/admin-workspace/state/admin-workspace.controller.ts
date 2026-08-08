@@ -288,6 +288,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   adminRemarkMenuOpenKey = '';
   private adminRemarkMenuCloseTimer: ReturnType<typeof setTimeout> | null = null;
   adminLeadStatusFilter = '';
+  adminLeadPipelineStageFilter = '';
   remarkLeads: any[] = [];
   remarkLeadsLoading: boolean = false;
   remarkLeadCompanies: Array<{ name: string; count: number }> = [];
@@ -1515,6 +1516,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'crm_payments': return 'Payments';
       case 'crm_tickets': return 'Tickets';
       case 'crm_projects': return 'Project Management';
+      case 'pipeline': return 'Pipeline';
       default: return 'Dashboard';
     }
   }
@@ -6663,7 +6665,9 @@ export abstract class AdminWorkspaceController implements OnInit {
           lead.assignedEmployeeId === this.leadEmployeeFilter;
         const matchesStatus = !this.adminLeadStatusFilter ||
           (lead.status || 'New') === this.adminLeadStatusFilter;
-        return matchesSearch && matchesEmployee && matchesStatus;
+        const matchesPipeline = !this.adminLeadPipelineStageFilter ||
+          lead.pipelineStage === this.adminLeadPipelineStageFilter;
+        return matchesSearch && matchesEmployee && matchesStatus && matchesPipeline;
       });
     }
 
@@ -7057,6 +7061,7 @@ export abstract class AdminWorkspaceController implements OnInit {
       .filter(l => {
         const companyMatches = l.leadCompanyName === this.selectedLeadCompany;
         const statusMatches = !this.adminLeadStatusFilter || (l.status || 'New') === this.adminLeadStatusFilter;
+        const pipelineMatches = !this.adminLeadPipelineStageFilter || l.pipelineStage === this.adminLeadPipelineStageFilter;
         const employeeMatches = !this.leadEmployeeFilter || l.assignedEmployeeId === this.leadEmployeeFilter;
         const q = this.leadSearchQuery.toLowerCase();
         const remarks: string[] = Array.isArray(l.remarks) ? l.remarks : [];

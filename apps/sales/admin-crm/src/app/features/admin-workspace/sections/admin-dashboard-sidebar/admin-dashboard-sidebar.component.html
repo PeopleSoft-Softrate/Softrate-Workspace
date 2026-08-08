@@ -256,6 +256,24 @@
     </button>
 
     <button
+      class="sidebar-link sidebar-link-pipeline"
+      type="button"
+      [class.active]="vm.dashTab==='pipeline'"
+      (click)="vm.switchTab('pipeline')"
+      *ngIf="vm.sidebarFeatureMatches('Pipeline')"
+      [title]="vm.sidebarMinimized ? 'Pipeline' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="4" height="18" rx="1"/>
+          <rect x="9" y="7" width="4" height="14" rx="1"/>
+          <rect x="16" y="11" width="4" height="10" rx="1"/>
+        </svg>
+      </span>
+      <span class="sidebar-label">Pipeline</span>
+    </button>
+
+    <button
       class="sidebar-link sidebar-link-client-onboard-requests"
       type="button"
       [class.active]="vm.dashTab==='crm_client_onboard_requests'"

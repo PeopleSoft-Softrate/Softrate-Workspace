@@ -1,0 +1,164 @@
+<ng-container *ngIf="vm.dashTab === 'pipeline'">
+  <div class="pipeline-section">
+
+    <!-- ── Page Header ───────────────────────────────────────── -->
+    <div class="pipeline-header">
+      <h1 class="pipeline-title">Pipeline</h1>
+      <button class="cta-secondary" style="font-size:0.82rem;padding:0.4rem 1rem;" (click)="pipelineVm.loadBoard()">
+        Refresh
+      </button>
+    </div>
+
+    <!-- ── Summary Stats ─────────────────────────────────────── -->
+    <div class="pipeline-stats" *ngIf="(pipelineVm.state$ | async) as state">
+      <div class="pipeline-stat-card">
+        <div class="pipeline-stat-value">{{ state.summary.openCount }}</div>
+        <div class="pipeline-stat-label">Open Deals</div>
+      </div>
+      <div class="pipeline-stat-card">
+        <div class="pipeline-stat-value">{{ state.summary.qualifiedCount }}</div>
+        <div class="pipeline-stat-label">Qualified</div>
+      </div>
+      <div class="pipeline-stat-card">
+        <div class="pipeline-stat-value">{{ state.summary.wonCount }}</div>
+        <div class="pipeline-stat-label">Won</div>
+      </div>
+      <div class="pipeline-stat-card">
+        <div class="pipeline-stat-value">{{ state.summary.lostCount }}</div>
+        <div class="pipeline-stat-label">Lost</div>
+      </div>
+    </div>
+
+    <!-- ── Filters Bar ────────────────────────────────────────── -->
+    <div class="pipeline-filters">
+      <input
+        id="pipelineSearch"
+        class="pipeline-filter-input"
+        type="text"
+        placeholder="Search leads…"
+        [value]="pipelineFilters.search"
+        (input)="onFilterChange('search', $any($event.target).value)"
+      />
+    </div>
+
+    <!-- ── Error / Move Error Banners ────────────────────────── -->
+    <ng-container *ngIf="(pipelineVm.state$ | async) as state">
+      <div class="pipeline-error-banner" *ngIf="state.error">⚠ {{ state.error }}</div>
+      <div class="pipeline-error-banner" *ngIf="state.moveError">⚠ {{ state.moveError }}</div>
+    </ng-container>
+
+    <!-- ── Loading ────────────────────────────────────────────── -->
+    <div class="pipeline-loading" *ngIf="(pipelineVm.state$ | async)?.loading">
+      Loading pipeline…
+    </div>
+
+    <!-- ── Kanban Board ───────────────────────────────────────── -->
+    <div class="pipeline-board" *ngIf="!(pipelineVm.state$ | async)?.loading">
+      <div
+        class="pipeline-column"
+        *ngFor="let col of (pipelineVm.state$ | async)?.columns; trackBy: trackByColumn"
+        [class.drag-over]="dragOverStage === col.stage"
+        (dragover)="onDragOver($event, col.stage)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event, col.stage)"
+      >
+        <!-- Column Header -->
+        <div class="pipeline-column-header">
+          <h3 class="pipeline-column-title">{{ col.label }}</h3>
+          <span class="pipeline-column-count">{{ col.total }}</span>
+        </div>
+
+        <!-- Column Cards -->
+        <div class="pipeline-column-body" (scroll)="onColumnScroll($event, col.stage, col.hasMore)">
+          <div
+            class="pipeline-card"
+            *ngFor="let lead of col.leads; trackBy: trackByLead"
+            [class.dragging]="draggingLeadId === lead._id"
+            draggable="true"
+            (dragstart)="onDragStart($event, lead)"
+            (dragend)="onDragEnd()"
+          >
+            <div class="pipeline-card-company" [title]="lead.leadCompanyName">{{ lead.leadCompanyName }}</div>
+            <div class="pipeline-card-contact" *ngIf="lead.contactName || lead.contactNumber">
+              {{ lead.contactName || lead.contactNumber }}
+            </div>
+
+            <!-- Badges -->
+            <div class="pipeline-card-meta">
+              <span class="pipeline-badge" *ngIf="lead.connectionOutcome">
+                {{ connectionOutcomeLabel(lead.connectionOutcome) }}
+              </span>
+              <span class="pipeline-badge" *ngIf="lead.qualificationOutcome">
+                {{ qualificationOutcomeLabel(lead.qualificationOutcome) }}
+              </span>
+              <span class="pipeline-badge" *ngIf="lead.lostReason">
+                {{ lostReasonLabel(lead.lostReason) }}
+              </span>
+            </div>
+
+            <div class="pipeline-card-days" *ngIf="lead.stageChangedAt">
+              {{ daysInStage(lead.stageChangedAt) }}d in stage
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div class="pipeline-column-empty" *ngIf="!col.leads.length">
+            No leads
+          </div>
+        </div>
+
+        <!-- Infinite Scroll Loader -->
+        <div class="pipeline-column-loading" *ngIf="(pipelineVm.state$ | async)?.loadingColumns?.has(col.stage)">
+          <span class="pipeline-spinner"></span> Loading...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Qualification Modal ──────────────────────────────────── -->
+  <div class="pipeline-modal-overlay" *ngIf="showQualModal" (mousedown)="cancelQualModal()">
+    <div class="pipeline-modal" (mousedown)="$event.stopPropagation()">
+      <h2 class="pipeline-modal-title">Qualification Outcome</h2>
+      <label class="pipeline-modal-label" for="qualOutcomeSelect">Outcome</label>
+      <select id="qualOutcomeSelect" class="pipeline-modal-select" [(ngModel)]="qualModalOutcome" (change)="qualModalReason = ''">
+        <option value="">Select outcome…</option>
+        <option value="QUALIFIED">Qualified</option>
+        <option value="NOT_QUALIFIED">Not Qualified</option>
+      </select>
+      <ng-container *ngIf="qualModalOutcome === 'NOT_QUALIFIED'">
+        <label class="pipeline-modal-label" for="qualReasonSelect">Reason</label>
+        <select id="qualReasonSelect" class="pipeline-modal-select" [(ngModel)]="qualModalReason">
+          <option value="">Select reason…</option>
+          <option value="NOT_INTERESTED">Not Interested</option>
+          <option value="INVALID">Invalid</option>
+        </select>
+      </ng-container>
+      <div class="pipeline-modal-error" *ngIf="qualModalError">{{ qualModalError }}</div>
+      <div class="pipeline-modal-actions">
+        <button class="pipeline-modal-cancel" (click)="cancelQualModal()">Cancel</button>
+        <button class="pipeline-modal-confirm" (click)="confirmQualModal()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Closed Lost Modal ────────────────────────────────────── -->
+  <div class="pipeline-modal-overlay" *ngIf="showLostModal" (mousedown)="cancelLostModal()">
+    <div class="pipeline-modal" (mousedown)="$event.stopPropagation()">
+      <h2 class="pipeline-modal-title">Closed Lost — Select Reason</h2>
+      <label class="pipeline-modal-label" for="lostReasonSelect">Reason</label>
+      <select id="lostReasonSelect" class="pipeline-modal-select" [(ngModel)]="lostModalReason">
+        <option value="">Select reason…</option>
+        <option value="PRICE">Price</option>
+        <option value="WRONG_TIME">Wrong Time</option>
+        <option value="COMPETITION">Competition</option>
+      </select>
+      <div class="pipeline-modal-error" *ngIf="lostModalError">{{ lostModalError }}</div>
+      <div class="pipeline-modal-actions">
+        <button class="pipeline-modal-cancel" (click)="cancelLostModal()">Cancel</button>
+        <button class="pipeline-modal-confirm" [disabled]="!lostModalReason" (click)="confirmLostModal()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+</ng-container>

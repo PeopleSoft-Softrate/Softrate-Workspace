@@ -18,6 +18,7 @@ import { AdminSettingsSectionComponent } from '../../../settings/presentation/ad
 import { AdminSupportSectionComponent } from '../../../settings/presentation/admin-support-section/admin-support-section.component';
 import { CrmAdminSectionComponent } from '../../crm/crm-admin-section.component';
 import { ProposalSettingsSectionComponent } from '../../sections/proposal-settings-section/proposal-settings-section.component';
+import { PipelineSectionComponent } from '../../../pipeline/presentation/pipeline-section/pipeline-section.component';
 
 
 @Component({
@@ -40,6 +41,7 @@ import { ProposalSettingsSectionComponent } from '../../sections/proposal-settin
     AdminQuotationSectionComponent,
     CrmAdminSectionComponent,
     ProposalSettingsSectionComponent,
+    PipelineSectionComponent,
 
     AdminEmployeeDrilldownComponent
   ],

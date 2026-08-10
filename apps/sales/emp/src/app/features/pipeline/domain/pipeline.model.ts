@@ -1,5 +1,4 @@
 export type PipelineStageCode =
-  | 'FOLLOW_UP'
   | 'QUALIFICATION'
   | 'NEEDS_ANALYSIS'
   | 'VALUE_PROPOSITION'
@@ -15,7 +14,7 @@ export type LostReason = 'PRICE' | 'WRONG_TIME' | 'COMPETITION';
 
 // No color properties — uses existing CRM design system only
 export const PIPELINE_STAGES: Array<{ code: PipelineStageCode; label: string }> = [
-  { code: 'FOLLOW_UP',          label: 'Follow Up'              },
+
   { code: 'QUALIFICATION',      label: 'Qualification'          },
   { code: 'NEEDS_ANALYSIS',     label: 'Needs Analysis'         },
   { code: 'VALUE_PROPOSITION',  label: 'Value Proposition'      },
@@ -49,13 +48,18 @@ export const QUALIFICATION_REASON_LABELS: Record<QualificationReason, string> = 
   INVALID: 'Invalid',
 };
 
-export interface PipelineLead {
-  _id: string;
+export interface PipelineDeal {
+  _id: string; // Deal ID
+  leadId: string;
   companyCode: string;
   leadCompanyName: string;
   contactName: string;
   contactNumber: string;
   assignedEmployeeId: string;
+  dealName: string;
+  amount: number;
+  closingDate: string | null;
+  description: string;
   pipelineStage: PipelineStageCode;
   connectionOutcome: string;
   qualificationOutcome: string;
@@ -70,7 +74,7 @@ export interface PipelineLead {
 export interface PipelineBoardColumn {
   stage: PipelineStageCode;
   label: string;
-  leads: PipelineLead[];
+  leads: PipelineDeal[];
   total: number;
   page: number;
   pageSize: number;

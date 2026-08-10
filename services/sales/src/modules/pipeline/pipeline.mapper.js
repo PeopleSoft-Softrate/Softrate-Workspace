@@ -7,7 +7,7 @@ function statusToPipeline(status) {
     case 'Follow Up':
     case 'Call Later':
     case 'Future Needs':
-      return { pipelineStage: 'FOLLOW_UP', connectionOutcome: 'BUSY' };
+      return { pipelineStage: 'QUALIFICATION', connectionOutcome: 'BUSY' };
     case 'Converted':
       return { pipelineStage: 'CLOSED_WON' };
     case 'Not Interested':
@@ -23,7 +23,6 @@ function statusToPipeline(status) {
 
 function pipelineToStatus(stage) {
   switch (stage) {
-    case 'FOLLOW_UP':
     case 'QUALIFICATION':
     case 'NEEDS_ANALYSIS':
       return 'Follow Up';

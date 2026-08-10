@@ -66,6 +66,18 @@ export class AdminWorkspaceComponent extends AdminWorkspaceController {
   adminFollowupViewMode: 'grid' | 'table' = 'grid';
   hoveredField: string | null = null;
   copiedField: string | null = null;
+
+  // ── Deal Modal ──────────────────────────────────────────────────
+  dealModalVisible = false;
+  dealModalLead: any = null;
+  dealForm = {
+    dealName: '',
+    amount: 0,
+    closingDate: '',
+    description: '',
+  };
+  dealModalSaving = false;
+
   copyText(text: string): void {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {

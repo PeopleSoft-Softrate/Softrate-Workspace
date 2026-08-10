@@ -5,7 +5,7 @@ import {
   PipelineBoardColumn,
   PipelineBoardSummary,
   PipelineFilters,
-  PipelineLead,
+  PipelineDeal,
   PipelineMovePayload,
   PipelineStageCode,
   ConnectionOutcome,
@@ -22,7 +22,7 @@ export interface PipelineState {
   error: string;
   moveError: string;
   filters: PipelineFilters;
-  undoStack: Array<{ lead: PipelineLead, originalLead: PipelineLead, payload: PipelineMovePayload }>;
+  undoStack: Array<{ lead: PipelineDeal, originalLead: PipelineDeal, payload: PipelineMovePayload }>;
   loadingColumns: Set<PipelineStageCode>;
 }
 
@@ -119,14 +119,14 @@ export class PipelineSectionViewModel {
   /**
    * Optimistically moves a card, calls backend, rolls back on failure.
    */
-  moveStage(lead: PipelineLead, payload: PipelineMovePayload, isUndo = false): void {
+  moveStage(lead: PipelineDeal, payload: PipelineMovePayload, isUndo = false): void {
     const sourceStage = lead.pipelineStage;
     const targetStage = payload.targetStage;
 
     if (sourceStage === targetStage) return;
 
     // Optimistic update
-    const updatedLead: PipelineLead = {
+    const updatedLead: PipelineDeal = {
       ...lead,
       pipelineStage: targetStage,
       qualificationOutcome: payload.qualificationOutcome ?? lead.qualificationOutcome,
@@ -142,7 +142,7 @@ export class PipelineSectionViewModel {
     this.repo.moveStage(lead._id, payload).subscribe({
       next: (res) => {
         // Replace optimistic card with server response
-        const serverLead: PipelineLead = res.lead;
+        const serverLead: PipelineDeal = res.lead;
         const columns = this.state.columns.map(c => {
           if (c.stage !== targetStage) return c;
           return {
@@ -195,9 +195,9 @@ export class PipelineSectionViewModel {
   }
 
   private applyCardMove(
-    removeLead: PipelineLead,
+    removeLead: PipelineDeal,
     removeFromStage: PipelineStageCode,
-    addLead: PipelineLead,
+    addLead: PipelineDeal,
     addToStage: PipelineStageCode,
   ): void {
     const columns = this.state.columns.map(c => {

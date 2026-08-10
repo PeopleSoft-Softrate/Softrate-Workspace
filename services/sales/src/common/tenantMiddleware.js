@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../../models/User');
 const Lead = require('../../models/Lead');
+const Deal = require('../../models/Deal');
 const CallLog = require('../../models/CallLog');
 const CallDetail = require('../../models/CallDetail');
 const Bookmark = require('../../models/Bookmark');
@@ -37,6 +38,7 @@ function getTenantConnection(dbName) {
   conn.model('CallDetail', CallDetail.schema);
   conn.model('Bookmark', Bookmark.schema);
   conn.model('BreakLog', BreakLog.schema);
+  conn.model('Deal', Deal.schema);
   conn.model('Quotation', Quotation.schema);
   conn.model('Invoice', Invoice.schema);
   conn.model('History', History.schema);
@@ -126,6 +128,7 @@ async function tenantMiddleware(req, res, next) {
       CallDetail: db.model('CallDetail'),
       Bookmark: db.model('Bookmark'),
       BreakLog: db.model('BreakLog'),
+      Deal: db.model('Deal'),
       Quotation: db.model('Quotation'),
       Invoice: db.model('Invoice'),
       History: db.model('History'),

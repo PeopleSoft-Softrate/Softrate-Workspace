@@ -794,6 +794,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   leadStatusFilter = '';
+  leadStatusGroup: 'All' | 'New' | 'Connected' | 'Followups' = 'All';
+
+  get effectiveLeadStatuses(): string[] {
+    if (this.leadStatusGroup === 'New') return ['New'];
+    if (this.leadStatusGroup === 'Connected') return ['Contacted', 'Connected', 'Call Later', 'Future Needs'];
+    if (this.leadStatusGroup === 'Followups') return ['Details Shared', 'Follow Up'];
+    return [];
+  }
   selectedFavouriteStatus: string = 'All';
   updatingLeadId = '';
 
@@ -1255,7 +1263,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.aiBriefCacheStatus = '';
         this.aiBriefError = res.message || 'AI brief is unavailable right now.';
       },
-      error: (err) => {
+      error: (err: any) => {
         if (requestId !== this.aiBriefRequestSeq) return;
 
         this.aiBriefLoading = false;
@@ -1809,6 +1817,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   selectedDnpStatus: string = 'All';
   selectedConvertedStatus: string = 'All';
   breakHourLimitMin: number = 60; // minutes — fetched from company settings
+
+  // ── Deal Modal ──────────────────────────────────────────────────
+  dealModalVisible = false;
+  dealModalLead: any = null;
+  dealForm = {
+    dealName: '',
+    amount: 0,
+    closingDate: '',
+    description: '',
+  };
+  dealModalSaving = false;
+
   
   // Invoice Settings
   invoiceLogo: string = '';
@@ -7170,7 +7190,12 @@ invoiceSeal: string = '';
     let params: Record<string, string>;
     switch (this.dashTab) {
       case 'leads':
-        params = this.leadStatusFilter ? { status: this.leadStatusFilter } : {};
+        params = {};
+        if (this.leadStatusGroup !== 'All') {
+          params['statuses'] = this.effectiveLeadStatuses.join(',');
+        } else if (this.leadStatusFilter) {
+          params['status'] = this.leadStatusFilter;
+        }
         break;
       case 'interested':
         params = this.selectedInterestedStatus === 'All'
@@ -7801,42 +7826,74 @@ invoiceSeal: string = '';
         primaryContactMap.set(company, lead);
       }
     }
-    const getEffectiveStatus = (lead: Lead) => {
-      const company = String(lead.leadCompanyName || '').trim();
-      const primary = primaryContactMap.get(company) || lead;
-      return primary.status;
-    };
+    const matchingCompaniesForLeadsTab = new Set<string>();
+    const matchingCompaniesForInterestedTab = new Set<string>();
+    const matchingCompaniesForDnpTab = new Set<string>();
+    const matchingCompaniesForConvertedTab = new Set<string>();
+    const matchingCompaniesForFavouriteTab = new Set<string>();
 
-    const statusIn = (lead: Lead, statuses: Set<string>) => statuses.has(normalizedStatus(getEffectiveStatus(lead)));
-    const selectedStatusMatches = (lead: Lead, selectedStatus: string) => (
-      selectedStatus === 'All' || normalizedStatus(getEffectiveStatus(lead)) === normalizedStatus(selectedStatus)
-    );
+    for (const lead of this.allLeads) {
+      if (!matchesLeadWorkspaceFilter(lead)) continue;
+      const company = String(lead.leadCompanyName || '').trim();
+      if (!company) continue;
+      
+      const normStatus = normalizedStatus(lead.status);
+
+      if (this.leadStatusGroup !== 'All') {
+        const effNorms = this.effectiveLeadStatuses.map(s => normalizedStatus(s));
+        if (effNorms.includes(normStatus) || (this.leadStatusGroup === 'Connected' && normStatus === 'connected')) {
+           matchingCompaniesForLeadsTab.add(company);
+        }
+      } else if (!this.leadStatusFilter || normStatus === normalizedStatus(this.leadStatusFilter)) {
+        matchingCompaniesForLeadsTab.add(company);
+      }
+
+      if (interestedStatusSet.has(normStatus) && (this.selectedInterestedStatus === 'All' || normStatus === normalizedStatus(this.selectedInterestedStatus))) {
+        matchingCompaniesForInterestedTab.add(company);
+      }
+
+      if (dnpStatusSet.has(normStatus) && (this.selectedDnpStatus === 'All' || normStatus === normalizedStatus(this.selectedDnpStatus))) {
+        matchingCompaniesForDnpTab.add(company);
+      }
+
+      if (convertedStatusSet.has(normStatus) && (this.selectedConvertedStatus === 'All' || normStatus === normalizedStatus(this.selectedConvertedStatus))) {
+        matchingCompaniesForConvertedTab.add(company);
+      }
+
+      if (lead.isFavourite && (this.selectedFavouriteStatus === 'All' || normStatus === normalizedStatus(this.selectedFavouriteStatus))) {
+        matchingCompaniesForFavouriteTab.add(company);
+      }
+    }
 
     const filteredLeads = this.allLeads.filter((lead) => {
       if (!matchesLeadWorkspaceFilter(lead)) return false;
-      if (this.leadStatusFilter && getEffectiveStatus(lead) !== this.leadStatusFilter) return false;
-      return true;
+      const company = String(lead.leadCompanyName || '').trim();
+      return matchingCompaniesForLeadsTab.has(company);
     });
 
-    const interestedLeads = this.allLeads
-      .filter((lead) => matchesLeadWorkspaceFilter(lead))
-      .filter((lead) => statusIn(lead, interestedStatusSet))
-      .filter((lead) => selectedStatusMatches(lead, this.selectedInterestedStatus));
+    const interestedLeads = this.allLeads.filter((lead) => {
+      if (!matchesLeadWorkspaceFilter(lead)) return false;
+      const company = String(lead.leadCompanyName || '').trim();
+      return matchingCompaniesForInterestedTab.has(company);
+    });
 
-    const dnpLeads = this.allLeads
-      .filter((lead) => matchesLeadWorkspaceFilter(lead))
-      .filter((lead) => statusIn(lead, dnpStatusSet))
-      .filter((lead) => selectedStatusMatches(lead, this.selectedDnpStatus));
+    const dnpLeads = this.allLeads.filter((lead) => {
+      if (!matchesLeadWorkspaceFilter(lead)) return false;
+      const company = String(lead.leadCompanyName || '').trim();
+      return matchingCompaniesForDnpTab.has(company);
+    });
 
-    const convertedLeads = this.allLeads
-      .filter((lead) => matchesLeadWorkspaceFilter(lead))
-      .filter((lead) => statusIn(lead, convertedStatusSet))
-      .filter((lead) => selectedStatusMatches(lead, this.selectedConvertedStatus));
+    const convertedLeads = this.allLeads.filter((lead) => {
+      if (!matchesLeadWorkspaceFilter(lead)) return false;
+      const company = String(lead.leadCompanyName || '').trim();
+      return matchingCompaniesForConvertedTab.has(company);
+    });
 
-    const favouriteLeads = this.allLeads
-      .filter((lead) => matchesLeadWorkspaceFilter(lead))
-      .filter((lead) => !!lead.isFavourite)
-      .filter((lead) => selectedStatusMatches(lead, this.selectedFavouriteStatus));
+    const favouriteLeads = this.allLeads.filter((lead) => {
+      if (!matchesLeadWorkspaceFilter(lead)) return false;
+      const company = String(lead.leadCompanyName || '').trim();
+      return matchingCompaniesForFavouriteTab.has(company);
+    });
 
     const rawTodayModifiedLeads = this.allLeads.filter(
       (lead) =>
@@ -8143,6 +8200,15 @@ invoiceSeal: string = '';
   }
 
   updateLeadStatus(lead: Lead, newStatus: string): void {
+    if (newStatus === 'ADD_DEAL') {
+      this.openDealModal(lead);
+      // Revert select visual state
+      const originalStatus = lead.status;
+      lead.status = '';
+      setTimeout(() => lead.status = originalStatus, 0);
+      return;
+    }
+
     this.updatingLeadId = lead._id;
     this.invalidateInvoiceCaches();
     this.invalidateOverviewCaches();
@@ -8169,6 +8235,48 @@ invoiceSeal: string = '';
     if (status === 'Contacted') return 'var(--status-info)';
     return 'var(--text-strong)';
   }
+
+  // ── Deal Modal Logic ─────────────────────────────────────────────
+  openDealModal(lead: any): void {
+    this.dealModalLead = lead;
+    this.dealForm = {
+      dealName: '',
+      amount: 0,
+      closingDate: '',
+      description: '',
+    };
+    this.dealModalVisible = true;
+  }
+
+  closeDealModal(): void {
+    this.dealModalVisible = false;
+    this.dealModalLead = null;
+  }
+
+  saveDeal(): void {
+    if (!this.dealModalLead || !this.dealForm.dealName) return;
+
+    this.dealModalSaving = true;
+    const payload = {
+      companyCode: this.employee?.companyCode,
+      leadId: this.dealModalLead._id,
+      ...this.dealForm
+    };
+
+    this.api.post<any>('/api/deals', payload).subscribe({
+      next: () => {
+        this.dealModalSaving = false;
+        this.closeDealModal();
+        this.fetchLeads(true);
+      },
+      error: (err) => {
+        console.error('Error saving deal:', err);
+        this.dealModalSaving = false;
+        alert('Failed to save deal');
+      }
+    });
+  }
+
 
   leadStatusColorFn = (status: string): string => this.leadStatusColor(status);
 

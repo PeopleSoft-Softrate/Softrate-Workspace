@@ -11,7 +11,7 @@ router.use(companyMiddleware);
 
 // ── Constants ──────────────────────────────────────────────────
 const VALID_PIPELINE_STAGES = [
-  'FOLLOW_UP', 'QUALIFICATION',
+  'QUALIFICATION',
   'NEEDS_ANALYSIS', 'VALUE_PROPOSITION', 'PROPOSAL_QUOTE',
   'NEGOTIATION_REVIEW', 'CLOSED_WON', 'CLOSED_LOST',
 ];
@@ -86,10 +86,10 @@ router.get('/board', async (req, res) => {
     };
 
     const matchQuery = buildBoardMatchQuery(companyCode, filters);
-    const LeadModel = req.models.Lead;
+    const DealModel = req.models.Deal;
 
     // 1. Get total counts per stage
-    const countResults = await LeadModel.aggregate([
+    const countResults = await DealModel.aggregate([
       { $match: matchQuery },
       { $group: { _id: '$pipelineStage', count: { $sum: 1 } } }
     ]);
@@ -109,13 +109,12 @@ router.get('/board', async (req, res) => {
     }
 
     // 3. Single aggregation for leads
-    const [raw] = await LeadModel.aggregate([
+    const [raw] = await DealModel.aggregate([
       { $match: matchQuery },
       { $facet: facetBranches },
     ]);
 
     const STAGE_LABELS = {
-      FOLLOW_UP: 'Follow Up',
       QUALIFICATION: 'Qualification', NEEDS_ANALYSIS: 'Needs Analysis',
       VALUE_PROPOSITION: 'Value Proposition', PROPOSAL_QUOTE: 'Proposal / Price Quote',
       NEGOTIATION_REVIEW: 'Negotiation / Review', CLOSED_WON: 'Closed Won', CLOSED_LOST: 'Closed Lost',
@@ -143,7 +142,7 @@ router.get('/board', async (req, res) => {
     }, 0);
     const wonCount = columns.find(c => c.stage === 'CLOSED_WON')?.total || 0;
     const lostCount = columns.find(c => c.stage === 'CLOSED_LOST')?.total || 0;
-    const qualifiedCount = await LeadModel.countDocuments({
+    const qualifiedCount = await DealModel.countDocuments({
       ...matchQuery,
       qualificationOutcome: 'QUALIFIED',
     });
@@ -181,11 +180,11 @@ router.get('/board/column', async (req, res) => {
     };
 
     const matchQuery = buildBoardMatchQuery(companyCode, filters);
-    const LeadModel = req.models.Lead;
+    const DealModel = req.models.Deal;
 
     const [total, leads] = await Promise.all([
-      LeadModel.countDocuments(matchQuery),
-      LeadModel.find(matchQuery)
+      DealModel.countDocuments(matchQuery),
+      DealModel.find(matchQuery)
         .sort({ stageChangedAt: -1, updatedAt: -1, _id: -1 })
         .skip(skip)
         .limit(pageSize)
@@ -230,16 +229,16 @@ router.patch('/leads/:id/stage', async (req, res) => {
     }
 
     // 2. Load lead and verify tenant ownership
-    const LeadModel = req.models.Lead;
-    const lead = await LeadModel.findById(id).lean();
-    if (!lead) {
-      return res.status(404).json({ success: false, message: 'Lead not found.' });
+    const DealModel = req.models.Deal;
+    const deal = await DealModel.findById(id).lean();
+    if (!deal) {
+      return res.status(404).json({ success: false, message: 'Deal not found.' });
     }
-    if (lead.companyCode !== companyCode) {
-      return res.status(403).json({ success: false, message: 'Access denied. Lead does not belong to this company.' });
+    if (deal.companyCode !== companyCode) {
+      return res.status(403).json({ success: false, message: 'Access denied. Deal does not belong to this company.' });
     }
 
-    const previousStage = lead.pipelineStage;
+    const previousStage = deal.pipelineStage;
     const newStatus = pipelineToStatus(targetStage);
     const update = {
       pipelineStage: targetStage,
@@ -262,11 +261,11 @@ router.patch('/leads/:id/stage', async (req, res) => {
 
     // 4. NEEDS_ANALYSIS requires qualificationOutcome = QUALIFIED (already set on lead OR in this request)
     if (targetStage === 'NEEDS_ANALYSIS') {
-      const effectiveQualification = qualificationOutcome || lead.qualificationOutcome;
+      const effectiveQualification = qualificationOutcome || deal.qualificationOutcome;
       if (effectiveQualification !== 'QUALIFIED') {
         return res.status(422).json({
           success: false,
-          message: 'Cannot move to Needs Analysis: lead must be Qualified first. Set qualificationOutcome to QUALIFIED at the Qualification stage.',
+          message: 'Cannot move to Needs Analysis: deal must be Qualified first. Set qualificationOutcome to QUALIFIED at the Qualification stage.',
         });
       }
     }
@@ -299,7 +298,7 @@ router.patch('/leads/:id/stage', async (req, res) => {
     }
 
     // 7. Persist the update
-    const updatedLead = await LeadModel.findByIdAndUpdate(
+    const updatedLead = await DealModel.findByIdAndUpdate(
       id,
       { $set: update },
       { new: true },

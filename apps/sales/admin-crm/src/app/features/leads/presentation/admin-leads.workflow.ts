@@ -32,6 +32,14 @@ export class AdminLeadsWorkflow {
     vm.lastFilteredLeadsRefForUnique = null;
   }
     updateLeadStatus(vm: any, lead: Lead, status: string): void {
+    if (status === 'ADD_DEAL') {
+      vm.openDealModal(lead);
+      const originalStatus = lead.status;
+      lead.status = '';
+      setTimeout(() => lead.status = originalStatus, 0);
+      return;
+    }
+
     if (!lead._id) return;
     vm.updatingLeadId = lead._id;
     this.leadService.updateLeadStatus(lead._id!, lead.companyCode, status).subscribe({

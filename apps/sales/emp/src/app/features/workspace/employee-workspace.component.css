@@ -1635,6 +1635,12 @@
   justify-content: flex-start;
   min-height: 56px;
   padding: 12px 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.workspace-header-filters-only .workspace-controls {
+  flex: 1;
 }
 
 .workspace-header-filters-only .mini-field>span {
@@ -8085,6 +8091,10 @@ body.column-resizing * {
 /* =========================================
    TABLE VIEW MODES (LEADS)
    ========================================= */
+
+.lead-workspace-view-toggle {
+  margin-left: auto;
+}
 
 .view-mode-toggle {
   display: flex;

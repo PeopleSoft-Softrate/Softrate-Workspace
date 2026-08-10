@@ -8,7 +8,7 @@ import {
   LOST_REASON_LABELS,
   QUALIFICATION_OUTCOME_LABELS,
   PipelineFilters,
-  PipelineLead,
+  PipelineDeal,
   PipelineStageCode,
   daysInStage,
 } from '../../domain/pipeline.model';
@@ -111,7 +111,7 @@ export class PipelineSectionComponent extends EmployeeWorkspaceSectionProxy impl
     return (LOST_REASON_LABELS as any)[code] ?? code;
   }
 
-  trackByLead(index: number, lead: PipelineLead): string {
+  trackByLead(index: number, lead: PipelineDeal): string {
     return lead._id;
   }
 
@@ -120,11 +120,11 @@ export class PipelineSectionComponent extends EmployeeWorkspaceSectionProxy impl
   }
 
   // ── Drag and Drop ──────────────────────────────────────────────
-  draggingLead: PipelineLead | null = null;
+  draggingLead: PipelineDeal | null = null;
   draggingLeadId: string = '';
   dragOverStage: PipelineStageCode | null = null;
 
-  onDragStart(event: DragEvent, lead: PipelineLead): void {
+  onDragStart(event: DragEvent, lead: PipelineDeal): void {
     this.draggingLead = lead;
     this.draggingLeadId = lead._id;
     event.dataTransfer?.setData('text/plain', lead._id);
@@ -177,9 +177,9 @@ export class PipelineSectionComponent extends EmployeeWorkspaceSectionProxy impl
   qualModalOutcome: string = '';
   qualModalReason: string = '';
   qualModalError: string = '';
-  private qualModalContext: { lead: PipelineLead; targetStage: PipelineStageCode; companyCode: string } | null = null;
+  private qualModalContext: { lead: PipelineDeal; targetStage: PipelineStageCode; companyCode: string } | null = null;
 
-  private openQualModal(lead: PipelineLead, targetStage: PipelineStageCode, companyCode: string): void {
+  private openQualModal(lead: PipelineDeal, targetStage: PipelineStageCode, companyCode: string): void {
     this.qualModalContext = { lead, targetStage, companyCode };
     this.qualModalOutcome = '';
     this.qualModalReason = '';
@@ -230,9 +230,9 @@ export class PipelineSectionComponent extends EmployeeWorkspaceSectionProxy impl
   showLostModal = false;
   lostModalReason: string = '';
   lostModalError: string = '';
-  private lostModalContext: { lead: PipelineLead; targetStage: PipelineStageCode; companyCode: string } | null = null;
+  private lostModalContext: { lead: PipelineDeal; targetStage: PipelineStageCode; companyCode: string } | null = null;
 
-  private openLostModal(lead: PipelineLead, targetStage: PipelineStageCode, companyCode: string): void {
+  private openLostModal(lead: PipelineDeal, targetStage: PipelineStageCode, companyCode: string): void {
     this.lostModalContext = { lead, targetStage, companyCode };
     this.lostModalReason = '';
     this.lostModalError = '';

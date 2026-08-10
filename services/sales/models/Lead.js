@@ -67,7 +67,7 @@ const leadSchema = new mongoose.Schema({
 
   // ── Pipeline fields (added for Sales Pipeline Kanban) ──────────
   // pipelineStage defaults to null; backfill script maps from existing status
-  pipelineStage:        { type: String, default: null },   // NEW|CONNECTED|FOLLOW_UP|QUALIFICATION|NEEDS_ANALYSIS|VALUE_PROPOSITION|PROPOSAL_QUOTE|NEGOTIATION_REVIEW|CLOSED_WON|CLOSED_LOST
+  pipelineStage:        { type: String, default: null },   // NEW|CONNECTED|QUALIFICATION|NEEDS_ANALYSIS|VALUE_PROPOSITION|PROPOSAL_QUOTE|NEGOTIATION_REVIEW|CLOSED_WON|CLOSED_LOST
   connectionOutcome:    { type: String, default: '' },     // NOT_CONNECTED|DNR|BUSY|SWITCH_OFF|NOT_REACHABLE
   qualificationOutcome: { type: String, default: '' },     // QUALIFIED|NOT_QUALIFIED
   qualificationReason:  { type: String, default: '' },     // NOT_INTERESTED|INVALID

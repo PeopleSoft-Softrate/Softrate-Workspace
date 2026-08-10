@@ -99,6 +99,7 @@ app.use('/api/leads', require('./src/modules/leads/lead.routes'));
 
 // Pipeline routes (Kanban board)
 app.use('/api/pipeline', require('./src/modules/pipeline/pipeline.routes'));
+app.use('/api/deals', require('./src/modules/deals/deal.routes'));
 
 
 // Invoice routes

@@ -79,8 +79,15 @@
             (dragend)="onDragEnd()"
           >
             <div class="pipeline-card-company" [title]="lead.leadCompanyName">{{ lead.leadCompanyName }}</div>
+            <div class="pipeline-card-dealname" style="font-size: 0.85rem; font-weight: 500; margin-top: 4px; color: var(--text-primary);">
+              {{ lead.dealName || 'Legacy Deal' }}
+            </div>
             <div class="pipeline-card-contact" *ngIf="lead.contactName || lead.contactNumber">
               {{ lead.contactName || lead.contactNumber }}
+            </div>
+            <div class="pipeline-card-deal-info" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; display: flex; justify-content: space-between;">
+              <span *ngIf="lead.amount > 0">₹{{ lead.amount }}</span>
+              <span *ngIf="lead.closingDate">Closes: {{ lead.closingDate | date:'mediumDate' }}</span>
             </div>
 
             <!-- Badges -->

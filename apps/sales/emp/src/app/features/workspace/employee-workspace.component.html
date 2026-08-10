@@ -1006,14 +1006,12 @@
             </label>
 
             <ng-container *ngIf="dashTab==='leads'">
-              <label class="mini-field">
-                <span>Status</span>
-                <select class="field-select filter-select-field" [(ngModel)]="leadStatusFilter"
-                  (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
-                  <option value="">All Status</option>
-                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
-                </select>
-              </label>
+              <div class="view-mode-toggle" style="height: 38px; align-items: center; margin-bottom: 0px; display: inline-flex; width: max-content; flex-shrink: 0;">
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="leadStatusGroup === 'All'" (click)="leadStatusGroup = 'All'; onLeadFilterChange()">All Leads</button>
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="leadStatusGroup === 'New'" (click)="leadStatusGroup = 'New'; onLeadFilterChange()">New</button>
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="leadStatusGroup === 'Connected'" (click)="leadStatusGroup = 'Connected'; onLeadFilterChange()">Connected</button>
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="leadStatusGroup === 'Followups'" (click)="leadStatusGroup = 'Followups'; onLeadFilterChange()">Followups</button>
+              </div>
             </ng-container>
 
             <ng-container *ngIf="dashTab==='interested'">
@@ -1305,6 +1303,8 @@
                                 [style.color]="leadStatusColorFn(lead.status)" [disabled]="updatingLeadId===lead._id">
                                 <option *ngFor="let st of LEAD_STATUSES" [value]="st"
                                   [style.color]="leadStatusColorFn(st)">{{ st }}</option>
+                                <option disabled>──────</option>
+                                <option value="ADD_DEAL">+ Add a Deal</option>
                               </select>
                             </td>
                             <td>
@@ -3394,7 +3394,60 @@
           * GST will be excluded
         </p>
       </div>
+    
+<!-- Deal Modal -->
+<div class="modal-overlay" *ngIf="dealModalVisible" (click)="closeDealModal()">
+  <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add a Deal</h2>
+      <button class="modal-close" (click)="closeDealModal()">✕</button>
     </div>
+    <div class="modal-body" *ngIf="dealModalLead">
+      
+      <div class="field-group">
+        <label class="field-label">Company Name</label>
+        <input class="field-input" type="text" [value]="dealModalLead.leadCompanyName" disabled />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Contact Name</label>
+        <input class="field-input" type="text" [value]="dealModalLead.contactName || dealModalLead.contactNumber" disabled />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Deal Name (Product) <span style="color:var(--status-negative)">*</span></label>
+        <select class="field-select" [(ngModel)]="dealForm.dealName">
+          <option value="">Select a product...</option>
+          <option *ngFor="let prod of products" [value]="prod.name">{{ prod.name }}</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Amount</label>
+        <input class="field-input" type="number" [(ngModel)]="dealForm.amount" placeholder="0" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Expected Closing Date</label>
+        <input class="field-input" type="date" [(ngModel)]="dealForm.closingDate" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Description</label>
+        <textarea class="field-input" [(ngModel)]="dealForm.description" rows="3" placeholder="Deal notes..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+      <button class="btn btn-secondary" (click)="closeDealModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveDeal()" [disabled]="!dealForm.dealName || dealModalSaving">
+        {{ dealModalSaving ? 'Saving...' : 'Save Deal' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+</div>
   </section>
 
   <section class="quotation-kind-note">

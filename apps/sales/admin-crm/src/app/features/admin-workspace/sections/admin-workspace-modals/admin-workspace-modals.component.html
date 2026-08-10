@@ -2385,3 +2385,55 @@
   (close)="vm.closeProposalModal()"
   (onProposalSent)="vm.onProposalSentFromModal($event)"
 ></app-proposal-generator-modal>
+
+<!-- Deal Modal -->
+<div class="modal-overlay" *ngIf="vm.dealModalVisible" (click)="vm.closeDealModal()">
+  <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add a Deal</h2>
+      <button class="modal-close" (click)="vm.closeDealModal()">✕</button>
+    </div>
+    <div class="modal-body" *ngIf="vm.dealModalLead">
+      
+      <div class="field-group">
+        <label class="field-label">Company Name</label>
+        <input class="field-input" type="text" [value]="vm.dealModalLead.leadCompanyName" disabled />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Contact Name</label>
+        <input class="field-input" type="text" [value]="vm.dealModalLead.contactName || vm.dealModalLead.contactNumber" disabled />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Deal Name (Product) <span style="color:var(--status-negative)">*</span></label>
+        <select class="field-select" [(ngModel)]="vm.dealForm.dealName">
+          <option value="">Select a product...</option>
+          <option *ngFor="let prod of vm.products" [value]="prod.name">{{ prod.name }}</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Amount</label>
+        <input class="field-input" type="number" [(ngModel)]="vm.dealForm.amount" placeholder="0" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Expected Closing Date</label>
+        <input class="field-input" type="date" [(ngModel)]="vm.dealForm.closingDate" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Description</label>
+        <textarea class="field-input" [(ngModel)]="vm.dealForm.description" rows="3" placeholder="Deal notes..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+      <button class="btn btn-secondary" (click)="vm.closeDealModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="vm.saveDeal()" [disabled]="!vm.dealForm.dealName || vm.dealModalSaving">
+        {{ vm.dealModalSaving ? 'Saving...' : 'Save Deal' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -17,6 +17,8 @@ import { AdminLeadsWorkflow } from '../leads/presentation/admin-leads.workflow';
 import { AdminSettingsWorkflow } from '../settings/presentation/admin-settings.workflow';
 import { AdminWorkspaceModalsComponent } from './sections/admin-workspace-modals/admin-workspace-modals.component';
 import { AdminWorkspaceController } from './state/admin-workspace.controller';
+import { RealtimeService } from '../../realtime.service';
+import { PipelineSectionViewModel } from '../pipeline/state/pipeline-section.viewmodel';
 
 @Component({
   selector: 'app-admin-workspace',
@@ -155,7 +157,9 @@ export class AdminWorkspaceComponent extends AdminWorkspaceController {
     adminLeadsWorkflow: AdminLeadsWorkflow,
     adminFollowupsWorkflow: AdminFollowupsWorkflow,
     adminSettingsWorkflow: AdminSettingsWorkflow,
-    adminEmployeesWorkflow: AdminEmployeesWorkflow
+    adminEmployeesWorkflow: AdminEmployeesWorkflow,
+    sse: RealtimeService,
+    adminPipelineVm: PipelineSectionViewModel,
   ) {
     super(
       callLogService,
@@ -170,7 +174,9 @@ export class AdminWorkspaceComponent extends AdminWorkspaceController {
       adminLeadsWorkflow,
       adminFollowupsWorkflow,
       adminSettingsWorkflow,
-      adminEmployeesWorkflow
+      adminEmployeesWorkflow,
+      sse,
+      adminPipelineVm
     );
   }
 

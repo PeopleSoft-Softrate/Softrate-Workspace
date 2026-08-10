@@ -14,6 +14,7 @@ import {
   LostReason,
 } from '../domain/pipeline.model';
 import { PipelineRepository } from '../data/pipeline.repository';
+import confetti from 'canvas-confetti';
 
 export interface PipelineState {
   columns: PipelineBoardColumn[];
@@ -197,6 +198,15 @@ export class PipelineSectionViewModel {
             leads: c.leads.map(l => l._id === serverLead._id ? serverLead : l),
           };
         });
+
+        if (targetStage === 'CLOSED_WON' && !isUndo) {
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#a864fd', '#29cdff', '#78ff44', '#ff718d', '#fdff6a']
+          });
+        }
 
         // Add to undo stack if this was not an undo operation
         const undoStack = [...this.state.undoStack];

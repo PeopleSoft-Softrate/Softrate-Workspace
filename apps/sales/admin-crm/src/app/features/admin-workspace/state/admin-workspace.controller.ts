@@ -28,6 +28,9 @@ import {
 } from '../../leads/domain/lead-status-ui';
 import { AdminInvoiceQuotationWorkflow } from '../../invoices/presentation/admin-invoice-quotation.workflow';
 import { AdminSettingsWorkflow } from '../../settings/presentation/admin-settings.workflow';
+import { RealtimeService, SSEEvent } from '../../../realtime.service';
+import { PipelineSectionViewModel } from '../../pipeline/state/pipeline-section.viewmodel';
+import { Subscription } from 'rxjs';
 import { OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '../../../core/config/pagination.config';
 import {
   CALL_TYPE_OPTIONS,
@@ -248,6 +251,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   showShareModal = false;
   shareMessage = '';
   isLogoutConfirmOpen = false;
+
+  private sseSub?: Subscription;
   employeeSearchQuery = '';
 
   // ── Proposal Settings ──────────────────────────────────────
@@ -1350,7 +1355,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     protected adminLeadsWorkflow: AdminLeadsWorkflow,
     protected adminFollowupsWorkflow: AdminFollowupsWorkflow,
     protected adminSettingsWorkflow: AdminSettingsWorkflow,
-    protected adminEmployeesWorkflow: AdminEmployeesWorkflow
+    protected adminEmployeesWorkflow: AdminEmployeesWorkflow,
+    public sse: RealtimeService,
+    public adminPipelineVm: PipelineSectionViewModel
   ) { 
     try {
       // Check as early as possible before Angular router clears the URL
@@ -1410,6 +1417,15 @@ export abstract class AdminWorkspaceController implements OnInit {
         } else {
           this._loadDashboard();
         }
+        
+        // Connect SSE
+        const adminId = user._id || 'admin';
+        this.sse.connect(this.dashboardCode, adminId);
+        this.sseSub = this.sse.events$.subscribe((ev: SSEEvent) => {
+          if (ev.type === 'PIPELINE_REFRESH') {
+            this.adminPipelineVm.loadBoard();
+          }
+        });
       } catch { localStorage.removeItem('tracecall_user'); }
     }
 

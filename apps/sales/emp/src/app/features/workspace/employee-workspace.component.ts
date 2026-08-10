@@ -25,6 +25,7 @@ import {
   EmployeeLeadsState,
   EmployeeLeadsViewModel,
 } from '../leads/presentation/employee-leads.viewmodel';
+import { PipelineSectionViewModel } from '../pipeline/state/pipeline-section.viewmodel';
 import { InvoicesRepository } from '../invoices/data/invoices.repository';
 import { QuotationsRepository } from '../quotations/data/quotations.repository';
 import { EmployeeLeadCardComponent } from '../leads/presentation/employee-lead-card.component';
@@ -5061,6 +5062,7 @@ invoiceSeal: string = '';
     private employeeLeadsVm: EmployeeLeadsViewModel,
     private invoicesRepository: InvoicesRepository,
     private quotationsRepository: QuotationsRepository,
+    public employeePipelineVm: PipelineSectionViewModel,
   ) { }
 
   ngOnInit(): void {
@@ -5902,7 +5904,9 @@ invoiceSeal: string = '';
   }
 
   handleRealtimeEvent(ev: SSEEvent): void {
-    if (ev.type === 'LEADS_REFRESH' || ev.type === 'LEADS_BULK_CREATED' || ev.type === 'LEAD_SET_DELETED') {
+    if (ev.type === 'PIPELINE_REFRESH') {
+      this.employeePipelineVm.loadBoard();
+    } else if (ev.type === 'LEADS_REFRESH' || ev.type === 'LEADS_BULK_CREATED' || ev.type === 'LEAD_SET_DELETED') {
       this.invalidateInvoiceCaches();
       this.invalidateOverviewCaches();
       this.fetchLeads(true); // bulk change, just refresh

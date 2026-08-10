@@ -101,6 +101,24 @@ export interface PipelineFilters {
   qualificationOutcome: string;
 }
 
+export interface StageTransitionData {
+  qualificationNotes?: string;
+  customerNeed?: string;
+  painPoint?: string;
+  proposedSolution?: string;
+  keyBenefits?: string;
+  quoteAmount?: number;
+  proposalSentDate?: string;
+  dealCloseAmount?: number;
+  advancePaid?: string;
+  negotiationNotes?: string;
+  expectedCloseDate?: string;
+  finalAmount?: number;
+  wonNotes?: string;
+  lossNotes?: string;
+  competitor?: string;
+}
+
 export interface PipelineMovePayload {
   companyCode: string;
   targetStage: PipelineStageCode;
@@ -108,7 +126,20 @@ export interface PipelineMovePayload {
   qualificationReason?: QualificationReason;
   lostReason?: LostReason;
   connectionOutcome?: ConnectionOutcome;
+  transitionData?: StageTransitionData;
+  isBackward?: boolean;
+  backwardReason?: string;
 }
+
+export const PIPELINE_STAGE_ORDER: Record<PipelineStageCode, number> = {
+  QUALIFICATION: 1,
+  NEEDS_ANALYSIS: 2,
+  VALUE_PROPOSITION: 3,
+  PROPOSAL_QUOTE: 4,
+  NEGOTIATION_REVIEW: 5,
+  CLOSED_WON: 6,
+  CLOSED_LOST: 6 // treat WON/LOST as same order level to prevent forward/backward between them
+};
 
 /** Returns how many days a lead has been in its current pipeline stage */
 export function daysInStage(stageChangedAt: string | null | undefined): number {

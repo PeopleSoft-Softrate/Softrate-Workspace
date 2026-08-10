@@ -131,7 +131,7 @@ export class CompanyTimelineComponent implements OnChanges {
           type: 'invoice',
           date: new Date(inv.date || inv.createdAt || new Date()),
           title: `Invoice Generated (${inv.invoiceNumber || 'Unknown'})`,
-          description: `Amount: INR ${inv.amount || inv.totalAmount || 0} - Status: ${inv.status || 'Pending'}`,
+          description: `Total: ₹${inv.total || inv.totalAmount || 0} • Paid: ₹${inv.amountPaid || 0} • Bal: ₹${inv.balanceDue || 0}`,
           meta: inv
         });
       });

@@ -172,6 +172,7 @@ function companyMiddleware(req, res, next) {
     CallDetail: db.model('CallDetail'),
     Bookmark: db.model('Bookmark'),
     BreakLog: db.model('BreakLog'),
+    Deal: db.model('Deal'),
     Quotation: db.model('Quotation'),
     Invoice: db.model('Invoice'),
     History: db.model('History'),

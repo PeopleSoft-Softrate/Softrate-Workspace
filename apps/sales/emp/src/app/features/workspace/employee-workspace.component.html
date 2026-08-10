@@ -2093,6 +2093,91 @@
             </div>
           </section>
 
+          <section class="company-full-card" [id]="companyFullSectionId('pipeline')">
+            <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h4 style="margin: 0;">Pipeline Deals</h4>
+              <button class="icon-button" style="padding: 4px 10px; font-size: 12px; font-weight: 600; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer;" (click)="openDealModal(companyFullViewLead())">
+                + Add Deal
+              </button>
+            </div>
+
+            <div *ngIf="companyFullDealsLoading" style="font-size: 0.85rem; color: var(--text-secondary);">Loading deals...</div>
+            <div *ngIf="companyFullDealsError" style="font-size: 0.85rem; color: #ef4444;">{{ companyFullDealsError }}</div>
+
+            <!-- Deals List -->
+            <div class="deal-list-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;" *ngIf="companyFullDeals.length > 0">
+              <div *ngFor="let deal of companyFullDeals" style="border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #fafafa;">
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Deal Name</div>
+                  <div style="font-size: 0.85rem; font-weight: 600;">{{ deal.dealName }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Stage</div>
+                  <div style="font-size: 0.85rem;">
+                    <span class="pipeline-badge">{{ deal.pipelineStage || 'NEW' }}</span>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Amount</div>
+                  <div style="font-size: 0.85rem; font-weight: 500;">₹{{ deal.amount || 0 }}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div *ngIf="!companyFullDealsLoading && companyFullDeals.length === 0" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">
+              No deals found for this lead.
+            </div>
+
+            <!-- Pipeline History -->
+            <div style="margin-top: 24px;">
+              <h4 style="margin: 0 0 12px 0; font-size: 0.95rem;">Pipeline History</h4>
+              
+              <div *ngIf="companyFullPipelineHistoryLogs.length === 0" style="font-size: 0.85rem; color: var(--text-secondary);">
+                No pipeline history available yet.
+              </div>
+
+              <div class="timeline-container" style="display: flex; flex-direction: column; gap: 20px; position: relative;" *ngIf="companyFullPipelineHistoryLogs.length > 0">
+                <!-- Connecting line -->
+                <div style="position: absolute; left: 4px; top: 8px; bottom: 8px; width: 2px; background: var(--border-light); z-index: 0;"></div>
+                
+                <div class="timeline-item" *ngFor="let log of companyFullPipelineHistoryLogs" style="display: flex; gap: 16px; position: relative; z-index: 1;">
+                  <!-- Marker -->
+                  <div class="timeline-marker" style="min-width: 10px; display: flex; flex-direction: column; align-items: center; padding-top: 4px;">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid var(--primary-main);"></div>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div class="timeline-content" style="flex: 1; padding-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <strong style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600;">Moved Stage</strong>
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                          <span>{{ log.oldValue || 'New' }}</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;">
+                            <path d="M5 12h14"></path>
+                            <path d="m12 5 7 7-7 7"></path>
+                          </svg>
+                          <strong style="color: var(--text-primary);">{{ log.newValue }}</strong>
+                        </div>
+                      </div>
+                      <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                        {{ log.timestamp | date:'MMM d, y, h:mm a' }}
+                      </div>
+                    </div>
+                    
+                    <!-- Details Grid -->
+                    <div class="pipeline-history-details" *ngIf="log.details" style="display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; font-size: 0.8rem; background: #f8fafc; padding: 10px 12px; border-radius: 6px; margin-top: 8px;">
+                      <ng-container *ngFor="let detail of log.details.split(' | ')">
+                        <span style="color: var(--text-secondary);">{{ detail.split(':')[0] }}</span>
+                        <span style="font-weight: 500; color: var(--text-primary);">{{ detail.split(':').slice(1).join(':').trim() || '—' }}</span>
+                      </ng-container>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section class="company-full-card" [id]="companyFullSectionId('followups')">
             <app-activities-calendar [employee]="employee" [allLeads]="allLeads" [filterCompanyId]="companyFullViewLead()?._id" [filterCompanyName]="companyFullViewLead()?.leadCompanyName" [embedded]="true" [searchQuery]="leadSearch" (activityClicked)="handleActivityClick($event)"></app-activities-calendar>
           </section>
@@ -2872,8 +2957,16 @@
 
         <div class="invoice-global-settings" *ngIf="!viewingSavedDocument" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
           <label class="mini-field" *ngIf="!quoteMode" style="flex: 1; max-width: 250px;">
-            <span style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Total Amount Paid (Global)</span>
-            <input class="field-input" type="number" [(ngModel)]="invoiceAmountPaid" placeholder="0" />
+            <span style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Total Amount Paid</span>
+            <input class="field-input" type="number" [ngModel]="invoiceAmountPaid" readonly style="background: #e2e8f0; cursor: not-allowed;" />
+          </label>
+          <label class="mini-field" *ngIf="!quoteMode && invoiceEditMode" style="flex: 1; max-width: 250px;">
+            <span style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--primary-main); margin-bottom: 0.5rem; text-transform: uppercase;">+ Add Payment (₹)</span>
+            <input class="field-input" type="number" [(ngModel)]="invoiceAdditionalPayment" (ngModelChange)="calculateTotalAmountPaid()" placeholder="0" />
+          </label>
+          <label class="mini-field" *ngIf="!quoteMode && !invoiceEditMode" style="flex: 1; max-width: 250px;">
+            <span style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--primary-main); margin-bottom: 0.5rem; text-transform: uppercase;">Initial Payment (₹)</span>
+            <input class="field-input" type="number" [(ngModel)]="invoiceAdditionalPayment" (ngModelChange)="calculateTotalAmountPaid()" placeholder="0" />
           </label>
           <label class="mini-field checkbox-field" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 24px;">
             <input type="checkbox" [(ngModel)]="invoiceIsInclusiveGst"
@@ -3395,57 +3488,7 @@
         </p>
       </div>
     
-<!-- Deal Modal -->
-<div class="modal-overlay" *ngIf="dealModalVisible" (click)="closeDealModal()">
-  <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Add a Deal</h2>
-      <button class="modal-close" (click)="closeDealModal()">✕</button>
-    </div>
-    <div class="modal-body" *ngIf="dealModalLead">
-      
-      <div class="field-group">
-        <label class="field-label">Company Name</label>
-        <input class="field-input" type="text" [value]="dealModalLead.leadCompanyName" disabled />
-      </div>
 
-      <div class="field-group">
-        <label class="field-label">Contact Name</label>
-        <input class="field-input" type="text" [value]="dealModalLead.contactName || dealModalLead.contactNumber" disabled />
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Deal Name (Product) <span style="color:var(--status-negative)">*</span></label>
-        <select class="field-select" [(ngModel)]="dealForm.dealName">
-          <option value="">Select a product...</option>
-          <option *ngFor="let prod of products" [value]="prod.name">{{ prod.name }}</option>
-        </select>
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Amount</label>
-        <input class="field-input" type="number" [(ngModel)]="dealForm.amount" placeholder="0" />
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Expected Closing Date</label>
-        <input class="field-input" type="date" [(ngModel)]="dealForm.closingDate" />
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Description</label>
-        <textarea class="field-input" [(ngModel)]="dealForm.description" rows="3" placeholder="Deal notes..."></textarea>
-      </div>
-
-    </div>
-    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
-      <button class="btn btn-secondary" (click)="closeDealModal()">Cancel</button>
-      <button class="btn btn-primary" (click)="saveDeal()" [disabled]="!dealForm.dealName || dealModalSaving">
-        {{ dealModalSaving ? 'Saving...' : 'Save Deal' }}
-      </button>
-    </div>
-  </div>
-</div>
 
 </div>
   </section>
@@ -3464,3 +3507,57 @@
   (close)="closeProposalModal()"
   (onProposalSent)="onProposalSentFromModal($event)"
 ></app-proposal-generator-modal>
+
+<!-- Deal Modal -->
+<div class="modal-overlay" *ngIf="dealModalVisible" (click)="closeDealModal()">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(500px, calc(100vw - 32px)); max-width: 500px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="closeDealModal()" aria-label="Close deal modal">✕</button>
+    
+    <h2 class="client-onboarding-modal-title" style="margin-bottom: 24px;">Add a Deal</h2>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form" *ngIf="dealModalLead" style="display: flex; flex-direction: column; gap: 16px;">
+      
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">COMPANY NAME</label>
+        <input class="field-input" type="text" [value]="dealModalLead.leadCompanyName" disabled style="background: #f8fafc;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">CONTACT NAME</label>
+        <input class="field-input" type="text" [value]="dealModalLead.contactName || dealModalLead.contactNumber" disabled style="background: #f8fafc;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">DEAL NAME (PRODUCT) <span style="color:var(--status-negative)">*</span></label>
+        <select class="field-select" [(ngModel)]="dealForm.dealName" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem; background: #fff;">
+          <option value="">Select a product...</option>
+          <option *ngFor="let prod of products" [value]="prod.name">{{ prod.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">AMOUNT</label>
+        <input class="field-input" type="text" [ngModel]="dealAmountDisplay" (ngModelChange)="onDealAmountChange($event)" placeholder="0" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">EXPECTED CLOSING DATE</label>
+        <input class="field-input" type="date" [(ngModel)]="dealForm.closingDate" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">DESCRIPTION</label>
+        <textarea class="field-input" [(ngModel)]="dealForm.description" rows="3" placeholder="Deal notes..." style="width: 100%; resize: vertical; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem; font-family: inherit;"></textarea>
+      </div>
+
+    </div>
+    
+    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px; display: flex; justify-content: flex-end; gap: 12px;">
+      <button class="secondary-action" type="button" (click)="closeDealModal()">Cancel</button>
+      <button class="primary-action" type="button" (click)="saveDeal()" [disabled]="!dealForm.dealName || dealModalSaving">
+        <span *ngIf="!dealModalSaving">Save Deal</span>
+        <span *ngIf="dealModalSaving" class="button-spinner"></span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -408,7 +408,7 @@ router.put('/:id', async (req, res) => {
     
     updateData.updatedAt = new Date();
 
-    const invoice = await req.models.Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { new: true });
+    const invoice = await req.models.Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { returnDocument: 'after' });
     
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Invoice not found.' });

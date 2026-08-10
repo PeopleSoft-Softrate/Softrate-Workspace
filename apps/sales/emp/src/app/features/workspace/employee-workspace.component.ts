@@ -237,7 +237,7 @@ interface CompanyFullViewProfile {
   createdAt?: string;
 }
 
-type CompanyFullSection = 'overview' | 'followups' | 'timeline' | 'alternate' | 'notes' | 'documents';
+type CompanyFullSection = 'overview' | 'followups' | 'timeline' | 'alternate' | 'notes' | 'documents' | 'pipeline';
 
 interface CallStats {
   incoming: number;
@@ -593,6 +593,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
+    { id: 'pipeline', label: 'Pipeline' },
     { id: 'followups', label: 'Schedule / Follow-up' },
     { id: 'timeline', label: 'Overall History' },
     { id: 'alternate', label: 'Alternate Info' },
@@ -602,6 +603,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullLoading = false;
   companyFullProfileLoading = false;
   companyFullHistoryLoading = false;
+  companyFullDealsLoading = false;
   companyFullInvoiceLoading = false;
   companyFullQuotationLoading = false;
   companyFullFollowupLoading = false;
@@ -611,6 +613,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullFollowupSaving = false;
   companyFullProfileError = '';
   companyFullHistoryError = '';
+  companyFullDealsError = '';
   companyFullInvoiceError = '';
   companyFullQuotationError = '';
   companyFullRemarkError = '';
@@ -625,9 +628,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     priority: '',
     notes: []
   };
+  companyFullDeals: any[] = [];
   companyFullHistoryLogs: LeadHistoryLog[] = [];
   companyFullRemarksHistory: LeadHistoryLog[] = [];
   companyFullProposalsHistory: LeadHistoryLog[] = [];
+  
+  get companyFullPipelineHistoryLogs(): LeadHistoryLog[] {
+    return this.companyFullHistoryLogs.filter((log) => log.action === 'Pipeline Stage Changed');
+  }
   companyFullDocuments: Array<{ id: string; name: string; url: string; size: number; uploadedAt: string }> = [];
   companyFullEmailHistory: LeadHistoryLog[] = [];
   companyFullInvoiceItems: InvoiceRecord[] = [];
@@ -1346,13 +1354,14 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async openCompanyFullViewForLeadContext(sourceLead: Lead, initialSection: CompanyFullSection = 'overview'): Promise<void> {
+  async openCompanyFullViewForLeadContext(sourceLead: Lead | any, initialSection: CompanyFullSection = 'overview'): Promise<void> {
     this.closeAiBriefPopup();
     this.companyRemarkLead = null;
-    this.companyFullContextLead = { ...sourceLead };
-    if (sourceLead.leadCompanyName && this.selectedLeadCompany !== sourceLead.leadCompanyName) {
-      this.selectedLeadCompany = sourceLead.leadCompanyName;
-      this.tabSelections[this.dashTab] = sourceLead.leadCompanyName;
+    const fullLead = this.allLeads?.find(l => l._id === sourceLead._id) || sourceLead;
+    this.companyFullContextLead = { ...fullLead };
+    if (fullLead.leadCompanyName && this.selectedLeadCompany !== fullLead.leadCompanyName) {
+      this.selectedLeadCompany = fullLead.leadCompanyName;
+      this.tabSelections[this.dashTab] = fullLead.leadCompanyName;
     }
     this.companyFullViewOpen = true;
     this.companyFullActiveSection = initialSection;
@@ -1631,7 +1640,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.detailAiSuggestionGeneratedAt = '';
         this.detailAiSuggestionError = res.message || 'AI guidance is unavailable right now.';
       },
-      error: (err) => {
+      error: (err: any) => {
         if (requestId !== this.detailAiSuggestionRequestSeq) return;
 
         this.detailAiSuggestionLoading = false;
@@ -1828,6 +1837,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     description: '',
   };
   dealModalSaving = false;
+  dealAmountDisplay = '';
 
   
   // Invoice Settings
@@ -1947,7 +1957,13 @@ invoiceSeal: string = '';
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
   invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
+  invoiceBaseAmountPaid = 0;
+  invoiceAdditionalPayment = 0;
   invoiceAmountPaid = 0;
+
+  calculateTotalAmountPaid(): void {
+    this.invoiceAmountPaid = this.invoiceBaseAmountPaid + (this.invoiceAdditionalPayment || 0);
+  }
   invoiceIsInclusiveGst = false;
   invoiceRecords: InvoiceRecord[] = [];
   invoiceRecordsLoading = false;
@@ -2972,12 +2988,14 @@ invoiceSeal: string = '';
       })),
       isInclusiveGst: this.invoiceIsInclusiveGst,
       amountPaid: this.invoiceAmountPaid,
+      balanceDue: this.invoiceTotal - (this.invoiceAmountPaid || 0),
     };
 
     this.invoiceSaving = true;
 
     if (this.invoiceEditMode && this.openedInvoiceRecord?._id) {
       const updatePayload = {
+        companyCode: payload.companyCode,
         items: payload.items,
         total: this.invoiceTotal,
         subTotal: this.invoiceSubtotal,
@@ -2986,6 +3004,7 @@ invoiceSeal: string = '';
         paymentStatus: payload.paymentStatus,
         isInclusiveGst: this.invoiceIsInclusiveGst,
         amountPaid: this.invoiceAmountPaid,
+        balanceDue: this.invoiceTotal - (this.invoiceAmountPaid || 0),
       };
       this.api.put<any>(`/api/invoices/${this.openedInvoiceRecord._id}`, updatePayload).subscribe({
         next: (res) => {
@@ -3428,6 +3447,9 @@ invoiceSeal: string = '';
     void this.setInvoiceQrFromUrl(record.publicUrl || '');
     this.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
     this.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(record.paymentStatus);
+    this.invoiceBaseAmountPaid = Number(record.amountPaid || 0);
+    this.invoiceAdditionalPayment = 0;
+    this.calculateTotalAmountPaid();
     this.dueDate = record.dueDate ? new Date(record.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
     this.invoiceLead = {
       _id: record._id,
@@ -4123,11 +4145,12 @@ invoiceSeal: string = '';
     this.companyFullInvoiceLoading = true;
     this.companyFullQuotationLoading = true;
     this.companyFullFollowupLoading = true;
+    this.companyFullDealsLoading = true;
 
     const employeeId = String(this.employee?._id || lead?.assignedEmployeeId || '').trim();
     const query = this.buildApiQueryString({ companyCode, companyName });
 
-    const [profileResult, historyResult, invoiceResult, quotationResult, followupResult] = await Promise.allSettled([
+    const [profileResult, historyResult, invoiceResult, quotationResult, followupResult, dealsResult, leadFetchResult] = await Promise.allSettled([
       firstValueFrom(this.api.get<any>(`/api/leads/company-profile?${query}`)),
       firstValueFrom(this.api.get<any>(`/api/history?${query}`)),
       firstValueFrom(this.invoicesRepository.history({
@@ -4147,6 +4170,8 @@ invoiceSeal: string = '';
       employeeId
         ? firstValueFrom(this.api.get<any>(`/api/bookmarks?${this.buildApiQueryString({ companyCode, employeeId: employeeId })}`))
         : Promise.resolve({ success: true, bookmarks: [] }),
+      firstValueFrom(this.api.get<any>(`/api/deals?leadId=${lead?._id || ''}`)),
+      lead?._id ? firstValueFrom(this.api.get<any>(`/api/leads/${lead._id}?companyCode=${companyCode}`)) : Promise.resolve({ success: false }),
     ]);
 
     if (profileResult.status === 'fulfilled') {
@@ -4155,6 +4180,11 @@ invoiceSeal: string = '';
       this.companyFullProfileError = 'Failed to load alternate info.';
     }
     this.companyFullProfileLoading = false;
+
+    // Merge full lead data if it was fetched successfully
+    if (leadFetchResult.status === 'fulfilled' && leadFetchResult.value?.success && leadFetchResult.value?.lead) {
+      this.companyFullContextLead = { ...this.companyFullContextLead, ...leadFetchResult.value.lead };
+    }
 
     if (historyResult.status === 'fulfilled') {
       const logs = Array.isArray(historyResult.value?.logs) ? historyResult.value.logs : [];
@@ -4192,6 +4222,13 @@ invoiceSeal: string = '';
       this.companyFullFollowupError = 'Failed to load follow-up details.';
     }
     this.companyFullFollowupLoading = false;
+
+    if (dealsResult.status === 'fulfilled') {
+      this.companyFullDeals = Array.isArray(dealsResult.value?.data) ? dealsResult.value.data : [];
+    } else {
+      this.companyFullDealsError = 'Failed to load pipeline deals.';
+    }
+    this.companyFullDealsLoading = false;
 
     this.companyFullLoading = false;
   }
@@ -8245,7 +8282,20 @@ invoiceSeal: string = '';
       closingDate: '',
       description: '',
     };
+    this.dealAmountDisplay = '';
     this.dealModalVisible = true;
+  }
+
+  
+  onDealAmountChange(value: string) {
+    if (!value) {
+      this.dealForm.amount = 0;
+      this.dealAmountDisplay = '';
+      return;
+    }
+    const numericValue = value.toString().replace(/[^0-9]/g, '');
+    this.dealForm.amount = numericValue ? parseInt(numericValue, 10) : 0;
+    this.dealAmountDisplay = numericValue ? Number(numericValue).toLocaleString('en-IN') : '';
   }
 
   closeDealModal(): void {
@@ -8437,7 +8487,7 @@ invoiceSeal: string = '';
   }
 
   get showLeadRecordView(): boolean {
-    return !!this.currentSelectedLead && ['leads', 'interested', 'dnp', 'converted', 'favourite', 'today-calls'].includes(this.dashTab);
+    return !!this.currentSelectedLead && ['leads', 'interested', 'dnp', 'converted', 'favourite', 'today-calls', 'pipeline'].includes(this.dashTab);
   }
 
   get activeFollowupCompany(): string {
@@ -8539,6 +8589,7 @@ invoiceSeal: string = '';
 
   get totalLeadsCount(): number { return this.getLeadCollections().totalLeadsCount; }
   get convertedLeadsCount(): number { 
+    
     return this.getLeadCollections().convertedLeadsCount; 
   }
   get pendingLeadsCount(): number { 

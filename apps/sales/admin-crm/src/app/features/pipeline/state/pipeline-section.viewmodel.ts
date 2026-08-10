@@ -24,6 +24,12 @@ export interface PipelineState {
   filters: PipelineFilters;
   undoStack: Array<{ lead: PipelineDeal, originalLead: PipelineDeal, payload: PipelineMovePayload }>;
   loadingColumns: Set<PipelineStageCode>;
+  moveModal: {
+    open: boolean;
+    lead: PipelineDeal | null;
+    targetStage: PipelineStageCode | null;
+    companyCode: string;
+  };
 }
 
 const initialState: PipelineState = {
@@ -43,6 +49,12 @@ const initialState: PipelineState = {
   filters: { search: '', owner: '', connectionOutcome: '', qualificationOutcome: '' },
   undoStack: [],
   loadingColumns: new Set<PipelineStageCode>(),
+  moveModal: {
+    open: false,
+    lead: null,
+    targetStage: null,
+    companyCode: '',
+  },
 };
 
 @Injectable({ providedIn: 'root' })
@@ -114,6 +126,38 @@ export class PipelineSectionViewModel {
         // Non-fatal — column just doesn't load more; no state corruption
       },
     });
+  }
+
+  // ── Unified Move to Stage Modal ────────────────────────────────
+  requestStageMove(lead: PipelineDeal, targetStage: PipelineStageCode, companyCode: string): void {
+    if (lead.pipelineStage === targetStage) return;
+    this.patch({
+      moveModal: {
+        open: true,
+        lead,
+        targetStage,
+        companyCode,
+      }
+    });
+  }
+
+  cancelStageMove(): void {
+    this.patch({
+      moveModal: {
+        open: false,
+        lead: null,
+        targetStage: null,
+        companyCode: '',
+      }
+    });
+  }
+
+  confirmStageMove(payload: PipelineMovePayload): void {
+    const modalState = this.state.moveModal;
+    if (!modalState.lead) return;
+
+    this.moveStage(modalState.lead, payload);
+    this.cancelStageMove();
   }
 
   /**

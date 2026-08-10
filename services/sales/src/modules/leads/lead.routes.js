@@ -614,6 +614,51 @@ router.get('/admin', async (req, res) => {
   }
 });
 
+router.get('/company-profile', async (req, res) => {
+  
+  try {
+    const companyCode = String(req.query.companyCode || '').trim();
+    const companyName = String(req.query.companyName || '').trim();
+    if (!companyCode || !companyName) {
+      return res.status(400).json({ success: false, message: 'companyCode and companyName are required.' });
+    }
+
+    const profile = await LeadCompanyProfile.findOne({
+      companyCode,
+      normalizedCompanyName: normalizeText(companyName),
+    }).lean();
+
+    return res.status(200).json({
+      success: true,
+      profile: mapCompanyProfile(profile, companyName),
+    });
+  } catch (err) {
+    console.error('[get company profile]', err);
+    return res.status(500).json({ success: false, message: 'Server error fetching company profile.' });
+  }
+});
+
+// GET — fetch a specific lead by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { companyCode } = req.query;
+    if (!companyCode) {
+      return res.status(400).json({ success: false, message: 'companyCode is required.' });
+    }
+    
+    const lead = await req.models.Lead.findOne({ _id: id, companyCode }).lean();
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found.' });
+    }
+    
+    return res.status(200).json({ success: true, lead: normalizeLeadForResponse(lead) });
+  } catch (err) {
+    console.error('[get lead by id]', err);
+    return res.status(500).json({ success: false, message: 'Server error fetching lead.' });
+  }
+});
+
 // POST — remove all leads in a set for an employee
 router.post('/set/delete', async (req, res) => {
   
@@ -663,29 +708,6 @@ router.post('/admin/delete-set', async (req, res) => {
   }
 });
 
-router.get('/company-profile', async (req, res) => {
-  
-  try {
-    const companyCode = String(req.query.companyCode || '').trim();
-    const companyName = String(req.query.companyName || '').trim();
-    if (!companyCode || !companyName) {
-      return res.status(400).json({ success: false, message: 'companyCode and companyName are required.' });
-    }
-
-    const profile = await LeadCompanyProfile.findOne({
-      companyCode,
-      normalizedCompanyName: normalizeText(companyName),
-    }).lean();
-
-    return res.status(200).json({
-      success: true,
-      profile: mapCompanyProfile(profile, companyName),
-    });
-  } catch (err) {
-    console.error('[get company profile]', err);
-    return res.status(500).json({ success: false, message: 'Server error fetching company profile.' });
-  }
-});
 
 router.patch('/company-profile', async (req, res) => {
   

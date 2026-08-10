@@ -78,7 +78,15 @@
             (dragstart)="onDragStart($event, lead)"
             (dragend)="onDragEnd()"
           >
-            <div class="pipeline-card-company" [title]="lead.leadCompanyName">{{ lead.leadCompanyName }}</div>
+            <div class="pipeline-card-company" [title]="lead.leadCompanyName" style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ lead.leadCompanyName }}</span>
+              <button class="icon-btn" (click)="viewCompanyProfile(lead); $event.stopPropagation()" title="View Company Profile" style="padding: 2px; color: var(--text-secondary); cursor: pointer; background: none; border: none; margin-left: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
             <div class="pipeline-card-dealname" style="font-size: 0.85rem; font-weight: 500; margin-top: 4px; color: var(--text-primary);">
               {{ lead.dealName || 'Legacy Deal' }}
             </div>
@@ -103,8 +111,21 @@
               </span>
             </div>
 
-            <div class="pipeline-card-days" *ngIf="lead.stageChangedAt">
-              {{ daysInStage(lead.stageChangedAt) }}d in stage
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+              <div class="pipeline-card-days" *ngIf="lead.stageChangedAt">
+                {{ daysInStage(lead.stageChangedAt) }}d in stage
+              </div>
+              
+              <div class="pipeline-card-actions" (click)="$event.stopPropagation()">
+                <select 
+                  class="pipeline-card-stage-select" 
+                  [ngModel]="lead.pipelineStage" 
+                  (ngModelChange)="onManualStageChange(lead, $event)"
+                  style="font-size: 0.75rem; padding: 2px 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; max-width: 100px;"
+                >
+                  <option *ngFor="let stage of (pipelineVm.state$ | async)?.columns" [value]="stage.stage">{{ stage.label }}</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -123,49 +144,144 @@
 
   </div>
 
-  <!-- ── Qualification Modal ──────────────────────────────────── -->
-  <div class="pipeline-modal-overlay" *ngIf="showQualModal" (mousedown)="cancelQualModal()">
-    <div class="pipeline-modal" (mousedown)="$event.stopPropagation()">
-      <h2 class="pipeline-modal-title">Qualification Outcome</h2>
-      <label class="pipeline-modal-label" for="qualOutcomeSelect">Outcome</label>
-      <select id="qualOutcomeSelect" class="pipeline-modal-select" [(ngModel)]="qualModalOutcome" (change)="qualModalReason = ''">
-        <option value="">Select outcome…</option>
-        <option value="QUALIFIED">Qualified</option>
-        <option value="NOT_QUALIFIED">Not Qualified</option>
-      </select>
-      <ng-container *ngIf="qualModalOutcome === 'NOT_QUALIFIED'">
-        <label class="pipeline-modal-label" for="qualReasonSelect">Reason</label>
-        <select id="qualReasonSelect" class="pipeline-modal-select" [(ngModel)]="qualModalReason">
-          <option value="">Select reason…</option>
-          <option value="NOT_INTERESTED">Not Interested</option>
-          <option value="INVALID">Invalid</option>
-        </select>
-      </ng-container>
-      <div class="pipeline-modal-error" *ngIf="qualModalError">{{ qualModalError }}</div>
-      <div class="pipeline-modal-actions">
-        <button class="pipeline-modal-cancel" (click)="cancelQualModal()">Cancel</button>
-        <button class="pipeline-modal-confirm" (click)="confirmQualModal()">Confirm</button>
-      </div>
-    </div>
-  </div>
+  <!-- ── Unified Move to Stage Modal ──────────────────────────── -->
+  <ng-container *ngIf="(pipelineVm.state$ | async)?.moveModal as modalState">
+    <div class="pipeline-modal-overlay" *ngIf="modalState.open" (mousedown)="cancelMoveModal()">
+      <div class="pipeline-modal" (mousedown)="$event.stopPropagation()">
+        <h2 class="pipeline-modal-title">
+          Move to {{ modalState.targetStage }}
+          <span *ngIf="isBackwardMove" style="color: var(--danger, #ef4444); font-size: 0.8rem; margin-left: 8px;">(Moving Backward)</span>
+        </h2>
 
-  <!-- ── Closed Lost Modal ────────────────────────────────────── -->
-  <div class="pipeline-modal-overlay" *ngIf="showLostModal" (mousedown)="cancelLostModal()">
-    <div class="pipeline-modal" (mousedown)="$event.stopPropagation()">
-      <h2 class="pipeline-modal-title">Closed Lost — Select Reason</h2>
-      <label class="pipeline-modal-label" for="lostReasonSelect">Reason</label>
-      <select id="lostReasonSelect" class="pipeline-modal-select" [(ngModel)]="lostModalReason">
-        <option value="">Select reason…</option>
-        <option value="PRICE">Price</option>
-        <option value="WRONG_TIME">Wrong Time</option>
-        <option value="COMPETITION">Competition</option>
-      </select>
-      <div class="pipeline-modal-error" *ngIf="lostModalError">{{ lostModalError }}</div>
-      <div class="pipeline-modal-actions">
-        <button class="pipeline-modal-cancel" (click)="cancelLostModal()">Cancel</button>
-        <button class="pipeline-modal-confirm" [disabled]="!lostModalReason" (click)="confirmLostModal()">Confirm</button>
+        <div class="pipeline-modal-body" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;">
+          
+          <!-- Backward Move Reason (Required if moving backward) -->
+          <ng-container *ngIf="isBackwardMove">
+            <label class="pipeline-modal-label">Reason for moving backward *</label>
+            <textarea class="pipeline-modal-input" [(ngModel)]="backwardReason" rows="3" placeholder="Why is this deal moving back?"></textarea>
+          </ng-container>
+
+          <!-- Forward / Standard Fields by Stage -->
+          <ng-container *ngIf="!isBackwardMove">
+            
+            <!-- Target: QUALIFICATION -->
+            <ng-container *ngIf="modalState.targetStage === 'QUALIFICATION'">
+              <label class="pipeline-modal-label">Qualification Notes</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="qualNotes" rows="2" placeholder="Any initial notes?"></textarea>
+            </ng-container>
+
+            <!-- Target: NEEDS_ANALYSIS -->
+            <ng-container *ngIf="modalState.targetStage === 'NEEDS_ANALYSIS'">
+              <!-- If coming from QUALIFICATION, we need the outcome -->
+              <ng-container *ngIf="modalState.lead?.pipelineStage === 'QUALIFICATION'">
+                <label class="pipeline-modal-label">Qualification Outcome *</label>
+                <select class="pipeline-modal-select" [(ngModel)]="qualOutcome" (change)="qualReason = ''">
+                  <option value="">Select outcome…</option>
+                  <option value="QUALIFIED">Qualified</option>
+                  <option value="NOT_QUALIFIED">Not Qualified</option>
+                </select>
+                <ng-container *ngIf="qualOutcome === 'NOT_QUALIFIED'">
+                  <label class="pipeline-modal-label">Reason *</label>
+                  <select class="pipeline-modal-select" [(ngModel)]="qualReason">
+                    <option value="">Select reason…</option>
+                    <option value="NOT_INTERESTED">Not Interested</option>
+                    <option value="INVALID">Invalid</option>
+                  </select>
+                </ng-container>
+              </ng-container>
+
+              <label class="pipeline-modal-label">Customer Need</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="customerNeed" rows="2" placeholder="What does the customer need?"></textarea>
+              <label class="pipeline-modal-label">Pain Points</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="painPoint" rows="2" placeholder="Customer pain points"></textarea>
+            </ng-container>
+
+            <!-- Target: VALUE_PROPOSITION -->
+            <ng-container *ngIf="modalState.targetStage === 'VALUE_PROPOSITION'">
+              <label class="pipeline-modal-label">Proposed Solution</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="proposedSolution" rows="2" placeholder="What is our solution?"></textarea>
+              <label class="pipeline-modal-label">Key Benefits</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="keyBenefits" rows="2" placeholder="Key benefits to customer"></textarea>
+            </ng-container>
+
+            <!-- Target: PROPOSAL_QUOTE -->
+            <ng-container *ngIf="modalState.targetStage === 'PROPOSAL_QUOTE'">
+              <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <button type="button" class="btn btn-outline-primary" style="flex: 1; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--primary-main); color: var(--primary-main); background: transparent; cursor: pointer;" (click)="generateProposal()">
+                  <i class="fa fa-file-text-o" style="margin-right: 6px;"></i> Generate Proposal
+                </button>
+                <button type="button" class="btn btn-outline-primary" style="flex: 1; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--primary-main); color: var(--primary-main); background: transparent; cursor: pointer;" (click)="generateQuotation()">
+                  <i class="fa fa-file-pdf-o" style="margin-right: 6px;"></i> Generate Quotation
+                </button>
+              </div>
+
+              <label class="pipeline-modal-label">Quote Amount (₹) *</label>
+              <input type="number" class="pipeline-modal-input" [(ngModel)]="quoteAmount" placeholder="0">
+              <label class="pipeline-modal-label">Proposal Sent Date *</label>
+              <input type="date" class="pipeline-modal-input" [(ngModel)]="proposalSentDate">
+            </ng-container>
+
+            <!-- Target: NEGOTIATION_REVIEW -->
+            <ng-container *ngIf="modalState.targetStage === 'NEGOTIATION_REVIEW'">
+              <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <button type="button" class="btn btn-outline-primary" style="flex: 1; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--primary-main); color: var(--primary-main); background: transparent; cursor: pointer;" (click)="generateInvoice()">
+                  <i class="fa fa-file-text-o" style="margin-right: 6px;"></i> Generate Invoice
+                </button>
+              </div>
+
+              <label class="pipeline-modal-label">Deal Close Amount (₹)</label>
+              <input type="number" class="pipeline-modal-input" [(ngModel)]="dealCloseAmount" placeholder="0">
+              
+              <label class="pipeline-modal-label">Advance Paid?</label>
+              <select class="pipeline-modal-select" [(ngModel)]="advancePaid">
+                <option value="">Select...</option>
+                <option value="YES">Yes</option>
+                <option value="NO">No</option>
+              </select>
+
+              <label class="pipeline-modal-label">Negotiation Notes</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="negotiationNotes" rows="2" placeholder="Negotiation details"></textarea>
+              <label class="pipeline-modal-label">Expected Close Date</label>
+              <input type="date" class="pipeline-modal-input" [(ngModel)]="expectedCloseDate">
+            </ng-container>
+
+            <!-- Target: CLOSED_WON -->
+            <ng-container *ngIf="modalState.targetStage === 'CLOSED_WON'">
+              <label class="pipeline-modal-label">Final Amount (₹)</label>
+              <input type="number" class="pipeline-modal-input" [(ngModel)]="finalAmount" placeholder="0">
+              <label class="pipeline-modal-label">Won Notes</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="wonNotes" rows="2" placeholder="Why did we win?"></textarea>
+            </ng-container>
+
+            <!-- Target: CLOSED_LOST -->
+            <ng-container *ngIf="modalState.targetStage === 'CLOSED_LOST'">
+              <label class="pipeline-modal-label">Lost Reason *</label>
+              <select class="pipeline-modal-select" [(ngModel)]="lostReason">
+                <option value="">Select reason…</option>
+                <option value="PRICE">Price</option>
+                <option value="WRONG_TIME">Wrong Time</option>
+                <option value="COMPETITION">Competition</option>
+              </select>
+              <ng-container *ngIf="lostReason === 'COMPETITION'">
+                <label class="pipeline-modal-label">Competitor Name</label>
+                <input type="text" class="pipeline-modal-input" [(ngModel)]="competitor" placeholder="Who won the deal?">
+              </ng-container>
+              <label class="pipeline-modal-label">Loss Notes</label>
+              <textarea class="pipeline-modal-input" [(ngModel)]="lossNotes" rows="2" placeholder="Additional details on why we lost"></textarea>
+            </ng-container>
+
+          </ng-container>
+
+        </div>
+
+        <div class="pipeline-modal-error" *ngIf="modalError" style="margin-top: 1rem;">{{ modalError }}</div>
+        
+        <div class="pipeline-modal-actions" style="margin-top: 1rem;">
+          <button class="pipeline-modal-cancel" (click)="cancelMoveModal()">Cancel</button>
+          <button class="pipeline-modal-confirm" (click)="confirmMoveModal()">Confirm Move</button>
+        </div>
       </div>
     </div>
-  </div>
+  </ng-container>
 
 </ng-container>

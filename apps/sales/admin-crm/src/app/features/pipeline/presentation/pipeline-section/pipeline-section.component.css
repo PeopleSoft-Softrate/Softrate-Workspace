@@ -83,7 +83,7 @@
 
 .pipeline-filter-input:focus,
 .pipeline-filter-select:focus {
-  border-color: var(--purple);
+  border-color: var(--accent, #3d7dfe);
 }
 
 .pipeline-filter-input {
@@ -131,7 +131,7 @@
 }
 
 .pipeline-column.drag-over {
-  border-color: var(--purple);
+  border-color: var(--accent, #3d7dfe);
   background: var(--bg-card-2);
 }
 
@@ -189,7 +189,7 @@
   width: 12px;
   height: 12px;
   border: 2px solid var(--border);
-  border-top-color: var(--purple);
+  border-top-color: var(--accent, #3d7dfe);
   border-radius: 50%;
   animation: pipeline-spin 0.8s linear infinite;
 }
@@ -213,7 +213,7 @@
 
 .pipeline-card:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border-color: var(--purple);
+  border-color: var(--accent, #3d7dfe);
 }
 
 .pipeline-card.dragging {
@@ -292,7 +292,7 @@
 }
 
 .pipeline-modal {
-  background: var(--bg-card);
+  background: var(--surface-primary, #ffffff);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1.5rem;
@@ -315,15 +315,20 @@
   margin-bottom: 0.4rem;
 }
 
+.pipeline-modal-input,
 .pipeline-modal-select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
-  background: var(--bg-card-2);
-  color: var(--text-1);
+  background: var(--surface-primary, #ffffff);
+  color: var(--text-strong, var(--text-1));
   margin-bottom: 1rem;
+}
+
+.pipeline-modal-input {
+  resize: vertical;
 }
 
 .pipeline-modal-actions {
@@ -347,7 +352,7 @@
   font-size: 0.83rem;
   border: none;
   border-radius: 8px;
-  background: var(--purple);
+  background: var(--accent, #3d7dfe);
   color: #fff;
   cursor: pointer;
   font-weight: 600;

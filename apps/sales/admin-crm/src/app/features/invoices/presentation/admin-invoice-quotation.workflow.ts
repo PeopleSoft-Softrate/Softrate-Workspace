@@ -1349,7 +1349,9 @@ export class AdminInvoiceQuotationWorkflow {
     };
     vm.invoiceIssuedAt = record.invoiceDate ? new Date(record.invoiceDate) : new Date(record.createdAt || Date.now());
     vm.invoicePaymentStatus = this.normalizeInvoicePaymentStatus(record.paymentStatus);
-    vm.invoiceAmountPaid = Number(record.amountPaid || 0);
+    vm.invoiceBaseAmountPaid = Number(record.amountPaid || 0);
+    vm.invoiceAdditionalPayment = 0;
+    vm.calculateTotalAmountPaid();
     vm.invoiceIsInclusiveGst = Boolean(record.isInclusiveGst);
     vm.invoiceItems = (record.items || []).map((item: any) => ({
       product: item.product || { name: item.name, sacHsn: item.sacHsn || '' },
@@ -1723,10 +1725,12 @@ export class AdminInvoiceQuotationWorkflow {
       })),
       isInclusiveGst: vm.invoiceIsInclusiveGst,
       amountPaid: vm.invoiceAmountPaid,
+      balanceDue: this.invoiceTotal(vm) - (vm.invoiceAmountPaid || 0),
     };
 
     if (vm.invoiceEditMode && vm.currentInvoiceRecord?._id) {
       const updatePayload = {
+        companyCode: payload.companyCode,
         items: payload.items,
         total: vm.invoiceTotal,
         subTotal: vm.invoiceSubtotal,
@@ -1735,6 +1739,7 @@ export class AdminInvoiceQuotationWorkflow {
         paymentStatus: payload.paymentStatus,
         isInclusiveGst: vm.invoiceIsInclusiveGst,
         amountPaid: vm.invoiceAmountPaid,
+        balanceDue: this.invoiceTotal(vm) - (vm.invoiceAmountPaid || 0),
       };
       this.api.put<any>(`/api/invoices/${vm.currentInvoiceRecord._id}`, updatePayload).subscribe({
         next: (res) => {

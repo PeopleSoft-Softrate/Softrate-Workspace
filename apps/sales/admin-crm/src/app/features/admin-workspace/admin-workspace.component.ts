@@ -77,6 +77,63 @@ export class AdminWorkspaceComponent extends AdminWorkspaceController {
     description: '',
   };
   dealModalSaving = false;
+  dealAmountDisplay = '';
+
+  get products() {
+    return this.settingsProducts || [];
+  }
+
+  openDealModal(lead: any): void {
+    this.dealModalLead = lead;
+    this.dealForm = {
+      dealName: '',
+      amount: 0,
+      closingDate: '',
+      description: '',
+    };
+    this.dealAmountDisplay = '';
+    this.dealModalVisible = true;
+  }
+
+  onDealAmountChange(value: string) {
+    if (!value) {
+      this.dealForm.amount = 0;
+      this.dealAmountDisplay = '';
+      return;
+    }
+    const numericValue = value.toString().replace(/[^0-9]/g, '');
+    this.dealForm.amount = numericValue ? parseInt(numericValue, 10) : 0;
+    this.dealAmountDisplay = numericValue ? Number(numericValue).toLocaleString('en-IN') : '';
+  }
+
+  closeDealModal(): void {
+    this.dealModalVisible = false;
+    this.dealModalLead = null;
+  }
+
+  saveDeal(): void {
+    if (!this.dealModalLead || !this.dealForm.dealName) return;
+
+    this.dealModalSaving = true;
+    const payload = {
+      companyCode: this.dashboardCode,
+      leadId: this.dealModalLead._id,
+      ...this.dealForm
+    };
+
+    this.api.post<any>('/api/deals', payload).subscribe({
+      next: () => {
+        this.dealModalSaving = false;
+        this.closeDealModal();
+        this.fetchAdminLeads(true);
+      },
+      error: (err: any) => {
+        console.error('Error saving deal:', err);
+        this.dealModalSaving = false;
+        alert('Failed to save deal');
+      }
+    });
+  }
 
   copyText(text: string): void {
     if (!text) return;

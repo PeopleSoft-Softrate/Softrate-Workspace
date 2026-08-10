@@ -5,6 +5,7 @@ const { companyMiddleware } = require('../../common/tenantMiddleware');
 const { logChange } = require('../../../services/historyService');
 const { invalidateLeadCaches } = require('../../../services/leadCache');
 const { pipelineToStatus } = require('./pipeline.mapper');
+const eventBus = require('../../../services/eventBus');
 
 const router = express.Router();
 router.use(companyMiddleware);
@@ -218,6 +219,8 @@ router.patch('/leads/:id/stage', async (req, res) => {
       qualificationReason,
       lostReason,
       connectionOutcome,
+      transitionData = {},
+      backwardReason,
     } = req.body;
 
     // 1. Basic required fields
@@ -230,6 +233,7 @@ router.patch('/leads/:id/stage', async (req, res) => {
 
     // 2. Load lead and verify tenant ownership
     const DealModel = req.models.Deal;
+    const HistoryModel = req.models.History;
     const deal = await DealModel.findById(id).lean();
     if (!deal) {
       return res.status(404).json({ success: false, message: 'Deal not found.' });
@@ -239,10 +243,22 @@ router.patch('/leads/:id/stage', async (req, res) => {
     }
 
     const previousStage = deal.pipelineStage;
+    const previousStageIndex = VALID_PIPELINE_STAGES.indexOf(previousStage);
+    const targetStageIndex = VALID_PIPELINE_STAGES.indexOf(targetStage);
+    const isBackward = targetStageIndex < previousStageIndex && previousStageIndex !== -1;
+
+    // Backward move validation
+    if (isBackward) {
+      if (!backwardReason) {
+        return res.status(400).json({ success: false, message: 'Reason is required when moving a deal backward.' });
+      }
+    }
+
     const newStatus = pipelineToStatus(targetStage);
     const update = {
       pipelineStage: targetStage,
       stageChangedAt: new Date(),
+      ...transitionData // Merge all transition data properties directly (or nested if preferred, but root is easier)
     };
     if (newStatus) {
       update.status = newStatus;
@@ -259,15 +275,21 @@ router.patch('/leads/:id/stage', async (req, res) => {
       update.lostReason = lostReason;
     }
 
-    // 4. NEEDS_ANALYSIS requires qualificationOutcome = QUALIFIED (already set on lead OR in this request)
-    if (targetStage === 'NEEDS_ANALYSIS') {
-      const effectiveQualification = qualificationOutcome || deal.qualificationOutcome;
-      if (effectiveQualification !== 'QUALIFIED') {
-        return res.status(422).json({
-          success: false,
-          message: 'Cannot move to Needs Analysis: deal must be Qualified first. Set qualificationOutcome to QUALIFIED at the Qualification stage.',
-        });
+    // Forward Validation
+    if (!isBackward) {
+      // 4. NEEDS_ANALYSIS requires qualificationOutcome = QUALIFIED (already set on lead OR in this request)
+      if (targetStage === 'NEEDS_ANALYSIS') {
+        const effectiveQualification = qualificationOutcome || deal.qualificationOutcome;
+        if (effectiveQualification !== 'QUALIFIED') {
+          return res.status(422).json({
+            success: false,
+            message: 'Cannot move to Needs Analysis: deal must be Qualified first. Set qualificationOutcome to QUALIFIED at the Qualification stage.',
+          });
+        }
       }
+
+      // We could add more explicit validations for other stages here based on transitionData
+      // For now, if it's sent from the frontend modal, it's included in transitionData.
     }
 
     // 5. If qualificationOutcome is being set, validate it
@@ -310,13 +332,22 @@ router.patch('/leads/:id/stage', async (req, res) => {
 
     // 8. Log to history
     const historyDetails = [];
+    if (isBackward) historyDetails.push(`Moved Backward Reason: ${backwardReason}`);
     if (qualificationOutcome) historyDetails.push(`qualificationOutcome: ${qualificationOutcome}`);
     if (qualificationReason) historyDetails.push(`qualificationReason: ${qualificationReason}`);
     if (lostReason) historyDetails.push(`lostReason: ${lostReason}`);
     if (connectionOutcome) historyDetails.push(`connectionOutcome: ${connectionOutcome}`);
 
+    // Add some keys from transitionData for context in history
+    if (transitionData.customerNeed) historyDetails.push(`Customer Need: ${transitionData.customerNeed}`);
+    if (transitionData.proposedSolution) historyDetails.push(`Solution: ${transitionData.proposedSolution}`);
+    if (transitionData.quoteAmount) historyDetails.push(`Quote Amount: ${transitionData.quoteAmount}`);
+    if (transitionData.dealCloseAmount) historyDetails.push(`Deal Close Amount: ${transitionData.dealCloseAmount}`);
+    if (transitionData.advancePaid) historyDetails.push(`Advance Paid: ${transitionData.advancePaid}`);
+    if (transitionData.finalAmount) historyDetails.push(`Final Amount: ${transitionData.finalAmount}`);
+
     await logChange({
-      HistoryModel: History,
+      HistoryModel: HistoryModel,
       companyCode: updatedLead.companyCode,
       contactNumber: updatedLead.contactNumber,
       contactName: updatedLead.contactName,
@@ -324,12 +355,14 @@ router.patch('/leads/:id/stage', async (req, res) => {
       action: 'Pipeline Stage Changed',
       oldValue: previousStage,
       newValue: targetStage,
-      details: historyDetails.length ? historyDetails.join('; ') : undefined,
+      details: historyDetails.length ? historyDetails.join(' | ') : undefined,
       changedBy: updatedLead.assignedEmployeeId,
     });
 
     // 9. Invalidate caches
     await invalidateLeadCaches({ companyCode, employeeId: updatedLead.assignedEmployeeId });
+
+    eventBus.emitToCompany(companyCode, { type: 'PIPELINE_REFRESH' });
 
     return res.status(200).json({ success: true, lead: updatedLead });
   } catch (err) {

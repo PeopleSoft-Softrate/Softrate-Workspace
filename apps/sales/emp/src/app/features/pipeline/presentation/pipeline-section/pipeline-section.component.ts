@@ -11,6 +11,7 @@ import {
   PipelineDeal,
   PipelineStageCode,
   daysInStage,
+  PIPELINE_STAGE_ORDER,
 } from '../../domain/pipeline.model';
 import { PipelineSectionViewModel } from '../../state/pipeline-section.viewmodel';
 
@@ -84,12 +85,31 @@ export class PipelineSectionComponent extends EmployeeWorkspaceSectionProxy impl
 
   // ── Infinite Scroll ──────────────────────────────────────────────
   onColumnScroll(event: Event, stage: PipelineStageCode, hasMore: boolean): void {
-    if (!hasMore) return;
-    const target = event.target as HTMLElement;
-    
-    // Check if scrolled near the bottom (within 50px)
-    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 50) {
+    const el = event.target as HTMLElement;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+    if (isAtBottom && hasMore) {
       this.pipelineVm.loadMoreColumn(stage);
+    }
+  }
+
+  viewCompanyProfile(deal: PipelineDeal): void {
+    if (!this.vm) return;
+    const vm = this.vm as any;
+
+    let fullLead = vm.allLeads?.find((l: any) => l._id === deal.leadId);
+    if (!fullLead) {
+      fullLead = {
+        _id: deal.leadId,
+        leadCompanyName: deal.leadCompanyName,
+        contactName: deal.contactName,
+        contactNumber: deal.contactNumber,
+        companyCode: deal.companyCode,
+        assignedEmployeeId: deal.assignedEmployeeId
+      };
+    }
+
+    if (vm.openCompanyFullViewForLeadContext) {
+      vm.openCompanyFullViewForLeadContext(fullLead);
     }
   }
 
@@ -154,109 +174,244 @@ export class PipelineSectionComponent extends EmployeeWorkspaceSectionProxy impl
 
     if (!lead || lead.pipelineStage === targetStage) return;
 
-    const companyCode: string = (this.vm as any).companyCode || (this.vm as any).dashboardCode || '';
-
-    // Qualification stage: require outcome modal when leaving QUALIFICATION
-    if (lead.pipelineStage === 'QUALIFICATION' && targetStage === 'NEEDS_ANALYSIS') {
-      this.openQualModal(lead, targetStage, companyCode);
-      return;
-    }
-
-    // Closed Lost: require reason modal
-    if (targetStage === 'CLOSED_LOST') {
-      this.openLostModal(lead, targetStage, companyCode);
-      return;
-    }
-
-    // All other moves — proceed directly
-    this.pipelineVm.moveStage(lead, { companyCode, targetStage });
+    this.initiateStageMove(lead, targetStage);
   }
 
-  // ── Qualification Modal ────────────────────────────────────────
-  showQualModal = false;
-  qualModalOutcome: string = '';
-  qualModalReason: string = '';
-  qualModalError: string = '';
-  private qualModalContext: { lead: PipelineDeal; targetStage: PipelineStageCode; companyCode: string } | null = null;
-
-  private openQualModal(lead: PipelineDeal, targetStage: PipelineStageCode, companyCode: string): void {
-    this.qualModalContext = { lead, targetStage, companyCode };
-    this.qualModalOutcome = '';
-    this.qualModalReason = '';
-    this.qualModalError = '';
-    this.showQualModal = true;
+  onManualStageChange(lead: PipelineDeal, targetStage: PipelineStageCode): void {
+    if (!lead || lead.pipelineStage === targetStage) return;
+    this.initiateStageMove(lead, targetStage);
   }
 
-  cancelQualModal(): void {
-    this.showQualModal = false;
-    this.qualModalContext = null;
+  private initiateStageMove(lead: PipelineDeal, targetStage: PipelineStageCode): void {
+    const companyCode: string = lead.companyCode || (this.vm as any).companyCode || (this.vm as any).dashboardCode || '';
+    
+    // Reset modal form state
+    this.resetModalForm();
+    
+    // Check direction
+    const currentOrder = PIPELINE_STAGE_ORDER[lead.pipelineStage] || 0;
+    const targetOrder = PIPELINE_STAGE_ORDER[targetStage] || 0;
+    this.isBackwardMove = targetOrder < currentOrder;
+
+    this.pipelineVm.requestStageMove(lead, targetStage, companyCode);
   }
 
-  confirmQualModal(): void {
-    this.qualModalError = '';
-    if (!this.qualModalOutcome) {
-      this.qualModalError = 'Please select an outcome.';
-      return;
+  // ── Unified Move to Stage Modal ────────────────────────────────
+  isBackwardMove = false;
+  modalError = '';
+  
+  // Backward fields
+  backwardReason = '';
+
+  // Standard fields
+  qualOutcome = '';
+  qualReason = '';
+  lostReason = '';
+  
+  // Transition Data fields
+  qualNotes = '';
+  customerNeed = '';
+  painPoint = '';
+  proposedSolution = '';
+  keyBenefits = '';
+  quoteAmount: number | null = null;
+  proposalSentDate = '';
+  negotiationNotes = '';
+  expectedCloseDate = '';
+  dealCloseAmount: number | null = null;
+  advancePaid = '';
+  finalAmount: number | null = null;
+  wonNotes = '';
+  lossNotes = '';
+  competitor = '';
+
+  resetModalForm(): void {
+    this.modalError = '';
+    this.backwardReason = '';
+    this.qualOutcome = '';
+    this.qualReason = '';
+    this.lostReason = '';
+    this.qualNotes = '';
+    this.customerNeed = '';
+    this.painPoint = '';
+    this.proposedSolution = '';
+    this.keyBenefits = '';
+    this.quoteAmount = null;
+    this.proposalSentDate = '';
+    this.negotiationNotes = '';
+    this.expectedCloseDate = '';
+    this.dealCloseAmount = null;
+    this.advancePaid = '';
+    this.finalAmount = null;
+    this.wonNotes = '';
+    this.lossNotes = '';
+    this.competitor = '';
+  }
+
+  cancelMoveModal(): void {
+    this.pipelineVm.cancelStageMove();
+  }
+
+  generateProposal(): void {
+    const modalState = this.pipelineVm.state.moveModal;
+    if (!this.vm || !modalState.lead) return;
+    const deal = modalState.lead;
+
+    this.confirmMoveModal();
+    if (this.modalError) return;
+
+    // Map deal to full lead for the proposal generator
+    let fullLead: any = (this.vm.allLeads || []).find((l: any) => l._id === deal.leadId);
+    if (!fullLead) {
+      fullLead = {
+        _id: deal.leadId,
+        leadCompanyName: deal.leadCompanyName,
+        contactName: deal.contactName,
+        contactNumber: deal.contactNumber,
+        companyCode: deal.companyCode,
+        assignedEmployeeId: deal.assignedEmployeeId
+      };
     }
-    if (this.qualModalOutcome === 'NOT_QUALIFIED' && !this.qualModalReason) {
-      this.qualModalError = 'Please select a reason for Not Qualified.';
-      return;
+    
+    // Open the proposal modal via the main viewmodel
+    if (typeof this.vm.openProposalModal === 'function') {
+      this.vm.openProposalModal(fullLead);
     }
-    if (this.qualModalOutcome === 'NOT_QUALIFIED') {
-      // Not qualified: stay on QUALIFICATION stage, just save outcome+reason
-      const ctx = this.qualModalContext!;
-      this.pipelineVm.moveStage(ctx.lead, {
-        companyCode: ctx.companyCode,
+  }
+
+  generateQuotation(): void {
+    const modalState = this.pipelineVm.state.moveModal;
+    if (!this.vm || !modalState.lead) return;
+    const deal = modalState.lead;
+    
+    this.confirmMoveModal();
+    if (this.modalError) return;
+
+    let fullLead: any = (this.vm.allLeads || []).find((l: any) => l._id === deal.leadId);
+    if (!fullLead) {
+      fullLead = {
+        _id: deal.leadId,
+        leadCompanyName: deal.leadCompanyName,
+        contactName: deal.contactName,
+        contactNumber: deal.contactNumber,
+        companyCode: deal.companyCode,
+        assignedEmployeeId: deal.assignedEmployeeId
+      };
+    }
+    
+    if (typeof this.vm.openQuotationModal === 'function') {
+      this.vm.openQuotationModal(fullLead);
+    }
+  }
+
+  generateInvoice(): void {
+    const modalState = this.pipelineVm.state.moveModal;
+    if (!this.vm || !modalState.lead) return;
+    const deal = modalState.lead;
+    
+    this.confirmMoveModal();
+    if (this.modalError) return;
+
+    let fullLead: any = (this.vm.allLeads || []).find((l: any) => l._id === deal.leadId);
+    if (!fullLead) {
+      fullLead = {
+        _id: deal.leadId,
+        leadCompanyName: deal.leadCompanyName,
+        contactName: deal.contactName,
+        contactNumber: deal.contactNumber,
+        companyCode: deal.companyCode,
+        assignedEmployeeId: deal.assignedEmployeeId
+      };
+    }
+    
+    if (typeof (this.vm as any).openInvoiceModal === 'function') {
+      (this.vm as any).openInvoiceModal(fullLead);
+    } else if (typeof (this.vm as any).openAdminInvoiceModal === 'function') {
+      (this.vm as any).openAdminInvoiceModal(fullLead);
+    }
+  }
+
+  viewLead(lead: PipelineDeal): void {
+    if (this.vm?.openCompanyFullViewForLeadContext) {
+      this.vm.openCompanyFullViewForLeadContext(lead);
+    }
+  }
+
+  confirmMoveModal(): void {
+    this.modalError = '';
+    const state = this.pipelineVm.state.moveModal;
+    if (!state.open || !state.lead || !state.targetStage) return;
+
+    const targetStage = state.targetStage;
+
+    if (this.isBackwardMove) {
+      if (!this.backwardReason.trim()) {
+        this.modalError = 'Please provide a reason for moving backward.';
+        return;
+      }
+    } else {
+      // Forward validation based on target stage
+      if (targetStage === 'NEEDS_ANALYSIS' && state.lead.pipelineStage === 'QUALIFICATION') {
+        if (!this.qualOutcome) {
+          this.modalError = 'Please select a qualification outcome.';
+          return;
+        }
+        if (this.qualOutcome === 'NOT_QUALIFIED' && !this.qualReason) {
+          this.modalError = 'Please select a reason for Not Qualified.';
+          return;
+        }
+      }
+
+      if (targetStage === 'CLOSED_LOST' && !this.lostReason) {
+        this.modalError = 'Please select a lost reason.';
+        return;
+      }
+      
+      if (targetStage === 'PROPOSAL_QUOTE') {
+        if (!this.quoteAmount || !this.proposalSentDate) {
+          this.modalError = 'Please enter Quote Amount and Proposal Sent Date.';
+          return;
+        }
+      }
+    }
+
+    if (this.qualOutcome === 'NOT_QUALIFIED') {
+      // If moving to Needs Analysis but they select NOT_QUALIFIED, we actually keep them in QUALIFICATION
+      // and just update the reason.
+      this.pipelineVm.confirmStageMove({
+        companyCode: state.companyCode,
         targetStage: 'QUALIFICATION',
         qualificationOutcome: 'NOT_QUALIFIED',
-        qualificationReason: this.qualModalReason as any,
+        qualificationReason: this.qualReason as any,
+        transitionData: { qualificationNotes: this.qualNotes }
       });
-      this.showQualModal = false;
-      this.qualModalContext = null;
       return;
     }
-    // QUALIFIED: proceed to target stage
-    const ctx = this.qualModalContext!;
-    this.pipelineVm.moveStage(ctx.lead, {
-      companyCode: ctx.companyCode,
-      targetStage: ctx.targetStage,
-      qualificationOutcome: 'QUALIFIED',
+
+    this.pipelineVm.confirmStageMove({
+      companyCode: state.companyCode,
+      targetStage,
+      isBackward: this.isBackwardMove,
+      backwardReason: this.backwardReason,
+      qualificationOutcome: this.qualOutcome ? (this.qualOutcome as any) : undefined,
+      lostReason: this.lostReason ? (this.lostReason as any) : undefined,
+      transitionData: {
+        qualificationNotes: this.qualNotes,
+        customerNeed: this.customerNeed,
+        painPoint: this.painPoint,
+        proposedSolution: this.proposedSolution,
+        keyBenefits: this.keyBenefits,
+        quoteAmount: this.quoteAmount || undefined,
+        proposalSentDate: this.proposalSentDate,
+        dealCloseAmount: this.dealCloseAmount || undefined,
+        advancePaid: this.advancePaid || undefined,
+        negotiationNotes: this.negotiationNotes,
+        expectedCloseDate: this.expectedCloseDate,
+        finalAmount: this.finalAmount || undefined,
+        wonNotes: this.wonNotes,
+        lossNotes: this.lossNotes,
+        competitor: this.competitor
+      }
     });
-    this.showQualModal = false;
-    this.qualModalContext = null;
-  }
-
-  // ── Closed Lost Modal ──────────────────────────────────────────
-  showLostModal = false;
-  lostModalReason: string = '';
-  lostModalError: string = '';
-  private lostModalContext: { lead: PipelineDeal; targetStage: PipelineStageCode; companyCode: string } | null = null;
-
-  private openLostModal(lead: PipelineDeal, targetStage: PipelineStageCode, companyCode: string): void {
-    this.lostModalContext = { lead, targetStage, companyCode };
-    this.lostModalReason = '';
-    this.lostModalError = '';
-    this.showLostModal = true;
-  }
-
-  cancelLostModal(): void {
-    this.showLostModal = false;
-    this.lostModalContext = null;
-  }
-
-  confirmLostModal(): void {
-    this.lostModalError = '';
-    if (!this.lostModalReason) {
-      this.lostModalError = 'Please select a lost reason.';
-      return;
-    }
-    const ctx = this.lostModalContext!;
-    this.pipelineVm.moveStage(ctx.lead, {
-      companyCode: ctx.companyCode,
-      targetStage: ctx.targetStage,
-      lostReason: this.lostModalReason as any,
-    });
-    this.showLostModal = false;
-    this.lostModalContext = null;
   }
 }

@@ -67,7 +67,7 @@ interface CompanyFullViewProfile {
   createdAt?: string;
 }
 
-type CompanyFullSection = 'overview' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'alternate' | 'notes';
+type CompanyFullSection = 'overview' | 'pipeline' | 'followups' | 'remarks' | 'invoices' | 'quotations' | 'alternate' | 'notes';
 
 const DEFAULT_QUOTATION_KIND_NOTE = 'We aim to provide the best software to automate your business with high quality at affordable cost.';
 const DEFAULT_QUOTATION_TERMS = [
@@ -565,7 +565,13 @@ export abstract class AdminWorkspaceController implements OnInit {
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
   invoicePaymentStatus: 'paid' | 'unpaid' = 'unpaid';
+  invoiceBaseAmountPaid = 0;
+  invoiceAdditionalPayment = 0;
   invoiceAmountPaid = 0;
+  
+  calculateTotalAmountPaid(): void {
+    this.invoiceAmountPaid = this.invoiceBaseAmountPaid + (this.invoiceAdditionalPayment || 0);
+  }
   invoiceIsInclusiveGst = false;
   currentQuotationNumber = '';
   quotationKindNoteDraft = DEFAULT_QUOTATION_KIND_NOTE;
@@ -606,6 +612,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
+    { id: 'pipeline', label: 'Pipeline' },
     { id: 'followups', label: 'Schedule / Follow-up' },
     { id: 'remarks', label: 'Overall History' },
     { id: 'invoices', label: 'Invoice History' },
@@ -616,6 +623,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullLoading = false;
   companyFullProfileLoading = false;
   companyFullHistoryLoading = false;
+  companyFullDealsLoading = false;
   companyFullInvoiceLoading = false;
   companyFullQuotationLoading = false;
   companyFullFollowupLoading = false;
@@ -625,6 +633,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullFollowupSaving = false;
   companyFullProfileError = '';
   companyFullHistoryError = '';
+  companyFullDealsError = '';
   companyFullInvoiceError = '';
   companyFullQuotationError = '';
   companyFullRemarkError = '';
@@ -640,6 +649,10 @@ export abstract class AdminWorkspaceController implements OnInit {
     notes: [],
   };
   companyFullHistoryLogs: any[] = [];
+  companyFullDeals: any[] = [];
+  get companyFullPipelineHistoryLogs(): any[] {
+    return this.companyFullHistoryLogs.filter((log) => log.action === 'Pipeline Stage Changed');
+  }
   companyFullRemarksHistory: any[] = [];
   companyFullInvoiceItems: any[] = [];
   companyFullQuotationItems: any[] = [];
@@ -1330,7 +1343,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     private aiBriefService: AiBriefService,
     private crmService: CrmService,
     private ticketService: TicketService,
-    private api: ApiService,
+    protected api: ApiService,
     private dashboardCache: DashboardCacheService,
     protected authPaymentWorkflow: AdminAuthPaymentWorkflow,
     protected invoiceQuotationWorkflow: AdminInvoiceQuotationWorkflow,
@@ -5364,13 +5377,17 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this.companyFullViewLead();
   }
 
-  private async openCompanyFullViewForLeadContext(sourceLead: Lead, initialSection: CompanyFullSection = 'overview'): Promise<void> {
+  async openCompanyFullViewForLeadContext(sourceLead: Lead | any, initialSection: CompanyFullSection = 'overview'): Promise<void> {
     this.closeAdminAiSummary();
     this.companyRemarkLead = null;
     this.clearCompanyFullRemarkMenuClose();
-    this.companyFullContextLead = { ...sourceLead };
+    
+    // Find the full lead object if we only have a partial one
+    const allLeads = this.allLeads || [];
+    const fullLead = allLeads.find(l => l._id === sourceLead._id) || sourceLead;
+    this.companyFullContextLead = { ...fullLead };
 
-    const companyName = String(sourceLead.leadCompanyName || '').trim();
+    const companyName = String(fullLead.leadCompanyName || '').trim();
     if (companyName) {
       if (this.dashTab === 'followups') {
         this.selectedGlobalFollowupCompany = companyName;
@@ -6075,12 +6092,14 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.companyFullInvoiceLoading = false;
     this.companyFullQuotationLoading = false;
     this.companyFullFollowupLoading = false;
+    this.companyFullDealsLoading = false;
     this.companyFullProfileError = '';
     this.companyFullHistoryError = '';
     this.companyFullInvoiceError = '';
     this.companyFullQuotationError = '';
     this.companyFullRemarkError = '';
     this.companyFullFollowupError = '';
+    this.companyFullDealsError = '';
     this.companyFullProfile = {
       leadCompanyName: '',
       alternatePhone: '',
@@ -6096,6 +6115,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.companyFullInvoiceItems = [];
     this.companyFullQuotationItems = [];
     this.companyFullFollowups = [];
+    this.companyFullDeals = [];
     this.companyFullRows = [];
     this.companyFullAlternatePhone = '';
     this.companyFullAlternateEmail = '';
@@ -6127,6 +6147,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.companyFullInvoiceLoading = true;
     this.companyFullQuotationLoading = true;
     this.companyFullFollowupLoading = true;
+    this.companyFullDealsLoading = true;
 
     const companyQuery = this.buildApiQueryString({
       companyCode,
@@ -6158,12 +6179,14 @@ export abstract class AdminWorkspaceController implements OnInit {
       paginated: true,
     });
 
-    const [profileResult, historyResult, invoiceResult, quotationResult, followupResult] = await Promise.allSettled([
+    const [profileResult, historyResult, invoiceResult, quotationResult, followupResult, dealsResult, leadFetchResult] = await Promise.allSettled([
       firstValueFrom(this.api.get<any>(`/api/leads/company-profile?${companyQuery}`)),
       firstValueFrom(this.api.get<any>(`/api/history?${historyQuery}`)),
       firstValueFrom(this.api.get<any>(`/api/invoices?${invoiceQuery}`)),
       firstValueFrom(this.api.get<any>(`/api/quotations?${quotationQuery}`)),
       firstValueFrom(this.api.get<any>(`/api/bookmarks/admin?${followupQuery}`)),
+      firstValueFrom(this.api.get<any>(`/api/deals?leadId=${lead?._id || ''}`)),
+      lead?._id ? firstValueFrom(this.api.get<any>(`/api/leads/${lead._id}?companyCode=${companyCode}`)) : Promise.resolve({ success: false }),
     ]);
 
     if (profileResult.status === 'fulfilled') {
@@ -6172,6 +6195,11 @@ export abstract class AdminWorkspaceController implements OnInit {
       this.companyFullProfileError = 'Failed to load alternate info.';
     }
     this.companyFullProfileLoading = false;
+
+    // Merge full lead data if it was fetched successfully
+    if (leadFetchResult.status === 'fulfilled' && leadFetchResult.value?.success && leadFetchResult.value?.lead) {
+      this.companyFullContextLead = { ...this.companyFullContextLead, ...leadFetchResult.value.lead };
+    }
 
     if (historyResult.status === 'fulfilled') {
       const logs = Array.isArray(historyResult.value?.logs) ? historyResult.value.logs : [];
@@ -6254,7 +6282,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   }
 
   private isCompanyRemarkHistoryLog(log: any): boolean {
-    return String(log?.action || '').toLowerCase().includes('remark');
+    const action = String(log?.action || '');
+    return action.toLowerCase().includes('remark') || action === 'Pipeline Stage Changed';
   }
 
   private isCompanyFollowupHistoryLog(log: any): boolean {

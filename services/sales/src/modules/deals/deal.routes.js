@@ -1,25 +1,44 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Deal = require('../../../models/Deal');
-const Lead = require('../../../models/Lead');
-const History = require('../../../models/History');
-const { companyMiddleware } = require('../../common/tenantMiddleware');
+
+const { tenantMiddleware } = require('../../common/tenantMiddleware');
 const { logChange } = require('../../../services/historyService');
+const eventBus = require('../../../services/eventBus');
 
 const router = express.Router();
-router.use(companyMiddleware);
+router.use(tenantMiddleware);
+
+// ── GET /api/deals ───────────────────────────────────────────────
+router.get('/', async (req, res) => {
+  try {
+    const companyCode = req.tenant.companyCode;
+    const { leadId } = req.query;
+
+    if (!leadId) {
+      return res.status(400).json({ success: false, message: 'leadId is required' });
+    }
+
+    const deals = await req.models.Deal.find({ companyCode, leadId }).sort({ createdAt: -1 });
+
+    return res.status(200).json({ success: true, data: deals });
+  } catch (error) {
+    console.error('Get deals error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 // ── POST /api/deals ──────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { companyCode, user } = req;
+    const companyCode = req.tenant.companyCode;
+    const user = req.employee;
     const { leadId, dealName, amount, closingDate, description } = req.body;
 
     if (!leadId || !dealName) {
       return res.status(400).json({ success: false, message: 'leadId and dealName are required' });
     }
 
-    const lead = await Lead.findOne({ _id: leadId, companyCode });
+    const lead = await req.models.Lead.findOne({ _id: leadId, companyCode });
     if (!lead) {
       return res.status(404).json({ success: false, message: 'Lead not found' });
     }
@@ -30,7 +49,7 @@ router.post('/', async (req, res) => {
         initialStage = 'QUALIFICATION'; // Default for a new deal if lead isn't already deep in the pipeline
     }
 
-    const deal = new Deal({
+    const deal = new req.models.Deal({
       companyCode,
       leadId: lead._id,
       assignedEmployeeId: lead.assignedEmployeeId,
@@ -57,6 +76,8 @@ router.post('/', async (req, res) => {
     await deal.save();
 
     await logChange(companyCode, lead._id, 'DEAL_CREATED', 'New deal added: ' + dealName, req.user);
+
+    eventBus.emitToCompany(companyCode, { type: 'PIPELINE_REFRESH' });
 
     return res.status(201).json({ success: true, data: deal });
   } catch (error) {

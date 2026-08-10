@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { AdminWorkspaceComponent } from '../../admin-workspace.component';
+import { AdminWorkspaceComponent } from '../../admin-workspace.component';
 import { CompanyTimelineComponent } from '../../../../shared/ui/company-timeline/company-timeline.component';
 import { ActivitiesCalendarComponent } from '../../../../shared/ui/activities-calendar/activities-calendar.component';
 import { ProposalGeneratorModalComponent } from '../proposal-generator-modal/proposal-generator-modal.component';

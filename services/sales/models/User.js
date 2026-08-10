@@ -122,7 +122,6 @@ const userSchema = new mongoose.Schema(
         'Not Interested',
         'DNP / Not Reachable',
         'Busy',
-        'Switch off',
         'Invalid'
       ],
     },

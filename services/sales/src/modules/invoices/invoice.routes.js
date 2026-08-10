@@ -5,6 +5,7 @@ const Invoice = require('../../../models/Invoice');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
 const Employee = require('../../../models/Employee');
+const eventBus = require('../../../services/eventBus');
 const { getClientByClientId, ensureClientForLead, mapClient } = require('../../../services/clientService');
 const { normalizeText } = require('../../../services/leadNormalization');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
@@ -378,6 +379,15 @@ router.post('/', async (req, res) => {
       throw lastError; // Exhausted retries
     }
 
+    if (req.body.dealId) {
+      try {
+        await req.models.Deal.updateOne({ _id: req.body.dealId }, { $set: { amount: invoice.total } });
+        eventBus.emitToCompany(companyCode, { type: 'PIPELINE_REFRESH' });
+      } catch (dealErr) {
+        console.error('Failed to update deal amount from invoice create:', dealErr);
+      }
+    }
+
     return res.status(201).json({ success: true, invoice: serializeInvoice(invoice, req) });
   } catch (err) {
     console.error('Create invoice error:', err);
@@ -412,6 +422,15 @@ router.put('/:id', async (req, res) => {
     
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Invoice not found.' });
+    }
+
+    if (req.body.dealId) {
+      try {
+        await req.models.Deal.updateOne({ _id: req.body.dealId }, { $set: { amount: invoice.total } });
+        eventBus.emitToCompany(updatePayload.companyCode || invoice.companyCode, { type: 'PIPELINE_REFRESH' });
+      } catch (dealErr) {
+        console.error('Failed to update deal amount from invoice update:', dealErr);
+      }
     }
 
     if (!invoice.publicToken) {

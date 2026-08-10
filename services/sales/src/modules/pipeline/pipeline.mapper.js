@@ -14,7 +14,6 @@ function statusToPipeline(status) {
     case 'Invalid':
     case 'DNP / Not Reachable':
     case 'Busy':
-    case 'Switch off':
       return { pipelineStage: 'CLOSED_LOST' };
     default:
       return {};

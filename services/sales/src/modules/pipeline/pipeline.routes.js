@@ -16,8 +16,7 @@ const VALID_PIPELINE_STAGES = [
   'NEEDS_ANALYSIS', 'VALUE_PROPOSITION', 'PROPOSAL_QUOTE',
   'NEGOTIATION_REVIEW', 'CLOSED_WON', 'CLOSED_LOST',
 ];
-
-const VALID_CONNECTION_OUTCOMES = ['NOT_CONNECTED', 'DNR', 'BUSY', 'SWITCH_OFF', 'NOT_REACHABLE'];
+const VALID_CONNECTION_OUTCOMES = ['NOT_CONNECTED', 'DNR', 'BUSY', 'NOT_REACHABLE'];
 const VALID_QUALIFICATION_OUTCOMES = ['QUALIFIED', 'NOT_QUALIFIED'];
 const VALID_QUALIFICATION_REASONS = ['NOT_INTERESTED', 'INVALID'];
 const VALID_LOST_REASONS = ['PRICE', 'WRONG_TIME', 'COMPETITION'];
@@ -63,6 +62,23 @@ function buildBoardMatchQuery(companyCode, filters = {}) {
       { contactNumber: searchRx },
     ];
   }
+  
+  if (filters.dateFilter) {
+    const now = new Date();
+    if (filters.dateFilter === 'last1week') {
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      query.createdAt = { $gte: oneWeekAgo };
+    } else if (filters.dateFilter === 'last30days') {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      query.createdAt = { $gte: thirtyDaysAgo };
+    } else if (filters.dateFilter === 'monthYear' && filters.month && filters.year) {
+      const month = parseInt(filters.month, 10) - 1; // 0-indexed
+      const year = parseInt(filters.year, 10);
+      const startOfMonth = new Date(year, month, 1);
+      const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      query.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+    }
+  }
   if (filters.stage && VALID_PIPELINE_STAGES.includes(filters.stage)) {
     query.pipelineStage = filters.stage;
   }
@@ -84,6 +100,9 @@ router.get('/board', async (req, res) => {
       connectionOutcome: req.query.connectionOutcome || '',
       qualificationOutcome: req.query.qualificationOutcome || '',
       search: req.query.search || '',
+      dateFilter: req.query.dateFilter || '',
+      month: req.query.month || '',
+      year: req.query.year || ''
     };
 
     const matchQuery = buildBoardMatchQuery(companyCode, filters);
@@ -177,6 +196,9 @@ router.get('/board/column', async (req, res) => {
       connectionOutcome: req.query.connectionOutcome || '',
       qualificationOutcome: req.query.qualificationOutcome || '',
       search: req.query.search || '',
+      dateFilter: req.query.dateFilter || '',
+      month: req.query.month || '',
+      year: req.query.year || '',
       stage,
     };
 
@@ -246,6 +268,11 @@ router.patch('/leads/:id/stage', async (req, res) => {
     const previousStageIndex = VALID_PIPELINE_STAGES.indexOf(previousStage);
     const targetStageIndex = VALID_PIPELINE_STAGES.indexOf(targetStage);
     const isBackward = targetStageIndex < previousStageIndex && previousStageIndex !== -1;
+
+    // Prevent moving from Closed Won to Closed Lost
+    if (previousStage === 'CLOSED_WON' && targetStage === 'CLOSED_LOST') {
+      return res.status(400).json({ success: false, message: 'Cannot move a deal from Closed Won to Closed Lost.' });
+    }
 
     // Backward move validation
     if (isBackward) {

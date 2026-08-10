@@ -135,6 +135,11 @@ export class PipelineSectionViewModel {
   // ── Unified Move to Stage Modal ────────────────────────────────
   requestStageMove(lead: PipelineDeal, targetStage: PipelineStageCode, companyCode: string): void {
     if (lead.pipelineStage === targetStage) return;
+    if (lead.pipelineStage === 'CLOSED_WON' && targetStage === 'CLOSED_LOST') {
+      this.patch({ error: 'Deals in Closed Won cannot be moved to Closed Lost.' });
+      setTimeout(() => this.patch({ error: '' }), 4000);
+      return;
+    }
     this.patch({
       moveModal: {
         open: true,

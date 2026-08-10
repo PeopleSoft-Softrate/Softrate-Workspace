@@ -5276,9 +5276,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     }
   }
 
-  openQuotationModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openQuotationModal(this, lead); }
+  openQuotationModal(lead: Lead, amount?: number): void { return this.invoiceQuotationWorkflow.openQuotationModal(this, lead, amount); }
 
-  openAdminInvoiceModal(lead: Lead): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModal(this, lead); }
+  openAdminInvoiceModal(lead: Lead, amount?: number): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModal(this, lead, amount); }
 
   openAdminInvoiceModalForClient(client: any): void { return this.invoiceQuotationWorkflow.openAdminInvoiceModalForClient(this, client); }
 

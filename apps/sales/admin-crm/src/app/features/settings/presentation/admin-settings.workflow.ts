@@ -462,7 +462,6 @@ export class AdminSettingsWorkflow {
       'Not Interested',
       'DNP / Not Reachable',
       'Busy',
-      'Switch off',
       'Invalid'
     ];
     if (protectedStatuses.includes(status)) {

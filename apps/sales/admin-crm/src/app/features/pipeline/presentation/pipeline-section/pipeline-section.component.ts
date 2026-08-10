@@ -65,7 +65,26 @@ export class PipelineSectionComponent extends AdminWorkspaceSectionProxy impleme
     owner: '',
     connectionOutcome: '',
     qualificationOutcome: '',
+    dateFilter: '',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
   };
+
+  months = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+  ];
+  years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
   private filterDebounce?: ReturnType<typeof setTimeout>;
 
@@ -297,7 +316,10 @@ export class PipelineSectionComponent extends AdminWorkspaceSectionProxy impleme
     }
     
     if (typeof this.vm.openQuotationModal === 'function') {
-      this.vm.openQuotationModal(fullLead);
+      const amount = this.quoteAmount || fullLead.amount;
+      fullLead.dealName = deal.dealName;
+      fullLead.dealId = deal._id;
+      this.vm.openQuotationModal(fullLead, amount);
     }
   }
 
@@ -322,9 +344,15 @@ export class PipelineSectionComponent extends AdminWorkspaceSectionProxy impleme
     }
     
     if (typeof (this.vm as any).openInvoiceModal === 'function') {
-      (this.vm as any).openInvoiceModal(fullLead);
+      const amount = this.dealCloseAmount || fullLead.amount;
+      fullLead.dealName = deal.dealName;
+      fullLead.dealId = deal._id;
+      (this.vm as any).openInvoiceModal(fullLead, amount);
     } else if (typeof (this.vm as any).openAdminInvoiceModal === 'function') {
-      (this.vm as any).openAdminInvoiceModal(fullLead);
+      const amount = this.dealCloseAmount || fullLead.amount;
+      fullLead.dealName = deal.dealName;
+      fullLead.dealId = deal._id;
+      (this.vm as any).openAdminInvoiceModal(fullLead, amount);
     }
   }
 

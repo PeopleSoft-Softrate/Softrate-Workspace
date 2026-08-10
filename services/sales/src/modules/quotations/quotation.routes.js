@@ -4,6 +4,7 @@ const Quotation = require('../../../models/Quotation');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
 const Employee = require('../../../models/Employee');
+const eventBus = require('../../../services/eventBus');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
 
 const { companyMiddleware } = require('../../common/tenantMiddleware');
@@ -170,6 +171,15 @@ router.post('/', async (req, res) => {
 
     if (!quotation) {
       throw lastError;
+    }
+
+    if (req.body.dealId) {
+      try {
+        await req.models.Deal.updateOne({ _id: req.body.dealId }, { $set: { amount: quotation.total } });
+        eventBus.emitToCompany(companyCode, { type: 'PIPELINE_REFRESH' });
+      } catch (dealErr) {
+        console.error('Failed to update deal amount from quotation create:', dealErr);
+      }
     }
 
     return res.status(201).json({ success: true, quotation });

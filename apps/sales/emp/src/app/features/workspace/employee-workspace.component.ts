@@ -1817,7 +1817,6 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     'Not Interested',
     'DNP / Not Reachable',
     'Busy',
-    'Switch off',
     'Invalid'
   ];
   INTERESTED_PAGE_STATUSES: string[] = ['Follow Up'];
@@ -2073,7 +2072,7 @@ invoiceSeal: string = '';
   quotationTransferLoading = false;
   transferredQuotationRecord: QuotationRecord | null = null;
 
-  openInvoiceModal(lead: any): void {
+  openInvoiceModal(lead: any, amount?: number): void {
     this.quoteMode = false;
     this.viewingSavedDocument = false;
     this.openedInvoiceRecord = null;
@@ -2084,6 +2083,7 @@ invoiceSeal: string = '';
     this.loadCompanySettings(this.documentCompanyCode);
     this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
+    this.invoiceItems = amount ? [{ name: (lead as any).dealName || 'Custom Service', quantity: 1, price: Number(amount) }] : [];
     this.invoicePaymentStatus = 'unpaid';
     this.invoiceAmountPaid = 0;
     this.invoiceIsInclusiveGst = false;
@@ -2095,7 +2095,7 @@ invoiceSeal: string = '';
     this.resetInvoicePublicLink();
   }
 
-  openQuotationModal(lead: any): void {
+  openQuotationModal(lead: any, amount?: number): void {
     void this.loadCompanySettings();
     this.quoteMode = true;
     this.viewingSavedDocument = false;
@@ -2107,6 +2107,7 @@ invoiceSeal: string = '';
     this.loadCompanySettings(this.documentCompanyCode);
     this.resetDocumentGstSelection();
     this.resetInvoiceBuilderDraftState();
+    this.invoiceItems = amount ? [{ name: (lead as any).dealName || 'Custom Service', quantity: 1, price: Number(amount) }] : [];
     this.quotationKindNoteDraft = this.defaultQuotationKindNote();
     this.showInvoiceModal = true;
     this.quoteNumber = Math.floor(100000 + Math.random() * 900000);
@@ -2975,6 +2976,7 @@ invoiceSeal: string = '';
       createdByPhone: this.employee.mobile,
       clientId: invoiceClient?.clientId || undefined,
       leadId: sourceLeadId,
+      dealId: (this.invoiceLead as any)?.dealId,
       contactNumber: this.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(),
       invoiceDate: this.invoiceIssuedAt,
@@ -2997,6 +2999,7 @@ invoiceSeal: string = '';
     if (this.invoiceEditMode && this.openedInvoiceRecord?._id) {
       const updatePayload = {
         companyCode: payload.companyCode,
+        dealId: (this.invoiceLead as any)?.dealId,
         items: payload.items,
         total: this.invoiceTotal,
         subTotal: this.invoiceSubtotal,
@@ -3086,6 +3089,7 @@ invoiceSeal: string = '';
       createdByPhone: this.employee.mobile,
       clientId: this.selectedInvoiceClient?.clientId || undefined,
       leadId: this.selectedInvoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id,
+      dealId: (this.invoiceLead as any)?.dealId,
       contactNumber: this.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(),
       quotationDate: this.invoiceIssuedAt,

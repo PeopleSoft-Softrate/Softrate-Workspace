@@ -4,9 +4,24 @@
     <!-- ── Page Header ───────────────────────────────────────── -->
     <div class="pipeline-header">
       <h1 class="pipeline-title">Pipeline</h1>
-      <button class="cta-secondary" style="font-size:0.82rem;padding:0.4rem 1rem;" (click)="pipelineVm.loadBoard()">
-        Refresh
-      </button>
+      
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <select class="form-select" style="min-width: 150px; padding: 0.4rem 1rem;" [value]="pipelineFilters.dateFilter" (change)="onFilterChange('dateFilter', $any($event.target).value)">
+          <option value="">All Time</option>
+          <option value="last1week">Last 1 Week</option>
+          <option value="last30days">Last 30 Days</option>
+          <option value="monthYear">Select Month & Year</option>
+        </select>
+        
+        <ng-container *ngIf="pipelineFilters.dateFilter === 'monthYear'">
+          <select class="form-select" style="min-width: 120px; padding: 0.4rem 1rem;" [value]="pipelineFilters.month" (change)="onFilterChange('month', $any($event.target).value)">
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+          </select>
+          <select class="form-select" style="min-width: 100px; padding: 0.4rem 1rem;" [value]="pipelineFilters.year" (change)="onFilterChange('year', $any($event.target).value)">
+            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          </select>
+        </ng-container>
+      </div>
     </div>
 
     <!-- ── Summary Stats ─────────────────────────────────────── -->
@@ -26,17 +41,7 @@
       </div>
     </div>
 
-    <!-- ── Filters Bar ────────────────────────────────────────── -->
-    <div class="pipeline-filters">
-      <input
-        id="pipelineSearch"
-        class="pipeline-filter-input"
-        type="text"
-        placeholder="Search leads…"
-        [value]="pipelineFilters.search"
-        (input)="onFilterChange('search', $any($event.target).value)"
-      />
-    </div>
+
 
     <!-- ── Error / Move Error Banners ────────────────────────── -->
     <ng-container *ngIf="(pipelineVm.state$ | async) as state">

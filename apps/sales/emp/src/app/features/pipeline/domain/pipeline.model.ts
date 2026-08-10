@@ -6,8 +6,7 @@ export type PipelineStageCode =
   | 'NEGOTIATION_REVIEW'
   | 'CLOSED_WON'
   | 'CLOSED_LOST';
-
-export type ConnectionOutcome = 'NOT_CONNECTED' | 'DNR' | 'BUSY' | 'SWITCH_OFF' | 'NOT_REACHABLE';
+export type ConnectionOutcome = 'NOT_CONNECTED' | 'DNR' | 'BUSY' | 'NOT_REACHABLE';
 export type QualificationOutcome = 'QUALIFIED' | 'NOT_QUALIFIED';
 export type QualificationReason = 'NOT_INTERESTED' | 'INVALID';
 export type LostReason = 'PRICE' | 'WRONG_TIME' | 'COMPETITION';
@@ -32,9 +31,8 @@ export const LOST_REASON_LABELS: Record<LostReason, string> = {
 
 export const CONNECTION_OUTCOME_LABELS: Record<ConnectionOutcome, string> = {
   NOT_CONNECTED: 'Not Connected',
-  DNR: 'DNR',
+  DNR: 'Do Not Reach',
   BUSY: 'Busy',
-  SWITCH_OFF: 'Switch Off',
   NOT_REACHABLE: 'Not Reachable',
 };
 
@@ -99,6 +97,9 @@ export interface PipelineFilters {
   owner: string;
   connectionOutcome: string;
   qualificationOutcome: string;
+  dateFilter?: string;
+  month?: number;
+  year?: number;
 }
 
 export interface StageTransitionData {

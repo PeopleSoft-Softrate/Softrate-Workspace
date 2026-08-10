@@ -23,7 +23,6 @@ export class AdminSettingsSectionComponent extends AdminWorkspaceSectionProxy {
     'Not Interested',
     'DNP / Not Reachable',
     'Busy',
-    'Switch off',
     'Invalid'
   ];
 }

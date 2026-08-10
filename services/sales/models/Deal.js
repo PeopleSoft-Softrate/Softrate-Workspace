@@ -16,7 +16,7 @@ const dealSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   
   pipelineStage: { type: String, default: 'NEW' }, // NEW|QUALIFICATION|NEEDS_ANALYSIS|VALUE_PROPOSITION|PROPOSAL_QUOTE|NEGOTIATION_REVIEW|CLOSED_WON|CLOSED_LOST
-  connectionOutcome: { type: String, default: '' }, // NOT_CONNECTED|DNR|BUSY|SWITCH_OFF|NOT_REACHABLE
+  connectionOutcome: { type: String, default: '' }, // NOT_CONNECTED|DNR|BUSY|NOT_REACHABLE
   qualificationOutcome: { type: String, default: '' }, // QUALIFIED|NOT_QUALIFIED
   qualificationReason: { type: String, default: '' }, // NOT_INTERESTED|INVALID
   lostReason: { type: String, default: '' }, // PRICE|WRONG_TIME|COMPETITION

@@ -1364,6 +1364,8 @@
   background: #ffffff !important;
   font-size: 15px !important;
   font-weight: var(--font-weight-medium) !important;
+  padding-right: 36px !important;
+  padding-left: 14px !important;
 }
 
 .dashboard-wrapper .admin-lead-record-card .lead-card-icon-action,

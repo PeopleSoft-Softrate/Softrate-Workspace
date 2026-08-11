@@ -336,10 +336,10 @@ svg.search-icon {
 .dashboard-wrapper .period-tabs button.active,
 .dashboard-wrapper .period-toggle-pill button.active,
 .dashboard-wrapper .drilldown-tabs button.active {
-  border-color: var(--admin-ink) !important;
-  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  background: white !important;
   color: var(--admin-ink) !important;
-  box-shadow: inset 0 0 0 1px var(--admin-ink) !important;
+  box-shadow: inset 0 0 0 1px #cbd5e1 !important;
 }
 
 .dashboard-wrapper .field-input,
@@ -361,6 +361,7 @@ svg.search-icon {
   box-shadow: none !important;
   font-size: 13px !important;
   outline: none !important;
+  padding-right: 32px !important;
 }
 
 .dashboard-wrapper .field-input:focus,
@@ -1120,7 +1121,7 @@ svg.search-icon {
 .admin-overview-view .kpi-card {
   min-height: 104px !important;
   border: 0 !important;
-  border-right: 1px solid var(--admin-line) !important;
+  /* border-right: 1px solid var(--admin-line) !important; */
   border-radius: 0 !important;
   background: #ffffff !important;
 }

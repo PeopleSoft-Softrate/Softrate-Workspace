@@ -201,6 +201,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   loginForm: LoginPayload = { email: '', password: '' };
   loginError = '';
   loginLoading = false;
+  showLoginPassword = false;
+  showSignupPassword = false;
 
   pwdChecks = { length: false, upper: false, number: false, symbol: false };
 
@@ -617,9 +619,9 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
+    { id: 'remarks', label: 'Overall History' },
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'followups', label: 'Schedule / Follow-up' },
-    { id: 'remarks', label: 'Overall History' },
     { id: 'invoices', label: 'Invoice History' },
     { id: 'quotations', label: 'Quotation History' },
     { id: 'alternate', label: 'Alternate Info' },
@@ -657,6 +659,19 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullDeals: any[] = [];
   get companyFullPipelineHistoryLogs(): any[] {
     return this.companyFullHistoryLogs.filter((log) => log.action === 'Pipeline Stage Changed');
+  }
+
+  get groupedPipelineHistoryLogs(): { dealName: string, logs: any[] }[] {
+    const logs = this.companyFullPipelineHistoryLogs;
+    const map = new Map<string, any[]>();
+    for (const log of logs) {
+      const deal = log.dealName || 'Legacy Deal';
+      if (!map.has(deal)) {
+        map.set(deal, []);
+      }
+      map.get(deal)!.push(log);
+    }
+    return Array.from(map.entries()).map(([dealName, dealLogs]) => ({ dealName, logs: dealLogs }));
   }
   companyFullRemarksHistory: any[] = [];
   companyFullInvoiceItems: any[] = [];
@@ -1902,7 +1917,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const rawDate = peak.row.date;
     if (!rawDate) return { label: 'Peak window', count: peak.count, duration: peak.row.totalDuration || 0 };
 
-    const date = new Date(rawDate.includes('T') ? rawDate + 'Z' : rawDate.replace(/-/g, '/'));
+    const date = new Date(rawDate.includes('T') ? rawDate : rawDate.replace(/-/g, '/'));
     const label = peak.row._isHourly
       ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -4146,10 +4161,10 @@ export abstract class AdminWorkspaceController implements OnInit {
   mapEmployeeStats(stats: any[]): void {
     this.empCallLoading = false;
     const statsMap: Record<string, any> = {};
-    for (const s of stats) statsMap[s.phone] = s;
+    for (const s of stats) statsMap[s.employeeId || s.phone] = s;
     this.employeeCallRows = this.employees.map(emp => ({
       emp,
-      stats: statsMap[emp.mobile] ?? null,
+      stats: statsMap[emp._id || ''] ?? statsMap[emp.mobile] ?? null,
     }));
 
     // Count employees who have at least 1 call in the current period
@@ -4410,8 +4425,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     const labels = this.timelineData.map(d => {
       let dt: Date;
       if (d.date.includes('T')) {
-        // Hourly data from backend is UTC; append 'Z' for correct local conversion
-        dt = new Date(d.date + 'Z');
+        // Hourly data from backend is local time; parse without 'Z'
+        dt = new Date(d.date);
       } else {
         // Daily data: use slashes for local parsing
         dt = new Date(d.date.replace(/-/g, '/'));
@@ -4430,6 +4445,22 @@ export abstract class AdminWorkspaceController implements OnInit {
       (d.incoming || 0) + (d.outgoing || 0) + (d.missed || 0) + (d.rejected || 0)
     );
 
+    let finalLabels = labels;
+    let finalData = totalCalls;
+
+    // If it's an hourly chart, trim the empty hours at start and end
+    if (isHourly && totalCalls.some(v => v > 0)) {
+      let first = totalCalls.findIndex(v => v > 0);
+      let last = totalCalls.length - 1 - [...totalCalls].reverse().findIndex(v => v > 0);
+      
+      // Add 1 hour padding on both sides if possible so the line doesn't abruptly touch the edges
+      first = Math.max(0, first - 1);
+      last = Math.min(totalCalls.length - 1, last + 1);
+
+      finalLabels = labels.slice(first, last + 1);
+      finalData = totalCalls.slice(first, last + 1);
+    }
+
     const textColor = 'rgba(80,80,100,0.6)';
     const gridColor = 'rgba(0,0,0,0.04)';
     const ctx = canvas.getContext('2d');
@@ -4444,10 +4475,10 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.timelineChart = new Chart(canvas, {
       type: isBarView ? 'bar' : 'line',
       data: {
-        labels: labels.length ? labels : ['No data'],
+        labels: finalLabels.length ? finalLabels : ['No data'],
         datasets: [{
           label: 'Total Calls',
-          data: totalCalls.length ? totalCalls : [0],
+          data: finalData.length ? finalData : [0],
           borderColor: this.dashboardPalette.incoming,
           backgroundColor: isBarView ? this.dashboardPalette.incoming : (grad ?? 'rgba(79,143,231,0.1)'),
           fill: !isBarView,
@@ -7273,6 +7304,21 @@ export abstract class AdminWorkspaceController implements OnInit {
   selectLeadSet(set: string): void { return this.adminEmployeesWorkflow.selectLeadSet(this, set); }
 
   deleteLeadSet(setLabel: string): void { return this.adminEmployeesWorkflow.deleteLeadSet(this, setLabel); }
+
+  // ── Global Add Lead Modal (Admin) ───────────────────────────────
+  addLeadModalVisible = false;
+  addSingleLeadLoading = false;
+  newLeadAssignedEmployeeId = '';
+  newLeadCompanyDetails = {
+    leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+  };
+  newLeadDirectors: any[] = [];
+
+  openAddLeadModal(): void { return this.adminLeadsWorkflow.openAddLeadModal(this); }
+  closeAddLeadModal(): void { return this.adminLeadsWorkflow.closeAddLeadModal(this); }
+  addDirector(): void { return this.adminLeadsWorkflow.addDirector(this); }
+  removeDirector(index: number): void { return this.adminLeadsWorkflow.removeDirector(this, index); }
+  saveSingleLead(): Promise<void> { return this.adminLeadsWorkflow.saveSingleLead(this); }
 
   // ── Manual Lead Addition ─────────────────────────────────────────
   addManualLead(): void {

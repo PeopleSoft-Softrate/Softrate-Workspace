@@ -108,13 +108,13 @@ router.get('/board', async (req, res) => {
     const matchQuery = buildBoardMatchQuery(companyCode, filters);
     const DealModel = req.models.Deal;
 
-    // 1. Get total counts per stage
+    // 1. Get total counts and amount per stage
     const countResults = await DealModel.aggregate([
       { $match: matchQuery },
-      { $group: { _id: '$pipelineStage', count: { $sum: 1 } } }
+      { $group: { _id: '$pipelineStage', count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } }
     ]);
     const countsMap = countResults.reduce((acc, row) => {
-      acc[row._id] = row.count;
+      acc[row._id] = { count: row.count, totalAmount: row.totalAmount || 0 };
       return acc;
     }, {});
 
@@ -142,12 +142,14 @@ router.get('/board', async (req, res) => {
 
     const columns = VALID_PIPELINE_STAGES.map((stage) => {
       const leads = raw?.[stage] || [];
-      const total = countsMap[stage] || 0;
+      const stageStats = countsMap[stage] || { count: 0, totalAmount: 0 };
+      const total = stageStats.count;
       return {
         stage,
         label: STAGE_LABELS[stage],
         leads,
         total,
+        totalAmount: stageStats.totalAmount,
         page: 1,
         pageSize,
         hasMore: total > leads.length,
@@ -156,12 +158,25 @@ router.get('/board', async (req, res) => {
 
     // Summary stats
     const openStages = VALID_PIPELINE_STAGES.filter(s => s !== 'CLOSED_WON' && s !== 'CLOSED_LOST');
-    const openCount = openStages.reduce((sum, s) => {
+    
+    let openCount = 0;
+    let openValue = 0;
+    for (const s of openStages) {
       const col = columns.find(c => c.stage === s);
-      return sum + (col?.total || 0);
-    }, 0);
-    const wonCount = columns.find(c => c.stage === 'CLOSED_WON')?.total || 0;
-    const lostCount = columns.find(c => c.stage === 'CLOSED_LOST')?.total || 0;
+      if (col) {
+        openCount += col.total;
+        openValue += col.totalAmount || 0;
+      }
+    }
+    
+    const wonCol = columns.find(c => c.stage === 'CLOSED_WON');
+    const wonCount = wonCol?.total || 0;
+    const wonValue = wonCol?.totalAmount || 0;
+    
+    const lostCol = columns.find(c => c.stage === 'CLOSED_LOST');
+    const lostCount = lostCol?.total || 0;
+    const lostValue = lostCol?.totalAmount || 0;
+    
     const qualifiedCount = await DealModel.countDocuments({
       ...matchQuery,
       qualificationOutcome: 'QUALIFIED',
@@ -170,7 +185,7 @@ router.get('/board', async (req, res) => {
     return res.status(200).json({
       success: true,
       columns,
-      summary: { openCount, wonCount, lostCount, qualifiedCount },
+      summary: { openCount, openValue, wonCount, wonValue, lostCount, lostValue, qualifiedCount },
     });
   } catch (err) {
     console.error('[pipeline board]', err);
@@ -379,6 +394,7 @@ router.patch('/leads/:id/stage', async (req, res) => {
       contactNumber: updatedLead.contactNumber,
       contactName: updatedLead.contactName,
       companyName: updatedLead.leadCompanyName,
+      dealName: updatedLead.dealName,
       action: 'Pipeline Stage Changed',
       oldValue: previousStage,
       newValue: targetStage,

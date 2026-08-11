@@ -145,8 +145,15 @@
               style="font-size: 0.75rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               🏷 Set / Batch Label <span style="color: red;">*</span>
             </label>
-            <input type="text" [(ngModel)]="newLeadSetLabel" placeholder='e.g. "Jan 2026" or "1/1/2026-10/1/2026"'
-              style="width: 100%; padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.82rem; box-sizing: border-box;">
+            <select [(ngModel)]="newLeadSetLabel"
+              style="width: 100%; padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.82rem; box-sizing: border-box; background: #fff;">
+              <option value="">-- Select Source of Lead --</option>
+              <option value="Inbound lead">Inbound lead</option>
+              <option value="Outbound lead">Outbound lead</option>
+              <option value="MCA Lead">MCA Lead</option>
+              <option value="Network">Network</option>
+              <option value="Referral">Referral</option>
+            </select>
             <div style="font-size: 0.72rem; color: var(--text-3); margin-top: 5px;">This label groups all imported leads
               so you can filter and access them easily later.</div>
           </div>
@@ -235,9 +242,15 @@
         <div *ngIf="leadUploadStep === 'idle'" class="manual-add-box"
           style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
           <h5 style="margin-top:0; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 700;">Add Single Lead</h5>
-          <input type="text" [(ngModel)]="newLeadSetLabel"
-            placeholder='Set Label (e.g. "Jan 2026" or "1/1/2026-10/1/2026")'
-            style="width:100%; margin-bottom:10px; padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); font-size: 0.82rem; background: rgba(99,102,241,0.03); box-sizing: border-box;">
+          <select [(ngModel)]="newLeadSetLabel"
+            style="width:100%; margin-bottom:10px; padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); font-size: 0.82rem; background: #fff; box-sizing: border-box;">
+            <option value="">-- Select Source of Lead --</option>
+            <option value="Inbound lead">Inbound lead</option>
+            <option value="Outbound lead">Outbound lead</option>
+            <option value="MCA Lead">MCA Lead</option>
+            <option value="Network">Network</option>
+            <option value="Referral">Referral</option>
+          </select>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <input type="text" [(ngModel)]="newSingleLead.leadCompanyName" placeholder="Company Name *"
               style="padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.82rem;">

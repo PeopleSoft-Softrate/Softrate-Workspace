@@ -494,7 +494,14 @@
 
               <label class="mini-field admin-employee-modal-wide-field">
                 <span>Set / Batch Label *</span>
-                <input class="field-input" type="text" [(ngModel)]="newLeadSetLabel" list="existingLeadSets" placeholder="Real Estate Leads">
+                <select class="field-select" [(ngModel)]="newLeadSetLabel" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.6rem; font-size: 0.85rem; background: #fff;">
+                  <option value="">-- Select Source of Lead --</option>
+                  <option value="Inbound lead">Inbound lead</option>
+                  <option value="Outbound lead">Outbound lead</option>
+                  <option value="MCA Lead">MCA Lead</option>
+                  <option value="Network">Network</option>
+                  <option value="Referral">Referral</option>
+                </select>
                 <datalist id="existingLeadSets">
                   <option *ngFor="let set of leadSets" [value]="set">{{ set }}</option>
                 </datalist>
@@ -822,7 +829,14 @@
               <div class="admin-employee-modal-grid">
                 <label class="mini-field">
                   <span>Set / Batch Label</span>
-                  <input class="field-input" type="text" [(ngModel)]="newLeadSetLabel" placeholder="Direct Sales">
+                  <select class="field-select" [(ngModel)]="newLeadSetLabel" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; background: #fff;">
+                    <option value="">-- Select Source of Lead --</option>
+                    <option value="Inbound lead">Inbound lead</option>
+                    <option value="Outbound lead">Outbound lead</option>
+                    <option value="MCA Lead">MCA Lead</option>
+                    <option value="Network">Network</option>
+                    <option value="Referral">Referral</option>
+                  </select>
                 </label>
                 <label class="mini-field">
                   <span>Company Name *</span>
@@ -1361,10 +1375,14 @@
 
                 <div style="margin-bottom: 1.25rem; padding: 1rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;">
                   <label style="font-size: 0.7rem; font-weight: 800; color: #4f46e5; text-transform: uppercase; display: block; margin-bottom: 6px;">🏷 Set / Batch Label *</label>
-                  <input type="text" [(ngModel)]="newLeadSetLabel" list="existingLeadSets" placeholder='e.g. "Real Estate Leads" or "Jan 2026"' style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
-                  <datalist id="existingLeadSets">
-                    <option *ngFor="let set of leadSets" [value]="set">{{ set }}</option>
-                  </datalist>
+                  <select [(ngModel)]="newLeadSetLabel" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem; background: #fff;">
+                    <option value="">-- Select Source of Lead --</option>
+                    <option value="Inbound lead">Inbound lead</option>
+                    <option value="Outbound lead">Outbound lead</option>
+                    <option value="MCA Lead">MCA Lead</option>
+                    <option value="Network">Network</option>
+                    <option value="Referral">Referral</option>
+                  </select>
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1rem;">
@@ -1447,7 +1465,14 @@
               <div *ngIf="leadUploadStep === 'idle'" style="display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem;">
                 <div style="border-right: 1px solid #f1f5f9; padding-right: 1.5rem;">
                   <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">Batch Label</label>
-                  <input type="text" [(ngModel)]="newLeadSetLabel" placeholder='e.g. "Direct Sales"' style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; background: #f8fafc;">
+                  <select [(ngModel)]="newLeadSetLabel" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; background: #fff;">
+                    <option value="">-- Select Source of Lead --</option>
+                    <option value="Inbound lead">Inbound lead</option>
+                    <option value="Outbound lead">Outbound lead</option>
+                    <option value="MCA Lead">MCA Lead</option>
+                    <option value="Network">Network</option>
+                    <option value="Referral">Referral</option>
+                  </select>
                   <p style="font-size: 0.65rem; color: #94a3b8; margin-top: 8px;">Used to group these leads for easy filtering.</p>
                 </div>
                 <div style="display: grid; gap: 12px;">

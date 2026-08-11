@@ -56,6 +56,7 @@ export interface LeadHistoryLog {
   changedBy?: string;
   oldValue?: string;
   newValue?: string;
+  dealName?: string;
   details?: string;
   metadata?: {
     remark?: string;

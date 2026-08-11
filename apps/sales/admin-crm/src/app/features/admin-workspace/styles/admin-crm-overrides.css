@@ -3343,7 +3343,7 @@ body,
 .dashboard-wrapper .top-employee-row .emp-avatar {
   width: 30px !important;
   height: 30px !important;
-  border-radius: 4px !important;
+  border-radius: 99px !important;
   font-size: 13px !important;
 }
 

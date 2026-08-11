@@ -861,95 +861,6 @@
             </div>
           </section>
 
-          <section class="company-full-card" [id]="vm.companyFullSectionId('pipeline')">
-            <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h4 style="margin: 0;">Pipeline Deals</h4>
-              <button class="icon-button" style="padding: 4px 10px; font-size: 12px; font-weight: 600; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer;" (click)="vm.openDealModal(vm.companyFullViewLead())">
-                + Add Deal
-              </button>
-            </div>
-
-            <div *ngIf="vm.companyFullDealsLoading" style="font-size: 0.85rem; color: var(--text-secondary);">Loading deals...</div>
-            <div *ngIf="vm.companyFullDealsError" style="font-size: 0.85rem; color: #ef4444;">{{ vm.companyFullDealsError }}</div>
-
-            <!-- Deals List -->
-            <div class="deal-list-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;" *ngIf="vm.companyFullDeals.length > 0">
-              <div *ngFor="let deal of vm.companyFullDeals" style="border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #fafafa;">
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Deal Name</div>
-                  <div style="font-size: 0.85rem; font-weight: 600;">{{ deal.dealName }}</div>
-                </div>
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Stage</div>
-                  <div style="font-size: 0.85rem;">
-                    <span class="pipeline-badge">{{ (deal.pipelineStage || 'NEW') | titlecase }}</span>
-                  </div>
-                </div>
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Amount</div>
-                  <div style="font-size: 0.85rem; font-weight: 500;">₹{{ deal.amount || 0 }}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div *ngIf="!vm.companyFullDealsLoading && vm.companyFullDeals.length === 0" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">
-              No deals found for this lead.
-            </div>
-
-            <!-- Pipeline History -->
-            <div style="margin-top: 24px;">
-              <h4 style="margin: 0 0 12px 0; font-size: 0.95rem;">Pipeline History</h4>
-              
-              <div *ngIf="vm.companyFullPipelineHistoryLogs.length === 0" style="font-size: 0.85rem; color: var(--text-secondary);">
-                No pipeline history available yet.
-              </div>
-              
-              <div class="timeline-container" style="display: flex; flex-direction: column; gap: 20px; position: relative;" *ngIf="vm.companyFullPipelineHistoryLogs.length > 0">
-                <!-- Connecting line -->
-                <div style="position: absolute; left: 4px; top: 8px; bottom: 8px; width: 2px; background: var(--border-light); z-index: 0;"></div>
-                
-                <div class="timeline-item" *ngFor="let log of vm.companyFullPipelineHistoryLogs" style="display: flex; gap: 16px; position: relative; z-index: 1;">
-                  <!-- Marker -->
-                  <div class="timeline-marker" style="min-width: 10px; display: flex; flex-direction: column; align-items: center; padding-top: 4px;">
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid var(--primary-main);"></div>
-                  </div>
-                  
-                  <!-- Content -->
-                  <div class="timeline-content" style="flex: 1; padding-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                      <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <strong style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600;">Moved Stage</strong>
-                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary);">
-                          <span>{{ log.oldValue || 'New' }}</span>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;">
-                            <path d="M5 12h14"></path>
-                            <path d="m12 5 7 7-7 7"></path>
-                          </svg>
-                          <strong style="color: var(--text-primary);">{{ log.newValue }}</strong>
-                        </div>
-                      </div>
-                      <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                        {{ log.timestamp | date:'MMM d, y, h:mm a' }}
-                      </div>
-                    </div>
-                    
-                    <!-- Details Grid -->
-                    <div class="pipeline-history-details" *ngIf="log.details" style="display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; font-size: 0.8rem; background: #f8fafc; padding: 10px 12px; border-radius: 6px; margin-top: 8px;">
-                      <ng-container *ngFor="let detail of log.details.split(' | ')">
-                        <span style="color: var(--text-secondary);">{{ detail.split(':')[0] }}</span>
-                        <span style="font-weight: 500; color: var(--text-primary);">{{ detail.split(':').slice(1).join(':').trim() || '—' }}</span>
-                      </ng-container>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="company-full-card" [id]="vm.companyFullSectionId('followups')">
-            <app-activities-calendar [allLeads]="vm.companyFullOverviewContacts()" [filterCompanyId]="vm.companyFullViewLead()?._id" [filterCompanyName]="vm.companyFullViewLead()?.leadCompanyName" [embedded]="true"></app-activities-calendar>
-          </section>
-
           <section class="company-full-card" [id]="vm.companyFullSectionId('remarks')">
             <div class="company-full-remark-entry" style="margin-bottom: 24px;">
               <div class="lead-card-remark-combobox company-full-remark-combobox" (click)="$event.stopPropagation()">
@@ -991,6 +902,88 @@
               [invoices]="vm.companyFullInvoiceItems"
               [quotations]="vm.companyFullQuotationItems">
             </app-company-timeline>
+          </section>
+
+          <section class="company-full-card" [id]="vm.companyFullSectionId('pipeline')">
+            <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h4 style="margin: 0;">Pipeline Deals</h4>
+              <button class="icon-button" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: #4f46e5; color: #fff; border: none; border-radius: 6px; cursor: pointer;" (click)="vm.openDealModal(vm.companyFullViewLead())">
+                + Add Deal
+              </button>
+            </div>
+
+            <div *ngIf="vm.companyFullDealsLoading" style="font-size: 0.85rem; color: var(--text-secondary);">Loading deals...</div>
+            <div *ngIf="vm.companyFullDealsError" style="font-size: 0.85rem; color: #ef4444;">{{ vm.companyFullDealsError }}</div>
+
+            <!-- Deals List -->
+            <div class="deal-list-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;" *ngIf="vm.companyFullDeals.length > 0">
+              <div *ngFor="let deal of vm.companyFullDeals" style="border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #fafafa;">
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Deal Name</div>
+                  <div style="font-size: 0.85rem; font-weight: 600;">{{ deal.dealName }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Stage</div>
+                  <div style="font-size: 0.85rem;">
+                    <span class="pipeline-badge">{{ (deal.pipelineStage || 'NEW') | titlecase }}</span>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Amount</div>
+                  <div style="font-size: 0.85rem; font-weight: 500;">₹{{ deal.amount || 0 }}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div *ngIf="!vm.companyFullDealsLoading && vm.companyFullDeals.length === 0" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">
+              No deals found for this lead.
+            </div>
+
+            <!-- Pipeline History -->
+            <div style="margin-top: 24px;">
+              <h4 style="margin: 0 0 12px 0; font-size: 0.95rem;">Pipeline History</h4>
+              
+              <div *ngIf="vm.companyFullPipelineHistoryLogs.length === 0" style="font-size: 0.85rem; color: var(--text-secondary);">
+                No pipeline history available yet.
+              </div>
+              
+              <div *ngIf="vm.companyFullPipelineHistoryLogs.length > 0">
+                <ng-container *ngFor="let dealGroup of vm.groupedPipelineHistoryLogs">
+                  <h5 style="margin: 16px 0 12px 0; font-size: 0.9rem; color: var(--primary-main); font-weight: 600;">{{ dealGroup.dealName || 'Legacy Deal' }}</h5>
+                  <div style="border-left: 2px solid #e2e8f0; padding-left: 20px; margin-left: 6px; display: flex; flex-direction: column; gap: 24px;">
+                    <div *ngFor="let log of dealGroup.logs" style="position: relative;">
+                      <!-- Timeline Dot -->
+                      <div style="position: absolute; width: 10px; height: 10px; background: #94a3b8; border-radius: 50%; left: -26px; top: 5px; box-shadow: 0 0 0 4px #fff;"></div>
+                      
+                      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a;">Stage Change</div>
+                        <div style="font-size: 0.75rem; color: #64748b;">{{ log.timestamp | date:'MMM d, y, h:mm a' }}</div>
+                      </div>
+                      
+                      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #475569;">
+                        <span>{{ log.oldValue || 'New' }}</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M5 12h14"></path>
+                          <path d="m12 5 7 7-7 7"></path>
+                        </svg>
+                        <strong style="color: #0f172a;">{{ log.newValue }}</strong>
+                      </div>
+                  
+                      <div *ngIf="log.details" style="margin-top: 10px; padding: 12px 16px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px; font-size: 0.8rem;">
+                        <div *ngFor="let detail of log.details.split(' | ')" style="display: flex; gap: 12px; margin-bottom: 6px;">
+                          <span style="color: #64748b; width: 150px; flex-shrink: 0;">{{ detail.split(':')[0] }}</span>
+                          <span style="color: #1e293b; font-weight: 500;">{{ detail.split(':').slice(1).join(':').trim() || '—' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+          </section>
+
+          <section class="company-full-card" [id]="vm.companyFullSectionId('followups')">
+            <app-activities-calendar [allLeads]="vm.companyFullOverviewContacts()" [filterCompanyId]="vm.companyFullViewLead()?._id" [filterCompanyName]="vm.companyFullViewLead()?.leadCompanyName" [embedded]="true"></app-activities-calendar>
           </section>
 
           <section class="company-full-card" [id]="vm.companyFullSectionId('invoices')">
@@ -2538,3 +2531,117 @@
     </div>
   </div>
 </div>
+
+<!-- Add Lead Modal -->
+<div class="invoice-overlay" *ngIf="vm.addLeadModalVisible" (mousedown)="vm.closeAddLeadModal()" style="z-index: 10000;">
+  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(600px, calc(100vw - 32px)); max-width: 600px; padding: 40px; border-radius: 14px; position: relative;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <button class="client-onboarding-modal-close" type="button" (click)="vm.closeAddLeadModal()" aria-label="Close add lead">✕</button>
+      
+    <h2 class="client-onboarding-modal-title">Add Single Lead</h2>
+    <p class="client-onboarding-modal-subtitle">Manually add a new lead to the list.</p>
+    
+    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
+      
+      <!-- Company Details Section -->
+      <h3 style="font-size: 1rem; color: #1e293b; margin-bottom: 12px; margin-top: 0; font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">Company Details</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Company Name *</label>
+          <input class="field-input" type="text" placeholder="Company Name" [(ngModel)]="vm.newLeadCompanyDetails.leadCompanyName" />
+        </div>
+        
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Assigned Employee</label>
+          <select class="field-select" [(ngModel)]="vm.newLeadAssignedEmployeeId" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem;">
+            <option value="">Unassigned (Admin Default)</option>
+            <option *ngFor="let emp of vm.employees" [value]="emp._id">{{ emp.name || emp.mobile }}</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Status</label>
+          <select class="field-select" [(ngModel)]="vm.newLeadCompanyDetails.status" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem;">
+            <option value="New">New</option>
+            <option value="Connected">Connected</option>
+            <option value="Interested">Interested</option>
+            <option value="Converted">Converted</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Source of Lead</label>
+          <select class="field-select" [(ngModel)]="vm.newLeadCompanyDetails.setLabel" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem;">
+            <option value="">-- Select Source --</option>
+            <option value="Inbound lead">Inbound lead</option>
+            <option value="Outbound lead">Outbound lead</option>
+            <option value="MCA Lead">MCA Lead</option>
+            <option value="Network">Network</option>
+            <option value="Referral">Referral</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Division</label>
+          <input class="field-input" type="text" placeholder="Main Division" [(ngModel)]="vm.newLeadCompanyDetails.mainDivisionDescription" />
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">CIN</label>
+          <input class="field-input" type="text" placeholder="CIN" [(ngModel)]="vm.newLeadCompanyDetails.cin" />
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Remarks</label>
+          <input class="field-input" type="text" placeholder="Remarks" [(ngModel)]="vm.newLeadCompanyDetails.remarks" />
+        </div>
+      </div>
+
+      <!-- Directors Section -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
+        <h3 style="font-size: 1rem; color: #1e293b; margin: 0; font-weight: 600;">Directors / Contacts</h3>
+        <button type="button" class="view-mode-btn" style="padding: 4px 10px; font-size: 12px; height: auto;" (click)="vm.addDirector()">+ Add Director</button>
+      </div>
+
+      <div *ngFor="let director of vm.newLeadDirectors; let i = index" style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; position: relative; border: 1px solid #e2e8f0;">
+        <h4 style="margin: 0 0 12px 0; font-size: 0.9rem; color: #334155;">Director {{ i + 1 }}</h4>
+        <button *ngIf="i > 0" type="button" (click)="vm.removeDirector(i)" style="position: absolute; right: 12px; top: 12px; background: none; border: none; color: #ef4444; font-size: 0.85rem; cursor: pointer;">Remove</button>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">First Name</label>
+            <input class="field-input" type="text" placeholder="First Name" [(ngModel)]="director.firstName" />
+          </div>
+          
+          <div class="form-group">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Last Name</label>
+            <input class="field-input" type="text" placeholder="Last Name" [(ngModel)]="director.lastName" />
+          </div>
+          
+          <div class="form-group">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Number *</label>
+            <input class="field-input" type="tel" placeholder="Contact Number" [(ngModel)]="director.contactNumber" />
+          </div>
+
+          <div class="form-group">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
+            <input class="field-input" type="email" placeholder="Email Address" [(ngModel)]="director.directorEmailAddress" />
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">DIN</label>
+            <input class="field-input" type="text" placeholder="DIN" [(ngModel)]="director.directorDin" />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+      <button class="secondary-action" type="button" (click)="vm.closeAddLeadModal()" [disabled]="vm.addSingleLeadLoading">Cancel</button>
+      <button class="primary-action" type="button" (click)="vm.saveSingleLead()" [disabled]="vm.addSingleLeadLoading || !vm.newLeadCompanyDetails.leadCompanyName">
+        <span *ngIf="!vm.addSingleLeadLoading">Save Leads</span>
+        <span *ngIf="vm.addSingleLeadLoading" class="button-spinner"></span>
+      </button>
+    </div>
+  </div>
+</div>
+

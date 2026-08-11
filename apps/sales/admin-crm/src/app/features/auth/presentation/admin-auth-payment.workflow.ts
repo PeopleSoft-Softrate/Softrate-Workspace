@@ -66,6 +66,7 @@ export class AdminAuthPaymentWorkflow {
   }
 
   openLogin(vm: any): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     vm.closeModals();
     vm.isLoginOpen = true;
     vm.loginError = '';
@@ -73,6 +74,7 @@ export class AdminAuthPaymentWorkflow {
   }
 
   openSignup(vm: any): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     vm.closeModals();
     vm.isSignupOpen = true;
     vm.signupError = '';

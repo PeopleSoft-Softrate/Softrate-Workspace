@@ -522,4 +522,109 @@ export class AdminLeadsWorkflow {
     if (vm.remarkLeadCompanyCachePrefix) this.dashboardCache.removeByPrefix(vm.remarkLeadCompanyCachePrefix);
     if (vm.remarkLeadContactCachePrefix) this.dashboardCache.removeByPrefix(vm.remarkLeadContactCachePrefix);
   }
+
+  // ── Global Add Lead Modal (Admin) ───────────────────────────────
+
+  openAddLeadModal(vm: any): void {
+    vm.addLeadModalVisible = true;
+    if (vm.newLeadDirectors.length === 0) {
+      this.addDirector(vm);
+    }
+  }
+
+  closeAddLeadModal(vm: any): void {
+    vm.addLeadModalVisible = false;
+    vm.newLeadCompanyDetails = {
+      leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+    };
+    vm.newLeadDirectors = [];
+    vm.newLeadAssignedEmployeeId = '';
+  }
+
+  addDirector(vm: any): void {
+    vm.newLeadDirectors.push({
+      firstName: '', lastName: '', contactNumber: '', directorEmailAddress: '', directorDin: ''
+    });
+  }
+
+  removeDirector(vm: any, index: number): void {
+    vm.newLeadDirectors.splice(index, 1);
+    if (vm.newLeadDirectors.length === 0) {
+      this.addDirector(vm);
+    }
+  }
+
+  async saveSingleLead(vm: any): Promise<void> {
+    if (vm.addSingleLeadLoading) return;
+    const companyCode = vm.dashboardCode;
+
+    if (!companyCode || !vm.newLeadCompanyDetails.leadCompanyName) {
+      alert('Missing required fields for new lead (Company Name)');
+      return;
+    }
+
+    const validDirectors = vm.newLeadDirectors.filter((d: any) => d.contactNumber && d.contactNumber.trim());
+    if (validDirectors.length === 0) {
+      alert('At least one director must have a contact number.');
+      return;
+    }
+
+    // Determine assignedEmployeeId and phone
+    let assignedEmployeeId = vm.newLeadAssignedEmployeeId;
+    let assignedEmployeePhone = '';
+    if (assignedEmployeeId) {
+      const emp = vm.employees?.find((e: any) => e._id === assignedEmployeeId);
+      if (emp) assignedEmployeePhone = emp.mobile || '';
+    } else {
+      // If no employee selected, assign to the logged in Admin's id so it has a valid owner
+      assignedEmployeeId = vm.adminData?._id;
+      assignedEmployeePhone = vm.adminData?.contactNumber || '';
+    }
+
+    vm.addSingleLeadLoading = true;
+    let addedCount = 0;
+
+    try {
+      // We process sequentially, or we can wait for all. Sequential is safer for duplicate checks if any.
+      for (const director of validDirectors) {
+        const contactName = (director.firstName.trim() + ' ' + director.lastName.trim()).trim();
+        
+        const payload = {
+          companyCode,
+          assignedEmployeeId,
+          assignedEmployeePhone,
+          leadCompanyName: vm.newLeadCompanyDetails.leadCompanyName.trim(),
+          contactNumber: director.contactNumber.trim(),
+          contactName,
+          mainDivisionDescription: vm.newLeadCompanyDetails.mainDivisionDescription.trim(),
+          directorEmailAddress: director.directorEmailAddress.trim(),
+          remarks: vm.newLeadCompanyDetails.remarks ? [vm.newLeadCompanyDetails.remarks.trim()] : [],
+          status: vm.newLeadCompanyDetails.status,
+          setLabel: vm.newLeadCompanyDetails.setLabel,
+          directorDin: director.directorDin.trim(),
+          directorFirstName: director.firstName.trim(),
+          directorLastName: director.lastName.trim(),
+          cin: vm.newLeadCompanyDetails.cin.trim(),
+          companyDescription: vm.newLeadCompanyDetails.companyDescription.trim()
+        };
+
+        const response = await from(this.leadService.addSingleLead(payload)).toPromise();
+        
+        if (response && response.success) {
+          addedCount++;
+        }
+      }
+      
+      this.invalidateAdminDashboardCaches(vm);
+      vm.fetchAdminLeads(true);
+      
+      this.closeAddLeadModal(vm);
+      alert(`Successfully added ${addedCount} lead(s)!`);
+    } catch (error) {
+      console.error('Failed to add lead(s)', error);
+      alert('Failed to add one or more leads');
+    } finally {
+      vm.addSingleLeadLoading = false;
+    }
+  }
 }

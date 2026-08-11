@@ -2247,11 +2247,16 @@ body.column-resizing * {
 }
 
 .lead-workspace-header .workspace-controls-stack {
-  display: grid;
-  grid-template-columns: minmax(172px, 220px) minmax(240px, 1fr) minmax(172px, 220px);
+  display: flex;
   align-items: end;
   width: 100%;
-  max-width: 920px;
+  max-width: none;
+  gap: 16px;
+}
+
+.lead-workspace-header .workspace-controls-stack .mini-field {
+  width: 172px;
+  flex-shrink: 0;
 }
 
 .lead-workspace-header .mini-field,
@@ -8064,8 +8069,12 @@ body.column-resizing * {
 
 @media (max-width: 760px) {
   .lead-workspace-header .workspace-controls-stack {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
     max-width: none;
+  }
+  .lead-workspace-header .workspace-controls-stack .mini-field {
+    width: 100%;
   }
 
   .followup-list-header {
@@ -8677,7 +8686,7 @@ body.column-resizing * {
   inset: 0;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(2px);
-  z-index: 9999;
+  z-index: 100000;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -594,9 +594,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
     { id: 'overview', label: 'Overview' },
+    { id: 'timeline', label: 'Overall History' },
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'followups', label: 'Schedule / Follow-up' },
-    { id: 'timeline', label: 'Overall History' },
     { id: 'alternate', label: 'Alternate Info' },
     { id: 'notes', label: 'Notes' },
     { id: 'documents', label: 'Documents' },
@@ -636,6 +636,19 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   
   get companyFullPipelineHistoryLogs(): LeadHistoryLog[] {
     return this.companyFullHistoryLogs.filter((log) => log.action === 'Pipeline Stage Changed');
+  }
+
+  get groupedPipelineHistoryLogs(): { dealName: string, logs: LeadHistoryLog[] }[] {
+    const logs = this.companyFullPipelineHistoryLogs;
+    const map = new Map<string, LeadHistoryLog[]>();
+    for (const log of logs) {
+      const deal = log.dealName || 'Legacy Deal';
+      if (!map.has(deal)) {
+        map.set(deal, []);
+      }
+      map.get(deal)!.push(log);
+    }
+    return Array.from(map.entries()).map(([dealName, dealLogs]) => ({ dealName, logs: dealLogs }));
   }
   companyFullDocuments: Array<{ id: string; name: string; url: string; size: number; uploadedAt: string }> = [];
   companyFullEmailHistory: LeadHistoryLog[] = [];
@@ -1953,6 +1966,15 @@ invoiceSeal: string = '';
   contactAddOpen = false;
   contactAddSaving = false;
   contactAddDraft = { contactName: '', contactNumber: '', directorEmailAddress: '' };
+  
+  addLeadModalVisible = false;
+  addSingleLeadLoading = false;
+  
+  newLeadCompanyDetails = {
+    leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+  };
+  
+  newLeadDirectors: any[] = [];
   currentInvoiceNumber = '';
   currentInvoicePublicUrl = '';
   currentInvoiceQrDataUrl = '';
@@ -5439,6 +5461,104 @@ invoiceSeal: string = '';
       alert('Failed to add contact');
     } finally {
       this.contactAddSaving = false;
+    }
+  }
+
+  openAddLeadModal(): void {
+    this.addLeadModalVisible = true;
+    if (this.newLeadDirectors.length === 0) {
+      this.addDirector();
+    }
+  }
+
+  closeAddLeadModal(): void {
+    this.addLeadModalVisible = false;
+    this.newLeadCompanyDetails = {
+      leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+    };
+    this.newLeadDirectors = [];
+  }
+
+  addDirector(): void {
+    this.newLeadDirectors.push({
+      firstName: '', lastName: '', contactNumber: '', directorEmailAddress: '', directorDin: ''
+    });
+  }
+
+  removeDirector(index: number): void {
+    this.newLeadDirectors.splice(index, 1);
+    if (this.newLeadDirectors.length === 0) {
+      this.addDirector();
+    }
+  }
+
+  async saveSingleLead(): Promise<void> {
+    if (this.addSingleLeadLoading) return;
+    const companyCode = this.employee?.companyCode;
+    const assignedEmployeeId = this.employee?._id;
+
+    if (!companyCode || !assignedEmployeeId || !this.newLeadCompanyDetails.leadCompanyName) {
+      alert('Missing required fields for new lead (Company Name)');
+      return;
+    }
+
+    // Validate that at least one director has a contact number
+    const validDirectors = this.newLeadDirectors.filter(d => d.contactNumber && d.contactNumber.trim());
+    if (validDirectors.length === 0) {
+      alert('At least one director must have a contact number.');
+      return;
+    }
+
+    this.addSingleLeadLoading = true;
+    let addedCount = 0;
+
+    try {
+      for (const director of validDirectors) {
+        const contactName = (director.firstName.trim() + ' ' + director.lastName.trim()).trim();
+        
+        const payload = {
+          companyCode,
+          assignedEmployeeId,
+          leadCompanyName: this.newLeadCompanyDetails.leadCompanyName.trim(),
+          contactNumber: director.contactNumber.trim(),
+          contactName,
+          mainDivisionDescription: this.newLeadCompanyDetails.mainDivisionDescription.trim(),
+          directorEmailAddress: director.directorEmailAddress.trim(),
+          remarks: this.newLeadCompanyDetails.remarks ? [this.newLeadCompanyDetails.remarks.trim()] : [],
+          status: this.newLeadCompanyDetails.status,
+          setLabel: this.newLeadCompanyDetails.setLabel,
+          directorDin: director.directorDin.trim(),
+          directorFirstName: director.firstName.trim(),
+          directorLastName: director.lastName.trim(),
+          cin: this.newLeadCompanyDetails.cin.trim(),
+          companyDescription: this.newLeadCompanyDetails.companyDescription.trim()
+        };
+
+        const response = await firstValueFrom(this.api.post<any>('/api/leads', payload));
+        
+        if (response && response.lead) {
+          this.allLeads.push(response.lead);
+          if (this.employeeScopedLeads) this.employeeScopedLeads.unshift(response.lead);
+          
+          // Only push to activeLeadRows if the user is currently viewing this exact company's drawer
+          if (this.activeLeadRows && this.selectedLeadCompany === response.lead.leadCompanyName) {
+            this.activeLeadRows.unshift(response.lead);
+          }
+          
+          addedCount++;
+        }
+      }
+      
+      this.touchLeads();
+      this.fetchLeads({ clearCache: true, forceRefresh: true });
+      
+      this.closeAddLeadModal();
+      alert(`Successfully added ${addedCount} lead(s)!`);
+    } catch (error) {
+      console.error('Failed to add lead(s)', error);
+      alert('Failed to add one or more leads');
+    } finally {
+      this.addSingleLeadLoading = false;
     }
   }
 

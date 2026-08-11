@@ -1,4 +1,4 @@
-<div class="landing-wrapper" *ngIf="!vm.loggedIn" [class.ready]="!vm.showSplash">
+<div class="landing-wrapper" *ngIf="!vm.loggedIn" [class.ready]="!vm.showSplash" [class.login-active]="vm.isLoginOpen || vm.isSignupOpen">
 
   <!-- ========== NAVBAR ========== -->
   <nav class="navbar" [class.navbar-scrolled]="vm.isNavbarScrolled">
@@ -8,7 +8,7 @@
           <img src="assets/icon/logo.png" alt="DealVoice Logo">
         </div>
       </div>
-      <div class="nav-links">
+      <div class="nav-links" *ngIf="!vm.isLoginOpen && !vm.isSignupOpen">
         <a (click)="vm.setPage('home')" class="nav-link" [class.active]="vm.currentPage === 'home'"
           style="cursor:pointer;">Home</a>
         <a (click)="vm.scrollToSection('features', vm.currentPage)" class="nav-link" style="cursor:pointer;">Features</a>
@@ -17,7 +17,7 @@
           style="cursor:pointer;">Pricing</a>
         <a (click)="vm.scrollToSection('about', vm.currentPage)" class="nav-link" style="cursor:pointer;">About</a>
       </div>
-      <div class="nav-auth">
+      <div class="nav-auth" *ngIf="!vm.isLoginOpen && !vm.isSignupOpen">
         <button class="btn-login" (click)="vm.openLogin()">Log In</button>
         <button class="btn-signup" (click)="vm.isTrialRequest=false; vm.openSignup()">Sign Up</button>
         <button class="cta-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;" (click)="vm.openTrialSignup()">Get
@@ -50,7 +50,7 @@
             class="gradient-text">sales deal closing.</span></h1>
 
         <div class="hero-action-row">
-          <div class="hero-cta">
+          <div class="hero-cta" *ngIf="!vm.isLoginOpen && !vm.isSignupOpen">
             <button class="cta-primary" (click)="vm.openTrialSignup()">
               Book a demo
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -870,8 +870,8 @@
 </div>
 
 <!-- ========== LOGIN MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.isLoginOpen" (mousedown)="vm.closeModals()">
-  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+<div class="modal-overlay login-overlay" [class.open]="vm.isLoginOpen" (mousedown)="vm.closeModals()">
+  <div class="modal login-panel" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeModals()">✕</button>
     <div class="modal-brand">
       <div class="brand-icon">
@@ -889,8 +889,14 @@
       </div>
       <div class="form-group">
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
-          [(ngModel)]="vm.loginForm.password" name="loginPassword" required>
+        <div style="position: relative;">
+          <input [type]="vm.showLoginPassword ? 'text' : 'password'" id="login-password" placeholder="••••••••" autocomplete="current-password"
+            [(ngModel)]="vm.loginForm.password" name="loginPassword" required style="padding-right: 2.5rem;">
+          <button type="button" class="password-toggle" (click)="vm.showLoginPassword = !vm.showLoginPassword" tabindex="-1" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-3); display: flex; align-items: center; justify-content: center; padding: 4px;">
+            <svg *ngIf="!vm.showLoginPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg *ngIf="vm.showLoginPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
       </div>
       <a href="#" class="forgot-link" (click)="vm.openForgotPwd(); $event.preventDefault()">Forgot password?</a>
       <button type="submit" class="btn-signup modal-submit" [disabled]="vm.loginLoading">{{ vm.loginLoading ? 'Signing in…' :
@@ -985,14 +991,9 @@
 </div>
 
 <!-- ========== SIGNUP MODAL ========== -->
-<div class="modal-overlay" [class.open]="vm.isSignupOpen" (mousedown)="vm.closeModals()">
-  <div class="modal modal-wide" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+<div class="modal-overlay login-overlay" [class.open]="vm.isSignupOpen" (mousedown)="vm.closeModals()">
+  <div class="modal login-panel signup-panel" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="vm.closeModals()">✕</button>
-    <div class="modal-brand">
-      <div class="brand-icon">
-        <img src="assets/icon/logo.png" alt="DealVoice Logo">
-      </div>
-    </div>
     <h2 class="modal-title">{{ vm.isTrialRequest ? 'Request Free Demo' : 'Create your account' }}</h2>
     <p class="modal-subtitle">{{ vm.isTrialRequest ? 'Get 7 days of full access to DealVoice features' : 'Start tracking
       calls for free — no credit card required' }}</p>
@@ -1067,8 +1068,14 @@
         </div>
         <div class="form-group">
           <label for="su-password">Password <span class="req">*</span></label>
-          <input type="password" id="su-password" placeholder="Min. 8 chars + A + 1 + !" autocomplete="new-password"
-            [value]="vm.signupForm.password" (input)="vm.onPasswordInput($any($event.target).value)" required>
+          <div style="position: relative;">
+            <input [type]="vm.showSignupPassword ? 'text' : 'password'" id="su-password" placeholder="Min. 8 chars + A + 1 + !" autocomplete="new-password"
+              [value]="vm.signupForm.password" (input)="vm.onPasswordInput($any($event.target).value)" required style="padding-right: 2.5rem;">
+            <button type="button" class="password-toggle" (click)="vm.showSignupPassword = !vm.showSignupPassword" tabindex="-1" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-3); display: flex; align-items: center; justify-content: center; padding: 4px;">
+              <svg *ngIf="!vm.showSignupPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg *ngIf="vm.showSignupPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </button>
+          </div>
           <div class="pwd-checks">
             <span [class.check-ok]="vm.pwdChecks.length">{{ vm.pwdChecks.length ? '✓' : '○' }} 8+ characters</span>
             <span [class.check-ok]="vm.pwdChecks.upper">{{ vm.pwdChecks.upper ? '✓' : '○' }} Uppercase letter</span>

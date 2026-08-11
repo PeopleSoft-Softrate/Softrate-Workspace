@@ -283,10 +283,8 @@ export class AdminInvoiceQuotationWorkflow {
     if (vm.quoteMode && vm.currentQuotationNumber) return vm.currentQuotationNumber;
     if (!vm.quoteMode && vm.currentInvoiceNumber) return vm.currentInvoiceNumber;
     const issued = vm.invoiceIssuedAt || new Date();
-    const yyyy = String(issued.getFullYear());
-    const mm = String(issued.getMonth() + 1).padStart(2, '0');
-    const sequence = String(vm.quoteNumber % 1000 || 1).padStart(3, '0');
-    return vm.quoteMode ? `Quote_${yyyy}${mm}${sequence}` : `${yyyy}${mm}${sequence}`;
+    const yy = String(issued.getFullYear()).slice(-2);
+    return `${yy}-Draft`;
   }
 
   private resolveInvoicePreviewGstPercentage(vm: any): number {

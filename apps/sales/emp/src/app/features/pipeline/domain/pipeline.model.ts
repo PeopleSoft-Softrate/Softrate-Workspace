@@ -74,6 +74,7 @@ export interface PipelineBoardColumn {
   label: string;
   leads: PipelineDeal[];
   total: number;
+  totalAmount: number;
   page: number;
   pageSize: number;
   hasMore: boolean;
@@ -81,8 +82,11 @@ export interface PipelineBoardColumn {
 
 export interface PipelineBoardSummary {
   openCount: number;
+  openValue: number;
   wonCount: number;
+  wonValue: number;
   lostCount: number;
+  lostValue: number;
   qualifiedCount: number;
 }
 

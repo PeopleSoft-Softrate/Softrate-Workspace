@@ -138,42 +138,9 @@
     </ng-container>
 
     <ng-template #adminNavigation>
-    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Import Leads', 'Add Employee', 'Invoice', 'Client Onboarding', 'Quotation'])">Quick Access</div>
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Invoice', 'Client Onboarding', 'Quotation'])">Quick Access</div>
 
-    <button
-      class="sidebar-link sidebar-link-import"
-      type="button"
-      (click)="vm.switchTab('employees')"
-      *ngIf="vm.sidebarFeatureMatches('Import Leads')"
-      [title]="vm.sidebarMinimized ? 'Import Leads' : ''"
-    >
-      <span class="sidebar-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-      </span>
-      <span class="sidebar-label">Import Leads</span>
-    </button>
 
-    <button
-      class="sidebar-link sidebar-link-add-employee"
-      type="button"
-      (click)="vm.switchTab('employees'); vm.openAddEmployee()"
-      *ngIf="vm.sidebarFeatureMatches('Add Employee')"
-      [title]="vm.sidebarMinimized ? 'Add Employee' : ''"
-    >
-      <span class="sidebar-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <line x1="19" y1="8" x2="19" y2="14" />
-          <line x1="22" y1="11" x2="16" y2="11" />
-        </svg>
-      </span>
-      <span class="sidebar-label">Add Employee</span>
-    </button>
 
     <button
       class="sidebar-link sidebar-link-invoice"
@@ -196,25 +163,6 @@
     </button>
 
     <button
-      class="sidebar-link sidebar-link-client-onboarding"
-      type="button"
-      [class.active]="vm.dashTab==='client_onboarding'"
-      (click)="vm.switchTab('client_onboarding')"
-      *ngIf="vm.sidebarFeatureMatches('Client Onboarding')"
-      [title]="vm.sidebarMinimized ? 'Client Onboarding' : ''"
-    >
-      <span class="sidebar-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-          <circle cx="9.5" cy="7" r="4" />
-          <path d="M19 8v6" />
-          <path d="M22 11h-6" />
-        </svg>
-      </span>
-      <span class="sidebar-label">Client Onboarding</span>
-    </button>
-
-    <button
       class="sidebar-link sidebar-link-quotation"
       type="button"
       [class.active]="vm.dashTab==='quotation'"
@@ -231,6 +179,25 @@
         </svg>
       </span>
       <span class="sidebar-label">Quotation</span>
+    </button>
+
+    <button
+      class="sidebar-link sidebar-link-client-onboarding"
+      type="button"
+      [class.active]="vm.dashTab==='client_onboarding'"
+      (click)="vm.switchTab('client_onboarding')"
+      *ngIf="vm.sidebarFeatureMatches('Client Onboarding')"
+      [title]="vm.sidebarMinimized ? 'Client Onboarding' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+          <circle cx="9.5" cy="7" r="4" />
+          <path d="M19 8v6" />
+          <path d="M22 11h-6" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Client Onboarding</span>
     </button>
 
     <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Client', 'Remarks Filter', 'Follow-ups', 'Employees', 'Periodic Reports'])">Admin Views</div>

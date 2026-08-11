@@ -136,6 +136,12 @@ export class PipelineSectionComponent extends AdminWorkspaceSectionProxy impleme
     return daysInStage(stageChangedAt);
   }
 
+  assignedEmployeeName(id: string): string {
+    if (!id || !this.vm?.employees) return '';
+    const emp = this.vm.employees.find((e: any) => e._id === id);
+    return emp ? emp.name || emp.mobile : '';
+  }
+
   // ── Label helpers ──────────────────────────────────────────────
   connectionOutcomeLabel(code: string): string {
     return (CONNECTION_OUTCOME_LABELS as any)[code] ?? code;

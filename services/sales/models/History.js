@@ -5,6 +5,7 @@ const historySchema = new mongoose.Schema({
   contactNumber: { type: String, required: true, index: true },
   contactName:   { type: String },
   companyName:   { type: String },
+  dealName:      { type: String },
   action:        { type: String, required: true },
   oldValue:      { type: mongoose.Schema.Types.Mixed },
   newValue:      { type: mongoose.Schema.Types.Mixed },

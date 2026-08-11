@@ -88,7 +88,14 @@
 .dashboard-wrapper {
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), padding-right 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.landing-wrapper.login-active {
+  padding-right: 40vw; /* compress content into the left 60% area */
+  transform: none;
   pointer-events: none;
 }
 
@@ -112,7 +119,12 @@
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-wrapper.login-active .navbar {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .navbar-scrolled {
@@ -302,7 +314,7 @@
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 128px 0rem 0;
+  padding: 128px 2rem 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -727,7 +739,7 @@
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(12px);
-  z-index: 2000;
+  z-index: 100000;
   display: none;
   align-items: center;
   justify-content: center;
@@ -772,6 +784,52 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Login Side Panel overrides */
+.modal-overlay.login-overlay {
+  justify-content: flex-end;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: background 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay.login-overlay.open {
+  background: transparent; /* Remove the dark overlay */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.modal.login-panel {
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0;
+  border-radius: 0;
+  border: none !important;
+  background: transparent !important;
+  width: 40vw;
+  max-width: 100vw;
+  transform: translateX(100%);
+  animation: none;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem;
+  box-shadow: none;
+  overflow-y: auto;
+}
+
+.modal.signup-panel {
+  justify-content: flex-start;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+.modal-overlay.login-overlay.open .modal.login-panel {
+  transform: translateX(0);
 }
 
 .modal-close {

@@ -484,7 +484,10 @@ router.get('/timeline', async (req, res) => {
         }
 
         for (const c of calls) {
-          const hour = new Date(c.timestamp).getHours();
+          const d = new Date(c.timestamp);
+          // Convert UTC to IST (+5:30) for correct hourly grouping
+          d.setUTCMinutes(d.getUTCMinutes() + 330);
+          const hour = d.getUTCHours();
           const type = c.callType.toLowerCase();
           if (byHour[hour]) {
             if (type === 'incoming') byHour[hour].incoming++;

@@ -453,16 +453,12 @@ export class AdminSettingsWorkflow {
   removeLeadStatus(vm: any, status: string): void {
     const protectedStatuses = [
       'New',
-      'Contacted',
       'Converted',
       'Follow Up',
-      'Details Shared',
-      'Future Needs',
-      'Call Later',
       'Not Interested',
-      'DNP / Not Reachable',
-      'Busy',
-      'Invalid'
+      'Contacted',
+      'Invalid',
+      'Not Connected'
     ];
     if (protectedStatuses.includes(status)) {
       vm.settingsSaveError = `The status "${status}" is a core workflow stage and cannot be deleted.`;

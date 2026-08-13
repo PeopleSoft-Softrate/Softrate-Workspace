@@ -73,6 +73,10 @@ textarea {
   font: inherit;
 }
 
+textarea {
+  resize: none !important;
+}
+
 a {
   color: inherit;
 }

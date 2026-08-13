@@ -113,16 +113,13 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [
         'New',
-        'Contacted',
         'Converted',
         'Follow Up',
-        'Details Shared',
-        'Future Needs',
-        'Call Later',
         'Not Interested',
-        'DNP / Not Reachable',
-        'Busy',
-        'Invalid'
+        'Contacted',
+        'Invalid',
+        'Not Connected',
+        'Closed Lost'
       ],
     },
     interestedPageStatuses: {
@@ -131,7 +128,7 @@ const userSchema = new mongoose.Schema(
     },
     dnpPageStatuses: {
       type: [String],
-      default: ['DNP / Not Reachable'],
+      default: ['Not Connected', 'Not Interested', 'Invalid'],
     },
     convertedPageStatuses: {
       type: [String],

@@ -8,25 +8,62 @@
 
     <div class="topbar-page-title admin-topbar-page-title">{{ vm.adminTopbarTitle }}</div>
 
-    <label class="topbar-search admin-global-search" for="adminGlobalSearch" [class.search-loading]="vm.adminGlobalSearchLoading">
-      <span class="topbar-search-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="6"></circle>
-          <path d="m20 20-4.35-4.35"></path>
-        </svg>
-      </span>
-      <input
-        id="adminGlobalSearch"
-        class="topbar-input"
-        type="text"
-        [placeholder]="vm.adminSearchPlaceholder"
-        autocomplete="off"
-        [attr.aria-busy]="vm.adminGlobalSearchLoading"
-        [(ngModel)]="vm.adminGlobalSearch"
-        (keyup.enter)="vm.onAdminGlobalSearchEnter()"
-      />
-      <span *ngIf="vm.adminGlobalSearchLoading" class="topbar-search-spinner" aria-hidden="true"></span>
-    </label>
+    <div class="admin-search-wrap" style="position: relative;">
+      <label class="topbar-search admin-global-search" for="adminGlobalSearch" [class.search-loading]="vm.adminGlobalSearchLoading">
+        <span class="topbar-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="m20 20-4.35-4.35"></path>
+          </svg>
+        </span>
+        <input
+          id="adminGlobalSearch"
+          class="topbar-input"
+          type="text"
+          [placeholder]="vm.adminSearchPlaceholder"
+          autocomplete="off"
+          [attr.aria-busy]="vm.adminGlobalSearchLoading"
+          [(ngModel)]="vm.adminGlobalSearch"
+          (input)="vm.onAdminSearchInput()"
+          (keyup.enter)="vm.onAdminGlobalSearchEnter()"
+        />
+        <span *ngIf="vm.adminGlobalSearchLoading" class="topbar-search-spinner" aria-hidden="true"></span>
+      </label>
+
+      <!-- Search Suggestions Dropdown -->
+      <div class="admin-search-suggestions" *ngIf="vm.adminSearchSuggestionsOpen && vm.adminSearchSuggestions.length > 0">
+        <div 
+          *ngFor="let s of vm.adminSearchSuggestions" 
+          class="admin-search-suggestion-item">
+          
+          <div class="admin-search-suggestion-icon" style="cursor: pointer;" (click)="vm.selectAdminSearchSuggestion(s)">
+            <svg *ngIf="s.type === 'company'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
+            <svg *ngIf="s.type === 'contact'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          
+          <div class="admin-search-suggestion-text" style="flex: 1; cursor: pointer;" (click)="vm.selectAdminSearchSuggestion(s)">
+            <div class="admin-search-suggestion-label">{{ s.label }}</div>
+            <div class="admin-search-suggestion-sublabel">{{ s.sublabel }}</div>
+          </div>
+
+          <div class="admin-search-suggestion-actions" style="display: flex; gap: 4px;">
+            <button 
+              class="suggestion-action-icon" 
+              title="Open in Leads" 
+              (click)="$event.stopPropagation(); vm.selectAdminSearchSuggestion(s, 'leads')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </button>
+            <button 
+              *ngIf="s.lead?.pipelineStage"
+              class="suggestion-action-icon" 
+              title="Open in Pipeline" 
+              (click)="$event.stopPropagation(); vm.selectAdminSearchSuggestion(s, 'pipeline')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="nav-auth topbar-actions">
       <div class="admin-break-alert" *ngIf="vm.breakNotifCount > 0">

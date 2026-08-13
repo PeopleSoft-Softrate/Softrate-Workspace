@@ -6,6 +6,7 @@ import { CallLogService } from '../../../services/calllog.service';
 import { EmployeeService, Employee } from '../../../services/employee.service';
 import { LeadService, Lead } from '../../../services/lead.service';
 import { AuthService } from '../../../services/auth.service';
+import { TargetService } from '../../../services/target.service';
 
 interface EmployeeLeadCompanyCachePayload {
   companies: Array<{ name: string; count: number }>;
@@ -37,6 +38,7 @@ export class AdminEmployeesWorkflow {
     private bookmarkService: BookmarkService,
     private dashboardCache: DashboardCacheService,
     private authService: AuthService,
+    private targetService: TargetService,
   ) {}
 
   filteredEmployeesForTable(vm: any): Employee[] {
@@ -204,6 +206,11 @@ export class AdminEmployeesWorkflow {
     vm.empFollowupPage = 1;
     vm.empFollowupHasMore = false;
     vm.empFollowupTotal = 0;
+    
+    // Target state
+    vm.selectedEmpTargets = [];
+    vm.selectedEmpTargetsLoading = true;
+    vm.targetYear = new Date().getFullYear();
 
     window.scrollTo({ top: 0, behavior: 'instant' });
 
@@ -245,6 +252,43 @@ export class AdminEmployeesWorkflow {
 
     vm.fetchEmpLeads();
     vm.fetchEmpFollowups();
+    this.fetchEmployeeTargets(vm);
+  }
+  
+  fetchEmployeeTargets(vm: any): void {
+    if (!vm.selectedEmployee) return;
+    vm.selectedEmpTargetsLoading = true;
+    this.targetService.getEmployeeTargets(vm.dashboardCode, vm.selectedEmployee._id, vm.targetYear).subscribe({
+      next: (res: any) => {
+        vm.selectedEmpTargetsLoading = false;
+        if (res.success) {
+          vm.selectedEmpTargets = res.data;
+        }
+      },
+      error: () => {
+        vm.selectedEmpTargetsLoading = false;
+      }
+    });
+  }
+  
+  setEmployeeTarget(vm: any, month: number, targetAmount: number): void {
+    if (!vm.selectedEmployee) return;
+    this.targetService.setTarget({
+      companyCode: vm.dashboardCode,
+      employeeId: vm.selectedEmployee._id,
+      year: vm.targetYear,
+      month: month,
+      targetAmount: targetAmount
+    }).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          const target = vm.selectedEmpTargets.find((t: any) => t.month === month);
+          if (target) {
+            target.targetAmount = targetAmount;
+          }
+        }
+      }
+    });
   }
 
   selectEmployee(vm: any, emp: Employee): void {

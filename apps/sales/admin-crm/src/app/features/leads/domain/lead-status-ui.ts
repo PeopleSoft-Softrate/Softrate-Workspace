@@ -1,15 +1,12 @@
 export const ADMIN_LEAD_STATUSES = [
   'New',
-  'Contacted',
   'Converted',
   'Follow Up',
-  'Details Shared',
-  'Future Needs',
-  'Call Later',
   'Not Interested',
-  'DNP / Not Reachable',
-  'Busy',
-  'Invalid'
+  'Contacted',
+  'Invalid',
+  'Not Connected',
+  'Closed Lost'
 ];
 
 export function leadStatusClass(status: string): string {

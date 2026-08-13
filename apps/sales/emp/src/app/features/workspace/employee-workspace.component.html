@@ -174,7 +174,7 @@
         <span class="sidebar-label">Interested</span>
       </button>
       <button class="sidebar-link sidebar-link-dnp" [class.active]="dashTab==='dnp'" (click)="switchTab('dnp')"
-        *ngIf="sidebarFeatureMatches('Not Connected')" [title]="sidebarMinimized ? 'Not Connected' : ''">
+        *ngIf="sidebarFeatureMatches('Not Connected')" [title]="sidebarMinimized ? 'Not Qualified' : ''">
         <span class="sidebar-icon sidebar-icon-dnp" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <line x1="23" y1="1" x2="17" y2="7" />
@@ -183,7 +183,7 @@
               d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-7.71A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
           </svg>
         </span>
-        <span class="sidebar-label">Not Connected</span>
+        <span class="sidebar-label">Not Qualified</span>
       </button>
       <button class="sidebar-link sidebar-link-converted" [class.active]="dashTab==='converted'"
         (click)="switchTab('converted')" *ngIf="sidebarFeatureMatches('Converted')"
@@ -260,18 +260,54 @@
       </button>
       <div class="topbar-page-title">{{ topbarTitle }}</div>
 
-      <label class="topbar-search" for="globalSearch" [class.search-loading]="globalSearchLoading"
-        [attr.aria-busy]="globalSearchLoading">
-        <span class="topbar-search-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="6"></circle>
-            <path d="m20 20-4.35-4.35"></path>
-          </svg>
-        </span>
-        <input id="globalSearch" class="topbar-input" type="text" placeholder="Search leads, phone, or company..."
-          autocomplete="off" aria-label="Search leads, companies, or phone numbers" [(ngModel)]="leadSearch" />
-        <span *ngIf="globalSearchLoading" class="topbar-search-spinner" aria-hidden="true"></span>
-      </label>
+      <div class="emp-search-wrap" style="position: relative;">
+        <label class="topbar-search" for="globalSearch" [class.search-loading]="globalSearchLoading"
+          [attr.aria-busy]="globalSearchLoading">
+          <span class="topbar-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m20 20-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input id="globalSearch" class="topbar-input" type="text" placeholder="Search leads, phone, or company..."
+            autocomplete="off" aria-label="Search leads, companies, or phone numbers" [(ngModel)]="leadSearch" (input)="onEmpSearchInput()" />
+          <span *ngIf="globalSearchLoading" class="topbar-search-spinner" aria-hidden="true"></span>
+        </label>
+
+        <!-- Search Suggestions Dropdown -->
+        <div class="admin-search-suggestions" *ngIf="empSearchSuggestionsOpen && empSearchSuggestions.length > 0">
+          <div 
+            *ngFor="let s of empSearchSuggestions" 
+            class="admin-search-suggestion-item">
+            
+            <div class="admin-search-suggestion-icon" style="cursor: pointer;" (click)="selectEmpSearchSuggestion(s)">
+              <svg *ngIf="s.type === 'company'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
+              <svg *ngIf="s.type === 'contact'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            
+            <div class="admin-search-suggestion-text" style="flex: 1; cursor: pointer;" (click)="selectEmpSearchSuggestion(s)">
+              <div class="admin-search-suggestion-label">{{ s.label }}</div>
+              <div class="admin-search-suggestion-sublabel">{{ s.sublabel }}</div>
+            </div>
+
+            <div class="admin-search-suggestion-actions" style="display: flex; gap: 4px;">
+              <button 
+                class="suggestion-action-icon" 
+                title="Open in Leads" 
+                (click)="$event.stopPropagation(); selectEmpSearchSuggestion(s, 'leads')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              </button>
+              <button 
+                *ngIf="s.lead?.pipelineStage"
+                class="suggestion-action-icon" 
+                title="Open in Pipeline" 
+                (click)="$event.stopPropagation(); selectEmpSearchSuggestion(s, 'pipeline')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="topbar-actions">
         <button class="topbar-metric topbar-metric-followups" type="button"
@@ -484,6 +520,18 @@
             <div class="metric-label">Follow-ups</div>
             <div class="metric-value">{{ filteredFollowups.length }}</div>
           </div>
+          <div class="metric-cell" style="min-width: 180px; justify-content: center;">
+            <div class="metric-label">Revenue Target</div>
+            <div *ngIf="myTargetLoading" style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">Loading...</div>
+            <div *ngIf="!myTargetLoading && (!myTarget || !myTarget.targetAmount)" style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">Not set</div>
+            <div *ngIf="!myTargetLoading && myTarget && myTarget.targetAmount > 0" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="font-size: 15px; font-weight: 600; color: var(--text-strong);">₹{{ myTarget.achievedAmount | number:'1.0-0' }} <span style="font-size: 13px; font-weight: 400; color: var(--text-muted);">/ ₹{{ myTarget.targetAmount | number:'1.0-0' }}</span></div>
+              <div class="progress-bar-container" style="width: 100%; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden;">
+                <div class="progress-bar-fill" [style.width.%]="(myTarget.achievedAmount / myTarget.targetAmount) * 100" [style.background]="myTarget.achievedAmount >= myTarget.targetAmount ? 'var(--success)' : 'var(--accent)'" style="height: 100%;"></div>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 500;">{{ (myTarget.achievedAmount / myTarget.targetAmount) * 100 | number:'1.0-1' }}% Completed</div>
+            </div>
+          </div>
         </div>
 
         <div class="overview-grid">
@@ -544,6 +592,8 @@
               </div>
             </ng-container>
           </section>
+
+
 
           <section class="workspace-section overview-activity-section">
             <div class="section-header">
@@ -1030,14 +1080,12 @@
             </ng-container>
 
             <ng-container *ngIf="dashTab==='dnp'">
-              <label class="mini-field">
-                <span>Status</span>
-                <select class="field-select filter-select-field" [(ngModel)]="selectedDnpStatus"
-                  (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
-                  <option value="All">All Statuses</option>
-                  <option *ngFor="let st of DNP_PAGE_STATUSES" [value]="st">{{ st }}</option>
-                </select>
-              </label>
+              <div class="view-mode-toggle" style="height: 38px; align-items: center; margin-bottom: 0px; display: inline-flex; width: max-content; flex-shrink: 0; margin-left: auto;">
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="selectedDnpStatus === 'All'" (click)="selectedDnpStatus = 'All'; onLeadFilterChange()">All Leads</button>
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="selectedDnpStatus === 'Not Connected'" (click)="selectedDnpStatus = 'Not Connected'; onLeadFilterChange()">Not Connected</button>
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="selectedDnpStatus === 'Not Interested'" (click)="selectedDnpStatus = 'Not Interested'; onLeadFilterChange()">Not Interested</button>
+                <button class="view-mode-btn" style="width: auto; padding: 0 12px; font-weight: 500; font-size: 13px; height: 30px; white-space: nowrap;" [class.active]="selectedDnpStatus === 'Invalid'" (click)="selectedDnpStatus = 'Invalid'; onLeadFilterChange()">Invalid</button>
+              </div>
             </ng-container>
 
             <ng-container *ngIf="dashTab==='converted'">
@@ -1057,7 +1105,7 @@
                 <select class="field-select filter-select-field" [(ngModel)]="selectedFavouriteStatus"
                   (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
                   <option value="All">All Statuses</option>
-                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                  <option *ngFor="let st of availableLeadStatuses" [value]="st">{{ st }}</option>
                 </select>
               </label>
             </ng-container>
@@ -1073,7 +1121,7 @@
                 <select class="field-select filter-select-field" [(ngModel)]="todayFilterStatus"
                   (ngModelChange)="onLeadFilterChange()" aria-label="Status filter">
                   <option value="All">All Statuses</option>
-                  <option *ngFor="let st of LEAD_STATUSES" [value]="st">{{ st }}</option>
+                  <option *ngFor="let st of availableLeadStatuses" [value]="st">{{ st }}</option>
                 </select>
               </label>
             </ng-container>
@@ -1157,7 +1205,7 @@
           </aside>
 
           <ng-container *ngIf="showLeadRecordView && currentSelectedLead as lead; else leadListMode">
-            <app-employee-lead-detail [lead]="lead" [drawerSection]="drawerSection" [statuses]="LEAD_STATUSES"
+            <app-employee-lead-detail [lead]="lead" [drawerSection]="drawerSection" [statuses]="getAvailableStatusesForLead(lead)"
               [historyLogs]="historyLogs" [historyLoading]="historyLoading"
               [remarkValue]="leadRemarksInputs[lead._id] || ''"
               (remarkValueChange)="leadRemarksInputs[lead._id] = $event"
@@ -1232,7 +1280,7 @@
                     <div class="lead-card-grid" *ngIf="leadViewMode === 'grid'">
                       <!-- Regular Lead Cards -->
                       <app-employee-lead-card *ngFor="let lead of activeLeadRows; trackBy: trackLeadId" [lead]="lead"
-                        [statuses]="LEAD_STATUSES" [productRemarks]="productRemarks"
+                        [statuses]="getAvailableStatusesForLead(lead)" [productRemarks]="productRemarks"
                         [remarkValue]="leadRemarksInputs[lead._id] || ''"
                         (remarkValueChange)="leadRemarksInputs[lead._id] = $event"
                         [remarkPosting]="remarkPostingIds.has(lead._id)" [statusUpdating]="updatingLeadId===lead._id"
@@ -1305,7 +1353,7 @@
                               <select class="field-select table-status-select" [ngModel]="lead.status"
                                 (ngModelChange)="updateLeadStatus(lead, $event)" (click)="$event.stopPropagation()"
                                 [style.color]="leadStatusColorFn(lead.status)" [disabled]="updatingLeadId===lead._id">
-                                <option *ngFor="let st of LEAD_STATUSES" [value]="st"
+                                <option *ngFor="let st of getAvailableStatusesForLead(lead)" [value]="st"
                                   [style.color]="leadStatusColorFn(st)">{{ st }}</option>
                                 <option disabled>──────</option>
                                 <option value="ADD_DEAL">+ Add a Deal</option>
@@ -3663,3 +3711,6 @@
     </div>
   </div>
 </div>
+
+<!-- Global hidden calendar for triggering Activity Modal -->
+<app-activities-calendar #globalActivityCalendar [employee]="employee" [allLeads]="allLeads" [hiddenMode]="true"></app-activities-calendar>

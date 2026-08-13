@@ -1013,6 +1013,11 @@ export abstract class AdminWorkspaceController implements OnInit {
   selectedEmpLoading = false;
   selectedEmpCalls: any[] = [];
   selectedEmpCallsLoading = false;
+  
+  // ── Employee Revenue Targets ─────────────────────────────────
+  targetYear: number = new Date().getFullYear();
+  selectedEmpTargets: any[] = [];
+  selectedEmpTargetsLoading: boolean = false;
   drilldownTab: 'stats' | 'calls' | 'leads' | 'followups' = 'stats';
   followupFilter: 'all' | 'today' = 'all';
   selectedFollowupDate: string = '';
@@ -1610,6 +1615,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
     this.adminGlobalSearchTimer = setTimeout(() => {
       if (trimmed !== this.currentAdminGlobalSearchValue(sourceTab).trim()) return;
+      this.fetchAdminGlobalSearchSuggestions(trimmed);
       this.runAdminGlobalSearch(sourceTab, trimmed);
     }, SEARCH_DEBOUNCE_MS);
   }
@@ -1629,6 +1635,81 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   get adminGlobalSearchLoading(): boolean {
     return this.isAdminSearching;
+  }
+
+  adminSearchSuggestionsOpen = false;
+
+  private _lastSearchSuggestionsQuery = '';
+  private _lastSearchSuggestionsLeadsRef: any[] | null = null;
+  private _cachedSearchSuggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
+
+  get adminSearchSuggestions(): { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] {
+    if (!this.adminGlobalSearch.trim()) return [];
+    return this._cachedSearchSuggestions;
+  }
+
+  async fetchAdminGlobalSearchSuggestions(query: string): Promise<void> {
+    if (!query) {
+      this._cachedSearchSuggestions = [];
+      return;
+    }
+    if (query === this._lastSearchSuggestionsQuery) return;
+    this._lastSearchSuggestionsQuery = query;
+
+    const companyCode = this.dashboardCode;
+    if (!companyCode) return;
+
+    try {
+      const res = await firstValueFrom(this.api.get<any>(`/api/leads?companyCode=${companyCode}&search=${encodeURIComponent(query)}&limit=6`));
+      
+      const suggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
+      const addedLabels = new Set<string>();
+
+      for (const lead of (res.items || [])) {
+        const company = (lead.leadCompanyName || '').toLowerCase();
+        const contact = (lead.contactName || '').toLowerCase();
+        const phone = String(lead.contactNumber || '').toLowerCase();
+        const queryLower = query.toLowerCase();
+
+        if (company.includes(queryLower)) {
+          const label = lead.leadCompanyName;
+          if (!addedLabels.has(label)) {
+            suggestions.push({ type: 'company', label, sublabel: 'Company', lead });
+            addedLabels.add(label);
+          }
+        } else if (contact.includes(queryLower) || phone.includes(queryLower)) {
+          const label = lead.contactName || String(lead.contactNumber || '');
+          if (!addedLabels.has(label)) {
+            suggestions.push({ type: 'contact', label, sublabel: lead.leadCompanyName || 'Contact', lead });
+            addedLabels.add(label);
+          }
+        }
+      }
+      this._cachedSearchSuggestions = suggestions;
+    } catch (err) {
+      // silently ignore
+    }
+  }
+
+  selectAdminSearchSuggestion(suggestion: any, targetTab?: AdminPageId): void {
+    this.adminGlobalSearch = suggestion.label;
+    this.adminSearchSuggestionsOpen = false;
+    if (targetTab) {
+      this.switchTab(targetTab);
+    }
+    this.onAdminGlobalSearchEnter();
+  }
+
+  closeAdminSearchSuggestions(): void {
+    this.adminSearchSuggestionsOpen = false;
+  }
+  
+  onAdminSearchInput(): void {
+    if (this.adminGlobalSearch.trim()) {
+      this.adminSearchSuggestionsOpen = true;
+    } else {
+      this.adminSearchSuggestionsOpen = false;
+    }
   }
 
   private currentAdminGlobalSearchValue(tab: AdminPageId = this.dashTab): string {
@@ -4802,6 +4883,9 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (this.productActionDropdownOpenKey && (!target || !target.closest('.product-action-dropdown'))) {
       this.productActionDropdownOpenKey = '';
     }
+    if (this.adminSearchSuggestionsOpen && (!target || !target.closest('.admin-search-wrap'))) {
+      this.adminSearchSuggestionsOpen = false;
+    }
   }
 
   handleGlobalEscape(): void {
@@ -4812,6 +4896,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.closeClientOnboardingCreateModal();
     this.productTagDropdownOpenKey = '';
     this.productActionDropdownOpenKey = '';
+    this.adminSearchSuggestionsOpen = false;
   }
 
   private adminProfilePhotoStorageKey(): string {

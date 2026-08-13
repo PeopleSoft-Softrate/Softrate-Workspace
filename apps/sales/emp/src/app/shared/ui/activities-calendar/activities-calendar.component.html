@@ -1,4 +1,4 @@
-<div class="activities-calendar-container" [class.embedded]="embedded">
+<div class="activities-calendar-container" [class.embedded]="embedded" *ngIf="!hiddenMode">
   <div class="workspace-header" *ngIf="!embedded">
     <h2 class="workspace-title">Activities</h2>
     <div class="workspace-controls">
@@ -175,7 +175,8 @@
           </thead>
           <tbody>
             <tr *ngFor="let activity of activitiesForCurrentTab"
-              style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s;"
+              style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s; cursor: pointer;"
+              (click)="onActivityRowClick(activity)"
               onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
               <td style="padding: 20px 24px; vertical-align: middle; white-space: nowrap;">
                 <div style="font-weight: 600; color: #1e293b;">{{ activity.date | date:'dd MMM, yyyy' }}</div>
@@ -236,7 +237,7 @@
     <div class="modal-body">
       <label class="field-label">
         <span>Date</span>
-        <input type="text" class="field-input" [value]="selectedActivityDate | date:'fullDate'" disabled>
+        <input type="date" class="field-input" [(ngModel)]="activityDateString">
       </label>
 
       <label class="field-label" style="margin-top: 12px;">

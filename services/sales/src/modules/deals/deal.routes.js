@@ -75,9 +75,43 @@ router.post('/', async (req, res) => {
 
     await deal.save();
 
-    await logChange(companyCode, lead._id, 'DEAL_CREATED', 'New deal added: ' + dealName, req.user);
+    await logChange({
+      HistoryModel: req.models.History,
+      companyCode,
+      contactNumber: lead.contactNumber,
+      contactName: lead.contactName,
+      companyName: lead.leadCompanyName,
+      dealName: dealName,
+      action: 'DEAL_CREATED',
+      details: 'New deal added: ' + dealName,
+      changedBy: user._id,
+    });
+    const LeadModel = req.models.Lead;
+    const targetCompanyName = String(lead.leadCompanyName || '').trim();
+    
+    if (targetCompanyName) {
+      const allCompanyLeads = await LeadModel.find({ companyCode }).select('_id leadCompanyName');
+      const matchedLeadIds = allCompanyLeads
+        .filter(l => String(l.leadCompanyName || '').trim() === targetCompanyName)
+        .map(l => l._id);
+        
+      if (matchedLeadIds.length > 0) {
+        await LeadModel.updateMany(
+          { _id: { $in: matchedLeadIds } },
+          { $set: { status: 'Pipeline', pipelineStage: initialStage, updatedAt: new Date() } }
+        );
+      }
+    } else {
+      lead.status = 'Pipeline';
+      lead.pipelineStage = initialStage;
+      await lead.save();
+    }
+
+    const { invalidateLeadCaches } = require('../../../services/leadCache');
+    await invalidateLeadCaches({ companyCode, employeeId: lead.assignedEmployeeId });
 
     eventBus.emitToCompany(companyCode, { type: 'PIPELINE_REFRESH' });
+    eventBus.emitToCompany(companyCode, { type: 'LEADS_REFRESH' });
 
     return res.status(201).json({ success: true, data: deal });
   } catch (error) {

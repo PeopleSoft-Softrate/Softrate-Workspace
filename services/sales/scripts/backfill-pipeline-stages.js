@@ -29,9 +29,7 @@ const STATUS_MAP = {
   'Converted':        { pipelineStage: 'CLOSED_WON' },
   'Not Interested':   { pipelineStage: 'QUALIFICATION', qualificationOutcome: 'NOT_QUALIFIED', qualificationReason: 'NOT_INTERESTED' },
   'Invalid':          { pipelineStage: 'QUALIFICATION', qualificationOutcome: 'NOT_QUALIFIED', qualificationReason: 'INVALID' },
-  'DNP / Not Reachable': { pipelineStage: 'NEW', connectionOutcome: 'NOT_CONNECTED' },
-  'Busy':             { pipelineStage: 'NEW', connectionOutcome: 'BUSY' },
-  'Switch off':       { pipelineStage: 'NEW', connectionOutcome: 'SWITCH_OFF' },
+  'Not Connected':    { pipelineStage: 'NEW', connectionOutcome: 'NOT_CONNECTED' },
   // Fallback: any unrecognized status → NEW
   '__DEFAULT__':      { pipelineStage: 'NEW' },
 };

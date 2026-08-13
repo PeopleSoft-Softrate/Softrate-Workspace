@@ -32,6 +32,7 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
   @Input() filterCompanyId?: string;
   @Input() filterCompanyName?: string;
   @Input() embedded = false;
+  @Input() hiddenMode = false;
   
   @Output() activityClicked = new EventEmitter<{leadId: string, section: string}>();
 
@@ -48,6 +49,22 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
   
   showActivityModal = false;
   selectedActivityDate: Date = new Date();
+  
+  get activityDateString(): string {
+    if (!this.selectedActivityDate) return '';
+    const d = this.selectedActivityDate;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  set activityDateString(value: string) {
+    if (value) {
+      const [year, month, day] = value.split('-').map(Number);
+      this.selectedActivityDate = new Date(year, month - 1, day);
+    }
+  }
   activityForm = {
     type: 'task' as 'task' | 'meeting' | 'call',
     title: '',
@@ -314,12 +331,14 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
     this.activitiesSubTab = tab;
   }
   
-  openActivityModal(date?: Date) {
+  openActivityModal(date?: Date, type: 'task' | 'meeting' | 'call' = 'task', prefillLead?: any) {
     this.selectedActivityDate = date ? new Date(date) : new Date();
-    this.activityForm = { type: 'task', title: '', description: '', time: '10:00', leadId: '' };
+    this.activityForm = { type: type, title: '', description: '', time: '10:00', leadId: '' };
     this.activityClientSearchQuery = '';
     
-    if (this.filterCompanyId) {
+    if (prefillLead) {
+      this.selectActivityClient(prefillLead);
+    } else if (this.filterCompanyId) {
       this.activityForm.leadId = this.filterCompanyId;
       this.activityClientSearchQuery = this.filterCompanyName || '';
     }
@@ -383,6 +402,12 @@ export class ActivitiesCalendarComponent implements OnInit, OnChanges {
     } catch (err: any) {
       console.error(err);
       alert('Error saving activity: ' + (err.message || String(err)));
+    }
+  }
+
+  onActivityRowClick(activity: any) {
+    if (activity.leadId) {
+      this.activityClicked.emit({ leadId: activity.leadId, section: 'overview' });
     }
   }
 

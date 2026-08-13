@@ -71,6 +71,10 @@ textarea {
   border-radius: 0;
 }
 
+textarea {
+  resize: none !important;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #c4cad6 #f4f5f7;

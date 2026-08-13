@@ -5,15 +5,13 @@
 function statusToPipeline(status) {
   switch (status) {
     case 'Follow Up':
-    case 'Call Later':
-    case 'Future Needs':
       return { pipelineStage: 'QUALIFICATION', connectionOutcome: 'BUSY' };
     case 'Converted':
       return { pipelineStage: 'CLOSED_WON' };
     case 'Not Interested':
     case 'Invalid':
-    case 'DNP / Not Reachable':
-    case 'Busy':
+    case 'Not Connected':
+    case 'Closed Lost':
       return { pipelineStage: 'CLOSED_LOST' };
     default:
       return {};
@@ -28,11 +26,11 @@ function pipelineToStatus(stage) {
     case 'VALUE_PROPOSITION':
     case 'PROPOSAL_QUOTE':
     case 'NEGOTIATION_REVIEW':
-      return 'Details Shared';
+      return 'Follow Up';
     case 'CLOSED_WON':
       return 'Converted';
     case 'CLOSED_LOST':
-      return 'Not Interested';
+      return 'Closed Lost';
     default:
       return null;
   }

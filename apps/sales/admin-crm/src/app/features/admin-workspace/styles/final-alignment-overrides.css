@@ -3945,3 +3945,8 @@ select.glass-input {
   padding-left: 12px !important;
 }
 
+
+.dashboard-wrapper .admin-employee-style-card.we-crm-active {
+  grid-template-rows: 44px 28px 96px 28px 28px 168px 44px !important;
+  min-height: 508px !important;
+}

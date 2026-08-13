@@ -5,7 +5,7 @@ const LEAD_CACHE_TTLS = {
   facets: 120,
   companyContacts: 120,
 };
-const LEAD_CACHE_NAMESPACE = 'lead:v2';
+const LEAD_CACHE_NAMESPACE = 'lead:v3';
 
 function buildEmployeeLeadListKey(companyCode, employeeId, params) {
   return `${LEAD_CACHE_NAMESPACE}:list:employee:${companyCode}:${employeeId}:${hashObject(params)}`;

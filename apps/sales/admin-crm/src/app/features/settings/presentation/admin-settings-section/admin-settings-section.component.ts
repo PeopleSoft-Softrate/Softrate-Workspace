@@ -14,15 +14,12 @@ export class AdminSettingsSectionComponent extends AdminWorkspaceSectionProxy {
 
   protectedStatuses = [
     'New',
-    'Contacted',
     'Converted',
     'Follow Up',
-    'Details Shared',
-    'Future Needs',
-    'Call Later',
     'Not Interested',
-    'DNP / Not Reachable',
-    'Busy',
-    'Invalid'
+    'Contacted',
+    'Invalid',
+    'Not Connected',
+    'Closed Lost'
   ];
 }

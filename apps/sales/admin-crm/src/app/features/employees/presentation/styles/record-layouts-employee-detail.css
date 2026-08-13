@@ -208,7 +208,7 @@
 
 .dashboard-wrapper .admin-employee-overview-strip {
   display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
   border-bottom: 1px solid var(--admin-line) !important;
 }
 

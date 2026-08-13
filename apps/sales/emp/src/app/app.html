@@ -191,24 +191,54 @@
     <header class="crm-topbar">
       <div class="topbar-page-title">{{ topbarTitle }}</div>
 
-      <label class="topbar-search" for="globalSearch">
-        <span class="topbar-search-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="6"></circle>
-            <path d="m20 20-4.35-4.35"></path>
-          </svg>
-        </span>
-        <input
-          id="globalSearch"
-          class="topbar-input"
-          type="text"
-          placeholder="Search leads, phone, or company..."
-          autocomplete="off"
-          aria-label="Search leads, companies, or phone numbers"
-          [(ngModel)]="leadSearch"
-        />
-        <span class="topbar-search-shortcut" aria-hidden="true">⌘ K</span>
-      </label>
+      <div class="emp-search-wrap" style="position: relative;">
+        <label class="topbar-search" for="globalSearch">
+          <span class="topbar-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m20 20-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input
+            id="globalSearch"
+            class="topbar-input"
+            type="text"
+            placeholder="Search leads, phone, or company..."
+            autocomplete="off"
+            aria-label="Search leads, companies, or phone numbers"
+            [(ngModel)]="leadSearch"
+            (input)="onEmpSearchInput()"
+          />
+          <span class="topbar-search-shortcut" aria-hidden="true">⌘ K</span>
+        </label>
+
+        <!-- Search Suggestions Dropdown -->
+        <div class="admin-search-suggestions" *ngIf="empSearchSuggestionsOpen && empSearchSuggestions.length > 0">
+          <div 
+            *ngFor="let s of empSearchSuggestions" 
+            class="admin-search-suggestion-item">
+            
+            <div class="admin-search-suggestion-icon" style="cursor: pointer;" (click)="selectEmpSearchSuggestion(s)">
+              <svg *ngIf="s.type === 'company'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+              <svg *ngIf="s.type === 'contact'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            
+            <div class="admin-search-suggestion-text" style="flex: 1; cursor: pointer;" (click)="selectEmpSearchSuggestion(s)">
+              <div class="admin-search-suggestion-label">{{ s.label }}</div>
+              <div class="admin-search-suggestion-sublabel">{{ s.sublabel }}</div>
+            </div>
+
+            <div class="admin-search-suggestion-actions" style="display: flex; gap: 4px;">
+              <button 
+                class="suggestion-action-icon" 
+                title="Open in Leads" 
+                (click)="$event.stopPropagation(); selectEmpSearchSuggestion(s, 'leads')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="topbar-actions">
         <button class="topbar-metric topbar-metric-followups" type="button" (click)="switchTab('followups'); followupFilter='today'">

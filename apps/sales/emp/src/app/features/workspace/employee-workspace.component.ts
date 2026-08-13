@@ -31,6 +31,7 @@ import { QuotationsRepository } from '../quotations/data/quotations.repository';
 import { EmployeeLeadCardComponent } from '../leads/presentation/employee-lead-card.component';
 import { EmployeeLeadDetailComponent } from '../leads/presentation/employee-lead-detail.component';
 import { Lead as EmployeeLeadModel, LeadDrawerSection, LeadHistoryLog } from '../leads/domain/lead.model';
+import { TargetService, EmployeeMonthlyData } from '../../target.service';
 
 type EmployeeLeadScope = Partial<Pick<EmployeeLeadsState, 'search' | 'status' | 'statuses' | 'isFavourite' | 'updatedFrom' | 'updatedTo' | 'setLabel' | 'division'>>;
 
@@ -364,6 +365,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   @ViewChild('followupEditSection') private followupEditSection?: ElementRef<HTMLElement>;
   @ViewChild('followupHistorySection') private followupHistorySection?: ElementRef<HTMLElement>;
   @ViewChild('companyFullScrollContent') private companyFullScrollContent?: ElementRef<HTMLElement>;
+  @ViewChild('globalActivityCalendar') private globalActivityCalendar?: any;
 
   private sseSub?: Subscription;
   private leadVmSub?: Subscription;
@@ -480,6 +482,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (this._searchTimeout) clearTimeout(this._searchTimeout);
     this._searchTimeout = setTimeout(() => {
       if (trimmed !== this._leadSearch.trim()) return;
+      this.fetchGlobalSearchSuggestions(trimmed);
       if (!this.employee) {
         this.isSearching = false;
         this.workspaceStateCache = null;
@@ -512,6 +515,84 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       }
     }, SEARCH_DEBOUNCE_MS);
   }
+
+  empSearchSuggestionsOpen = false;
+
+  private _lastSearchSuggestionsQuery = '';
+  private _lastSearchSuggestionsLeadsRef: any[] | null = null;
+  private _cachedSearchSuggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
+
+  get empSearchSuggestions(): { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] {
+    if (!this.leadSearch.trim()) return [];
+    return this._cachedSearchSuggestions;
+  }
+
+  async fetchGlobalSearchSuggestions(query: string): Promise<void> {
+    if (!query) {
+      this._cachedSearchSuggestions = [];
+      return;
+    }
+    if (query === this._lastSearchSuggestionsQuery) return;
+    this._lastSearchSuggestionsQuery = query;
+
+    const companyCode = this.employee?.companyCode || '';
+    const employeeId = this.employee?._id || '';
+    if (!companyCode || !employeeId) return;
+
+    try {
+      const res = await firstValueFrom(this.api.get<any>(`/api/leads/employee?companyCode=${companyCode}&employeeId=${employeeId}&search=${encodeURIComponent(query)}&limit=6`));
+      
+      const suggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
+      const addedLabels = new Set<string>();
+
+      for (const lead of (res.items || [])) {
+        const company = (lead.leadCompanyName || '').toLowerCase();
+        const contact = (lead.contactName || '').toLowerCase();
+        const phone = String(lead.contactNumber || '').toLowerCase();
+        const queryLower = query.toLowerCase();
+
+        if (company.includes(queryLower)) {
+          const label = lead.leadCompanyName;
+          if (!addedLabels.has(label)) {
+            suggestions.push({ type: 'company', label, sublabel: 'Company', lead });
+            addedLabels.add(label);
+          }
+        } else if (contact.includes(queryLower) || phone.includes(queryLower)) {
+          const label = lead.contactName || String(lead.contactNumber || '');
+          if (!addedLabels.has(label)) {
+            suggestions.push({ type: 'contact', label, sublabel: lead.leadCompanyName || 'Contact', lead });
+            addedLabels.add(label);
+          }
+        }
+      }
+      this._cachedSearchSuggestions = suggestions;
+    } catch (err) {
+      // silently ignore
+    }
+  }
+
+  selectEmpSearchSuggestion(suggestion: any, targetTab?: any): void {
+    this.leadSearch = suggestion.label;
+    this.empSearchSuggestionsOpen = false;
+    if (targetTab) {
+      this.switchTab(targetTab);
+    }
+    // Also trigger the actual search
+    this.prepareGlobalLeadSearchContext();
+  }
+
+  closeEmpSearchSuggestions(): void {
+    this.empSearchSuggestionsOpen = false;
+  }
+  
+  onEmpSearchInput(): void {
+    if (this.leadSearch.trim()) {
+      this.empSearchSuggestionsOpen = true;
+    } else {
+      this.empSearchSuggestionsOpen = false;
+    }
+  }
+
 
   get globalSearchLoading(): boolean {
     return this.isSearching;
@@ -820,8 +901,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   get effectiveLeadStatuses(): string[] {
     if (this.leadStatusGroup === 'New') return ['New'];
-    if (this.leadStatusGroup === 'Connected') return ['Contacted', 'Connected', 'Call Later', 'Future Needs'];
-    if (this.leadStatusGroup === 'Followups') return ['Details Shared', 'Follow Up'];
+    if (this.leadStatusGroup === 'Connected') return ['Contacted', 'Connected'];
+    if (this.leadStatusGroup === 'Followups') return ['Follow Up'];
     return [];
   }
   selectedFavouriteStatus: string = 'All';
@@ -1410,6 +1491,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   handleDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
+    
+    if (this.empSearchSuggestionsOpen && (!target || !target.closest('.emp-search-wrap'))) {
+      this.closeEmpSearchSuggestions();
+    }
+    
     if (this.profileMenuOpen && (!target || !target.closest('.profile-dropdown'))) {
       this.closeProfileMenu();
     }
@@ -1425,6 +1511,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   handleGlobalEscape(): void {
+    this.closeEmpSearchSuggestions();
     this.closeProfileMenu();
     this.closeAiBriefPopup();
     this.closeAiBriefFullView();
@@ -1821,19 +1908,63 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   LEAD_STATUSES: string[] = [
     'New',
-    'Contacted',
     'Converted',
     'Follow Up',
-    'Details Shared',
-    'Future Needs',
-    'Call Later',
     'Not Interested',
-    'DNP / Not Reachable',
-    'Busy',
-    'Invalid'
+    'Contacted',
+    'Invalid',
+    'Not Connected',
+    'Closed Lost'
   ];
+
+  private _statusCache: { [key: string]: string[] } = {};
+
+  get availableLeadStatuses(): string[] {
+    const key = `base_${this.dashTab}_${this.leadStatusGroup}`;
+    if (this._statusCache[key]) {
+      return this._statusCache[key];
+    }
+
+    const baseStatuses = this.LEAD_STATUSES.filter(s => {
+      const norm = (s || '').toLowerCase();
+      return norm !== 'converted' && norm !== 'closed lost';
+    });
+    let result = baseStatuses;
+
+    if (this.dashTab === 'leads') {
+      if (this.leadStatusGroup === 'Connected') {
+        result = baseStatuses.filter(s => {
+          const norm = (s || '').toLowerCase();
+          return norm !== 'new' && norm !== 'invalid' && norm !== 'not connected';
+        });
+      } else if (this.leadStatusGroup === 'Followups') {
+        result = baseStatuses.filter(s => {
+          const norm = (s || '').toLowerCase();
+          return norm !== 'new' && norm !== 'invalid' && norm !== 'not connected' && norm !== 'contacted';
+        });
+      }
+    }
+    this._statusCache[key] = result;
+    return result;
+  }
+
+  getAvailableStatusesForLead(lead: any): string[] {
+    const baseList = this.availableLeadStatuses;
+    const currentStatus = lead?.status;
+    
+    if (currentStatus === 'Converted' || currentStatus === 'Closed Lost' || currentStatus === 'Pipeline') {
+      if (!baseList.includes(currentStatus)) {
+        const key = `${currentStatus.replace(/\s+/g, '_').toLowerCase()}_${this.dashTab}_${this.leadStatusGroup}`;
+        if (!this._statusCache[key]) {
+          this._statusCache[key] = [currentStatus, ...baseList];
+        }
+        return this._statusCache[key];
+      }
+    }
+    return baseList;
+  }
   INTERESTED_PAGE_STATUSES: string[] = ['Follow Up'];
-  DNP_PAGE_STATUSES: string[] = ['DNP / Not Reachable'];
+  DNP_PAGE_STATUSES: string[] = ['Not Connected'];
   CONVERTED_PAGE_STATUSES: string[] = ['Converted'];
   selectedInterestedStatus: string = 'All';
   selectedDnpStatus: string = 'All';
@@ -2986,7 +3117,10 @@ invoiceSeal: string = '';
     if (!this.invoiceLead || !this.employee || this.invoiceSaving) return;
 
     const invoiceClient = this.selectedInvoiceClient;
-    const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id;
+    const isDealObj = !!(this.invoiceLead as any).leadId;
+    const actualLeadId = isDealObj ? (this.invoiceLead as any).leadId : this.invoiceLead._id;
+    const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || actualLeadId;
+    const actualDealId = (this.invoiceLead as any).dealId || (isDealObj ? this.invoiceLead._id : undefined);
 
     const payload = {
       companyCode: this.employee.companyCode,
@@ -2998,7 +3132,7 @@ invoiceSeal: string = '';
       createdByPhone: this.employee.mobile,
       clientId: invoiceClient?.clientId || undefined,
       leadId: sourceLeadId,
-      dealId: (this.invoiceLead as any)?.dealId,
+      dealId: actualDealId,
       contactNumber: this.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(),
       invoiceDate: this.invoiceIssuedAt,
@@ -3021,7 +3155,7 @@ invoiceSeal: string = '';
     if (this.invoiceEditMode && this.openedInvoiceRecord?._id) {
       const updatePayload = {
         companyCode: payload.companyCode,
-        dealId: (this.invoiceLead as any)?.dealId,
+        dealId: actualDealId,
         items: payload.items,
         total: this.invoiceTotal,
         subTotal: this.invoiceSubtotal,
@@ -3101,6 +3235,10 @@ invoiceSeal: string = '';
   saveAndPrintQuotation(action: 'print' | 'email' = 'print'): void {
     if (!this.invoiceLead || !this.employee || this.quotationSaving) return;
     this.quotationSaving = true;
+    const isDealObj = !!(this.invoiceLead as any).leadId;
+    const actualLeadId = isDealObj ? (this.invoiceLead as any).leadId : this.invoiceLead._id;
+    const actualDealId = (this.invoiceLead as any).dealId || (isDealObj ? this.invoiceLead._id : undefined);
+
     this.api.post<any>('/api/quotations', {
       companyCode: this.employee.companyCode,
       brandingCompanyCode: this.documentCompanyCode || this.employee.companyCode,
@@ -3110,8 +3248,8 @@ invoiceSeal: string = '';
       createdByName: this.employee.name,
       createdByPhone: this.employee.mobile,
       clientId: this.selectedInvoiceClient?.clientId || undefined,
-      leadId: this.selectedInvoiceClient?.sourceLeadIds?.[0] || this.invoiceLead._id,
-      dealId: (this.invoiceLead as any)?.dealId,
+      leadId: this.selectedInvoiceClient?.sourceLeadIds?.[0] || actualLeadId,
+      dealId: actualDealId,
       contactNumber: this.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(),
       quotationDate: this.invoiceIssuedAt,
@@ -5089,7 +5227,30 @@ invoiceSeal: string = '';
     private invoicesRepository: InvoicesRepository,
     private quotationsRepository: QuotationsRepository,
     public employeePipelineVm: PipelineSectionViewModel,
+    private targetService: TargetService,
   ) { }
+  
+  // Target state
+  targetYear: number = new Date().getFullYear();
+  targetMonth: number = new Date().getMonth() + 1;
+  myTarget: EmployeeMonthlyData | null = null;
+  myTargetLoading: boolean = false;
+  
+  loadMyTarget(): void {
+    if (!this.employee) return;
+    this.myTargetLoading = true;
+    this.targetService.getEmployeeTargets(this.employee.companyCode, this.employee._id, this.targetYear).subscribe({
+      next: (res: any) => {
+        this.myTargetLoading = false;
+        if (res.success) {
+          this.myTarget = res.data.find((m: any) => m.month === this.targetMonth) || null;
+        }
+      },
+      error: () => {
+        this.myTargetLoading = false;
+      }
+    });
+  }
 
   ngOnInit(): void {
     Chart.register(...registerables);
@@ -6134,6 +6295,7 @@ invoiceSeal: string = '';
         this.loadOverviewFollowupsOnce(),
         this.warmDefaultLeadScopes(),
       ]);
+      this.loadMyTarget();
       void this.warmBackgroundDashboardData(runId);
     } finally {
       await minimumSplash;
@@ -7997,35 +8159,45 @@ invoiceSeal: string = '';
     const matchingCompaniesForConvertedTab = new Set<string>();
     const matchingCompaniesForFavouriteTab = new Set<string>();
 
-    for (const lead of this.allLeads) {
-      if (!matchesLeadWorkspaceFilter(lead)) continue;
-      const company = String(lead.leadCompanyName || '').trim();
-      if (!company) continue;
+    for (const [company, primaryContact] of primaryContactMap.entries()) {
+      // Find all leads for this company
+      const companyLeads = this.allLeads.filter(l => String(l.leadCompanyName || '').trim() === company);
       
-      const normStatus = normalizedStatus(lead.status);
+      // If the primaryContact is starred, effective statuses is ONLY its status.
+      // Otherwise, it's all statuses from all leads in this company.
+      const hasSpoc = primaryContact && primaryContact.isStarred;
+      const effectiveStatuses = hasSpoc 
+        ? [normalizedStatus(primaryContact.status)]
+        : companyLeads.map(l => normalizedStatus(l.status));
+      
+      // Determine if this company matches the filters based on effectiveStatuses
+      const matchesWorkspace = companyLeads.some(l => matchesLeadWorkspaceFilter(l));
+      if (!matchesWorkspace) continue;
 
       if (this.leadStatusGroup !== 'All') {
         const effNorms = this.effectiveLeadStatuses.map(s => normalizedStatus(s));
-        if (effNorms.includes(normStatus) || (this.leadStatusGroup === 'Connected' && normStatus === 'connected')) {
+        if (effectiveStatuses.some(status => effNorms.includes(status) || (this.leadStatusGroup === 'Connected' && status === 'connected'))) {
            matchingCompaniesForLeadsTab.add(company);
         }
-      } else if (!this.leadStatusFilter || normStatus === normalizedStatus(this.leadStatusFilter)) {
+      } else if (!this.leadStatusFilter || effectiveStatuses.some(status => status === normalizedStatus(this.leadStatusFilter))) {
         matchingCompaniesForLeadsTab.add(company);
       }
 
-      if (interestedStatusSet.has(normStatus) && (this.selectedInterestedStatus === 'All' || normStatus === normalizedStatus(this.selectedInterestedStatus))) {
+      if (effectiveStatuses.some(status => interestedStatusSet.has(status) && (this.selectedInterestedStatus === 'All' || status === normalizedStatus(this.selectedInterestedStatus)))) {
         matchingCompaniesForInterestedTab.add(company);
       }
 
-      if (dnpStatusSet.has(normStatus) && (this.selectedDnpStatus === 'All' || normStatus === normalizedStatus(this.selectedDnpStatus))) {
+      if (effectiveStatuses.some(status => dnpStatusSet.has(status) && (this.selectedDnpStatus === 'All' || status === normalizedStatus(this.selectedDnpStatus)))) {
         matchingCompaniesForDnpTab.add(company);
       }
 
-      if (convertedStatusSet.has(normStatus) && (this.selectedConvertedStatus === 'All' || normStatus === normalizedStatus(this.selectedConvertedStatus))) {
+      if (effectiveStatuses.some(status => convertedStatusSet.has(status) && (this.selectedConvertedStatus === 'All' || status === normalizedStatus(this.selectedConvertedStatus)))) {
         matchingCompaniesForConvertedTab.add(company);
       }
 
-      if (lead.isFavourite && (this.selectedFavouriteStatus === 'All' || normStatus === normalizedStatus(this.selectedFavouriteStatus))) {
+      // For favourites, we should probably check if the SPOC is favourite, or any lead is favourite?
+      // The old code checked if ANY lead is favourite and matches the status.
+      if (companyLeads.some(l => l.isFavourite) && effectiveStatuses.some(status => this.selectedFavouriteStatus === 'All' || status === normalizedStatus(this.selectedFavouriteStatus))) {
         matchingCompaniesForFavouriteTab.add(company);
       }
     }
@@ -8373,6 +8545,10 @@ invoiceSeal: string = '';
       setTimeout(() => lead.status = originalStatus, 0);
       return;
     }
+    
+    if (newStatus === 'Follow Up' && this.globalActivityCalendar) {
+      this.globalActivityCalendar.openActivityModal(undefined, 'call', lead);
+    }
 
     this.updatingLeadId = lead._id;
     this.invalidateInvoiceCaches();
@@ -8522,7 +8698,7 @@ invoiceSeal: string = '';
       case 'interested':
         return 'Interested';
       case 'dnp':
-        return 'Not Connected';
+        return 'Not Qualified';
       case 'converted':
         return 'Converted';
       case 'favourite':

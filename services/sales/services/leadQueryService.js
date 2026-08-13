@@ -300,8 +300,21 @@ async function getLeadSets({ LeadModel, companyCode, employeeId, query = {} }) {
 }
 
 async function getLeadCompanies({ LeadModel, companyCode, employeeId, query = {} }) {
-  const { mongoQuery } = buildLeadSearchQuery({ companyCode, employeeId, query });
+  const targetStatuses = String(query.statuses ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!targetStatuses.length && String(query.status ?? '').trim()) {
+    targetStatuses.push(String(query.status).trim());
+  }
+
+  const queryWithoutStatus = { ...query };
+  delete queryWithoutStatus.status;
+  delete queryWithoutStatus.statuses;
+
+  const { mongoQuery } = buildLeadSearchQuery({ companyCode, employeeId, query: queryWithoutStatus });
   const pagination = parsePagination(query);
+  
   const pipeline = [
     { $match: mongoQuery },
     { $match: { leadCompanyNameLower: { $ne: '' } } },
@@ -310,10 +323,45 @@ async function getLeadCompanies({ LeadModel, companyCode, employeeId, query = {}
         _id: '$leadCompanyName',
         count: { $sum: 1 },
         minSheetOrder: { $min: '$sheetOrder' },
+        spocStatuses: {
+          $push: { $cond: [{ $eq: ['$isStarred', true] }, '$status', null] }
+        },
+        allStatuses: { $push: '$status' }
       },
     },
-    { $sort: { minSheetOrder: 1, _id: 1 } },
+    {
+      $addFields: {
+        spocStatuses: {
+          $filter: {
+            input: '$spocStatuses',
+            as: 'status',
+            cond: { $ne: ['$$status', null] }
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        effectiveStatuses: {
+          $cond: [
+            { $gt: [{ $size: '$spocStatuses' }, 0] },
+            '$spocStatuses',
+            '$allStatuses'
+          ]
+        }
+      }
+    }
   ];
+
+  if (targetStatuses.length > 0) {
+    pipeline.push({
+      $match: {
+        effectiveStatuses: { $in: targetStatuses }
+      }
+    });
+  }
+
+  pipeline.push({ $sort: { minSheetOrder: 1, _id: 1 } });
 
   const [totalRows, rows] = await Promise.all([
     LeadModel.aggregate([...pipeline, { $count: 'total' }]),

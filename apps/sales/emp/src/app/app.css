@@ -1172,9 +1172,14 @@
 }
 
 .metrics-strip {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  width: 100%;
   border-bottom: 1px solid var(--border-strong);
+}
+
+.metrics-strip .metric-cell {
+  flex: 1;
+  min-width: 0;
 }
 
 .workspace-header-filters-only .field-input {
@@ -4998,4 +5003,109 @@
   height: max-content !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
+}
+
+/* =============================================
+   Global Search Suggestions (Employee Portal)
+   ============================================= */
+
+.emp-search-wrap {
+  width: min(100%, 560px);
+  position: relative;
+}
+
+.admin-search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  padding: 4px;
+}
+
+.admin-search-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.admin-search-suggestion-item:hover {
+  background: var(--surface-float);
+}
+
+.admin-search-suggestion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.admin-search-suggestion-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-search-suggestion-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-search-suggestion-label {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-search-suggestion-sublabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.suggestion-action-icon:hover {
+  background: var(--surface-float);
+  color: var(--text-strong);
+}
+
+.suggestion-action-icon svg {
+  width: 15px;
+  height: 15px;
 }

@@ -402,10 +402,34 @@ router.patch('/leads/:id/stage', async (req, res) => {
       changedBy: updatedLead.assignedEmployeeId,
     });
 
+    const LeadModel = req.models.Lead;
+    if (LeadModel) {
+      let newLeadStatus = 'Pipeline';
+      if (targetStage === 'CLOSED_WON') {
+        newLeadStatus = 'Converted';
+      } else if (targetStage === 'CLOSED_LOST') {
+        newLeadStatus = 'Closed Lost';
+      }
+
+      const targetCompanyName = String(updatedLead.leadCompanyName || '').trim();
+      const allCompanyLeads = await LeadModel.find({ companyCode: updatedLead.companyCode }).select('_id leadCompanyName');
+      const matchedLeadIds = allCompanyLeads
+        .filter(l => String(l.leadCompanyName || '').trim() === targetCompanyName)
+        .map(l => l._id);
+
+      if (matchedLeadIds.length > 0) {
+        await LeadModel.updateMany(
+          { _id: { $in: matchedLeadIds } },
+          { $set: { status: newLeadStatus, updatedAt: new Date() } }
+        );
+      }
+    }
+
     // 9. Invalidate caches
     await invalidateLeadCaches({ companyCode, employeeId: updatedLead.assignedEmployeeId });
 
     eventBus.emitToCompany(companyCode, { type: 'PIPELINE_REFRESH' });
+    eventBus.emitToCompany(companyCode, { type: 'LEADS_REFRESH' });
 
     return res.status(200).json({ success: true, lead: updatedLead });
   } catch (err) {

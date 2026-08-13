@@ -78,7 +78,84 @@ function clientPayloadFromLead(lead) {
     sourceLeadIds: [lead._id],
     assignedEmployeePhones: [lead.assignedEmployeePhone],
     onboardedByRole: 'system',
+    // Company metadata fields
+    cin: stringValue(lead.cin),
+    incorporationDate: stringValue(lead.dateOfIncorporation),
+    companyEmail: stringValue(lead.companyEmail),
+    roc: stringValue(lead.roc),
+    registrationNumber: stringValue(lead.registrationNumber),
+    companyOrigin: stringValue(lead.companyOrigin),
+    businessType: stringValue(lead.companyType),
+    classOfCompany: stringValue(lead.classOfCompany),
+    companyCategory: stringValue(lead.companyCategory),
+    companySubcategory: stringValue(lead.companySubcategory),
+    authorisedCapital: stringValue(lead.authorisedCapital),
+    paidupCapital: stringValue(lead.paidUpCapital),
+    totalObligationOfContribution: stringValue(lead.totalObligationOfContribution),
+    addressType: stringValue(lead.addressType),
+    mainDivisionNo: stringValue(lead.mainDivisionNo),
+    streetAddressLine1: stringValue(lead.streetAddressLine1),
+    streetAddressLine2: stringValue(lead.streetAddressLine2),
+    city: stringValue(lead.city),
+    state: stringValue(lead.state),
+    postalCode: stringValue(lead.postalCode),
   };
+}
+
+/**
+ * Build a directors[] array by loading ALL leads for the same company.
+ * Each lead stores one director's data (flat fields), so we collect them all.
+ */
+async function buildDirectorsFromLeads(LeadModel, companyCode, leadCompanyName) {
+  if (!companyCode || !leadCompanyName) return [];
+  const leads = await LeadModel.find({
+    companyCode,
+    leadCompanyName,
+    isArchived: { $ne: true },
+  }).lean();
+
+  const directors = [];
+  const seenDins = new Set();
+
+  for (const lead of leads) {
+    const firstName = stringValue(lead.directorFirstName) || stringValue(lead.contactName).split(' ')[0] || '';
+    const lastName = stringValue(lead.directorLastName) || stringValue(lead.contactName).split(' ').slice(1).join(' ') || '';
+    const din = stringValue(lead.directorDin);
+
+    if (!firstName && !din) continue; // skip leads with no director info at all
+
+    // De-duplicate by DIN if present
+    const dedupeKey = din || `${firstName}|${lastName}`;
+    if (seenDins.has(dedupeKey)) continue;
+    seenDins.add(dedupeKey);
+
+    let dirEmail = stringValue(lead.directorEmailAddress);
+    if (dirEmail) {
+      const parts = dirEmail.split(/[\s,;/]+/).map(p => p.trim()).filter(Boolean);
+      dirEmail = parts.find(p => p.includes('@')) || parts[0] || '';
+    }
+
+    directors.push({
+      firstName,
+      lastName,
+      din,
+      email: dirEmail,
+      phone: stringValue(lead.directorMobileNumber || lead.contactNumber),
+      mobileNumber: stringValue(lead.directorMobileNumber || lead.contactNumber),
+      permanentAddressLine1: stringValue(lead.directorPermanentAddressLine1),
+      permanentAddressLine2: stringValue(lead.directorPermanentAddressLine2),
+      permanentCity: stringValue(lead.directorPermanentCity),
+      permanentState: stringValue(lead.directorPermanentState),
+      permanentPincode: stringValue(lead.directorPermanentPincode),
+      presentAddressLine1: stringValue(lead.directorPresentAddressLine1),
+      presentAddressLine2: stringValue(lead.directorPresentAddressLine2),
+      presentCity: stringValue(lead.directorPresentCity),
+      presentState: stringValue(lead.directorPresentState),
+      presentPincode: stringValue(lead.directorPresentPincode),
+    });
+  }
+
+  return directors;
 }
 
 async function getNextSequence({ CounterModel }, companyCode, entity) {
@@ -168,29 +245,54 @@ async function createClientPayload({ ClientModel, CounterModel }, payload, optio
   return { client, created: true, duplicate: false };
 }
 
-async function ensureClientForLead({ ClientModel, LeadModel, CounterModel }, leadOrId) {
+async function ensureClientForLead({ ClientModel, LeadModel, CounterModel }, leadOrId, { forceCreate = false } = {}) {
   const lead = typeof leadOrId === 'string' || leadOrId instanceof mongoose.Types.ObjectId
     ? await LeadModel.findById(leadOrId)
     : leadOrId;
-  if (!lead || !(await isConvertedStatus(lead.companyCode, lead.status))) return null;
+  if (!lead) return null;
+  if (!forceCreate && !(await isConvertedStatus(lead.companyCode, lead.status))) return null;
   const result = await createClientPayload({ ClientModel, CounterModel }, clientPayloadFromLead(lead), { mergeIfExists: true });
 
   // Notify WE-CRM so it can add the entity to the client's account
   const targetCompanyCode = process.env.WE_CRM_ACCESS;
   if (result.client && targetCompanyCode && lead.companyCode === targetCompanyCode) {
-    notifyWeCrm({
-      companyId: process.env.WE_CRM_COMPANYID,
-      companyName: stringValue(result.client.companyName),
-      ownerName: stringValue(result.client.primaryContactName),
-      phone: stringValue(result.client.primaryPhone),
-      email: stringValue(result.client.primaryEmail),
-      address: stringValue(result.client.address),
-      businessType: '',
-      serviceName: 'Entity Onboarding',
-      dealvoiceClientId: String(result.client._id || ''),
-      softrateClientId: String(result.client.clientId || ''),
-      // Pass the new entity company name so WE-CRM can add it to client_entities
-      entityName: stringValue(lead.leadCompanyName),
+    const payload = clientPayloadFromLead(lead);
+    buildDirectorsFromLeads(LeadModel, lead.companyCode, lead.leadCompanyName).then(directors => {
+      notifyWeCrm({
+        companyId: process.env.WE_CRM_COMPANYID,
+        companyName: stringValue(result.client.companyName),
+        ownerName: stringValue(result.client.primaryContactName),
+        phone: stringValue(result.client.primaryPhone),
+        email: stringValue(result.client.primaryEmail),
+        address: stringValue(result.client.address),
+        serviceName: 'Entity Onboarding',
+        dealvoiceClientId: String(result.client._id || ''),
+        softrateClientId: String(result.client.clientId || ''),
+        entityName: stringValue(lead.leadCompanyName),
+        // Full company data
+        cin: payload.cin,
+        incorporationDate: payload.incorporationDate,
+        companyEmail: payload.companyEmail,
+        roc: payload.roc,
+        registrationNumber: payload.registrationNumber,
+        companyOrigin: payload.companyOrigin,
+        businessType: payload.businessType,
+        classOfCompany: payload.classOfCompany,
+        companyCategory: payload.companyCategory,
+        companySubcategory: payload.companySubcategory,
+        authorisedCapital: payload.authorisedCapital,
+        paidupCapital: payload.paidupCapital,
+        totalObligationOfContribution: payload.totalObligationOfContribution,
+        addressType: payload.addressType,
+        mainDivisionNo: payload.mainDivisionNo,
+        streetAddressLine1: payload.streetAddressLine1,
+        streetAddressLine2: payload.streetAddressLine2,
+        city: payload.city,
+        state: payload.state,
+        postalCode: payload.postalCode,
+        // All directors
+        directors,
+      });
     }).catch(err => console.error('[WE-CRM intake ensureClientForLead] webhook failed:', err.message));
   }
 
@@ -234,17 +336,43 @@ async function createManualClient({ ClientModel, LeadModel, CounterModel }, payl
   // ── Notify WE-CRM via intake webhook if configured ───────────
   const targetCompanyCode = process.env.WE_CRM_ACCESS;
   if (result.client && payload.serviceName && targetCompanyCode && payload.companyCode === targetCompanyCode) {
-    notifyWeCrm({
-      companyId: process.env.WE_CRM_COMPANYID,
-      companyName: stringValue(result.client.companyName),
-      ownerName: stringValue(result.client.primaryContactName),
-      phone: stringValue(result.client.primaryPhone),
-      email: stringValue(result.client.primaryEmail),
-      address: stringValue(payload.address),
-      businessType: '',
-      serviceName: payload.serviceName,
-      dealvoiceClientId: String(result.client._id || ''),
-      softrateClientId: String(result.client.clientId || ''),
+    const companyCode = stringValue(payload.companyCode);
+    const leadCompanyName = stringValue(payload.companyName || payload.leadCompanyName);
+    buildDirectorsFromLeads(LeadModel, companyCode, leadCompanyName).then(directors => {
+      notifyWeCrm({
+        companyId: process.env.WE_CRM_COMPANYID,
+        companyName: stringValue(result.client.companyName),
+        ownerName: stringValue(result.client.primaryContactName),
+        phone: stringValue(result.client.primaryPhone),
+        email: stringValue(result.client.primaryEmail),
+        address: stringValue(payload.address),
+        serviceName: payload.serviceName,
+        dealvoiceClientId: String(result.client._id || ''),
+        softrateClientId: String(result.client.clientId || ''),
+        // Full company data (passed through from payload if set by caller)
+        cin: stringValue(payload.cin),
+        incorporationDate: stringValue(payload.incorporationDate),
+        companyEmail: stringValue(payload.companyEmail),
+        roc: stringValue(payload.roc),
+        registrationNumber: stringValue(payload.registrationNumber),
+        companyOrigin: stringValue(payload.companyOrigin),
+        businessType: stringValue(payload.businessType),
+        classOfCompany: stringValue(payload.classOfCompany),
+        companyCategory: stringValue(payload.companyCategory),
+        companySubcategory: stringValue(payload.companySubcategory),
+        authorisedCapital: stringValue(payload.authorisedCapital),
+        paidupCapital: stringValue(payload.paidupCapital),
+        totalObligationOfContribution: stringValue(payload.totalObligationOfContribution),
+        addressType: stringValue(payload.addressType),
+        mainDivisionNo: stringValue(payload.mainDivisionNo),
+        streetAddressLine1: stringValue(payload.streetAddressLine1),
+        streetAddressLine2: stringValue(payload.streetAddressLine2),
+        city: stringValue(payload.city),
+        state: stringValue(payload.state),
+        postalCode: stringValue(payload.postalCode),
+        // All directors collected from all leads for the same company
+        directors,
+      });
     }).catch(err => console.error('[WE-CRM intake] webhook failed:', err.message));
   }
 

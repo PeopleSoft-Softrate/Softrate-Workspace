@@ -50,6 +50,20 @@
                 <div class="metric-label">Follow-ups</div>
                 <div class="metric-value">{{ selectedEmpBookmarks.length }}</div>
               </div>
+              <div class="metric-cell" style="display: flex; flex-direction: column;">
+                <div class="metric-label">Revenue Target</div>
+                <div class="metric-value">
+                  ₹{{ currentAchievedAmount | number:'1.0-0' }} <span style="font-size: 0.6em; color: #64748b; font-weight: 500;">/ ₹{{ currentRevenueTarget | number:'1.0-0' }}</span>
+                </div>
+                <div style="margin-top: 12px; width: 100%; max-width: 150px;">
+                  <div style="height: 6px; width: 100%; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                    <div style="height: 100%; background: #3b82f6; border-radius: 3px;" [style.width]="currentRevenueTarget > 0 ? (currentAchievedAmount / currentRevenueTarget * 100 > 100 ? 100 : (currentAchievedAmount / currentRevenueTarget * 100)) + '%' : '0%'"></div>
+                  </div>
+                  <div style="font-size: 13px; color: #64748b; font-weight: 500; margin-top: 6px;">
+                    {{ currentRevenueTarget > 0 ? ((currentAchievedAmount / currentRevenueTarget) * 100 | number:'1.0-1') : 0 }}% Completed
+                  </div>
+                </div>
+              </div>
             </section>
 
             <div class="admin-employee-overview-grid">
@@ -136,6 +150,67 @@
                       </tr>
                       <tr *ngIf="selectedEmpCalls.length === 0">
                         <td colspan="4" class="empty-cell">No call records found for this period.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- Employee Revenue Targets -->
+              <section class="workspace-section admin-employee-fixed-section admin-employee-call-history">
+                <div class="section-header">
+                  <div>
+                    <div class="section-kicker">Performance Goals</div>
+                    <h3>Revenue Targets</h3>
+                  </div>
+                  <div class="section-actions" style="align-items: flex-end;">
+                    <div style="display: flex; gap: 8px; align-items: flex-end; margin-right: 16px; padding-right: 16px; border-right: 1px solid var(--border-color);">
+                      <label class="mini-field" style="margin: 0;">
+                        <span>Bulk Set (₹)</span>
+                        <input type="number" class="field-input filter-select-field" style="width: 120px;" placeholder="Amount" [(ngModel)]="bulkTargetAmount" aria-label="Bulk target amount">
+                      </label>
+                      <button class="primary-action" style="padding: 4px 12px; height: 38px; font-size: 14px;" (click)="applyBulkTarget()" [disabled]="bulkTargetLoading || !bulkTargetAmount">
+                        {{ bulkTargetLoading ? 'Applying...' : 'Apply All' }}
+                      </button>
+                    </div>
+                    <label class="mini-field" style="margin: 0;">
+                      <span>Year</span>
+                      <select class="field-select filter-select-field" [ngModel]="targetYear" (ngModelChange)="onTargetYearChange($event)" aria-label="Target Year">
+                        <option [value]="targetYear - 1">{{ targetYear - 1 }}</option>
+                        <option [value]="targetYear">{{ targetYear }}</option>
+                        <option [value]="targetYear + 1">{{ targetYear + 1 }}</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                
+                <div *ngIf="selectedEmpTargetsLoading" class="dash-loading" style="padding: 20px;">Loading targets...</div>
+                
+                <div class="table-scroll" *ngIf="!selectedEmpTargetsLoading">
+                  <table class="data-table compact-table">
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Target (₹)</th>
+                        <th>Achieved (₹)</th>
+                        <th>Progress</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let t of selectedEmpTargets">
+                        <td><strong>{{ getMonthName(t.month) }}</strong></td>
+                        <td>
+                          <input type="number" class="field-input" style="width: 100px; padding: 4px 8px;" [(ngModel)]="t.targetAmount" (blur)="setEmployeeTarget(t.month, t.targetAmount)" aria-label="Target amount">
+                        </td>
+                        <td>₹{{ t.achievedAmount | number:'1.0-0' }}</td>
+                        <td>
+                          <div class="progress-bar-container" style="width: 100%; max-width: 150px; height: 6px; background: var(--surface-3); border-radius: 4px; overflow: hidden; margin-top: 4px;">
+                            <div class="progress-bar-fill" [style.width.%]="(t.achievedAmount / (t.targetAmount || 1)) * 100" [style.background]="t.achievedAmount >= t.targetAmount ? 'var(--success)' : 'var(--accent)'" style="height: 100%;"></div>
+                          </div>
+                          <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">
+                            {{ t.targetAmount > 0 ? ((t.achievedAmount / t.targetAmount) * 100 | number:'1.0-1') : 0 }}%
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                   </table>

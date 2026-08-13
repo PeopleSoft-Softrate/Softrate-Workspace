@@ -83,17 +83,73 @@ export class AdminLeadsWorkflow {
       email: lead.directorEmailAddress || (lead as any).email || `client_${lead.contactNumber || (lead as any).phone}@example.com`,
       phone: String(lead.contactNumber || (lead as any).phone || ''),
       password: '',
-      business_type: '',
+      business_type: (lead as any).companyType || '',
       pan: '',
       gstin: (lead as any).gstNumber || '',
-      address: (lead as any).address || '',
+      // Full address (legacy combined field)
+      address: [
+        (lead as any).streetAddressLine1,
+        (lead as any).streetAddressLine2,
+        (lead as any).city,
+        (lead as any).state,
+        (lead as any).postalCode,
+      ].filter(Boolean).join(', ') || (lead as any).address || '',
+      // Company identity fields
+      cin: (lead as any).cin || '',
+      incorporation_date: (lead as any).dateOfIncorporation || '',
+      company_email: (lead as any).companyEmail || '',
+      roc: (lead as any).roc || '',
+      registration_number: (lead as any).registrationNumber || '',
+      company_origin: (lead as any).companyOrigin || '',
+      class_of_company: (lead as any).classOfCompany || '',
+      company_category: (lead as any).companyCategory || '',
+      company_subcategory: (lead as any).companySubcategory || '',
+      // Financials
+      authorised_capital: (lead as any).authorisedCapital || '',
+      paidup_capital: (lead as any).paidUpCapital || '',
+      total_obligation_of_contribution: (lead as any).totalObligationOfContribution || '',
+      // Address breakdown
+      address_type: (lead as any).addressType || '',
+      main_division_no: (lead as any).mainDivisionNo || '',
+      street_address_line_1: (lead as any).streetAddressLine1 || '',
+      street_address_line_2: (lead as any).streetAddressLine2 || '',
+      city: (lead as any).city || '',
+      state: (lead as any).state || '',
+      postal_code: (lead as any).postalCode || '',
       created_by: '',
       serviceName: '',
       isComplianceService: false,
-      _leadId: lead._id
+      _leadId: lead._id,
+      directors: []
     };
+    
+    // Bundle all sibling directors for this company
+    if (vm.leadsInSelectedCompany && lead.leadCompanyName) {
+      const companyNameLower = (lead as any).leadCompanyNameLower || lead.leadCompanyName.toLowerCase();
+      const siblings = vm.leadsInSelectedCompany.filter((l: any) => 
+        (l.leadCompanyNameLower === companyNameLower) || (l.leadCompanyName === lead.leadCompanyName)
+      );
+      
+      vm.weCrmClientData.directors = siblings.map((l: any) => {
+        const contactName = l.contactName || '';
+        const nameParts = contactName.split(' ');
+        const fName = l.directorFirstName || nameParts[0] || '';
+        const lName = l.directorLastName || nameParts.slice(1).join(' ') || '';
+        
+        return {
+          firstName: fName,
+          lastName: lName,
+          fullName: (fName + ' ' + lName).trim(),
+          email: l.directorEmailAddress || '',
+          phone: String(l.contactNumber || ''),
+          din: l.directorDin || ''
+        };
+      });
+    }
+
     vm.showWeCrmModal = true;
   }
+
 
   closeWeCrmModal(vm: any): void {
     vm.showWeCrmModal = false;

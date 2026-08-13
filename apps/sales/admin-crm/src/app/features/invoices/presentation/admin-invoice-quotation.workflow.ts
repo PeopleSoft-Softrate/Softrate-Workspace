@@ -1698,7 +1698,10 @@ export class AdminInvoiceQuotationWorkflow {
     if (!vm.invoiceLead || vm.invoiceSaving) return;
 
     const invoiceClient = vm.selectedInvoiceClient;
-    const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || vm.invoiceLead._id;
+    const isDealObj = !!(vm.invoiceLead as any).leadId;
+    const actualLeadId = isDealObj ? (vm.invoiceLead as any).leadId : vm.invoiceLead._id;
+    const sourceLeadId = invoiceClient?.sourceLeadIds?.[0] || actualLeadId;
+    const actualDealId = (vm.invoiceLead as any).dealId || (isDealObj ? vm.invoiceLead._id : undefined);
     vm.invoiceSaving = true;
 
     const payload = {
@@ -1710,7 +1713,7 @@ export class AdminInvoiceQuotationWorkflow {
       createdByName: vm.dashboardCompany,
       clientId: invoiceClient?.clientId || undefined,
       leadId: sourceLeadId,
-      dealId: (vm.invoiceLead as any)?.dealId,
+      dealId: actualDealId,
       contactNumber: vm.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(vm),
       invoiceDate: vm.invoiceIssuedAt,
@@ -1730,7 +1733,7 @@ export class AdminInvoiceQuotationWorkflow {
     if (vm.invoiceEditMode && vm.currentInvoiceRecord?._id) {
       const updatePayload = {
         companyCode: payload.companyCode,
-        dealId: (vm.invoiceLead as any)?.dealId,
+        dealId: actualDealId,
         items: payload.items,
         total: vm.invoiceTotal,
         subTotal: vm.invoiceSubtotal,
@@ -1782,6 +1785,10 @@ export class AdminInvoiceQuotationWorkflow {
   saveAndPrintQuotation(vm: any): void {
     if (!vm.invoiceLead || vm.quotationSaving) return;
     vm.quotationSaving = true;
+    const isDealObj = !!(vm.invoiceLead as any).leadId;
+    const actualLeadId = isDealObj ? (vm.invoiceLead as any).leadId : vm.invoiceLead._id;
+    const actualDealId = (vm.invoiceLead as any).dealId || (isDealObj ? vm.invoiceLead._id : undefined);
+
     this.api.post<any>('/api/quotations', {
       companyCode: vm.dashboardCode,
       brandingCompanyCode: vm.documentCompanyCode || vm.dashboardCode,
@@ -1790,8 +1797,8 @@ export class AdminInvoiceQuotationWorkflow {
       createdByRole: 'admin',
       createdByName: vm.dashboardCompany,
       clientId: vm.selectedInvoiceClient?.clientId || undefined,
-      leadId: vm.selectedInvoiceClient?.sourceLeadIds?.[0] || vm.invoiceLead._id,
-      dealId: (vm.invoiceLead as any)?.dealId,
+      leadId: vm.selectedInvoiceClient?.sourceLeadIds?.[0] || actualLeadId,
+      dealId: actualDealId,
       contactNumber: vm.invoiceLead.contactNumber,
       gstPercentage: this.invoicePreviewGstPercentage(vm),
       quotationDate: vm.invoiceIssuedAt,

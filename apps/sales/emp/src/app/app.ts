@@ -234,6 +234,75 @@ export class App implements OnInit, OnDestroy {
     }, 400);
   }
 
+  empSearchSuggestionsOpen = false;
+
+  private _lastSearchSuggestionsQuery = '';
+  private _lastSearchSuggestionsLeadsRef: any[] | null = null;
+  private _cachedSearchSuggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
+
+  get empSearchSuggestions(): { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] {
+    const query = this.leadSearch.toLowerCase().trim();
+    if (!query) {
+      this._lastSearchSuggestionsQuery = '';
+      this._cachedSearchSuggestions = [];
+      return this._cachedSearchSuggestions;
+    }
+
+    if (query === this._lastSearchSuggestionsQuery && this._lastSearchSuggestionsLeadsRef === this.allLeads) {
+      return this._cachedSearchSuggestions;
+    }
+
+    const suggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
+    const addedLabels = new Set<string>();
+
+    for (const lead of this.allLeads) {
+      if (suggestions.length >= 6) break;
+
+      const company = (lead.leadCompanyName || '').toLowerCase();
+      const contact = (lead.contactName || '').toLowerCase();
+      const phone = String(lead.contactNumber || '').toLowerCase();
+
+      if (company.includes(query)) {
+        const label = lead.leadCompanyName;
+        if (!addedLabels.has(label)) {
+          suggestions.push({ type: 'company', label, sublabel: 'Company', lead });
+          addedLabels.add(label);
+        }
+      } else if (contact.includes(query) || phone.includes(query)) {
+        const label = lead.contactName || String(lead.contactNumber || '');
+        if (!addedLabels.has(label)) {
+          suggestions.push({ type: 'contact', label, sublabel: lead.leadCompanyName || 'Contact', lead });
+          addedLabels.add(label);
+        }
+      }
+    }
+    
+    this._lastSearchSuggestionsQuery = query;
+    this._lastSearchSuggestionsLeadsRef = this.allLeads;
+    this._cachedSearchSuggestions = suggestions;
+    return this._cachedSearchSuggestions;
+  }
+
+  selectEmpSearchSuggestion(suggestion: any, targetTab?: any): void {
+    this.leadSearch = suggestion.label;
+    this.empSearchSuggestionsOpen = false;
+    if (targetTab) {
+      this.switchTab(targetTab);
+    }
+  }
+
+  closeEmpSearchSuggestions(): void {
+    this.empSearchSuggestionsOpen = false;
+  }
+  
+  onEmpSearchInput(): void {
+    if (this.leadSearch.trim()) {
+      this.empSearchSuggestionsOpen = true;
+    } else {
+      this.empSearchSuggestionsOpen = false;
+    }
+  }
+
   sidebarFeatureMatches(label: string): boolean {
     const query = this.sidebarFeatureSearch.trim().toLowerCase();
     return !query || label.toLowerCase().includes(query);
@@ -938,6 +1007,11 @@ export class App implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   handleDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
+    
+    if (this.empSearchSuggestionsOpen && (!target || !target.closest('.emp-search-wrap'))) {
+      this.closeEmpSearchSuggestions();
+    }
+    
     if (this.profileMenuOpen && (!target || !target.closest('.profile-dropdown'))) {
       this.closeProfileMenu();
     }
@@ -950,6 +1024,7 @@ export class App implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   handleGlobalEscape(): void {
+    this.closeEmpSearchSuggestions();
     this.closeProfileMenu();
     this.closeAiBriefPopup();
   }

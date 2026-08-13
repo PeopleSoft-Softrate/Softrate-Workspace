@@ -99,8 +99,8 @@ export class EmployeeLeadsViewModel {
   private readonly contactHydrationConcurrency = 12;
   private readonly leadPageCacheTtlMs = 24 * 60 * 60 * 1000;
   private readonly leadPageRefreshAfterMs = 5 * 60 * 1000;
-  private readonly persistentLeadPagePrefix = 'lead-page:v3|';
-  private readonly persistentLeadSectionPrefix = 'lead-section:v3|';
+  private readonly persistentLeadPagePrefix = 'lead-page:v4|';
+  private readonly persistentLeadSectionPrefix = 'lead-section:v4|';
   private readonly leadPageCache = new Map<string, LeadPageCacheEntry>();
   private readonly leadSectionCache = new Map<string, LeadSectionCacheEntry>();
 

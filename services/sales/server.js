@@ -129,6 +129,9 @@ app.use('/api/activities', require('./src/modules/activities/activities.routes')
 // Email Integration routes (Google Workspace OAuth)
 app.use('/api/email', require('./src/modules/email/routes/email.routes'));
 
+// Employee targets routes
+app.use('/api/targets', require('./src/modules/employees/target.routes'));
+
 // ── Real-time SSE events endpoint ────────────────────────────
 const eventBus = require('./services/eventBus');
 

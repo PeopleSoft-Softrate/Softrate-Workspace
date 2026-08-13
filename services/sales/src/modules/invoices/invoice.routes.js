@@ -5,6 +5,7 @@ const Invoice = require('../../../models/Invoice');
 const Lead = require('../../../models/Lead');
 const User = require('../../../models/User');
 const Employee = require('../../../models/Employee');
+const EmployeeRevenue = require('../../../models/EmployeeRevenue');
 const eventBus = require('../../../services/eventBus');
 const { getClientByClientId, ensureClientForLead, mapClient } = require('../../../services/clientService');
 const { normalizeText } = require('../../../services/leadNormalization');
@@ -252,13 +253,17 @@ router.post('/', async (req, res) => {
     let lead = await findInvoiceLead(req.body, req);
 
     if (!client && lead) {
-      if (!isConvertedLead(lead, user)) {
+      if (!isConvertedLead(lead, user) && !req.body.dealId) {
         return res.status(400).json({
           success: false,
           message: 'Invoices can only be generated for onboarded clients.',
         });
       }
-      client = await ensureClientForLead({ ClientModel: req.models.Client, LeadModel: req.models.Lead, CounterModel: req.models.Counter }, lead);
+      client = await ensureClientForLead(
+        { ClientModel: req.models.Client, LeadModel: req.models.Lead, CounterModel: req.models.Counter },
+        lead,
+        { forceCreate: !!req.body.dealId }
+      );
     }
 
     if (!client) {
@@ -388,6 +393,20 @@ router.post('/', async (req, res) => {
       }
     }
 
+    if (resolvedEmployeeId && invoice.amountPaid > 0) {
+      try {
+        const invMonth = invoice.invoiceDate.getMonth() + 1;
+        const invYear = invoice.invoiceDate.getFullYear();
+        await EmployeeRevenue.findOneAndUpdate(
+          { companyCode, employeeId: resolvedEmployeeId, year: invYear, month: invMonth },
+          { $inc: { achievedAmount: invoice.amountPaid } },
+          { upsert: true }
+        );
+      } catch (revErr) {
+        console.error('Failed to update EmployeeRevenue on create:', revErr);
+      }
+    }
+
     return res.status(201).json({ success: true, invoice: serializeInvoice(invoice, req) });
   } catch (err) {
     console.error('Create invoice error:', err);
@@ -418,6 +437,11 @@ router.put('/:id', async (req, res) => {
     
     updateData.updatedAt = new Date();
 
+    const oldInvoice = await req.models.Invoice.findById(invoiceId);
+    if (!oldInvoice) {
+      return res.status(404).json({ success: false, message: 'Invoice not found.' });
+    }
+
     const invoice = await req.models.Invoice.findByIdAndUpdate(invoiceId, { $set: updateData }, { returnDocument: 'after' });
     
     if (!invoice) {
@@ -430,6 +454,48 @@ router.put('/:id', async (req, res) => {
         eventBus.emitToCompany(updatePayload.companyCode || invoice.companyCode, { type: 'PIPELINE_REFRESH' });
       } catch (dealErr) {
         console.error('Failed to update deal amount from invoice update:', dealErr);
+      }
+    }
+
+    if (invoice.employeeId || oldInvoice.employeeId) {
+      try {
+        const oldEmployeeId = oldInvoice.employeeId;
+        const newEmployeeId = invoice.employeeId;
+        const oldPaid = Number(oldInvoice.amountPaid || 0);
+        const newPaid = Number(invoice.amountPaid || 0);
+
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+
+        if (String(oldEmployeeId) === String(newEmployeeId)) {
+          // Same employee, just apply delta to current month
+          const delta = newPaid - oldPaid;
+          if (delta !== 0 && newEmployeeId) {
+            await EmployeeRevenue.findOneAndUpdate(
+              { companyCode: invoice.companyCode, employeeId: newEmployeeId, year: currentYear, month: currentMonth },
+              { $inc: { achievedAmount: delta } },
+              { upsert: true }
+            );
+          }
+        } else {
+          // Employee changed, remove from old, add to new (in current month)
+          if (oldEmployeeId && oldPaid > 0) {
+            await EmployeeRevenue.findOneAndUpdate(
+              { companyCode: oldInvoice.companyCode, employeeId: oldEmployeeId, year: currentYear, month: currentMonth },
+              { $inc: { achievedAmount: -oldPaid } },
+              { upsert: true }
+            );
+          }
+          if (newEmployeeId && newPaid > 0) {
+            await EmployeeRevenue.findOneAndUpdate(
+              { companyCode: invoice.companyCode, employeeId: newEmployeeId, year: currentYear, month: currentMonth },
+              { $inc: { achievedAmount: newPaid } },
+              { upsert: true }
+            );
+          }
+        }
+      } catch (revErr) {
+        console.error('Failed to update EmployeeRevenue on update:', revErr);
       }
     }
 

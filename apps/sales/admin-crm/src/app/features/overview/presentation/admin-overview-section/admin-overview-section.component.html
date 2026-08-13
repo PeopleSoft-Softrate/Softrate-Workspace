@@ -217,8 +217,11 @@
 
         <div class="dash-grid-layout" *ngIf="!summaryLoading && summaryStats">
 
-          <!-- ── TOP KPI CARDS ── -->
-          <div class="top-stats-row">
+          
+          <!-- ── KPI AND EMPLOYEES ROW ── -->
+          <div class="kpi-employee-split">
+            <div class="kpi-and-statistics-col">
+              <div class="top-stats-row">
 
             <!-- Card 1: Connected Calls -->
             <div class="kpi-card animate-fade-in-up stagger-1">
@@ -333,73 +336,24 @@
             </div>
 
           </div><!-- /top-stats-row -->
+              <div class="chart-card dark flex-1 animate-fade-in-up stagger-5 admin-statistics-card">
 
-          <!-- ── CHARTS ROW ── -->
-          <div class="charts-row">
-
-            <!-- Statistics card: Line chart LEFT + Donut RIGHT -->
-            <div class="chart-card dark flex-1 animate-fade-in-up stagger-5 admin-statistics-card">
-
-              <!-- Card header -->
-              <div class="admin-statistics-header">
-                <div class="admin-statistics-kpis">
-                  <h3>Statistics</h3>
-                  <div class="admin-statistics-metrics">
-                    <div>
-                      <div class="admin-statistics-value">{{ summaryStats.total }}</div>
-                      <div class="admin-statistics-label">Total Calls</div>
-                    </div>
-                    <div>
-                      <div class="admin-statistics-value">{{ fmtAvgDur(summaryStats.totalDuration, summaryStats.connected) }}</div>
-                      <div class="admin-statistics-label">Avg Duration</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="section-actions admin-statistics-actions">
-                  <label class="overview-view-control admin-overview-view-control">
-                    <span>View:</span>
-                    <select class="field-select filter-select-field" [(ngModel)]="chartType" (change)="setChartType(chartType)" aria-label="Statistics chart view">
-                      <option value="line">Timeline</option>
-                      <option value="bar">Breakdown</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-
-              <div class="admin-stat-insights">
-                <div class="admin-insight-cell">
-                  <span>Connect Rate</span>
-                  <strong>{{ adminConnectRate }}%</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Missed Rate</span>
-                  <strong>{{ adminMissedRate }}%</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Outbound Share</span>
-                  <strong>{{ adminOutboundShare }}%</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Active Reps</span>
-                  <strong>{{ adminActiveEmployeeCount }}</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Top Performer</span>
-                  <strong>{{ adminTopPerformerName }}</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Avg / Active Rep</span>
-                  <strong>{{ adminAvgCallsPerActiveEmployee }} calls</strong>
-                </div>
-              </div>
-
+              
               <ng-container *ngIf="(summaryStats.total || 0) > 0 || timelineData.length > 0; else adminOverviewStatisticsEmpty">
                 <div class="admin-statistics-visuals">
                   <section class="workspace-section admin-statistics-panel admin-statistics-trend">
-                    <div class="section-header">
+                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                       <div>
                         <div class="section-kicker">Performance</div>
                         <h3>Call trend</h3>
+                      </div>
+                      <div class="chart-type-toggles" style="display: flex; gap: 4px;">
+                        <button class="btn-icon" [class.active]="chartType === 'line'" (click)="setChartType('line')" aria-label="Timeline view" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none;" [ngStyle]="{'background': chartType === 'line' ? '#f1f5f9' : 'transparent', 'color': chartType === 'line' ? '#0f172a' : '#64748b'}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </button>
+                        <button class="btn-icon" [class.active]="chartType === 'bar'" (click)="setChartType('bar')" aria-label="Breakdown view" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none;" [ngStyle]="{'background': chartType === 'bar' ? '#f1f5f9' : 'transparent', 'color': chartType === 'bar' ? '#0f172a' : '#64748b'}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </button>
                       </div>
                     </div>
                     <div class="chart-frame">
@@ -438,18 +392,22 @@
                       </div>
                     </div>
                   </section>
-                  <div class="admin-stat-insights peak-insights-grid" *ngIf="adminPeakActivity.count > 0">
-                    <div class="admin-insight-cell">
+                  <div class="admin-stat-insights peak-insights-grid" *ngIf="adminPeakActivity.count > 0" style="display: grid !important; grid-template-columns: repeat(4, 1fr) !important; border: none !important; background: transparent !important; box-shadow: none !important;">
+                    <div class="admin-insight-cell" style="border: none !important; background: transparent !important; box-shadow: none !important;">
                       <span>Peak Time</span>
                       <strong>{{ adminPeakActivity.label }}</strong>
                     </div>
-                    <div class="admin-insight-cell">
+                    <div class="admin-insight-cell" style="border: none !important; background: transparent !important; box-shadow: none !important;">
+                      <span>Duration</span>
+                      <strong>{{ fmtDur(adminPeakActivity.duration) }}</strong>
+                    </div>
+                    <div class="admin-insight-cell" style="border: none !important; background: transparent !important; box-shadow: none !important;">
                       <span>Calls</span>
                       <strong>{{ adminPeakActivity.count }}</strong>
                     </div>
-                    <div class="admin-insight-cell">
-                      <span>Duration</span>
-                      <strong>{{ fmtDur(adminPeakActivity.duration) }}</strong>
+                    <div class="admin-insight-cell" style="border: none !important; background: transparent !important; box-shadow: none !important;">
+                      <span>Connect Rate</span>
+                      <strong>{{ adminConnectRate }}%</strong>
                     </div>
                   </div>
                 </div>
@@ -458,9 +416,51 @@
               <ng-template #adminOverviewStatisticsEmpty>
                 <div class="empty-state-inline admin-statistics-empty">No call activity available for the selected period.</div>
               </ng-template>
-            </div>
 
-            <!-- Top Employees card -->
+              <!-- Card header -->
+              <div class="admin-statistics-header">
+                <div class="admin-statistics-kpis">
+                  <h3>Statistics</h3>
+                  <div class="admin-statistics-metrics">
+                    <div>
+                      <div class="admin-statistics-value">{{ summaryStats.total }}</div>
+                      <div class="admin-statistics-label">Total Calls</div>
+                    </div>
+                    <div>
+                      <div class="admin-statistics-value">{{ fmtAvgDur(summaryStats.totalDuration, summaryStats.connected) }}</div>
+                      <div class="admin-statistics-label">Avg Duration</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Removed dropdown -->
+              </div>
+
+              
+              <div class="admin-stat-insights">
+                
+                <div class="admin-insight-cell">
+                  <span>Missed Rate</span>
+                  <strong>{{ adminMissedRate }}%</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Outbound Share</span>
+                  <strong>{{ adminOutboundShare }}%</strong>
+                </div>
+                <div class="admin-insight-cell">
+                  <span>Active Reps</span>
+                  <strong>{{ adminActiveEmployeeCount }}</strong>
+                </div>
+                
+                <div class="admin-insight-cell">
+                  <span>Avg / Active Rep</span>
+                  <strong>{{ adminAvgCallsPerActiveEmployee }} calls</strong>
+                </div>
+              </div>
+
+              
+
+            </div>
+            </div>
             <div class="chart-card flex-1 admin-employees-card">
               <div class="top-employee-board-header">
                 <div>
@@ -515,35 +515,19 @@
 
                 <aside class="top-employee-side">
                   <div class="top-employee-side-card">
-                    <span>Team Volume</span>
-                    <strong>{{ summaryStats.total }}</strong>
-                    <p>Calls handled across the selected period</p>
+                    <span>Total Amount</span>
+                    <strong>{{ (invoiceStats?.totalAmount || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <p>Total value of all invoices</p>
                   </div>
                   <div class="top-employee-side-card">
-                    <span>Active Reps</span>
-                    <strong>{{ adminActiveEmployeeCount }}</strong>
-                    <p>{{ adminAvgCallsPerActiveEmployee }} calls per active rep</p>
+                    <span>Amount Paid</span>
+                    <strong>{{ (invoiceStats?.totalPaid || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <p>Total collected revenue</p>
                   </div>
-                  <div class="top-employee-side-card">
-                    <span>Top Performer</span>
-                    <strong>{{ adminTopPerformerName }}</strong>
-                    <p>{{ employeeCallRows.length ? (employeeCallRows[0].stats?.total || 0) : 0 }} calls by the current leader</p>
-                  </div>
-                  <div class="top-employee-side-chart">
-                    <div class="top-employee-side-chart-head">
-                      <span>Signal Mix</span>
-                      <strong>{{ adminConnectRate }}%</strong>
-                    </div>
-                    <div class="top-employee-side-bar">
-                      <i class="signal-in" [style.width.%]="adminIncomingShare"></i>
-                      <i class="signal-out" [style.width.%]="adminOutboundShare"></i>
-                      <i class="signal-missed" [style.width.%]="adminMissedRate"></i>
-                    </div>
-                    <div class="top-employee-side-legend">
-                      <span><i class="signal-dot in"></i>Incoming</span>
-                      <span><i class="signal-dot out"></i>Outgoing</span>
-                      <span><i class="signal-dot miss"></i>Missed</span>
-                    </div>
+                  <div class="top-employee-side-card" style="grid-column: 1 / -1;">
+                    <span>Pending Amount</span>
+                    <strong>{{ (invoiceStats?.totalPending || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <p>Total outstanding balance</p>
                   </div>
                 </aside>
               </div>
@@ -555,8 +539,7 @@
               </ng-template>
 
             </div>
-
-          </div><!-- /charts-row -->
+          </div>
 
           <!-- ── BOTTOM STATS ROW ── -->
           <div class="bottom-stats-grid call-analytics-panel">

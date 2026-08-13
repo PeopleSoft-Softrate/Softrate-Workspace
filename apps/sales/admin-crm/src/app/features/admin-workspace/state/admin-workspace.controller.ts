@@ -495,6 +495,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   invoiceRecordsHasMore = false;
   invoiceRecordsTotal = 0;
   invoiceRecordsLoaded = false;
+  invoiceStats: { totalAmount: number, totalPaid: number, totalPending: number } = { totalAmount: 0, totalPaid: 0, totalPending: 0 };
   invoiceSearch = '';
   adminInvoiceClients: any[] = [];
   adminInvoiceClientsLoading = false;
@@ -2053,6 +2054,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.fetchPaymentHistory();
     this.fetchAdminLeads();
     this.fetchCompanyBookmarks();
+    this.fetchInvoiceRecords();
     // Preload past 7 days data on load to avoid spinners when toggling periods
     this.preloadDashboardData();
     // Start break notification polling (every 60s)

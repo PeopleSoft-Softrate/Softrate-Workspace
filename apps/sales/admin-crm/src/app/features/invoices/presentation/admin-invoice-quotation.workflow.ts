@@ -826,6 +826,7 @@ export class AdminInvoiceQuotationWorkflow {
       vm.invoiceRecordsPage = pageResult.page;
       vm.invoiceRecordsHasMore = pageResult.hasMore;
       vm.invoiceRecordsTotal = pageResult.total;
+      vm.invoiceStats = response?.stats || { totalAmount: 0, totalPaid: 0, totalPending: 0 };
       vm.invoiceRecordsLoaded = true;
       this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
     } catch {

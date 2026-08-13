@@ -569,14 +569,30 @@ router.get('/', async (req, res) => {
     }
 
     const pagination = parsePageQuery(req.query);
-    const [total, invoices] = await Promise.all([
+
+    const aggregationPipeline = [
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$total" },
+          totalPaid: { $sum: "$amountPaid" },
+          totalPending: { $sum: "$balanceDue" }
+        }
+      }
+    ];
+
+    const [total, invoices, statsResult] = await Promise.all([
       req.models.Invoice.countDocuments(filter),
       req.models.Invoice.find(filter)
         .sort({ invoiceDate: -1, createdAt: -1 })
         .skip(pagination.isPaginated ? pagination.skip : 0)
         .limit(pagination.isPaginated ? pagination.pageSize : 300)
         .lean(),
+      req.models.Invoice.aggregate(aggregationPipeline)
     ]);
+    
+    const stats = statsResult[0] || { totalAmount: 0, totalPaid: 0, totalPending: 0 };
     await ensurePublicTokens(invoices);
 
     const page = buildPageResponse({
@@ -594,6 +610,11 @@ router.get('/', async (req, res) => {
       pageSize: page.pageSize,
       total: page.total,
       hasMore: page.hasMore,
+      stats: {
+        totalAmount: stats.totalAmount,
+        totalPaid: stats.totalPaid,
+        totalPending: stats.totalPending
+      }
     });
   } catch (err) {
     console.error('List invoices error:', err);

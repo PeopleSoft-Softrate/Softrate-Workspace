@@ -1119,7 +1119,7 @@ svg.search-icon {
 }
 
 .admin-overview-view .kpi-card {
-  min-height: 104px !important;
+  min-height: 60px !important;
   border: 0 !important;
   /* border-right: 1px solid var(--admin-line) !important; */
   border-radius: 0 !important;

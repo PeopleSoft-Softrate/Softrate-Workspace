@@ -1246,7 +1246,6 @@ body,
 
 .dashboard-wrapper .chart-card,
 .dashboard-wrapper .dash-card-v2 {
-  border: 1px solid var(--admin-line) !important;
   border-radius: 4px !important;
   background: var(--admin-surface) !important;
   box-shadow: none !important;
@@ -1549,7 +1548,6 @@ body,
 .dashboard-wrapper .chart-card.dark {
   min-height: 420px !important;
   border: 0 !important;
-  border-right: 1px solid var(--admin-line) !important;
   border-radius: 0 !important;
   background: #fff !important;
   box-shadow: none !important;
@@ -2044,7 +2042,7 @@ body,
 
 .dashboard-wrapper .kpi-card {
   min-height: 112px !important;
-  padding: 28px 30px !important;
+  padding: 16px !important;
   background: var(--crm-surface) !important;
   border: 0 !important;
   border-right: 1px solid var(--crm-line) !important;
@@ -2176,8 +2174,8 @@ body,
 }
 
 .dashboard-wrapper .admin-insight-cell:nth-child(1)::after { width: 34% !important; background: var(--crm-green) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(2)::after { width: 8% !important; background: var(--crm-red) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(3)::after { width: 92% !important; background: var(--crm-blue) !important; }
+.dashboard-wrapper .admin-insight-cell:nth-child(2)::after { width: 92% !important; background: var(--crm-blue) !important; }
+.dashboard-wrapper .admin-insight-cell:nth-child(3)::after { width: 8% !important; background: var(--crm-red) !important; }
 .dashboard-wrapper .admin-insight-cell:nth-child(4)::after { width: 58% !important; background: var(--crm-amber) !important; }
 .dashboard-wrapper .admin-insight-cell:nth-child(5)::after { width: 68% !important; background: #94a3b8 !important; }
 .dashboard-wrapper .admin-insight-cell:nth-child(6)::after { width: 78% !important; background: var(--crm-green) !important; }
@@ -5124,4 +5122,62 @@ body,
   background: var(--crm-surface, #ffffff);
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* KPI & Employees Split Layout */
+.dashboard-wrapper .kpi-employee-split {
+  display: grid !important;
+  grid-template-columns: 2.5fr 1.5fr !important;
+  gap: 24px !important;
+  margin-bottom: 24px !important;
+}
+
+.dashboard-wrapper .kpi-employee-split .kpi-and-statistics-col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+.dashboard-wrapper .kpi-employee-split .top-stats-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 24px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 16px;
+}
+
+.dashboard-wrapper .kpi-employee-split .kpi-card {
+  border-radius: 24px !important;
+  border: 1px solid var(--admin-line, #e4e4e7) !important;
+  background: #fff !important;
+}
+
+.dashboard-wrapper .kpi-employee-split .kpi-card:last-child {
+  border-right: 1px solid var(--admin-line, #e4e4e7) !important;
+}
+
+.dashboard-wrapper .statistics-row {
+  margin-bottom: 24px !important;
+}
+
+.dashboard-wrapper .admin-stat-insights.peak-insights-grid,
+.dashboard-wrapper .admin-stat-insights.peak-insights-grid .admin-insight-cell {
+  border: 0 !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1280px) {
+  .dashboard-wrapper .kpi-employee-split {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 760px) {
+  .dashboard-wrapper .kpi-employee-split .top-stats-row {
+    grid-template-columns: 1fr !important;
+  }
 }

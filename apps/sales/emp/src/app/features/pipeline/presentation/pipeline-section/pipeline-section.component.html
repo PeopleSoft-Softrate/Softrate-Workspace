@@ -8,6 +8,13 @@
         <h1 class="pipeline-title" style="margin: 0;">Pipeline</h1>
         
         <div style="display: flex; gap: 10px; align-items: center;">
+          <select class="field-select filter-select-field" style="min-width: 140px;" [value]="pipelineFilters.priority || ''" (change)="onFilterChange('priority', $any($event.target).value)">
+            <option value="">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          
           <select class="field-select filter-select-field" style="min-width: 150px;" [value]="pipelineFilters.dateFilter" (change)="onFilterChange('dateFilter', $any($event.target).value)">
             <option value="">All Time</option>
             <option value="last1week">Last 1 Week</option>
@@ -70,6 +77,7 @@
     <div class="pipeline-board" *ngIf="!(pipelineVm.state$ | async)?.loading">
       <div
         class="pipeline-column"
+        [ngClass]="{'won-column': col.stage === 'CLOSED_WON', 'lost-column': col.stage === 'CLOSED_LOST'}"
         *ngFor="let col of (pipelineVm.state$ | async)?.columns; trackBy: trackByColumn"
         [class.drag-over]="dragOverStage === col.stage"
         (dragover)="onDragOver($event, col.stage)"
@@ -96,8 +104,12 @@
             (dragstart)="onDragStart($event, lead)"
             (dragend)="onDragEnd()"
           >
-            <div class="pipeline-card-company" [title]="lead.leadCompanyName" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="pipeline-card-company" [title]="lead.leadCompanyName" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
               <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ lead.leadCompanyName }}</span>
+              <span class="pipeline-badge" *ngIf="lead.priority" style="display: inline-flex; align-items: center; gap: 4px; padding: 0; background: transparent; border: none; flex-shrink: 0; margin: 0; box-shadow: none;">
+                <span [ngStyle]="{'background-color': lead.priority === 'High' ? '#ef4444' : lead.priority === 'Medium' ? '#f59e0b' : '#10b981'}" style="width: 6px; height: 6px; border-radius: 50%;"></span>
+                {{ lead.priority }}
+              </span>
             </div>
             <div class="pipeline-card-dealname" style="font-size: 0.85rem; font-weight: 500; margin-top: 4px; color: var(--text-primary);">
               {{ lead.dealName || 'Legacy Deal' }}
@@ -111,13 +123,7 @@
             </div>
 
             <!-- Badges -->
-            <div class="pipeline-card-meta">
-              <span class="pipeline-badge" *ngIf="lead.connectionOutcome">
-                {{ connectionOutcomeLabel(lead.connectionOutcome) }}
-              </span>
-              <span class="pipeline-badge" *ngIf="lead.lostReason">
-                {{ lostReasonLabel(lead.lostReason) }}
-              </span>
+            <div class="pipeline-card-meta" *ngIf="false">
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">
@@ -126,10 +132,6 @@
               </div>
               <button (click)="viewCompanyProfile(lead); $event.stopPropagation()" title="View Deal Details" style="display: flex; align-items: center; gap: 4px; padding: 0; font-size: 0.75rem; font-weight: 600; color: rgba(99, 102, 241, 1); cursor: pointer; background: transparent; border: none; transition: opacity 0.2s;">
                 View Details
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5l7 7-7 7"></path>
-                </svg>
               </button>
             </div>
           </div>

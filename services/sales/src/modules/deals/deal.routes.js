@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
   try {
     const companyCode = req.tenant.companyCode;
     const user = req.employee;
-    const { leadId, dealName, amount, closingDate, description } = req.body;
+    const { leadId, dealName, amount, closingDate, description, priority } = req.body;
 
     if (!leadId || !dealName) {
       return res.status(400).json({ success: false, message: 'leadId and dealName are required' });
@@ -62,6 +62,7 @@ router.post('/', async (req, res) => {
       amount: amount ? Number(amount) : 0,
       closingDate: closingDate ? new Date(closingDate) : null,
       description: description || '',
+      priority: priority || 'Medium',
       
       pipelineStage: initialStage,
       connectionOutcome: lead.connectionOutcome,

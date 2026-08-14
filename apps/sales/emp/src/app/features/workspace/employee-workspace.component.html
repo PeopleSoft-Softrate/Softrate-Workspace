@@ -298,7 +298,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               </button>
               <button 
-                *ngIf="s.lead?.pipelineStage"
+                *ngIf="isLeadInPipeline(s.lead)"
                 class="suggestion-action-icon" 
                 title="Open in Pipeline" 
                 (click)="$event.stopPropagation(); selectEmpSearchSuggestion(s, 'pipeline')">
@@ -1934,13 +1934,22 @@
           </div>
         </div>
 
-        <div class="lead-detail-panel company-full-content" #companyFullScrollContent
-          (scroll)="onCompanyFullContentScroll($event)">
+        <div style="position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+          <div *ngIf="companyFullLoading" style="position: absolute; inset: 0; z-index: 100; backdrop-filter: blur(4px); background: rgba(255, 255, 255, 0.4); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 20%;">
+            <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 32px; height: 32px; animation: spin 1s linear infinite; color: var(--primary-main); margin-bottom: 12px;">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10"></path>
+            </svg>
+            <span style="font-weight: 600; color: var(--text-dark);">Loading company details...</span>
+          </div>
+
+          <div class="lead-detail-panel company-full-content" #companyFullScrollContent
+            (scroll)="onCompanyFullContentScroll($event)" style="flex: 1; overflow-y: auto;">
+
           <section class="company-full-card" [id]="companyFullSectionId('overview')">
             <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 12px;">
                 <h4 style="margin: 0;">Overview</h4>
-                <span class="company-full-card-meta" *ngIf="companyFullLoading" style="margin: 0;">Loading company details...</span>
               </div>
               <button class="icon-button" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="openOverviewEditModal()">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2159,7 +2168,7 @@
           <section class="company-full-card" [id]="companyFullSectionId('pipeline')">
             <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <h4 style="margin: 0;">Pipeline Deals</h4>
-              <button class="icon-button" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: #4f46e5; color: #fff; border: none; border-radius: 6px; cursor: pointer;" (click)="openDealModal(companyFullViewLead())">
+              <button type="button" class="primary-action" (click)="openDealModal(companyFullViewLead()); $event.preventDefault(); $event.stopPropagation()">
                 + Add Deal
               </button>
             </div>
@@ -2338,6 +2347,7 @@
               </ng-template>
             </div>
           </section>
+        </div>
         </div>
       </div>
     </section>
@@ -3554,7 +3564,7 @@
 ></app-proposal-generator-modal>
 
 <!-- Deal Modal -->
-<div class="modal-overlay" *ngIf="dealModalVisible" (click)="closeDealModal()">
+<div class="modal-overlay" *ngIf="dealModalVisible" (click)="closeDealModal()" style="z-index: 99999;">
   <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(500px, calc(100vw - 32px)); max-width: 500px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
     <button class="client-onboarding-modal-close" type="button" (click)="closeDealModal()" aria-label="Close deal modal">✕</button>
     
@@ -3577,6 +3587,15 @@
         <select class="field-select" [(ngModel)]="dealForm.dealName" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem; background: #fff;">
           <option value="">Select a product...</option>
           <option *ngFor="let prod of products" [value]="prod.name">{{ prod.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">PRIORITY</label>
+        <select class="field-select" [(ngModel)]="dealForm.priority" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem; background: #fff;">
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
         </select>
       </div>
 

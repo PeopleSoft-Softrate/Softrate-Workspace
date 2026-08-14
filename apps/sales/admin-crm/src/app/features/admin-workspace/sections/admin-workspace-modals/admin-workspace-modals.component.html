@@ -597,13 +597,19 @@
           </div>
         </div>
 
-        <div class="lead-detail-panel company-full-content" #companyFullScrollContent
-          (scroll)="vm.onCompanyFullContentScroll($event)">
+        <div style="position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+          <div *ngIf="vm.companyFullLoading" style="position: absolute; inset: 0; z-index: 100; backdrop-filter: blur(4px); background: rgba(255, 255, 255, 0.4); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 20%;">
+            <div class="pipeline-spinner" style="width: 32px; height: 32px; border: 3px solid rgba(0,0,0,0.1); border-top-color: #334155; border-radius: 50%; margin-bottom: 12px; animation: spin 1s linear infinite;"></div>
+            <span style="font-weight: 600; color: var(--text-dark);">Loading company details...</span>
+          </div>
+
+          <div class="lead-detail-panel company-full-content" #companyFullScrollContent
+            (scroll)="vm.onCompanyFullContentScroll($event)" style="flex: 1; overflow-y: auto;">
+
           <section class="company-full-card" [id]="vm.companyFullSectionId('overview')">
             <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 12px;">
                 <h4 style="margin: 0;">Overview</h4>
-                <span class="company-full-card-meta" *ngIf="vm.companyFullLoading" style="margin: 0;">Loading company details...</span>
               </div>
               <button class="icon-button" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="vm.openOverviewEditModal()">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -905,12 +911,21 @@
           </section>
 
           <section class="company-full-card" [id]="vm.companyFullSectionId('pipeline')">
+            <ng-container *ngIf="(vm.companyFullContextLead || vm.companyFullViewLead()) as pipelineLead">
             <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <h4 style="margin: 0;">Pipeline Deals</h4>
-              <button class="icon-button" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: #4f46e5; color: #fff; border: none; border-radius: 6px; cursor: pointer;" (click)="vm.openDealModal(vm.companyFullViewLead())">
+              <button type="button" class="primary-action"
+                (mousedown)="$event.stopPropagation()"
+                (click)="vm.openDealModal(pipelineLead); $event.stopPropagation()">
                 + Add Deal
               </button>
             </div>
+            </ng-container>
+            <ng-container *ngIf="!(vm.companyFullContextLead || vm.companyFullViewLead())">
+            <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h4 style="margin: 0;">Pipeline Deals</h4>
+            </div>
+            </ng-container>
 
             <div *ngIf="vm.companyFullDealsLoading" style="font-size: 0.85rem; color: var(--text-secondary);">Loading deals...</div>
             <div *ngIf="vm.companyFullDealsError" style="font-size: 0.85rem; color: #ef4444;">{{ vm.companyFullDealsError }}</div>
@@ -1128,6 +1143,7 @@
               </ng-template>
             </div>
           </section>
+        </div>
         </div>
       </div>
     </section>
@@ -2479,7 +2495,7 @@
 ></app-proposal-generator-modal>
 
 <!-- Admin Deal Modal -->
-<div class="modal-overlay" *ngIf="vm.dealModalVisible" (click)="vm.closeDealModal()">
+<div class="modal-overlay" *ngIf="vm.dealModalVisible" (click)="vm.closeDealModal()" style="z-index: 99999;">
   <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(500px, calc(100vw - 32px)); max-width: 500px; padding: 40px; border-radius: 14px; position: relative;" (click)="$event.stopPropagation()">
     <button class="client-onboarding-modal-close" type="button" (click)="vm.closeDealModal()" aria-label="Close deal modal">✕</button>
     
@@ -2502,6 +2518,15 @@
         <select class="field-select" [(ngModel)]="vm.dealForm.dealName" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem; background: #fff;">
           <option value="">Select a product...</option>
           <option *ngFor="let prod of vm.products" [value]="prod.name">{{ prod.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">PRIORITY</label>
+        <select class="field-select" [(ngModel)]="vm.dealForm.priority" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem; background: #fff;">
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
         </select>
       </div>
 

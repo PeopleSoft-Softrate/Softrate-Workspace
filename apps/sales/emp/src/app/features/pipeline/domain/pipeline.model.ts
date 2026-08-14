@@ -58,6 +58,7 @@ export interface PipelineDeal {
   amount: number;
   closingDate: string | null;
   description: string;
+  priority?: string;
   pipelineStage: PipelineStageCode;
   connectionOutcome: string;
   qualificationOutcome: string;
@@ -101,6 +102,7 @@ export interface PipelineFilters {
   owner: string;
   connectionOutcome: string;
   qualificationOutcome: string;
+  priority?: string;
   dateFilter?: string;
   month?: number;
   year?: number;

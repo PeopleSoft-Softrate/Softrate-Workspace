@@ -1242,6 +1242,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   private remarkLeadRequestRun = 0;
   private remarkFilterSearchTimer: ReturnType<typeof setTimeout> | null = null;
   private adminGlobalSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  private adminSuggestionsTimer: ReturnType<typeof setTimeout> | null = null;
   private adminGlobalSearchSettleTimer: ReturnType<typeof setInterval> | null = null;
 
   // Bookmarks (Follow-up)
@@ -1605,19 +1606,28 @@ export abstract class AdminWorkspaceController implements OnInit {
 
     const trimmed = value.trim();
     const shouldRunAsyncSearch = this.isAdminGlobalSearchAsyncTab(sourceTab, trimmed);
-    this.isAdminSearching = shouldRunAsyncSearch && previousTrimmed !== trimmed;
+    
+    // We can always show global search loading spinner if query is present and different
+    this.isAdminSearching = previousTrimmed !== trimmed;
 
-    if (this.adminGlobalSearchTimer) clearTimeout(this.adminGlobalSearchTimer);
-    if (!shouldRunAsyncSearch) {
-      this.stopAdminGlobalSearchTracking();
-      this.isAdminSearching = false;
-      return;
-    }
-
-    this.adminGlobalSearchTimer = setTimeout(() => {
+    // ── Fast suggestions timer (100ms) ──────────────────────────
+    if (this.adminSuggestionsTimer) clearTimeout(this.adminSuggestionsTimer);
+    this.adminSuggestionsTimer = setTimeout(() => {
       if (trimmed !== this.currentAdminGlobalSearchValue(sourceTab).trim()) return;
       this.fetchAdminGlobalSearchSuggestions(trimmed);
-      this.runAdminGlobalSearch(sourceTab, trimmed);
+    }, 100);
+
+    // ── Full table search timer (300ms) ──────────────────────────
+    if (this.adminGlobalSearchTimer) clearTimeout(this.adminGlobalSearchTimer);
+    this.adminGlobalSearchTimer = setTimeout(() => {
+      if (trimmed !== this.currentAdminGlobalSearchValue(sourceTab).trim()) return;
+
+      if (shouldRunAsyncSearch) {
+        this.runAdminGlobalSearch(sourceTab, trimmed);
+      } else {
+        this.stopAdminGlobalSearchTracking();
+        this.isAdminSearching = false;
+      }
     }, SEARCH_DEBOUNCE_MS);
   }
 
@@ -1649,6 +1659,15 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this._cachedSearchSuggestions;
   }
 
+  isLeadInPipeline(lead: any): boolean {
+    if (!lead || !lead.pipelineStage) return false;
+    const validStages = [
+      'QUALIFICATION', 'NEEDS_ANALYSIS', 'VALUE_PROPOSITION', 
+      'PROPOSAL_QUOTE', 'NEGOTIATION_REVIEW', 'CLOSED_WON', 'CLOSED_LOST'
+    ];
+    return validStages.includes(lead.pipelineStage);
+  }
+
   async fetchAdminGlobalSearchSuggestions(query: string): Promise<void> {
     if (!query) {
       this._cachedSearchSuggestions = [];
@@ -1661,7 +1680,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (!companyCode) return;
 
     try {
-      const res = await firstValueFrom(this.api.get<any>(`/api/leads?companyCode=${companyCode}&search=${encodeURIComponent(query)}&limit=6`));
+      const res = await firstValueFrom(this.api.get<any>(`/api/leads/admin?companyCode=${companyCode}&search=${encodeURIComponent(query)}&searchMode=quick&limit=6`));
       
       const suggestions: { type: 'company'|'contact', label: string, sublabel: string, lead: any }[] = [];
       const addedLabels = new Set<string>();
@@ -1686,17 +1705,26 @@ export abstract class AdminWorkspaceController implements OnInit {
           }
         }
       }
+      
       this._cachedSearchSuggestions = suggestions;
     } catch (err) {
       // silently ignore
     }
   }
+  
 
-  selectAdminSearchSuggestion(suggestion: any, targetTab?: AdminPageId): void {
-    this.adminGlobalSearch = suggestion.label;
+  selectAdminSearchSuggestion(suggestion: any, targetTab?: AdminPageId | 'pipeline'): void {
     this.adminSearchSuggestionsOpen = false;
+    this.adminGlobalSearch = suggestion.label;
+    if (targetTab === 'pipeline') {
+      this.switchTab('pipeline');
+      if (this.adminPipelineVm) {
+        this.adminPipelineVm.setFilter({ search: suggestion.label });
+      }
+      return;
+    }
     if (targetTab) {
-      this.switchTab(targetTab);
+      this.switchTab(targetTab as AdminPageId);
     }
     this.onAdminGlobalSearchEnter();
   }
@@ -2061,6 +2089,21 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.startBreakNotifPolling();
     // Load Settings data
     this.fetchSettings();
+    // Warm up search index silently so the first user search is instant
+    this.warmUpSearchIndex();
+  }
+
+  private warmUpSearchIndex(): void {
+    // Fire a silent dummy search 3s after load to warm MongoDB's index cache.
+    // This ensures the quick-prefix index is loaded into RAM so the first real
+    // user search returns in milliseconds instead of several seconds.
+    setTimeout(() => {
+      const companyCode = this.dashboardCode;
+      if (!companyCode) return;
+      this.api.get<any>(`/api/leads/admin?companyCode=${companyCode}&search=a&searchMode=quick&limit=1`).subscribe({
+        error: () => { /* silently ignore */ }
+      });
+    }, 3000);
   }
 
   get isCrmAdmin(): boolean {
@@ -6275,7 +6318,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     const companyName = this.companyFullCompanyName();
     if (!companyCode || !companyName) return;
 
-    this.companyFullLoading = true;
+    this.companyFullLoading = false; // Turn off global loading so modal opens instantly
     this.companyFullProfileLoading = true;
     this.companyFullHistoryLoading = true;
     this.companyFullInvoiceLoading = true;
@@ -6283,65 +6326,11 @@ export abstract class AdminWorkspaceController implements OnInit {
     this.companyFullFollowupLoading = true;
     this.companyFullDealsLoading = true;
 
-    const companyQuery = this.buildApiQueryString({
-      companyCode,
-      companyName,
-    });
-    const historyQuery = this.buildApiQueryString({
-      companyCode,
-      companyName,
-    });
-    const invoiceQuery = this.buildApiQueryString({
-      companyCode,
-      search: companyName,
-      page: 1,
-      pageSize: 100,
-      paginated: true,
-    });
-    const quotationQuery = this.buildApiQueryString({
-      companyCode,
-      search: companyName,
-      page: 1,
-      pageSize: 100,
-      paginated: true,
-    });
-    const followupQuery = this.buildApiQueryString({
-      companyCode,
-      search: companyName,
-      page: 1,
-      pageSize: 200,
-      paginated: true,
-    });
-
-    const [profileResult, historyResult, invoiceResult, quotationResult, followupResult, dealsResult, leadFetchResult] = await Promise.allSettled([
-      firstValueFrom(this.api.get<any>(`/api/leads/company-profile?${companyQuery}`)),
-      firstValueFrom(this.api.get<any>(`/api/history?${historyQuery}`)),
-      firstValueFrom(this.api.get<any>(`/api/invoices?${invoiceQuery}`)),
-      firstValueFrom(this.api.get<any>(`/api/quotations?${quotationQuery}`)),
-      firstValueFrom(this.api.get<any>(`/api/bookmarks/admin?${followupQuery}`)),
-      firstValueFrom(this.api.get<any>(`/api/deals?leadId=${lead?._id || ''}`)),
-      lead?._id ? firstValueFrom(this.api.get<any>(`/api/leads/${lead._id}?companyCode=${companyCode}`)) : Promise.resolve({ success: false }),
-    ]);
-
-    if (profileResult.status === 'fulfilled') {
-      this.applyCompanyFullProfile(profileResult.value?.profile);
-    } else {
-      this.companyFullProfileError = 'Failed to load alternate info.';
-    }
-    this.companyFullProfileLoading = false;
-
-    // Merge full lead data if it was fetched successfully
-    if (leadFetchResult.status === 'fulfilled' && leadFetchResult.value?.success && leadFetchResult.value?.lead) {
-      this.companyFullContextLead = { ...this.companyFullContextLead, ...leadFetchResult.value.lead };
-    }
-
-    if (historyResult.status === 'fulfilled') {
-      const logs = Array.isArray(historyResult.value?.logs) ? historyResult.value.logs : [];
-      this.applyCompanyFullHistoryLogs(logs);
-    } else {
-      this.companyFullHistoryError = 'Failed to load remark history.';
-    }
-    this.companyFullHistoryLoading = false;
+    const companyQuery = this.buildApiQueryString({ companyCode, companyName });
+    const historyQuery = this.buildApiQueryString({ companyCode, companyName });
+    const invoiceQuery = this.buildApiQueryString({ companyCode, search: companyName, page: 1, pageSize: 100, paginated: true });
+    const quotationQuery = this.buildApiQueryString({ companyCode, search: companyName, page: 1, pageSize: 100, paginated: true });
+    const followupQuery = this.buildApiQueryString({ companyCode, search: companyName, page: 1, pageSize: 200, paginated: true });
 
     const companyPhoneSet = new Set(
       this.companyFullViewRows()
@@ -6350,44 +6339,71 @@ export abstract class AdminWorkspaceController implements OnInit {
     );
     const normalizedCompany = this.normalizeCompanyName(companyName);
 
-    if (invoiceResult.status === 'fulfilled') {
-      const invoiceItems = Array.isArray(invoiceResult.value?.items)
-        ? invoiceResult.value.items
-        : (invoiceResult.value?.invoices || []);
-      this.companyFullInvoiceItems = invoiceItems.filter((item: any) => (
-        this.normalizeCompanyName(item?.leadCompanyName || item?.clientSnapshot?.companyName) === normalizedCompany
-        || companyPhoneSet.has(this.normalizePhoneForMatch(item?.contactNumber || item?.clientSnapshot?.phone))
-      ));
-    } else {
-      this.companyFullInvoiceError = 'Failed to load invoice history.';
-    }
-    this.companyFullInvoiceLoading = false;
+    // 1. Profile
+    firstValueFrom(this.api.get<any>(`/api/leads/company-profile?${companyQuery}`))
+      .then(res => this.applyCompanyFullProfile(res?.profile))
+      .catch(() => this.companyFullProfileError = 'Failed to load alternate info.')
+      .finally(() => this.companyFullProfileLoading = false);
 
-    if (quotationResult.status === 'fulfilled') {
-      const quotationItems = Array.isArray(quotationResult.value?.items)
-        ? quotationResult.value.items
-        : (quotationResult.value?.quotations || []);
-      this.companyFullQuotationItems = quotationItems.filter((item: any) => (
-        this.normalizeCompanyName(item?.leadCompanyName || item?.clientSnapshot?.companyName) === normalizedCompany
-        || companyPhoneSet.has(this.normalizePhoneForMatch(item?.contactNumber || item?.clientSnapshot?.phone))
-      ));
-    } else {
-      this.companyFullQuotationError = 'Failed to load quotation history.';
+    // 2. Lead Fetch (updates context)
+    if (lead?._id) {
+      firstValueFrom(this.api.get<any>(`/api/leads/${lead._id}?companyCode=${companyCode}`))
+        .then(res => {
+          if (res?.success && res?.lead) {
+            this.companyFullContextLead = { ...this.companyFullContextLead, ...res.lead };
+          }
+        })
+        .catch(console.error);
     }
-    this.companyFullQuotationLoading = false;
 
-    if (followupResult.status === 'fulfilled') {
-      const bookmarks = Array.isArray(followupResult.value?.bookmarks)
-        ? followupResult.value.bookmarks
-        : (followupResult.value?.items || []);
-      this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName);
-      this.syncCompanyFullFollowupForm();
-    } else {
-      this.companyFullFollowupError = 'Failed to load follow-up details.';
-    }
-    this.companyFullFollowupLoading = false;
+    // 3. History
+    firstValueFrom(this.api.get<any>(`/api/history?${historyQuery}`))
+      .then(res => {
+        const logs = Array.isArray(res?.logs) ? res.logs : [];
+        this.applyCompanyFullHistoryLogs(logs);
+      })
+      .catch(() => this.companyFullHistoryError = 'Failed to load remark history.')
+      .finally(() => this.companyFullHistoryLoading = false);
 
-    this.companyFullLoading = false;
+    // 4. Invoices
+    firstValueFrom(this.api.get<any>(`/api/invoices?${invoiceQuery}`))
+      .then(res => {
+        const invoiceItems = Array.isArray(res?.items) ? res.items : (res?.invoices || []);
+        this.companyFullInvoiceItems = invoiceItems.filter((item: any) => (
+          this.normalizeCompanyName(item?.leadCompanyName || item?.clientSnapshot?.companyName) === normalizedCompany
+          || companyPhoneSet.has(this.normalizePhoneForMatch(item?.contactNumber || item?.clientSnapshot?.phone))
+        ));
+      })
+      .catch(() => this.companyFullInvoiceError = 'Failed to load invoice history.')
+      .finally(() => this.companyFullInvoiceLoading = false);
+
+    // 5. Quotations
+    firstValueFrom(this.api.get<any>(`/api/quotations?${quotationQuery}`))
+      .then(res => {
+        const quotationItems = Array.isArray(res?.items) ? res.items : (res?.quotations || []);
+        this.companyFullQuotationItems = quotationItems.filter((item: any) => (
+          this.normalizeCompanyName(item?.leadCompanyName || item?.clientSnapshot?.companyName) === normalizedCompany
+          || companyPhoneSet.has(this.normalizePhoneForMatch(item?.contactNumber || item?.clientSnapshot?.phone))
+        ));
+      })
+      .catch(() => this.companyFullQuotationError = 'Failed to load quotation history.')
+      .finally(() => this.companyFullQuotationLoading = false);
+
+    // 6. Follow-ups
+    firstValueFrom(this.api.get<any>(`/api/bookmarks/admin?${followupQuery}`))
+      .then(res => {
+        const bookmarks = Array.isArray(res?.bookmarks) ? res.bookmarks : (res?.items || []);
+        this.companyFullFollowups = this.normalizeCompanyFollowups(bookmarks, companyName);
+        this.syncCompanyFullFollowupForm();
+      })
+      .catch(() => this.companyFullFollowupError = 'Failed to load follow-up details.')
+      .finally(() => this.companyFullFollowupLoading = false);
+
+    // 7. Deals
+    firstValueFrom(this.api.get<any>(`/api/deals?leadId=${lead?._id || ''}`))
+      .then(res => this.companyFullDeals = Array.isArray(res?.data) ? res.data : [])
+      .catch(() => this.companyFullDealsError = 'Failed to load pipeline deals.')
+      .finally(() => this.companyFullDealsLoading = false);
   }
 
   private applyCompanyFullProfile(profile: any): void {

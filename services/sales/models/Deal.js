@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 
 const dealSchema = new mongoose.Schema({
+  priority: { type: String, enum: ["High", "Medium", "Low"], default: "Medium" },
+
   companyCode: { type: String, required: true, index: true },
   leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
   assignedEmployeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', default: null, index: true },

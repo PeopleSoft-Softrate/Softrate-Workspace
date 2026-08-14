@@ -6,7 +6,8 @@ import type { AdminWorkspaceComponent } from '../../admin-workspace.component';
 @Component({
   selector: 'app-admin-dashboard-nav',
   imports: [CommonModule, FormsModule],
-  templateUrl: './admin-dashboard-nav.component.html'
+  templateUrl: './admin-dashboard-nav.component.html',
+  styleUrls: ['./admin-dashboard-nav.component.css']
 })
 export class AdminDashboardNavComponent {
   @Input({ required: true }) vm!: AdminWorkspaceComponent;

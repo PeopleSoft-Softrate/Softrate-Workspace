@@ -54,6 +54,9 @@ function buildBoardMatchQuery(companyCode, filters = {}) {
   if (filters.qualificationOutcome && VALID_QUALIFICATION_OUTCOMES.includes(filters.qualificationOutcome)) {
     query.qualificationOutcome = filters.qualificationOutcome;
   }
+  if (filters.priority) {
+    query.priority = filters.priority;
+  }
   if (filters.search) {
     const searchRx = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     query.$or = [
@@ -99,6 +102,7 @@ router.get('/board', async (req, res) => {
       owner: req.query.owner || '',
       connectionOutcome: req.query.connectionOutcome || '',
       qualificationOutcome: req.query.qualificationOutcome || '',
+      priority: req.query.priority || '',
       search: req.query.search || '',
       dateFilter: req.query.dateFilter || '',
       month: req.query.month || '',
@@ -210,6 +214,7 @@ router.get('/board/column', async (req, res) => {
       owner: req.query.owner || '',
       connectionOutcome: req.query.connectionOutcome || '',
       qualificationOutcome: req.query.qualificationOutcome || '',
+      priority: req.query.priority || '',
       search: req.query.search || '',
       dateFilter: req.query.dateFilter || '',
       month: req.query.month || '',

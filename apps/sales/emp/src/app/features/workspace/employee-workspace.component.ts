@@ -572,8 +572,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   selectEmpSearchSuggestion(suggestion: any, targetTab?: any): void {
-    this.leadSearch = suggestion.label;
     this.empSearchSuggestionsOpen = false;
+    this.leadSearch = suggestion.label;
+    if (targetTab === 'pipeline') {
+      this.switchTab('pipeline');
+      if (this.employeePipelineVm) {
+        this.employeePipelineVm.setFilter({ search: suggestion.label });
+      }
+      return;
+    }
     if (targetTab) {
       this.switchTab(targetTab);
     }
@@ -596,6 +603,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   get globalSearchLoading(): boolean {
     return this.isSearching;
+  }
+
+  isLeadInPipeline(lead: any): boolean {
+    if (!lead || !lead.pipelineStage) return false;
+    const validStages = [
+      'QUALIFICATION', 'NEEDS_ANALYSIS', 'VALUE_PROPOSITION', 
+      'PROPOSAL_QUOTE', 'NEGOTIATION_REVIEW', 'CLOSED_WON', 'CLOSED_LOST'
+    ];
+    return validStages.includes(lead.pipelineStage);
   }
 
   private finishGlobalSearchIfSettled(): void {
@@ -1974,11 +1990,12 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   // ── Deal Modal ──────────────────────────────────────────────────
   dealModalVisible = false;
   dealModalLead: any = null;
-  dealForm = {
+  dealForm: any = {
     dealName: '',
     amount: 0,
     closingDate: '',
     description: '',
+    priority: 'Medium',
   };
   dealModalSaving = false;
   dealAmountDisplay = '';
@@ -8585,6 +8602,7 @@ invoiceSeal: string = '';
       amount: 0,
       closingDate: '',
       description: '',
+      priority: 'Medium',
     };
     this.dealAmountDisplay = '';
     this.dealModalVisible = true;

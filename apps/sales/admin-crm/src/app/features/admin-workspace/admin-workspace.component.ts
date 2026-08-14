@@ -72,11 +72,12 @@ export class AdminWorkspaceComponent extends AdminWorkspaceController {
   // ── Deal Modal ──────────────────────────────────────────────────
   dealModalVisible = false;
   dealModalLead: any = null;
-  dealForm = {
+  dealForm: any = {
     dealName: '',
     amount: 0,
     closingDate: '',
     description: '',
+    priority: 'Medium',
   };
   dealModalSaving = false;
   dealAmountDisplay = '';
@@ -86,12 +87,14 @@ export class AdminWorkspaceComponent extends AdminWorkspaceController {
   }
 
   openDealModal(lead: any): void {
+    if (!lead) return;
     this.dealModalLead = lead;
     this.dealForm = {
       dealName: '',
       amount: 0,
       closingDate: '',
       description: '',
+      priority: 'Medium',
     };
     this.dealAmountDisplay = '';
     this.dealModalVisible = true;

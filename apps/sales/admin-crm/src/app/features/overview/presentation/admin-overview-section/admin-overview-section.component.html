@@ -336,7 +336,7 @@
             </div>
 
           </div><!-- /top-stats-row -->
-              <div class="chart-card dark flex-1 animate-fade-in-up stagger-5 admin-statistics-card">
+              <div class="chart-card dark animate-fade-in-up stagger-5 admin-statistics-card">
 
               
               <ng-container *ngIf="(summaryStats.total || 0) > 0 || timelineData.length > 0; else adminOverviewStatisticsEmpty">
@@ -349,7 +349,10 @@
                       </div>
                       <div class="chart-type-toggles" style="display: flex; gap: 4px;">
                         <button class="btn-icon" [class.active]="chartType === 'line'" (click)="setChartType('line')" aria-label="Timeline view" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none;" [ngStyle]="{'background': chartType === 'line' ? '#f1f5f9' : 'transparent', 'color': chartType === 'line' ? '#0f172a' : '#64748b'}">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/>
+                            <path d="m19 9-5 5-4-4-3 3"/>
+                          </svg>
                         </button>
                         <button class="btn-icon" [class.active]="chartType === 'bar'" (click)="setChartType('bar')" aria-label="Breakdown view" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none;" [ngStyle]="{'background': chartType === 'bar' ? '#f1f5f9' : 'transparent', 'color': chartType === 'bar' ? '#0f172a' : '#64748b'}">
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -417,43 +420,78 @@
                 <div class="empty-state-inline admin-statistics-empty">No call activity available for the selected period.</div>
               </ng-template>
 
-              <!-- Card header -->
-              <div class="admin-statistics-header">
+              <!-- Modern Statistics Grid -->
+              <div class="admin-statistics-modern-container" style="display: flex; flex-direction: column; gap: 16px;">
                 <div class="admin-statistics-kpis">
-                  <h3>Statistics</h3>
-                  <div class="admin-statistics-metrics">
-                    <div>
-                      <div class="admin-statistics-value">{{ summaryStats.total }}</div>
-                      <div class="admin-statistics-label">Total Calls</div>
+                  <h3 style="margin: 0; font-size: 20px; font-weight: 500; color: #1e293b;">Statistics</h3>
+                </div>
+                
+                <div class="admin-peak-metrics-modern" style="grid-template-columns: repeat(3, 1fr); padding: 0; gap: 16px;">
+                  <!-- Total Calls -->
+                  <div class="modern-metric-card calls" style="background: #ffffff; border: none; box-shadow: none;">
+                    <div class="metric-icon" style="background: transparent; color: #3b82f6;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                     </div>
-                    <div>
-                      <div class="admin-statistics-value">{{ fmtAvgDur(summaryStats.totalDuration, summaryStats.connected) }}</div>
-                      <div class="admin-statistics-label">Avg Duration</div>
+                    <div class="metric-details">
+                      <span>Total Calls</span>
+                      <strong>{{ summaryStats.total }}</strong>
                     </div>
                   </div>
-                </div>
-                <!-- Removed dropdown -->
-              </div>
 
-              
-              <div class="admin-stat-insights">
-                
-                <div class="admin-insight-cell">
-                  <span>Missed Rate</span>
-                  <strong>{{ adminMissedRate }}%</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Outbound Share</span>
-                  <strong>{{ adminOutboundShare }}%</strong>
-                </div>
-                <div class="admin-insight-cell">
-                  <span>Active Reps</span>
-                  <strong>{{ adminActiveEmployeeCount }}</strong>
-                </div>
-                
-                <div class="admin-insight-cell">
-                  <span>Avg / Active Rep</span>
-                  <strong>{{ adminAvgCallsPerActiveEmployee }} calls</strong>
+                  <!-- Avg Duration -->
+                  <div class="modern-metric-card duration" style="background: #ffffff; border: none; box-shadow: none;">
+                    <div class="metric-icon" style="background: transparent; color: #8b5cf6;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <div class="metric-details">
+                      <span>Avg Duration</span>
+                      <strong>{{ fmtAvgDur(summaryStats.totalDuration, summaryStats.connected) }}</strong>
+                    </div>
+                  </div>
+
+                  <!-- Missed Rate -->
+                  <div class="modern-metric-card missed" style="background: #ffffff; border: none; box-shadow: none;">
+                    <div class="metric-icon" style="background: transparent; color: #ef4444;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                    <div class="metric-details">
+                      <span>Missed Rate</span>
+                      <strong>{{ adminMissedRate }}%</strong>
+                    </div>
+                  </div>
+
+                  <!-- Outbound Share -->
+                  <div class="modern-metric-card outbound" style="background: #ffffff; border: none; box-shadow: none;">
+                    <div class="metric-icon" style="background: transparent; color: #f59e0b;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                    <div class="metric-details">
+                      <span>Outbound Share</span>
+                      <strong>{{ adminOutboundShare }}%</strong>
+                    </div>
+                  </div>
+
+                  <!-- Active Reps -->
+                  <div class="modern-metric-card reps" style="background: #ffffff; border: none; box-shadow: none;">
+                    <div class="metric-icon" style="background: transparent; color: #22c55e;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <div class="metric-details">
+                      <span>Active Reps</span>
+                      <strong>{{ adminActiveEmployeeCount }}</strong>
+                    </div>
+                  </div>
+
+                  <!-- Avg / Active Rep -->
+                  <div class="modern-metric-card avg-reps" style="background: #ffffff; border: none; box-shadow: none;">
+                    <div class="metric-icon" style="background: transparent; color: #475569;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    </div>
+                    <div class="metric-details">
+                      <span>Avg / Active Rep</span>
+                      <strong>{{ adminAvgCallsPerActiveEmployee }}</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -464,8 +502,6 @@
             <div class="chart-card flex-1 admin-employees-card">
               <div class="top-employee-board-header">
                 <div>
-                  <h3>Top Employees</h3>
-                  <p>Ranked by calls handled, with live productivity context</p>
                 </div>
                 <button class="pill-btn dark" (click)="dashTab='employees'">See All
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -516,17 +552,17 @@
                 <aside class="top-employee-side">
                   <div class="top-employee-side-card">
                     <span>Total Amount</span>
-                    <strong>{{ (invoiceStats?.totalAmount || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <strong>{{ (invoiceStats.totalAmount || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
                     <p>Total value of all invoices</p>
                   </div>
                   <div class="top-employee-side-card">
                     <span>Amount Paid</span>
-                    <strong>{{ (invoiceStats?.totalPaid || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <strong>{{ (invoiceStats.totalPaid || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
                     <p>Total collected revenue</p>
                   </div>
                   <div class="top-employee-side-card" style="grid-column: 1 / -1;">
                     <span>Pending Amount</span>
-                    <strong>{{ (invoiceStats?.totalPending || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <strong>{{ (invoiceStats.totalPending || 0) | currency:'INR':'symbol':'1.0-0' }}</strong>
                     <p>Total outstanding balance</p>
                   </div>
                 </aside>

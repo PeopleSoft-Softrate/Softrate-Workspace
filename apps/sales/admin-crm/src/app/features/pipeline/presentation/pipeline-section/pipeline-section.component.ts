@@ -1,3 +1,4 @@
+// trigger recompile
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, DoCheck, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -40,7 +41,25 @@ export class PipelineSectionComponent extends AdminWorkspaceSectionProxy impleme
   // ── Lifecycle ──────────────────────────────────────────────────
   private sub?: Subscription;
   override ngOnInit(): void {
-    this.sub = this.pipelineVm.state$.subscribe();
+    let wasLoading = false;
+    this.sub = this.pipelineVm.state$.subscribe(state => {
+      if (wasLoading && !state.loading && state.filters?.search) {
+        setTimeout(() => this.autoScrollToPopulatedColumn(state.columns), 150);
+      }
+      wasLoading = state.loading;
+    });
+  }
+
+  private autoScrollToPopulatedColumn(columns: any[]): void {
+    if (!columns || !columns.length) return;
+    const colIndex = columns.findIndex(col => col.leads && col.leads.length > 0);
+    if (colIndex > -1) {
+      const board = document.querySelector('.pipeline-board');
+      const cols = document.querySelectorAll('.pipeline-column');
+      if (board && cols && cols[colIndex]) {
+        cols[colIndex].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      }
+    }
   }
 
   private lastCompanyCode = '';
@@ -125,9 +144,9 @@ export class PipelineSectionComponent extends AdminWorkspaceSectionProxy impleme
 
     // Attempt calling through delegation proxy first (which binds context automatically), then fallback to direct vm call
     if (typeof (this as any).openCompanyFullViewForLeadContext === 'function') {
-      (this as any).openCompanyFullViewForLeadContext(fullLead, 'overview');
+      (this as any).openCompanyFullViewForLeadContext(fullLead, 'pipeline');
     } else if (vm && typeof vm.openCompanyFullViewForLeadContext === 'function') {
-      vm.openCompanyFullViewForLeadContext(fullLead, 'overview');
+      vm.openCompanyFullViewForLeadContext(fullLead, 'pipeline');
     }
   }
 

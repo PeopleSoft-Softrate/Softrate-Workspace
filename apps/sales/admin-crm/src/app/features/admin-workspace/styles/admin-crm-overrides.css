@@ -576,7 +576,7 @@ body,
 .dash-title,
 .drilldown-name {
   color: #111827;
-  font-family: var(--font-head);
+  font-family: inherit;
   font-size: 28px;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0;
@@ -709,7 +709,7 @@ body,
 .premium-card h3,
 .settings-section-title {
   color: #111827 !important;
-  font-family: var(--font-head);
+  font-family: inherit;
   font-size: 17px !important;
   font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0 !important;
@@ -1105,7 +1105,7 @@ body,
 }
 
 .admin-dropdown-action:hover {
-  background: #fef2f2;
+  background: transparent;
   color: var(--admin-red);
 }
 
@@ -2103,7 +2103,8 @@ body,
 
 .dashboard-wrapper .admin-statistics-card {
   display: grid !important;
-  grid-template-rows: auto auto minmax(310px, auto) !important;
+  grid-template-rows: auto auto auto !important;
+  align-content: start !important;
   gap: 24px !important;
 }
 
@@ -2161,25 +2162,6 @@ body,
   overflow: hidden !important;
 }
 
-.dashboard-wrapper .admin-insight-cell::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 20px !important;
-  right: auto !important;
-  bottom: 14px !important;
-  height: 3px !important;
-  width: 46% !important;
-  background: var(--crm-blue) !important;
-  opacity: 0.75 !important;
-}
-
-.dashboard-wrapper .admin-insight-cell:nth-child(1)::after { width: 34% !important; background: var(--crm-green) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(2)::after { width: 92% !important; background: var(--crm-blue) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(3)::after { width: 8% !important; background: var(--crm-red) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(4)::after { width: 58% !important; background: var(--crm-amber) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(5)::after { width: 68% !important; background: #94a3b8 !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(6)::after { width: 78% !important; background: var(--crm-green) !important; }
-.dashboard-wrapper .admin-insight-cell:nth-child(7)::after { width: 52% !important; background: var(--crm-blue) !important; }
 
 .dashboard-wrapper .admin-insight-cell strong {
   color: var(--crm-ink) !important;
@@ -2430,6 +2412,8 @@ body,
   min-width: 0 !important;
   display: grid !important;
   gap: 8px !important;
+  justify-items: start !important;
+  text-align: left !important;
 }
 
 .dashboard-wrapper .top-employee-name {
@@ -2440,6 +2424,8 @@ body,
   letter-spacing: -0.03em !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  text-align: left !important;
+  width: 100% !important;
 }
 
 .dashboard-wrapper .top-employee-sub {
@@ -3656,7 +3642,7 @@ body,
   padding: 0.85rem 1rem;
   border: 1px solid rgba(37, 99, 235, 0.18);
   border-radius: 8px;
-  background: #eff6ff;
+  background: transparent;
   color: #1e3a8a;
   font-weight: var(--font-weight-bold);
 }
@@ -3968,14 +3954,14 @@ body,
 }
 
 .crm-status-upcoming {
-  background: #fffbeb;
+  background: transparent;
   color: #b45309;
   border-color: rgba(180, 83, 9, 0.18);
 }
 
 .crm-status-unpaid,
 .crm-status-blocked {
-  background: #fef2f2;
+  background: transparent;
   color: #b91c1c;
   border-color: rgba(185, 28, 28, 0.18);
 }
@@ -4131,7 +4117,7 @@ body,
   padding: 0.16rem 0.45rem;
   border-radius: 999px;
   border: 1px solid rgba(220, 38, 38, 0.18);
-  background: #fef2f2;
+  background: transparent;
   color: #b91c1c;
   font-size: 0.68rem;
   font-weight: var(--font-weight-extrabold);
@@ -5179,5 +5165,97 @@ body,
 @media (max-width: 760px) {
   .dashboard-wrapper .kpi-employee-split .top-stats-row {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* Modern Peak Metrics Design */
+.dashboard-wrapper .admin-peak-metrics-modern {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 16px 0;
+  width: 100%;
+}
+
+.dashboard-wrapper .modern-metric-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.dashboard-wrapper .modern-metric-card:hover {
+  border-color: #cbd5e1;
+}
+
+.dashboard-wrapper .modern-metric-card .metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.dashboard-wrapper .modern-metric-card .metric-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Colors for specific metric icons */
+.dashboard-wrapper .modern-metric-card.peak-time .metric-icon {
+  background: transparent;
+  color: #16a34a;
+}
+.dashboard-wrapper .modern-metric-card.duration .metric-icon {
+  background: transparent;
+  color: #2563eb;
+}
+.dashboard-wrapper .modern-metric-card.calls .metric-icon {
+  background: transparent;
+  color: #dc2626;
+}
+.dashboard-wrapper .modern-metric-card.connect-rate .metric-icon {
+  background: transparent;
+  color: #d97706;
+}
+
+.dashboard-wrapper .modern-metric-card .metric-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-wrapper .modern-metric-card .metric-details span {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.dashboard-wrapper .modern-metric-card .metric-details strong {
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-wrapper .admin-peak-metrics-modern {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .dashboard-wrapper .admin-peak-metrics-modern {
+    grid-template-columns: 1fr;
   }
 }

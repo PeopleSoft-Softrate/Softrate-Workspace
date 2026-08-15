@@ -586,7 +586,7 @@
 
             <section class="call-analytics-widget">
               <div class="analytics-widget-head">
-                <span>Call Volume</span>
+                <span>Call Summary</span>
                 <strong>{{ summaryStats.total }}</strong>
               </div>
               <div class="analytics-row">
@@ -605,7 +605,7 @@
 
             <section class="call-analytics-widget">
               <div class="analytics-widget-head">
-                <span>Traffic Mix</span>
+                <span>Inbound vs Outbound</span>
                 <strong>{{ adminOutboundShare }}%</strong>
               </div>
               <div class="traffic-split">
@@ -620,12 +620,12 @@
                 <span>Outgoing</span>
                 <b>{{ summaryStats.outgoing }}</b>
               </div>
-              <p>{{ adminOutboundShare }}% outbound motion</p>
+              <p>{{ adminOutboundShare }}% outbound calls</p>
             </section>
 
             <section class="call-analytics-widget">
               <div class="analytics-widget-head">
-                <span>Talk Time</span>
+                <span>Call Durations</span>
                 <strong>{{ shortDur(summaryStats.totalDuration) }}</strong>
               </div>
               <div class="analytics-row">
@@ -644,7 +644,7 @@
 
             <section class="call-analytics-widget">
               <div class="analytics-widget-head">
-                <span>Exceptions</span>
+                <span>Unanswered Calls</span>
                 <strong>{{ (summaryStats.missed || 0) + (summaryStats.rejected || 0) }}</strong>
               </div>
               <div class="analytics-row is-negative">

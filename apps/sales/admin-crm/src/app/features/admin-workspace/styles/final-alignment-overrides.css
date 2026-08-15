@@ -1646,7 +1646,7 @@
 
 .dashboard-wrapper .admin-overview-view .admin-statistics-card {
   display: grid !important;
-  grid-template-rows: auto auto minmax(220px, 1fr) !important;
+  grid-template-rows: auto auto auto !important;
   row-gap: 24px !important;
   align-content: start !important;
 }

@@ -138,9 +138,7 @@
     </ng-container>
 
     <ng-template #adminNavigation>
-    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Invoice', 'Client Onboarding', 'Quotation'])">Quick Access</div>
-
-
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Invoice', 'Client Onboarding', 'Quotation', 'Proposal', 'Proposal Settings'])">Quick Access</div>
 
     <button
       class="sidebar-link sidebar-link-invoice"
@@ -163,6 +161,25 @@
     </button>
 
     <button
+      class="sidebar-link sidebar-link-client-onboarding"
+      type="button"
+      [class.active]="vm.dashTab==='client_onboarding'"
+      (click)="vm.switchTab('client_onboarding')"
+      *ngIf="vm.sidebarFeatureMatches('Client Onboarding')"
+      [title]="vm.sidebarMinimized ? 'Client Onboarding' : ''"
+    >
+      <span class="sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+          <circle cx="9.5" cy="7" r="4" />
+          <path d="M19 8v6" />
+          <path d="M22 11h-6" />
+        </svg>
+      </span>
+      <span class="sidebar-label">Client Onboarding</span>
+    </button>
+
+    <button
       class="sidebar-link sidebar-link-quotation"
       type="button"
       [class.active]="vm.dashTab==='quotation'"
@@ -182,22 +199,22 @@
     </button>
 
     <button
-      class="sidebar-link sidebar-link-client-onboarding"
+      class="sidebar-link sidebar-link-proposal"
       type="button"
-      [class.active]="vm.dashTab==='client_onboarding'"
-      (click)="vm.switchTab('client_onboarding')"
-      *ngIf="vm.sidebarFeatureMatches('Client Onboarding')"
-      [title]="vm.sidebarMinimized ? 'Client Onboarding' : ''"
+      [class.active]="vm.dashTab==='proposal_settings'"
+      (click)="vm.switchTab('proposal_settings')"
+      *ngIf="vm.sidebarFeatureMatches('Proposal') || vm.sidebarFeatureMatches('Proposal Settings')"
+      [title]="vm.sidebarMinimized ? 'Proposal' : ''"
     >
       <span class="sidebar-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-          <circle cx="9.5" cy="7" r="4" />
-          <path d="M19 8v6" />
-          <path d="M22 11h-6" />
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <line x1="8" y1="10" x2="16" y2="10"/>
+          <line x1="8" y1="14" x2="16" y2="14"/>
+          <circle cx="7" cy="7" r="1" fill="currentColor" stroke="none"/>
         </svg>
       </span>
-      <span class="sidebar-label">Client Onboarding</span>
+      <span class="sidebar-label">Proposal</span>
     </button>
 
     <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Client', 'Remarks Filter', 'Follow-ups', 'Employees', 'Periodic Reports'])">Admin Views</div>

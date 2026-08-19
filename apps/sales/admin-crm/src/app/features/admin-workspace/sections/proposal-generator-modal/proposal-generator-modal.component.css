@@ -114,3 +114,62 @@
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
+
+.btn-format {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-format:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* Force pasted HTML text elements to inherit container's typography */
+::ng-deep .field-input * {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+  font-weight: inherit;
+  font-style: inherit;
+  text-align: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure standard rich text tags still have effect but scale appropriately */
+::ng-deep .field-input b, ::ng-deep .field-input strong {
+  font-weight: bold !important;
+}
+::ng-deep .field-input i, ::ng-deep .field-input em {
+  font-style: italic !important;
+}
+::ng-deep .field-input u {
+  text-decoration: underline !important;
+}
+
+/* Restore list padding and margin so bullets/numbers are visible */
+::ng-deep .field-input ul, ::ng-deep .field-input ol {
+  padding-left: 20px !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+}
+::ng-deep .field-input li {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: list-item !important;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

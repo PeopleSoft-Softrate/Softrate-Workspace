@@ -59,7 +59,7 @@ export class AdminLeadsWorkflow {
 
   openWeCrmModal(vm: any, lead: Lead): void {
     if (!vm.weCrmUrl) {
-      alert('WE CRM URL is not configured.');
+      alert('Startup Doctor URL is not configured.');
       return;
     }
 
@@ -71,7 +71,7 @@ export class AdminLeadsWorkflow {
         .then(data => {
           vm.weCrmManagers = data || [];
         })
-        .catch(err => console.error('Failed to load WE CRM managers', err))
+        .catch(err => console.error('Failed to load Startup Doctor managers', err))
         .finally(() => {
           vm.weCrmManagersLoading = false;
         });
@@ -97,7 +97,7 @@ export class AdminLeadsWorkflow {
       // Company identity fields
       cin: (lead as any).cin || '',
       incorporation_date: (lead as any).dateOfIncorporation || '',
-      company_email: (lead as any).companyEmail || '',
+      company_email: (lead as any).companyEmail || lead.directorEmailAddress || (lead as any).email || '',
       roc: (lead as any).roc || '',
       registration_number: (lead as any).registrationNumber || '',
       company_origin: (lead as any).companyOrigin || '',
@@ -159,6 +159,8 @@ export class AdminLeadsWorkflow {
     vm.updatingLeadId = vm.weCrmClientData._leadId;
     const payload = {
       ...vm.weCrmClientData,
+      email: vm.weCrmClientData.company_email,
+      owner_name: vm.weCrmClientData.company_name || 'Client',
       role: 'customer',
       status: 'active',
       company_id: vm.weCrmCompanyId,
@@ -175,14 +177,17 @@ export class AdminLeadsWorkflow {
     .then(async (res) => {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        alert('Successfully added to WE CRM!');
+        vm.weCrmSuccess = 'Successfully added to Startup Doctor!';
+        setTimeout(() => vm.weCrmSuccess = '', 3000);
         vm.showWeCrmModal = false;
       } else {
-        alert('Failed: ' + (data.message || 'Unknown error'));
+        vm.weCrmError = 'Failed: ' + (data.message || 'Unknown error');
+        setTimeout(() => vm.weCrmError = '', 3000);
       }
     })
     .catch((err) => {
-      alert('Failed: ' + err.message);
+      vm.weCrmError = 'Failed: ' + err.message;
+      setTimeout(() => vm.weCrmError = '', 3000);
     })
     .finally(() => {
       vm.updatingLeadId = null;
@@ -191,7 +196,7 @@ export class AdminLeadsWorkflow {
 
   approveEntityRequest(vm: any, request: any): void {
     if (!vm.weCrmUrl) {
-      alert('WE CRM URL is not configured.');
+      alert('Startup Doctor URL is not configured.');
       return;
     }
 
@@ -211,16 +216,19 @@ export class AdminLeadsWorkflow {
     .then(async (res) => {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        alert('Entity approved successfully!');
+        vm.weCrmSuccess = 'Entity approved successfully!';
+        setTimeout(() => vm.weCrmSuccess = '', 3000);
         if (vm.fetchCrmOnboardRequests) {
           vm.fetchCrmOnboardRequests();
         }
       } else {
-        alert('Failed: ' + (data.message || 'Unknown error'));
+        vm.weCrmError = 'Failed: ' + (data.message || 'Unknown error');
+        setTimeout(() => vm.weCrmError = '', 3000);
       }
     })
     .catch((err) => {
-      alert('Failed: ' + err.message);
+      vm.weCrmError = 'Failed: ' + err.message;
+      setTimeout(() => vm.weCrmError = '', 3000);
     })
     .finally(() => {
       vm.updatingLeadId = null;
@@ -229,7 +237,7 @@ export class AdminLeadsWorkflow {
 
   addToWeCrm(vm: any, lead: Lead): void {
     if (!vm.weCrmUrl) {
-      alert('WE CRM URL is not configured.');
+      alert('Startup Doctor URL is not configured.');
       return;
     }
     
@@ -257,14 +265,17 @@ export class AdminLeadsWorkflow {
     .then(async (res) => {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        alert('Successfully added to WE CRM!');
+        vm.weCrmSuccess = 'Successfully added to Startup Doctor!';
+        setTimeout(() => vm.weCrmSuccess = '', 3000);
       } else {
-        alert('Failed to add to WE CRM: ' + (data.message || 'Unknown error'));
+        vm.weCrmError = 'Failed to add to Startup Doctor: ' + (data.message || 'Unknown error');
+        setTimeout(() => vm.weCrmError = '', 3000);
       }
     })
     .catch((err) => {
-      console.error('WE CRM Error:', err);
-      alert('Network error when contacting WE CRM.');
+      console.error('Startup Doctor Error:', err);
+      vm.weCrmError = 'Network error when contacting Startup Doctor.';
+      setTimeout(() => vm.weCrmError = '', 3000);
     })
     .finally(() => {
       vm.updatingLeadId = null;

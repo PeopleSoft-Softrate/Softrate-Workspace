@@ -42,5 +42,5 @@
 </div>
 
 <ng-template #emptyList>
-  <dv-empty-state message="No finance records found."></dv-empty-state>
+  <dv-empty-state [message]="loading ? 'Loading finance records...' : 'No finance records found.'"></dv-empty-state>
 </ng-template>

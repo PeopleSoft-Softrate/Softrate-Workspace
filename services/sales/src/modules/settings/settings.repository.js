@@ -1,7 +1,7 @@
 const User = require('../../../models/User');
 
 function findSettings(companyCode) {
-  return User.findOne({ companyCode }).lean();
+  return User.findOne({ companyCode }).select('-proposalTemplates').lean();
 }
 
 function updateSettings(companyCode, settings) {

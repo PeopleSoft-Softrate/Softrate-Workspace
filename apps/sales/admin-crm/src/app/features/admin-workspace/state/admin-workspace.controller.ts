@@ -708,6 +708,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   weCrmClientData: any = {};
   weCrmManagers: any[] = [];
   weCrmManagersLoading = false;
+  weCrmSuccess = '';
+  weCrmError = '';
   aiBriefError = '';
   aiBriefCacheStatus: 'hit' | 'miss' | '' = '';
   aiBriefCompany = '';
@@ -1504,10 +1506,10 @@ export abstract class AdminWorkspaceController implements OnInit {
       if (tab === 'our_clients') {
         this.adminLeadStatusFilter = 'Converted';
         this.selectedAdminLeadSet = '';
-        this.fetchAdminLeads(true);
+        this.fetchAdminLeads();
       } else if (tab === 'leads' && prevTab === 'our_clients') {
         this.adminLeadStatusFilter = '';
-        this.fetchAdminLeads(true);
+        this.fetchAdminLeads();
       } else if (tab === 'remarks_filter') {
         this.selectedAdminLeadSet = ''; // Reset set filter for global remarks search
         this.selectedRemarkFilter = this.settingsProductRemarks[0] || '';
@@ -2329,21 +2331,40 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this.crmClients.find((client) => client.companyName === this.selectedCrmClientCompany) || null;
   }
 
+  private _cachedFilteredCrmClientsRef: any = null;
+  private _cachedCrmClientSearch: string = '';
+  private _cachedFilteredCrmClients: CrmClient[] = [];
+
   get filteredCrmClients(): CrmClient[] {
-    const query = this.crmClientSearch.trim().toLowerCase();
-    if (!query) return this.crmClients;
-    return this.crmClients.filter((client) => [
-      client.companyName,
-      client.primaryContact,
-      client.primaryPhone,
-      client.primaryEmail,
-      ...(client.managers || []),
-      ...((client.managers || []).map((manager) => this.crmManagerName(manager))),
-    ].some((value) => String(value || '').toLowerCase().includes(query)));
+    const query = (this.crmClientSearch || '').trim().toLowerCase();
+    if (this._cachedFilteredCrmClientsRef !== this.crmClients || this._cachedCrmClientSearch !== query) {
+      if (!query) {
+        this._cachedFilteredCrmClients = this.crmClients || [];
+      } else {
+        this._cachedFilteredCrmClients = (this.crmClients || []).filter((client) => [
+          client.companyName,
+          client.primaryContact,
+          client.primaryPhone,
+          client.primaryEmail,
+          ...(client.managers || []),
+          ...((client.managers || []).map((manager) => this.crmManagerName(manager))),
+        ].some((value) => String(value || '').toLowerCase().includes(query)));
+      }
+      this._cachedFilteredCrmClientsRef = this.crmClients;
+      this._cachedCrmClientSearch = query;
+    }
+    return this._cachedFilteredCrmClients;
   }
 
+  private _cachedCrmClientContactsRef: any = null;
+  private _cachedCrmClientContacts: any[] = [];
+
   crmClientContacts(client: CrmClient | null = this.selectedCrmClient): any[] {
-    return (client?.contacts || []).map((lead) => this.normalizeLead(lead));
+    if (this._cachedCrmClientContactsRef !== client) {
+      this._cachedCrmClientContacts = (client?.contacts || []).map((lead) => this.normalizeLead(lead));
+      this._cachedCrmClientContactsRef = client;
+    }
+    return this._cachedCrmClientContacts;
   }
 
   crmManagerName(phoneOrName = ''): string {
@@ -2403,17 +2424,27 @@ export abstract class AdminWorkspaceController implements OnInit {
       .filter((item) => !query || String(item.clientCompanyName || '').toLowerCase().includes(query) || String(item.documentNumber || '').toLowerCase().includes(query));
   }
 
+  private _cachedFilteredNdaRef: any = null;
+  private _cachedNdaSearch: string = '';
+  private _cachedFilteredNda: any[] = [];
+
   get filteredNdaContracts(): any[] {
-    const query = this.ndaHistorySearch.trim().toLowerCase();
-    return this.crmContracts
-      .filter((item) => item.type === 'NDA')
-      .filter((item) => this.matchesNdaDateFilter(item.createdAt || item.generatedAt || item.effectiveFrom))
-      .filter((item) => !query || [
-        item.documentNumber,
-        item.clientCompanyName,
-        item.contactName,
-        item.status,
-      ].some((value) => String(value || '').toLowerCase().includes(query)));
+    const query = (this.ndaHistorySearch || '').trim().toLowerCase();
+    if (this._cachedFilteredNdaRef !== this.crmContracts || this._cachedNdaSearch !== query) {
+      this._cachedFilteredNda = (this.crmContracts || [])
+        .filter((item) => item.type === 'NDA')
+        .filter((item) => this.matchesNdaDateFilter(item.createdAt || item.generatedAt || item.effectiveFrom))
+        .filter((item) => !query || [
+          item.documentNumber,
+          item.clientCompanyName,
+          item.contactName,
+          item.status,
+        ].some((value) => String(value || '').toLowerCase().includes(query)));
+        
+      this._cachedFilteredNdaRef = this.crmContracts;
+      this._cachedNdaSearch = query;
+    }
+    return this._cachedFilteredNda;
   }
 
   get todayInputDate(): string {
@@ -5815,29 +5846,44 @@ export abstract class AdminWorkspaceController implements OnInit {
     return companyTotal || this.allLeads.length;
   }
 
+  private _cachedRecentLeadsRef: any = null;
+  private _cachedRecentLeads: Lead[] = [];
+
   get adminOverviewRecentLeads(): Lead[] {
-    return [...this.allLeads]
-      .sort((a, b) => {
-        const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
-        const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
-        return bTime - aTime;
-      })
-      .slice(0, 8);
+    if (this._cachedRecentLeadsRef !== this.allLeads) {
+      this._cachedRecentLeads = [...this.allLeads]
+        .sort((a, b) => {
+          const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+          return bTime - aTime;
+        })
+        .slice(0, 8);
+      this._cachedRecentLeadsRef = this.allLeads;
+    }
+    return this._cachedRecentLeads;
   }
 
-  get adminOverviewUpcomingFollowups(): Bookmark[] {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+  private _cachedUpcomingFollowupsRef: any = null;
+  private _cachedUpcomingFollowups: Bookmark[] = [];
 
-    return [...this.allBookmarks]
-      .filter((bookmark) => {
-        if (!bookmark.reminderDate) return false;
-        const date = new Date(bookmark.reminderDate);
-        date.setHours(0, 0, 0, 0);
-        return date >= now;
-      })
-      .sort((a, b) => new Date(a.reminderDate || 0).getTime() - new Date(b.reminderDate || 0).getTime())
-      .slice(0, 8);
+  get adminOverviewUpcomingFollowups(): Bookmark[] {
+    if (this._cachedUpcomingFollowupsRef !== this.allBookmarks) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      this._cachedUpcomingFollowups = [...this.allBookmarks]
+        .filter((bookmark) => {
+          if (!bookmark.reminderDate) return false;
+          const date = new Date(bookmark.reminderDate);
+          date.setHours(0, 0, 0, 0);
+          return date >= now;
+        })
+        .sort((a, b) => new Date(a.reminderDate || 0).getTime() - new Date(b.reminderDate || 0).getTime())
+        .slice(0, 8);
+      
+      this._cachedUpcomingFollowupsRef = this.allBookmarks;
+    }
+    return this._cachedUpcomingFollowups;
   }
 
   openOverviewLead(lead: Lead): void {
@@ -5859,10 +5905,22 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this.companyFullBaseSections;
   }
 
+  private _cachedFallbackRows: Lead[] = [];
+  
   companyFullViewRows(): Lead[] {
-    if (this.companyFullRows.length) return this.companyFullRows;
-    if (this.companyFullContextLead) return [this.companyFullContextLead];
-    return this.resolveCompanyFullViewRows(null);
+    if (this.companyFullRows && this.companyFullRows.length > 0) return this.companyFullRows;
+    if (this.companyFullContextLead) {
+      if (this._cachedFallbackRows[0] !== this.companyFullContextLead || this._cachedFallbackRows.length !== 1) {
+        this._cachedFallbackRows = [this.companyFullContextLead];
+      }
+      return this._cachedFallbackRows;
+    }
+    
+    // As a last resort, if even this falls through (shouldn't happen), cache the resolved empty array
+    if (this._cachedFallbackRows.length !== 0 && this._cachedFallbackRows[0] !== null) {
+      this._cachedFallbackRows = this.resolveCompanyFullViewRows(null);
+    }
+    return this._cachedFallbackRows;
   }
 
   private resolveCompanyFullViewRows(fallbackLead: Lead | null = this.companyFullContextLead): Lead[] {
@@ -8056,19 +8114,48 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   // ── Proposal Template CRUD ─────────────────────────────────────────────
 
-  fetchProposalTemplates(): void {
+  fetchProposalTemplates(force = false): void {
     if (!this.dashboardCode) return;
+
+    // Serve from cache immediately — invalidated on template save/delete
+    const cacheKey = `proposal-templates|${this.dashboardCode}`;
+    if (!force) {
+      const cached = this.dashboardCache.get<any[]>(cacheKey);
+      if (cached) {
+        this.proposalTemplates = cached;
+        return;
+      }
+    }
+
     this.proposalTemplatesLoading = true;
     this.proposalTemplatesError = '';
     this.api.get<any>(`/api/auth/proposals?companyCode=${this.dashboardCode}`).subscribe({
       next: (res: any) => {
         this.proposalTemplatesLoading = false;
         this.proposalTemplates = res?.templates || [];
+        this.dashboardCache.set(cacheKey, this.proposalTemplates, { ttlMs: 24 * 60 * 60 * 1000 });
       },
       error: (err: any) => {
         this.proposalTemplatesLoading = false;
         this.proposalTemplatesError = err?.error?.message || 'Failed to load templates.';
       }
+    });
+  }
+
+  fetchProposalTemplateById(id: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (!this.dashboardCode) {
+        reject(new Error('No dashboard code'));
+        return;
+      }
+      this.api.get<any>(`/api/auth/proposals/${id}?companyCode=${this.dashboardCode}`).subscribe({
+        next: (res: any) => {
+          resolve(res?.template);
+        },
+        error: (err: any) => {
+          reject(err);
+        }
+      });
     });
   }
 
@@ -8113,6 +8200,8 @@ export abstract class AdminWorkspaceController implements OnInit {
             t._id === res.template._id ? res.template : t
           );
         }
+        // Invalidate cache so the next list load fetches fresh data
+        this.dashboardCache.removeByPrefix(`proposal-templates|${this.dashboardCode}`);
         this.proposalTemplatesSuccess = 'Template saved successfully!';
         setTimeout(() => this.proposalTemplatesSuccess = '', 3000);
       }
@@ -8130,6 +8219,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     try {
       await firstValueFrom(this.api.delete<any>(`/api/auth/proposals/${templateId}?companyCode=${this.dashboardCode}`));
       this.proposalTemplates = this.proposalTemplates.filter(t => t._id !== templateId);
+      // Invalidate cache so the next list load fetches fresh data
+      this.dashboardCache.removeByPrefix(`proposal-templates|${this.dashboardCode}`);
     } catch (err: any) {
       alert(err?.error?.message || 'Failed to delete template.');
     }

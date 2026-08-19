@@ -48,6 +48,7 @@
 
           <div class="admin-search-suggestion-actions" style="display: flex; gap: 4px;">
             <button 
+              *ngIf="s.lead"
               class="suggestion-action-icon" 
               title="Open in Leads" 
               (click)="$event.stopPropagation(); vm.selectAdminSearchSuggestion(s, 'leads')">

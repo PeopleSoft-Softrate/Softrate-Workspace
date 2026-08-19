@@ -80,7 +80,7 @@ router.post('/register', async (req, res) => {
     }
 
     // --- Check duplicate email ---
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email: email.toLowerCase() }).select('_id');
     if (existing) {
       return res.status(409).json({ success: false, message: 'Email already registered.' });
     }
@@ -93,7 +93,7 @@ router.post('/register', async (req, res) => {
     let baseCode = generateCompanyCode(companyName);
     let finalCode = baseCode;
     let counter = 1;
-    while (await User.findOne({ companyCode: finalCode })) {
+    while (await User.findOne({ companyCode: finalCode }).select('_id')) {
       finalCode = baseCode + counter;
       counter++;
     }
@@ -141,7 +141,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('-proposalTemplates');
     if (!user) {
       return res
         .status(401)
@@ -216,7 +216,10 @@ router.post('/login', async (req, res) => {
 router.get('/company/:companyCode', async (req, res) => {
   try {
     const { companyCode } = req.params;
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne(
+      { companyCode },
+      'companyName companyAddress email mobile teamSize relationshipManager tags companyCode rmRequestTime'
+    ).lean();
     if (!user) {
       return res.status(404).json({ success: false, message: 'Company not found.' });
     }
@@ -275,7 +278,7 @@ router.put('/company/:companyCode/password', async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne({ companyCode }).select('-proposalTemplates');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
@@ -308,7 +311,7 @@ router.put('/company/:companyCode/password', async (req, res) => {
 router.post('/company/:companyCode/request-rm', async (req, res) => {
   try {
     const { companyCode } = req.params;
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne({ companyCode }).select('-proposalTemplates');
     if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
     // 8 hour throttle check
@@ -422,7 +425,7 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('-proposalTemplates');
     if (!user) {
       return res.status(404).json({ 
         success: false, 
@@ -516,7 +519,10 @@ router.post('/reset-password', async (req, res) => {
 router.get('/company/:companyCode/settings', async (req, res) => {
   try {
     const { companyCode } = req.params;
-    const user = await User.findOne({ companyCode }, 'companyName breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies resendApiKey resendSenderDomain');
+    const user = await User.findOne(
+      { companyCode },
+      'companyName companyAddress breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies resendApiKey resendSenderDomain'
+    ).lean();
     if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
     const leadStatuses = user.leadStatuses || [];
     const valid = new Set(leadStatuses);
@@ -532,6 +538,7 @@ router.get('/company/:companyCode/settings', async (req, res) => {
         dnpPageStatuses: filterValid(user.dnpPageStatuses),
         convertedPageStatuses: filterValid(user.convertedPageStatuses),
         companyName: user.companyName,
+        companyAddress: user.companyAddress || '',
         invoiceLogo: user.invoiceLogo,
         invoiceSeal: user.invoiceSeal || '',
         invoiceTerms: user.invoiceTerms || '',
@@ -668,16 +675,100 @@ router.put('/company/:companyCode/settings', async (req, res) => {
 
 // ── Proposal Templates CRUD ────────────────────────────────────────────────
 
-// List all templates for a company
+// List all templates for a company (summarized to reduce payload size)
 router.get('/proposals', async (req, res) => {
   try {
     const companyCode = req.query.companyCode || req.user?.companyCode;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
-    const user = await User.findOne({ companyCode }).lean();
-    if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
-    return res.json({ success: true, templates: user.proposalTemplates || [] });
+    const ProposalTemplate = require('../../../models/ProposalTemplate');
+    let templates = await ProposalTemplate.find({ companyCode }).select('-pages.rawPdfBase64').lean();
+    // Auto-migrate from User model if new collection is empty.
+    // IMPORTANT: We use the native MongoDB driver here, NOT Mongoose's User.findOne(),
+    // because the User document may exceed 16MB (the very bug we are fixing).
+    // The native driver streams data without Mongoose's BSON size enforcement.
+    if (templates.length === 0) {
+      try {
+        const nativeDb = require('mongoose').connection.db;
+        const rawUser = await nativeDb.collection('users').findOne(
+          { companyCode },
+          { projection: { proposalTemplates: 1 } }
+        );
+        
+        if (rawUser && rawUser.proposalTemplates && rawUser.proposalTemplates.length > 0) {
+          const bulkOps = rawUser.proposalTemplates.map(t => ({
+            updateOne: {
+              filter: { _id: t._id },
+              update: { $set: { _id: t._id, companyCode, name: t.name, pages: t.pages, createdAt: t.createdAt || new Date(), updatedAt: t.updatedAt || new Date() } },
+              upsert: true
+            }
+          }));
+          await ProposalTemplate.bulkWrite(bulkOps);
+          
+          // Remove from User to permanently free up space
+          await nativeDb.collection('users').updateOne(
+            { companyCode },
+            { $unset: { proposalTemplates: "" } }
+          );
+          
+          // Return summarized templates from what we just migrated
+          templates = rawUser.proposalTemplates;
+          console.log(`[proposals] Auto-migrated ${templates.length} templates for ${companyCode}`);
+        }
+      } catch (migrationErr) {
+        // Non-fatal: migration failed but don't crash the list endpoint
+        console.error('[proposals] Auto-migration failed:', migrationErr.message);
+      }
+    }
+    
+    // Strip all heavy layer data and keep only a thumbnail src for the list view
+    const summarizedTemplates = templates.map(t => {
+      const summaryPages = [];
+      if (t.pages && t.pages.length > 0) {
+        const firstPage = t.pages[0];
+        const previewLayers = (firstPage.layers || []).filter(l => l.type === 'pdf_page' || l.type === 'image');
+        const thumbnailLayer = previewLayers.length > 0 ? { type: previewLayers[0].type, src: previewLayers[0].src } : null;
+        
+        summaryPages.push({
+          id: firstPage.id,
+          layers: thumbnailLayer ? [thumbnailLayer] : []
+        });
+        
+        for (let i = 1; i < t.pages.length; i++) {
+          summaryPages.push({ id: t.pages[i].id, layers: [] });
+        }
+      }
+      return {
+        _id: t._id,
+        name: t.name,
+        createdAt: t.createdAt,
+        pages: summaryPages
+      };
+    });
+    
+    return res.json({ success: true, templates: summarizedTemplates });
   } catch (err) {
     console.error('[proposals GET]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// Get a specific template by ID (full payload including rawPdfBase64)
+router.get('/proposals/:id', async (req, res) => {
+  try {
+    const companyCode = req.query.companyCode || req.user?.companyCode;
+    const { id } = req.params;
+    if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
+    
+    const ProposalTemplate = require('../../../models/ProposalTemplate');
+    const template = await ProposalTemplate.findOne({ companyCode, _id: id }).lean();
+    
+    if (!template) {
+      return res.status(404).json({ success: false, message: 'Template not found.' });
+    }
+    
+    return res.json({ success: true, template });
+  } catch (err) {
+    console.error('[proposals/:id GET]', err);
     return res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
@@ -687,8 +778,15 @@ router.post('/proposals', async (req, res) => {
   try {
     const { companyCode, name, pages } = req.body;
     if (!companyCode || !name) return res.status(400).json({ success: false, message: 'companyCode and name required.' });
-    const template = { _id: require('crypto').randomUUID(), name: String(name).trim(), pages: pages || [], createdAt: new Date() };
-    await User.findOneAndUpdate({ companyCode }, { $push: { proposalTemplates: template } });
+    
+    const ProposalTemplate = require('../../../models/ProposalTemplate');
+    const template = await ProposalTemplate.create({
+      _id: require('crypto').randomUUID(),
+      companyCode,
+      name: String(name).trim(),
+      pages: pages || []
+    });
+    
     return res.json({ success: true, template });
   } catch (err) {
     console.error('[proposals POST]', err);
@@ -702,16 +800,17 @@ router.patch('/proposals/:id', async (req, res) => {
     const { companyCode, name, pages } = req.body;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
     const update = {};
-    if (name) update['proposalTemplates.$.name'] = String(name).trim();
-    if (pages) update['proposalTemplates.$.pages'] = pages;
-    update['proposalTemplates.$.updatedAt'] = new Date();
-    const result = await User.findOneAndUpdate(
-      { companyCode, 'proposalTemplates._id': req.params.id },
+    if (name) update.name = String(name).trim();
+    if (pages) update.pages = pages;
+    
+    const ProposalTemplate = require('../../../models/ProposalTemplate');
+    const template = await ProposalTemplate.findOneAndUpdate(
+      { companyCode, _id: req.params.id },
       { $set: update },
       { new: true }
     ).lean();
-    if (!result) return res.status(404).json({ success: false, message: 'Template not found.' });
-    const template = (result.proposalTemplates || []).find(t => t._id === req.params.id);
+    
+    if (!template) return res.status(404).json({ success: false, message: 'Template not found.' });
     return res.json({ success: true, template });
   } catch (err) {
     console.error('[proposals PATCH]', err);
@@ -724,7 +823,9 @@ router.delete('/proposals/:id', async (req, res) => {
   try {
     const companyCode = req.query.companyCode || req.user?.companyCode;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
-    await User.findOneAndUpdate({ companyCode }, { $pull: { proposalTemplates: { _id: req.params.id } } });
+    
+    const ProposalTemplate = require('../../../models/ProposalTemplate');
+    await ProposalTemplate.findOneAndDelete({ companyCode, _id: req.params.id });
     return res.json({ success: true });
   } catch (err) {
     console.error('[proposals DELETE]', err);

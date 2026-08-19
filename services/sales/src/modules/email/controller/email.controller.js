@@ -66,7 +66,7 @@ async function sendEmailFromCRMController(req, res) {
 
 async function getEmailStatus(req, res) {
   try {
-    const user = await User.findOne({ companyCode: req.companyCode });
+    const user = await User.findOne({ companyCode: req.companyCode }).select('-proposalTemplates');
     if (!user) {
       return res.status(404).json({ success: false, message: 'Company not found' });
     }

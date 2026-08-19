@@ -87,7 +87,7 @@ router.get('/calculate', async (req, res) => {
 
     // If companyCode provided, this is a renewal preview
     if (companyCode) {
-      const user = await User.findOne({ companyCode: companyCode.toUpperCase() });
+      const user = await User.findOne({ companyCode: companyCode.toUpperCase() }).select('-proposalTemplates');
       if (user && user.subscriptionTo) {
         const subToStr = toISTDateStr(new Date(user.subscriptionTo));
         if (subToStr >= todayIST()) {
@@ -398,7 +398,7 @@ router.post('/renew', async (req, res) => {
     const { companyCode, toDate } = req.body;
     if (!companyCode || !toDate) return res.status(400).json({ success: false, message: 'companyCode and toDate are required.' });
 
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne({ companyCode }).select('-proposalTemplates');
     if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
 
     const todayStr = todayIST();

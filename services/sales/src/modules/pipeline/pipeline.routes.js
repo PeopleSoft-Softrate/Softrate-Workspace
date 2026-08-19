@@ -123,12 +123,20 @@ router.get('/board', async (req, res) => {
     }, {});
 
     // 2. Build $facet branches for top N leads per stage
+    // $project first so MongoDB sends only board-card fields over the wire
+    const BOARD_CARD_PROJECTION = {
+      _id: 1, leadId: 1, companyCode: 1, leadCompanyName: 1, contactName: 1, contactNumber: 1,
+      dealName: 1, amount: 1, closingDate: 1, pipelineStage: 1, stageChangedAt: 1, updatedAt: 1,
+      priority: 1, connectionOutcome: 1, qualificationOutcome: 1, qualificationReason: 1, lostReason: 1,
+      assignedEmployeeId: 1, createdByName: 1, createdByRole: 1,
+    };
     const facetBranches = {};
     for (const stage of VALID_PIPELINE_STAGES) {
       facetBranches[stage] = [
         { $match: { pipelineStage: stage } },
         { $sort: { stageChangedAt: -1, updatedAt: -1, _id: -1 } },
         { $limit: pageSize },
+        { $project: BOARD_CARD_PROJECTION },
       ];
     }
 

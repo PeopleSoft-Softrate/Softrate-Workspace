@@ -18,7 +18,7 @@ async function sendEmailFromCRM(companyCode, employeeId, mailOptions) {
     }
 
     // Look up the company (tenant) for configuration
-    const user = await User.findOne({ companyCode });
+    const user = await User.findOne({ companyCode }).select('-proposalTemplates');
     let compName = mailOptions.companyName || (user ? user.companyName : '');
 
     // API Key Resolution: ONLY use the Database Key. No fallback for security purposes!

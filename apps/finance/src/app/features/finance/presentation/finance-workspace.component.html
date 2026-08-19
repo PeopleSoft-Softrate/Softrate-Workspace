@@ -23,6 +23,7 @@
           placeholder="Search finance records"
           autocomplete="off"
           [(ngModel)]="vm.search"
+          (ngModelChange)="vm.onSearchChange()"
         />
       </label>
 
@@ -151,20 +152,46 @@
       <section class="finance-content" *ngIf="vm.isIntegratedView; else integratedLater">
         <div class="record-toolbar admin-followups-toolbar">
           <div class="workspace-controls">
-            <label class="mini-field admin-followups-date-control">
-              <span>From</span>
-              <input class="field-input filter-date-field admin-followups-date-input" type="date" [(ngModel)]="vm.dateFrom" (change)="vm.loadActive()" />
+            <label class="mini-field">
+              <span>Period</span>
+              <select class="field-select filter-date-field" [(ngModel)]="vm.dateFilterType" (change)="vm.onDateFilterChange()">
+                <option value="this-month">This Month</option>
+                <option value="last-30-days">Last 30 Days</option>
+                <option value="custom-month">Select Month &amp; Year</option>
+              </select>
             </label>
-            <label class="mini-field admin-followups-date-control">
-              <span>To</span>
-              <input class="field-input filter-date-field admin-followups-date-input" type="date" [(ngModel)]="vm.dateTo" (change)="vm.loadActive()" />
+            <label class="mini-field" *ngIf="vm.dateFilterType === 'custom-month'">
+              <span>Month</span>
+              <div style="display: flex; gap: 4px;">
+                <select class="field-select filter-date-field" [(ngModel)]="vm.customMonthPart" (change)="vm.onCustomMonthChange()">
+                  <option value="01">Jan</option>
+                  <option value="02">Feb</option>
+                  <option value="03">Mar</option>
+                  <option value="04">Apr</option>
+                  <option value="05">May</option>
+                  <option value="06">Jun</option>
+                  <option value="07">Jul</option>
+                  <option value="08">Aug</option>
+                  <option value="09">Sep</option>
+                  <option value="10">Oct</option>
+                  <option value="11">Nov</option>
+                  <option value="12">Dec</option>
+                </select>
+                <input class="field-input filter-date-field" type="number" list="finance-year-options" style="width: 80px;" [(ngModel)]="vm.customYearPart" (change)="vm.onCustomMonthChange()" placeholder="YYYY" />
+                <datalist id="finance-year-options">
+                  <option *ngFor="let year of vm.yearOptions" [value]="year"></option>
+                </datalist>
+              </div>
             </label>
-            <app-status-select
-              [value]="vm.statusFilter"
-              [options]="vm.statusOptions"
-              label="Status filter"
-              (valueChange)="vm.onStatusFilterChange($event)"
-            ></app-status-select>
+            <label class="mini-field">
+              <span>Status</span>
+              <app-status-select
+                [value]="vm.statusFilter"
+                [options]="vm.statusOptions"
+                label="Status filter"
+                (valueChange)="vm.onStatusFilterChange($event)"
+              ></app-status-select>
+            </label>
             <button class="toolbar-button crm-icon-refresh finance-refresh-button" type="button" title="Sync finance data" aria-label="Sync finance data" (click)="vm.loadActive()" [disabled]="vm.loading">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M21 12a9 9 0 1 1-2.64-6.36" />
@@ -199,6 +226,13 @@
           (openRecord)="vm.openDetail($event)"
           (approveClaim)="vm.approveEmployeeClaim($event)"
         ></app-finance-expenses-view>
+        <app-history-pagination
+          *ngIf="vm.totalPages > 1"
+          [page]="vm.page"
+          [total]="vm.totalItems"
+          [pageSize]="vm.pageSize"
+          (pageChange)="vm.onPageChange($event)"
+        ></app-history-pagination>
       </section>
 
       <ng-template #integratedLater>

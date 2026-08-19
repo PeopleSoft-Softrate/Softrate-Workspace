@@ -45,6 +45,10 @@ ssh -o StrictHostKeyChecking=accept-new $VPS_USER@$VPS_HOST << 'EOF'
   # Stop existing containers if any and restart
   echo "Rebuilding and starting containers..."
   docker compose up --build -d
+
+  # Restart sales-api to pick up fresh MONGO_URI
+  echo "Restarting sales-api..."
+  docker compose restart sales-api
 EOF
 
 echo "Deployment complete! ✅"

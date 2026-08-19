@@ -7111,11 +7111,26 @@ invoiceSeal: string = '';
   private async loadCompanySettings(companyCode?: string): Promise<void> {
     if (!this.employee) return;
     const targetCode = companyCode || this.employee.companyCode;
+
+    // Serve from cache immediately — settings only change when the page is refreshed
+    const cacheKey = `settings|${targetCode}`;
+    const cached = this.dashboardCache.get<any>(cacheKey);
+    if (cached) {
+      this.applyCompanySettings(cached);
+      if (cached.companyAddress) this.companyAddress = cached.companyAddress;
+      return;
+    }
+
     try {
       const res = await firstValueFrom(this.api.get<any>(`/api/auth/company/${targetCode}/settings`));
       if (res.success && res.settings) {
+        // Cache with a 24-hour TTL — user must refresh page for settings changes to take effect
+        this.dashboardCache.set(cacheKey, res.settings, { ttlMs: 24 * 60 * 60 * 1000 });
         this.applyCompanySettings(res.settings);
-        await this.loadCompanyInvoiceProfile(targetCode);
+        // companyAddress is now included in the settings response — no second request needed
+        if (res.settings.companyAddress) {
+          this.companyAddress = res.settings.companyAddress;
+        }
       }
     } catch {}
   }

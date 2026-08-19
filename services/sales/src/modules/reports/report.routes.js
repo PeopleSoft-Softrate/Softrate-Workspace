@@ -104,7 +104,7 @@ router.post('/sync', async (req, res) => {
     }
 
     // ── Subscription guard ──────────────────────────────────────
-    const company = await User.findOne({ companyCode });
+    const company = await User.findOne({ companyCode }).select('-proposalTemplates');
     if (company) {
       const now = new Date();
       const isExpired = company.status === 'On due' ||

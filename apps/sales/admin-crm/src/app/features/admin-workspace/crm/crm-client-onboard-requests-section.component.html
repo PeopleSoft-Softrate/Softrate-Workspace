@@ -72,11 +72,11 @@
             </td>
             <td>
               <div class="table-actions-cell" style="display: flex; gap: 8px;">
-                <button *ngIf="!request.isEntityRequest" class="lead-card-invoice-action" type="button" (click)="vm.openWeCrmModal(request)" [disabled]="vm.updatingLeadId===request._id" style="margin-top: 0; min-width: 120px;" title="Add to WE CRM">
+                <button *ngIf="!request.isEntityRequest" class="lead-card-invoice-action" type="button" (click)="vm.openWeCrmModal(request)" [disabled]="vm.updatingLeadId===request._id" style="margin-top: 0; min-width: 120px;" title="Add to Startup Doctor">
                   <span aria-hidden="true" *ngIf="vm.updatingLeadId!==request._id">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   </span>
-                  <span>{{ vm.updatingLeadId===request._id ? 'Processing...' : 'Add to WE CRM' }}</span>
+                  <span>{{ vm.updatingLeadId===request._id ? 'Processing...' : 'Add to Startup Doctor' }}</span>
                 </button>
 
                 <button *ngIf="request.isEntityRequest" class="lead-card-invoice-action" type="button" (click)="vm.approveEntityRequest(request)" [disabled]="vm.updatingLeadId===request._id" style="margin-top: 0; min-width: 120px; background-color: #10b981; color: white; border-color: #10b981;" title="Approve Entity">

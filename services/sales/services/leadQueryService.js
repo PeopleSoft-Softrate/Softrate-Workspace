@@ -206,12 +206,13 @@ function buildLeadSearchQuery({ companyCode, employeeId, query = {} }) {
   }
 
   if (searchMode === 'quick' && normalizedSearch) {
-    const prefixRegex = new RegExp(`^${escapeRegex(normalizedSearch)}`);
+    // Modified to use a contains match instead of prefix (^), to allow finding words in-between
+    const quickRegex = new RegExp(escapeRegex(normalizedSearch));
     const quickClauses = [
-      { leadCompanyNameLower: prefixRegex },
-      { contactNameLower: prefixRegex },
-      { directorEmailLower: prefixRegex },
-      { setLabelLower: prefixRegex },
+      { leadCompanyNameLower: quickRegex },
+      { contactNameLower: quickRegex },
+      { directorEmailLower: quickRegex },
+      { setLabelLower: quickRegex },
       { status: search },
     ];
 

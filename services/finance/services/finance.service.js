@@ -10,21 +10,55 @@ const FinanceSettings = require('../models/FinanceSettings');
 const { lifecycleStatusFor } = require('../../crm/src/modules/amc/amcService');
 const { listEmployeeClaims } = require('./hrmsClaims.service');
 
-const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';
+// ── Multi-tenant connection cache ─────────────────────────────────────────
+// Each company has its own isolated database (e.g. salesdb_stp_1603_2026).
+// We replicate the same pattern used by the sales service tenantMiddleware.
+const tenantConnections = new Map();
 
-function sourceModel(name, collection) {
-  return mongoose.models[name] || mongoose.model(
-    name,
-    new mongoose.Schema({}, { strict: false, collection }),
-    collection
-  );
+function getTenantConnection(dbName) {
+  if (tenantConnections.has(dbName)) return tenantConnections.get(dbName);
+
+  const masterUri = process.env.MONGO_URI || '';
+  const parsedUri = new URL(masterUri);
+  parsedUri.pathname = `/${dbName}`;
+  const conn = mongoose.createConnection(parsedUri.toString());
+
+  conn.on('connected', () => console.log(`[Finance Tenant DB] Connected: ${dbName}`));
+  conn.on('error', (err) => console.error(`[Finance Tenant DB] Error (${dbName}):`, err.message));
+
+  tenantConnections.set(dbName, conn);
+  return conn;
 }
 
-const Invoice = sourceModel('FinanceSourceSalesInvoice', 'invoices');
-const Payment = sourceModel('FinanceSourceSalesPayment', 'payments');
-const CrmPayment = sourceModel('FinanceSourceCrmPayment', 'crmpayments');
-const CrmAmc = sourceModel('FinanceSourceCrmAmc', 'crmamcs');
-const CrmProject = sourceModel('FinanceSourceCrmProject', 'crmprojects');
+const LOOSE_SCHEMA = new mongoose.Schema({}, { strict: false });
+
+function getTenantModels(companyCode) {
+  const dbName = `salesdb_${companyCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+  const db = getTenantConnection(dbName);
+
+  function model(name, collection) {
+    // Re-use cached model on this connection if it exists, otherwise register it
+    try { return db.model(name); } catch {
+      return db.model(name, LOOSE_SCHEMA.clone(), collection);
+    }
+  }
+
+  return {
+    Invoice: model('FinanceSrcInvoice', 'invoices'),
+    Payment: model('FinanceSrcPayment', 'payments'),
+    CrmPayment: model('FinanceSrcCrmPayment', 'crmpayments'),
+    CrmAmc: model('FinanceSrcCrmAmc', 'crmamcs'),
+    CrmProject: model('FinanceSrcCrmProject', 'crmprojects'),
+    FinanceVendor: model('FinanceVendor', 'financevendors'),
+    FinanceVendorBill: model('FinanceVendorBill', 'financevendorbills'),
+    FinancePurchaseOrder: model('FinancePurchaseOrder', 'financepurchaseorders'),
+    FinanceExpense: model('FinanceExpense', 'financeexpenses'),
+    FinancePayrollRun: model('FinancePayrollRun', 'financepayrollruns'),
+    FinanceTaxRecord: model('FinanceTaxRecord', 'financetaxrecords'),
+    FinanceBankEntry: model('FinanceBankEntry', 'financebankentries'),
+    FinanceSettings: model('FinanceSettings', 'financesettings'),
+  };
+}
 
 function normalize(value) {
   return String(value || '').trim();
@@ -35,7 +69,7 @@ function normalizeKey(value) {
 }
 
 function defaultFinanceCompanyCode() {
-  return normalize(process.env.DEFAULT_FINANCE_COMPANY_CODE) || DEFAULT_FINANCE_COMPANY_CODE;
+  return normalize(process.env.DEFAULT_FINANCE_COMPANY_CODE) || 'STP-1603-2026';
 }
 
 function resolveCompanyCode(companyCode) {
@@ -130,13 +164,62 @@ function invoiceVersionNo(invoice) {
   return match ? toNumber(match[1]) : 0;
 }
 
-function serializeSalesInvoice(invoice) {
+function serializeSalesInvoice(invoice, crmPayments = []) {
   const total = toNumber(invoice.total);
-  const status = salesInvoiceStatus(invoice);
-  const paidAmount = status === 'Paid' ? total : 0;
-  const balanceAmount = Math.max(total - paidAmount, 0);
+  let status = salesInvoiceStatus(invoice);
+  
+  // Use the invoice's own recorded amountPaid as the baseline
+  let basePaidAmount = status === 'Paid' ? total : (toNumber(invoice.amountPaid) || toNumber(invoice.paidAmount) || 0);
+
+  if (status !== 'Paid') {
+    const invoiceNumber = normalize(invoice.invoiceNumber);
+    const relatedPayments = crmPayments.filter((p) => normalize(p.invoiceNumber) === invoiceNumber);
+    const crmPaid = relatedPayments.reduce((sum, p) => sum + toNumber(p.paidAmount), 0);
+    
+    // Total paid is the advance amount paid on the invoice + any subsequent CRM payments
+    let paidAmount = Math.min(basePaidAmount + crmPaid, total);
+    
+    if (paidAmount >= total && total > 0) status = 'Paid';
+    else if (paidAmount > 0) status = 'Partially Paid';
+    
+    const balanceAmount = Math.max(total - paidAmount, 0);
+    const dueDate = parseDate(invoice.dueDate);
+    const daysOverdue = dueDate && balanceAmount > 0 ? Math.max(daysBetween(dueDate), 0) : 0;
+    
+    return {
+      id: String(invoice._id || ''),
+      source: 'sales',
+      stream: 'Sales Invoice',
+      companyCode: invoice.companyCode || '',
+      clientId: invoice.clientId || invoice.clientSnapshot?.clientId || '',
+      clientName: invoice.leadCompanyName || invoice.clientSnapshot?.companyName || '',
+      invoiceNumber: invoice.invoiceNumber || '',
+      versionNo: invoiceVersionNo(invoice),
+      invoiceDate: invoice.invoiceDate || invoice.createdAt,
+      dueDate: invoice.dueDate || null,
+      taxableAmount: toNumber(invoice.subtotal),
+      gstAmount: toNumber(invoice.gstAmount),
+      totalAmount: total,
+      paidAmount,
+      balanceAmount,
+      paymentStatus: status,
+      status: balanceAmount > 0 && dueDate && dueDate < new Date() ? 'Overdue' : status,
+      daysOverdue,
+      agingBucket: agingBucket(daysOverdue),
+      owner: invoice.employeeName || invoice.createdByName || '',
+      contactName: invoice.contactName || '',
+      contactNumber: invoice.contactNumber || '',
+      email: invoice.directorEmailAddress || '',
+      createdAt: invoice.createdAt || null,
+      updatedAt: invoice.updatedAt || null,
+    };
+  }
+
+  // Fallback for fully paid invoices
+  const paidAmount = basePaidAmount;
+  const balanceAmount = 0;
   const dueDate = parseDate(invoice.dueDate);
-  const daysOverdue = dueDate && balanceAmount > 0 ? Math.max(daysBetween(dueDate), 0) : 0;
+  const daysOverdue = 0;
   return {
     id: String(invoice._id || ''),
     source: 'sales',
@@ -261,52 +344,65 @@ function groupByMonth(rows, selector, dateSelector) {
   return months.map((key) => ({ month: key, amount: grouped.get(key) || 0 }));
 }
 
-async function getFinanceCollections(companyCode) {
+async function getFinanceCollections(companyCode, keys = null) {
   const query = companyQuery(companyCode);
-  const [
-    invoices,
-    crmPayments,
-    amcRecords,
-    subscriptionPayments,
-    vendors,
-    vendorBills,
-    purchaseOrders,
-    expenses,
-    payrollRuns,
-    taxRecords,
-    bankEntries,
-    projects,
-    settings,
-  ] = await Promise.all([
-    Invoice.find(query).sort({ invoiceDate: -1, createdAt: -1 }).lean(),
-    CrmPayment.find(query).sort({ createdAt: -1 }).lean(),
-    CrmAmc.find(query).sort({ renewalDate: 1, updatedAt: -1 }).lean(),
-    Payment.find(query).sort({ createdAt: -1 }).lean(),
-    FinanceVendor.find(query).sort({ name: 1 }).lean(),
-    FinanceVendorBill.find(query).sort({ dueDate: 1, createdAt: -1 }).lean(),
-    FinancePurchaseOrder.find(query).sort({ createdAt: -1 }).lean(),
-    FinanceExpense.find(query).sort({ expenseDate: -1, createdAt: -1 }).lean(),
-    FinancePayrollRun.find(query).sort({ createdAt: -1 }).lean(),
-    FinanceTaxRecord.find(query).sort({ createdAt: -1 }).lean(),
-    FinanceBankEntry.find(query).sort({ entryDate: -1 }).lean(),
-    CrmProject.find(query).sort({ updatedAt: -1 }).lean(),
-    FinanceSettings.findOne(query).lean(),
-  ]);
+  const models = getTenantModels(companyCode);
+
+  const projections = {
+    invoices: '_id companyCode clientId leadCompanyName clientSnapshot invoiceNumber versionNo invoiceDate createdAt dueDate subtotal gstAmount total amountPaid balanceDue paymentStatus employeeName createdByName contactName contactNumber directorEmailAddress updatedAt status',
+    crmPayments: '_id companyCode clientCompanyName invoiceNumber createdAt amount paidAmount status paymentMode paidAt notes',
+    amcRecords: '_id companyCode clientCompanyName domainName renewalDate annualFee outstandingAmount status latestPaymentDate',
+    subscriptionPayments: '_id amount status createdAt',
+    vendors: '_id name',
+    vendorBills: '_id status taxAmount tdsDeducted netPayable paidAmount dueDate createdAt serviceType',
+    purchaseOrders: '_id status totalAmount createdAt',
+    expenses: '_id type status amount taxAmount expenseDate createdAt',
+    payrollRuns: '_id status runNumber month items deductions netPayable createdAt',
+    taxRecords: '_id type createdAt',
+    bankEntries: '_id status entryDate',
+    projects: '_id clientCompanyName projectManagerName status',
+    settings: '', // Settings is small, fetch all
+  };
+
+  const fetchers = {
+    invoices: () => models.Invoice.find(query).select(projections.invoices).sort({ invoiceDate: -1, createdAt: -1 }).lean(),
+    crmPayments: () => models.CrmPayment.find(query).select(projections.crmPayments).sort({ createdAt: -1 }).lean(),
+    amcRecords: () => models.CrmAmc.find(query).select(projections.amcRecords).sort({ renewalDate: 1, updatedAt: -1 }).lean(),
+    subscriptionPayments: () => models.Payment.find(query).select(projections.subscriptionPayments).sort({ createdAt: -1 }).lean(),
+    vendors: () => models.FinanceVendor.find(query).select(projections.vendors).sort({ name: 1 }).lean(),
+    vendorBills: () => models.FinanceVendorBill.find(query).select(projections.vendorBills).sort({ dueDate: 1, createdAt: -1 }).lean(),
+    purchaseOrders: () => models.FinancePurchaseOrder.find(query).select(projections.purchaseOrders).sort({ createdAt: -1 }).lean(),
+    expenses: () => models.FinanceExpense.find(query).select(projections.expenses).sort({ expenseDate: -1, createdAt: -1 }).lean(),
+    payrollRuns: () => models.FinancePayrollRun.find(query).select(projections.payrollRuns).sort({ createdAt: -1 }).lean(),
+    taxRecords: () => models.FinanceTaxRecord.find(query).select(projections.taxRecords).sort({ createdAt: -1 }).lean(),
+    bankEntries: () => models.FinanceBankEntry.find(query).select(projections.bankEntries).sort({ entryDate: -1 }).lean(),
+    projects: () => models.CrmProject.find(query).select(projections.projects).sort({ updatedAt: -1 }).lean(),
+    settings: () => models.FinanceSettings.findOne(query).select(projections.settings).lean(),
+  };
+
+  const keysToFetch = keys || Object.keys(fetchers);
+  const results = await Promise.all(keysToFetch.map((key) => fetchers[key]()));
+
+  const data = {};
+  Object.keys(fetchers).forEach((key) => data[key] = key === 'settings' ? null : []);
+  keysToFetch.forEach((key, index) => data[key] = results[index]);
+
+  const crmPayments = data.crmPayments.map(serializeCrmPayment);
 
   return {
-    invoices: invoices.map(serializeSalesInvoice),
-    crmPayments: crmPayments.map(serializeCrmPayment),
-    amcRecords: amcRecords.map(serializeAmc),
-    subscriptionPayments: subscriptionPayments.map(serializeSubscriptionPayment),
-    vendors,
-    vendorBills,
-    purchaseOrders,
-    expenses,
-    payrollRuns,
-    taxRecords,
-    bankEntries,
-    projects,
-    settings,
+    invoices: data.invoices.map((inv) => serializeSalesInvoice(inv, crmPayments)),
+    crmPayments,
+    amcRecords: data.amcRecords.map(serializeAmc),
+    subscriptionPayments: data.subscriptionPayments.map(serializeSubscriptionPayment),
+    vendors: data.vendors,
+    vendorBills: data.vendorBills,
+    purchaseOrders: data.purchaseOrders,
+    expenses: data.expenses,
+    payrollRuns: data.payrollRuns,
+    taxRecords: data.taxRecords,
+    bankEntries: data.bankEntries,
+    projects: data.projects,
+    settings: data.settings,
   };
 }
 
@@ -514,7 +610,12 @@ function invoiceMatchesStatus(invoice, statusFilter) {
   if (!statusFilter) return true;
   const paymentStatus = normalize(invoice.paymentStatus).toLowerCase();
   const lifecycleStatus = normalize(invoice.status).toLowerCase();
-  if (statusFilter === 'unpaid') return paymentStatus === 'unpaid';
+  
+  if (statusFilter === 'unpaid') {
+    return ['unpaid', 'partially paid', 'overdue'].includes(paymentStatus) || 
+           ['unpaid', 'partially paid', 'overdue'].includes(lifecycleStatus);
+  }
+  
   return paymentStatus === statusFilter || lifecycleStatus === statusFilter;
 }
 
@@ -612,7 +713,10 @@ function buildDashboard(data, range = {}) {
 
 async function getDashboard(companyCode, query = {}) {
   const code = resolveCompanyCode(companyCode);
-  const data = await getFinanceCollections(companyCode);
+  const data = await getFinanceCollections(companyCode, [
+    'invoices', 'crmPayments', 'amcRecords', 'subscriptionPayments',
+    'expenses', 'vendorBills', 'payrollRuns'
+  ]);
   return {
     success: true,
     companyCode: code,
@@ -622,7 +726,7 @@ async function getDashboard(companyCode, query = {}) {
 }
 
 async function getIncomeStreams(companyCode, query = {}) {
-  const data = await getFinanceCollections(companyCode);
+  const data = await getFinanceCollections(companyCode, ['invoices', 'crmPayments', 'amcRecords', 'subscriptionPayments']);
   const range = dateRangeFromQuery(query);
   const streams = buildIncomeStreams(data, range);
   return {
@@ -636,9 +740,38 @@ async function getIncomeStreams(companyCode, query = {}) {
     },
   };
 }
+function paginateItems(items = [], query = {}, view = '') {
+  let filtered = items;
+  
+  if (query.status && query.status !== 'All Status' && view !== 'invoices') {
+    const statusLower = query.status.toLowerCase();
+    filtered = filtered.filter(item => {
+      const pStatus = (item.paymentStatus || '').toLowerCase();
+      const lStatus = (item.status || '').toLowerCase();
+      return pStatus === statusLower || lStatus === statusLower;
+    });
+  }
+
+  if (query.search) {
+    const searchLower = query.search.trim().toLowerCase();
+    filtered = filtered.filter(item => JSON.stringify(item || {}).toLowerCase().includes(searchLower));
+  }
+
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.max(1, parseInt(query.limit) || 20);
+  const skip = (page - 1) * limit;
+  
+  return {
+    items: filtered.slice(skip, skip + limit),
+    totalItems: filtered.length,
+    currentPage: page,
+    totalPages: Math.ceil(filtered.length / limit)
+  };
+}
 
 async function getReceivables(companyCode, view = 'invoices', query = {}) {
-  const data = await getFinanceCollections(companyCode);
+  // Only fetch the collections we actually need for the receivables dashboard
+  const data = await getFinanceCollections(companyCode, ['invoices', 'crmPayments', 'amcRecords']);
   const range = dateRangeFromQuery(query);
   const hasRequestedRange = !!(range.from || range.to);
   const statusFilter = statusFilterFromQuery(query);
@@ -664,10 +797,16 @@ async function getReceivables(companyCode, view = 'invoices', query = {}) {
     'client-balance': clientBalance,
   };
 
+  const viewItems = views[view] || invoices;
+  const pagination = paginateItems(viewItems, query, view);
+
   return {
     success: true,
     view,
-    items: views[view] || invoices,
+    items: pagination.items,
+    totalItems: pagination.totalItems,
+    currentPage: pagination.currentPage,
+    totalPages: pagination.totalPages,
     analytics: view === 'amc-renewals'
       ? {
           paidAmcCharges: sum(amcRenewals.filter((item) => item.paymentStatus === 'Paid'), (item) => item.paidAmount || item.totalAmount),
@@ -686,8 +825,8 @@ async function getReceivables(companyCode, view = 'invoices', query = {}) {
   };
 }
 
-async function getPayables(companyCode, view = 'vendor-bills') {
-  const data = await getFinanceCollections(companyCode);
+async function getPayables(companyCode, view = 'vendor-bills', query = {}) {
+  const data = await getFinanceCollections(companyCode, ['vendorBills', 'purchaseOrders']);
   const vendorPayments = data.vendorBills.filter((bill) => ['Payment Scheduled', 'Paid', 'Approved'].includes(bill.status));
   const subscriptionPayments = data.vendorBills.filter((bill) => /subscription|license|hosting|software/i.test(bill.serviceType || bill.vendorName || ''));
   const views = {
@@ -696,10 +835,16 @@ async function getPayables(companyCode, view = 'vendor-bills') {
     'vendor-payments': vendorPayments,
     'subscription-payments': subscriptionPayments,
   };
+  const viewItems = views[view] || data.vendorBills;
+  const pagination = paginateItems(viewItems, query, view);
+  
   return {
     success: true,
     view,
-    items: views[view] || data.vendorBills,
+    items: pagination.items,
+    totalItems: pagination.totalItems,
+    currentPage: pagination.currentPage,
+    totalPages: pagination.totalPages,
     analytics: {
       pendingPayable: sum(data.vendorBills.filter((bill) => bill.status !== 'Paid'), (bill) => Math.max(toNumber(bill.netPayable) - toNumber(bill.paidAmount), 0)),
       paidAmount: sum(data.vendorBills.filter((bill) => bill.status === 'Paid'), (bill) => bill.paidAmount || bill.netPayable),
@@ -709,28 +854,37 @@ async function getPayables(companyCode, view = 'vendor-bills') {
   };
 }
 
-async function getExpenses(companyCode, view = 'company-expenses') {
+async function getExpenses(companyCode, view = 'company-expenses', query = {}) {
   if (view === 'employee-claims') {
     const claims = await listEmployeeClaims(companyCode);
+    const pagination = paginateItems(claims.items, query, view);
     return {
       success: true,
       view,
-      items: claims.items,
+      items: pagination.items,
+      totalItems: pagination.totalItems,
+      currentPage: pagination.currentPage,
+      totalPages: pagination.totalPages,
       analytics: claims.analytics,
     };
   }
 
-  const data = await getFinanceCollections(companyCode);
+  const data = await getFinanceCollections(companyCode, ['expenses']);
   const typeMap = {
     'company-expenses': 'Company Expense',
     reimbursements: 'Reimbursement',
   };
   const type = typeMap[view];
   const items = type ? data.expenses.filter((expense) => expense.type === type) : data.expenses;
+  const pagination = paginateItems(items, query, view);
+  
   return {
     success: true,
     view,
-    items,
+    items: pagination.items,
+    totalItems: pagination.totalItems,
+    currentPage: pagination.currentPage,
+    totalPages: pagination.totalPages,
     analytics: {
       submitted: data.expenses.filter((expense) => expense.status === 'Submitted').length,
       verified: data.expenses.filter((expense) => expense.status === 'Finance Verified').length,
@@ -740,8 +894,8 @@ async function getExpenses(companyCode, view = 'company-expenses') {
   };
 }
 
-async function getPayroll(companyCode, view = 'payroll-runs') {
-  const data = await getFinanceCollections(companyCode);
+async function getPayroll(companyCode, view = 'payroll-runs', query = {}) {
+  const data = await getFinanceCollections(companyCode, ['payrollRuns']);
   const salaryProcessing = data.payrollRuns.filter((run) => run.status !== 'Processed');
   const payslips = data.payrollRuns.flatMap((run) => (run.items || []).map((item) => ({
     ...item,
@@ -754,10 +908,16 @@ async function getPayroll(companyCode, view = 'payroll-runs') {
     'salary-processing': salaryProcessing,
     payslips,
   };
+  const viewItems = views[view] || data.payrollRuns;
+  const pagination = paginateItems(viewItems, query, view);
+  
   return {
     success: true,
     view,
-    items: views[view] || data.payrollRuns,
+    items: pagination.items,
+    totalItems: pagination.totalItems,
+    currentPage: pagination.currentPage,
+    totalPages: pagination.totalPages,
     analytics: {
       openRuns: salaryProcessing.length,
       processedRuns: data.payrollRuns.filter((run) => run.status === 'Processed').length,
@@ -768,7 +928,7 @@ async function getPayroll(companyCode, view = 'payroll-runs') {
 }
 
 async function getTax(companyCode, view = 'gst') {
-  const data = await getFinanceCollections(companyCode);
+  const data = await getFinanceCollections(companyCode, ['invoices', 'vendorBills', 'expenses', 'payrollRuns', 'taxRecords']);
   const gstCollected = sum(data.invoices.filter((invoice) => invoice.paymentStatus === 'Paid'), (invoice) => invoice.gstAmount);
   const gstPaid = sum(data.vendorBills, (bill) => bill.taxAmount) + sum(data.expenses, (expense) => expense.taxAmount);
   const tdsDeducted = sum(data.vendorBills, (bill) => bill.tdsDeducted) + sum(data.payrollRuns, (run) => run.deductions);
@@ -797,7 +957,10 @@ async function getTax(companyCode, view = 'gst') {
 }
 
 async function getBanking(companyCode, view = 'cash-flow') {
-  const data = await getFinanceCollections(companyCode);
+  const data = await getFinanceCollections(companyCode, [
+    'invoices', 'crmPayments', 'amcRecords', 'subscriptionPayments',
+    'expenses', 'vendorBills', 'payrollRuns', 'bankEntries'
+  ]);
   const incomeStreams = buildIncomeStreams(data);
   const expenseStreams = buildExpenseStreams(data);
   const cashFlow = {
@@ -825,7 +988,10 @@ async function getBanking(companyCode, view = 'cash-flow') {
 }
 
 async function getReports(companyCode, view = 'profit-loss') {
-  const data = await getFinanceCollections(companyCode);
+  const data = await getFinanceCollections(companyCode, [
+    'invoices', 'crmPayments', 'amcRecords', 'subscriptionPayments',
+    'expenses', 'vendorBills', 'payrollRuns', 'projects'
+  ]);
   const dashboard = buildDashboard(data);
   const outstanding = buildOutstanding(data);
   const openVendorBills = data.vendorBills.filter((bill) => bill.status !== 'Paid');

@@ -252,6 +252,18 @@
   color: #09090b !important;
 }
 
+.dashboard-wrapper .sidebar-link-invoice:not(.active) .sidebar-icon {
+  color: #2563eb !important;
+}
+
+.dashboard-wrapper .sidebar-link-quotation:not(.active) .sidebar-icon {
+  color: #16a34a !important;
+}
+
+.dashboard-wrapper .sidebar-link-proposal:not(.active) .sidebar-icon {
+  color: #8b5cf6 !important;
+}
+
 .dashboard-wrapper .sidebar-icon svg {
   width: 18px !important;
   height: 18px !important;

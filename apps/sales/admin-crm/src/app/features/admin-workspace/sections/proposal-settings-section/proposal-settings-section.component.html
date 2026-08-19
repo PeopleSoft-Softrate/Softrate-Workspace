@@ -28,6 +28,9 @@
 
     <div *ngIf="!proposalTemplatesLoading && proposalTemplates.length > 0" class="plib-grid">
       <div class="plib-card" *ngFor="let tpl of proposalTemplates">
+        <div *ngIf="openingTemplateId === tpl._id" class="plib-card-loading-overlay">
+          <div class="psb-spinner"></div>
+        </div>
         <div class="plib-card-preview" (click)="enterEditor(tpl)">
           <ng-container *ngIf="getPageThumbnail((tpl.pages || [])[0]) as thumbSrc; else placeholderSvg">
             <img [src]="thumbSrc" class="plib-card-preview-img" />
@@ -116,6 +119,18 @@
 
         <div class="pce-toolbar-sep"></div>
 
+        <button class="pce-tool pce-icon-only" (click)="zoomOut()" title="Zoom Out">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <span class="pce-zoom-label" style="font-size: 0.8rem; font-weight: 600; color: #475569; min-width: 40px; text-align: center;">
+          {{ (editorZoom * 100) | number:'1.0-0' }}%
+        </span>
+        <button class="pce-tool pce-icon-only" (click)="zoomIn()" title="Zoom In">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+
+        <div class="pce-toolbar-sep"></div>
+
         <button class="pce-tool pce-tool-export" (click)="exportToPdf()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export
@@ -170,8 +185,34 @@
 
       <!-- Canvas -->
       <div class="pce-canvas-wrap">
-        <div class="pce-canvas-bg">
+        <div class="pce-canvas-bg" style="position: relative;">
           <div #konvaContainer class="pce-canvas-stage"></div>
+          
+          <!-- HTML Rich Text Overlays -->
+          <ng-container *ngFor="let layer of activePage?.layers">
+            <div *ngIf="layer.type === 'text' && !layer.hidden"
+                 class="pce-canvas-text"
+                 [style.position]="'absolute'"
+                 [style.left.px]="layer.x * editorZoom"
+                 [style.top.px]="layer.y * editorZoom"
+                 [style.width.px]="layer.w"
+                 [style.height.px]="layer.h"
+                 [style.pointer-events]="'none'"
+                 [style.transform]="'scale(' + editorZoom + ')'"
+                 [style.transform-origin]="'top left'"
+                 [style.overflow]="'hidden'"
+                 [style.font-family]="layer.fontFamily || 'Inter'"
+                 [style.font-size.px]="layer.fontSize || 16"
+                 [style.color]="layer.color || '#000000'"
+                 [style.font-weight]="layer.bold ? 'bold' : 'normal'"
+                 [style.font-style]="layer.italic ? 'italic' : 'normal'"
+                 [style.text-align]="layer.align || 'left'"
+                 [style.padding.px]="layer.padding !== undefined ? layer.padding : 4"
+                 [style.line-height]="layer.lineHeight || 1.2"
+                 [style.letter-spacing.px]="layer.letterSpacing || 0"
+                 [innerHTML]="getLayerSafeHtml(layer)">
+            </div>
+          </ng-container>
         </div>
       </div>
 
@@ -227,8 +268,30 @@
           <!-- Text Properties -->
           <ng-container *ngIf="selectedLayer?.type === 'text'">
             <div class="pce-prop-section-title">Content</div>
-            <div class="pce-prop-group">
-              <textarea class="pce-prop-textarea" [(ngModel)]="propContent" (ngModelChange)="applyProps()" rows="3" placeholder="Text content…" [disabled]="propIsPlaceholder"></textarea>
+            <div class="pce-prop-group" *ngIf="!propIsPlaceholder">
+              <div style="display: flex; gap: 4px; margin-bottom: 6px; align-items: center; flex-wrap: wrap; background: #f8fafc; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                <button class="pce-lbtn" (mousedown)="$event.preventDefault(); execFormat('bold')" title="Bold" style="width: 24px; height: 24px; font-weight: bold; border-radius:4px">B</button>
+                <button class="pce-lbtn" (mousedown)="$event.preventDefault(); execFormat('italic')" title="Italic" style="width: 24px; height: 24px; font-style: italic; border-radius:4px">I</button>
+                <button class="pce-lbtn" (mousedown)="$event.preventDefault(); execFormat('underline')" title="Underline" style="width: 24px; height: 24px; text-decoration: underline; border-radius:4px">U</button>
+                <div style="width: 1px; height: 16px; background: #cbd5e1; margin: 0 4px;"></div>
+                <button class="pce-lbtn" (mousedown)="$event.preventDefault(); execFormat('insertUnorderedList')" title="Bullet List" style="width: 24px; height: 24px; border-radius:4px">•</button>
+                <div style="width: 1px; height: 16px; background: #cbd5e1; margin: 0 4px;"></div>
+                <input type="color" style="padding:0; width:20px; height:20px; border:none; cursor:pointer;" (input)="execFormat('foreColor', $event)" title="Text Color" />
+                <input type="color" style="padding:0; width:20px; height:20px; border:none; cursor:pointer;" value="#ffffff" (input)="execFormat('hiliteColor', $event)" title="Highlight Color" />
+              </div>
+              <div #editorArea class="pce-prop-textarea" contenteditable="true" (input)="onContentChange($event)" style="min-height: 80px; overflow-y: auto; background: white;" [style.pointer-events]="propIsPlaceholder ? 'none' : 'auto'" [style.opacity]="propIsPlaceholder ? '0.6' : '1'"
+                   [style.font-family]="propFontFamily || 'Inter'"
+                   [style.font-size.px]="propFontSize || 16"
+                   [style.color]="propColor || '#000000'"
+                   [style.line-height]="propLineHeight || 1.2"
+                   [style.letter-spacing.px]="propLetterSpacing || 0"
+                   [style.font-weight]="propBold ? 'bold' : 'normal'"
+                   [style.font-style]="propItalic ? 'italic' : 'normal'"
+                   [style.text-align]="propAlign || 'left'">
+              </div>
+            </div>
+            <div class="pce-prop-group" *ngIf="propIsPlaceholder">
+              <input type="text" class="pce-prop-input" [value]="propPlaceholderLabel || 'Placeholder'" disabled style="background: #f1f5f9; color: #94a3b8;">
             </div>
             <div class="pce-prop-group">
               <label class="pce-prop-check">
@@ -271,9 +334,19 @@
                 <label class="pce-prop-label">Font Size</label>
                 <input class="pce-prop-input" type="number" [(ngModel)]="propFontSize" (ngModelChange)="applyProps()" min="6" max="200">
               </div>
-              <div class="pce-prop-group">
+              <div class="pce-prop-group" style="flex:1">
                 <label class="pce-prop-label">Color</label>
                 <input class="pce-prop-color" type="color" [(ngModel)]="propColor" (ngModelChange)="applyProps()">
+              </div>
+            </div>
+            <div class="pce-prop-row" style="margin-top: 8px;">
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Line Spacing</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propLineHeight" (ngModelChange)="applyProps()" step="0.1" min="0.5" max="3">
+              </div>
+              <div class="pce-prop-group" style="flex:1">
+                <label class="pce-prop-label">Letter Spacing</label>
+                <input class="pce-prop-input" type="number" [(ngModel)]="propLetterSpacing" (ngModelChange)="applyProps()" step="0.5" min="-5" max="20">
               </div>
             </div>
             <div class="pce-prop-group">

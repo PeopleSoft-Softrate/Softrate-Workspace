@@ -1326,13 +1326,13 @@
             </div>
             <div class="quotation-total-panel">
               <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === null">
-                * {{ vm.settingsGstPercentage || 18 }}% GST will be excluded
+                * Exclude {{ vm.settingsGstPercentage || 18 }}% GST
               </p>
               <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === 0">
                 * 0% GST
               </p>
               <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === -1">
-                * GST will be excluded
+                * Exclude GST
               </p>
             </div>
           </div>
@@ -2488,7 +2488,9 @@
 <app-proposal-generator-modal
   *ngIf="vm.showProposalModal"
   [show]="vm.showProposalModal"
-  [companyCode]="vm.dashboardCode"
+  [companyCode]="vm.documentCompanyCode || vm.dashboardCode"
+  [baseCompanyCode]="vm.baseCompanyCode || vm.dashboardCode"
+  [collaboratingCompanies]="vm.settingsCollaboratingCompanies || []"
   [lead]="vm.proposalModalLead"
   (close)="vm.closeProposalModal()"
   (onProposalSent)="vm.onProposalSentFromModal($event)"

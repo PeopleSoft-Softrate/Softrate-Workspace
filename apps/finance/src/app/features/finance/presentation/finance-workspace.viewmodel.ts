@@ -10,10 +10,17 @@ const DEFAULT_FINANCE_COMPANY_CODE = 'STP-1603-2026';
 @Injectable()
 export class FinanceWorkspaceViewModel {
   companyCode = this.storedFinanceCompanyCode();
-  dateFrom = '';
-  dateTo = '';
+  dateFilterType: 'this-month' | 'last-30-days' | 'custom-month' = 'this-month';
+  customMonth = '';
+  customMonthPart = '';
+  customYearPart = '';
   search = '';
-  statusFilter = 'Unpaid';
+
+  get yearOptions(): string[] {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 11 }, (_, i) => String(currentYear - i));
+  }
+
   sidebarFeatureSearch = '';
   sidebarOpen = false;
   sidebarMinimized = false;
@@ -21,6 +28,9 @@ export class FinanceWorkspaceViewModel {
   profileMenuOpen = false;
   activeGroup: FinanceGroupId = 'receivables';
   activeView = 'invoices';
+  statusFilter = this.defaultStatusForView(this.activeView);
+  page = 1;
+  pageSize = 20;
   loading = false;
   error = '';
   payload?: FinanceListResponse;
@@ -29,9 +39,68 @@ export class FinanceWorkspaceViewModel {
   approvingClaimId = '';
 
   readonly navGroups = FINANCE_NAV_GROUPS;
-  readonly statusOptions = ['All Status', 'Paid', 'Unpaid', 'Overdue', 'Pending', 'Partially Paid', 'Pending Finance Approval', 'Finance Verified', 'Submitted'];
+  get statusOptions(): string[] {
+    switch (this.activeView) {
+      case 'invoices':
+        return ['All Status', 'Paid', 'Unpaid', 'Overdue', 'Partially Paid'];
+      case 'employee-claims':
+      case 'company-expenses':
+        return ['All Status', 'Pending Finance Approval', 'Finance Verified', 'Submitted', 'Paid', 'Rejected'];
+      case 'vendor-bills':
+      case 'purchase-orders':
+        return ['All Status', 'Pending', 'Paid', 'Overdue', 'Rejected'];
+      case 'payroll-runs':
+        return ['All Status', 'Draft', 'Processed', 'Paid'];
+      default:
+        return ['All Status', 'Paid', 'Unpaid', 'Pending', 'Overdue'];
+    }
+  }
 
   constructor(private readonly api: FinanceApiService) {}
+
+  private toLocalIsoDate(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  get dateFrom(): string {
+    const today = new Date();
+    if (this.dateFilterType === 'this-month') {
+      return this.toLocalIsoDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    } else if (this.dateFilterType === 'last-30-days') {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 30);
+      return this.toLocalIsoDate(d);
+    } else if (this.dateFilterType === 'custom-month' && this.customMonth) {
+      const [year, month] = this.customMonth.split('-');
+      if (year && month) {
+        return this.toLocalIsoDate(new Date(Number(year), Number(month) - 1, 1));
+      }
+    }
+    return '';
+  }
+
+  get totalPages(): number {
+    return this.payload?.totalPages || 0;
+  }
+
+  get totalItems(): number {
+    return this.payload?.totalItems || 0;
+  }
+
+  get dateTo(): string {
+    const today = new Date();
+    if (this.dateFilterType === 'this-month') {
+      return this.toLocalIsoDate(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+    } else if (this.dateFilterType === 'last-30-days') {
+      return this.toLocalIsoDate(today);
+    } else if (this.dateFilterType === 'custom-month' && this.customMonth) {
+      const [year, month] = this.customMonth.split('-');
+      if (year && month) {
+        return this.toLocalIsoDate(new Date(Number(year), Number(month), 0));
+      }
+    }
+    return '';
+  }
 
   private storedFinanceCompanyCode(): string {
     const financeCompanyCode = localStorage.getItem('financeCompanyCode')?.trim();
@@ -42,6 +111,7 @@ export class FinanceWorkspaceViewModel {
 
     return localStorage.getItem('companyCode')?.trim() || DEFAULT_FINANCE_COMPANY_CODE;
   }
+
 
   private crmUserCompanyCode(): string {
     const rawUser = localStorage.getItem('tracecall_user');
@@ -113,6 +183,7 @@ export class FinanceWorkspaceViewModel {
     this.activeGroup = group.id;
     this.activeView = view;
     this.search = '';
+    this.page = 1;
     this.statusFilter = this.defaultStatusForView(view);
     this.sidebarOpen = false;
     this.loadActive();
@@ -120,14 +191,45 @@ export class FinanceWorkspaceViewModel {
 
   onStatusFilterChange(status: string): void {
     this.statusFilter = status;
-    if (this.activeView === 'invoices') {
+    this.page = 1;
+    this.loadActive();
+  }
+
+  onDateFilterChange(): void {
+    if (this.dateFilterType !== 'custom-month') {
+      this.customMonth = '';
+    } else {
+      const today = new Date();
+      this.customMonthPart = String(today.getMonth() + 1).padStart(2, '0');
+      this.customYearPart = String(today.getFullYear());
+      this.customMonth = `${this.customYearPart}-${this.customMonthPart}`;
+    }
+    this.page = 1;
+    this.loadActive();
+  }
+
+  onCustomMonthChange(): void {
+    if (this.dateFilterType === 'custom-month') {
+      if (this.customMonthPart && this.customYearPart) {
+        this.customMonth = `${this.customYearPart}-${this.customMonthPart}`;
+      }
+      this.page = 1;
       this.loadActive();
     }
   }
 
+  onSearchChange(): void {
+    this.page = 1;
+    this.loadActive();
+  }
+
+  onPageChange(page: number): void {
+    this.page = page;
+    this.loadActive();
+  }
+
   loadActive(): void {
     this.error = '';
-    this.payload = undefined;
 
     if (!this.isIntegratedView) {
       this.loading = false;
@@ -172,7 +274,7 @@ export class FinanceWorkspaceViewModel {
   }
 
   private defaultStatusForView(view = this.activeView): string {
-    return view === 'invoices' ? 'Unpaid' : 'All Status';
+    return 'All Status';
   }
 
   private activeQuery(): FinanceQuery {
@@ -180,24 +282,21 @@ export class FinanceWorkspaceViewModel {
       companyCode: this.companyCode.trim(),
       from: this.dateFrom,
       to: this.dateTo,
+      page: this.page,
+      limit: this.pageSize,
     };
-    if (this.activeView === 'invoices' && this.statusFilter !== 'All Status') {
+    if (this.statusFilter !== 'All Status') {
       query.status = this.statusFilter;
+    }
+    const search = this.search.trim().toLowerCase();
+    if (search) {
+      query.search = search;
     }
     return query;
   }
 
   rows(): FinanceRecord[] {
-    const rows = this.payload?.items || [];
-    const search = this.search.trim().toLowerCase();
-
-    return rows.filter((row) => {
-      const matchesSearch = !search || JSON.stringify(row || {}).toLowerCase().includes(search);
-      if (this.activeView === 'invoices') return matchesSearch;
-      const status = paymentStatus(row).toLowerCase();
-      const matchesStatus = this.statusFilter === 'All Status' || status === this.statusFilter.toLowerCase();
-      return matchesSearch && matchesStatus;
-    });
+    return this.payload?.items || [];
   }
 
   analytics(): FinanceAnalyticsItem[] {

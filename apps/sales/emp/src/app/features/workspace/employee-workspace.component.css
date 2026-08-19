@@ -737,6 +737,10 @@
   color: #16a34a;
 }
 
+.sidebar-link-proposal .sidebar-icon {
+  color: #8b5cf6;
+}
+
 .rail-item-count,
 .utility-value,
 .table-pane-meta,

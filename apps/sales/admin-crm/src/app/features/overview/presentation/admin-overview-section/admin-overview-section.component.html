@@ -348,14 +348,13 @@
                         <h3>Call trend</h3>
                       </div>
                       <div class="chart-type-toggles" style="display: flex; gap: 4px;">
-                        <button class="btn-icon" [class.active]="chartType === 'line'" (click)="setChartType('line')" aria-label="Timeline view" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none;" [ngStyle]="{'background': chartType === 'line' ? '#f1f5f9' : 'transparent', 'color': chartType === 'line' ? '#0f172a' : '#64748b'}">
+                        <button class="btn-icon" (click)="setChartType(chartType === 'line' ? 'bar' : 'line')" aria-label="Swap chart type" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none; background: transparent; color: #64748b;" title="Swap chart type" onmouseenter="this.style.background='#f1f5f9'; this.style.color='#0f172a'" onmouseleave="this.style.background='#f8fafc'; this.style.color='#64748b'">
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 3v18h18"/>
-                            <path d="m19 9-5 5-4-4-3 3"/>
+                            <path d="m16 3 4 4-4 4"/>
+                            <path d="M20 7H4"/>
+                            <path d="m8 21-4-4 4-4"/>
+                            <path d="M4 17h16"/>
                           </svg>
-                        </button>
-                        <button class="btn-icon" [class.active]="chartType === 'bar'" (click)="setChartType('bar')" aria-label="Breakdown view" style="padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none;" [ngStyle]="{'background': chartType === 'bar' ? '#f1f5f9' : 'transparent', 'color': chartType === 'bar' ? '#0f172a' : '#64748b'}">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                         </button>
                       </div>
                     </div>

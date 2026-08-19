@@ -112,7 +112,7 @@ router.get('/receivables/:view', requireCompanyCode, receivablesHandler);
 
 async function payablesHandler(req, res) {
   try {
-    return res.json(await getPayables(companyCode(req), req.params.view || 'vendor-bills'));
+    return res.json(await getPayables(companyCode(req), req.params.view || 'vendor-bills', req.query));
   } catch (err) {
     return sendError(res, err, 'Failed to load payables.');
   }
@@ -123,7 +123,7 @@ router.get('/payables/:view', requireCompanyCode, payablesHandler);
 
 async function expensesHandler(req, res) {
   try {
-    return res.json(await getExpenses(companyCode(req), req.params.view || 'company-expenses'));
+    return res.json(await getExpenses(companyCode(req), req.params.view || 'company-expenses', req.query));
   } catch (err) {
     return sendError(res, err, 'Failed to load expenses.');
   }
@@ -134,7 +134,7 @@ router.get('/expenses/:view', requireCompanyCode, expensesHandler);
 
 async function payrollHandler(req, res) {
   try {
-    return res.json(await getPayroll(companyCode(req), req.params.view || 'payroll-runs'));
+    return res.json(await getPayroll(companyCode(req), req.params.view || 'payroll-runs', req.query));
   } catch (err) {
     return sendError(res, err, 'Failed to load payroll.');
   }
@@ -145,7 +145,7 @@ router.get('/payroll/:view', requireCompanyCode, payrollHandler);
 
 async function taxHandler(req, res) {
   try {
-    return res.json(await getTax(companyCode(req), req.params.view || 'gst'));
+    return res.json(await getTax(companyCode(req), req.params.view || 'gst', req.query));
   } catch (err) {
     return sendError(res, err, 'Failed to load tax records.');
   }
@@ -156,7 +156,7 @@ router.get('/tax/:view', requireCompanyCode, taxHandler);
 
 async function bankingHandler(req, res) {
   try {
-    return res.json(await getBanking(companyCode(req), req.params.view || 'cash-flow'));
+    return res.json(await getBanking(companyCode(req), req.params.view || 'cash-flow', req.query));
   } catch (err) {
     return sendError(res, err, 'Failed to load banking records.');
   }

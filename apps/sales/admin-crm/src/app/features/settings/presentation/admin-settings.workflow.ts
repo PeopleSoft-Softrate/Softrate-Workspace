@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
+import { DashboardCacheService } from '../../../core/cache/dashboard-cache.service';
 import { formatSeconds } from '../../reports/domain/call-formatters';
 import { environment } from '../../../../environments/environment';
 
@@ -7,7 +8,10 @@ const DEFAULT_INVOICE_LOGO = 'assets/icon/softrate-transparent-logo.png';
 
 @Injectable({ providedIn: 'root' })
 export class AdminSettingsWorkflow {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private dashboardCache: DashboardCacheService,
+  ) {}
 
   private normalizeAppAssetUrl(value: any): string {
     const url = String(value || '').trim();
@@ -163,43 +167,59 @@ export class AdminSettingsWorkflow {
 
   fetchSettings(vm: any): void {
     if (!vm.dashboardCode) return;
+
+    // Serve from cache immediately — settings are invalidated on save
+    const cacheKey = `admin-settings|${vm.dashboardCode}`;
+    const cached = this.dashboardCache.get<any>(cacheKey);
+    if (cached) {
+      this.applySettingsToVm(vm, cached);
+      this.loadCollaborationInvites(vm);
+      return;
+    }
+
     vm.settingsLoading = true;
     this.authService.getCompanySettings(vm.dashboardCode).subscribe({
       next: (res: any) => {
         vm.settingsLoading = false;
         if (res.success) {
-          vm.settingsBreakHourLimit = res.settings.breakHourLimit ?? 60;
-          vm.settingsConnectedCallDuration = res.settings.connectedCallDuration ?? 0;
-          vm.settingsLeadStatuses = res.settings.leadStatuses || [];
-          vm.settingsInterestedPageStatuses = res.settings.interestedPageStatuses || [];
-          vm.settingsDnpPageStatuses = res.settings.dnpPageStatuses || [];
-          vm.settingsConvertedPageStatuses = res.settings.convertedPageStatuses || [];
-          vm.settingsCollaboratingCompanies = res.settings.collaboratingCompanies || [];
-          vm.settingsCompanyName = res.settings.companyName || '';
-          vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(res.settings.invoiceLogo || DEFAULT_INVOICE_LOGO);
-          vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(res.settings.invoiceSeal || '');
-          vm.settingsInvoiceTerms = res.settings.invoiceTerms || '';
-          vm.settingsShowCompanyNameOnInvoice = res.settings.showCompanyNameOnInvoice ?? true;
-          vm.settingsGstNumber = res.settings.gstNumber || '';
-          vm.settingsGstPercentage = res.settings.gstPercentage ?? 18;
-          vm.settingsInvoiceRegisteredAddress = res.settings.invoiceRegisteredAddress || '';
-          vm.settingsInvoiceFooter = res.settings.invoiceFooter || '';
-          vm.settingsBankDetails = res.settings.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
-          vm.settingsBankDetails2 = res.settings.bankDetails2 || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
-          vm.settingsContactDetails = res.settings.contactDetails || { website: '', email: '', phone: '' };
-          vm.settingsProducts = res.settings.products || [];
-          vm.settingsProductRemarks = res.settings.productRemarks || [];
-          vm.resendApiKey = res.settings.resendApiKey || '';
-          vm.resendSenderDomain = res.settings.resendSenderDomain || '';
-          vm.weCrmAccessEnabled = res.settings.weCrmAccessEnabled || false;
-          vm.weCrmUrl = res.settings.weCrmUrl || 'http://localhost:5001/api';
-          vm.weCrmCompanyId = res.settings.weCrmCompanyId || null;
+          // Cache with a 24-hour TTL — invalidated immediately on save
+          this.dashboardCache.set(cacheKey, res.settings, { ttlMs: 24 * 60 * 60 * 1000 });
+          this.applySettingsToVm(vm, res.settings);
         }
       },
       error: () => { vm.settingsLoading = false; },
     });
     // Also fetch collaboration invites
     this.loadCollaborationInvites(vm);
+  }
+
+  private applySettingsToVm(vm: any, settings: any): void {
+    vm.settingsBreakHourLimit = settings.breakHourLimit ?? 60;
+    vm.settingsConnectedCallDuration = settings.connectedCallDuration ?? 0;
+    vm.settingsLeadStatuses = settings.leadStatuses || [];
+    vm.settingsInterestedPageStatuses = settings.interestedPageStatuses || [];
+    vm.settingsDnpPageStatuses = settings.dnpPageStatuses || [];
+    vm.settingsConvertedPageStatuses = settings.convertedPageStatuses || [];
+    vm.settingsCollaboratingCompanies = settings.collaboratingCompanies || [];
+    vm.settingsCompanyName = settings.companyName || '';
+    vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(settings.invoiceLogo || DEFAULT_INVOICE_LOGO);
+    vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(settings.invoiceSeal || '');
+    vm.settingsInvoiceTerms = settings.invoiceTerms || '';
+    vm.settingsShowCompanyNameOnInvoice = settings.showCompanyNameOnInvoice ?? true;
+    vm.settingsGstNumber = settings.gstNumber || '';
+    vm.settingsGstPercentage = settings.gstPercentage ?? 18;
+    vm.settingsInvoiceRegisteredAddress = settings.invoiceRegisteredAddress || '';
+    vm.settingsInvoiceFooter = settings.invoiceFooter || '';
+    vm.settingsBankDetails = settings.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+    vm.settingsBankDetails2 = settings.bankDetails2 || { bankName: '', accountNumber: '', ifscCode: '', branchName: '' };
+    vm.settingsContactDetails = settings.contactDetails || { website: '', email: '', phone: '' };
+    vm.settingsProducts = settings.products || [];
+    vm.settingsProductRemarks = settings.productRemarks || [];
+    vm.resendApiKey = settings.resendApiKey || '';
+    vm.resendSenderDomain = settings.resendSenderDomain || '';
+    vm.weCrmAccessEnabled = settings.weCrmAccessEnabled || false;
+    vm.weCrmUrl = settings.weCrmUrl || 'http://localhost:5001/api';
+    vm.weCrmCompanyId = settings.weCrmCompanyId || null;
   }
 
   fetchSettingsForDocument(vm: any, code: string, onComplete?: () => void): void {
@@ -409,6 +429,8 @@ export class AdminSettingsWorkflow {
       next: (res: any) => {
         vm.settingsLoading = false;
         if (res.success) {
+          // Invalidate cache so the next fetch loads fresh settings from server
+          this.dashboardCache.removeByPrefix(`admin-settings|${vm.dashboardCode}`);
           vm.settingsCompanyName = res.settings?.companyName || vm.settingsCompanyName;
           vm.dashboardCompany = vm.settingsCompanyName || vm.dashboardCompany;
           vm.settingsSaveSuccess = 'Settings saved successfully!';

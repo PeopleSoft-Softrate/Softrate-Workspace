@@ -14,6 +14,7 @@ import {
   LostReason,
 } from '../domain/pipeline.model';
 import { PipelineRepository } from '../data/pipeline.repository';
+import { DashboardCacheService } from '../../../core/cache/dashboard-cache.service';
 import confetti from 'canvas-confetti';
 
 export interface PipelineState {
@@ -65,8 +66,13 @@ export class PipelineSectionViewModel {
   readonly state$ = this.stateSubject.asObservable();
 
   private companyCode = '';
+  // 2-minute TTL — short enough to stay fresh, long enough to avoid redundant calls on tab switches
+  private readonly cacheTtlMs = 2 * 60 * 1000;
 
-  constructor(private repo: PipelineRepository) {}
+  constructor(
+    private repo: PipelineRepository,
+    private cache: DashboardCacheService,
+  ) {}
 
   get state(): PipelineState {
     return this.stateSubject.value;
@@ -85,17 +91,34 @@ export class PipelineSectionViewModel {
     this.loadBoard();
   }
 
-  loadBoard(): void {
+  loadBoard(force = false): void {
     if (!this.companyCode) return;
+
+    // Serve from cache immediately — 2-minute TTL prevents stale boards
+    const cacheKey = this.boardCacheKey();
+    if (!force) {
+      const cached = this.cache.get<{ columns: PipelineBoardColumn[]; summary: PipelineBoardSummary }>(cacheKey);
+      if (cached) {
+        this.patch({ columns: cached.columns, summary: cached.summary, loading: false });
+        return;
+      }
+    }
+
     this.patch({ loading: true, error: '' });
     this.repo.getBoard(this.companyCode, this.state.filters).subscribe({
       next: (res) => {
+        this.cache.set(cacheKey, { columns: res.columns, summary: res.summary }, { ttlMs: this.cacheTtlMs });
         this.patch({ columns: res.columns, summary: res.summary, loading: false });
       },
       error: () => {
         this.patch({ loading: false, error: 'Failed to load pipeline board. Please try again.' });
       },
     });
+  }
+
+  private boardCacheKey(): string {
+    const f = this.state.filters;
+    return `pipeline-board|${this.companyCode}|${f.owner}|${f.search}|${f.connectionOutcome}|${f.qualificationOutcome}|${f.dateFilter}|${f.month}|${f.year}`;
   }
 
   loadMoreColumn(stage: PipelineStageCode): void {
@@ -221,6 +244,8 @@ export class PipelineSectionViewModel {
           if (undoStack.length > 10) undoStack.shift(); // Keep last 10
         }
 
+        // Invalidate cache — board changed, next load must be fresh
+        this.cache.invalidate(`pipeline-board|${this.companyCode}`);
         this.patch({ columns, undoStack });
       },
       error: (err) => {

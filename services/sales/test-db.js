@@ -1,12 +1,31 @@
-require('dotenv').config();
 const mongoose = require('mongoose');
-const Lead = require('./models/Lead');
+const User = require('./models/User');
+
 async function run() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  const count = await Lead.countDocuments({ pipelineStage: { $ne: null } });
-  console.log("Leads with pipelineStage:", count);
-  const sample = await Lead.findOne({ pipelineStage: { $ne: null } }).select('companyCode status pipelineStage');
-  console.log("Sample lead:", sample);
-  process.exit();
+  await mongoose.connect('mongodb://localhost:27017/softrate');
+  console.log('Connected.');
+  
+  console.time('findUser');
+  const user = await User.findOne({ 'proposalTemplates': { $exists: true, $not: { $size: 0 } } }, 'companyCode proposalTemplates._id');
+  console.timeEnd('findUser');
+  
+  if (!user) {
+    console.log('No user with proposal templates found.');
+    return process.exit(0);
+  }
+  
+  const companyCode = user.companyCode;
+  const id = user.proposalTemplates[0]._id;
+  console.log(`Found: company=${companyCode}, templateId=${id}`);
+  
+  console.time('fetchTemplate');
+  const user2 = await User.findOne(
+    { companyCode, 'proposalTemplates._id': id },
+    { 'proposalTemplates.$': 1 }
+  ).lean();
+  console.timeEnd('fetchTemplate');
+  
+  console.log('Template pages length:', user2.proposalTemplates[0].pages?.length);
+  process.exit(0);
 }
 run();

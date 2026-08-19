@@ -11,6 +11,9 @@ const Invoice = require('../../models/Invoice');
 const History = require('../../models/History');
 const Client = require('../../models/Client');
 const Counter = require('../../models/Counter');
+const Employee = require('../../models/Employee');
+const EmployeeRevenue = require('../../models/EmployeeRevenue');
+const EmployeeTarget = require('../../models/EmployeeTarget');
 const { verifyToken } = require('./jwtHelper');
 
 // Cache of tenant connections: companyCode → mongoose.Connection
@@ -44,6 +47,9 @@ function getTenantConnection(dbName) {
   conn.model('History', History.schema);
   conn.model('Client', Client.schema);
   conn.model('Counter', Counter.schema);
+  conn.model('Employee', Employee.schema);
+  conn.model('EmployeeRevenue', EmployeeRevenue.schema);
+  conn.model('EmployeeTarget', EmployeeTarget.schema);
 
   conn.on('connected', () => console.log(`[Tenant DB] Connected: ${dbName}`));
   conn.on('error', (err) => console.error(`[Tenant DB] Error (${dbName}):`, err.message));
@@ -134,6 +140,9 @@ async function tenantMiddleware(req, res, next) {
       History: db.model('History'),
       Client: db.model('Client'),
       Counter: db.model('Counter'),
+      Employee: db.model('Employee'),
+      EmployeeRevenue: db.model('EmployeeRevenue'),
+      EmployeeTarget: db.model('EmployeeTarget'),
     };
 
     next();
@@ -178,6 +187,9 @@ function companyMiddleware(req, res, next) {
     History: db.model('History'),
     Client: db.model('Client'),
     Counter: db.model('Counter'),
+    Employee: db.model('Employee'),
+    EmployeeRevenue: db.model('EmployeeRevenue'),
+    EmployeeTarget: db.model('EmployeeTarget'),
   };
   next();
 }

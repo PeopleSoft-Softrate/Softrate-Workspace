@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
     const brandingCompanyCode = normalize(req.body.brandingCompanyCode) || companyCode;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode is required.' });
 
-    const user = await User.findOne({ companyCode: brandingCompanyCode });
+    const user = await User.findOne({ companyCode: brandingCompanyCode }).select('-proposalTemplates');
     if (!user) return res.status(404).json({ success: false, message: 'Company settings not found.' });
 
     const { getClientByClientId } = require('../../../services/clientService');

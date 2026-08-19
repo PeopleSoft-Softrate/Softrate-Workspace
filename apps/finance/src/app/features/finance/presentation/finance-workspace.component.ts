@@ -14,6 +14,7 @@ import { ReportsViewComponent } from './reports/reports-view.component';
 import { SettingsViewComponent } from './settings/settings-view.component';
 import { TaxViewComponent } from './tax/tax-view.component';
 import { FinanceWorkspaceViewModel } from './finance-workspace.viewmodel';
+import { HistoryPaginationComponent } from '../../../shared/ui/history-pagination.component';
 
 @Component({
   selector: 'app-finance-workspace',
@@ -34,6 +35,7 @@ import { FinanceWorkspaceViewModel } from './finance-workspace.viewmodel';
     TaxViewComponent,
     InvoicesViewComponent,
     AmcRenewalsViewComponent,
+    HistoryPaginationComponent,
   ],
   providers: [FinanceWorkspaceViewModel],
   templateUrl: './finance-workspace.component.html',

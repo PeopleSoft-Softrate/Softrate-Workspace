@@ -65,6 +65,7 @@
 }
 
 .plib-card {
+  position: relative;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -117,6 +118,16 @@
   display: flex;
   gap: 6px;
   padding: 0 1rem 0.75rem;
+}
+
+.plib-card-loading-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
 /* ── Canvas Editor ────────────────────────────────────────────── */
@@ -375,8 +386,6 @@
 
 .pce-canvas-stage {
   display: block;
-  width: 794px;
-  height: 1123px;
 }
 
 /* Right Panel */
@@ -674,3 +683,43 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Force pasted HTML text elements to inherit container's typography */
+::ng-deep .pce-canvas-text *,
+::ng-deep .pce-prop-textarea * {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+  font-weight: inherit;
+  font-style: inherit;
+  text-align: inherit;
+  margin: 0;
+  padding: 0;
+}
+/* Ensure standard rich text tags still have effect but scale appropriately */
+::ng-deep .pce-canvas-text b, ::ng-deep .pce-canvas-text strong,
+::ng-deep .pce-prop-textarea b, ::ng-deep .pce-prop-textarea strong {
+  font-weight: bold !important;
+}
+::ng-deep .pce-canvas-text i, ::ng-deep .pce-canvas-text em,
+::ng-deep .pce-prop-textarea i, ::ng-deep .pce-prop-textarea em {
+  font-style: italic !important;
+}
+::ng-deep .pce-canvas-text u, ::ng-deep .pce-prop-textarea u {
+  text-decoration: underline !important;
+}
+
+/* Restore list padding and margin so bullets/numbers are visible */
+::ng-deep .pce-canvas-text ul, ::ng-deep .pce-prop-textarea ul,
+::ng-deep .pce-canvas-text ol, ::ng-deep .pce-prop-textarea ol {
+  padding-left: 20px !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+}
+::ng-deep .pce-canvas-text li, ::ng-deep .pce-prop-textarea li {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: list-item !important;
+}

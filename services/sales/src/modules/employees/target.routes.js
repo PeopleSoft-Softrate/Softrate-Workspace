@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const EmployeeTarget = require('../../../models/EmployeeTarget');
-const EmployeeRevenue = require('../../../models/EmployeeRevenue');
-const Employee = require('../../../models/Employee');
+const EmployeeTargetGlobal = require('../../../models/EmployeeTarget');
+const EmployeeRevenueGlobal = require('../../../models/EmployeeRevenue');
+const EmployeeGlobal = require('../../../models/Employee');
 const { companyMiddleware } = require('../../common/tenantMiddleware');
 
 const router = express.Router();
@@ -22,6 +22,10 @@ router.get('/', async (req, res) => {
     if (!companyCode || !year || !month) {
       return res.status(400).json({ success: false, message: 'companyCode, year, and month are required' });
     }
+
+    const Employee = req.models?.Employee || EmployeeGlobal;
+    const EmployeeTarget = req.models?.EmployeeTarget || EmployeeTargetGlobal;
+    const EmployeeRevenue = req.models?.EmployeeRevenue || EmployeeRevenueGlobal;
 
     const [employees, targets, revenues] = await Promise.all([
       Employee.find({ companyCode }).select('_id name').lean(),
@@ -57,6 +61,9 @@ router.get('/employee/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'companyCode, year, and employeeId are required' });
     }
 
+    const EmployeeTarget = req.models?.EmployeeTarget || EmployeeTargetGlobal;
+    const EmployeeRevenue = req.models?.EmployeeRevenue || EmployeeRevenueGlobal;
+
     const [targets, revenues] = await Promise.all([
       EmployeeTarget.find({ companyCode, employeeId, year }).lean(),
       EmployeeRevenue.find({ companyCode, employeeId, year }).lean(),
@@ -89,6 +96,8 @@ router.post('/', async (req, res) => {
     if (!companyCode || !employeeId || !year || !month || targetAmount === undefined) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
+
+    const EmployeeTarget = req.models?.EmployeeTarget || EmployeeTargetGlobal;
 
     const target = await EmployeeTarget.findOneAndUpdate(
       { companyCode, employeeId, year, month },

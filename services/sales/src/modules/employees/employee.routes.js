@@ -1,17 +1,21 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
-const Employee = require('../../../models/Employee');
+const Employee = require('../../../models/Employee'); // Global model — used ONLY for login (no JWT yet)
 const { signToken } = require('../../common/jwtHelper');
+const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
 
-// GET employees for a given company code
+// All admin CRUD routes attach tenant DB via companyMiddleware
+router.use(companyMiddleware);
+
+// GET employees for a given company code — uses tenant DB
 router.get('/', async (req, res) => {
   try {
     const { companyCode } = req.query;
     if (!companyCode) {
       return res.status(400).json({ success: false, message: 'companyCode is required' });
     }
-    const employees = await Employee.find({ companyCode }).sort({ createdAt: -1 });
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employees = await EmployeeModel.find({ companyCode }).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, employees });
   } catch (err) {
     console.error('[get employees]', err);
@@ -19,14 +23,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST a new employee
+// POST a new employee — uses tenant DB
 router.post('/', async (req, res) => {
   try {
     const { name, mobile, companyCode, countryCode } = req.body;
     if (!name || !mobile || !companyCode) {
       return res.status(400).json({ success: false, message: 'Name, mobile, and companyCode are required.' });
     }
-    const newEmployee = await Employee.create({ name, mobile, companyCode, countryCode: countryCode || '+91' });
+    const EmployeeModel = req.models?.Employee || Employee;
+    const newEmployee = await EmployeeModel.create({ name, mobile, companyCode, countryCode: countryCode || '+91' });
     return res.status(201).json({ success: true, employee: newEmployee, message: 'Employee added successfully.' });
   } catch (err) {
     console.error('[post employee]', err);
@@ -34,14 +39,15 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH employee code — set or update (optional, employee sets it themselves)
+// PATCH employee code — uses tenant DB
 router.patch('/:id/code', async (req, res) => {
   try {
-    const { employeeCode } = req.body;
+    const { employeeCode, companyCode } = req.body;
     if (!employeeCode || !employeeCode.trim()) {
       return res.status(400).json({ success: false, message: 'Employee code is required.' });
     }
-    const employee = await Employee.findByIdAndUpdate(
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(
       req.params.id,
       { employeeCode: employeeCode.trim() },
       { returnDocument: 'after' },
@@ -56,14 +62,15 @@ router.patch('/:id/code', async (req, res) => {
   }
 });
 
-// PATCH employee allowedCompanies
+// PATCH employee allowedCompanies — uses tenant DB
 router.patch('/:id/allowed-companies', async (req, res) => {
   try {
     const { allowedCompanies } = req.body;
     if (!Array.isArray(allowedCompanies)) {
       return res.status(400).json({ success: false, message: 'allowedCompanies must be an array.' });
     }
-    const employee = await Employee.findByIdAndUpdate(
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(
       req.params.id,
       { allowedCompanies },
       { returnDocument: 'after' },
@@ -78,7 +85,7 @@ router.patch('/:id/allowed-companies', async (req, res) => {
   }
 });
 
-// PATCH employee tags (update employee and add tag to company)
+// PATCH employee tags — uses tenant DB
 router.patch('/:id/tags', async (req, res) => {
   try {
     const { tags, companyCode } = req.body;
@@ -86,7 +93,8 @@ router.patch('/:id/tags', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tags array is required.' });
     }
 
-    const employee = await Employee.findByIdAndUpdate(
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(
       req.params.id,
       { $set: { tags: tags } },
       { returnDocument: 'after' }
@@ -111,7 +119,7 @@ router.patch('/:id/tags', async (req, res) => {
   }
 });
 
-// PUT update employee details
+// PUT update employee details — uses tenant DB
 router.put('/:id', async (req, res) => {
   try {
     const { name, mobile, countryCode, tags, allowedCompanies } = req.body;
@@ -123,7 +131,8 @@ router.put('/:id', async (req, res) => {
     if (tags && Array.isArray(tags)) updateData.tags = tags;
     if (allowedCompanies && Array.isArray(allowedCompanies)) updateData.allowedCompanies = allowedCompanies;
 
-    const employee = await Employee.findByIdAndUpdate(
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
       { returnDocument: 'after' }
@@ -140,16 +149,31 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Employee Login (via mobile + companyCode) — returns a JWT
+// Employee Login — MUST use the global Employee model since no JWT exists yet.
+// The login looks up the employee by mobile+companyCode and issues a JWT.
 router.post('/login', async (req, res) => {
   try {
     const { companyCode, mobile, countryCode } = req.body;
     if (!companyCode || !mobile) {
       return res.status(400).json({ success: false, message: 'Company code and mobile number are required.' });
     }
-    const query = { companyCode, mobile };
-    if (countryCode) query.countryCode = countryCode;
-    const employee = await Employee.findOne(query);
+
+    // First try the tenant DB (preferred — employee should live in their own DB)
+    const EmployeeModel = req.models?.Employee || null;
+    let employee = null;
+    if (EmployeeModel) {
+      const query = { companyCode, mobile };
+      if (countryCode) query.countryCode = countryCode;
+      employee = await EmployeeModel.findOne(query);
+    }
+
+    // Fallback: check the global (test) DB for employees not yet migrated
+    if (!employee) {
+      const query = { companyCode, mobile };
+      if (countryCode) query.countryCode = countryCode;
+      employee = await Employee.findOne(query);
+    }
+
     if (!employee) {
       return res.status(404).json({ success: false, message: 'Employee not found with this number & company code.' });
     }
@@ -164,10 +188,11 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin: Trigger sync for a specific employee
+// Admin: Trigger sync for a specific employee — uses tenant DB
 router.post('/:id/trigger-sync', async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndUpdate(req.params.id, { $set: { forceSync: true } });
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(req.params.id, { $set: { forceSync: true } });
     if (!employee) return res.status(404).json({ success: false, message: 'Employee not found.' });
     return res.status(200).json({ success: true, message: 'Sync triggered.' });
   } catch (err) {
@@ -175,26 +200,27 @@ router.post('/:id/trigger-sync', async (req, res) => {
   }
 });
 
-// Admin: Trigger sync for all employees in a company
+// Admin: Trigger sync for all employees in a company — uses tenant DB
 router.post('/trigger-sync-all', async (req, res) => {
   try {
     const { companyCode } = req.body;
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
-    await Employee.updateMany({ companyCode }, { $set: { forceSync: true } });
+    const EmployeeModel = req.models?.Employee || Employee;
+    await EmployeeModel.updateMany({ companyCode }, { $set: { forceSync: true } });
     return res.status(200).json({ success: true, message: 'Sync triggered for all employees.' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
 
-// Mobile App: Poll for sync trigger (uses employeeId from query param)
+// Mobile App: Poll for sync trigger — uses tenant DB (falls back to global)
 router.get('/sync-status', async (req, res) => {
   try {
     const { employeeId } = req.query;
     if (!employeeId) return res.status(400).json({ success: false, message: 'employeeId required.' });
-    
-    // Find employee and if forceSync is true, return it and reset it to false atomically
-    const employee = await Employee.findOneAndUpdate(
+
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findOneAndUpdate(
       { _id: employeeId, forceSync: true },
       { $set: { forceSync: false } }
     );

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { NgIf, NgFor, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 import { AdminWorkspaceSectionProxy } from '../../sections/admin-workspace-section-proxy';
 import Konva from 'konva';
 
@@ -13,6 +14,7 @@ export interface ProposalLayer {
   zIndex: number; locked: boolean; hidden: boolean;
   content?: string; fontSize?: number; fontFamily?: string; color?: string;
   bold?: boolean; italic?: boolean; underline?: boolean; align?: 'left' | 'center' | 'right';
+  lineHeight?: number; letterSpacing?: number;
   isPlaceholder?: boolean; placeholderLabel?: string; placeholderMaxChars?: number; placeholderDropdownOptions?: string[];
   src?: string;        // display-size preview PNG (for Konva editor only)
   shapeType?: 'rect' | 'circle' | 'line';
@@ -58,7 +60,9 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
   historyIndex = -1;
   private maxHistory = 40;
 
+  openingTemplateId: string | null = null;
   draggedLayerId: string | null = null;
+  editorZoom: number = 0.65;
 
   private stage!: Konva.Stage;
   private activeKonvaLayer!: Konva.Layer;
@@ -67,8 +71,9 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
   shapeSubtype: 'rect' | 'circle' | 'line' = 'rect';
   sidePanel: 'layers' | 'properties' = 'layers';
 
-  propContent = ''; propFontSize = 16; propFontFamily = 'Inter'; propColor = '#000000';
+  propContent = ''; propContentSafe: any = ''; propFontSize = 16; propFontFamily = 'Inter'; propColor = '#000000';
   propBold = false; propItalic = false; propUnderline = false; propAlign: 'left' | 'center' | 'right' = 'left';
+  propLineHeight = 1.2; propLetterSpacing = 0;
   propFillColor = '#e2e8f0'; propStrokeColor = '#475569'; propStrokeWidth = 2; propBorderRadius = 0; propPadding = 4;
   propHasBackground = false; propIsPlaceholder = false; propPlaceholderLabel = ''; propPlaceholderMode = ''; propPlaceholderMaxChars: number | null = null;
   propPlaceholderDropdownOptionsText = '';
@@ -84,7 +89,7 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     'streetAddressLine2', 'city', 'state', 'postalCode', 'registrationNumber'
   ];
 
-  constructor() { super(); }
+  constructor(public sanitizer: DomSanitizer) { super(); }
   override ngOnInit(): void {}
   ngAfterViewInit(): void {}
 
@@ -99,9 +104,10 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     const dpr = window.devicePixelRatio || 2;
     this.stage = new Konva.Stage({
       container: this.konvaContainer.nativeElement,
-      width: A4_W, height: A4_H,
+      width: A4_W * this.editorZoom, height: A4_H * this.editorZoom,
       pixelRatio: dpr
     });
+    this.stage.scale({ x: this.editorZoom, y: this.editorZoom });
     this.activeKonvaLayer = new Konva.Layer();
     this.stage.add(this.activeKonvaLayer);
     this.transformer = new Konva.Transformer({ rotateEnabled: false, keepRatio: false });
@@ -148,6 +154,8 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
         fill: layer.color || '#000000',
         fontStyle: `${layer.bold ? 'bold' : ''} ${layer.italic ? 'italic' : ''}`.trim() || 'normal',
         align: layer.align || 'left', verticalAlign: 'top', padding: layer.padding !== undefined ? layer.padding : 4,
+        lineHeight: layer.lineHeight || 1.2,
+        opacity: 0 // Invisible so HTML overlay shows instead
       }));
     } else if (layer.type === 'image' || layer.type === 'pdf_page') {
       const img = new Image(); img.src = layer.src || '';
@@ -185,11 +193,20 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     this.sidePanel = 'layers';
   }
 
+  @ViewChild('editorArea') editorArea!: import('@angular/core').ElementRef<HTMLDivElement>;
+
   syncPropsFromLayer(): void {
     const l = this.selectedLayer; if (!l) return;
-    this.propContent = l.content || ''; this.propFontSize = l.fontSize || 16; this.propFontFamily = l.fontFamily || 'Inter';
+    this.propContent = l.content || ''; 
+    setTimeout(() => {
+      if (this.editorArea && this.editorArea.nativeElement.innerHTML !== this.propContent) {
+        this.editorArea.nativeElement.innerHTML = this.propContent;
+      }
+    });
+    this.propFontSize = l.fontSize || 16; this.propFontFamily = l.fontFamily || 'Inter';
     this.propColor = l.color || '#000000'; this.propBold = l.bold || false; this.propItalic = l.italic || false;
     this.propUnderline = l.underline || false; this.propAlign = l.align || 'left';
+    this.propLineHeight = l.lineHeight || 1.2; this.propLetterSpacing = l.letterSpacing || 0;
     if (!l.fillColor || l.fillColor === 'transparent') {
       this.propHasBackground = false;
       this.propFillColor = '#ffffff';
@@ -215,12 +232,40 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     }
   }
 
+  private safeHtmlCache = new Map<string, any>();
+
+  getLayerSafeHtml(layer: any): any {
+    const raw = layer.isPlaceholder ? `[${layer.placeholderLabel || 'Placeholder'}]` : (layer.content || 'Text');
+    const cacheKey = layer.id + '_' + raw;
+    if (this.safeHtmlCache.has(cacheKey)) return this.safeHtmlCache.get(cacheKey);
+    const safe = this.sanitizer.bypassSecurityTrustHtml(raw);
+    this.safeHtmlCache.set(cacheKey, safe);
+    return safe;
+  }
+
   onPlaceholderModeChange(): void {
     if (this.propPlaceholderMode !== 'custom' && this.propPlaceholderMode !== 'dropdown') {
       this.propPlaceholderLabel = this.propPlaceholderMode;
     } else {
       this.propPlaceholderLabel = '';
     }
+    this.applyProps();
+  }
+
+  execFormat(command: string, event?: any) {
+    let value = null;
+    if (event && event.target) {
+      value = event.target.value;
+    }
+    document.execCommand(command, false, value);
+    if (this.editorArea) {
+      this.propContent = this.editorArea.nativeElement.innerHTML;
+      this.applyProps();
+    }
+  }
+
+  onContentChange(event: any) {
+    this.propContent = event.target.innerHTML;
     this.applyProps();
   }
 
@@ -235,7 +280,7 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
         ? this.propPlaceholderDropdownOptionsText.split(',').map(s => s.trim()).filter(s => !!s)
         : undefined;
 
-      Object.assign(l, { content: this.propContent, fontSize: this.propFontSize, fontFamily: this.propFontFamily, color: this.propColor, bold: this.propBold, italic: this.propItalic, underline: this.propUnderline, align: this.propAlign, isPlaceholder: this.propIsPlaceholder, placeholderLabel: finalPlaceholderLabel, placeholderMaxChars: this.propPlaceholderMaxChars, placeholderDropdownOptions: dropdownOptions, fillColor: finalFillColor, borderRadius: this.propBorderRadius, padding: this.propPadding });
+      Object.assign(l, { content: this.propContent, fontSize: this.propFontSize, fontFamily: this.propFontFamily, color: this.propColor, bold: this.propBold, italic: this.propItalic, underline: this.propUnderline, align: this.propAlign, lineHeight: this.propLineHeight, letterSpacing: this.propLetterSpacing, isPlaceholder: this.propIsPlaceholder, placeholderLabel: finalPlaceholderLabel, placeholderMaxChars: this.propPlaceholderMaxChars, placeholderDropdownOptions: dropdownOptions, fillColor: finalFillColor, borderRadius: this.propBorderRadius, padding: this.propPadding });
       if (l.isPlaceholder) {
         this.autoFitText();
         return; // autoFitText already calls renderCurrentPage
@@ -463,6 +508,28 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     this.renderCurrentPage();
   }
 
+  zoomIn(): void {
+    if (this.editorZoom < 2.0) {
+      this.editorZoom = Math.min(2.0, this.editorZoom + 0.1);
+      this.updateZoom();
+    }
+  }
+
+  zoomOut(): void {
+    if (this.editorZoom > 0.3) {
+      this.editorZoom = Math.max(0.3, this.editorZoom - 0.1);
+      this.updateZoom();
+    }
+  }
+
+  updateZoom(): void {
+    if (!this.stage) return;
+    this.stage.width(A4_W * this.editorZoom);
+    this.stage.height(A4_H * this.editorZoom);
+    this.stage.scale({ x: this.editorZoom, y: this.editorZoom });
+    this.stage.draw();
+  }
+
   pushHistory(): void {
     // Exclude rawPdfBase64 from history snapshots (too large)
     const snap = JSON.stringify(this.pages.map(p => ({ ...p, rawPdfBase64: undefined })));
@@ -552,9 +619,19 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
             const fontSize  = (layer.fontSize || 16) * SCALE_Y;
             const colorHex  = layer.color || '#000000';
             const color     = this.hexToRgbPdf(colorHex);
-            const text      = layer.isPlaceholder
+            let rawText = layer.isPlaceholder
               ? `[${layer.placeholderLabel || 'Placeholder'}]`
               : (layer.content || '');
+            
+            // Basic HTML to plaintext conversion
+            rawText = rawText
+              .replace(/<br\s*[\/]?>/gi, '\n')
+              .replace(/<\/p>|<\/div>/gi, '\n')
+              .replace(/<[^>]+>/g, '')
+              .replace(/\n\s*\n/g, '\n')
+              .trim();
+              
+            const text = rawText;
 
             // Word-wrap and draw line by line
             const padX = (layer.padding !== undefined ? layer.padding : 4) * SCALE_X;
@@ -624,16 +701,20 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
   }
 
   private wrapTextForPdf(text: string, font: any, fontSize: number, maxWidth: number): string[] {
-    const words  = text.split(' ');
+    const rawLines = text.split(/\r?\n/);
     const lines: string[] = [];
-    let line = '';
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (font.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
-        lines.push(line); line = word;
-      } else { line = test; }
+    for (const rawLine of rawLines) {
+      const words = rawLine.split(' ');
+      let line = '';
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (font.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
+          lines.push(line); line = word;
+        } else { line = test; }
+      }
+      if (line) lines.push(line);
+      else if (!words.length || (words.length === 1 && words[0] === '')) lines.push('');
     }
-    if (line) lines.push(line);
     return lines;
   }
 
@@ -658,10 +739,21 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     await (this as any).saveProposalTemplate({ _id: this.editingTemplateId, name: this.templateName, pages: this.pages });
   }
 
-  enterEditor(template?: any): void {
+  async enterEditor(template?: any): Promise<void> {
     if (template) {
-      this.editingTemplateId = template._id; this.templateName = template.name;
-      this.pages = JSON.parse(JSON.stringify(template.pages || [{ id: 'page_1', layers: [] }]));
+      this.openingTemplateId = template._id;
+      try {
+        const fullTemplate = await (this as any).fetchProposalTemplateById(template._id);
+        this.editingTemplateId = fullTemplate._id;
+        this.templateName = fullTemplate.name;
+        this.pages = JSON.parse(JSON.stringify(fullTemplate.pages || [{ id: 'page_1', layers: [] }]));
+      } catch (err) {
+        console.error('Failed to load full template', err);
+        alert('Failed to load template details.');
+        this.openingTemplateId = null;
+        return;
+      }
+      this.openingTemplateId = null;
     } else {
       this.editingTemplateId = null; this.templateName = 'Untitled Proposal';
       this.pages = [{ id: 'page_1', layers: [] }];

@@ -1,4 +1,26 @@
 services:
+  # ---------------------------------------------------------------
+  # Dedicated MongoDB for Softrate Workspace
+  # Containers reach it as:  mongodb://mongo:27017/
+  # ---------------------------------------------------------------
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    # Bound ONLY to localhost on the VPS for security (no public internet access)
+    ports:
+      - "127.0.0.1:27027:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      # Simple auth setup
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_USER:-softrate}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASS:-changeme}"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   gateway:
     build:
       context: .
@@ -39,12 +61,16 @@ services:
     build:
       context: .
       dockerfile: deploy/docker/services/sales-api.Dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
     env_file:
       - services/sales/.env
     environment:
       NODE_ENV: production
       PORT: 4000
       FRONTEND_URL: "${PUBLIC_BASE_URL:-https://dealvoice.softrateglobal.com}"
+      MONGO_URI: "mongodb://${MONGO_USER:-softrate}:${MONGO_PASS:-changeme}@mongo:27017/?authSource=admin"
     expose:
       - "4000"
     restart: unless-stopped
@@ -102,12 +128,14 @@ services:
       NODE_ENV: production
       PORT: 5001
       BACKEND_URL: "${PUBLIC_BASE_URL:-http://localhost}/hrms-api"
+      MONGO_URI: "mongodb+srv://peoplesoft_db_user:jdaKGQQTcmvIFyCl@peoplesoft.rjdu5de.mongodb.net/"
     expose:
       - "5001"
     restart: unless-stopped
 
 volumes:
   tickets_uploads:
+  mongo_data:
 
 networks:
   default: {}
@@ -123,3 +151,4 @@ networks:
     external: true
   authsoft_default:
     external: true
+

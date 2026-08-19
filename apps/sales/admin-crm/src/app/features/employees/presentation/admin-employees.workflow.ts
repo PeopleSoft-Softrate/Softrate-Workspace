@@ -42,26 +42,43 @@ export class AdminEmployeesWorkflow {
   ) {}
 
   filteredEmployeesForTable(vm: any): Employee[] {
-    const query = vm.employeeSearchQuery.trim().toLowerCase();
-    if (!query) return vm.employees;
-    return vm.employees.filter((emp: Employee) => {
-      const tags = Array.isArray(emp.tags) ? emp.tags.join(' ') : '';
-      return [
-        emp.name,
-        emp.mobile,
-        tags,
-        emp.lastCallTime,
-        emp.lastSyncTime,
-      ].some((value) => String(value || '').toLowerCase().includes(query));
-    });
+    const query = (vm.employeeSearchQuery || '').trim().toLowerCase();
+    const depsStr = query;
+    if (vm._lastEmployeesRefForTable !== vm.employees || vm._lastEmployeeSearchQuery !== depsStr) {
+      if (!query) {
+        vm._filteredEmployeesForTableCache = vm.employees || [];
+      } else {
+        vm._filteredEmployeesForTableCache = (vm.employees || []).filter((emp: Employee) => {
+          const tags = Array.isArray(emp.tags) ? emp.tags.join(' ') : '';
+          return [
+            emp.name,
+            emp.mobile,
+            tags,
+            emp.lastCallTime,
+            emp.lastSyncTime,
+          ].some((value) => String(value || '').toLowerCase().includes(query));
+        });
+      }
+      vm._lastEmployeesRefForTable = vm.employees;
+      vm._lastEmployeeSearchQuery = depsStr;
+    }
+    return vm._filteredEmployeesForTableCache || [];
   }
 
   filteredEmployeeCallRows(vm: any): any[] {
-    return vm.employeeCallRows.filter((row: any) => {
-      if (vm.filterTags && (!row.emp.tags || !row.emp.tags.includes(vm.filterTags))) return false;
-      if (vm.filterEmployees && row.emp.mobile !== vm.filterEmployees) return false;
-      return true;
-    });
+    const query = (vm.employeeCallRowsSearchQuery || '').trim().toLowerCase();
+    const depsStr = query + '|' + (vm.filterTags || '') + '|' + (vm.filterEmployees || '');
+    if (vm._lastEmployeeCallRowsRef !== vm.employeeCallRows || vm._lastEmployeeCallRowsSearchQuery !== depsStr) {
+      vm._filteredEmployeeCallRowsCache = (vm.employeeCallRows || []).filter((row: any) => {
+        if (vm.filterTags && (!row.emp.tags || !row.emp.tags.includes(vm.filterTags))) return false;
+        if (vm.filterEmployees && row.emp.mobile !== vm.filterEmployees) return false;
+        if (query && ![row.emp.name, row.emp.mobile].some((value) => String(value || '').toLowerCase().includes(query))) return false;
+        return true;
+      });
+      vm._lastEmployeeCallRowsRef = vm.employeeCallRows;
+      vm._lastEmployeeCallRowsSearchQuery = depsStr;
+    }
+    return vm._filteredEmployeeCallRowsCache || [];
   }
 
   fetchEmployees(vm: any): void {

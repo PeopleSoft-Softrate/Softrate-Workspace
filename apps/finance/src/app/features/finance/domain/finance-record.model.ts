@@ -3,12 +3,18 @@ export interface FinanceQuery {
   from?: string;
   to?: string;
   status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface FinanceListResponse<T = FinanceRecord> {
   success: boolean;
   view?: string;
   items?: T[];
+  totalItems?: number;
+  currentPage?: number;
+  totalPages?: number;
   analytics?: Record<string, number>;
 }
 

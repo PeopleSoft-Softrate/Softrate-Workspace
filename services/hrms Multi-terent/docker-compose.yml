@@ -10,7 +10,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5001
-      - MONGO_URI=${MONGO_URI}
+      - MONGO_URI=mongodb+srv://peoplesoft_db_user:jdaKGQQTcmvIFyCl@peoplesoft.rjdu5de.mongodb.net/
       - JWT_SECRET=${JWT_SECRET}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - FROM_EMAIL=${FROM_EMAIL}

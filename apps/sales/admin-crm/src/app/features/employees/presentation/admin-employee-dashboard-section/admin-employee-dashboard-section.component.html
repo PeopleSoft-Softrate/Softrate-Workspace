@@ -283,10 +283,7 @@
                       </div>
                       <div class="lead-record-line"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg></span><span>{{ lead.contactNumber || '—' }}</span></div>
                       <button class="lead-card-invoice-action" type="button" (click)="openQuotationModal(lead)">
-                        <span aria-hidden="true">
-                          <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
-                        </span>
-                        <span>Generate Quote</span>
+                        <span style="display: none !important;"></span><span>+ Quotation</span>
                       </button>
                       <div class="lead-record-line"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg></span><span>{{ lead.setLabel || 'Old Leads' }}</span></div>
                       <div class="lead-record-line lead-record-email" [title]="lead.directorEmailAddress || ''"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg></span><span>{{ lead.directorEmailAddress || '—' }}</span></div>
@@ -435,20 +432,14 @@
                       <div class="lead-record-line"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.29 18a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 14 15.82l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg></span><span>{{ b.contactNumber || '—' }}</span></div>
                       <ng-container *ngIf="getLeadByPhone(b.contactNumber) as lead; else employeeFollowupReminderLine">
                         <button class="lead-card-invoice-action" type="button" (click)="openQuotationModal(lead)">
-                          <span aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
-                          </span>
-                          <span>Generate Quote</span>
+                          <span style="display: none !important;"></span><span>+ Quotation</span>
                         </button>
                         <div class="lead-record-line"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg></span><span>{{ lead.setLabel || 'Old Leads' }}</span></div>
                         <div class="lead-record-line lead-record-email" [title]="lead.directorEmailAddress || ''"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg></span><span>{{ lead.directorEmailAddress || '—' }}</span></div>
                       </ng-container>
                       <ng-template #employeeFollowupReminderLine>
                         <button class="lead-card-invoice-action" type="button" disabled>
-                          <span aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h4" /><path d="M9 12h6" /><path d="M9 16h4" /></svg>
-                          </span>
-                          <span>Generate Quote</span>
+                          <span style="display: none !important;"></span><span>+ Quotation</span>
                         </button>
                         <div class="lead-record-line"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10 12 4 4 10l8 6 8-6Z" /><path d="M4 14l8 6 8-6" /></svg></span><span>{{ b.reminderDate ? (b.reminderDate | date:'MMM d, y') : 'No reminder date' }}</span></div>
                         <div class="lead-record-line lead-record-email"><span class="lead-record-line-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" /><path d="m4 7 8 6 8-6" /></svg></span><span>{{ b.companyName || 'Follow-up only' }}</span></div>
@@ -1913,8 +1904,7 @@
 
                       <button (click)="dashTab='invoice'; selectedEmployeeForInvoice=selectedEmployee; invoiceLead=getLeadByPhone(b.contactNumber)"
                         style="width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; margin: 4px 0; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                        Generate Invoice
+                        + Invoice
                       </button>
 
                       <div class="lead-meta" *ngIf="getLeadByPhone(b.contactNumber) as lead">

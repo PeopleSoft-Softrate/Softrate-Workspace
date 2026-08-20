@@ -113,6 +113,9 @@ app.use('/api/clients', require('./src/modules/clients/client.routes'));
 // Quotation routes
 app.use('/api/quotations', require('./src/modules/quotations/quotation.routes'));
 
+// Proposal records routes (History & Versions)
+app.use('/api/proposal-records', require('./src/modules/proposals/proposal-records.routes'));
+
 // Break log routes
 app.use('/api/breaklog', require('./src/modules/break-logs/break-log.routes'));
 

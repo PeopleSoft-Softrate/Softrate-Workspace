@@ -68,8 +68,11 @@ function serializeInvoice(invoice, req, publicOnly = false) {
     computedBalanceDue = 0;
   }
 
+  const leadCode = source.leadCode || (typeof source.leadId === 'object' && source.leadId?.leadId) || source.leadSnapshot?.leadId || source.clientSnapshot?.leadId || '';
+
   const serialized = {
     ...source,
+    leadCode,
     publicToken,
     amountPaid: computedAmountPaid,
     balanceDue: computedBalanceDue,
@@ -135,10 +138,48 @@ async function ensurePublicTokens(invoices) {
   const refreshed = await req.models.Invoice.find({ _id: { $in: missingRecords.map((invoice) => invoice._id) } })
     .select('_id publicToken')
     .lean();
-  const tokenById = new Map(refreshed.map((invoice) => [String(invoice._id), invoice.publicToken]));
+  const tokenMap = new Map(refreshed.map((invoice) => [String(invoice._id), invoice.publicToken]));
   missingRecords.forEach((invoice) => {
-    invoice.publicToken = tokenById.get(String(invoice._id)) || invoice.publicToken;
+    invoice.publicToken = tokenMap.get(String(invoice._id)) || invoice.publicToken;
   });
+}
+
+async function ensureLeadCodes(invoices, req) {
+  const records = Array.isArray(invoices) ? invoices : [invoices];
+  const missingRecords = records.filter((inv) => inv && !normalize(inv.leadCode));
+  if (!missingRecords.length) return;
+
+  const leadIds = missingRecords.map((i) => i.leadId).filter((id) => mongoose.Types.ObjectId.isValid(id));
+  const clientIds = missingRecords.map((i) => normalize(i.clientId)).filter(Boolean);
+  const companyNames = missingRecords.map((i) => normalizeText(i.leadCompanyName)).filter(Boolean);
+  const companyCode = req.companyCode || records[0]?.companyCode;
+
+  const [leadsById, leadsByName, clientsById, clientsByName] = await Promise.all([
+    leadIds.length ? req.models.Lead.find({ _id: { $in: leadIds } }, 'leadId leadCompanyName').lean() : [],
+    companyNames.length ? req.models.Lead.find({ companyCode, leadCompanyNameLower: { $in: companyNames } }, 'leadId leadCompanyNameLower').lean() : [],
+    clientIds.length ? req.models.Client.find({ clientId: { $in: clientIds } }, 'leadId clientId companyName').lean() : [],
+    companyNames.length ? req.models.Client.find({ companyCode, normalizedCompanyName: { $in: companyNames } }, 'leadId companyName normalizedCompanyName').lean() : [],
+  ]);
+
+  const leadIdMap = new Map();
+  leadsById.forEach((l) => { if (l.leadId) leadIdMap.set(String(l._id), l.leadId); });
+  const leadNameMap = new Map();
+  leadsByName.forEach((l) => { if (l.leadId) leadNameMap.set(normalizeText(l.leadCompanyNameLower), l.leadId); });
+  const clientIdMap = new Map();
+  clientsById.forEach((c) => { if (c.leadId) clientIdMap.set(c.clientId, c.leadId); });
+  const clientNameMap = new Map();
+  clientsByName.forEach((c) => { if (c.leadId) clientNameMap.set(normalizeText(c.companyName || c.normalizedCompanyName), c.leadId); });
+
+  for (const inv of missingRecords) {
+    const code = (inv.leadId && leadIdMap.get(String(inv.leadId)))
+      || (inv.clientId && clientIdMap.get(inv.clientId))
+      || leadNameMap.get(normalizeText(inv.leadCompanyName))
+      || clientNameMap.get(normalizeText(inv.leadCompanyName))
+      || '';
+    if (code) {
+      inv.leadCode = code;
+    }
+  }
 }
 
 function getConvertedStatuses(user) {
@@ -159,13 +200,13 @@ async function generateInvoiceNumber(companyCode, lead, invoiceDate, client = nu
   
   const count = await req.models.Invoice.countDocuments({
     companyCode,
-    invoiceNumber: new RegExp(`^${yy}\\d{3,}$`),
+    invoiceNumber: new RegExp(`^(INV-?)?${yy}\\d{3,}$`, 'i'),
   });
   
   const nextSeq = String(count + 1).padStart(3, '0');
   
   return {
-    invoiceNumber: `${yy}${nextSeq}`,
+    invoiceNumber: `INV${yy}${nextSeq}`,
     versionNo: 1,
   };
 }
@@ -306,12 +347,15 @@ router.post('/', async (req, res) => {
         const { invoiceNumber, versionNo } = await generateInvoiceNumber(companyCode, lead, invoiceDate, client, req);
         const clientCompanyName = clientDto.companyName || lead?.leadCompanyName || 'Client Company';
 
+        const clientLeadCode = lead?.leadId || clientDto.leadId || client?.leadId || normalize(req.body.leadCode);
+
         invoice = await req.models.Invoice.create({
           companyCode,
           clientId: client.clientId,
           employeeId: resolvedEmployeeId,
           employeeName: normalize(req.body.employeeName),
           leadId: lead?._id || null,
+          leadCode: clientLeadCode,
           leadCompanyName: clientCompanyName,
           contactName: clientDto.primaryContactName || lead?.contactName || '',
           contactNumber: clientDto.primaryPhone || lead?.contactNumber || '',
@@ -594,6 +638,7 @@ router.get('/', async (req, res) => {
     
     const stats = statsResult[0] || { totalAmount: 0, totalPaid: 0, totalPending: 0 };
     await ensurePublicTokens(invoices);
+    await ensureLeadCodes(invoices, req);
 
     const page = buildPageResponse({
       items: invoices.map((invoice) => serializeInvoice(invoice, req)),

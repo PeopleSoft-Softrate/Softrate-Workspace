@@ -136,12 +136,12 @@
                     </div>
 
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                      <button class="lead-card-invoice-action" type="button" (click)="openQuotationModal(lead)" style="margin-top: 0; flex: 1 1 calc(50% - 4px); min-width: 140px;">
-                        <span style="display: none !important;"></span><span>+ Quotation</span>
-                      </button>
-
                       <button class="lead-card-invoice-action" type="button" (click)="openProposalModal(lead)" style="margin-top: 0; flex: 1 1 calc(50% - 4px); min-width: 140px;">
                         <span style="display: none !important;"></span><span>+ Proposal</span>
+                      </button>
+
+                      <button class="lead-card-invoice-action" type="button" (click)="openQuotationModal(lead)" style="margin-top: 0; flex: 1 1 calc(50% - 4px); min-width: 140px;">
+                        <span style="display: none !important;"></span><span>+ Quotation</span>
                       </button>
 
                       <button *ngIf="(vm.weCrmAccessEnabled || vm.dashboardCode === 'WEE-0306-2026') && dashTab === 'our_clients'" class="lead-card-invoice-action" type="button" (click)="vm.openWeCrmModal(lead)" [disabled]="vm.updatingLeadId===lead._id" style="margin-top: 0; flex: 1 1 100%;">
@@ -305,14 +305,14 @@
                         <td>
                           <div class="table-actions-cell">
                             <button
-                              class="lead-card-invoice-action" (click)="$event.stopPropagation(); openQuotationModal(lead)"
-                              title="+ Quotation">
-                              <span style="display: none !important;"></span><span style="font-size: 13px; font-weight: 500;">+ Quotation</span>
-                            </button>
-                            <button
                               class="lead-card-invoice-action" (click)="$event.stopPropagation(); openProposalModal(lead)"
                               title="+ Proposal">
                               <span style="display: none !important;"></span><span style="font-size: 13px; font-weight: 500;">+ Proposal</span>
+                            </button>
+                            <button
+                              class="lead-card-invoice-action" (click)="$event.stopPropagation(); openQuotationModal(lead)"
+                              title="+ Quotation">
+                              <span style="display: none !important;"></span><span style="font-size: 13px; font-weight: 500;">+ Quotation</span>
                             </button>
                             <button class="lead-card-icon-action lead-card-followup-action"
                               (click)="$event.stopPropagation(); openFollowupModal(lead)"

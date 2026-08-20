@@ -10,7 +10,7 @@ import { Bookmark } from '../../../services/bookmark.service';
 import { AiBrief, AiBriefService } from '../../../services/ai-brief.service';
 import { CrmAmcRow, CrmClient, CrmHostingerDomain, CrmProjectRow, CrmService } from '../../../services/crm.service';
 import { CrmTicket, TicketService } from '../../../services/ticket.service';
-import { AdminPageId } from '../../../core/layout/admin-pages';
+import { AdminPageId, ADMIN_PAGES } from '../../../core/layout/admin-pages';
 import { DashboardCacheService } from '../../../core/cache/dashboard-cache.service';
 import * as XLSX from 'xlsx';
 import { ADMIN_INDUSTRIES, LANDING_TESTIMONIALS } from '../../auth/presentation/landing-content';
@@ -74,9 +74,9 @@ type CompanyFullSection = 'overview' | 'pipeline' | 'followups' | 'remarks' | 'i
 
 const DEFAULT_QUOTATION_KIND_NOTE = 'We aim to provide the best software to automate your business with high quality at affordable cost.';
 const DEFAULT_QUOTATION_TERMS = [
-  'All rates quoted are valid for 14 days.',
-  '40% payment should be done in advance.',
-  'The remaining amount should be paid within 7 days of invoice.',
+  '(i) All rates quoted are valid for 14 days.',
+  '(ii) 40% payment should be done in advance.',
+  '(iii) The remaining amount should be paid within 7 days of invoice.',
 ];
 
 @Directive()
@@ -612,6 +612,28 @@ export abstract class AdminWorkspaceController implements OnInit {
   quotationDateFilterOpen = false;
   quotationDateFrom = '';
   quotationDateTo = '';
+  proposalRecords: any[] = [];
+  proposalRecordsLoading = false;
+  proposalRecordsLoadingMore = false;
+  proposalRecordsLoaded = false;
+  proposalRecordsPage = 1;
+  proposalRecordsHasMore = false;
+  proposalRecordsTotal = 0;
+  proposalSearch = '';
+  adminProposalLeads: Lead[] = [];
+  proposalLeadsLoading = false;
+  proposalLeadsLoadingMore = false;
+  proposalLeadsLoaded = false;
+  proposalLeadsPage = 1;
+  proposalLeadsHasMore = false;
+  proposalLeadsTotal = 0;
+  proposalHistorySearch = '';
+  proposalDateFilterOpen = false;
+  proposalDateFrom = '';
+  proposalDateTo = '';
+  selectedProposalLead: any = null;
+  savedProposalRecordForModal: any = null;
+  private proposalSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   private quotationSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   private clientOnboardingSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   readonly currentYear = new Date().getFullYear();
@@ -619,7 +641,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   companyFullViewOpen = false;
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
-    { id: 'overview', label: 'Overview' },
+    { id: 'overview', label: 'Company Details' },
     { id: 'remarks', label: 'Overall History' },
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'followups', label: 'Schedule / Follow-up' },
@@ -662,8 +684,15 @@ export abstract class AdminWorkspaceController implements OnInit {
     return this.companyFullHistoryLogs.filter((log) => log.action === 'Pipeline Stage Changed');
   }
 
+  private _cachedGroupedPipelineLogs: { dealName: string, logs: any[] }[] = [];
+  private _cachedPipelineHistoryRef: any[] | null = null;
+
   get groupedPipelineHistoryLogs(): { dealName: string, logs: any[] }[] {
     const logs = this.companyFullPipelineHistoryLogs;
+    if (this._cachedPipelineHistoryRef === logs) {
+      return this._cachedGroupedPipelineLogs;
+    }
+    this._cachedPipelineHistoryRef = logs;
     const map = new Map<string, any[]>();
     for (const log of logs) {
       const deal = log.dealName || 'Legacy Deal';
@@ -672,7 +701,8 @@ export abstract class AdminWorkspaceController implements OnInit {
       }
       map.get(deal)!.push(log);
     }
-    return Array.from(map.entries()).map(([dealName, dealLogs]) => ({ dealName, logs: dealLogs }));
+    this._cachedGroupedPipelineLogs = Array.from(map.entries()).map(([dealName, dealLogs]) => ({ dealName, logs: dealLogs }));
+    return this._cachedGroupedPipelineLogs;
   }
   companyFullRemarksHistory: any[] = [];
   companyFullInvoiceItems: any[] = [];
@@ -945,6 +975,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   settingsInvoiceLogo: string = '';
   settingsInvoiceSeal: string = '';
   settingsInvoiceTerms: string = '';
+  settingsQuotationBannerText: string = 'Think Software,\nThink Softrate.';
   currentInvoiceRecord: any = null;
   settingsShowCompanyNameOnInvoice: boolean = true;
   settingsGstNumber: string = '';
@@ -1235,6 +1266,8 @@ export abstract class AdminWorkspaceController implements OnInit {
   readonly adminQuotationHistoryCachePrefix = 'admin-quotation-history|';
   readonly adminQuotationLeadCachePrefix = 'admin-quotation-leads|';
   readonly adminQuotationClientCachePrefix = 'admin-quotation-clients|';
+  readonly adminProposalHistoryCachePrefix = 'admin-proposal-history|';
+  readonly adminProposalLeadCachePrefix = 'admin-proposal-leads|';
   readonly adminClientOnboardingCachePrefix = 'admin-client-onboarding|';
   readonly remarkLeadCompanyCachePrefix = 'admin-remark-lead-companies|';
   readonly remarkLeadContactCachePrefix = 'admin-remark-lead-contacts|';
@@ -1441,6 +1474,15 @@ export abstract class AdminWorkspaceController implements OnInit {
         } else {
           this._loadDashboard();
         }
+
+        // Restore exact active page on refresh
+        const pathSegment = (window.location.pathname.replace(/^\/+/, '').split('/')[0] || '').trim();
+        const hashSegment = (window.location.hash.replace(/^#\/?/, '').split('/')[0] || '').trim();
+        const savedTab = (localStorage.getItem('dv_admin_active_tab') || '').trim();
+        const candidate = (pathSegment || hashSegment || savedTab) as AdminPageId;
+        if (candidate && ADMIN_PAGES.includes(candidate) && candidate !== 'overview' && this.userRole !== 'crm_admin') {
+          setTimeout(() => this.switchTab(candidate), 60);
+        }
         
         // Connect SSE
         const adminId = user._id || 'admin';
@@ -1479,6 +1521,14 @@ export abstract class AdminWorkspaceController implements OnInit {
 
     this.dashTab = tab;
     this.sidebarOpen = false;
+
+    try {
+      localStorage.setItem('dv_admin_active_tab', tab);
+      const targetPath = '/' + tab;
+      if (window.location.pathname !== targetPath) {
+        window.history.replaceState(null, '', targetPath);
+      }
+    } catch {}
 
     if (this.isCrmPage(tab)) {
       this.loadCrmTab(tab);
@@ -1535,13 +1585,15 @@ export abstract class AdminWorkspaceController implements OnInit {
       this.fetchInvoiceRecords();
       this.fetchAdminInvoiceClients();
     }
-    if (tab === 'client_onboarding') {
-      this.fetchClientOnboardingRecords();
-    }
     if (tab === 'quotation') {
       this.fetchSettings();
       this.fetchAdminQuotationLeads();
       this.fetchQuotationRecords();
+    }
+    if (tab === 'proposals') {
+      this.fetchSettings();
+      this.fetchAdminProposalLeads();
+      this.fetchProposalRecords();
     }
   }
 
@@ -1558,9 +1610,9 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'support': return 'Help & Support';
       case 'settings': return 'App Settings';
       case 'invoice': return 'Invoice';
-      case 'client_onboarding': return 'Client Onboarding';
       case 'invoice_settings': return 'Invoice Settings';
       case 'quotation': return 'Quotation';
+      case 'proposals': return 'Proposals';
       case 'proposal_settings': return 'Proposal Settings';
       case 'crm_clients': return 'CRM Clients';
       case 'crm_sla': return 'SLA';
@@ -1581,7 +1633,6 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'followups': return 'Search follow-ups, phone, or company...';
       case 'quotation': return 'Search leads, phone, or company...';
       case 'invoice': return 'Search onboarded clients...';
-      case 'client_onboarding': return 'Search onboarded clients...';
       case 'invoice_settings': return 'Search invoice settings...';
       case 'proposal_settings': return 'Search proposal templates...';
       case 'employees': return 'Search employees, phone, or tag...';
@@ -1754,8 +1805,6 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'invoice':
       case 'invoice_settings':
         return this.invoiceSearch;
-      case 'client_onboarding':
-        return this.clientOnboardingSearch;
       case 'quotation':
         return this.quotationSearch;
       case 'employees':
@@ -1792,9 +1841,6 @@ export abstract class AdminWorkspaceController implements OnInit {
       case 'invoice_settings':
         this.invoiceSearch = value;
         return;
-      case 'client_onboarding':
-        this.clientOnboardingSearch = value;
-        return;
       case 'quotation':
         this.quotationSearch = value;
         return;
@@ -1823,7 +1869,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   private isAdminGlobalSearchAsyncTab(tab: AdminPageId, query: string): boolean {
     if (tab === 'overview') return !!query;
-    return ['leads', 'followups', 'remarks_filter', 'emp_dashboard', 'invoice', 'client_onboarding', 'quotation', 'crm_clients', 'crm_amc', 'crm_tickets'].includes(tab);
+    return ['leads', 'followups', 'remarks_filter', 'emp_dashboard', 'invoice', 'quotation', 'crm_clients', 'crm_amc', 'crm_tickets'].includes(tab);
   }
 
   private runAdminGlobalSearch(sourceTab: AdminPageId, query: string): void {
@@ -1861,10 +1907,6 @@ export abstract class AdminWorkspaceController implements OnInit {
         return;
       case 'invoice':
         this.fetchAdminInvoiceClients();
-        this.startAdminGlobalSearchTracking();
-        return;
-      case 'client_onboarding':
-        this.fetchClientOnboardingRecords();
         this.startAdminGlobalSearchTracking();
         return;
       case 'quotation':
@@ -4504,6 +4546,10 @@ export abstract class AdminWorkspaceController implements OnInit {
       || `${record?.action || 'history'}-${record?.createdAt || record?.timestamp || index}`;
   };
 
+  trackByDealGroup = (index: number, item: { dealName: string }): string | number => {
+    return item?.dealName || index;
+  };
+
   setOverviewChartType(type: 'pie' | 'bar'): void {
     this.overviewChartType = type;
     this.renderOverviewChart();
@@ -5425,6 +5471,8 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   get filteredQuotationRecords(): any[] { return this.invoiceQuotationWorkflow.filteredQuotationRecords(this); }
 
+  get filteredProposalRecords(): any[] { return this.proposalRecords; }
+
   matchesAdminInvoiceDateFilter(rawDate?: string): boolean { return this.invoiceQuotationWorkflow.matchesAdminInvoiceDateFilter(this, rawDate); }
 
   matchesInvoiceDateRange(rawDate?: string): boolean { return this.invoiceQuotationWorkflow.matchesInvoiceDateRange(this, rawDate); }
@@ -5432,6 +5480,20 @@ export abstract class AdminWorkspaceController implements OnInit {
   matchesQuotationDateRange(rawDate?: string): boolean { return this.invoiceQuotationWorkflow.matchesQuotationDateRange(this, rawDate); }
 
   fetchQuotationRecords(force = false): void { return this.invoiceQuotationWorkflow.fetchQuotationRecords(this, force); }
+
+  fetchAdminProposalLeads(force = false): void { return this.invoiceQuotationWorkflow.fetchAdminProposalLeads(this, force); }
+
+  fetchProposalRecords(force = false): void { return this.invoiceQuotationWorkflow.fetchProposalRecords(this, force); }
+
+  onAdminProposalSearchChange(): void { return this.invoiceQuotationWorkflow.onAdminProposalSearchChange(this); }
+
+  onAdminProposalHistoryQueryChange(): void { return this.invoiceQuotationWorkflow.onAdminProposalHistoryQueryChange(this); }
+
+  onAdminProposalLeadScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminProposalLeadScroll(this, event); }
+
+  onAdminProposalHistoryScroll(event: Event): void { return this.invoiceQuotationWorkflow.onAdminProposalHistoryScroll(this, event); }
+
+  openSavedProposal(proposal: any): void { return this.invoiceQuotationWorkflow.openSavedProposal(this, proposal); }
 
   openSavedInvoice(record: any): void { return this.invoiceQuotationWorkflow.openSavedInvoice(this, record); }
 
@@ -5451,7 +5513,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     return Number(value.replace(/,/g, '')) || 0;
   }
 
-  openProposalModal(lead: Lead): void {
+  openProposalModal(lead: any): void {
+    this.savedProposalRecordForModal = null;
     this.proposalModalLead = lead;
     this.showProposalModal = true;
   }
@@ -5459,6 +5522,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   closeProposalModal(): void {
     this.showProposalModal = false;
     this.proposalModalLead = null;
+    this.savedProposalRecordForModal = null;
   }
 
   onProposalSentFromModal(event: { action: 'download' | 'send', file?: File, templateName?: string }): void {
@@ -5466,6 +5530,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     if (this.proposalModalLead && this.proposalModalLead._id) {
       this.updateLeadStatus(this.proposalModalLead._id, 'Proposal Sent');
     }
+    this.fetchProposalRecords(true);
   }
 
   openQuotationModal(lead: Lead, amount?: number): void { return this.invoiceQuotationWorkflow.openQuotationModal(this, lead, amount); }
@@ -5514,9 +5579,15 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   invoiceContactLine(): string { return this.invoiceQuotationWorkflow.invoiceContactLine(this); }
 
+  quotationFooterContactLine(): string { return this.invoiceQuotationWorkflow.quotationFooterContactLine(this); }
+
   quotationBankRows(): QuotationBankRow[] { return this.invoiceQuotationWorkflow.quotationBankRows(this); }
 
   quotationKindNoteText(): string { return this.invoiceQuotationWorkflow.quotationKindNoteText(this); }
+
+  quotationBannerDisplayText(): string { return this.invoiceQuotationWorkflow.quotationBannerDisplayText(this); }
+
+  formatQuotationDate(dateInput?: any): string { return this.invoiceQuotationWorkflow.formatQuotationDate(dateInput); }
 
   formatInvoicePaymentStatus(status?: string): string { return this.invoiceQuotationWorkflow.formatInvoicePaymentStatus(this, status); }
 
@@ -5583,6 +5654,32 @@ export abstract class AdminWorkspaceController implements OnInit {
     }
 
     return this.companyFullViewLead();
+  }
+
+  async openCompanyFromLeadHistory(doc: any, event?: Event): Promise<void> {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!doc) return;
+    const leadCode = doc.leadCode || (typeof doc.leadId === 'object' ? doc.leadId?.leadId : '') || doc.leadSnapshot?.leadId || doc.clientSnapshot?.leadId;
+    const companyName = doc.leadCompanyName || doc.companyName || doc.clientSnapshot?.companyName;
+
+    let matchingLead = (this.allLeads || []).find((l) => (leadCode && l.leadId === leadCode) || (companyName && l.leadCompanyName?.toLowerCase() === companyName.toLowerCase()));
+
+    if (!matchingLead) {
+      matchingLead = {
+        _id: (typeof doc.leadId === 'object' ? doc.leadId?._id : doc.leadId) || doc._id,
+        leadId: leadCode || '',
+        leadCompanyName: companyName || '',
+        contactName: doc.contactName || '',
+        contactNumber: doc.contactNumber || '',
+        directorEmailAddress: doc.directorEmailAddress || '',
+        companyCode: doc.companyCode || this.dashboardCode || this.baseCompanyCode || '',
+      } as any;
+    }
+
+    await this.openCompanyFullViewForLeadContext(matchingLead, 'overview');
   }
 
   async openCompanyFullViewForLeadContext(sourceLead: Lead | any, initialSection: CompanyFullSection = 'overview'): Promise<void> {
@@ -5975,6 +6072,25 @@ export abstract class AdminWorkspaceController implements OnInit {
     return spoc || rows[0] || this.companyFullContextLead || null;
   }
 
+  companyFullLeadId(): string {
+    const lead = this.companyFullViewLead();
+    if (lead?.leadId) return String(lead.leadId);
+    if ((lead as any)?.leadCode) return String((lead as any).leadCode);
+    if (this.companyFullContextLead?.leadId) return String(this.companyFullContextLead.leadId);
+    if ((this.companyFullContextLead as any)?.leadCode) return String((this.companyFullContextLead as any).leadCode);
+    if ((this.companyFullProfile as any)?.leadId) return String((this.companyFullProfile as any).leadId);
+
+    const companyName = this.companyFullCompanyName();
+    if (companyName && companyName !== 'Company details') {
+      const match = (this.allLeads || []).find(
+        (l) => l.leadCompanyName?.toLowerCase() === companyName.toLowerCase() && (l.leadId || (l as any).leadCode)
+      );
+      if (match?.leadId) return String(match.leadId);
+      if ((match as any)?.leadCode) return String((match as any).leadCode);
+    }
+    return '';
+  }
+
   companyFullCompanyName(): string {
     return String(
       this.companyFullContextLead?.leadCompanyName
@@ -6185,10 +6301,16 @@ export abstract class AdminWorkspaceController implements OnInit {
     target?.scrollIntoView({ behavior, block: 'start' });
   }
 
+  private _companyFullScrollThrottle: any = null;
+
   onCompanyFullContentScroll(event: Event): void {
     const container = event.target as HTMLElement | null;
     if (!container) return;
-    this.syncCompanyFullActiveSection(container);
+    if (this._companyFullScrollThrottle) return;
+    this._companyFullScrollThrottle = requestAnimationFrame(() => {
+      this._companyFullScrollThrottle = null;
+      this.syncCompanyFullActiveSection(container);
+    });
   }
 
   async saveCompanyFullAlternateInfo(): Promise<void> {
@@ -6663,7 +6785,9 @@ export abstract class AdminWorkspaceController implements OnInit {
       activeSection = 'overview';
     }
 
-    this.companyFullActiveSection = activeSection;
+    if (this.companyFullActiveSection !== activeSection) {
+      this.companyFullActiveSection = activeSection;
+    }
   }
 
   private clearCompanyFullRemarkMenuClose(): void {
@@ -7471,7 +7595,7 @@ export abstract class AdminWorkspaceController implements OnInit {
   addSingleLeadLoading = false;
   newLeadAssignedEmployeeId = '';
   newLeadCompanyDetails = {
-    leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+    leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'Connected', cin: '', companyDescription: '', setLabel: ''
   };
   newLeadDirectors: any[] = [];
 

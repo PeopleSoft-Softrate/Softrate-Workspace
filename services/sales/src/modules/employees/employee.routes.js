@@ -149,8 +149,10 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Employee Login — MUST use the global Employee model since no JWT exists yet.
-// The login looks up the employee by mobile+companyCode and issues a JWT.
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
+
+// Employee Login — checks credentials and returns 2FA challenge / QR setup
 router.post('/login', async (req, res) => {
   try {
     const { companyCode, mobile, countryCode } = req.body;
@@ -178,13 +180,169 @@ router.post('/login', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Employee not found with this number & company code.' });
     }
 
-    // Issue JWT — employeeId + companyCode embedded in token
-    const token = signToken({ employeeId: String(employee._id), companyCode, role: 'employee' });
+    // If 2FA is already enabled and secret exists, require 6-digit TOTP code
+    if (employee.twoFactorEnabled && employee.twoFactorSecret) {
+      return res.status(200).json({
+        success: true,
+        require2FA: true,
+        employeeId: String(employee._id),
+        employeeName: employee.name,
+        companyCode,
+        message: 'Two-factor authentication code required.',
+      });
+    }
 
-    return res.status(200).json({ success: true, message: 'Employee authenticated', employee, token });
+    // Otherwise, generate a new TOTP secret & QR code for mandatory setup
+    const secret = speakeasy.generateSecret({
+      name: `DealVoice:${employee.name}`,
+      issuer: 'DealVoice',
+      length: 20,
+    });
+
+    employee.twoFactorTempSecret = secret.base32;
+    await employee.save();
+
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+
+    return res.status(200).json({
+      success: true,
+      require2FASetup: true,
+      qrCode,
+      secret: secret.base32,
+      otpauthUrl: secret.otpauth_url,
+      employeeId: String(employee._id),
+      employeeName: employee.name,
+      companyCode,
+      message: 'Please configure your authenticator app using the QR code.',
+    });
   } catch (err) {
     console.error('[employee login]', err);
     return res.status(500).json({ success: false, message: 'Server error during employee login' });
+  }
+});
+
+// Verify 2FA Setup (First-time QR scan)
+router.post('/2fa/verify-setup', async (req, res) => {
+  try {
+    const { employeeId, companyCode, token } = req.body;
+    if (!employeeId || !token) {
+      return res.status(400).json({ success: false, message: 'Employee ID and 6-digit verification code are required.' });
+    }
+
+    const EmployeeModel = req.models?.Employee || null;
+    let employee = null;
+    if (EmployeeModel) {
+      employee = await EmployeeModel.findById(employeeId);
+    }
+    if (!employee) {
+      employee = await Employee.findById(employeeId);
+    }
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found.' });
+    }
+
+    if (!employee.twoFactorTempSecret) {
+      return res.status(400).json({ success: false, message: 'No pending 2FA setup found. Please sign in again.' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: employee.twoFactorTempSecret,
+      encoding: 'base32',
+      token: String(token).trim(),
+      window: 2, // Allow ±1 minute clock drift
+    });
+
+    if (!verified) {
+      return res.status(400).json({ success: false, message: 'Invalid 6-digit verification code. Please check your Authenticator app and try again.' });
+    }
+
+    employee.twoFactorEnabled = true;
+    employee.twoFactorSecret = employee.twoFactorTempSecret;
+    employee.twoFactorTempSecret = '';
+    employee.lastLoginDate = new Date().toISOString().slice(0, 10);
+    await employee.save();
+
+    const jwtToken = signToken({ employeeId: String(employee._id), companyCode: employee.companyCode || companyCode, role: 'employee' });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Two-factor authentication verified and enabled successfully.',
+      employee,
+      token: jwtToken,
+      loginDate: employee.lastLoginDate,
+    });
+  } catch (err) {
+    console.error('[2fa verify-setup]', err);
+    return res.status(500).json({ success: false, message: 'Server error verifying authenticator setup.' });
+  }
+});
+
+// Verify 2FA (Subsequent daily logins)
+router.post('/2fa/verify', async (req, res) => {
+  try {
+    const { employeeId, companyCode, token } = req.body;
+    if (!employeeId || !token) {
+      return res.status(400).json({ success: false, message: 'Employee ID and 6-digit verification code are required.' });
+    }
+
+    const EmployeeModel = req.models?.Employee || null;
+    let employee = null;
+    if (EmployeeModel) {
+      employee = await EmployeeModel.findById(employeeId);
+    }
+    if (!employee) {
+      employee = await Employee.findById(employeeId);
+    }
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found.' });
+    }
+
+    if (!employee.twoFactorSecret) {
+      return res.status(400).json({ success: false, message: '2FA is not configured. Please sign in to set up.' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: employee.twoFactorSecret,
+      encoding: 'base32',
+      token: String(token).trim(),
+      window: 2,
+    });
+
+    if (!verified) {
+      return res.status(400).json({ success: false, message: 'Invalid 6-digit code. Please check your Authenticator app and try again.' });
+    }
+
+    employee.lastLoginDate = new Date().toISOString().slice(0, 10);
+    await employee.save();
+
+    const jwtToken = signToken({ employeeId: String(employee._id), companyCode: employee.companyCode || companyCode, role: 'employee' });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Employee authenticated successfully.',
+      employee,
+      token: jwtToken,
+      loginDate: employee.lastLoginDate,
+    });
+  } catch (err) {
+    console.error('[2fa verify]', err);
+    return res.status(500).json({ success: false, message: 'Server error during 2FA verification.' });
+  }
+});
+
+// Admin: Reset 2FA for an employee
+router.post('/:id/reset-2fa', async (req, res) => {
+  try {
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(
+      req.params.id,
+      { $set: { twoFactorEnabled: false, twoFactorSecret: '', twoFactorTempSecret: '' } },
+      { new: true }
+    );
+    if (!employee) return res.status(404).json({ success: false, message: 'Employee not found.' });
+    return res.status(200).json({ success: true, message: '2FA reset successfully. Employee will be prompted to set up a new QR code on next login.', employee });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error resetting 2FA.' });
   }
 });
 

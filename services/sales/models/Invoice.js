@@ -18,6 +18,7 @@ const invoiceSchema = new mongoose.Schema({
   employeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', index: true },
   employeeName: { type: String, default: '' },
   leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', default: null, index: true },
+  leadCode: { type: String, default: '', index: true },
   leadCompanyName: { type: String, required: true },
   contactName: { type: String, default: '' },
   contactNumber: { type: String, default: '' },

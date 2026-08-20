@@ -17,6 +17,10 @@ const employeeSchema = new mongoose.Schema({
   lastSyncTime: { type: Date, default: null },
   forceSync:    { type: Boolean, default: false },
   allowedCompanies: [{ type: String, trim: true }],
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorSecret: { type: String, default: '' },
+  twoFactorTempSecret: { type: String, default: '' },
+  lastLoginDate: { type: String, default: '' },
   createdAt:    { type: Date, default: Date.now },
 });
 

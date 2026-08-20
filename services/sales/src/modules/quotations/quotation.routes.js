@@ -6,6 +6,7 @@ const User = require('../../../models/User');
 const Employee = require('../../../models/Employee');
 const eventBus = require('../../../services/eventBus');
 const { parsePageQuery, buildPageResponse } = require('../../common/pagination/pagination');
+const { normalizeText } = require('../../../services/leadNormalization');
 
 const { companyMiddleware } = require('../../common/tenantMiddleware');
 const router = express.Router();
@@ -34,13 +35,13 @@ async function generateQuotationNumber(req, companyCode, lead, quotationDate, cl
   
   const count = await req.models.Quotation.countDocuments({
     companyCode,
-    quotationNumber: new RegExp(`^QT-${yy}\\d{3,}$`, 'i'),
+    quotationNumber: new RegExp(`^QT-?${yy}\\d{3,}$`, 'i'),
   });
   
   const nextSeq = String(count + 1).padStart(3, '0');
   
   return {
-    quotationNumber: `QT-${yy}${nextSeq}`,
+    quotationNumber: `QT${yy}${nextSeq}`,
     versionNo: 1,
   };
 }
@@ -114,12 +115,15 @@ router.post('/', async (req, res) => {
 
         const clientCompanyName = client?.companyName || lead?.leadCompanyName || 'Client Company';
 
+        const clientLeadCode = lead?.leadId || client?.leadId || normalize(req.body.leadCode);
+
         quotation = await req.models.Quotation.create({
           companyCode,
           clientId: client?.clientId || '',
           employeeId: resolvedEmployeeId,
           employeeName: normalize(req.body.employeeName),
           leadId: lead?._id || null,
+          leadCode: clientLeadCode,
           leadCompanyName: clientCompanyName,
           contactName: client?.primaryContactName || lead?.contactName || '',
           contactNumber: client?.primaryPhone || lead?.contactNumber || '',
@@ -234,6 +238,46 @@ router.get('/', async (req, res) => {
         .limit(pagination.isPaginated ? pagination.pageSize : 300)
         .lean(),
     ]);
+
+async function ensureLeadCodes(quotations, req) {
+  const records = Array.isArray(quotations) ? quotations : [quotations];
+  const missingRecords = records.filter((q) => q && !normalize(q.leadCode));
+  if (!missingRecords.length) return;
+
+  const leadIds = missingRecords.map((i) => i.leadId).filter((id) => mongoose.Types.ObjectId.isValid(id));
+  const clientIds = missingRecords.map((i) => normalize(i.clientId)).filter(Boolean);
+  const companyNames = missingRecords.map((i) => normalizeText(i.leadCompanyName)).filter(Boolean);
+  const companyCode = req.companyCode || records[0]?.companyCode;
+
+  const [leadsById, leadsByName, clientsById, clientsByName] = await Promise.all([
+    leadIds.length ? req.models.Lead.find({ _id: { $in: leadIds } }, 'leadId leadCompanyName').lean() : [],
+    companyNames.length ? req.models.Lead.find({ companyCode, leadCompanyNameLower: { $in: companyNames } }, 'leadId leadCompanyNameLower').lean() : [],
+    clientIds.length ? req.models.Client.find({ clientId: { $in: clientIds } }, 'leadId clientId companyName').lean() : [],
+    companyNames.length ? req.models.Client.find({ companyCode, normalizedCompanyName: { $in: companyNames } }, 'leadId companyName normalizedCompanyName').lean() : [],
+  ]);
+
+  const leadIdMap = new Map();
+  leadsById.forEach((l) => { if (l.leadId) leadIdMap.set(String(l._id), l.leadId); });
+  const leadNameMap = new Map();
+  leadsByName.forEach((l) => { if (l.leadId) leadNameMap.set(normalizeText(l.leadCompanyNameLower), l.leadId); });
+  const clientIdMap = new Map();
+  clientsById.forEach((c) => { if (c.leadId) clientIdMap.set(c.clientId, c.leadId); });
+  const clientNameMap = new Map();
+  clientsByName.forEach((c) => { if (c.leadId) clientNameMap.set(normalizeText(c.companyName || c.normalizedCompanyName), c.leadId); });
+
+  for (const q of missingRecords) {
+    const code = (q.leadId && leadIdMap.get(String(q.leadId)))
+      || (q.clientId && clientIdMap.get(q.clientId))
+      || leadNameMap.get(normalizeText(q.leadCompanyName))
+      || clientNameMap.get(normalizeText(q.leadCompanyName))
+      || '';
+    if (code) {
+      q.leadCode = code;
+    }
+  }
+}
+
+    await ensureLeadCodes(quotations, req);
 
     const page = buildPageResponse({
       items: quotations,

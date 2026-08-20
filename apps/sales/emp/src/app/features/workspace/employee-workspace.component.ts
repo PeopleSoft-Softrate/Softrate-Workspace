@@ -20,7 +20,7 @@ import {
   AiSuggestionScenario,
   AiSuggestionService,
 } from '../../ai-suggestion.service';
-import { EmployeePageId } from '../../core/layout/employee-pages';
+import { EmployeePageId, EMPLOYEE_PAGES } from '../../core/layout/employee-pages';
 import {
   EmployeeLeadsState,
   EmployeeLeadsViewModel,
@@ -60,6 +60,7 @@ interface Employee {
 
 interface Lead {
   _id: string;
+  leadId?: string;
   companyCode: string;
   assignedEmployeeId: string;
   leadCompanyName: string;
@@ -170,6 +171,7 @@ interface CachedLeadCompanyPage {
 
 interface InvoiceRecord {
   _id: string;
+  leadCode?: string;
   companyCode?: string;
   invoiceNumber: string;
   publicToken?: string;
@@ -202,6 +204,8 @@ interface InvoiceRecord {
 
 interface QuotationRecord {
   _id: string;
+  leadCode?: string;
+  clientId?: string;
   companyCode?: string;
   quotationNumber: string;
   leadCompanyName: string;
@@ -257,9 +261,9 @@ type DrawerSection = LeadDrawerSection;
 type OverviewPeriod = 'today' | 'yesterday' | 'lastweek';
 const DEFAULT_QUOTATION_KIND_NOTE = 'We aim to provide the best software to automate your business with high quality at affordable cost.';
 const DEFAULT_QUOTATION_TERMS = [
-  'All rates quoted are valid for 14 days.',
-  '40% payment should be done in advance.',
-  'The remaining amount should be paid within 7 days of invoice.',
+  '(i) All rates quoted are valid for 14 days.',
+  '(ii) 40% payment should be done in advance.',
+  '(iii) The remaining amount should be paid within 7 days of invoice.',
 ];
 
 interface QuotationBankRow {
@@ -351,10 +355,13 @@ import { ProposalGeneratorModalComponent } from './proposal-generator-modal/prop
 
 import { PipelineSectionComponent } from '../pipeline/presentation/pipeline-section/pipeline-section.component';
 
+import { PaneSplitterDirective } from '../../shared/ui/pane-splitter.directive';
+import { TableColumnResizeDirective } from '../../shared/ui/table-column-resize.directive';
+
 @Component({
   selector: 'app-employee-workspace',
   standalone: true,
-  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent, PipelineSectionComponent],
+  imports: [NgIf, NgFor, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, UpperCasePipe, EmployeeLeadCardComponent, EmployeeLeadDetailComponent, ActivitiesCalendarComponent, CompanyTimelineComponent, ProposalGeneratorModalComponent, PipelineSectionComponent, PaneSplitterDirective, TableColumnResizeDirective],
   templateUrl: './employee-workspace.component.html',
   styleUrl: './employee-workspace.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -377,6 +384,18 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   loginLoading = false;
   loginError = '';
   loginForm = { companyCode: '', mobile: '', countryCode: '+91' };
+
+  authStep: 'credentials' | 'setup_2fa' | 'verify_2fa' = 'credentials';
+  twoFactorQrCode = '';
+  twoFactorSecretKey = '';
+  twoFactorOtpauthUrl = '';
+  twoFactorEmployeeId = '';
+  twoFactorEmployeeName = '';
+  twoFactorCompanyCode = '';
+  twoFactorCode = '';
+  twoFactorLoading = false;
+  twoFactorError = '';
+  copiedSecret = false;
 
   employee: Employee | null = null;
   companyName = '';
@@ -501,9 +520,6 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.invoiceHistorySearch = trimmed;
         this.onInvoiceSearchChange();
         this.onInvoiceHistoryQueryChange();
-      } else if (this.dashTab === 'client-onboarding') {
-        this.clientOnboardingSearch = trimmed;
-        this.onClientOnboardingSearchChange();
       } else if (this.dashTab === 'quotations') {
         this.quotationSearch = trimmed;
         this.quotationHistorySearch = trimmed;
@@ -650,7 +666,6 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     favourite: '',
     'today-calls': '',
     invoices: '',
-    'client-onboarding': '',
     quotations: ''
   };
   private leadSetSelections: Partial<Record<EmployeePageId, string>> = {
@@ -690,7 +705,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   companyFullViewOpen = false;
   companyFullActiveSection: CompanyFullSection = 'overview';
   private readonly companyFullBaseSections: Array<{ id: CompanyFullSection; label: string }> = [
-    { id: 'overview', label: 'Overview' },
+    { id: 'overview', label: 'Company Details' },
     { id: 'timeline', label: 'Overall History' },
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'followups', label: 'Schedule / Follow-up' },
@@ -735,8 +750,15 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return this.companyFullHistoryLogs.filter((log) => log.action === 'Pipeline Stage Changed');
   }
 
+  private _cachedGroupedPipelineLogs: { dealName: string, logs: LeadHistoryLog[] }[] = [];
+  private _cachedPipelineHistoryRef: LeadHistoryLog[] | null = null;
+
   get groupedPipelineHistoryLogs(): { dealName: string, logs: LeadHistoryLog[] }[] {
     const logs = this.companyFullPipelineHistoryLogs;
+    if (this._cachedPipelineHistoryRef === logs) {
+      return this._cachedGroupedPipelineLogs;
+    }
+    this._cachedPipelineHistoryRef = logs;
     const map = new Map<string, LeadHistoryLog[]>();
     for (const log of logs) {
       const deal = log.dealName || 'Legacy Deal';
@@ -745,7 +767,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       }
       map.get(deal)!.push(log);
     }
-    return Array.from(map.entries()).map(([dealName, dealLogs]) => ({ dealName, logs: dealLogs }));
+    this._cachedGroupedPipelineLogs = Array.from(map.entries()).map(([dealName, dealLogs]) => ({ dealName, logs: dealLogs }));
+    return this._cachedGroupedPipelineLogs;
   }
   companyFullDocuments: Array<{ id: string; name: string; url: string; size: number; uploadedAt: string }> = [];
   companyFullEmailHistory: LeadHistoryLog[] = [];
@@ -989,6 +1012,178 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         ].filter(Boolean),
       ),
     ).sort((a, b) => a.localeCompare(b));
+  }
+
+  readonly availableLeadSectorCategories: string[] = [
+    'Technology & IT Services',
+    'Manufacturing & Industrial',
+    'Wholesale & Retail Trade',
+    'Healthcare & Life Sciences',
+    'Education & Training',
+    'Real Estate & Construction',
+    'Finance, Legal & Professional',
+    'Media, Publishing & Entertainment',
+    'Logistics, Transport & Hospitality',
+    'Agriculture, Energy & Resources',
+    'Other Industries & Services'
+  ];
+
+  get groupedLeadDivisions(): { category: string; divisions: { rawValue: string; displayLabel: string }[] }[] {
+    const rawList = this.availableLeadDivisions;
+    const groupMap = new Map<string, { rawValue: string; displayLabel: string }[]>();
+
+    for (const raw of rawList) {
+      const trimmed = raw.trim();
+      if (!trimmed || trimmed.toLowerCase() === 'main division') continue;
+      const category = this.getSectorCategoryForDivision(trimmed);
+      const displayLabel = this.formatDivisionDisplayLabel(trimmed);
+      if (!groupMap.has(category)) {
+        groupMap.set(category, []);
+      }
+      groupMap.get(category)!.push({
+        rawValue: trimmed,
+        displayLabel
+      });
+    }
+
+    const categoriesOrder = this.availableLeadSectorCategories;
+
+    const result: { category: string; divisions: { rawValue: string; displayLabel: string }[] }[] = [];
+    for (const cat of categoriesOrder) {
+      if (groupMap.has(cat)) {
+        const divisions = groupMap.get(cat)!.sort((a, b) => a.displayLabel.localeCompare(b.displayLabel));
+        result.push({ category: cat, divisions });
+        groupMap.delete(cat);
+      }
+    }
+
+    for (const [cat, divisions] of groupMap.entries()) {
+      divisions.sort((a, b) => a.displayLabel.localeCompare(b.displayLabel));
+      result.push({ category: cat, divisions });
+    }
+
+    return result;
+  }
+
+  getSectorCategoryForDivision(division: string): string {
+    const d = (division || '').toLowerCase().replace(/[^a-z0-9]/g, ' ');
+
+    if (
+      d.includes('computer') || d.includes('programming') || d.includes('software') ||
+      d.includes('information service') || d.includes('telecom') || d.includes('data processing') ||
+      d.includes('consultancy and related') || d.includes('technology') || d.includes('cyber')
+    ) {
+      return 'Technology & IT Services';
+    }
+
+    if (
+      d.includes('health') || d.includes('hospital') || d.includes('medical') ||
+      d.includes('pharmaceutical') || d.includes('medicine') || d.includes('social work') ||
+      d.includes('clinic') || d.includes('nurs')
+    ) {
+      return 'Healthcare & Life Sciences';
+    }
+
+    if (
+      d.includes('education') || d.includes('school') || d.includes('university') ||
+      d.includes('college') || d.includes('training') || d.includes('academic') ||
+      d.includes('coaching') || d.includes('teaching')
+    ) {
+      return 'Education & Training';
+    }
+
+    if (
+      d.includes('manufacture') || d.includes('fabricated') || d.includes('metal') ||
+      d.includes('machinery') || d.includes('equipment') || d.includes('textile') ||
+      d.includes('apparel') || d.includes('chemical') || d.includes('plastic') ||
+      d.includes('rubber') || d.includes('automobile') || d.includes('food product') ||
+      d.includes('beverage') || d.includes('paper') || d.includes('leather')
+    ) {
+      return 'Manufacturing & Industrial';
+    }
+
+    if (
+      d.includes('wholesale') || d.includes('retail') || d.includes('trade') ||
+      d.includes('motor vehicle') || d.includes('motorcycle') || d.includes('dealer') ||
+      d.includes('distributor') || d.includes('store') || d.includes('shop')
+    ) {
+      return 'Wholesale & Retail Trade';
+    }
+
+    if (
+      d.includes('real estate') || d.includes('construction') || d.includes('building') ||
+      d.includes('civil engineering') || d.includes('property') || d.includes('architect') ||
+      d.includes('developer') || d.includes('infrastructure')
+    ) {
+      return 'Real Estate & Construction';
+    }
+
+    if (
+      d.includes('financial') || d.includes('bank') || d.includes('insurance') ||
+      d.includes('monetary') || d.includes('fund') || d.includes('accounting') ||
+      d.includes('legal') || d.includes('audit') || d.includes('tax') ||
+      d.includes('management consultancy') || d.includes('scientific') ||
+      d.includes('advertising') || d.includes('market research')
+    ) {
+      return 'Finance, Legal & Professional';
+    }
+
+    if (
+      d.includes('publishing') || d.includes('motion picture') || d.includes('video') ||
+      d.includes('television') || d.includes('broadcast') || d.includes('sound recording') ||
+      d.includes('media') || d.includes('arts') || d.includes('entertainment') ||
+      d.includes('recreation') || d.includes('sports')
+    ) {
+      return 'Media, Publishing & Entertainment';
+    }
+
+    if (
+      d.includes('transport') || d.includes('freight') || d.includes('cargo') ||
+      d.includes('warehous') || d.includes('storage') || d.includes('courier') ||
+      d.includes('postal') || d.includes('hotel') || d.includes('accommodation') ||
+      d.includes('restaurant') || d.includes('food service') || d.includes('hospitality')
+    ) {
+      return 'Logistics, Transport & Hospitality';
+    }
+
+    if (
+      d.includes('agriculture') || d.includes('crop') || d.includes('animal') ||
+      d.includes('farm') || d.includes('forest') || d.includes('fishing') ||
+      d.includes('mining') || d.includes('quarry') || d.includes('electric') ||
+      d.includes('gas') || d.includes('water supply') || d.includes('waste') ||
+      d.includes('energy') || d.includes('solar')
+    ) {
+      return 'Agriculture, Energy & Resources';
+    }
+
+    return 'Other Industries & Services';
+  }
+
+  formatDivisionDisplayLabel(raw: string): string {
+    if (!raw) return '';
+    let str = String(raw).trim();
+
+    // Fix comma and missing spaces from unformatted MCA extracts
+    str = str.replace(/([a-zA-Z]),([a-zA-Z])/g, '$1, $2');
+    str = str.replace(/([A-Z]{3,})(AND|EXCEPT|OF|FOR|TO|IN|WITH|THE)([A-Z]{3,})/g, '$1 $2 $3');
+    str = str.replace(/WHOLESALETRADE/gi, 'WHOLESALE TRADE');
+    str = str.replace(/EXCEPTOFMOTORVEHICLESANDMOTORCYCLES/gi, 'EXCEPT OF MOTOR VEHICLES AND MOTORCYCLES');
+    str = str.replace(/CONSULTANCYAND/gi, 'CONSULTANCY AND');
+    str = str.replace(/RELATEDACTIVITIES/gi, 'RELATED ACTIVITIES');
+    str = str.replace(/HUMANHEALTH/gi, 'HUMAN HEALTH');
+
+    // Title Case formatting
+    const minorWords = new Set(['and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'a', 'an', 'the', 'except', 'by']);
+    const words = str.toLowerCase().split(/\s+/);
+    return words.map((w, idx) => {
+      const hasComma = w.endsWith(',');
+      const cleanWord = hasComma ? w.slice(0, -1) : w;
+      if (idx !== 0 && minorWords.has(cleanWord)) {
+        return w;
+      }
+      const cap = cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);
+      return hasComma ? cap + ',' : cap;
+    }).join(' ');
   }
 
   isLeadSegregationFilterTab(tab: EmployeePageId = this.dashTab): boolean {
@@ -1463,6 +1658,32 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (lead) {
       await this.openCompanyFullViewForLeadContext(lead, event.section as CompanyFullSection);
     }
+  }
+
+  async openCompanyFromLeadHistory(doc: any, event?: Event): Promise<void> {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!doc) return;
+    const leadCode = doc.leadCode || (typeof doc.leadId === 'object' ? doc.leadId?.leadId : '') || doc.leadSnapshot?.leadId || doc.clientSnapshot?.leadId;
+    const companyName = doc.leadCompanyName || doc.companyName;
+
+    let matchingLead = (this.allLeads || []).find((l) => (leadCode && l.leadId === leadCode) || (companyName && l.leadCompanyName?.toLowerCase() === companyName.toLowerCase()));
+
+    if (!matchingLead) {
+      matchingLead = {
+        _id: (typeof doc.leadId === 'object' ? doc.leadId?._id : doc.leadId) || doc._id,
+        leadId: leadCode || '',
+        leadCompanyName: companyName || '',
+        contactName: doc.contactName || '',
+        contactNumber: doc.contactNumber || '',
+        directorEmailAddress: doc.directorEmailAddress || '',
+        companyCode: doc.companyCode || this.employee?.companyCode || '',
+      } as any;
+    }
+
+    await this.openCompanyFullViewForLeadContext(matchingLead, 'overview');
   }
 
   async openCompanyFullViewForLeadContext(sourceLead: Lead | any, initialSection: CompanyFullSection = 'overview'): Promise<void> {
@@ -2008,8 +2229,9 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
   gstPercentage: number = 18;
   invoiceRegisteredAddress: string = '';
   invoiceFooter: string = '';
-invoiceSeal: string = '';
+  invoiceSeal: string = '';
   invoiceTerms: string = '';
+  quotationBannerText: string = 'Think Software,\nThink Softrate.';
   bankDetails: any = null;
   bankDetails2: any = null;
   contactDetails: any = null;
@@ -2039,6 +2261,7 @@ invoiceSeal: string = '';
   proposalModalLead: any = null;
 
   openProposalModal(lead: any) {
+    this.savedProposalRecordForModal = null;
     this.proposalModalLead = lead;
     this.showProposalModal = true;
   }
@@ -2046,6 +2269,220 @@ invoiceSeal: string = '';
   closeProposalModal() {
     this.showProposalModal = false;
     this.proposalModalLead = null;
+    this.savedProposalRecordForModal = null;
+  }
+
+  openSavedProposal(proposal: any) {
+    this.savedProposalRecordForModal = proposal;
+    this.proposalModalLead = {
+      _id: proposal.leadId,
+      leadCompanyName: proposal.leadCompanyName,
+      contactName: proposal.contactName,
+      contactNumber: proposal.contactNumber,
+      directorEmailAddress: proposal.directorEmailAddress,
+    };
+    this.showProposalModal = true;
+  }
+
+  onProposalLeadClick(lead: any): void {
+    if (this.selectedProposalLead?._id === lead?._id) {
+      this.selectedProposalLead = null;
+    } else {
+      this.selectedProposalLead = lead;
+    }
+    this.onProposalHistoryQueryChange();
+  }
+
+  get filteredProposalRecords(): any[] {
+    const query = this.proposalHistorySearch.trim().toLowerCase();
+    return this.proposalRecords.filter((prop) => {
+      const searchable = [
+        prop.proposalNumber,
+        prop.leadCompanyName,
+        prop.templateName,
+        prop.contactName,
+        prop.contactNumber,
+        prop.directorEmailAddress,
+      ].join(' ').toLowerCase();
+      return (!query || searchable.includes(query)) && this.matchesProposalDateFilter(prop.proposalDate || prop.createdAt);
+    });
+  }
+
+  matchesProposalDateFilter(rawDate?: string): boolean {
+    if (!rawDate) return false;
+    const date = new Date(rawDate);
+    if (this.proposalDateFrom) {
+      const from = new Date(this.proposalDateFrom);
+      from.setHours(0, 0, 0, 0);
+      if (date < from) return false;
+    }
+    if (this.proposalDateTo) {
+      const to = new Date(this.proposalDateTo);
+      to.setHours(23, 59, 59, 999);
+      if (date > to) return false;
+    }
+    return true;
+  }
+
+  fetchProposalRecords(force = false): void {
+    const restored = !force && this.restoreCachedProposalRecords();
+    void this.loadProposalRecordsPage(1, { reset: true, forceRefresh: force, silent: restored });
+  }
+
+  async loadProposalRecordsPage(
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!this.employee) return;
+    const cacheKey = this.proposalHistoryCacheKey(page);
+    const silent = !!options.silent;
+    if (options.reset && !silent) {
+      this.proposalRecords = [];
+      this.proposalRecordsPage = 1;
+      this.proposalRecordsHasMore = false;
+      this.proposalRecordsTotal = 0;
+    }
+    if (options.append) {
+      this.proposalRecordsLoadingMore = true;
+    } else if (!silent) {
+      this.proposalRecordsLoading = true;
+    }
+
+    const params = new URLSearchParams({
+      companyCode: this.employee.companyCode,
+      search: (this.proposalHistorySearch || '').trim(),
+      dateFrom: this.proposalDateFrom || '',
+      dateTo: this.proposalDateTo || '',
+      page: String(page),
+      pageSize: String(OPERATIONAL_PAGE_SIZE),
+      paginated: 'true',
+    });
+
+    if (this.selectedProposalLead?._id) {
+      params.set('leadId', String(this.selectedProposalLead._id));
+    }
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/proposal-records?${params.toString()}`));
+      const rawItems = Array.isArray(response?.items) ? response.items : (response?.proposals || []);
+      const pageResult = this.resolvePagedResponse<any>(response, rawItems, page, OPERATIONAL_PAGE_SIZE);
+      this.proposalRecords = options.append
+        ? this.mergePagedItems(this.proposalRecords, pageResult.items, (item) => String(item?._id || item?.id || item?.proposalNumber || ''))
+        : pageResult.items;
+      this.proposalRecordsPage = pageResult.page;
+      this.proposalRecordsHasMore = pageResult.hasMore;
+      this.proposalRecordsTotal = pageResult.total;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: this.dashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        this.proposalRecords = [];
+        this.proposalRecordsPage = 1;
+        this.proposalRecordsHasMore = false;
+        this.proposalRecordsTotal = 0;
+      }
+    } finally {
+      this.proposalRecordsLoading = false;
+      this.proposalRecordsLoadingMore = false;
+    }
+  }
+
+  fetchProposalLeadCompanies(force = false): void {
+    void this.loadProposalLeadCompaniesPage(1, { reset: true, forceRefresh: force });
+  }
+
+  async loadProposalLeadCompaniesPage(
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!this.employee) return;
+    const cacheKey = this.proposalLeadCompaniesCacheKey(page);
+    if (!options.forceRefresh && this.restoreCachedProposalLeadCompaniesPage(page, !!options.append)) {
+      return;
+    }
+
+    const silent = !!options.silent;
+    if (options.append) {
+      this.proposalLeadCompaniesLoadingMore = true;
+    } else {
+      this.proposalLeadsLoading = !silent;
+      if (options.reset && !silent) {
+        this.proposalLeadCompanies = [];
+        this.proposalLeadCompanyPage = 1;
+        this.proposalLeadCompanyHasMore = false;
+        this.proposalLeadCompanyTotal = 0;
+      }
+    }
+
+    const params = new URLSearchParams({
+      companyCode: this.employee.companyCode,
+      employeeId: this.employee._id,
+      phone: this.employee.mobile,
+      search: (this.proposalSearch || '').trim(),
+      page: String(page),
+      pageSize: String(OPERATIONAL_PAGE_SIZE),
+      paginated: 'true',
+      includeContacts: 'true',
+      contactPageSize: '1',
+    });
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/leads/employee/companies?${params.toString()}`));
+      const incomingCompanies = this.normalizeWorkspaceLeadCompanies(response?.companies);
+      const incomingContacts = this.normalizeWorkspaceLeadCompanyContacts(response?.contactsByCompany);
+      this.proposalLeadCompanies = options.append
+        ? this.mergeWorkspaceLeadCompanies(this.proposalLeadCompanies, incomingCompanies)
+        : incomingCompanies;
+      this.quotationLeadCompanyContacts = options.append
+        ? this.mergeWorkspaceLeadCompanyContacts(this.quotationLeadCompanyContacts, incomingContacts)
+        : incomingContacts;
+      this.proposalLeadCompanyPage = Number(response?.page || page);
+      this.proposalLeadCompanyHasMore = !!response?.hasMore;
+      this.proposalLeadCompanyTotal = Number(response?.total || this.proposalLeadCompanies.length);
+      this.dashboardCache.set(cacheKey, {
+        companies: incomingCompanies,
+        contactsByCompany: incomingContacts,
+        page: this.proposalLeadCompanyPage,
+        total: this.proposalLeadCompanyTotal,
+        hasMore: this.proposalLeadCompanyHasMore,
+      }, { ttlMs: this.dashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        this.proposalLeadCompanies = [];
+        this.proposalLeadCompanyPage = 1;
+        this.proposalLeadCompanyHasMore = false;
+        this.proposalLeadCompanyTotal = 0;
+      }
+    } finally {
+      this.proposalLeadsLoading = false;
+      this.proposalLeadCompaniesLoadingMore = false;
+    }
+  }
+
+  onProposalSearchChange(): void {
+    if (this.proposalSearchTimeoutRef) clearTimeout(this.proposalSearchTimeoutRef);
+    this.proposalSearchTimeoutRef = setTimeout(() => {
+      void this.loadProposalLeadCompaniesPage(1, { reset: true });
+    }, 250);
+  }
+
+  onProposalHistoryQueryChange(): void {
+    this.fetchProposalRecords(true);
+  }
+
+  onProposalLeadListScroll(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || this.proposalLeadsLoading || this.proposalLeadCompaniesLoadingMore || !this.proposalLeadCompanyHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadProposalLeadCompaniesPage(this.proposalLeadCompanyPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  onProposalHistoryScroll(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || this.proposalRecordsLoadingMore || !this.proposalRecordsHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadProposalRecordsPage(this.proposalRecordsPage + 1, { append: true, forceRefresh: true });
+    }
   }
 
   onProposalSentFromModal(event?: { action: 'download' | 'send', file?: File, templateName?: string }) {
@@ -2119,7 +2556,7 @@ invoiceSeal: string = '';
   addSingleLeadLoading = false;
   
   newLeadCompanyDetails = {
-    leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+    leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'Connected', cin: '', companyDescription: '', setLabel: ''
   };
   
   newLeadDirectors: any[] = [];
@@ -2210,6 +2647,26 @@ invoiceSeal: string = '';
   quotationDateFilterOpen = false;
   quotationDateFrom = '';
   quotationDateTo = '';
+  proposalRecords: any[] = [];
+  proposalRecordsLoading = false;
+  proposalRecordsLoadingMore = false;
+  proposalRecordsPage = 1;
+  proposalRecordsHasMore = false;
+  proposalRecordsTotal = 0;
+  proposalHistorySearch = '';
+  proposalDateFilterOpen = false;
+  proposalDateFrom = '';
+  proposalDateTo = '';
+  selectedProposalLead: any = null;
+  proposalLeadCompanies: any[] = [];
+  proposalLeadsLoading = false;
+  proposalLeadCompaniesLoadingMore = false;
+  proposalLeadCompanyTotal = 0;
+  proposalLeadCompanyPage = 1;
+  proposalLeadCompanyHasMore = false;
+  proposalSearch = '';
+  savedProposalRecordForModal: any = null;
+  private proposalSearchTimeoutRef: ReturnType<typeof setTimeout> | null = null;
   quotationSaving = false;
   currentQuotationNumber = '';
   quotationKindNoteDraft = DEFAULT_QUOTATION_KIND_NOTE;
@@ -2619,6 +3076,13 @@ invoiceSeal: string = '';
     return String(this.activeInvoiceCompanySnapshot()?.website || this.contactDetails?.website || '').trim();
   }
 
+  quotationFooterContactLine(): string {
+    const parts = [this.invoiceCompanyWebsite(), this.invoiceCompanyEmail()]
+      .map((part) => String(part || '').trim())
+      .filter(Boolean);
+    return parts.join(' | ') || (this.invoiceContactLine() || 'www.softrateglobal.com | helpdesk@softrateglobal.com');
+  }
+
   invoiceCompanyGstNumber(): string {
     return String(this.activeInvoiceCompanySnapshot()?.gstNumber || this.gstNumber || '').trim();
   }
@@ -2712,6 +3176,33 @@ invoiceSeal: string = '';
       this.activeInvoiceCompanySnapshot()?.footer ||
       this.defaultQuotationKindNote(),
     ).trim();
+  }
+
+  quotationBannerDisplayText(): string {
+    return String(
+      this.activeInvoiceCompanySnapshot()?.quotationBannerText ||
+      this.quotationBannerText ||
+      'Think Software,\nThink Softrate.'
+    ).trim();
+  }
+
+  formatQuotationDate(dateInput?: any): string {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(d.getTime())) return '';
+    const day = d.getDate();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+
+    return `${day}${suffix} ${month}, ${year}`;
   }
 
   private activeInvoiceCompanySnapshot(): any {
@@ -2812,6 +3303,8 @@ invoiceSeal: string = '';
   private buildPrintDocument(previewHtml: string, docTitle = 'Invoice'): string {
     const headMarkup = this.collectPrintHeadMarkup();
     const baseHref = String(document.baseURI || window.location.href).replace(/"/g, '&quot;');
+    const isQuotation = previewHtml.includes('quotation-preview');
+    const rootClass = isQuotation ? 'employee-print-root quotation-print-root' : 'employee-print-root';
     return `<!doctype html>
 <html lang="en">
   <head>
@@ -2845,6 +3338,15 @@ invoiceSeal: string = '';
         box-sizing: border-box !important;
       }
 
+      .quotation-print-root {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+      }
+
       .employee-print-root .invoice-modal,
       .employee-print-root .invoice-builder {
         display: block !important;
@@ -2871,12 +3373,29 @@ invoiceSeal: string = '';
         box-shadow: none !important;
       }
 
+      .quotation-print-root .quotation-preview {
+        width: 210mm !important;
+        max-width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+
       .employee-print-root .invoice-preview:not(.quotation-preview) {
         display: flex !important;
         flex-direction: column !important;
       }
 
       .employee-print-root .quotation-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        border: none !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
         page-break-after: always !important;
         break-after: page !important;
       }
@@ -2890,14 +3409,37 @@ invoiceSeal: string = '';
         margin-top: 0 !important;
       }
 
+      .quotation-print-root .quotation-hero {
+        width: 210mm !important;
+        min-height: 64mm !important;
+        max-height: 68mm !important;
+        padding: 8mm 16mm 7mm 16mm !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+      }
+
+      .quotation-print-root .quotation-letter {
+        padding: 7mm 16mm 4mm 16mm !important;
+      }
+
+      .quotation-print-root .quotation-service-card {
+        width: calc(210mm - 32mm) !important;
+        max-width: calc(210mm - 32mm) !important;
+        margin: 0 16mm !important;
+      }
+
+      .quotation-print-root .quotation-terms-page {
+        padding: 10mm 16mm 8mm 16mm !important;
+      }
+
       @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 0 !important;
       }
     </style>
   </head>
   <body>
-    <div class="employee-print-root">
+    <div class="${rootClass}">
       <div class="invoice-modal">
         <div class="invoice-builder">
           ${previewHtml}
@@ -3044,14 +3586,14 @@ invoiceSeal: string = '';
     if (this.currentInvoiceNumber) return this.currentInvoiceNumber;
     const issued = this.invoiceIssuedAt || new Date();
     const yy = String(issued.getFullYear()).slice(-2);
-    return `${yy}-Draft`;
+    return `INV${yy}Draft`;
   }
 
   quotationNumber(): string {
     if (this.currentQuotationNumber) return this.currentQuotationNumber;
     const issued = this.invoiceIssuedAt || new Date();
     const yy = String(issued.getFullYear()).slice(-2);
-    return `QT-${yy}-Draft`;
+    return `QT${yy}Draft`;
   }
 
   async emailCurrentDocument(): Promise<void> {
@@ -3910,6 +4452,25 @@ invoiceSeal: string = '';
     return spoc || rows[0] || this.companyFullContextLead || this.activeLeadBannerLead();
   }
 
+  companyFullLeadId(): string {
+    const lead = this.companyFullViewLead();
+    if (lead?.leadId) return String(lead.leadId);
+    if ((lead as any)?.leadCode) return String((lead as any).leadCode);
+    if (this.companyFullContextLead?.leadId) return String(this.companyFullContextLead.leadId);
+    if ((this.companyFullContextLead as any)?.leadCode) return String((this.companyFullContextLead as any).leadCode);
+    if ((this.companyFullProfile as any)?.leadId) return String((this.companyFullProfile as any).leadId);
+
+    const companyName = this.companyFullCompanyName();
+    if (companyName && companyName !== 'Company details') {
+      const match = (this.allLeads || []).find(
+        (l) => l.leadCompanyName?.toLowerCase() === companyName.toLowerCase() && (l.leadId || (l as any).leadCode)
+      );
+      if (match?.leadId) return String(match.leadId);
+      if ((match as any)?.leadCode) return String((match as any).leadCode);
+    }
+    return '';
+  }
+
   companyFullCompanyName(): string {
     return this.selectedLeadCompany || this.companyFullProfile.leadCompanyName || this.companyFullViewLead()?.leadCompanyName || 'Company details';
   }
@@ -4112,10 +4673,16 @@ invoiceSeal: string = '';
     target?.scrollIntoView({ behavior, block: 'start' });
   }
 
+  private _companyFullScrollThrottle: any = null;
+
   onCompanyFullContentScroll(event: Event): void {
     const container = event.target as HTMLElement | null;
     if (!container) return;
-    this.syncCompanyFullActiveSection(container);
+    if (this._companyFullScrollThrottle) return;
+    this._companyFullScrollThrottle = requestAnimationFrame(() => {
+      this._companyFullScrollThrottle = null;
+      this.syncCompanyFullActiveSection(container);
+    });
   }
 
   async saveCompanyFullAlternateInfo(): Promise<void> {
@@ -4610,7 +5177,9 @@ invoiceSeal: string = '';
       activeSection = 'overview';
     }
 
-    this.companyFullActiveSection = activeSection;
+    if (this.companyFullActiveSection !== activeSection) {
+      this.companyFullActiveSection = activeSection;
+    }
   }
 
   private clearCompanyFullRemarkMenuClose(): void {
@@ -5271,7 +5840,6 @@ invoiceSeal: string = '';
 
   ngOnInit(): void {
     Chart.register(...registerables);
-    
 
     this.leadVmSub = this.employeeLeadsVm.state$.subscribe((state) => this.applyEmployeeLeadViewModelState(state));
     const raw = localStorage.getItem('dv_employee');
@@ -5279,14 +5847,33 @@ invoiceSeal: string = '';
     if (raw) {
       try {
         const data = JSON.parse(raw);
-        this.employee = data.employee;
-        this.companyName = data.companyName || '';
-        this.loggedIn = true;
-        restoredSession = true;
-        this.loadDashboard();
-        this.initRealtime();
-        this.resumeBreakTimer();
-      } catch { localStorage.removeItem('dv_employee'); }
+        const todayStr = new Date().toISOString().slice(0, 10);
+        // Daily login enforcement: session valid only for the current calendar day
+        if (data.loginDate && data.loginDate === todayStr && data.employee) {
+          this.employee = data.employee;
+          this.companyName = data.companyName || '';
+          this.loggedIn = true;
+          restoredSession = true;
+          this.loadDashboard();
+          this.initRealtime();
+          this.resumeBreakTimer();
+
+          // Restore exact active page on refresh
+          const pathSegment = (window.location.pathname.replace(/^\/+/, '').split('/')[0] || '').trim();
+          const hashSegment = (window.location.hash.replace(/^#\/?/, '').split('/')[0] || '').trim();
+          const savedTab = (localStorage.getItem('dv_emp_active_tab') || '').trim();
+          const candidate = (pathSegment || hashSegment || savedTab) as EmployeePageId;
+          if (candidate && EMPLOYEE_PAGES.includes(candidate) && candidate !== 'overview') {
+            setTimeout(() => this.switchTab(candidate), 60);
+          }
+        } else {
+          localStorage.removeItem('dv_employee');
+          localStorage.removeItem('tracecall_emp_token');
+        }
+      } catch {
+        localStorage.removeItem('dv_employee');
+        localStorage.removeItem('tracecall_emp_token');
+      }
     }
     if (!restoredSession) {
       setTimeout(() => {
@@ -5308,7 +5895,7 @@ invoiceSeal: string = '';
     if (this._searchTimeout) clearTimeout(this._searchTimeout);
   }
 
-  // ── Login ─────────────────────────────────────────────────────
+  // ── Login & 2FA ───────────────────────────────────────────────
   login(): void {
     const { companyCode, mobile } = this.loginForm;
     if (!companyCode.trim() || !mobile.trim()) {
@@ -5325,29 +5912,35 @@ invoiceSeal: string = '';
     }).subscribe({
       next: res => {
         this.loginLoading = false;
-        if (res.success) {
-          this.employee = res.employee;
-          if ((res as any).token) {
-            localStorage.setItem('tracecall_emp_token', (res as any).token);
-          }
-
-          // Also fetch company name
-          this.api.get<any>(`/api/auth/company/${companyCode.trim()}`).subscribe({
-            next: cr => {
-              this.companyName = cr.company?.companyName || '';
-              this.persistEmployeeSession();
-            },
-            error: () => {
-              this.persistEmployeeSession();
-            }
-          });
-
-          this.loggedIn = true;
-          this.loadDashboard();
-          this.initRealtime();
-        } else {
+        if (!res.success) {
           this.loginError = res.message || 'Login failed.';
+          return;
         }
+
+        if (res.require2FASetup) {
+          this.authStep = 'setup_2fa';
+          this.twoFactorQrCode = res.qrCode || '';
+          this.twoFactorSecretKey = res.secret || '';
+          this.twoFactorOtpauthUrl = res.otpauthUrl || '';
+          this.twoFactorEmployeeId = res.employeeId || '';
+          this.twoFactorEmployeeName = res.employeeName || '';
+          this.twoFactorCompanyCode = res.companyCode || companyCode.trim();
+          this.twoFactorCode = '';
+          this.twoFactorError = '';
+          return;
+        }
+
+        if (res.require2FA) {
+          this.authStep = 'verify_2fa';
+          this.twoFactorEmployeeId = res.employeeId || '';
+          this.twoFactorEmployeeName = res.employeeName || '';
+          this.twoFactorCompanyCode = res.companyCode || companyCode.trim();
+          this.twoFactorCode = '';
+          this.twoFactorError = '';
+          return;
+        }
+
+        this.completeLoginSuccess(res, companyCode.trim());
       },
       error: err => {
         this.loginLoading = false;
@@ -5356,12 +5949,121 @@ invoiceSeal: string = '';
     });
   }
 
+  verify2FASetup(): void {
+    const code = this.twoFactorCode.trim();
+    if (!code || code.length !== 6) {
+      this.twoFactorError = 'Please enter the complete 6-digit code from your authenticator app.';
+      return;
+    }
+
+    this.twoFactorLoading = true;
+    this.twoFactorError = '';
+
+    this.api.post<any>('/api/employees/2fa/verify-setup', {
+      employeeId: this.twoFactorEmployeeId,
+      companyCode: this.twoFactorCompanyCode,
+      token: code,
+    }).subscribe({
+      next: res => {
+        this.twoFactorLoading = false;
+        if (res.success) {
+          this.completeLoginSuccess(res, this.twoFactorCompanyCode);
+        } else {
+          this.twoFactorError = res.message || 'Verification failed. Please try again.';
+        }
+      },
+      error: err => {
+        this.twoFactorLoading = false;
+        this.twoFactorError = err.error?.message || 'Invalid code. Please check your Authenticator app and try again.';
+      }
+    });
+  }
+
+  verify2FACode(): void {
+    const code = this.twoFactorCode.trim();
+    if (!code || code.length !== 6) {
+      this.twoFactorError = 'Please enter the 6-digit code from your authenticator app.';
+      return;
+    }
+
+    this.twoFactorLoading = true;
+    this.twoFactorError = '';
+
+    this.api.post<any>('/api/employees/2fa/verify', {
+      employeeId: this.twoFactorEmployeeId,
+      companyCode: this.twoFactorCompanyCode,
+      token: code,
+    }).subscribe({
+      next: res => {
+        this.twoFactorLoading = false;
+        if (res.success) {
+          this.completeLoginSuccess(res, this.twoFactorCompanyCode);
+        } else {
+          this.twoFactorError = res.message || 'Verification failed. Please try again.';
+        }
+      },
+      error: err => {
+        this.twoFactorLoading = false;
+        this.twoFactorError = err.error?.message || 'Invalid code. Please check your Authenticator app and try again.';
+      }
+    });
+  }
+
+  copySecretKey(): void {
+    if (!this.twoFactorSecretKey) return;
+    navigator.clipboard?.writeText(this.twoFactorSecretKey);
+    this.copiedSecret = true;
+    setTimeout(() => { this.copiedSecret = false; }, 2000);
+  }
+
+  backToCredentials(): void {
+    this.authStep = 'credentials';
+    this.twoFactorCode = '';
+    this.twoFactorError = '';
+    this.twoFactorLoading = false;
+  }
+
+  private completeLoginSuccess(res: any, companyCode: string): void {
+    this.employee = res.employee;
+    if (res.token) {
+      localStorage.setItem('tracecall_emp_token', res.token);
+    }
+    this.authStep = 'credentials';
+    this.twoFactorCode = '';
+    this.twoFactorError = '';
+
+    this.api.get<any>(`/api/auth/company/${companyCode.trim()}`).subscribe({
+      next: cr => {
+        this.companyName = cr.company?.companyName || '';
+        this.persistEmployeeSession();
+      },
+      error: () => {
+        this.persistEmployeeSession();
+      }
+    });
+
+    this.loggedIn = true;
+    this.loadDashboard();
+    this.initRealtime();
+  }
+
   logout(): void {
     this.profileMenuOpen = false;
     this.closeProfileEditor();
     this.loggedIn = false;
+    this.authStep = 'credentials';
+    this.twoFactorCode = '';
+    this.twoFactorError = '';
     this.employee = null;
     this.companyName = '';
+    localStorage.removeItem('dv_employee');
+    localStorage.removeItem('tracecall_emp_token');
+    localStorage.removeItem('dv_emp_active_tab');
+    try {
+      if (window.location.pathname !== '/') {
+        window.history.replaceState(null, '', '/');
+      }
+    } catch {}
     this.callStats = null;
     this.timelineData = [];
     this.leads = [];
@@ -5652,7 +6354,7 @@ invoiceSeal: string = '';
   closeAddLeadModal(): void {
     this.addLeadModalVisible = false;
     this.newLeadCompanyDetails = {
-      leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+      leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'Connected', cin: '', companyDescription: '', setLabel: ''
     };
     this.newLeadDirectors = [];
   }
@@ -5914,9 +6616,11 @@ invoiceSeal: string = '';
 
   private persistEmployeeSession(): void {
     if (!this.employee) return;
+    const todayStr = new Date().toISOString().slice(0, 10);
     localStorage.setItem('dv_employee', JSON.stringify({
       employee: this.employee,
       companyName: this.companyName,
+      loginDate: todayStr,
     }));
   }
 
@@ -6071,6 +6775,7 @@ invoiceSeal: string = '';
       : Math.max(0, total - amountPaid);
     return {
       _id: String(record?._id || record?.id || ''),
+      leadCode: String(record?.leadCode || record?.leadId?.leadId || record?.leadSnapshot?.leadId || record?.clientSnapshot?.leadId || ''),
       companyCode: record?.companyCode || '',
       invoiceNumber: String(record?.invoiceNumber || ''),
       publicToken: String(record?.publicToken || ''),
@@ -6105,6 +6810,8 @@ invoiceSeal: string = '';
   private toWorkspaceQuotationRecord(record: any): QuotationRecord {
     return {
       _id: String(record?._id || record?.id || ''),
+      leadCode: String(record?.leadCode || record?.leadId?.leadId || record?.leadSnapshot?.leadId || record?.clientSnapshot?.leadId || ''),
+      clientId: String(record?.clientId || record?.clientSnapshot?.clientId || ''),
       companyCode: record?.companyCode || '',
       quotationNumber: String(record?.quotationNumber || ''),
       leadCompanyName: String(record?.leadCompanyName || record?.companyName || ''),
@@ -6427,6 +7134,28 @@ invoiceSeal: string = '';
       this.employee?.companyCode || '',
       this.employee?._id || '',
       this.quotationSearch.trim(),
+      page,
+    ].join('|');
+  }
+
+  private proposalHistoryCacheKey(page = 1): string {
+    return [
+      'proposal',
+      this.employee?.companyCode || '',
+      this.employee?._id || '',
+      this.proposalHistorySearch.trim(),
+      this.proposalDateFrom || '',
+      this.proposalDateTo || '',
+      page,
+    ].join('|');
+  }
+
+  private proposalLeadCompaniesCacheKey(page = 1): string {
+    return [
+      'proposal-lead-companies',
+      this.employee?.companyCode || '',
+      this.employee?._id || '',
+      this.proposalSearch.trim(),
       page,
     ].join('|');
   }
@@ -6824,6 +7553,31 @@ invoiceSeal: string = '';
     return true;
   }
 
+  private restoreCachedProposalRecords(): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.proposalHistoryCacheKey(1));
+    if (!cached) return false;
+    this.proposalRecords = cached.items;
+    this.proposalRecordsPage = cached.page;
+    this.proposalRecordsHasMore = cached.hasMore;
+    this.proposalRecordsTotal = cached.total;
+    this.proposalRecordsLoading = false;
+    return true;
+  }
+
+  private restoreCachedProposalLeadCompaniesPage(page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.proposalLeadCompaniesCacheKey(page));
+    if (!cached) return false;
+    this.proposalLeadCompanies = append
+      ? this.mergePagedItems(this.proposalLeadCompanies, cached.items, (item) => String(item?._id || item?.leadCompanyName || ''))
+      : cached.items;
+    this.proposalLeadCompanyPage = cached.page;
+    this.proposalLeadCompanyHasMore = cached.hasMore;
+    this.proposalLeadCompanyTotal = cached.total;
+    this.proposalLeadsLoading = false;
+    this.proposalLeadCompaniesLoadingMore = false;
+    return true;
+  }
+
   private async loadFollowupsPage(
     page: number,
     options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
@@ -7053,6 +7807,14 @@ invoiceSeal: string = '';
 
     this.dashTab = tab;
 
+    try {
+      localStorage.setItem('dv_emp_active_tab', tab);
+      const targetPath = '/' + tab;
+      if (window.location.pathname !== targetPath) {
+        window.history.replaceState(null, '', targetPath);
+      }
+    } catch {}
+
     // Restore the selection for the target tab
     this.selectedLeadCompany = this.tabSelections[tab] || '';
     this.selectedLeadId = '';
@@ -7077,13 +7839,14 @@ invoiceSeal: string = '';
       this.fetchInvoiceRecords();
       this.fetchInvoiceEligibleLeads();
     }
-    if (tab === 'client-onboarding') {
-      this.fetchClientOnboardingRecords();
-    }
     if (tab === 'quotations') {
       this.quotationLeadRenderCount = OPERATIONAL_PAGE_SIZE;
       void this.loadQuotationLeadCompaniesOnce();
       this.fetchQuotationRecords();
+    }
+    if (tab === 'proposals') {
+      this.fetchProposalLeadCompanies();
+      this.fetchProposalRecords();
     }
     if (tab === 'overview') {
       this.fetchStats();
@@ -7158,6 +7921,7 @@ invoiceSeal: string = '';
     this.invoiceFooter = settings.invoiceFooter || '';
     this.invoiceSeal = settings.invoiceSeal || '';
     this.invoiceTerms = settings.invoiceTerms || '';
+    this.quotationBannerText = settings.quotationBannerText || 'Think Software,\nThink Softrate.';
     this.bankDetails = settings.bankDetails;
     this.bankDetails2 = settings.bankDetails2;
     this.contactDetails = settings.contactDetails;
@@ -7992,6 +8756,20 @@ invoiceSeal: string = '';
     this.openQuotationModal(lead);
   }
 
+  openProposalModalForCompany(companyName: string): void {
+    const lead = this.primaryLeadForCompany(companyName, this.quotationLeadCompanyContacts) ||
+      this.allLeads.find((l) => this.normalizeCompanyName(l.leadCompanyName) === this.normalizeCompanyName(companyName));
+    if (lead) {
+      this.openProposalModal(lead);
+    } else {
+      this.openProposalModal({
+        leadCompanyName: companyName,
+        contactName: '',
+        contactNumber: '',
+      } as any);
+    }
+  }
+
   private leadScopeFromParams(scope: Record<string, string>): EmployeeLeadScope {
     return {
       search: this.leadSearch.trim(),
@@ -8168,7 +8946,12 @@ invoiceSeal: string = '';
     const matchesLeadWorkspaceFilter = (lead: Lead): boolean => {
       if (search && !this.matchLead(lead, search)) return false;
       if (selectedLeadSet && lead.setLabel !== selectedLeadSet) return false;
-      if (selectedLeadDivision && String(lead.mainDivisionDescription || '').trim() !== selectedLeadDivision) return false;
+      if (selectedLeadDivision) {
+        const leadCat = this.getSectorCategoryForDivision(lead.mainDivisionDescription || '');
+        if (leadCat !== selectedLeadDivision && String(lead.mainDivisionDescription || '').trim() !== selectedLeadDivision) {
+          return false;
+        }
+      }
       return true;
     };
     const normalizedStatus = (status: string) => String(status || '').trim().toLowerCase();
@@ -8740,8 +9523,6 @@ invoiceSeal: string = '';
         return 'Today History';
       case 'invoices':
         return 'Invoices';
-      case 'client-onboarding':
-        return 'Client Onboarding';
       case 'quotations':
         return 'Quotations';
       default:
@@ -8753,7 +9534,6 @@ invoiceSeal: string = '';
     if (this.dashTab === 'overview') return 'Overview';
     if (this.dashTab === 'followups') return 'Follow-ups';
     if (this.dashTab === 'invoices') return 'Invoices';
-    if (this.dashTab === 'client-onboarding') return 'Client Onboarding';
     if (this.dashTab === 'quotations') return 'Quotations';
     return this.activeWorkspaceTitle || 'DealVoice';
   }
@@ -8774,8 +9554,6 @@ invoiceSeal: string = '';
         return 'Today’s updated records and live work history.';
       case 'invoices':
         return 'Create invoices for onboarded clients and review saved invoice history.';
-      case 'client-onboarding':
-        return 'Onboard client companies and keep their generated client IDs ready for delivery workflows.';
       case 'quotations':
         return 'Create quotations for leads and review saved quotation history.';
       default:

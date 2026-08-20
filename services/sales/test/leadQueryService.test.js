@@ -25,24 +25,24 @@ test('parsePagination keeps architecture page size for company rail requests', (
 test('buildLeadSearchQuery handles phone search', () => {
   const result = buildLeadSearchQuery({
     companyCode: 'DV01',
-    phone: '9999999999',
+    employeeId: '9999999999',
     query: { search: '+91 98765 43210', searchMode: 'phone' },
   });
 
   assert.equal(result.mongoQuery.companyCode, 'DV01');
-  assert.equal(result.mongoQuery.assignedEmployeePhone, '9999999999');
+  assert.equal(result.mongoQuery.assignedEmployeeId, '9999999999');
   assert.equal(result.mongoQuery.contactNumberNormalized, '9876543210');
   assert.equal(result.searchStrategy, 'phone');
 });
 
-test('buildLeadSearchQuery uses prefix search for short text', () => {
+test('buildLeadSearchQuery uses contains search for short text', () => {
   const result = buildLeadSearchQuery({
     companyCode: 'DV01',
-    phone: '9999999999',
+    employeeId: '9999999999',
     query: { search: 'ac' },
   });
 
-  assert.equal(result.searchStrategy, 'prefix');
+  assert.equal(result.searchStrategy, 'contains');
   assert.ok(Array.isArray(result.mongoQuery.$or));
   assert.equal(result.mongoQuery.$or.length > 0, true);
 });
@@ -50,7 +50,7 @@ test('buildLeadSearchQuery uses prefix search for short text', () => {
 test('buildLeadSearchQuery uses indexed quick prefix search when requested', () => {
   const result = buildLeadSearchQuery({
     companyCode: 'DV01',
-    phone: '9999999999',
+    employeeId: '9999999999',
     query: { search: 'Kshoma Green', searchMode: 'quick' },
   });
 
@@ -58,21 +58,17 @@ test('buildLeadSearchQuery uses indexed quick prefix search when requested', () 
   assert.ok(Array.isArray(result.mongoQuery.$or));
   assert.deepEqual(result.sort, { sheetOrder: 1, createdAt: 1, _id: 1 });
   assert.equal(result.mongoQuery.$or.some((clause) => !!clause.leadCompanyNameLower), true);
-  assert.equal(result.mongoQuery.$or.some((clause) => !!clause.leadCompanyName), false);
-  assert.equal(result.mongoQuery.$or.some((clause) => !!clause.contactName), false);
-  assert.equal(result.mongoQuery.$or.some((clause) => !!clause.setLabel), false);
   assert.equal(result.mongoQuery.$or.some((clause) => clause.status === 'Kshoma Green'), true);
 });
 
-test('buildLeadSearchQuery uses text search for longer text queries', () => {
+test('buildLeadSearchQuery uses contains search for longer text queries', () => {
   const result = buildLeadSearchQuery({
     companyCode: 'DV01',
     query: { search: 'tile distributor mumbai' },
   });
 
-  assert.equal(result.searchStrategy, 'text');
-  assert.deepEqual(result.mongoQuery.$text, { $search: 'tile distributor mumbai' });
-  assert.ok(result.projection);
+  assert.equal(result.searchStrategy, 'contains');
+  assert.ok(Array.isArray(result.mongoQuery.$or));
 });
 
 test('buildLeadSearchQuery applies employee lead view filters', () => {

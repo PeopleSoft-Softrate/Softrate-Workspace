@@ -205,6 +205,7 @@ export class AdminSettingsWorkflow {
     vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(settings.invoiceLogo || DEFAULT_INVOICE_LOGO);
     vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(settings.invoiceSeal || '');
     vm.settingsInvoiceTerms = settings.invoiceTerms || '';
+    vm.settingsQuotationBannerText = settings.quotationBannerText || 'Think Software,\nThink Softrate.';
     vm.settingsShowCompanyNameOnInvoice = settings.showCompanyNameOnInvoice ?? true;
     vm.settingsGstNumber = settings.gstNumber || '';
     vm.settingsGstPercentage = settings.gstPercentage ?? 18;
@@ -231,6 +232,7 @@ export class AdminSettingsWorkflow {
           vm.settingsInvoiceLogo = this.normalizeAppAssetUrl(res.settings.invoiceLogo || '/assets/logos/softrate-logo-dark.png');
           vm.settingsInvoiceSeal = this.normalizeAppAssetUrl(res.settings.invoiceSeal || '');
           vm.settingsInvoiceTerms = res.settings.invoiceTerms || '';
+          vm.settingsQuotationBannerText = res.settings.quotationBannerText || 'Think Software,\nThink Softrate.';
           vm.settingsShowCompanyNameOnInvoice = res.settings.showCompanyNameOnInvoice ?? true;
           vm.settingsGstNumber = res.settings.gstNumber || '';
           vm.settingsGstPercentage = res.settings.gstPercentage ?? 18;
@@ -413,6 +415,7 @@ export class AdminSettingsWorkflow {
       invoiceLogo: vm.settingsInvoiceLogo,
       invoiceSeal: vm.settingsInvoiceSeal,
       invoiceTerms: vm.settingsInvoiceTerms,
+      quotationBannerText: vm.settingsQuotationBannerText,
       showCompanyNameOnInvoice: vm.settingsShowCompanyNameOnInvoice,
       gstNumber: vm.settingsGstNumber,
       gstPercentage: vm.settingsGstPercentage,

@@ -24,6 +24,7 @@ function mapClient(client = {}) {
     id: String(source._id || ''),
     companyCode: source.companyCode || '',
     clientId: source.clientId || '',
+    leadId: source.leadId || '',
     companyName: source.companyName || '',
     leadCompanyName: source.companyName || '',
     primaryContact: source.primaryContactName || 'Primary Contact',
@@ -70,6 +71,7 @@ function clientPayloadFromLead(lead) {
   return {
     companyCode: stringValue(lead.companyCode),
     companyName: stringValue(lead.leadCompanyName),
+    leadId: stringValue(lead.leadId),
     primaryContactName: stringValue(lead.contactName),
     primaryPhone: stringValue(lead.contactNumber),
     primaryEmail: email,
@@ -193,6 +195,7 @@ async function createClientPayload({ ClientModel, CounterModel }, payload, optio
 
       const update = {
         $set: {
+          leadId: existing.leadId || stringValue(payload.leadId),
           primaryContactName: existing.primaryContactName || stringValue(payload.primaryContactName),
           primaryPhone: existing.primaryPhone || stringValue(payload.primaryPhone),
           primaryEmail: existing.primaryEmail || stringValue(payload.primaryEmail),
@@ -218,6 +221,7 @@ async function createClientPayload({ ClientModel, CounterModel }, payload, optio
       client = await ClientModel.create({
         companyCode,
         clientId: await nextClientId({ CounterModel }, companyCode),
+        leadId: stringValue(payload.leadId),
         companyName,
         primaryContactName: stringValue(payload.primaryContactName || payload.contactName),
         primaryPhone: stringValue(payload.primaryPhone || payload.contactNumber || payload.phone),

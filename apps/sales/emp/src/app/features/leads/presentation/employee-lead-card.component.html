@@ -29,11 +29,11 @@
   </div>
 
   <div class="lead-card-invoice-actions">
-    <button class="lead-card-invoice-action" type="button" title="+ quotation" (click)="$event.stopPropagation(); quotationOpen.emit(lead)" *ngIf="showQuotationAction; else invoiceLeadAction">
-      <span style="display: none !important;"></span><span>+ Quotation</span>
-    </button>
     <button class="lead-card-invoice-action" type="button" title="+ proposal" (click)="$event.stopPropagation(); proposalOpen.emit(lead)" *ngIf="showQuotationAction">
       <span style="display: none !important;"></span><span>+ Proposal</span>
+    </button>
+    <button class="lead-card-invoice-action" type="button" title="+ quotation" (click)="$event.stopPropagation(); quotationOpen.emit(lead)" *ngIf="showQuotationAction; else invoiceLeadAction">
+      <span style="display: none !important;"></span><span>+ Quotation</span>
     </button>
     <ng-template #invoiceLeadAction>
       <button class="lead-card-invoice-action" type="button" title="+ invoice" (click)="$event.stopPropagation(); invoiceOpen.emit(lead)">

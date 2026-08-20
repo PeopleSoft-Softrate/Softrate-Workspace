@@ -16,6 +16,7 @@ const quotationSchema = new mongoose.Schema({
   employeeName: { type: String, default: '' },
   clientId: { type: String, default: '', index: true },
   leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', default: null, index: true },
+  leadCode: { type: String, default: '', index: true },
   leadCompanyName: { type: String, required: true },
   contactName: { type: String, default: '' },
   contactNumber: { type: String, default: '' },

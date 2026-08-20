@@ -11,8 +11,8 @@ export type EmployeePageId =
   | 'favourite'
   | 'today-calls'
   | 'invoices'
-  | 'client-onboarding'
   | 'quotations'
+  | 'proposals'
   | 'activities'
   | 'pipeline';
 
@@ -26,8 +26,8 @@ export const EMPLOYEE_PAGES: readonly EmployeePageId[] = [
   'favourite',
   'today-calls',
   'invoices',
-  'client-onboarding',
   'quotations',
+  'proposals',
   'activities',
   'pipeline'
 ];

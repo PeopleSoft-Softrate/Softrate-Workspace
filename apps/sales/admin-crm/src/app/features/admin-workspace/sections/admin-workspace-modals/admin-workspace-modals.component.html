@@ -592,8 +592,11 @@
 
       <div class="lead-detail-main company-full-main" id="company-full-scroll-root">
         <div class="lead-detail-header company-full-header">
-          <div class="lead-detail-title-row">
+          <div class="lead-detail-title-row" style="display: flex; align-items: center; gap: 10px;">
             <h3>{{ vm.companyFullCompanyName() }}</h3>
+            <span *ngIf="vm.companyFullLeadId()" class="lead-badge" style="font-size: 13px; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
+              {{ vm.companyFullLeadId() }}
+            </span>
           </div>
         </div>
 
@@ -609,80 +612,20 @@
           <section class="company-full-card" [id]="vm.companyFullSectionId('overview')">
             <div class="company-full-card-head" style="display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 12px;">
-                <h4 style="margin: 0;">Overview</h4>
+                <h4 style="margin: 0;">Company Details</h4>
               </div>
-              <button class="icon-button" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-light); background: #fff; border-radius: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-dark);" (click)="vm.openOverviewEditModal()">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                Edit Overview
-              </button>
             </div>
 
             <div class="lead-detail-summary company-full-overview-grid"
               *ngIf="vm.companyFullViewLead() as companyLead; else emptyCompanyFullOverview">
-              <div class="lead-detail-column">
-                <div class="lead-detail-field">
-                  <span>Primary Contact</span>
-                  <strong>{{ vm.companyFullPrimaryContact() }}</strong>
-                </div>
-                <div class="lead-detail-field">
-                  <span>Email</span>
-                  <strong [title]="vm.companyFullPrimaryEmail()">{{ vm.companyFullPrimaryEmail() }}</strong>
-                </div>
-                <div class="lead-detail-section">
-                  <div class="lead-detail-section-title">Company Context</div>
-                  <div class="company-full-context-copy">
-                    {{ vm.companyFullViewContext() || 'No company context recorded.' }}
-                  </div>
-                </div>
-              </div>
-
-              <div class="lead-detail-column lead-detail-column-side">
-                <div class="lead-detail-grid company-full-meta-grid">
-                  <div class="lead-detail-field">
-                    <span>Phone</span>
-                    <strong class="nowrap-value" [title]="vm.companyFullPrimaryPhone()">{{ vm.companyFullPrimaryPhone()
-                      }}</strong>
-                  </div>
-                  <div class="lead-detail-field">
-                    <span>Latest Update</span>
-                    <strong class="nowrap-value">{{ vm.companyFullLatestUpdate() }}</strong>
-                  </div>
-                  <div class="lead-detail-field">
-                    <span>Contacts</span>
-                    <strong>{{ vm.companyFullViewRows().length }}</strong>
-                  </div>
-                  <div class="lead-detail-field">
-                    <span>Set</span>
-                    <strong>{{ vm.companyFullSetSummary() }}</strong>
-                  </div>
-                  <div class="lead-detail-field">
-                    <span>Primary Status</span>
-                    <strong [style.color]="vm.leadStatusColor(vm.companyFullPrimaryStatus())">{{
-                      vm.companyFullPrimaryStatus() }}</strong>
-                  </div>
-                  <div class="lead-detail-field">
-                    <span>Alternate Phone</span>
-                    <strong class="nowrap-value" [title]="vm.companyFullAlternatePhoneValue()">{{ vm.companyFullAlternatePhoneValue() }}</strong>
-                  </div>
-                  <div class="lead-detail-field">
-                    <span>Alternate Email</span>
-                    <strong class="nowrap-value" [title]="vm.companyFullAlternateEmailValue()">{{ vm.companyFullAlternateEmailValue() }}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Full-width Section Divider -->
-              <div style="grid-column: span 2; border-top: 1px solid #e2e8f0; margin: 16px 0 8px 0;"></div>
 
               <!-- Full-width Detailed Fields Grid (3-column layout aligning from the left) -->
               <div style="grid-column: span 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px; min-width: 0;">
                 
-                <!-- Section 1: Company Profile -->
-                <div style="grid-column: span 3; font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Company Registration</div>
-                
+                <div class="lead-detail-field" *ngIf="vm.companyFullLeadId()">
+                  <span>Lead ID</span>
+                  <strong class="nowrap-value" [title]="vm.companyFullLeadId()">{{ vm.companyFullLeadId() }}</strong>
+                </div>
                 <div class="lead-detail-field" *ngIf="companyLead.cin">
                   <span>CIN</span>
                   <strong class="nowrap-value" [title]="companyLead.cin">{{ companyLead.cin }}</strong>
@@ -836,11 +779,6 @@
                     <strong class="nowrap-value" [title]="lead.directorDin">{{ lead.directorDin }}</strong>
                   </div>
 
-                  <div class="lead-detail-field" *ngIf="lead.directorMobileNumber && lead.directorMobileNumber !== lead.contactNumber">
-                    <span>Dir. Mobile</span>
-                    <strong class="nowrap-value" [title]="lead.directorMobileNumber">{{ lead.directorMobileNumber }}</strong>
-                  </div>
-
                   <div class="lead-detail-field">
                     <span>Status</span>
                     <strong [style.color]="vm.leadStatusColor(lead.status)">{{ lead.status || 'New' }}</strong>
@@ -932,7 +870,7 @@
 
             <!-- Deals List -->
             <div class="deal-list-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;" *ngIf="vm.companyFullDeals.length > 0">
-              <div *ngFor="let deal of vm.companyFullDeals" style="border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #fafafa;">
+              <div *ngFor="let deal of vm.companyFullDeals; trackBy: vm.trackByAdminRecordIdentity" style="border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #fafafa;">
                 <div>
                   <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Deal Name</div>
                   <div style="font-size: 0.85rem; font-weight: 600;">{{ deal.dealName }}</div>
@@ -963,10 +901,10 @@
               </div>
               
               <div *ngIf="vm.companyFullPipelineHistoryLogs.length > 0">
-                <ng-container *ngFor="let dealGroup of vm.groupedPipelineHistoryLogs">
+                <ng-container *ngFor="let dealGroup of vm.groupedPipelineHistoryLogs; trackBy: vm.trackByDealGroup">
                   <h5 style="margin: 16px 0 12px 0; font-size: 0.9rem; color: var(--primary-main); font-weight: 600;">{{ dealGroup.dealName || 'Legacy Deal' }}</h5>
                   <div style="border-left: 2px solid #e2e8f0; padding-left: 20px; margin-left: 6px; display: flex; flex-direction: column; gap: 24px;">
-                    <div *ngFor="let log of dealGroup.logs" style="position: relative;">
+                    <div *ngFor="let log of dealGroup.logs; trackBy: vm.trackByHistoryIdentity" style="position: relative;">
                       <!-- Timeline Dot -->
                       <div style="position: absolute; width: 10px; height: 10px; background: #94a3b8; border-radius: 50%; left: -26px; top: 5px; box-shadow: 0 0 0 4px #fff;"></div>
                       
@@ -1303,44 +1241,48 @@
 
       <ng-template #adminQuotationPrintBody>
         <section class="quotation-letter">
-          <h3>Dear {{ vm.invoiceLead?.contactName || 'Client' }},</h3>
-          <strong>{{ vm.invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
-          <p>It was a pleasure speaking with you.</p>
-          <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide
-            you with the cost details of our services.</p>
+          <h3 class="quotation-salutation">Dear {{ vm.invoiceLead?.contactName || 'Sir/Ma\'am' }},</h3>
+          <strong class="quotation-client-company">{{ (vm.invoiceLead?.leadCompanyName || 'CLIENT COMPANY') | uppercase }}</strong>
+          <p>Thank you for choosing {{ vm.invoiceCompanyDisplayName() || 'Softrate' }}. It was a pleasure speaking with you!</p>
+          <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide you with the cost details of our services.</p>
         </section>
 
         <section class="quotation-service-card">
           <div class="quotation-service-header">
-            <span>Item Description</span>
-            <span>Qty</span>
-            <span>Price</span>
-            <span>Amount</span>
+            <span>ITEM DESCRIPTION</span>
+            <span>QTY</span>
+            <span>PRICE</span>
+            <span>AMOUNT</span>
           </div>
           <div class="quotation-service-body">
             <div class="quotation-service-row" *ngFor="let item of vm.invoiceItems">
-              <span>{{ item.name }}</span>
-              <span>{{ item.quantity }}</span>
-              <span>{{ item.price | number:'1.0-0' }}</span>
-              <span>{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
+              <div class="quotation-item-main">
+                <span class="quotation-item-name">{{ item.name }}</span>
+                <span class="quotation-item-desc" *ngIf="$any(item).description || item.product?.description">{{ $any(item).description || item.product?.description }}</span>
+              </div>
+              <span class="quotation-col-qty">{{ item.quantity }}</span>
+              <span class="quotation-col-price">₹{{ (item.price || 0) | number:'1.0-0' }}</span>
+              <span class="quotation-col-amount">₹{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
             </div>
-            <div class="quotation-total-panel">
-              <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === null">
-                * Exclude {{ vm.settingsGstPercentage || 18 }}% GST
-              </p>
-              <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === 0">
-                * 0% GST
-              </p>
-              <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === -1">
-                * Exclude GST
-              </p>
+
+            <div class="quotation-table-bottom-bar">
+              <div class="quotation-gst-note-wrap">
+                <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === null">
+                  * Exclude {{ vm.settingsGstPercentage || 18 }}% GST
+                </p>
+                <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === 0">
+                  * 0% GST
+                </p>
+                <p class="gst-exempt-footnote" *ngIf="vm.documentGstPercentageOverride === -1">
+                  * Exclude GST
+                </p>
+              </div>
+              <div class="quotation-grand-total-wrap">
+                <span class="quotation-grand-total-label">GRAND TOTAL</span>
+                <strong class="quotation-grand-total-val">₹{{ vm.invoiceSubtotal | number:'1.0-0' }}</strong>
+              </div>
             </div>
           </div>
-        </section>
-
-        <section class="quotation-kind-note">
-          <strong>Kind Note:</strong>
-          <span>{{ vm.quotationKindNoteText() }}</span>
         </section>
       </ng-template>
 
@@ -1492,10 +1434,9 @@
                     </div>
                     <div class="quotation-hero-title">
                       <h2>Quotation</h2>
-                      <span>Quote Number</span>
-                      <strong>{{ vm.invoiceNumber() }}</strong>
-                      <span>Date of issue</span>
-                      <strong>{{ vm.invoiceIssuedAt | date:'dd/MM/yyyy' }}</strong>
+                      <span class="quotation-hero-label">Quote Number</span>
+                      <strong class="quotation-hero-number">{{ vm.invoiceNumber() }}</strong>
+                      <span class="quotation-hero-date">{{ vm.formatQuotationDate(vm.invoiceIssuedAt) }}</span>
                     </div>
                   </header>
 
@@ -1504,41 +1445,52 @@
 
                 <section class="quotation-page quotation-terms-page">
                   <div class="quotation-partner-panel">
-                    <h2>Your Trusted Tech Partner</h2>
+                    <h2>{{ vm.quotationBannerDisplayText() }}</h2>
                   </div>
 
                   <div class="quotation-terms-grid">
-                    <section class="quotation-terms-box quotation-payable-box">
-                      <h3>Payable To</h3>
-                      <strong>{{ vm.invoiceCompanyDisplayName() }}</strong>
-                      <p *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</p>
+                    <div class="quotation-card-box quotation-payable-card">
+                      <h3 class="quotation-section-title">Payable To</h3>
+                      <div class="quotation-company-name">{{ vm.invoiceCompanyDisplayName() }}</div>
 
-                      <h3 class="quotation-bank-heading">Bank Details</h3>
+                      <h3 class="quotation-section-title quotation-bank-heading">Bank Details</h3>
                       <div class="quotation-bank-list"
                         *ngIf="vm.quotationBankRows().length; else adminQuotationNoBankDetails">
                         <div class="quotation-bank-row" *ngFor="let row of vm.quotationBankRows()">
-                          <span>{{ row.label }}</span>
-                          <strong>{{ row.value }}</strong>
+                          <span class="quotation-bank-label">{{ row.label }}</span>
+                          <span class="quotation-bank-colon">:</span>
+                          <span class="quotation-bank-val">{{ row.value }}</span>
                         </div>
                       </div>
                       <ng-template #adminQuotationNoBankDetails>
                         <p class="quotation-muted-line">Bank details not configured.</p>
                       </ng-template>
-                    </section>
+                    </div>
 
-                    <section class="quotation-terms-box quotation-conditions-box">
-                      <h3>Terms and conditions:</h3>
-                      <ul>
+                    <div class="quotation-card-box quotation-conditions-card">
+                      <h3 class="quotation-section-title">Terms and conditions:</h3>
+                      <ul class="quotation-conditions-list">
                         <li *ngFor="let term of vm.quotationTerms">{{ term }}</li>
                       </ul>
-                    </section>
+                    </div>
+                  </div>
+
+                  <div class="quotation-card-box quotation-mission-card">
+                    <p class="quotation-mission-text">
+                      We aimed to provide the best software to automate your business (Our Charges were 50% less than market price with a mantra “High quality at affordable cost”)
+                    </p>
+                    <p class="quotation-tax-note">
+                      The price mentioned above is exclusive of applicable tax.
+                    </p>
                   </div>
 
                   <footer class="quotation-terms-footer">
-                    <strong>{{ vm.invoiceCompanyDisplayName() }}</strong>
-                    <span *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</span>
-                    <span *ngIf="vm.invoiceContactLine()">{{ vm.invoiceContactLine() }}</span>
-                    <span>Copyright © {{ vm.currentYear }} All Rights Reserved</span>
+                    <strong class="quotation-footer-company">{{ vm.invoiceCompanyDisplayName() }}</strong>
+                    <span class="quotation-footer-contact">{{ vm.quotationFooterContactLine() }}</span>
+                    <span class="quotation-footer-copy">Copyright © {{ vm.currentYear }} All Rights Reserved</span>
+                    <div class="quotation-certifications-wrap">
+                      <img src="/assets/quotation/certifications-strip.png" alt="Accredited Certifications" class="quotation-certifications-img" />
+                    </div>
                   </footer>
                 </section>
               </ng-container>
@@ -1630,10 +1582,9 @@
                 </div>
                 <div class="quotation-hero-title">
                   <h2>Quotation</h2>
-                  <span>Quote Number</span>
-                  <strong>{{ vm.invoiceNumber() }}</strong>
-                  <span>Date of issue</span>
-                  <strong>{{ vm.invoiceIssuedAt | date:'dd/MM/yyyy' }}</strong>
+                  <span class="quotation-hero-label">Quote Number</span>
+                  <strong class="quotation-hero-number">{{ vm.invoiceNumber() }}</strong>
+                  <span class="quotation-hero-date">{{ vm.formatQuotationDate(vm.invoiceIssuedAt) }}</span>
                 </div>
               </header>
 
@@ -1642,41 +1593,52 @@
 
             <section class="quotation-page quotation-terms-page">
               <div class="quotation-partner-panel">
-                <h2>Your Trusted Tech Partner</h2>
+                <h2>{{ vm.quotationBannerDisplayText() }}</h2>
               </div>
 
               <div class="quotation-terms-grid">
-                <section class="quotation-terms-box quotation-payable-box">
-                  <h3>Payable To</h3>
-                  <strong>{{ vm.invoiceCompanyDisplayName() }}</strong>
-                  <p *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</p>
+                <div class="quotation-card-box quotation-payable-card">
+                  <h3 class="quotation-section-title">Payable To</h3>
+                  <div class="quotation-company-name">{{ vm.invoiceCompanyDisplayName() }}</div>
 
-                  <h3 class="quotation-bank-heading">Bank Details</h3>
+                  <h3 class="quotation-section-title quotation-bank-heading">Bank Details</h3>
                   <div class="quotation-bank-list"
                     *ngIf="vm.quotationBankRows().length; else adminQuotationNoBankDetails">
                     <div class="quotation-bank-row" *ngFor="let row of vm.quotationBankRows()">
-                      <span>{{ row.label }}</span>
-                      <strong>{{ row.value }}</strong>
+                      <span class="quotation-bank-label">{{ row.label }}</span>
+                      <span class="quotation-bank-colon">:</span>
+                      <span class="quotation-bank-val">{{ row.value }}</span>
                     </div>
                   </div>
                   <ng-template #adminQuotationNoBankDetails>
                     <p class="quotation-muted-line">Bank details not configured.</p>
                   </ng-template>
-                </section>
+                </div>
 
-                <section class="quotation-terms-box quotation-conditions-box">
-                  <h3>Terms and conditions:</h3>
-                  <ul>
+                <div class="quotation-card-box quotation-conditions-card">
+                  <h3 class="quotation-section-title">Terms and conditions:</h3>
+                  <ul class="quotation-conditions-list">
                     <li *ngFor="let term of vm.quotationTerms">{{ term }}</li>
                   </ul>
-                </section>
+                </div>
+              </div>
+
+              <div class="quotation-card-box quotation-mission-card">
+                <p class="quotation-mission-text">
+                  We aimed to provide the best software to automate your business (Our Charges were 50% less than market price with a mantra “High quality at affordable cost”)
+                </p>
+                <p class="quotation-tax-note">
+                  The price mentioned above is exclusive of applicable tax.
+                </p>
               </div>
 
               <footer class="quotation-terms-footer">
-                <strong>{{ vm.invoiceCompanyDisplayName() }}</strong>
-                <span *ngIf="vm.invoiceCompanyAddress()">{{ vm.invoiceCompanyAddress() }}</span>
-                <span *ngIf="vm.invoiceContactLine()">{{ vm.invoiceContactLine() }}</span>
-                <span>Copyright © {{ vm.currentYear }} All Rights Reserved</span>
+                <strong class="quotation-footer-company">{{ vm.invoiceCompanyDisplayName() }}</strong>
+                <span class="quotation-footer-contact">{{ vm.quotationFooterContactLine() }}</span>
+                <span class="quotation-footer-copy">Copyright © {{ vm.currentYear }} All Rights Reserved</span>
+                <div class="quotation-certifications-wrap">
+                  <img src="/assets/quotation/certifications-strip.png" alt="Accredited Certifications" class="quotation-certifications-img" />
+                </div>
               </footer>
             </section>
           </ng-container>
@@ -2005,8 +1967,11 @@
       <!-- MAIN CONTENT -->
       <div class="lead-detail-main company-full-main" id="client-profile-scroll-root">
         <div class="lead-detail-header company-full-header">
-          <div class="lead-detail-title-row">
+          <div class="lead-detail-title-row" style="display: flex; align-items: center; gap: 10px;">
             <h3>{{ vm.selectedClientProfile?.client?.companyName || 'Loading...' }}</h3>
+            <span *ngIf="vm.selectedClientProfile?.client?.leadId || vm.selectedClientProfile?.leadDetails?.leadId" class="lead-badge" style="font-size: 13px; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
+              {{ vm.selectedClientProfile.client.leadId || vm.selectedClientProfile.leadDetails?.leadId }}
+            </span>
             <span *ngIf="vm.selectedClientProfile?.leadDetails?.isStarred" class="crm-status-pill status-starred" style="margin-left: 1rem; color: #eab308; background: #fef9c3; border-color: #fef08a;">★ Starred</span>
           </div>
         </div>
@@ -2024,6 +1989,10 @@
               </div>
               <div class="lead-detail-summary company-full-overview-grid">
                 <div class="lead-detail-column">
+                  <div class="lead-detail-field" *ngIf="vm.selectedClientProfile.client.leadId || vm.selectedClientProfile.leadDetails?.leadId">
+                    <span>Lead ID</span>
+                    <strong>{{ vm.selectedClientProfile.client.leadId || vm.selectedClientProfile.leadDetails?.leadId }}</strong>
+                  </div>
                   <div class="lead-detail-field">
                     <span>Client ID</span>
                     <strong>{{ vm.selectedClientProfile.client.clientId || '-' }}</strong>
@@ -2492,8 +2461,10 @@
   [baseCompanyCode]="vm.baseCompanyCode || vm.dashboardCode"
   [collaboratingCompanies]="vm.settingsCollaboratingCompanies || []"
   [lead]="vm.proposalModalLead"
+  [savedProposalRecord]="vm.savedProposalRecordForModal"
   (close)="vm.closeProposalModal()"
   (onProposalSent)="vm.onProposalSentFromModal($event)"
+  (onProposalSaved)="vm.fetchProposalRecords(true)"
 ></app-proposal-generator-modal>
 
 <!-- Admin Deal Modal -->
@@ -2560,35 +2531,35 @@
 </div>
 
 <!-- Add Lead Modal -->
-<div class="invoice-overlay" *ngIf="vm.addLeadModalVisible" (mousedown)="vm.closeAddLeadModal()" style="z-index: 10000;">
-  <div class="invoice-modal client-onboarding-modal" style="background: #ffffff; width: min(600px, calc(100vw - 32px)); max-width: 600px; padding: 40px; border-radius: 14px; position: relative;" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
-    <button class="client-onboarding-modal-close" type="button" (click)="vm.closeAddLeadModal()" aria-label="Close add lead">✕</button>
-      
-    <h2 class="client-onboarding-modal-title">Add Single Lead</h2>
-    <p class="client-onboarding-modal-subtitle">Manually add a new lead to the list.</p>
+<!-- Add Single Lead Side Drilldown Drawer -->
+<div class="add-lead-drilldown-overlay" *ngIf="vm.addLeadModalVisible" (mousedown)="vm.closeAddLeadModal()">
+  <div class="add-lead-drilldown-panel" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <div class="add-lead-drilldown-header">
+      <h2 class="add-lead-drilldown-title">Add Single Lead</h2>
+      <p class="add-lead-drilldown-subtitle">Manually add a new lead to your list.</p>
+      <button class="add-lead-drilldown-close" type="button" (click)="vm.closeAddLeadModal()" aria-label="Close add lead">✕</button>
+    </div>
     
-    <div class="client-onboarding-form client-onboarding-modal-form" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;">
-      
+    <div class="add-lead-drilldown-body">
       <!-- Company Details Section -->
-      <h3 style="font-size: 1rem; color: #1e293b; margin-bottom: 12px; margin-top: 0; font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">Company Details</h3>
+      <h3 style="font-size: 0.95rem; color: var(--text-strong, #1e293b); margin: 0 0 14px 0; font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid var(--border, #e2e8f0);">Company Details</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
         <div class="form-group" style="grid-column: span 2;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Company Name *</label>
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Company Name *</label>
           <input class="field-input" type="text" placeholder="Company Name" [(ngModel)]="vm.newLeadCompanyDetails.leadCompanyName" />
         </div>
         
         <div class="form-group" style="grid-column: span 2;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Assigned Employee</label>
-          <select class="field-select" [(ngModel)]="vm.newLeadAssignedEmployeeId" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Assigned Employee</label>
+          <select class="field-select" [(ngModel)]="vm.newLeadAssignedEmployeeId" style="width: 100%; border: 1px solid var(--border, #e2e8f0); border-radius: 6px; padding: 10px; font-size: 0.95rem;">
             <option value="">Unassigned (Admin Default)</option>
             <option *ngFor="let emp of vm.employees" [value]="emp._id">{{ emp.name || emp.mobile }}</option>
           </select>
         </div>
         
         <div class="form-group">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Status</label>
-          <select class="field-select" [(ngModel)]="vm.newLeadCompanyDetails.status" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem;">
-            <option value="New">New</option>
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Status</label>
+          <select class="field-select" [(ngModel)]="vm.newLeadCompanyDetails.status" style="width: 100%; border: 1px solid var(--border, #e2e8f0); border-radius: 6px; padding: 10px; font-size: 0.95rem;">
             <option value="Connected">Connected</option>
             <option value="Interested">Interested</option>
             <option value="Converted">Converted</option>
@@ -2596,8 +2567,8 @@
         </div>
 
         <div class="form-group">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Source of Lead</label>
-          <select class="field-select" [(ngModel)]="vm.newLeadCompanyDetails.setLabel" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.95rem;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Source of Lead</label>
+          <select class="field-select" [(ngModel)]="vm.newLeadCompanyDetails.setLabel" style="width: 100%; border: 1px solid var(--border, #e2e8f0); border-radius: 6px; padding: 10px; font-size: 0.95rem;">
             <option value="">-- Select Source --</option>
             <option value="Inbound lead">Inbound lead</option>
             <option value="Outbound lead">Outbound lead</option>
@@ -2608,61 +2579,64 @@
         </div>
 
         <div class="form-group">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Division</label>
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Division</label>
           <input class="field-input" type="text" placeholder="Main Division" [(ngModel)]="vm.newLeadCompanyDetails.mainDivisionDescription" />
         </div>
         
         <div class="form-group">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">CIN</label>
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">CIN</label>
           <input class="field-input" type="text" placeholder="CIN" [(ngModel)]="vm.newLeadCompanyDetails.cin" />
         </div>
 
         <div class="form-group" style="grid-column: span 2;">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Remarks</label>
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Remarks</label>
           <input class="field-input" type="text" placeholder="Remarks" [(ngModel)]="vm.newLeadCompanyDetails.remarks" />
         </div>
       </div>
 
       <!-- Directors Section -->
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px;">
-        <h3 style="font-size: 1rem; color: #1e293b; margin: 0; font-weight: 600;">Directors / Contacts</h3>
-        <button type="button" class="view-mode-btn" style="padding: 4px 10px; font-size: 12px; height: auto;" (click)="vm.addDirector()">+ Add Director</button>
+      <div style="display: flex; align-items: center; border-bottom: 1px solid var(--border, #e2e8f0); padding-bottom: 8px; margin-bottom: 14px;">
+        <h3 style="font-size: 0.95rem; color: var(--text-strong, #1e293b); margin: 0; font-weight: 700;">Directors / Contacts</h3>
       </div>
 
-      <div *ngFor="let director of vm.newLeadDirectors; let i = index" style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; position: relative; border: 1px solid #e2e8f0;">
-        <h4 style="margin: 0 0 12px 0; font-size: 0.9rem; color: #334155;">Director {{ i + 1 }}</h4>
-        <button *ngIf="i > 0" type="button" (click)="vm.removeDirector(i)" style="position: absolute; right: 12px; top: 12px; background: none; border: none; color: #ef4444; font-size: 0.85rem; cursor: pointer;">Remove</button>
+      <div *ngFor="let director of vm.newLeadDirectors; let i = index" style="background: var(--surface-secondary, #f8fafc); padding: 16px; border-radius: 8px; margin-bottom: 16px; position: relative; border: 1px solid var(--border, #e2e8f0);">
+        <h4 style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--text-strong, #334155); font-weight: 600;">Director {{ i + 1 }}</h4>
+        <button *ngIf="i > 0" type="button" (click)="vm.removeDirector(i)" style="position: absolute; right: 12px; top: 12px; background: none; border: none; color: #ef4444; font-size: 0.85rem; cursor: pointer; font-weight: 600;">Remove</button>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="form-group">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">First Name</label>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">First Name</label>
             <input class="field-input" type="text" placeholder="First Name" [(ngModel)]="director.firstName" />
           </div>
           
           <div class="form-group">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Last Name</label>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Last Name</label>
             <input class="field-input" type="text" placeholder="Last Name" [(ngModel)]="director.lastName" />
           </div>
           
           <div class="form-group">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Contact Number *</label>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Contact Number *</label>
             <input class="field-input" type="tel" placeholder="Contact Number" [(ngModel)]="director.contactNumber" />
           </div>
 
           <div class="form-group">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email Address</label>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">Email Address</label>
             <input class="field-input" type="email" placeholder="Email Address" [(ngModel)]="director.directorEmailAddress" />
           </div>
 
           <div class="form-group" style="grid-column: span 2;">
-            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">DIN</label>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted, #475569); display: block; margin-bottom: 6px;">DIN</label>
             <input class="field-input" type="text" placeholder="DIN" [(ngModel)]="director.directorDin" />
           </div>
         </div>
       </div>
+
+      <div style="margin-top: 4px; margin-bottom: 16px;">
+        <button type="button" class="view-mode-btn" style="padding: 8px 16px; font-size: 13px; font-weight: 600; height: auto; cursor: pointer;" (click)="vm.addDirector()">+ Add Director</button>
+      </div>
     </div>
     
-    <div class="client-onboarding-actions" style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+    <div class="add-lead-drilldown-footer">
       <button class="secondary-action" type="button" (click)="vm.closeAddLeadModal()" [disabled]="vm.addSingleLeadLoading">Cancel</button>
       <button class="primary-action" type="button" (click)="vm.saveSingleLead()" [disabled]="vm.addSingleLeadLoading || !vm.newLeadCompanyDetails.leadCompanyName">
         <span *ngIf="!vm.addSingleLeadLoading">Save Leads</span>

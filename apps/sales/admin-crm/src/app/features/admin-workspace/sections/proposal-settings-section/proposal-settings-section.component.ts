@@ -353,7 +353,7 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
 
   // ── PDF Import ─────────────────────────────────────────────────────────────
   // Renders a lightweight screen-res preview for the Konva canvas editor,
-  // and stores the original raw PDF bytes (base64) at the page level so
+  // and stores the single-page raw PDF bytes (base64) at the page level so
   // exportToPdf() can embed the content as a vector XObject (zero quality loss).
   onPdfImport(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return;
@@ -362,36 +362,50 @@ export class ProposalSettingsSectionComponent extends AdminWorkspaceSectionProxy
     const reader = new FileReader();
     reader.onload = async (e) => {
       const rawBuffer = e.target?.result as ArrayBuffer;
-      // Store raw bytes as base64 for lossless vector export
-      const rawPdfBase64 = this.arrayBufferToBase64(rawBuffer);
       const data = new Uint8Array(rawBuffer);
       try {
+        const { PDFDocument } = await import('pdf-lib');
+        const pdfLibDoc = await PDFDocument.load(data);
         const pdf = await pdfjsLib.getDocument({ data }).promise;
+
         for (let pn = 1; pn <= pdf.numPages; pn++) {
           const pg = await pdf.getPage(pn);
-          // Render preview at 2× for crisp display on HiDPI/retina screens
-          const displayDpr = Math.max(window.devicePixelRatio || 2, 2);
+          // Render preview at crisp DPR
+          const displayDpr = Math.min(Math.max(window.devicePixelRatio || 1.5, 1.5), 2);
           const previewScale = (A4_W / pg.getViewport({ scale: 1 }).width) * displayDpr;
           const vp = pg.getViewport({ scale: previewScale });
           const c = document.createElement('canvas');
           c.width  = Math.round(vp.width);
           c.height = Math.round(vp.height);
           await pg.render({ canvasContext: c.getContext('2d')!, viewport: vp }).promise;
-          const srcPreview = c.toDataURL('image/png');
+          // Use JPEG 0.85 for 10x smaller preview image payload
+          const srcPreview = c.toDataURL('image/jpeg', 0.85);
+
+          // Extract single page PDF bytes for lossless vector export
+          let singlePageBase64 = '';
+          try {
+            const singleDoc = await PDFDocument.create();
+            const [copiedPage] = await singleDoc.copyPages(pdfLibDoc, [pn - 1]);
+            singleDoc.addPage(copiedPage);
+            const singlePageBytes = await singleDoc.save();
+            singlePageBase64 = this.arrayBufferToBase64(singlePageBytes.buffer as ArrayBuffer);
+          } catch {
+            singlePageBase64 = '';
+          }
 
           if (pn > 1) this.addPage();
           const target = this.pages[this.activePageIndex + pn - 1] ?? this.pages[this.pages.length - 1];
 
-          // Store raw PDF bytes at page level (not in layer — stays out of the saved template JSON)
-          target.rawPdfBase64 = rawPdfBase64;
-          target.rawPdfPageIndex = pn - 1;
+          // Store extracted single page PDF bytes at page level
+          target.rawPdfBase64 = singlePageBase64;
+          target.rawPdfPageIndex = 0;
 
           this.pushHistory();
           target.layers.unshift({
             id: this.newId(), type: 'pdf_page',
             x: 0, y: 0, w: A4_W, h: A4_H,
             zIndex: 0, locked: true, hidden: false,
-            src: srcPreview,  // preview for canvas editor only
+            src: srcPreview,  // lightweight preview for canvas editor only
           });
         }
         this.renderCurrentPage();

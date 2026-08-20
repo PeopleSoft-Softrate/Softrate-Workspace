@@ -148,6 +148,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    quotationBannerText: {
+      type: String,
+      trim: true,
+      default: 'Think Software,\nThink Softrate.',
+    },
     showCompanyNameOnInvoice: {
       type: Boolean,
       default: true,

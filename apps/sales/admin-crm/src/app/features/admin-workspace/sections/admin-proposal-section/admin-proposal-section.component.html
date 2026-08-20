@@ -1,0 +1,116 @@
+<!-- ══ PROPOSALS HISTORY & VERSIONING TAB ══ -->
+<div *ngIf="dashTab==='proposals'" class="workspace invoice-workspace quotation-workspace admin-quotation-view" style="animation: fadeIn 0.4s ease-out; height: 100%;">
+
+
+  <div class="invoice-feature-grid" appPaneSplitter storageKey="admin_proposal_col_width">
+    <!-- LEFT: Proposal Leads (Clients) -->
+    <section class="invoice-feature-pane invoice-converted-pane">
+      <div class="invoice-pane-header">
+        <div>
+          <h2>Proposal Leads</h2>
+          <p>{{ proposalLeadsLoading ? 'Loading leads' : ((proposalLeadsTotal || adminProposalLeads.length) + ' listed') }}</p>
+        </div>
+      </div>
+      <div class="invoice-lead-list" (scroll)="onAdminProposalLeadScroll($event)">
+        <article
+          class="invoice-lead-row"
+          *ngFor="let lead of adminProposalLeads"
+          (click)="openProposalModal(lead)"
+          tabindex="0"
+          role="button"
+          style="cursor: pointer;"
+        >
+          <div class="invoice-lead-main">
+            <span class="invoice-lead-company">{{ lead.leadCompanyName || 'Unnamed Company' }}</span>
+            <span *ngIf="lead.contactName || lead.contactNumber">
+              {{ (lead.contactName && lead.contactNumber) ? (lead.contactName + ' · ' + lead.contactNumber) : (lead.contactName || lead.contactNumber) }}
+            </span>
+          </div>
+        </article>
+        <div *ngIf="proposalLeadsLoading" class="empty-state-inline">Loading leads...</div>
+        <div *ngIf="!proposalLeadsLoading && adminProposalLeads.length===0" class="empty-state-inline">No leads match the current search.</div>
+        <div *ngIf="proposalLeadsLoadingMore" class="scroll-page-state">Loading more leads...</div>
+        <div *ngIf="!proposalLeadsLoading && !proposalLeadsLoadingMore && adminProposalLeads.length > 0 && !proposalLeadsHasMore" class="scroll-page-state">End of leads</div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Proposal History & Client Versions -->
+    <section class="invoice-feature-pane invoice-history-pane">
+      <div class="invoice-pane-header invoice-pane-header-stacked">
+        <div>
+          <h2>Proposal History</h2>
+          <p>{{ proposalRecordsTotal || filteredProposalRecords.length }} saved proposals</p>
+        </div>
+        <div class="invoice-history-tools">
+          <label class="topbar-search invoice-history-search" for="adminProposalHistorySearch">
+            <span class="topbar-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m20 20-4.35-4.35"></path></svg>
+            </span>
+            <input id="adminProposalHistorySearch" class="topbar-input" type="text" placeholder="Search proposals..." [(ngModel)]="proposalHistorySearch" (ngModelChange)="onAdminProposalHistoryQueryChange()">
+          </label>
+          <button class="toolbar-button invoice-date-filter-button" type="button" (click)="proposalDateFilterOpen=!proposalDateFilterOpen">Date Filter</button>
+        </div>
+      </div>
+
+      <div class="invoice-date-filter-row" *ngIf="proposalDateFilterOpen">
+        <label class="mini-field"><span>From</span><input class="field-input" type="date" [(ngModel)]="proposalDateFrom" (change)="onAdminProposalHistoryQueryChange()"></label>
+        <label class="mini-field"><span>To</span><input class="field-input" type="date" [(ngModel)]="proposalDateTo" (change)="onAdminProposalHistoryQueryChange()"></label>
+        <button class="toolbar-button invoice-date-clear" type="button" (click)="proposalDateFrom=''; proposalDateTo=''; onAdminProposalHistoryQueryChange()">Clear</button>
+      </div>
+
+      <div class="table-scroll invoice-history-table" (scroll)="onAdminProposalHistoryScroll($event)">
+        <table class="data-table compact-table" appTableColumnResize storageKey="admin_proposal_table_cols">
+          <thead>
+            <tr>
+              <th>Lead ID</th>
+              <th>Date</th>
+              <th>Proposal</th>
+              <th>Version</th>
+              <th>Company</th>
+              <th>Template</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let proposal of filteredProposalRecords"
+              class="history-click-row"
+              (click)="openSavedProposal(proposal)"
+              tabindex="0"
+              role="button"
+              style="cursor: pointer;"
+            >
+              <td>
+                <span *ngIf="proposal.leadCode; else noProposalLead" class="lead-id-link" (click)="openCompanyFromLeadHistory(proposal, $event)" title="View company details">
+                  {{ proposal.leadCode }}
+                </span>
+                <ng-template #noProposalLead>—</ng-template>
+              </td>
+              <td>{{ proposal.proposalDate | date:'dd MMM yyyy' }}</td>
+              <td style="font-weight: 600; color: #0f172a;">{{ proposal.proposalNumber }}</td>
+              <td>
+                <span style="display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff;">
+                  v{{ proposal.versionNo || 1 }}
+                </span>
+              </td>
+              <td>{{ proposal.leadCompanyName }}</td>
+              <td>
+                <span style="font-size: 12px; color: #64748b;">{{ proposal.templateName || 'Default Template' }}</span>
+              </td>
+              <td>{{ proposal.contactName || proposal.contactNumber || '—' }}</td>
+            </tr>
+            <tr *ngIf="!proposalRecordsLoading && filteredProposalRecords.length===0">
+              <td colspan="7" class="empty-cell">No proposals generated yet.</td>
+            </tr>
+            <tr *ngIf="proposalRecordsLoading">
+              <td colspan="7" class="empty-cell">Loading proposals...</td>
+            </tr>
+            <tr *ngIf="proposalRecordsLoadingMore">
+              <td colspan="7" class="empty-cell">Loading more proposals...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

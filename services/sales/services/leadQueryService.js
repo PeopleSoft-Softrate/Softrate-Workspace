@@ -129,7 +129,27 @@ function buildBaseLeadQuery({ companyCode, employeeId, query = {} }) {
 
   const division = String(query.division ?? query.mainDivisionDescription ?? '').trim();
   if (division) {
-    mongoQuery.mainDivisionDescription = new RegExp(`^${escapeRegex(division)}$`, 'i');
+    const SECTOR_REGEX_MAP = {
+      'Technology & IT Services': /computer|programming|software|information service|telecom|data processing|consultancy and related|technology|cyber/i,
+      'Healthcare & Life Sciences': /health|hospital|medical|pharmaceutical|medicine|social work|clinic|nurs/i,
+      'Education & Training': /education|school|university|college|training|academic|coaching|teaching/i,
+      'Manufacturing & Industrial': /manufacture|fabricated|metal|machinery|equipment|textile|apparel|chemical|plastic|rubber|automobile|food product|beverage|paper|leather/i,
+      'Wholesale & Retail Trade': /wholesale|retail|trade|motor vehicle|motorcycle|dealer|distributor|store|shop/i,
+      'Real Estate & Construction': /real estate|construction|building|civil engineering|property|architect|developer|infrastructure/i,
+      'Finance, Legal & Professional': /financial|bank|insurance|monetary|fund|accounting|legal|audit|tax|management consultancy|scientific|advertising|market research/i,
+      'Media, Publishing & Entertainment': /publishing|motion picture|video|television|broadcast|sound recording|media|arts|entertainment|recreation|sports/i,
+      'Logistics, Transport & Hospitality': /transport|freight|cargo|warehous|storage|courier|postal|hotel|accommodation|restaurant|food service|hospitality/i,
+      'Agriculture, Energy & Resources': /agriculture|crop|animal|farm|forest|fishing|mining|quarry|electric|gas|water supply|waste|energy|solar/i,
+    };
+
+    if (SECTOR_REGEX_MAP[division]) {
+      mongoQuery.mainDivisionDescription = SECTOR_REGEX_MAP[division];
+    } else if (division === 'Other Industries & Services') {
+      const combinedKnown = new RegExp(Object.values(SECTOR_REGEX_MAP).map(r => r.source).join('|'), 'i');
+      mongoQuery.mainDivisionDescription = { $exists: true, $nin: ['', null], $not: combinedKnown };
+    } else {
+      mongoQuery.mainDivisionDescription = new RegExp(`^${escapeRegex(division)}$`, 'i');
+    }
   }
 
   const statuses = String(query.statuses ?? '')

@@ -4130,10 +4130,12 @@
 }
 
 .invoice-workspace {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
-  overflow: hidden;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
 }
 
 .invoice-feature-header {
@@ -4164,24 +4166,90 @@
   box-shadow: none;
 }
 
+.invoice-feature-header {
+  display: none !important;
+}
+
 .invoice-feature-grid {
-  display: grid;
-  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.35fr);
-  gap: 0;
-  min-height: 0;
-  overflow: hidden;
-  border-top: 1px solid var(--border);
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 0 !important;
+  min-height: 0 !important;
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  border-top: 1px solid var(--border) !important;
+  position: relative !important;
+}
+
+.invoice-feature-grid > .invoice-converted-pane {
+  flex: 0 0 auto !important;
+  min-width: 240px !important;
+  max-width: 80% !important;
+  overflow: hidden !important;
+  border-right: none !important;
+}
+
+.invoice-feature-grid > .invoice-history-pane {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.invoice-pane-resizer {
+  width: 8px !important;
+  min-width: 8px !important;
+  max-width: 8px !important;
+  cursor: col-resize !important;
+  background: #f8fafc !important;
+  border-left: 1px solid #e2e8f0 !important;
+  border-right: 1px solid #e2e8f0 !important;
+  position: relative !important;
+  z-index: 20 !important;
+  flex: 0 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  user-select: none !important;
+  touch-action: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.invoice-pane-resizer::after {
+  content: '' !important;
+  display: block !important;
+  width: 2px !important;
+  height: 24px !important;
+  border-radius: 2px !important;
+  background: #cbd5e1 !important;
+  transition: all 0.2s ease !important;
+}
+
+.invoice-pane-resizer:hover,
+.invoice-pane-resizer.is-resizing {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+}
+
+.invoice-pane-resizer:hover::after,
+.invoice-pane-resizer.is-resizing::after {
+  height: 40px !important;
+  background: #2563eb !important;
+}
+
+body.is-column-resizing,
+body.is-column-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .invoice-feature-pane {
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: #ffffff;
-}
-
-.invoice-converted-pane {
-  border-right: 1px solid var(--border);
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  background: #ffffff !important;
 }
 
 .invoice-pane-header {
@@ -4247,6 +4315,39 @@
   background: #ffffff;
 }
 
+.invoice-history-company-filter {
+  display: inline-flex;
+  align-items: center;
+}
+
+.invoice-history-company-select {
+  height: 38px !important;
+  min-height: 38px !important;
+  min-width: 145px !important;
+  padding: 0 40px 0 16px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 999px !important;
+  background-color: #ffffff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 14px 14px !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  color: #374151 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-history-company-select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
 .invoice-date-filter-button {
   min-height: 38px;
   border-radius: 999px;
@@ -4277,9 +4378,24 @@
 }
 
 .invoice-lead-list,
-.invoice-history-table {
-  height: calc(100vh - 208px);
-  overflow: auto;
+.invoice-history-table,
+.table-scroll,
+.invoice-feature-pane {
+  flex: 1 1 0% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.invoice-lead-list::-webkit-scrollbar,
+.invoice-history-table::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar,
+.invoice-feature-pane::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .invoice-lead-list>.empty-state-inline {
@@ -4292,7 +4408,70 @@
 }
 
 .invoice-date-filter-row+.invoice-history-table {
-  height: calc(100vh - 278px);
+  flex: 1 1 0% !important;
+  height: auto !important;
+}
+
+.invoice-history-table table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.invoice-history-table th,
+.invoice-history-table td {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
+  max-width: 0 !important;
+}
+
+.invoice-history-table th {
+  position: relative !important;
+  user-select: none !important;
+}
+
+.col-resize-handle {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 8px !important;
+  height: 100% !important;
+  cursor: col-resize !important;
+  user-select: none !important;
+  z-index: 10 !important;
+  touch-action: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.col-resize-handle::after {
+  content: '' !important;
+  display: block !important;
+  width: 2px !important;
+  height: 60% !important;
+  background: transparent !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.col-resize-handle:hover::after,
+.col-resize-handle.is-resizing::after {
+  background: #3b82f6 !important;
+}
+
+.col-resize-handle:hover,
+.col-resize-handle.is-resizing {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+body.is-col-resizing,
+body.is-col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .quotation-preview {

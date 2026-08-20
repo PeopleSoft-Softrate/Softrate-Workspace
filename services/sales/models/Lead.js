@@ -1,8 +1,20 @@
 const mongoose = require('mongoose');
-const { normalizePhone, normalizeRemarks, normalizeText } = require('../services/leadNormalization');
+const {
+  formatCode,
+  formatCompanyName,
+  formatDescription,
+  formatEmail,
+  formatLocation,
+  formatPersonName,
+  normalizePhone,
+  normalizeRemarks,
+  normalizeText,
+  toTitleCase,
+} = require('../services/leadNormalization');
 
 const leadSchema = new mongoose.Schema({
   companyCode:         { type: String, required: true },
+  leadId:              { type: String, default: '', index: true },
   assignedEmployeeId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
   leadCompanyName:     { type: String, required: true },
   contactName:         { type: String, default: '' },
@@ -76,15 +88,45 @@ const leadSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 leadSchema.pre('save', async function normalizeLead() {
-  this.companyCode = String(this.companyCode ?? '').trim();
-  this.leadCompanyName = String(this.leadCompanyName ?? '').trim();
-  this.contactName = String(this.contactName ?? '').trim();
+  this.leadId = String(this.leadId ?? '').trim().toUpperCase();
+  this.companyCode = String(this.companyCode ?? '').trim().toUpperCase();
+  this.leadCompanyName = formatCompanyName(this.leadCompanyName);
+  this.contactName = formatPersonName(this.contactName);
   this.contactNumber = String(this.contactNumber ?? '').trim();
-  this.status = String(this.status ?? 'New').trim() || 'New';
-  this.setLabel = String(this.setLabel ?? '').trim();
-  this.companyDescription = String(this.companyDescription ?? '').trim();
-  this.mainDivisionDescription = String(this.mainDivisionDescription ?? '').trim();
-  this.directorEmailAddress = String(this.directorEmailAddress ?? '').trim();
+  this.status = this.status ? toTitleCase(this.status) : 'New';
+  this.setLabel = toTitleCase(this.setLabel);
+  this.companyDescription = formatDescription(this.companyDescription);
+  this.mainDivisionDescription = formatDescription(this.mainDivisionDescription);
+  this.directorEmailAddress = formatEmail(this.directorEmailAddress);
+  this.companyEmail = formatEmail(this.companyEmail);
+  this.cin = formatCode(this.cin);
+  this.registrationNumber = formatCode(this.registrationNumber);
+  this.directorDin = formatCode(this.directorDin);
+  this.roc = formatCode(this.roc);
+  this.directorFirstName = formatPersonName(this.directorFirstName);
+  this.directorLastName = formatPersonName(this.directorLastName);
+  this.directorMobileNumber = String(this.directorMobileNumber ?? '').trim();
+  this.city = formatLocation(this.city);
+  this.state = formatLocation(this.state);
+  this.postalCode = String(this.postalCode ?? '').trim();
+  this.addressType = toTitleCase(this.addressType);
+  this.streetAddressLine1 = toTitleCase(this.streetAddressLine1);
+  this.streetAddressLine2 = toTitleCase(this.streetAddressLine2);
+  this.directorPermanentCity = formatLocation(this.directorPermanentCity);
+  this.directorPermanentState = formatLocation(this.directorPermanentState);
+  this.directorPermanentPincode = String(this.directorPermanentPincode ?? '').trim();
+  this.directorPermanentAddressLine1 = toTitleCase(this.directorPermanentAddressLine1);
+  this.directorPermanentAddressLine2 = toTitleCase(this.directorPermanentAddressLine2);
+  this.directorPresentCity = formatLocation(this.directorPresentCity);
+  this.directorPresentState = formatLocation(this.directorPresentState);
+  this.directorPresentPincode = String(this.directorPresentPincode ?? '').trim();
+  this.directorPresentAddressLine1 = toTitleCase(this.directorPresentAddressLine1);
+  this.directorPresentAddressLine2 = toTitleCase(this.directorPresentAddressLine2);
+  this.companyType = toTitleCase(this.companyType);
+  this.classOfCompany = toTitleCase(this.classOfCompany);
+  this.companyCategory = toTitleCase(this.companyCategory);
+  this.companySubcategory = toTitleCase(this.companySubcategory);
+  this.companyOrigin = toTitleCase(this.companyOrigin);
   this.remarks = normalizeRemarks(this.remarks);
   this.contactNumberNormalized = normalizePhone(this.contactNumber);
   this.leadCompanyNameLower = normalizeText(this.leadCompanyName);
@@ -94,6 +136,8 @@ leadSchema.pre('save', async function normalizeLead() {
 });
 
 // Indexes using ObjectId
+leadSchema.index({ companyCode: 1, leadId: 1 });
+leadSchema.index({ companyCode: 1, leadCompanyNameLower: 1, leadId: 1 });
 leadSchema.index({ companyCode: 1, assignedEmployeeId: 1, isArchived: 1, setLabelLower: 1, status: 1, sheetOrder: 1, _id: 1 });
 leadSchema.index({ companyCode: 1, isArchived: 1, setLabelLower: 1, status: 1, sheetOrder: 1, _id: 1 });
 leadSchema.index({ companyCode: 1, assignedEmployeeId: 1, contactNumberNormalized: 1 });

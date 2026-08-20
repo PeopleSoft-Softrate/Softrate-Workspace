@@ -161,25 +161,6 @@
     </button>
 
     <button
-      class="sidebar-link sidebar-link-client-onboarding"
-      type="button"
-      [class.active]="vm.dashTab==='client_onboarding'"
-      (click)="vm.switchTab('client_onboarding')"
-      *ngIf="vm.sidebarFeatureMatches('Client Onboarding')"
-      [title]="vm.sidebarMinimized ? 'Client Onboarding' : ''"
-    >
-      <span class="sidebar-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-          <circle cx="9.5" cy="7" r="4" />
-          <path d="M19 8v6" />
-          <path d="M22 11h-6" />
-        </svg>
-      </span>
-      <span class="sidebar-label">Client Onboarding</span>
-    </button>
-
-    <button
       class="sidebar-link sidebar-link-quotation"
       type="button"
       [class.active]="vm.dashTab==='quotation'"
@@ -201,8 +182,8 @@
     <button
       class="sidebar-link sidebar-link-proposal"
       type="button"
-      [class.active]="vm.dashTab==='proposal_settings'"
-      (click)="vm.switchTab('proposal_settings')"
+      [class.active]="vm.dashTab==='proposals'"
+      (click)="vm.switchTab('proposals')"
       *ngIf="vm.sidebarFeatureMatches('Proposal') || vm.sidebarFeatureMatches('Proposal Settings')"
       [title]="vm.sidebarMinimized ? 'Proposal' : ''"
     >
@@ -217,7 +198,7 @@
       <span class="sidebar-label">Proposal</span>
     </button>
 
-    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Client', 'Remarks Filter', 'Follow-ups', 'Employees', 'Periodic Reports'])">Admin Views</div>
+    <div class="sidebar-group-label" *ngIf="vm.sidebarSectionHas(['Leads', 'Client', 'Remarks Filter', 'Employees', 'Periodic Reports'])">Admin Views</div>
 
     <button
       class="sidebar-link sidebar-link-leads"
@@ -312,21 +293,6 @@
       <span class="sidebar-label">Remarks Filter</span>
     </button>
 
-    <button
-      class="sidebar-link sidebar-link-followups"
-      type="button"
-      [class.active]="vm.dashTab==='followups'"
-      (click)="vm.switchTab('followups')"
-      *ngIf="vm.sidebarFeatureMatches('Follow-ups')"
-      [title]="vm.sidebarMinimized ? 'Follow-ups' : ''"
-    >
-      <span class="sidebar-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
-        </svg>
-      </span>
-      <span class="sidebar-label">Follow-ups</span>
-    </button>
 
     <button
       class="sidebar-link sidebar-link-employees"

@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, KeyValuePipe } from '@angular/common';
+import { NgIf, NgFor, NgClass, DatePipe, DecimalPipe, NgTemplateOutlet, KeyValuePipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { Subscription } from 'rxjs';
@@ -11,6 +11,7 @@ import {
   AiSuggestionScenario,
   AiSuggestionService,
 } from './ai-suggestion.service';
+import { ProposalGeneratorModalComponent } from './features/workspace/proposal-generator-modal/proposal-generator-modal.component';
 
 interface Employee {
   _id: string;
@@ -26,6 +27,7 @@ interface Employee {
 
 interface Lead {
   _id: string;
+  leadId?: string;
   companyCode: string;
   assignedEmployeeId: string;
   leadCompanyName: string;
@@ -65,6 +67,7 @@ interface Bookmark {
 
 interface InvoiceRecord {
   _id: string;
+  leadCode?: string;
   invoiceNumber: string;
   leadCompanyName: string;
   contactName: string;
@@ -88,6 +91,8 @@ interface InvoiceRecord {
 
 interface QuotationRecord {
   _id: string;
+  leadCode?: string;
+  clientId?: string;
   quotationNumber: string;
   leadCompanyName: string;
   contactName: string;
@@ -167,7 +172,7 @@ interface WorkspaceState {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, KeyValuePipe],
+  imports: [NgIf, NgFor, NgClass, NgTemplateOutlet, FormsModule, DatePipe, DecimalPipe, KeyValuePipe, UpperCasePipe, ProposalGeneratorModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   encapsulation: ViewEncapsulation.None,
@@ -193,7 +198,7 @@ export class App implements OnInit, OnDestroy {
   profileMenuOpen = false;
 
   // ── Dashboard tabs ────────────────────────────────────────────
-  dashTab: 'overview' | 'leads' | 'followups' | 'interested' | 'dnp' | 'converted' | 'favourite' | 'today-calls' | 'invoices' | 'quotations' = 'overview';
+  dashTab: 'overview' | 'leads' | 'followups' | 'interested' | 'dnp' | 'converted' | 'favourite' | 'today-calls' | 'invoices' | 'quotations' | 'proposals' = 'overview';
   sidebarFeatureSearch = '';
 
   // ── Period ────────────────────────────────────────────────────
@@ -1322,9 +1327,9 @@ export class App implements OnInit, OnDestroy {
   documentCompanyCode = '';
 
   quotationTerms = [
-    'All rates quoted are valid for 14 days.',
-    '40% payment should be done in advance.',
-    'The remaining amount should be paid within 7 days of invoice.',
+    '(i) All rates quoted are valid for 14 days.',
+    '(ii) 40% payment should be done in advance.',
+    '(iii) The remaining amount should be paid within 7 days of invoice.',
   ];
   currentYear = new Date().getFullYear();
   invoiceRecords: InvoiceRecord[] = [];
@@ -1396,6 +1401,19 @@ export class App implements OnInit, OnDestroy {
     this.showInvoiceModal = false;
     this.quoteMode = false;
     this.viewingSavedDocument = false;
+  }
+
+  showProposalModal = false;
+  proposalModalLead: any = null;
+
+  openProposalModal(lead: any = null): void {
+    this.proposalModalLead = lead;
+    this.showProposalModal = true;
+  }
+
+  closeProposalModal(): void {
+    this.showProposalModal = false;
+    this.proposalModalLead = null;
   }
 
   onProductSelect(): void {
@@ -1533,11 +1551,44 @@ export class App implements OnInit, OnDestroy {
     return this.invoiceRegisteredAddress || this.companyAddress || this.contactDetails?.address || '';
   }
 
+  quotationBannerText: string = 'Think Software,\nThink Softrate.';
+  documentGstPercentageOverride: number | null = null;
+
   invoiceContactLine(): string {
     const parts = [this.contactDetails?.phone, this.contactDetails?.email, this.contactDetails?.website]
       .map((part) => String(part || '').trim())
       .filter(Boolean);
     return parts.join(' · ');
+  }
+
+  quotationBannerDisplayText(): string {
+    return String(this.quotationBannerText || 'Think Software,\nThink Softrate.').trim();
+  }
+
+  quotationFooterContactLine(): string {
+    const parts = [this.contactDetails?.website, this.contactDetails?.email]
+      .map((part) => String(part || '').trim())
+      .filter(Boolean);
+    return parts.join(' | ') || (this.invoiceContactLine() || 'www.softrateglobal.com | helpdesk@softrateglobal.com');
+  }
+
+  formatQuotationDate(dateInput?: any): string {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(d.getTime())) return '';
+    const day = d.getDate();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+
+    return `${day}${suffix} ${month}, ${year}`;
   }
 
   invoiceNumber(): string {
@@ -2298,13 +2349,22 @@ export class App implements OnInit, OnDestroy {
     if (raw) {
       try {
         const data = JSON.parse(raw);
-        this.employee = data.employee;
-        this.companyName = data.companyName || '';
-        this.loggedIn = true;
-        this.loadDashboard();
-        this.initRealtime();
-        this.resumeBreakTimer();
-      } catch { localStorage.removeItem('dv_employee'); }
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (data.loginDate && data.loginDate === todayStr && data.employee) {
+          this.employee = data.employee;
+          this.companyName = data.companyName || '';
+          this.loggedIn = true;
+          this.loadDashboard();
+          this.initRealtime();
+          this.resumeBreakTimer();
+        } else {
+          localStorage.removeItem('dv_employee');
+          localStorage.removeItem('tracecall_emp_token');
+        }
+      } catch {
+        localStorage.removeItem('dv_employee');
+        localStorage.removeItem('tracecall_emp_token');
+      }
     }
   }
 
@@ -2502,7 +2562,7 @@ export class App implements OnInit, OnDestroy {
     this.fetchBreakStatus();
   }
 
-  switchTab(tab: 'overview' | 'leads' | 'followups' | 'interested' | 'dnp' | 'converted' | 'favourite' | 'today-calls' | 'invoices' | 'quotations'): void {
+  switchTab(tab: 'overview' | 'leads' | 'followups' | 'interested' | 'dnp' | 'converted' | 'favourite' | 'today-calls' | 'invoices' | 'quotations' | 'proposals'): void {
     // Save current selection to the map before switching
     if (this.dashTab) {
       this.tabSelections[this.dashTab] = this.selectedLeadCompany;
@@ -3449,6 +3509,7 @@ export class App implements OnInit, OnDestroy {
     if (this.dashTab === 'followups') return 'Follow-ups';
     if (this.dashTab === 'invoices') return 'Invoices';
     if (this.dashTab === 'quotations') return 'Quotations';
+    if (this.dashTab === 'proposals') return 'Proposals';
     return this.activeWorkspaceTitle || 'DealVoice';
   }
 

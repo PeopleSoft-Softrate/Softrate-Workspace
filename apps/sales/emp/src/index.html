@@ -18,6 +18,13 @@
     if (typeof pdfjsLib !== 'undefined') {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
+
+    // Prevent mouse wheel from accidentally incrementing/decrementing number inputs
+    document.addEventListener('wheel', function(e) {
+      if (document.activeElement instanceof HTMLInputElement && document.activeElement.type === 'number') {
+        document.activeElement.blur();
+      }
+    }, { passive: true });
   </script>
 </body>
 </html>

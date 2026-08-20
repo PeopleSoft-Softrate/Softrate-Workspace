@@ -602,7 +602,7 @@ export class AdminLeadsWorkflow {
   closeAddLeadModal(vm: any): void {
     vm.addLeadModalVisible = false;
     vm.newLeadCompanyDetails = {
-      leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'New', cin: '', companyDescription: '', setLabel: ''
+      leadCompanyName: '', mainDivisionDescription: '', remarks: '', status: 'Connected', cin: '', companyDescription: '', setLabel: ''
     };
     vm.newLeadDirectors = [];
     vm.newLeadAssignedEmployeeId = '';

@@ -1,5 +1,7 @@
 export interface InvoiceDto {
   _id?: string;
+  leadCode?: string;
+  clientId?: string;
   companyCode?: string;
   invoiceNumber?: string;
   publicToken?: string;

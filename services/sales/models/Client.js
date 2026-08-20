@@ -4,6 +4,7 @@ const { normalizePhone, normalizeText } = require('../services/leadNormalization
 const clientSchema = new mongoose.Schema({
   companyCode: { type: String, required: true, trim: true, index: true },
   clientId: { type: String, required: true, trim: true },
+  leadId: { type: String, trim: true, default: '', index: true },
   companyName: { type: String, required: true, trim: true },
   normalizedCompanyName: { type: String, required: true, trim: true },
   primaryContactName: { type: String, trim: true, default: '' },
@@ -26,6 +27,7 @@ const clientSchema = new mongoose.Schema({
 clientSchema.pre('validate', function normalizeClient() {
   this.companyCode = String(this.companyCode || '').trim();
   this.clientId = String(this.clientId || '').trim();
+  this.leadId = String(this.leadId || '').trim().toUpperCase();
   this.companyName = String(this.companyName || '').trim();
   this.normalizedCompanyName = normalizeText(this.companyName);
   this.primaryContactName = String(this.primaryContactName || '').trim();

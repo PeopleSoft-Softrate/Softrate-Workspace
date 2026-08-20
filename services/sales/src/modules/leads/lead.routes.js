@@ -33,6 +33,7 @@ const {
   parsePagination,
 } = require('../../../services/leadQueryService');
 const { enrichLeadForStorage, normalizePhone, normalizeRemarks, normalizeText } = require('../../../services/leadNormalization');
+const { getLeadIdForCompany } = require('../../../services/leadIdService');
 const { ensureClientForLead } = require('../../../services/clientService');
 const { getAiBriefForLead } = require('../../../services/ai/researchWorkflow');
 const { getAiSuggestionForLead } = require('../../../services/ai/suggestionWorkflow');
@@ -273,6 +274,14 @@ router.post('/', async (req, res) => {
         success: false,
         message: 'companyCode, assignedEmployeeId, leadCompanyName, and contactNumber are required.',
       });
+    }
+
+    if (!payload.leadId) {
+      payload.leadId = await getLeadIdForCompany(
+        { LeadModel: req.models.Lead, ClientModel: req.models.Client, CounterModel: req.models.Counter },
+        payload.companyCode,
+        payload.leadCompanyName
+      );
     }
 
     const lead = await req.models.Lead.create(payload);

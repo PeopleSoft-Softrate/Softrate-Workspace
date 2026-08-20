@@ -4,6 +4,7 @@ import { ApiService } from './api.service';
 
 export interface Lead {
   _id?: string;
+  leadId?: string;
   companyCode: string;
   assignedEmployeeId: string;
   assignedEmployeePhone?: string;

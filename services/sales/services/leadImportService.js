@@ -2,7 +2,8 @@ const Lead = require('../models/Lead');
 const LeadImportBatch = require('../models/LeadImportBatch');
 const { logChange } = require('./historyService');
 const { invalidateLeadCaches } = require('./leadCache');
-const { buildLeadDedupKey, enrichLeadForStorage } = require('./leadNormalization');
+const { buildLeadDedupKey, enrichLeadForStorage, normalizeText } = require('./leadNormalization');
+const { allocateLeadIdsForBatch } = require('./leadIdService');
 const eventBus = require('./eventBus');
 const History = require('../models/History');
 const { getTenantConnection } = require('../src/common/tenantMiddleware');
@@ -20,19 +21,23 @@ async function createLeadImportBatch({ companyCode, assignedEmployeeId, original
   });
 }
 
-function prepareLeadDocs(leads, importBatchId) {
+function prepareLeadDocs(leads, importBatchId, companyMap = new Map()) {
   const dedupe = new Set();
   const docs = [];
   let duplicateCount = 0;
   let errorCount = 0;
 
   leads.forEach((lead, index) => {
+    const norm = normalizeText(lead.leadCompanyName || lead.leadCompanyNameLower);
+    const leadId = (companyMap && companyMap.get(norm)) || lead.leadId || '';
+
     const enriched = enrichLeadForStorage(
       {
         ...lead,
+        leadId,
         sheetOrder: Number.isFinite(lead.sheetOrder) ? lead.sheetOrder : index,
       },
-      { importBatchId }
+      { importBatchId, leadId }
     );
 
     if (!enriched.companyCode || !enriched.assignedEmployeeId || !enriched.contactNumber || !enriched.leadCompanyName) {
@@ -99,8 +104,16 @@ async function processLeadImportBatch(batchId, leads) {
     const db = getTenantConnection(dbName);
     const TenantLead = db.model('Lead');
     const TenantHistory = db.model('History');
+    const TenantCounter = db.model('Counter');
+    const TenantClient = db.model('Client');
 
-    const { docs, duplicateCount, errorCount } = prepareLeadDocs(leads, batch._id);
+    const companyMap = await allocateLeadIdsForBatch(
+      { LeadModel: TenantLead, ClientModel: TenantClient, CounterModel: TenantCounter },
+      batch.companyCode,
+      leads
+    );
+
+    const { docs, duplicateCount, errorCount } = prepareLeadDocs(leads, batch._id, companyMap);
     const insertedCount = await insertLeadChunks(docs, TenantLead);
 
     batch.status = 'completed';

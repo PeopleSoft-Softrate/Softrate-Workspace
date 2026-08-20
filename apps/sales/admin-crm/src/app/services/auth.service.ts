@@ -100,6 +100,7 @@ export class AuthService {
     invoiceLogo?: string;
     invoiceSeal?: string;
     invoiceTerms?: string;
+    quotationBannerText?: string;
     showCompanyNameOnInvoice?: boolean;
     gstNumber?: string;
     gstPercentage?: number;

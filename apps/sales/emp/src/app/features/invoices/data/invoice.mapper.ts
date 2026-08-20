@@ -4,6 +4,8 @@ import { InvoiceRecord } from '../domain/invoice.model';
 export function mapInvoiceDto(dto: InvoiceDto): InvoiceRecord {
   return {
     id: String(dto._id || ''),
+    leadCode: String(dto.leadCode || (dto as any).leadId?.leadId || (dto as any).leadSnapshot?.leadId || (dto as any).clientSnapshot?.leadId || ''),
+    clientId: String(dto.clientId || (dto as any).clientSnapshot?.clientId || ''),
     companyCode: dto.companyCode || '',
     invoiceNumber: String(dto.invoiceNumber || ''),
     publicToken: String(dto.publicToken || ''),

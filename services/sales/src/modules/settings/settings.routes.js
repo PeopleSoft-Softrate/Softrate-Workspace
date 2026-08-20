@@ -521,7 +521,7 @@ router.get('/company/:companyCode/settings', async (req, res) => {
     const { companyCode } = req.params;
     const user = await User.findOne(
       { companyCode },
-      'companyName companyAddress breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies resendApiKey resendSenderDomain'
+      'companyName companyAddress breakHourLimit connectedCallDuration leadStatuses interestedPageStatuses dnpPageStatuses convertedPageStatuses invoiceLogo invoiceSeal invoiceTerms quotationBannerText showCompanyNameOnInvoice gstNumber gstPercentage invoiceRegisteredAddress invoiceFooter bankDetails bankDetails2 contactDetails products productRemarks collaboratingCompanies resendApiKey resendSenderDomain'
     ).lean();
     if (!user) return res.status(404).json({ success: false, message: 'Company not found.' });
     const leadStatuses = user.leadStatuses || [];
@@ -542,6 +542,7 @@ router.get('/company/:companyCode/settings', async (req, res) => {
         invoiceLogo: user.invoiceLogo,
         invoiceSeal: user.invoiceSeal || '',
         invoiceTerms: user.invoiceTerms || '',
+        quotationBannerText: user.quotationBannerText || 'Think Software,\nThink Softrate.',
         showCompanyNameOnInvoice: user.showCompanyNameOnInvoice ?? true,
         gstNumber: user.gstNumber,
         gstPercentage: user.gstPercentage ?? 18,
@@ -576,7 +577,7 @@ router.put('/company/:companyCode/settings', async (req, res) => {
     const {
       companyName,
       breakHourLimit, connectedCallDuration, leadStatuses, interestedPageStatuses, dnpPageStatuses, convertedPageStatuses,
-      invoiceLogo, invoiceSeal, invoiceTerms, showCompanyNameOnInvoice, gstNumber, gstPercentage, invoiceRegisteredAddress, invoiceFooter, bankDetails, bankDetails2, contactDetails, products, productRemarks, collaboratingCompanies,
+      invoiceLogo, invoiceSeal, invoiceTerms, quotationBannerText, showCompanyNameOnInvoice, gstNumber, gstPercentage, invoiceRegisteredAddress, invoiceFooter, bankDetails, bankDetails2, contactDetails, products, productRemarks, collaboratingCompanies,
       resendApiKey, resendSenderDomain
     } = req.body;
 
@@ -600,6 +601,7 @@ router.put('/company/:companyCode/settings', async (req, res) => {
     if (invoiceLogo !== undefined) update.invoiceLogo = invoiceLogo;
     if (invoiceSeal !== undefined) update.invoiceSeal = invoiceSeal;
     if (invoiceTerms !== undefined) update.invoiceTerms = invoiceTerms;
+    if (quotationBannerText !== undefined) update.quotationBannerText = quotationBannerText;
     if (showCompanyNameOnInvoice !== undefined) update.showCompanyNameOnInvoice = !!showCompanyNameOnInvoice;
     if (gstNumber !== undefined) update.gstNumber = gstNumber;
     if (gstPercentage !== undefined) update.gstPercentage = Number(gstPercentage);
@@ -653,6 +655,7 @@ router.put('/company/:companyCode/settings', async (req, res) => {
         invoiceLogo: user.invoiceLogo,
         invoiceSeal: user.invoiceSeal,
         invoiceTerms: user.invoiceTerms,
+        quotationBannerText: user.quotationBannerText || 'Think Software,\nThink Softrate.',
         showCompanyNameOnInvoice: user.showCompanyNameOnInvoice,
         gstNumber: user.gstNumber,
         gstPercentage: user.gstPercentage,
@@ -773,24 +776,38 @@ router.get('/proposals/:id', async (req, res) => {
   }
 });
 
+function sanitizeTemplatePages(pages) {
+  if (!Array.isArray(pages)) return [];
+  return pages.map(page => {
+    if (!page || typeof page !== 'object') return page;
+    const p = { ...page };
+    // Safety check: if rawPdfBase64 per single page is unexpectedly huge (> 8MB), strip to protect BSON limit
+    if (typeof p.rawPdfBase64 === 'string' && p.rawPdfBase64.length > 8 * 1024 * 1024) {
+      p.rawPdfBase64 = '';
+    }
+    return p;
+  });
+}
+
 // Create a new template
 router.post('/proposals', async (req, res) => {
   try {
     const { companyCode, name, pages } = req.body;
     if (!companyCode || !name) return res.status(400).json({ success: false, message: 'companyCode and name required.' });
     
+    const sanitizedPages = sanitizeTemplatePages(pages);
     const ProposalTemplate = require('../../../models/ProposalTemplate');
     const template = await ProposalTemplate.create({
       _id: require('crypto').randomUUID(),
       companyCode,
       name: String(name).trim(),
-      pages: pages || []
+      pages: sanitizedPages
     });
     
     return res.json({ success: true, template });
   } catch (err) {
     console.error('[proposals POST]', err);
-    return res.status(500).json({ success: false, message: 'Server error.' });
+    return res.status(500).json({ success: false, message: err?.message || 'Server error saving proposal template.' });
   }
 });
 
@@ -801,7 +818,7 @@ router.patch('/proposals/:id', async (req, res) => {
     if (!companyCode) return res.status(400).json({ success: false, message: 'companyCode required.' });
     const update = {};
     if (name) update.name = String(name).trim();
-    if (pages) update.pages = pages;
+    if (pages) update.pages = sanitizeTemplatePages(pages);
     
     const ProposalTemplate = require('../../../models/ProposalTemplate');
     const template = await ProposalTemplate.findOneAndUpdate(
@@ -814,7 +831,7 @@ router.patch('/proposals/:id', async (req, res) => {
     return res.json({ success: true, template });
   } catch (err) {
     console.error('[proposals PATCH]', err);
-    return res.status(500).json({ success: false, message: 'Server error.' });
+    return res.status(500).json({ success: false, message: err?.message || 'Server error updating proposal template.' });
   }
 });
 

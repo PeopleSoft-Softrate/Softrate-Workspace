@@ -882,7 +882,7 @@ body,
 
 .custom-range-row,
 .reports-filter-card {
-  border: 1px solid #dfe5ee;
+  border: 1px solid #ffffff;
   border-radius: 12px;
   background: #ffffff;
 }
@@ -1134,10 +1134,10 @@ body,
   min-height: 80px !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
-  align-items: start !important;
-  padding: 16px !important;
+  align-items: center !important;
+  padding: 20px !important;
   border: 1px solid var(--admin-line) !important;
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   background: var(--admin-surface) !important;
   box-shadow: none !important;
 }
@@ -1486,8 +1486,11 @@ body,
 
 .dashboard-wrapper .kpi-card {
   min-height: 112px !important;
-  display: block !important;
-  padding: 24px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  padding: 24px !important;
   border: 0 !important;
   border-right: 1px solid var(--admin-line) !important;
   border-left: 0 !important;
@@ -1568,30 +1571,59 @@ body,
 }
 
 .dashboard-wrapper .period-tabs {
-  overflow: hidden !important;
-  border: 1px solid var(--admin-line) !important;
-  border-radius: 4px !important;
-  background: #f3f4f6 !important;
+  display: inline-flex !important;
+  padding: 0 !important;
+  gap: 8px !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 .dashboard-wrapper .period-tabs button {
-  min-height: 40px !important;
-  padding: 0 18px !important;
-  border: 0 !important;
-  border-radius: 3px !important;
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
   color: #6b7280 !important;
   font-family: var(--font-body) !important;
   font-size: 12px !important;
-  font-weight: var(--font-weight-bold) !important;
-  letter-spacing: 0.12em !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
+  white-space: nowrap !important;
+  transition: all 0.2s ease !important;
+}
+
+.dashboard-wrapper .period-tabs button:hover:not(.active) {
+  color: #374151 !important;
 }
 
 .dashboard-wrapper .period-tabs button.active {
   background: #fff !important;
   color: #111827 !important;
-  border: 0 !important;
-  box-shadow: 0 0 0 1px rgba(229, 231, 235, 0.9) !important;
+  border-color: #d1d5db !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dashboard-wrapper .see-all-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  color: #245fe0 !important;
+  font-family: var(--font-body) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.dashboard-wrapper .see-all-link:hover {
+  text-decoration: underline !important;
+  color: #1a4ab0 !important;
 }
 
 .dashboard-wrapper .stats-chart-body {
@@ -4210,23 +4242,93 @@ body,
   font-weight: var(--font-weight-normal) !important;
 }
 
-.crm-nda-shell .invoice-feature-grid {
-  display: grid;
-  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.35fr);
-  min-height: 0;
-  height: calc(100vh - 144px);
-  overflow: hidden;
+.crm-nda-shell .invoice-feature-header,
+.invoice-feature-header {
+  display: none !important;
 }
 
-.crm-nda-shell .invoice-feature-pane {
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: #ffffff;
+.crm-nda-shell .invoice-feature-grid,
+.invoice-feature-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  min-height: 0 !important;
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  position: relative !important;
 }
 
-.crm-nda-shell .invoice-converted-pane {
-  border-right: 1px solid #e5e7eb;
+.crm-nda-shell .invoice-feature-grid > .invoice-converted-pane,
+.invoice-feature-grid > .invoice-converted-pane {
+  flex: 0 0 auto !important;
+  min-width: 240px !important;
+  max-width: 80% !important;
+  overflow: hidden !important;
+  border-right: none !important;
+}
+
+.crm-nda-shell .invoice-feature-grid > .invoice-history-pane,
+.invoice-feature-grid > .invoice-history-pane {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.invoice-pane-resizer {
+  width: 8px !important;
+  min-width: 8px !important;
+  max-width: 8px !important;
+  cursor: col-resize !important;
+  background: #f8fafc !important;
+  border-left: 1px solid #e2e8f0 !important;
+  border-right: 1px solid #e2e8f0 !important;
+  position: relative !important;
+  z-index: 20 !important;
+  flex: 0 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  user-select: none !important;
+  touch-action: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.invoice-pane-resizer::after {
+  content: '' !important;
+  display: block !important;
+  width: 2px !important;
+  height: 24px !important;
+  border-radius: 2px !important;
+  background: #cbd5e1 !important;
+  transition: all 0.2s ease !important;
+}
+
+.invoice-pane-resizer:hover,
+.invoice-pane-resizer.is-resizing {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+}
+
+.invoice-pane-resizer:hover::after,
+.invoice-pane-resizer.is-resizing::after {
+  height: 40px !important;
+  background: #2563eb !important;
+}
+
+body.is-column-resizing,
+body.is-column-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+.crm-nda-shell .invoice-feature-pane,
+.invoice-feature-pane {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  background: #ffffff !important;
 }
 
 .crm-nda-shell .invoice-pane-header {
@@ -4276,43 +4378,109 @@ body,
   font-weight: var(--font-weight-normal) !important;
 }
 
-.crm-nda-shell .invoice-date-filter-button {
-  min-height: 38px;
-  border-radius: 999px;
+.crm-nda-shell .invoice-date-filter-button,
+.invoice-date-filter-button {
+  min-height: 38px !important;
+  border-radius: 999px !important;
 }
 
+.invoice-date-filter-row,
 .crm-nda-shell .invoice-date-filter-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.65rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  gap: 12px !important;
+  padding: 12px 20px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  flex-shrink: 0 !important;
 }
 
+.invoice-date-filter-row .mini-field,
 .crm-nda-shell .invoice-date-filter-row .mini-field {
-  width: 150px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  width: 160px !important;
+  margin: 0 !important;
 }
 
+.invoice-date-filter-row .mini-field span,
+.crm-nda-shell .invoice-date-filter-row .mini-field span {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+}
+
+.invoice-date-filter-row .field-input,
 .crm-nda-shell .invoice-date-filter-row .field-input {
-  min-height: 40px;
-  border-radius: 12px;
+  width: 100% !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 6px 12px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  box-sizing: border-box !important;
 }
 
+.invoice-date-filter-row .invoice-date-clear,
+.invoice-date-clear,
 .crm-nda-shell .invoice-date-clear {
-  min-height: 40px;
-  border-radius: 12px;
-  color: #3157c8;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  background: #f8fafc !important;
+  color: #3b82f6 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+.invoice-date-clear:hover,
+.crm-nda-shell .invoice-date-clear:hover {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
 }
 
 .crm-nda-shell .invoice-lead-list,
-.crm-nda-shell .invoice-history-table {
-  height: calc(100vh - 226px);
-  overflow: auto;
+.crm-nda-shell .invoice-history-table,
+.crm-nda-shell .table-scroll,
+.invoice-lead-list,
+.invoice-history-table,
+.table-scroll {
+  flex: 1 1 0% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-.crm-nda-shell .invoice-date-filter-row + .invoice-history-table {
-  height: calc(100vh - 288px);
+.crm-nda-shell .invoice-lead-list::-webkit-scrollbar,
+.crm-nda-shell .invoice-history-table::-webkit-scrollbar,
+.crm-nda-shell .table-scroll::-webkit-scrollbar,
+.invoice-lead-list::-webkit-scrollbar,
+.invoice-history-table::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.crm-nda-shell .invoice-date-filter-row + .invoice-history-table,
+.invoice-date-filter-row + .invoice-history-table {
+  flex: 1 1 0% !important;
+  height: auto !important;
 }
 
 .crm-nda-shell .invoice-lead-row {
@@ -4362,27 +4530,81 @@ body,
   cursor: pointer;
 }
 
-.crm-nda-shell .invoice-history-table table {
-  width: 100%;
-  border-collapse: collapse;
+.crm-nda-shell .invoice-history-table table,
+.invoice-history-table table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
   font-size: 13px;
 }
 
 .crm-nda-shell .invoice-history-table th,
-.crm-nda-shell .invoice-history-table td {
+.crm-nda-shell .invoice-history-table td,
+.invoice-history-table th,
+.invoice-history-table td {
   padding: 14px 16px !important;
   border-bottom: 1px solid #e5e7eb !important;
   color: #374151 !important;
   font-size: 13px !important;
   line-height: 1.35 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
+  max-width: 0 !important;
 }
 
-.crm-nda-shell .invoice-history-table th {
+.crm-nda-shell .invoice-history-table th,
+.invoice-history-table th {
   color: #6b7280 !important;
   font-size: 11px !important;
   font-weight: var(--font-weight-extrabold) !important;
   letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
+  position: relative !important;
+  user-select: none !important;
+}
+
+.col-resize-handle {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 8px !important;
+  height: 100% !important;
+  cursor: col-resize !important;
+  user-select: none !important;
+  z-index: 10 !important;
+  touch-action: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.col-resize-handle::after {
+  content: '' !important;
+  display: block !important;
+  width: 2px !important;
+  height: 60% !important;
+  background: transparent !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.col-resize-handle:hover::after,
+.col-resize-handle.is-resizing::after {
+  background: #3b82f6 !important;
+}
+
+.col-resize-handle:hover,
+.col-resize-handle.is-resizing {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+body.is-col-resizing,
+body.is-col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .crm-nda-workspace-overlay {
@@ -5121,7 +5343,7 @@ body,
 .dashboard-wrapper .kpi-employee-split .kpi-and-statistics-col {
   display: flex !important;
   flex-direction: column !important;
-  gap: 24px !important;
+  gap: 4px !important;
 }
 
 .dashboard-wrapper .kpi-employee-split .top-stats-row {
@@ -5181,7 +5403,7 @@ body,
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 20px;
+  padding: 20px;
   background: #ffffff;
   border: none;
   border-radius: 12px;

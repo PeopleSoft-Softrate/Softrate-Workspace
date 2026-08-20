@@ -100,8 +100,8 @@
         </span>
         <span class="sidebar-label">Quotation</span>
       </button>
-      <button class="sidebar-link sidebar-link-proposal" [class.active]="showProposalModal"
-        (click)="openProposalModal(null)" *ngIf="sidebarFeatureMatches('Proposal')">
+      <button class="sidebar-link sidebar-link-proposal" [class.active]="dashTab==='proposals'"
+        (click)="switchTab('proposals')" *ngIf="sidebarFeatureMatches('Proposal')">
         <span class="sidebar-icon sidebar-icon-proposal" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -1889,10 +1889,9 @@
               </div>
               <div class="quotation-hero-title">
                 <h2>Quotation</h2>
-                <span>Quote Number</span>
-                <strong>{{ invoiceNumber() }}</strong>
-                <span>Date of issue</span>
-                <strong>{{ invoiceIssuedAt | date:'dd/MM/yyyy' }}</strong>
+                <span class="quotation-hero-label">Quote Number</span>
+                <strong class="quotation-hero-number">{{ invoiceNumber() }}</strong>
+                <span class="quotation-hero-date">{{ formatQuotationDate(invoiceIssuedAt) }}</span>
               </div>
             </header>
             <ng-container [ngTemplateOutlet]="quotationPrintBody"></ng-container>
@@ -1900,40 +1899,51 @@
 
           <section class="quotation-page quotation-terms-page">
             <div class="quotation-partner-panel">
-              <h2>Your Trusted Tech Partner</h2>
+              <h2>{{ quotationBannerDisplayText() }}</h2>
             </div>
 
             <div class="quotation-terms-grid">
-              <section class="quotation-terms-box quotation-payable-box">
-                <h3>Payable To</h3>
-                <strong>{{ invoiceCompanyDisplayName() }}</strong>
-                <p *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</p>
+              <div class="quotation-card-box quotation-payable-card">
+                <h3 class="quotation-section-title">Payable To</h3>
+                <div class="quotation-company-name">{{ invoiceCompanyDisplayName() }}</div>
 
-                <h3 class="quotation-bank-heading">Bank Details</h3>
+                <h3 class="quotation-section-title quotation-bank-heading">Bank Details</h3>
                 <div class="quotation-bank-list" *ngIf="quotationBankRows.length; else quotationNoBankDetails">
                   <div class="quotation-bank-row" *ngFor="let row of quotationBankRows">
-                    <span>{{ row.label }}</span>
-                    <strong>{{ row.value }}</strong>
+                    <span class="quotation-bank-label">{{ row.label }}</span>
+                    <span class="quotation-bank-colon">:</span>
+                    <span class="quotation-bank-val">{{ row.value }}</span>
                   </div>
                 </div>
                 <ng-template #quotationNoBankDetails>
                   <p class="quotation-muted-line">Bank details not configured.</p>
                 </ng-template>
-              </section>
+              </div>
 
-              <section class="quotation-terms-box quotation-conditions-box">
-                <h3>Terms and conditions:</h3>
-                <ul>
+              <div class="quotation-card-box quotation-conditions-card">
+                <h3 class="quotation-section-title">Terms and conditions:</h3>
+                <ul class="quotation-conditions-list">
                   <li *ngFor="let term of quotationTerms">{{ term }}</li>
                 </ul>
-              </section>
+              </div>
+            </div>
+
+            <div class="quotation-card-box quotation-mission-card">
+              <p class="quotation-mission-text">
+                We aimed to provide the best software to automate your business (Our Charges were 50% less than market price with a mantra “High quality at affordable cost”)
+              </p>
+              <p class="quotation-tax-note">
+                The price mentioned above is exclusive of applicable tax.
+              </p>
             </div>
 
             <footer class="quotation-terms-footer">
-              <strong>{{ invoiceCompanyDisplayName() }}</strong>
-              <span *ngIf="invoiceCompanyAddress()">{{ invoiceCompanyAddress() }}</span>
-              <span *ngIf="contactDetails?.phone">Mob: {{ contactDetails.phone }}</span>
-              <span>Copyright © {{ currentYear }} All Rights Reserved</span>
+              <strong class="quotation-footer-company">{{ invoiceCompanyDisplayName() }}</strong>
+              <span class="quotation-footer-contact">{{ quotationFooterContactLine() }}</span>
+              <span class="quotation-footer-copy">Copyright © {{ currentYear }} All Rights Reserved</span>
+              <div class="quotation-certifications-wrap">
+                <img src="/assets/quotation/certifications-strip.png" alt="Accredited Certifications" class="quotation-certifications-img" />
+              </div>
             </footer>
           </section>
         </ng-container>
@@ -2062,40 +2072,48 @@
 
         <ng-template #quotationPrintBody>
           <section class="quotation-letter">
-            <h3>Dear {{ invoiceLead?.contactName || 'Client' }},</h3>
-            <strong>{{ invoiceLead?.leadCompanyName || 'Client Company' }}</strong>
-            <p>It was a pleasure speaking with you.</p>
-            <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide
-              you with the cost details of our services.</p>
+            <h3 class="quotation-salutation">Dear {{ invoiceLead?.contactName || 'Sir/Ma\'am' }},</h3>
+            <strong class="quotation-client-company">{{ (invoiceLead?.leadCompanyName || 'CLIENT COMPANY') | uppercase }}</strong>
+            <p>Thank you for choosing {{ invoiceCompanyDisplayName() || 'Softrate' }}. It was a pleasure speaking with you!</p>
+            <p>In reference to the specific requirements we discussed during our conversation, we are pleased to provide you with the cost details of our services.</p>
           </section>
 
           <section class="quotation-service-card">
             <div class="quotation-service-header">
-              <span>Item Description</span>
-              <span>Qty</span>
-              <span>Price</span>
-              <span>Amount</span>
+              <span>ITEM DESCRIPTION</span>
+              <span>QTY</span>
+              <span>PRICE</span>
+              <span>AMOUNT</span>
             </div>
             <div class="quotation-service-body">
               <div class="quotation-service-row" *ngFor="let item of invoiceItems">
-                <span>{{ item.name }}</span>
-                <span>{{ item.quantity }}</span>
-                <span>{{ item.price | number:'1.0-0' }}</span>
-                <span>{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
-              </div>
-              <div class="quotation-total-panel">
-                <div><span>Sub Total</span><strong>{{ invoiceSubtotal | number:'1.0-0' }}</strong></div>
-                <div><span>GST ({{ gstPercentage }}%)</span><strong>{{ invoiceGstAmount | number:'1.0-0' }}</strong>
+                <div class="quotation-item-main">
+                  <span class="quotation-item-name">{{ item.name }}</span>
+                  <span class="quotation-item-desc" *ngIf="item.description || item.product?.description">{{ item.description || item.product?.description }}</span>
                 </div>
-                <div><span>Grand Total</span><strong>{{ invoiceTotal | number:'1.0-0' }}</strong></div>
+                <span class="quotation-col-qty">{{ item.quantity }}</span>
+                <span class="quotation-col-price">₹{{ (item.price || 0) | number:'1.0-0' }}</span>
+                <span class="quotation-col-amount">₹{{ ((item.price || 0) * (item.quantity || 1)) | number:'1.0-0' }}</span>
+              </div>
+
+              <div class="quotation-table-bottom-bar">
+                <div class="quotation-gst-note-wrap">
+                  <p class="gst-exempt-footnote" *ngIf="documentGstPercentageOverride === null">
+                    * Exclude {{ gstPercentage || 18 }}% GST
+                  </p>
+                  <p class="gst-exempt-footnote" *ngIf="documentGstPercentageOverride === 0">
+                    * 0% GST
+                  </p>
+                  <p class="gst-exempt-footnote" *ngIf="documentGstPercentageOverride === -1">
+                    * Exclude GST
+                  </p>
+                </div>
+                <div class="quotation-grand-total-wrap">
+                  <span class="quotation-grand-total-label">GRAND TOTAL</span>
+                  <strong class="quotation-grand-total-val">₹{{ invoiceSubtotal | number:'1.0-0' }}</strong>
+                </div>
               </div>
             </div>
-          </section>
-
-          <section class="quotation-kind-note">
-            <strong>Kind Note:</strong>
-            <span>{{ invoiceFooter || 'We aim to provide the best software to automate your business with high quality
-              at affordable cost.' }}</span>
           </section>
         </ng-template>
       </div>
@@ -2115,3 +2133,12 @@
 <datalist id="remarkSuggestions">
   <option *ngFor="let remark of productRemarks" [value]="remark"></option>
 </datalist>
+
+<app-proposal-generator-modal
+  *ngIf="showProposalModal"
+  [show]="showProposalModal"
+  [lead]="proposalModalLead"
+  [collaboratingCompanies]="employee?.allowedCompanies || []"
+  [baseCompanyCode]="employee?.companyCode || ''"
+  (close)="closeProposalModal()">
+</app-proposal-generator-modal>

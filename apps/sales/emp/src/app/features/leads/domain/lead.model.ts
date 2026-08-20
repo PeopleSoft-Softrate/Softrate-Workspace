@@ -1,5 +1,6 @@
 export interface Lead {
   id: string;
+  leadId?: string;
   companyCode: string;
   assignedEmployeeId: string;
   companyName: string;

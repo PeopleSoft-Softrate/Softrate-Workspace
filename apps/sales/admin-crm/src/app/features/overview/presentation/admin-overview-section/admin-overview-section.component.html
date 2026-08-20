@@ -181,26 +181,6 @@
       </section>
 
       <div *ngIf="dashTab==='overview'" class="admin-overview-view">
-        <div class="dash-header-row admin-overview-filter-header">
-          <div class="period-tabs">
-            <button *ngFor="let p of periods" [class.active]="selectedPeriod===p.key" (click)="onPeriodChange(p.key)">{{
-              p.label }}</button>
-          </div>
-        </div>
-
-        <!-- Custom date range -->
-        <div class="custom-range-row" *ngIf="selectedPeriod==='custom'">
-          <div class="cr-field">
-            <label>From</label>
-            <input type="date" [(ngModel)]="customFrom" [max]="todayIso">
-          </div>
-          <div class="cr-field">
-            <label>To <span style="font-size:.7rem;opacity:.6;">(optional)</span></label>
-            <input type="date" [(ngModel)]="customTo" [min]="customFrom" [max]="todayIso">
-          </div>
-          <button class="cta-primary" style="padding:.42rem 1.1rem;font-size:.82rem;align-self:flex-end;"
-            (click)="applyCustomRange()" [disabled]="!customFrom">Apply</button>
-        </div>
 
         <!-- SKELETON LOADING STATE -->
         <div *ngIf="summaryLoading" class="dash-loading">
@@ -499,16 +479,25 @@
             </div>
             </div>
             <div class="chart-card flex-1 admin-employees-card">
-              <div class="top-employee-board-header">
-                <div>
+              <div class="top-employee-board-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
+                <div class="admin-overview-filter-header" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; width: 100%;">
+                  <div class="period-tabs" style="margin: 0;">
+                    <button *ngFor="let p of periods" [class.active]="selectedPeriod===p.key" (click)="onPeriodChange(p.key)">{{ p.label }}</button>
+                  </div>
+                  <!-- Custom date range -->
+                  <div class="custom-range-row" *ngIf="selectedPeriod==='custom'" style="margin: 0; padding: 0;">
+                    <div class="cr-field">
+                      <label>From</label>
+                      <input type="date" [(ngModel)]="customFrom" [max]="todayIso">
+                    </div>
+                    <div class="cr-field">
+                      <label>To <span style="font-size:.7rem;opacity:.6;">(optional)</span></label>
+                      <input type="date" [(ngModel)]="customTo" [min]="customFrom" [max]="todayIso">
+                    </div>
+                    <button class="cta-primary" style="height: 42px; padding: 0 1.5rem; font-size: 14px; font-weight: 500; align-self: flex-end; border-radius: 8px; background: #fff; color: #111827; border: 1px solid var(--admin-line); box-shadow: 0 1px 2px rgba(0,0,0,0.05);" (click)="applyCustomRange()" [disabled]="!customFrom">Apply</button>
+                  </div>
                 </div>
-                <button class="pill-btn dark" (click)="dashTab='employees'">See All
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </button>
+
               </div>
               <div class="top-employee-board" *ngIf="employeeCallRows && employeeCallRows.length; else noEmployeeBoard">
                 <div class="top-employee-ranklist">
@@ -546,6 +535,15 @@
                       </svg>
                     </div>
                   </button>
+                  <div style="display: flex; justify-content: flex-end; padding: 16px 24px;">
+                    <button class="see-all-link" (click)="dashTab='employees'">See All
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <aside class="top-employee-side">

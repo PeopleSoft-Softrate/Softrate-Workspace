@@ -4,7 +4,7 @@
         </div>
 
         <!-- Skeleton Loading State -->
-        <div *ngIf="settingsLoading" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:960px; animation: fadeIn 0.4s ease-out;">
+        <div *ngIf="settingsLoading" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;width:100%; animation: fadeIn 0.4s ease-out;">
           <!-- Card 1 Skeleton -->
           <div class="skeleton-card">
             <div class="skeleton skeleton-title"></div>
@@ -45,7 +45,7 @@
           </div>
         </div>
 
-        <div *ngIf="!settingsLoading" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:960px; animation: fadeIn 0.4s ease-out;">
+        <div *ngIf="!settingsLoading" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;width:100%; animation: fadeIn 0.4s ease-out;">
 
           <!-- Tag Management Card -->
           <div class="company-card" style="display: flex; flex-direction: column;">

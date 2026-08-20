@@ -1,5 +1,7 @@
 export interface QuotationRecord {
   id: string;
+  leadCode?: string;
+  clientId?: string;
   companyCode?: string;
   quotationNumber: string;
   companyName: string;

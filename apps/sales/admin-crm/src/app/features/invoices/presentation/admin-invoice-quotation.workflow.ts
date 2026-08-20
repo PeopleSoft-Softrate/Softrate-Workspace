@@ -131,7 +131,12 @@ export class AdminInvoiceQuotationWorkflow {
       }
 
       .quotation-print-root {
-        padding: 8mm !important;
+        width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
       }
 
       .admin-print-root .admin-quote-modal,
@@ -163,13 +168,14 @@ export class AdminInvoiceQuotationWorkflow {
       .quotation-print-root .admin-quote-modal,
       .quotation-print-root .invoice-builder,
       .quotation-print-root .invoice-preview {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-height: 0 !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        min-height: 297mm !important;
         height: auto !important;
-        margin: 0 auto !important;
+        margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
+        border: none !important;
         box-sizing: border-box !important;
       }
 
@@ -179,7 +185,14 @@ export class AdminInvoiceQuotationWorkflow {
       }
 
       .admin-print-root .quotation-page {
-        margin: 5mm auto !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        border: none !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
         page-break-after: always !important;
         break-after: page !important;
       }
@@ -193,9 +206,32 @@ export class AdminInvoiceQuotationWorkflow {
         margin-top: 0 !important;
       }
 
+      .quotation-print-root .quotation-hero {
+        width: 210mm !important;
+        min-height: 64mm !important;
+        max-height: 68mm !important;
+        padding: 8mm 16mm 7mm 16mm !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+      }
+
+      .quotation-print-root .quotation-letter {
+        padding: 7mm 16mm 4mm 16mm !important;
+      }
+
+      .quotation-print-root .quotation-service-card {
+        width: calc(210mm - 32mm) !important;
+        max-width: calc(210mm - 32mm) !important;
+        margin: 0 16mm !important;
+      }
+
+      .quotation-print-root .quotation-terms-page {
+        padding: 10mm 16mm 8mm 16mm !important;
+      }
+
       @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 0 !important;
       }
     </style>
   </head>
@@ -555,6 +591,26 @@ export class AdminInvoiceQuotationWorkflow {
     ].join('|');
   }
 
+  private adminProposalHistoryCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminProposalHistoryCachePrefix,
+      vm.dashboardCode || '',
+      (vm.proposalHistorySearch || '').trim(),
+      vm.proposalDateFrom || '',
+      vm.proposalDateTo || '',
+      page,
+    ].join('|');
+  }
+
+  private adminProposalLeadCacheKey(vm: any, page = 1): string {
+    return [
+      vm.adminProposalLeadCachePrefix,
+      vm.dashboardCode || '',
+      (vm.proposalSearch || '').trim().toLowerCase() || 'all',
+      page,
+    ].join('|');
+  }
+
   private restoreCachedInvoiceHistoryPage(vm: any, page = 1, append = false): boolean {
     const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminInvoiceHistoryCacheKey(vm, page));
     if (!cached) return false;
@@ -642,6 +698,36 @@ export class AdminInvoiceQuotationWorkflow {
     vm.quotationLeadsLoaded = true;
     vm.quotationLeadsLoading = false;
     vm.quotationLeadsLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedProposalHistoryPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<any>>(this.adminProposalHistoryCacheKey(vm, page));
+    if (!cached) return false;
+    vm.proposalRecords = append
+      ? this.mergePagedItems(vm.proposalRecords, cached.items, (item) => String(item?._id || item?.id || item?.proposalNumber || ''))
+      : cached.items;
+    vm.proposalRecordsPage = cached.page;
+    vm.proposalRecordsHasMore = cached.hasMore;
+    vm.proposalRecordsTotal = cached.total;
+    vm.proposalRecordsLoaded = true;
+    vm.proposalRecordsLoading = false;
+    vm.proposalRecordsLoadingMore = false;
+    return true;
+  }
+
+  private restoreCachedProposalLeadPage(vm: any, page = 1, append = false): boolean {
+    const cached = this.dashboardCache.get<PagedResponse<Lead>>(this.adminProposalLeadCacheKey(vm, page));
+    if (!cached) return false;
+    vm.adminProposalLeads = append
+      ? this.mergePagedItems(vm.adminProposalLeads, cached.items, (item) => String(item?._id || `${item?.leadCompanyName || ''}|${item?.contactNumber || ''}`))
+      : cached.items;
+    vm.proposalLeadsPage = cached.page;
+    vm.proposalLeadsHasMore = cached.hasMore;
+    vm.proposalLeadsTotal = cached.total;
+    vm.proposalLeadsLoaded = true;
+    vm.proposalLeadsLoading = false;
+    vm.proposalLeadsLoadingMore = false;
     return true;
   }
 
@@ -1622,12 +1708,47 @@ export class AdminInvoiceQuotationWorkflow {
     return String(vm.invoiceContactLineCache || '');
   }
 
+  quotationFooterContactLine(vm: any): string {
+    const parts = [
+      String(this.activeInvoiceCompanySnapshot(vm)?.website || vm.settingsContactDetails?.website || '').trim(),
+      String(this.activeInvoiceCompanySnapshot(vm)?.email || vm.settingsContactDetails?.email || '').trim()
+    ].filter(Boolean);
+    return parts.join(' | ') || (this.invoiceContactLine(vm) || 'www.softrateglobal.com | helpdesk@softrateglobal.com');
+  }
+
   quotationBankRows(vm: any): Array<{ label: string; value: string }> {
     return vm.quotationBankRowsCache || [];
   }
 
   quotationKindNoteText(vm: any): string {
     return String(vm.quotationKindNoteTextCache || this.defaultQuotationKindNote(vm));
+  }
+
+  quotationBannerDisplayText(vm: any): string {
+    return String(
+      this.activeInvoiceCompanySnapshot(vm)?.quotationBannerText ||
+      vm.settingsQuotationBannerText ||
+      'Think Software,\nThink Softrate.'
+    ).trim();
+  }
+
+  formatQuotationDate(dateInput?: any): string {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(d.getTime())) return '';
+    const day = d.getDate();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+
+    return `${day}${suffix} ${month}, ${year}`;
   }
 
   formatInvoicePaymentStatus(vm: any, status?: string): string {
@@ -1878,5 +1999,174 @@ export class AdminInvoiceQuotationWorkflow {
 
   getTotalItemsQty(vm: any): number {
     return Number(vm.invoiceTotalItemsQtyCache || 0);
+  }
+
+  fetchAdminProposalLeads(vm: any, force = false): void {
+    void this.loadAdminProposalLeadPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  fetchProposalRecords(vm: any, force = false): void {
+    void this.loadProposalHistoryPage(vm, 1, { reset: true, forceRefresh: force });
+  }
+
+  onAdminProposalSearchChange(vm: any): void {
+    if (vm.proposalSearchTimeoutRef) clearTimeout(vm.proposalSearchTimeoutRef);
+    vm.proposalSearchTimeoutRef = setTimeout(() => {
+      vm.proposalLeadsLoaded = false;
+      void this.loadAdminProposalLeadPage(vm, 1, { reset: true });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  onAdminProposalHistoryQueryChange(vm: any): void {
+    vm.proposalRecordsLoaded = false;
+    this.fetchProposalRecords(vm, true);
+  }
+
+  onAdminProposalLeadScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.proposalLeadsLoading || vm.proposalLeadsLoadingMore || !vm.proposalLeadsHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadAdminProposalLeadPage(vm, vm.proposalLeadsPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  onAdminProposalHistoryScroll(vm: any, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target || vm.proposalRecordsLoadingMore || !vm.proposalRecordsHasMore) return;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 120) {
+      void this.loadProposalHistoryPage(vm, vm.proposalRecordsPage + 1, { append: true, forceRefresh: true });
+    }
+  }
+
+  openSavedProposal(vm: any, proposal: any): void {
+    vm.savedProposalRecordForModal = proposal;
+    vm.proposalModalLead = {
+      _id: proposal.leadId,
+      leadCompanyName: proposal.leadCompanyName,
+      contactName: proposal.contactName,
+      contactNumber: proposal.contactNumber,
+      directorEmailAddress: proposal.directorEmailAddress,
+    };
+    vm.showProposalModal = true;
+  }
+
+  async loadProposalHistoryPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!vm.dashboardCode) return;
+    const cacheKey = this.adminProposalHistoryCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedProposalHistoryPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.reset && !silent) {
+      vm.proposalRecords = [];
+      vm.proposalRecordsPage = 1;
+      vm.proposalRecordsHasMore = false;
+      vm.proposalRecordsTotal = 0;
+    }
+    if (options.append) {
+      vm.proposalRecordsLoadingMore = true;
+    } else if (!silent) {
+      vm.proposalRecordsLoading = true;
+    }
+
+    const params = new URLSearchParams({
+      companyCode: vm.dashboardCode,
+      search: (vm.proposalHistorySearch || '').trim(),
+      dateFrom: vm.proposalDateFrom || '',
+      dateTo: vm.proposalDateTo || '',
+      page: String(page),
+      pageSize: String(HISTORY_PAGE_SIZE),
+      paginated: 'true',
+    });
+
+    if (vm.selectedProposalLead?._id) {
+      params.set('leadId', String(vm.selectedProposalLead._id));
+    }
+
+    try {
+      const response = await firstValueFrom(this.api.get<any>(`/api/proposal-records?${params.toString()}`));
+      const rawItems = Array.isArray(response?.items) ? response.items : (response?.proposals || []);
+      const pageResult = this.resolvePagedResponse<any>(response, rawItems, page, HISTORY_PAGE_SIZE);
+      vm.proposalRecords = options.append
+        ? this.mergePagedItems(vm.proposalRecords, pageResult.items, (item) => String(item?._id || item?.id || item?.proposalNumber || ''))
+        : pageResult.items;
+      vm.proposalRecordsPage = pageResult.page;
+      vm.proposalRecordsHasMore = pageResult.hasMore;
+      vm.proposalRecordsTotal = pageResult.total;
+      vm.proposalRecordsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        vm.proposalRecords = [];
+        vm.proposalRecordsPage = 1;
+        vm.proposalRecordsHasMore = false;
+        vm.proposalRecordsTotal = 0;
+      }
+    } finally {
+      vm.proposalRecordsLoading = false;
+      vm.proposalRecordsLoadingMore = false;
+    }
+  }
+
+  async loadAdminProposalLeadPage(
+    vm: any,
+    page: number,
+    options: { reset?: boolean; silent?: boolean; forceRefresh?: boolean; append?: boolean } = {},
+  ): Promise<void> {
+    if (!vm.dashboardCode) return;
+    const cacheKey = this.adminProposalLeadCacheKey(vm, page);
+    const restored = !options.forceRefresh && this.restoreCachedProposalLeadPage(vm, page, !!options.append);
+    if (restored && !this.isRefreshDue(vm, cacheKey)) return;
+
+    const silent = !!options.silent || restored;
+    if (options.append) {
+      vm.proposalLeadsLoadingMore = true;
+    } else {
+      vm.proposalLeadsLoading = !silent;
+      if (options.reset && !silent) {
+        vm.adminProposalLeads = [];
+        vm.proposalLeadsPage = 1;
+        vm.proposalLeadsHasMore = false;
+        vm.proposalLeadsTotal = 0;
+      }
+    }
+
+    try {
+      const response = await firstValueFrom(this.leadService.getAdminLeadPage(vm.dashboardCode, {
+        search: (vm.proposalSearch || '').trim() || undefined,
+        page,
+        pageSize: OPERATIONAL_PAGE_SIZE,
+        paginated: true,
+      }));
+      const rawItems = Array.isArray(response?.leads) ? response.leads : (response?.items || []);
+      const pageResult = this.resolvePagedResponse<Lead>(
+        response,
+        rawItems.map((lead: any) => vm.normalizeLead(lead)),
+        page,
+        OPERATIONAL_PAGE_SIZE,
+      );
+      vm.adminProposalLeads = options.append
+        ? this.mergePagedItems(vm.adminProposalLeads, pageResult.items, (item) => String(item?._id || `${item?.leadCompanyName || ''}|${item?.contactNumber || ''}`))
+        : pageResult.items;
+      vm.proposalLeadsPage = pageResult.page;
+      vm.proposalLeadsHasMore = pageResult.hasMore;
+      vm.proposalLeadsTotal = pageResult.total;
+      vm.proposalLeadsLoaded = true;
+      this.dashboardCache.set(cacheKey, pageResult, { ttlMs: vm.adminDashboardCacheTtlMs });
+    } catch {
+      if (!options.append && !silent) {
+        vm.adminProposalLeads = [];
+        vm.proposalLeadsPage = 1;
+        vm.proposalLeadsHasMore = false;
+        vm.proposalLeadsTotal = 0;
+      }
+    } finally {
+      vm.proposalLeadsLoading = false;
+      vm.proposalLeadsLoadingMore = false;
+    }
   }
 }

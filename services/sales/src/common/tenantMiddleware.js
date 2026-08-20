@@ -8,6 +8,7 @@ const Bookmark = require('../../models/Bookmark');
 const BreakLog = require('../../models/BreakLog');
 const Quotation = require('../../models/Quotation');
 const Invoice = require('../../models/Invoice');
+const Proposal = require('../../models/Proposal');
 const History = require('../../models/History');
 const Client = require('../../models/Client');
 const Counter = require('../../models/Counter');
@@ -44,6 +45,7 @@ function getTenantConnection(dbName) {
   conn.model('Deal', Deal.schema);
   conn.model('Quotation', Quotation.schema);
   conn.model('Invoice', Invoice.schema);
+  conn.model('Proposal', Proposal.schema);
   conn.model('History', History.schema);
   conn.model('Client', Client.schema);
   conn.model('Counter', Counter.schema);
@@ -137,6 +139,7 @@ async function tenantMiddleware(req, res, next) {
       Deal: db.model('Deal'),
       Quotation: db.model('Quotation'),
       Invoice: db.model('Invoice'),
+      Proposal: db.model('Proposal'),
       History: db.model('History'),
       Client: db.model('Client'),
       Counter: db.model('Counter'),
@@ -184,6 +187,7 @@ function companyMiddleware(req, res, next) {
     Deal: db.model('Deal'),
     Quotation: db.model('Quotation'),
     Invoice: db.model('Invoice'),
+    Proposal: db.model('Proposal'),
     History: db.model('History'),
     Client: db.model('Client'),
     Counter: db.model('Counter'),

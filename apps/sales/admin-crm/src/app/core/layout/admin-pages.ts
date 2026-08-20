@@ -12,7 +12,6 @@ export type AdminPageId =
   | 'emp_dashboard'
   | 'settings'
   | 'invoice'
-  | 'client_onboarding'
   | 'invoice_settings'
   | 'quotation'
   | 'remarks_filter'
@@ -27,7 +26,8 @@ export type AdminPageId =
   | 'crm_projects'
   | 'crm_client_onboard_requests'
   | 'email_integration'
-  | 'proposal_settings';
+  | 'proposal_settings'
+  | 'proposals';
 
 export const ADMIN_PAGES: readonly AdminPageId[] = [
   'overview',
@@ -40,7 +40,6 @@ export const ADMIN_PAGES: readonly AdminPageId[] = [
   'emp_dashboard',
   'settings',
   'invoice',
-  'client_onboarding',
   'invoice_settings',
   'quotation',
   'remarks_filter',
@@ -56,6 +55,7 @@ export const ADMIN_PAGES: readonly AdminPageId[] = [
   'crm_client_onboard_requests',
   'email_integration',
   'proposal_settings',
+  'proposals',
 ];
 
 export const ADMIN_ROUTES: Routes = [

@@ -23,8 +23,10 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
   @Input() collaboratingCompanies: string[] = [];
   @Input() show: boolean = false;
   
+  @Input() savedProposalRecord: any = null;
   @Output() close = new EventEmitter<void>();
   @Output() onProposalSent = new EventEmitter<{ action: 'download' | 'send', file?: File, templateName?: string }>();
+  @Output() onProposalSaved = new EventEmitter<any>();
 
   templates: any[] = [];
   selectedTemplateId: string = '';
@@ -87,9 +89,31 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
     this.loadingTemplates = true;
     this.error = '';
     this.api.get<{success: boolean, templates: any[]}>(`/api/auth/proposals?companyCode=${this.companyCode}`).subscribe({
-      next: (res: {success: boolean, templates: any[]}) => {
+      next: async (res: {success: boolean, templates: any[]}) => {
         if (res.success) {
           this.templates = res.templates || [];
+          if (this.savedProposalRecord && this.savedProposalRecord.templateId) {
+            this.selectedTemplateId = this.savedProposalRecord.templateId;
+            await this.onTemplateSelect();
+            if (this.savedProposalRecord.valuesSnapshot) {
+              const snap = this.savedProposalRecord.valuesSnapshot;
+              for (const sp of this.standardPlaceholders) {
+                if (snap[sp.key] !== undefined) sp.value = snap[sp.key];
+              }
+              for (const cp of this.customPlaceholders) {
+                if (snap[cp.key] !== undefined) cp.value = snap[cp.key];
+              }
+              for (const dp of this.dropdownPlaceholders) {
+                if (snap[dp.key] !== undefined) {
+                  dp.value = snap[dp.key];
+                  try {
+                    dp.selectedOptions = JSON.parse(snap[dp.key]);
+                  } catch {}
+                }
+              }
+            }
+            this.triggerPreview();
+          }
         } else {
           this.error = 'Failed to load templates.';
         }
@@ -405,6 +429,20 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
     this.close.emit();
   }
 
+  private getPagesSnapshotForSave(): any[] {
+    const pages = this.getPagesWithEdits();
+    return pages.map(p => ({
+      ...p,
+      backgroundImage: (typeof p.backgroundImage === 'string' && p.backgroundImage.startsWith('data:')) ? '' : (p.backgroundImage || ''),
+      layers: (p.layers || []).map((l: any) => {
+        if (typeof l.imageSrc === 'string' && l.imageSrc.startsWith('data:')) {
+          return { ...l, imageSrc: '' };
+        }
+        return l;
+      })
+    }));
+  }
+
   async generatePdf(action: 'download' | 'send') {
     const tpl = this.templates.find(t => t._id === this.selectedTemplateId);
     if (!tpl) return;
@@ -441,6 +479,33 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
         const file = new File([blob], fileName, { type: 'application/pdf' });
         this.onProposalSent.emit({ action: 'send', file, templateName: tpl.name });
       }
+
+      // Auto-save proposal record to backend
+      const proposalPayload = {
+        companyCode: this.companyCode,
+        brandingCompanyCode: this.companyCode,
+        leadId: this.lead?._id || this.lead?.leadId || null,
+        clientId: this.lead?.clientId || '',
+        leadCompanyName: this.lead?.leadCompanyName || this.lead?.companyName || 'Unnamed Company',
+        contactName: this.lead?.contactName || this.lead?.name || '',
+        contactNumber: this.lead?.contactNumber || this.lead?.phone || '',
+        directorEmailAddress: this.lead?.directorEmailAddress || this.lead?.email || '',
+        templateId: tpl._id,
+        templateName: tpl.name,
+        valuesSnapshot: dynamicData,
+        pagesSnapshot: this.getPagesSnapshotForSave(),
+        proposalDate: new Date(),
+        status: action === 'send' ? 'sent' : 'generated',
+        createdByRole: 'admin',
+      };
+      this.api.post<any>('/api/proposal-records', proposalPayload).subscribe({
+        next: (res: any) => {
+          if (res?.proposal) {
+            this.onProposalSaved.emit(res.proposal);
+          }
+        },
+        error: (err: any) => console.warn('Failed to save proposal record', err),
+      });
 
     } catch (e: any) {
       console.error(e);

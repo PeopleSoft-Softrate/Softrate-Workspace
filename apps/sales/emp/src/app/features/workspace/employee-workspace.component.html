@@ -60,9 +60,25 @@
       <div class="auth-panel-header">
         <div class="auth-panel-kicker">Security Setup</div>
         <h2>Setup Authenticator</h2>
-        <p style="margin-top: 6px; font-size: 13px; color: var(--text-muted);">
-          Scan this QR code using <strong>Google Authenticator</strong> or <strong>Microsoft Authenticator</strong> to activate daily 2FA login.
+        <p style="margin-top: 6px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+          Scan this QR code using the Authenticator app <strong>AuthSoft</strong> to activate daily 2FA login.
         </p>
+
+        <a
+          href="https://play.google.com/store/apps/details?id=com.softrate.authsoft&pcampaignid=web_share"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="authsoft-download-pill"
+          title="Download AuthSoft on Google Play"
+        >
+          <svg class="play-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+            <path d="M3.609 1.814L13.793 12 3.61 22.186A1.5 1.5 0 0 1 3 21.2V2.8a1.5 1.5 0 0 1 .609-.986zm11.3 11.3l2.296 2.295-9.845 5.684 7.549-7.979zm2.296-3.71l-2.296 2.296-7.55-7.98 9.846 5.684zm1.118.646l2.84 1.64a.8.8 0 0 1 0 1.388l-2.84 1.64-2.148-2.334 2.148-2.334z"/>
+          </svg>
+          <span>Get AuthSoft on Google Play</span>
+          <svg class="arrow-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M17 7H7M17 7V17"/>
+          </svg>
+        </a>
       </div>
 
       <div class="totp-setup-card">
@@ -89,22 +105,34 @@
       <div class="form-stack" style="margin-top: 18px;">
         <label class="field">
           <span class="field-label">Enter 6-digit Authenticator Code</span>
-          <input
-            class="field-input totp-code-input"
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="6"
-            placeholder="000000"
-            [(ngModel)]="twoFactorCode"
-            (keyup.enter)="verify2FASetup()"
-            autofocus
-          />
+          <div class="totp-input-box" (click)="setupTotpInput.focus()">
+            <input
+              #setupTotpInput
+              class="totp-real-input"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              [ngModel]="twoFactorCode"
+              (ngModelChange)="onTwoFactorCodeChange($event, 'setup')"
+              (keyup.enter)="verify2FASetup()"
+              autofocus
+            />
+            <div class="totp-slots-row">
+              <div class="totp-slot" *ngFor="let idx of [0, 1, 2, 3, 4, 5]" [class.filled]="(twoFactorCode || '').length > idx" [class.active]="(twoFactorCode || '').length === idx">
+                <div class="totp-slot-content">
+                  <span class="totp-slot-value" *ngIf="(twoFactorCode || '')[idx]">{{ (twoFactorCode || '')[idx] }}</span>
+                  <span class="totp-slot-cursor" *ngIf="!(twoFactorCode || '')[idx] && (twoFactorCode || '').length === idx">|</span>
+                </div>
+                <span class="totp-slot-line"></span>
+              </div>
+            </div>
+          </div>
         </label>
 
         <div class="form-error" *ngIf="twoFactorError">{{ twoFactorError }}</div>
 
-        <button class="primary-action" (click)="verify2FASetup()" [disabled]="twoFactorLoading || twoFactorCode.length !== 6">
+        <button class="primary-action" (click)="verify2FASetup()" [disabled]="twoFactorLoading || (twoFactorCode || '').length !== 6">
           <span *ngIf="!twoFactorLoading">Verify & Activate</span>
           <span *ngIf="twoFactorLoading" class="button-spinner"></span>
         </button>
@@ -128,22 +156,34 @@
       <div class="form-stack" style="margin-top: 24px;">
         <label class="field">
           <span class="field-label">6-Digit Code</span>
-          <input
-            class="field-input totp-code-input"
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="6"
-            placeholder="000000"
-            [(ngModel)]="twoFactorCode"
-            (keyup.enter)="verify2FACode()"
-            autofocus
-          />
+          <div class="totp-input-box" (click)="verifyTotpInput.focus()">
+            <input
+              #verifyTotpInput
+              class="totp-real-input"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              [ngModel]="twoFactorCode"
+              (ngModelChange)="onTwoFactorCodeChange($event, 'verify')"
+              (keyup.enter)="verify2FACode()"
+              autofocus
+            />
+            <div class="totp-slots-row">
+              <div class="totp-slot" *ngFor="let idx of [0, 1, 2, 3, 4, 5]" [class.filled]="(twoFactorCode || '').length > idx" [class.active]="(twoFactorCode || '').length === idx">
+                <div class="totp-slot-content">
+                  <span class="totp-slot-value" *ngIf="(twoFactorCode || '')[idx]">{{ (twoFactorCode || '')[idx] }}</span>
+                  <span class="totp-slot-cursor" *ngIf="!(twoFactorCode || '')[idx] && (twoFactorCode || '').length === idx">|</span>
+                </div>
+                <span class="totp-slot-line"></span>
+              </div>
+            </div>
+          </div>
         </label>
 
         <div class="form-error" *ngIf="twoFactorError">{{ twoFactorError }}</div>
 
-        <button class="primary-action" (click)="verify2FACode()" [disabled]="twoFactorLoading || twoFactorCode.length !== 6">
+        <button class="primary-action" (click)="verify2FACode()" [disabled]="twoFactorLoading || (twoFactorCode || '').length !== 6">
           <span *ngIf="!twoFactorLoading">Verify & Enter Workspace</span>
           <span *ngIf="twoFactorLoading" class="button-spinner"></span>
         </button>
@@ -2401,11 +2441,21 @@
       </div>
       <button class="secondary-action" type="button" (click)="closeCompanyRemarkHistory()">Close</button>
     </div>
-    <div class="company-remarks-list" *ngIf="companyRemarkHistory(companyRemarkLead).length; else emptyCompanyRemarks">
-      <div class="company-remark-row" *ngFor="let remark of companyRemarkHistory(companyRemarkLead)">
-        {{ remark }}
+    <div class="company-remarks-list" *ngIf="companyRemarkEntries.length; else (companyRemarkLoading ? loadingCompanyRemarks : emptyCompanyRemarks)">
+      <div class="company-remark-row" *ngFor="let item of companyRemarkEntries">
+        <div class="company-remark-text">{{ item.text }}</div>
+        <div class="company-remark-timestamp" *ngIf="item.timestamp">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>{{ item.timestamp | date:'dd MMM yyyy, hh:mm a' }}</span>
+        </div>
       </div>
     </div>
+    <ng-template #loadingCompanyRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">Loading remark history...</div>
+    </ng-template>
     <ng-template #emptyCompanyRemarks>
       <div class="empty-state-inline empty-state-inline-minimal">No remarks recorded for this contact.</div>
     </ng-template>

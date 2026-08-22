@@ -21,6 +21,7 @@ import {
   AiSuggestionService,
 } from '../../ai-suggestion.service';
 import { EmployeePageId, EMPLOYEE_PAGES } from '../../core/layout/employee-pages';
+import { formatDocumentTitle, cleanLegalCompanyName } from '../../shared/utils/document-name.util';
 import {
   EmployeeLeadsState,
   EmployeeLeadsViewModel,
@@ -792,6 +793,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     reminderDate: '',
   };
   companyRemarkLead: Lead | null = null;
+  companyRemarkEntries: Array<{ text: string; timestamp?: string | Date; author?: string }> = [];
+  companyRemarkLoading = false;
   private aiBriefRequestSeq = 0;
   private aiBriefMemoryCache = new Map<
     string,
@@ -940,7 +943,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   get effectiveLeadStatuses(): string[] {
     if (this.leadStatusGroup === 'New') return ['New'];
-    if (this.leadStatusGroup === 'Connected') return ['Contacted', 'Connected'];
+    if (this.leadStatusGroup === 'Connected') return ['Connected', 'Contacted'];
     if (this.leadStatusGroup === 'Followups') return ['Follow Up'];
     return [];
   }
@@ -1719,10 +1722,80 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
   openCompanyRemarkHistory(lead: Lead): void {
     this.companyRemarkLead = lead;
+    this.companyRemarkLoading = true;
+    const initialRemarks = (lead.remarks || []).filter(Boolean);
+    this.companyRemarkEntries = initialRemarks.map(r => ({ text: String(r).trim() })).reverse();
+
+    const companyCode = String(lead.companyCode || this.employee?.companyCode || '').trim();
+    const contactNumber = String(lead.contactNumber || '').trim();
+    const companyName = String(lead.leadCompanyName || '').trim();
+
+    if (companyCode && (contactNumber || companyName)) {
+      let query = `companyCode=${encodeURIComponent(companyCode)}`;
+      if (contactNumber) query += `&contactNumber=${encodeURIComponent(contactNumber)}`;
+      if (companyName) query += `&companyName=${encodeURIComponent(companyName)}`;
+
+      this.api.get<any>(`/api/history?${query}`).subscribe({
+        next: (res) => {
+          this.companyRemarkLoading = false;
+          const logs = (res?.logs || []).filter((l: any) => 
+            String(l.action || '').toLowerCase().includes('remark')
+          );
+          this.companyRemarkEntries = this.buildRemarkHistoryEntries(lead, logs);
+        },
+        error: () => {
+          this.companyRemarkLoading = false;
+        }
+      });
+    } else {
+      this.companyRemarkLoading = false;
+    }
+  }
+
+  private buildRemarkHistoryEntries(lead: Lead, logs: any[]): Array<{ text: string; timestamp?: string | Date; author?: string }> {
+    const entries: Array<{ text: string; timestamp?: string | Date; author?: string }> = [];
+    const usedLogIndices = new Set<number>();
+
+    // 1. Add all history logs for remarks
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      const text = String(log.newValue || log.details || '').trim();
+      if (text) {
+        entries.push({
+          text,
+          timestamp: log.timestamp || log.createdAt,
+          author: log.changedByName || log.author || ''
+        });
+        usedLogIndices.add(i);
+      }
+    }
+
+    // 2. Also ensure any remarks in lead.remarks not matched in logs are included
+    const logTexts = new Set(entries.map(e => e.text.toLowerCase()));
+    for (const r of (lead.remarks || [])) {
+      const trimmed = String(r || '').trim();
+      if (trimmed && !logTexts.has(trimmed.toLowerCase())) {
+        entries.push({
+          text: trimmed
+        });
+      }
+    }
+
+    // Sort newest first
+    return entries.sort((a, b) => {
+      if (a.timestamp && b.timestamp) {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      }
+      if (a.timestamp) return -1;
+      if (b.timestamp) return 1;
+      return 0;
+    });
   }
 
   closeCompanyRemarkHistory(): void {
     this.companyRemarkLead = null;
+    this.companyRemarkEntries = [];
+    this.companyRemarkLoading = false;
   }
 
   @HostListener('document:click', ['$event'])
@@ -2148,7 +2221,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     'Converted',
     'Follow Up',
     'Not Interested',
-    'Contacted',
+    'Connected',
     'Invalid',
     'Not Connected',
     'Closed Lost'
@@ -2177,7 +2250,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       } else if (this.leadStatusGroup === 'Followups') {
         result = baseStatuses.filter(s => {
           const norm = (s || '').toLowerCase();
-          return norm !== 'new' && norm !== 'invalid' && norm !== 'not connected' && norm !== 'contacted';
+          return norm !== 'new' && norm !== 'invalid' && norm !== 'not connected' && norm !== 'connected' && norm !== 'contacted';
         });
       }
     }
@@ -3596,6 +3669,12 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     return `QT${yy}Draft`;
   }
 
+  private getFormattedDocumentTitle(): string {
+    const rawCompany = this.invoiceLead?.leadCompanyName || this.selectedInvoiceClient?.leadCompanyName || this.selectedInvoiceClient?.companyName || (this.invoiceLead as any)?.companyName || (this.invoiceLead as any)?.name || '';
+    const docType = this.quoteMode ? 'Quotation' : 'Invoice';
+    return formatDocumentTitle(docType, rawCompany);
+  }
+
   async emailCurrentDocument(): Promise<void> {
     if (this.invoiceItems.length === 0) {
       alert(`Please add at least one product to the ${this.quoteMode ? 'quotation' : 'invoice'}.`);
@@ -3620,7 +3699,8 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
     const docType = this.quoteMode ? 'Quotation' : 'Invoice';
     const docNumber = this.quoteMode ? this.quotationNumber() : String(this.currentInvoiceNumber || 'Draft');
-    const filename = `${docType}_${docNumber}.pdf`;
+    const docTitle = this.getFormattedDocumentTitle();
+    const filename = `${docTitle}.pdf`;
 
     const opt = {
       margin: 0,
@@ -3660,11 +3740,11 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
       alert(`Please add at least one product to the ${this.quoteMode ? 'quotation' : 'invoice'}.`);
       return;
     }
+    const docTitle = this.getFormattedDocumentTitle();
     if (this.viewingSavedDocument) {
-      const invNum = String(this.currentInvoiceNumber || 'Invoice');
       void this.ensureInvoiceQr().finally(() => {
         if (action === 'email') this.emailCurrentDocument();
-        else this.printCurrentDocument(invNum);
+        else this.printCurrentDocument(docTitle);
       });
       return;
     }
@@ -3739,7 +3819,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           this.fetchInvoiceRecords(true);
           void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => {
             if (action === 'email') this.emailCurrentDocument();
-            else this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice'));
+            else this.printCurrentDocument(this.getFormattedDocumentTitle());
           });
         },
         error: (err) => {
@@ -3762,7 +3842,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
           this.fetchInvoiceRecords(true);
           void this.setInvoiceQrFromUrl(res.invoice.publicUrl || '').finally(() => {
             if (action === 'email') this.emailCurrentDocument();
-            else this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice'));
+            else this.printCurrentDocument(this.getFormattedDocumentTitle());
           });
         },
         error: (err) => {
@@ -3833,7 +3913,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         if (action === 'email') {
           this.emailCurrentDocument();
         } else {
-          this.printCurrentDocument(String(res.quotation.quotationNumber || 'Quotation'));
+          this.printCurrentDocument(this.getFormattedDocumentTitle());
         }
       },
       error: (err) => {
@@ -5947,6 +6027,17 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
         this.loginError = err.error?.message || 'Employee not found with this number & company code.';
       }
     });
+  }
+
+  onTwoFactorCodeChange(code: string, type: 'setup' | 'verify'): void {
+    this.twoFactorCode = code;
+    if (code && code.length === 6) {
+      if (type === 'setup') {
+        this.verify2FASetup();
+      } else {
+        this.verify2FACode();
+      }
+    }
   }
 
   verify2FASetup(): void {
@@ -8991,7 +9082,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
 
       if (this.leadStatusGroup !== 'All') {
         const effNorms = this.effectiveLeadStatuses.map(s => normalizedStatus(s));
-        if (effectiveStatuses.some(status => effNorms.includes(status) || (this.leadStatusGroup === 'Connected' && status === 'connected'))) {
+        if (effectiveStatuses.some(status => effNorms.includes(status) || (this.leadStatusGroup === 'Connected' && (status === 'connected' || status === 'contacted')))) {
            matchingCompaniesForLeadsTab.add(company);
         }
       } else if (!this.leadStatusFilter || effectiveStatuses.some(status => status === normalizedStatus(this.leadStatusFilter))) {
@@ -9379,7 +9470,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (this.DNP_PAGE_STATUSES.includes(status)) return 'status-not-interested';
     if (this.CONVERTED_PAGE_STATUSES.includes(status)) return 'status-converted';
     if (status === 'Follow Up') return 'status-followup';
-    if (status === 'Contacted') return 'status-contacted';
+    if (status === 'Connected') return 'status-contacted';
     return 'status-new';
   }
 
@@ -9388,7 +9479,7 @@ export class EmployeeWorkspaceComponent implements OnInit, OnDestroy {
     if (this.DNP_PAGE_STATUSES.includes(status)) return 'var(--status-negative)';
     if (this.CONVERTED_PAGE_STATUSES.includes(status)) return 'var(--status-info)';
     if (status === 'Follow Up') return 'var(--status-warning)';
-    if (status === 'Contacted') return 'var(--status-info)';
+    if (status === 'Connected') return 'var(--status-info)';
     return 'var(--text-strong)';
   }
 

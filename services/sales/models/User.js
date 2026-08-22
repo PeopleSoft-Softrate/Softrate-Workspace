@@ -116,7 +116,7 @@ const userSchema = new mongoose.Schema(
         'Converted',
         'Follow Up',
         'Not Interested',
-        'Contacted',
+        'Connected',
         'Invalid',
         'Not Connected',
         'Closed Lost'

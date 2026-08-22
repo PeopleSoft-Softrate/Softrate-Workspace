@@ -7,6 +7,7 @@ import { HISTORY_PAGE_SIZE, OPERATIONAL_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from '..
 import { ApiService } from '../../../services/api.service';
 import { Lead, LeadService } from '../../../services/lead.service';
 import { formatInvoiceMoney as formatInvoiceMoneyValue, numberToWords } from '../domain/invoice-formatters';
+import { formatDocumentTitle } from '../../../shared/utils/document-name.util';
 
 interface PagedResponse<T> {
   items: T[];
@@ -1802,14 +1803,20 @@ export class AdminInvoiceQuotationWorkflow {
     });
     this.refreshInvoicePreviewCaches(vm);
   }
+  getFormattedDocumentTitle(vm: any): string {
+    const rawCompany = vm.invoiceLead?.leadCompanyName || vm.selectedInvoiceClient?.leadCompanyName || vm.selectedInvoiceClient?.companyName || vm.selectedInvoiceClient?.clientName || (vm.invoiceLead as any)?.companyName || (vm.invoiceLead as any)?.name || '';
+    const docType = vm.quoteMode ? 'Quotation' : 'Invoice';
+    return formatDocumentTitle(docType, rawCompany);
+  }
+
   printInvoice(vm: any): void {
     if (vm.invoiceItems.length === 0) {
       alert(`Please add at least one product to the ${vm.quoteMode ? 'quotation' : 'invoice'}.`);
       return;
     }
+    const docTitle = this.getFormattedDocumentTitle(vm);
     if (vm.viewingSavedDocument && !vm.invoiceEditMode) {
-      const invNum = String(vm.invoiceNumberCache || this.resolveInvoiceNumber(vm) || 'Invoice');
-      this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument(invNum));
+      this.ensureInvoiceQr(vm).finally(() => this.printCurrentDocument(docTitle));
       return;
     }
 
@@ -1877,7 +1884,7 @@ export class AdminInvoiceQuotationWorkflow {
           vm.viewingSavedDocument = true;
           vm.currentInvoiceRecord = res.invoice;
           vm.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
+          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(this.getFormattedDocumentTitle(vm)));
         },
         error: (err) => {
           vm.invoiceSaving = false;
@@ -1894,7 +1901,7 @@ export class AdminInvoiceQuotationWorkflow {
           }
           vm.currentInvoiceNumber = res.invoice.invoiceNumber;
           vm.fetchInvoiceRecords(true);
-          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(String(res.invoice.invoiceNumber || 'Invoice')));
+          void this.setInvoiceQrFromUrl(vm, res.invoice.publicUrl || '').finally(() => this.printCurrentDocument(this.getFormattedDocumentTitle(vm)));
         },
         error: (err) => {
           vm.invoiceSaving = false;
@@ -1941,7 +1948,7 @@ export class AdminInvoiceQuotationWorkflow {
         vm.currentQuotationNumber = res.quotation.quotationNumber;
         vm.quotationKindNoteDraft = String(res.quotation.kindNote || this.quotationKindNoteText(vm));
         vm.fetchQuotationRecords(true);
-        this.printCurrentDocument(String(res.quotation.quotationNumber || 'Quotation'));
+        this.printCurrentDocument(this.getFormattedDocumentTitle(vm));
       },
       error: (err) => {
         vm.quotationSaving = false;

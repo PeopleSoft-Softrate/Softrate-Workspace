@@ -3,7 +3,7 @@ export const ADMIN_LEAD_STATUSES = [
   'Converted',
   'Follow Up',
   'Not Interested',
-  'Contacted',
+  'Connected',
   'Invalid',
   'Not Connected',
   'Closed Lost'

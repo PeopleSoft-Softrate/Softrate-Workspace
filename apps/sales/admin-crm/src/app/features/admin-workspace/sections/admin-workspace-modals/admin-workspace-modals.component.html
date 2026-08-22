@@ -384,11 +384,21 @@
       <button class="secondary-action" type="button" (click)="vm.closeAllRemarksModal()">Close</button>
     </div>
     <div class="company-remarks-list"
-      *ngIf="vm.companyRemarkHistory(vm.selectedBookmarkForRemarks).length; else emptyBookmarkRemarks">
-      <div class="company-remark-row" *ngFor="let remark of vm.companyRemarkHistory(vm.selectedBookmarkForRemarks)">
-        {{ remark }}
+      *ngIf="vm.companyRemarkEntries.length; else (vm.companyRemarkLoading ? loadingBookmarkRemarks : emptyBookmarkRemarks)">
+      <div class="company-remark-row" *ngFor="let item of vm.companyRemarkEntries">
+        <div class="company-remark-text">{{ item.text }}</div>
+        <div class="company-remark-timestamp" *ngIf="item.timestamp">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>{{ item.timestamp | date:'dd MMM yyyy, hh:mm a' }}</span>
+        </div>
       </div>
     </div>
+    <ng-template #loadingBookmarkRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">Loading remark history...</div>
+    </ng-template>
     <ng-template #emptyBookmarkRemarks>
       <div class="empty-state-inline empty-state-inline-minimal">No remarks recorded for this contact.</div>
     </ng-template>
@@ -1109,11 +1119,21 @@
       <button class="secondary-action" type="button" (click)="vm.closeCompanyRemarkHistory()">Close</button>
     </div>
     <div class="company-remarks-list"
-      *ngIf="vm.companyRemarkHistory(vm.companyRemarkLead).length; else emptyCompanyLeadRemarks">
-      <div class="company-remark-row" *ngFor="let remark of vm.companyRemarkHistory(vm.companyRemarkLead)">
-        {{ remark }}
+      *ngIf="vm.companyRemarkEntries.length; else (vm.companyRemarkLoading ? loadingCompanyLeadRemarks : emptyCompanyLeadRemarks)">
+      <div class="company-remark-row" *ngFor="let item of vm.companyRemarkEntries">
+        <div class="company-remark-text">{{ item.text }}</div>
+        <div class="company-remark-timestamp" *ngIf="item.timestamp">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>{{ item.timestamp | date:'dd MMM yyyy, hh:mm a' }}</span>
+        </div>
       </div>
     </div>
+    <ng-template #loadingCompanyLeadRemarks>
+      <div class="empty-state-inline empty-state-inline-minimal">Loading remark history...</div>
+    </ng-template>
     <ng-template #emptyCompanyLeadRemarks>
       <div class="empty-state-inline empty-state-inline-minimal">No remarks recorded for this contact.</div>
     </ng-template>

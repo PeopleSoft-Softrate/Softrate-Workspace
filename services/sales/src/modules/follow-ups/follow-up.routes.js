@@ -128,7 +128,7 @@ router.post('/', async (req, res) => {
       eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_UPDATED', bookmark });
 
       // Log History
-      await logChange({ HistoryModel: History,
+      await logChange({ HistoryModel: req.models.History || History,
         companyCode: bookmark.companyCode,
         contactNumber: bookmark.contactNumber,
         companyName: bookmark.companyName,
@@ -158,7 +158,7 @@ router.post('/', async (req, res) => {
       eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_CREATED', bookmark });
 
       // Log History
-      await logChange({ HistoryModel: History,
+      await logChange({ HistoryModel: req.models.History || History,
         companyCode: bookmark.companyCode,
         contactNumber: bookmark.contactNumber,
         contactName: bookmark.contactName,
@@ -380,7 +380,7 @@ router.patch('/:id', async (req, res) => {
     eventBus.emitToEmployee(bookmark.companyCode, bookmark.employeeId, { type: 'BOOKMARK_UPDATED', bookmark });
 
     // Log History
-    await logChange({ HistoryModel: History,
+    await logChange({ HistoryModel: req.models.History || History,
       companyCode: bookmark.companyCode,
       contactNumber: bookmark.contactNumber,
       contactName: bookmark.contactName,

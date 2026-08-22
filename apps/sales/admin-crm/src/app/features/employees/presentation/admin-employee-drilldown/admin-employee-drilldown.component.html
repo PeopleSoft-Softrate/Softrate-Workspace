@@ -214,14 +214,280 @@
                 <option *ngFor="let s of settingsLeadStatuses" [value]="s">{{ s }}</option>
               </select>
             </div>
+
             <div class="form-group" style="margin:0">
-              <label style="font-size: 0.75rem;">Company Description Column</label>
-              <select [(ngModel)]="leadColumnMapping.companyDescription"
+              <label style="font-size: 0.75rem;">CIN Column</label>
+              <select [(ngModel)]="leadColumnMapping.cin"
                 style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
                 <option value="">-- Select Column --</option>
                 <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
               </select>
             </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Date Of Incorporation Column</label>
+              <select [(ngModel)]="leadColumnMapping.dateOfIncorporation"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Email Column</label>
+              <select [(ngModel)]="leadColumnMapping.companyEmail"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Authorised Capital Column</label>
+              <select [(ngModel)]="leadColumnMapping.authorisedCapital"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">PaidUp Capital Column</label>
+              <select [(ngModel)]="leadColumnMapping.paidUpCapital"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Total Obligation Column</label>
+              <select [(ngModel)]="leadColumnMapping.totalObligationOfContribution"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Address Type Column</label>
+              <select [(ngModel)]="leadColumnMapping.addressType"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Street Address Line 1 Column</label>
+              <select [(ngModel)]="leadColumnMapping.streetAddressLine1"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Street Address Line 2 Column</label>
+              <select [(ngModel)]="leadColumnMapping.streetAddressLine2"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">City Column</label>
+              <select [(ngModel)]="leadColumnMapping.city"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">State Column</label>
+              <select [(ngModel)]="leadColumnMapping.state"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Postal Code Column</label>
+              <select [(ngModel)]="leadColumnMapping.postalCode"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Director DIN Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorDin"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Director First Name Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorFirstName"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Director Last Name Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorLastName"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Director Mobile Number Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorMobileNumber"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Perm Address Line 1 Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPermanentAddressLine1"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Perm Address Line 2 Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPermanentAddressLine2"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Perm City Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPermanentCity"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Perm State Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPermanentState"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Perm Pincode Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPermanentPincode"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Pres Address Line 1 Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPresentAddressLine1"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Pres Address Line 2 Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPresentAddressLine2"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Pres City Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPresentCity"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Pres State Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPresentState"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Dir. Pres Pincode Column</label>
+              <select [(ngModel)]="leadColumnMapping.directorPresentPincode"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Main Division No Column</label>
+              <select [(ngModel)]="leadColumnMapping.mainDivisionNo"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Type Column</label>
+              <select [(ngModel)]="leadColumnMapping.companyType"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Class Of Company Column</label>
+              <select [(ngModel)]="leadColumnMapping.classOfCompany"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Category Column</label>
+              <select [(ngModel)]="leadColumnMapping.companyCategory"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Subcategory Column</label>
+              <select [(ngModel)]="leadColumnMapping.companySubcategory"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Registration Number Column</label>
+              <select [(ngModel)]="leadColumnMapping.registrationNumber"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">Company Origin Column</label>
+              <select [(ngModel)]="leadColumnMapping.companyOrigin"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label style="font-size: 0.75rem;">ROC Column</label>
+              <select [(ngModel)]="leadColumnMapping.roc"
+                style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid #cbd5e1;">
+                <option value="">-- Select Column --</option>
+                <option *ngFor="let h of excelHeaders" [value]="h">{{ h }}</option>
+              </select>
+            </div>
+
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 1.5rem;">

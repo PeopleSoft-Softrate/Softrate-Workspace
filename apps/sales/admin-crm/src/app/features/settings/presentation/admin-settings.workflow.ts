@@ -483,7 +483,7 @@ export class AdminSettingsWorkflow {
       'Converted',
       'Follow Up',
       'Not Interested',
-      'Contacted',
+      'Connected',
       'Invalid',
       'Not Connected'
     ];

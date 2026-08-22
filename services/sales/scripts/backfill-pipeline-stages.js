@@ -21,7 +21,7 @@ const BATCH_SIZE = 500;
 // ── Status → Pipeline mapping ──────────────────────────────────
 const STATUS_MAP = {
   'New':              { pipelineStage: 'NEW' },
-  'Contacted':        { pipelineStage: 'CONNECTED' },
+  'Connected':        { pipelineStage: 'CONNECTED' },
   'Follow Up':        { pipelineStage: 'QUALIFICATION' },
   'Details Shared':   { pipelineStage: 'QUALIFICATION' },
   'Future Needs':     { pipelineStage: 'QUALIFICATION' },

@@ -1255,6 +1255,28 @@
   color: #111827 !important;
   line-height: 1.5 !important;
   overflow-wrap: anywhere !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.company-remarks-modal .company-remark-text {
+  font-size: 0.9rem !important;
+  color: #111827 !important;
+  white-space: pre-wrap !important;
+}
+
+.company-remarks-modal .company-remark-timestamp {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 0.75rem !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+}
+
+.company-remarks-modal .company-remark-timestamp svg {
+  opacity: 0.7 !important;
 }
 
 .company-remarks-modal .empty-state-inline {

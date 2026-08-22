@@ -6,6 +6,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { PdfGeneratorService } from '../../../shared/utils/pdf-generator.service';
+import { formatDocumentTitle } from '../../../shared/utils/document-name.util';
 
 declare const pdfjsLib: any;
 
@@ -464,18 +465,21 @@ export class ProposalGeneratorModalComponent implements OnInit, OnDestroy {
 
       const blob = await this.pdfSvc.generatePdfBlob(this.getPagesWithEdits(), tpl.name, dynamicData);
 
+      const clientCompanyName = this.lead?.leadCompanyName || this.lead?.companyName || this.lead?.company || this.lead?.name || '';
+      const docTitle = formatDocumentTitle('Proposal', clientCompanyName, tpl.name);
+      const fileName = `${docTitle}.pdf`;
+
       if (action === 'download') {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${tpl.name}_${this.lead?.name || 'Lead'}.pdf`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         this.onProposalSent.emit({ action: 'download', templateName: tpl.name });
       } else if (action === 'send') {
-        const fileName = `${tpl.name}_${this.lead?.name || 'Lead'}.pdf`;
         const file = new File([blob], fileName, { type: 'application/pdf' });
         this.onProposalSent.emit({ action: 'send', file, templateName: tpl.name });
       }

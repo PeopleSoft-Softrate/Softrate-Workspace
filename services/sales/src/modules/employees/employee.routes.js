@@ -119,6 +119,34 @@ router.patch('/:id/tags', async (req, res) => {
   }
 });
 
+// PATCH employee profile photo — uses tenant DB
+router.patch('/:id/profile-photo', async (req, res) => {
+  try {
+    const { profilePhoto } = req.body;
+    
+    // We allow empty string to remove the photo
+    if (profilePhoto === undefined) {
+      return res.status(400).json({ success: false, message: 'profilePhoto is required.' });
+    }
+
+    const EmployeeModel = req.models?.Employee || Employee;
+    const employee = await EmployeeModel.findByIdAndUpdate(
+      req.params.id,
+      { $set: { profilePhoto } },
+      { returnDocument: 'after' }
+    );
+
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found.' });
+    }
+
+    return res.status(200).json({ success: true, employee });
+  } catch (err) {
+    console.error('[patch employee profile photo]', err);
+    return res.status(500).json({ success: false, message: 'Server error updating profile photo.' });
+  }
+});
+
 // PUT update employee details — uses tenant DB
 router.put('/:id', async (req, res) => {
   try {

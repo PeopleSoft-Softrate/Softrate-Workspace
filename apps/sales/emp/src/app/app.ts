@@ -3438,7 +3438,7 @@ export class App implements OnInit, OnDestroy {
     if (this.DNP_PAGE_STATUSES.includes(status)) return 'status-not-interested';
     if (this.CONVERTED_PAGE_STATUSES.includes(status)) return 'status-converted';
     if (status === 'Follow Up') return 'status-followup';
-    if (status === 'Contacted') return 'status-contacted';
+    if (status === 'Connected') return 'status-contacted';
     return 'status-new';
   }
 
@@ -3447,7 +3447,7 @@ export class App implements OnInit, OnDestroy {
     if (this.DNP_PAGE_STATUSES.includes(status)) return 'var(--status-negative)';
     if (this.CONVERTED_PAGE_STATUSES.includes(status)) return 'var(--status-info)';
     if (status === 'Follow Up') return 'var(--status-warning)';
-    if (status === 'Contacted') return 'var(--status-info)';
+    if (status === 'Connected') return 'var(--status-info)';
     return 'var(--text-strong)';
   }
 

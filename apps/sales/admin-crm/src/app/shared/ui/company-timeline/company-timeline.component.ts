@@ -112,16 +112,40 @@ export class CompanyTimelineComponent implements OnChanges {
         });
       });
 
-      // Add remarks (LeadHistoryLog)
+      // Add remarks (LeadHistoryLog & lead.remarks)
+      const seenRemarkTexts = new Set<string>();
       (this.remarks || []).forEach((remark: any) => {
-        items.push({
-          id: Math.random().toString(),
-          type: 'remark',
-          date: new Date(remark.timestamp || remark.createdAt || new Date()),
-          title: 'Remark Added',
-          description: remark.details || remark.action || 'No details',
-          meta: remark
-        });
+        const text = String(remark.newValue || remark.details || remark.action || '').trim();
+        if (text) {
+          seenRemarkTexts.add(text.toLowerCase());
+          const displayDetails = remark.newValue && remark.details && remark.details !== remark.newValue 
+            ? `${remark.newValue} (${remark.details})`
+            : (remark.newValue || remark.details || 'Remark Added');
+          items.push({
+            id: remark._id || Math.random().toString(),
+            type: 'remark',
+            date: new Date(remark.timestamp || remark.createdAt || new Date()),
+            title: `Remark: ${remark.newValue || remark.details || 'Remark Added'}`,
+            description: displayDetails,
+            meta: remark
+          });
+        }
+      });
+
+      // Fallback/direct remarks from this.lead.remarks
+      (this.lead?.remarks || []).forEach((r: any) => {
+        const text = String(r || '').trim();
+        if (text && !seenRemarkTexts.has(text.toLowerCase())) {
+          seenRemarkTexts.add(text.toLowerCase());
+          items.push({
+            id: Math.random().toString(),
+            type: 'remark',
+            date: new Date(this.lead.updatedAt || this.lead.createdAt || new Date()),
+            title: `Remark: ${text}`,
+            description: text,
+            meta: { text }
+          });
+        }
       });
 
       // Add invoices

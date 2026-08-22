@@ -290,7 +290,7 @@ router.post('/', async (req, res) => {
     await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
     eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_CREATED', lead: responseLead });
 
-    await logChange({ HistoryModel: History,
+    await logChange({ HistoryModel: req.models.History || History,
       companyCode: lead.companyCode,
       contactNumber: lead.contactNumber,
       contactName: lead.contactName,
@@ -970,7 +970,7 @@ router.patch('/:id/status', async (req, res) => {
     await invalidateLeadScope(lead.companyCode, lead.assignedEmployeeId);
     eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
 
-    await logChange({ HistoryModel: History,
+    await logChange({ HistoryModel: req.models.History || History,
       companyCode: lead.companyCode,
       contactNumber: lead.contactNumber,
       contactName: lead.contactName,
@@ -1025,7 +1025,7 @@ router.patch('/:id/flags', async (req, res) => {
     eventBus.emitToEmployee(lead.companyCode, lead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
 
     if (update.isStarred !== undefined && update.isStarred !== oldLead.isStarred) {
-      await logChange({ HistoryModel: History,
+      await logChange({ HistoryModel: req.models.History || History,
         companyCode: lead.companyCode,
         contactNumber: lead.contactNumber,
         contactName: lead.contactName,
@@ -1035,7 +1035,7 @@ router.patch('/:id/flags', async (req, res) => {
       });
     }
     if (update.isFavourite !== undefined && update.isFavourite !== oldLead.isFavourite) {
-      await logChange({ HistoryModel: History,
+      await logChange({ HistoryModel: req.models.History || History,
         companyCode: lead.companyCode,
         contactNumber: lead.contactNumber,
         contactName: lead.contactName,
@@ -1077,7 +1077,7 @@ router.post('/:id/remarks', async (req, res) => {
     await invalidateLeadScope(updatedLead.companyCode, updatedLead.assignedEmployeeId);
     eventBus.emitToEmployee(updatedLead.companyCode, updatedLead.assignedEmployeeId, { type: 'LEAD_UPDATED', lead: responseLead });
 
-    await logChange({ HistoryModel: History,
+    await logChange({ HistoryModel: req.models.History || History,
       companyCode: updatedLead.companyCode,
       contactNumber: updatedLead.contactNumber,
       contactName: updatedLead.contactName,

@@ -14,7 +14,7 @@ export class AdminSettingsSectionComponent extends AdminWorkspaceSectionProxy {
     'Converted',
     'Follow Up',
     'Not Interested',
-    'Contacted',
+    'Connected',
     'Invalid',
     'Not Connected',
     'Closed Lost'

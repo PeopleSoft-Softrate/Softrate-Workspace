@@ -728,6 +728,8 @@ export abstract class AdminWorkspaceController implements OnInit {
     reminderDate: '',
   };
   companyRemarkLead: Lead | null = null;
+  companyRemarkEntries: Array<{ text: string; timestamp?: string | Date; author?: string }> = [];
+  companyRemarkLoading = false;
   adminAiSummaryOpen = false;
   aiBrief: AiBrief | null = null;
   aiBriefLoading = false;
@@ -5724,10 +5726,78 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   openCompanyRemarkHistory(lead: Lead): void {
     this.companyRemarkLead = lead;
+    this.companyRemarkLoading = true;
+    const initialRemarks = (lead.remarks || []).filter(Boolean);
+    this.companyRemarkEntries = initialRemarks.map(r => ({ text: String(r).trim() })).reverse();
+
+    const companyCode = String(lead.companyCode || this.dashboardCode || '').trim();
+    const contactNumber = String(lead.contactNumber || '').trim();
+    const companyName = String(lead.leadCompanyName || '').trim();
+
+    if (companyCode && (contactNumber || companyName)) {
+      let query = `companyCode=${encodeURIComponent(companyCode)}`;
+      if (contactNumber) query += `&contactNumber=${encodeURIComponent(contactNumber)}`;
+      if (companyName) query += `&companyName=${encodeURIComponent(companyName)}`;
+
+      this.api.get<any>(`/api/history?${query}`).subscribe({
+        next: (res) => {
+          this.companyRemarkLoading = false;
+          const logs = (res?.logs || []).filter((l: any) => 
+            String(l.action || '').toLowerCase().includes('remark')
+          );
+          this.companyRemarkEntries = this.buildRemarkHistoryEntries(lead, logs);
+        },
+        error: () => {
+          this.companyRemarkLoading = false;
+        }
+      });
+    } else {
+      this.companyRemarkLoading = false;
+    }
+  }
+
+  private buildRemarkHistoryEntries(lead: any, logs: any[]): Array<{ text: string; timestamp?: string | Date; author?: string }> {
+    const entries: Array<{ text: string; timestamp?: string | Date; author?: string }> = [];
+
+    // 1. Add all history logs for remarks
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      const text = String(log.newValue || log.details || '').trim();
+      if (text) {
+        entries.push({
+          text,
+          timestamp: log.timestamp || log.createdAt,
+          author: log.changedByName || log.author || ''
+        });
+      }
+    }
+
+    // 2. Also ensure any remarks in lead.remarks not matched in logs are included
+    const logTexts = new Set(entries.map(e => e.text.toLowerCase()));
+    for (const r of (lead?.remarks || [])) {
+      const trimmed = String(r || '').trim();
+      if (trimmed && !logTexts.has(trimmed.toLowerCase())) {
+        entries.push({
+          text: trimmed
+        });
+      }
+    }
+
+    // Sort newest first
+    return entries.sort((a, b) => {
+      if (a.timestamp && b.timestamp) {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      }
+      if (a.timestamp) return -1;
+      if (b.timestamp) return 1;
+      return 0;
+    });
   }
 
   closeCompanyRemarkHistory(): void {
     this.companyRemarkLead = null;
+    this.companyRemarkEntries = [];
+    this.companyRemarkLoading = false;
   }
 
   openAdminAiSummary(event?: Event): void {
@@ -7560,11 +7630,41 @@ export abstract class AdminWorkspaceController implements OnInit {
   viewAllRemarks(bookmark: any): void {
     this.selectedBookmarkForRemarks = bookmark;
     this.showAllRemarksModal = true;
+    this.companyRemarkLoading = true;
+    const initialRemarks = (bookmark?.remarks || []).filter(Boolean);
+    this.companyRemarkEntries = initialRemarks.map((r: any) => ({ text: String(r).trim() })).reverse();
+
+    const companyCode = String(bookmark?.companyCode || this.dashboardCode || '').trim();
+    const contactNumber = String(bookmark?.contactNumber || bookmark?.phone || '').trim();
+    const companyName = String(bookmark?.companyName || bookmark?.leadCompanyName || '').trim();
+
+    if (companyCode && (contactNumber || companyName)) {
+      let query = `companyCode=${encodeURIComponent(companyCode)}`;
+      if (contactNumber) query += `&contactNumber=${encodeURIComponent(contactNumber)}`;
+      if (companyName) query += `&companyName=${encodeURIComponent(companyName)}`;
+
+      this.api.get<any>(`/api/history?${query}`).subscribe({
+        next: (res) => {
+          this.companyRemarkLoading = false;
+          const logs = (res?.logs || []).filter((l: any) => 
+            String(l.action || '').toLowerCase().includes('remark')
+          );
+          this.companyRemarkEntries = this.buildRemarkHistoryEntries(bookmark, logs);
+        },
+        error: () => {
+          this.companyRemarkLoading = false;
+        }
+      });
+    } else {
+      this.companyRemarkLoading = false;
+    }
   }
 
   closeAllRemarksModal(): void {
     this.showAllRemarksModal = false;
     this.selectedBookmarkForRemarks = null;
+    this.companyRemarkEntries = [];
+    this.companyRemarkLoading = false;
   }
 
   deleteBookmark(id: string): void { return this.adminFollowupsWorkflow.deleteBookmark(this, id); }
@@ -7719,7 +7819,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     reader.onload = (e: any) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
@@ -7743,7 +7843,17 @@ export abstract class AdminWorkspaceController implements OnInit {
           if (!hasData) continue;
           let rowData: any = {};
           this.excelHeaders.forEach((header, index) => {
-            if (header) rowData[header] = row[index];
+            if (header) {
+              let val = row[index];
+              if (val instanceof Date) {
+                // Format JS Date to YYYY-MM-DD
+                const d = new Date(val);
+                // Adjust for timezone offset to avoid shifting to previous day
+                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                val = d.toISOString().split('T')[0];
+              }
+              rowData[header] = val;
+            }
           });
           rowData.__excelRowNumber = i + 1;
           this.parsedExcelData.push(rowData);
@@ -7755,7 +7865,7 @@ export abstract class AdminWorkspaceController implements OnInit {
         }) || '';
         
         this.leadColumnMapping.firstName = tryMap(['first name', 'firstname', 'name', 'contact name', 'director first name', 'directorfirstname']);
-        this.leadColumnMapping.lastName = tryMap(['last name', 'lastname', 'surname', 'second name']);
+        this.leadColumnMapping.lastName = tryMap(['last name', 'lastname', 'surname', 'second name', 'director last name', 'directorlastname']);
         this.leadColumnMapping.contactNumber = tryMap(['contact number', 'number', 'phone', 'mobile', 'directormobilenumber', 'director mobile number']);
         this.leadColumnMapping.leadCompanyName = tryMap(['company name', 'company', 'business', 'lead company name']);
         this.leadColumnMapping.mainDivisionDescription = tryMap(['main division', 'main division description', 'division']);

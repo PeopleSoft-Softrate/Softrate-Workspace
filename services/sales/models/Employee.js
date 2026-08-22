@@ -21,6 +21,7 @@ const employeeSchema = new mongoose.Schema({
   twoFactorSecret: { type: String, default: '' },
   twoFactorTempSecret: { type: String, default: '' },
   lastLoginDate: { type: String, default: '' },
+  profilePhoto: { type: String, default: '' },
   createdAt:    { type: Date, default: Date.now },
 });
 

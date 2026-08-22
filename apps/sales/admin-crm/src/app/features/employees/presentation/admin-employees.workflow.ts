@@ -288,20 +288,21 @@ export class AdminEmployeesWorkflow {
     });
   }
   
-  setEmployeeTarget(vm: any, month: number, targetAmount: number): void {
+  setEmployeeTarget(vm: any, month: number, targetAmount: any): void {
     if (!vm.selectedEmployee) return;
+    const numericAmount = typeof targetAmount === 'number' ? targetAmount : parseFloat(String(targetAmount || '0').replace(/[^0-9.]/g, '')) || 0;
     this.targetService.setTarget({
       companyCode: vm.dashboardCode,
       employeeId: vm.selectedEmployee._id,
       year: vm.targetYear,
       month: month,
-      targetAmount: targetAmount
+      targetAmount: numericAmount
     }).subscribe({
       next: (res: any) => {
         if (res.success) {
           const target = vm.selectedEmpTargets.find((t: any) => t.month === month);
           if (target) {
-            target.targetAmount = targetAmount;
+            target.targetAmount = numericAmount;
           }
         }
       }
@@ -806,17 +807,19 @@ export class AdminEmployeesWorkflow {
   }
 
   deleteLeadSet(vm: any, setLabel: string): void {
-    if (!confirm(`Delete ALL leads in set "${setLabel}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete ALL leads in set "${setLabel}" for ${vm.selectedEmployee?.name || 'this employee'}? This cannot be undone.`)) return;
     vm.deleteSetLoading = true;
     this.leadService.deleteLeadSet(vm.dashboardCode, vm.selectedEmployee!._id, setLabel).subscribe({
       next: (res: any) => {
         vm.deleteSetLoading = false;
         if (res.success) {
+          vm.invalidateAdminDashboardCaches?.();
           if (vm.selectedLeadSet === setLabel) vm.selectedLeadSet = '';
           vm.fetchEmpLeads();
+          if (vm.selectedPeriod) vm.fetchEmpStats?.();
         }
       },
-      error: () => { vm.deleteSetLoading = false; },
+      error: () => { vm.deleteSetLoading = false; alert('Failed to delete set.'); },
     });
   }
 

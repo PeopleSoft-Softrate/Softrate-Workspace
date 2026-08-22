@@ -778,6 +778,25 @@
   overflow-x: hidden !important;
   padding: 0 0 28px !important;
   background: #f6f7fb !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.dashboard-wrapper .admin-employee-fullview,
+.dashboard-wrapper .admin-employee-fullview-card,
+.dashboard-wrapper .admin-employee-fullview-scroll,
+.dashboard-wrapper .admin-employee-fullview * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.dashboard-wrapper .admin-employee-fullview::-webkit-scrollbar,
+.dashboard-wrapper .admin-employee-fullview-card::-webkit-scrollbar,
+.dashboard-wrapper .admin-employee-fullview-scroll::-webkit-scrollbar,
+.dashboard-wrapper .admin-employee-fullview *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .dashboard-wrapper .admin-employee-list-section {
@@ -1111,18 +1130,18 @@
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .admin-employee-card-grid {
-  grid-auto-rows: minmax(516px, auto) !important;
+  grid-auto-rows: auto !important;
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-style-card,
 .dashboard-wrapper .admin-employee-followups-frame .admin-employee-style-card {
-  min-height: 456px !important;
+  min-height: auto !important;
   height: auto !important;
   overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card {
-  min-height: 516px !important;
+  min-height: auto !important;
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .lead-card-invoice-action:disabled {

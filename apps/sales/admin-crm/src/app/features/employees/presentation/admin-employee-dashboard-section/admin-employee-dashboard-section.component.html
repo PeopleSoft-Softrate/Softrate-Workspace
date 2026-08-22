@@ -167,7 +167,7 @@
                     <div style="display: flex; gap: 8px; align-items: flex-end; margin-right: 16px; padding-right: 16px; border-right: 1px solid var(--border-color);">
                       <label class="mini-field" style="margin: 0;">
                         <span>Bulk Set (₹)</span>
-                        <input type="number" class="field-input filter-select-field" style="width: 120px;" placeholder="Amount" [(ngModel)]="bulkTargetAmount" aria-label="Bulk target amount">
+                        <input type="text" inputmode="numeric" class="field-input" style="width: 140px; min-width: 140px; padding: 0 14px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: #ffffff; font-size: 0.9rem;" placeholder="Amount" [(ngModel)]="bulkTargetAmount" aria-label="Bulk target amount">
                       </label>
                       <button class="primary-action" style="padding: 4px 12px; height: 38px; font-size: 14px;" (click)="applyBulkTarget()" [disabled]="bulkTargetLoading || !bulkTargetAmount">
                         {{ bulkTargetLoading ? 'Applying...' : 'Apply All' }}
@@ -190,17 +190,17 @@
                   <table class="data-table compact-table">
                     <thead>
                       <tr>
-                        <th>Month</th>
-                        <th>Target (₹)</th>
-                        <th>Achieved (₹)</th>
-                        <th>Progress</th>
+                        <th style="min-width: 100px;">Month</th>
+                        <th style="min-width: 180px; width: 180px;">Target (₹)</th>
+                        <th style="min-width: 140px;">Achieved (₹)</th>
+                        <th style="min-width: 160px;">Progress</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr *ngFor="let t of selectedEmpTargets">
                         <td><strong>{{ getMonthName(t.month) }}</strong></td>
-                        <td>
-                          <input type="number" class="field-input" style="width: 100px; padding: 4px 8px;" [(ngModel)]="t.targetAmount" (blur)="setEmployeeTarget(t.month, t.targetAmount)" aria-label="Target amount">
+                        <td style="min-width: 180px;">
+                          <input type="text" inputmode="numeric" class="field-input emp-target-input" style="width: 160px; min-width: 160px; padding: 6px 14px; height: 38px; font-size: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: #ffffff; box-sizing: border-box;" [(ngModel)]="t.targetAmount" (blur)="setEmployeeTarget(t.month, t.targetAmount)" aria-label="Target amount">
                         </td>
                         <td>₹{{ t.achievedAmount | number:'1.0-0' }}</td>
                         <td>
@@ -219,26 +219,27 @@
             </div>
 
             <section class="workspace record-workspace admin-employee-list-section admin-employee-assigned-section">
-              <div class="admin-employee-section-heading">
-                <div>
+              <div class="admin-employee-section-heading" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 20px !important; flex-wrap: nowrap !important;">
+                <div style="flex-shrink: 0;">
                   <h3>Assigned Leads</h3>
                   <p>{{ empLeadCompanyTotal || filteredEmpLeads.length }} leads assigned to {{ selectedEmployee.name }}</p>
                 </div>
-              </div>
-              <div class="workspace-header lead-workspace-header workspace-header-filters-only admin-employee-filter-row">
-                <div class="workspace-controls workspace-controls-stack">
-                  <label class="mini-field">
-                    <span>Lead Search</span>
-                    <input class="field-input filter-select-field" type="text" placeholder="Search name or company" [(ngModel)]="empLeadSearchQuery" (ngModelChange)="onEmployeeLeadSearchChange()">
+                <div class="workspace-controls" style="display: flex !important; flex-direction: row !important; align-items: center !important; gap: 10px !important; flex-wrap: nowrap !important; width: auto !important; margin: 0 !important;">
+                  <label class="mini-field" style="margin: 0; display: flex; align-items: center;">
+                    <input class="field-input" type="text" placeholder="Search name or company" [(ngModel)]="empLeadSearchQuery" (ngModelChange)="onEmployeeLeadSearchChange()" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); width: 220px; background: #ffffff;">
                   </label>
-                  <label class="mini-field">
-                    <span>Lead Set</span>
-                    <select class="field-select filter-select-field" [(ngModel)]="selectedLeadSet" (change)="selectLeadSet(selectedLeadSet)">
+                  <label class="mini-field" style="margin: 0; display: flex; align-items: center;">
+                    <select class="field-select filter-select-field" [(ngModel)]="selectedLeadSet" (change)="selectLeadSet(selectedLeadSet)" style="height: 38px; border-radius: 8px; width: 130px;">
                       <option value="">All Sets</option>
                       <option *ngFor="let set of leadSets" [value]="set">{{ set }}</option>
                     </select>
                   </label>
-                  <button class="toolbar-button admin-employee-add-button" type="button" (click)="showAddLeadForm = true">+ Add Leads</button>
+                  <button *ngIf="selectedLeadSet" class="toolbar-button admin-leads-delete-set" type="button" (click)="deleteLeadSet(selectedLeadSet)" [disabled]="deleteSetLoading" title="Delete this lead set for this employee" aria-label="Delete selected lead set" style="flex-shrink: 0; height: 38px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                      <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                    </svg>
+                  </button>
+                  <button class="toolbar-button admin-employee-add-button" type="button" (click)="showAddLeadForm = true" style="height: 38px; padding: 0 16px; border-radius: 8px; flex-shrink: 0; white-space: nowrap;">+ Add Leads</button>
                 </div>
               </div>
 
@@ -296,7 +297,7 @@
                           <button class="text-action" type="button" (click)="openCompanyRemarkHistory(lead)">History</button>
                         </div>
                         <div class="lead-card-remark-list" *ngIf="lead.remarks?.length; else noEmployeeLeadRemarks">
-                          <div class="lead-card-remark-item" *ngFor="let remark of adminLeadRemarkPreviewList(lead)">{{ remark }}</div>
+                          <div class="lead-card-remark-item" *ngFor="let remark of adminLeadRemarkPreviewList(lead).slice(0, 2)">{{ remark }}</div>
                         </div>
                         <ng-template #noEmployeeLeadRemarks><div class="lead-card-empty">No remarks added.</div></ng-template>
                         <div class="lead-card-remark-entry">
@@ -454,7 +455,7 @@
                         </div>
                         <div class="lead-card-remark-list" *ngIf="followupDescriptionPreview(b) || followupRemarkPreviewList(b).length; else noEmployeeFollowupRemarks">
                           <div class="lead-card-remark-item" *ngIf="followupDescriptionPreview(b)">{{ followupDescriptionPreview(b) }}</div>
-                          <div class="lead-card-remark-item" *ngFor="let remark of followupRemarkPreviewList(b)">{{ remark }}</div>
+                          <div class="lead-card-remark-item" *ngFor="let remark of followupRemarkPreviewList(b).slice(0, 2)">{{ remark }}</div>
                         </div>
                         <ng-template #noEmployeeFollowupRemarks><div class="lead-card-empty">No remarks added.</div></ng-template>
                         <div class="lead-card-remark-entry" *ngIf="getLeadByPhone(b.contactNumber) as lead">

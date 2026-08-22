@@ -46,13 +46,16 @@ async function backfillTenantLeadIds(conn, companyCode) {
     }
   }
 
-  // Also check existing clients for leadId
+  // Also check existing clients for leadId and include standalone clients
   const allClients = await TenantClient.find({}).lean();
   const clientMap = new Map();
   for (const client of allClients) {
     const norm = normalizeText(client.companyName || client.normalizedCompanyName);
     if (norm) {
       clientMap.set(norm, client);
+      if (!companyGroups.has(norm)) {
+        companyGroups.set(norm, []);
+      }
       if (client.leadId && /^L\d+$/i.test(client.leadId)) {
         const parsed = parseInt(client.leadId.slice(1), 10);
         if (!Number.isNaN(parsed) && parsed > maxAssignedSeq) {

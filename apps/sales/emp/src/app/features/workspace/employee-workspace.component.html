@@ -27,7 +27,7 @@
       <div class="form-stack">
         <label class="field">
           <span class="field-label">Company Code</span>
-          <input id="companyCode" class="field-input" type="text" placeholder="e.g. STP-1603-2026"
+          <input id="companyCode" class="field-input" type="text" placeholder="e.g. ABC-1001-2026"
             [(ngModel)]="loginForm.companyCode" (keyup.enter)="login()" />
         </label>
 
@@ -3773,8 +3773,8 @@
         </div>
       </div>
 
-      <div style="margin-top: 4px; margin-bottom: 16px;">
-        <button type="button" class="view-mode-btn" style="padding: 8px 16px; font-size: 13px; font-weight: 600; height: auto; cursor: pointer;" (click)="addDirector()">+ Add Director</button>
+      <div style="display: flex; justify-content: center; align-items: center; margin-top: 12px; margin-bottom: 20px;">
+        <button type="button" class="add-director-btn" style="width: auto; min-width: 140px; padding: 8px 24px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #ffffff; border: 1px solid #2563eb; color: #2563eb; border-radius: 6px; transition: all 0.2s ease;" (click)="addDirector()">+ Add Director</button>
       </div>
     </div>
     

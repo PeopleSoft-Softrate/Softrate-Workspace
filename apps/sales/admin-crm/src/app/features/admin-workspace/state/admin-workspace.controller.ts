@@ -5205,7 +5205,7 @@ export abstract class AdminWorkspaceController implements OnInit {
     return `${selected.length} tags selected`;
   }
 
-  addProductRemark(): void { return this.adminSettingsWorkflow.addProductRemark(this); }
+  addProductRemark(value?: string): void { return this.adminSettingsWorkflow.addProductRemark(this, value); }
 
   removeProductRemark(remark: string): void { return this.adminSettingsWorkflow.removeProductRemark(this, remark); }
 
@@ -5235,7 +5235,7 @@ export abstract class AdminWorkspaceController implements OnInit {
 
   saveSettings(): void { return this.adminSettingsWorkflow.saveSettings(this); }
 
-  addLeadStatus(): void { return this.adminSettingsWorkflow.addLeadStatus(this); }
+  addLeadStatus(value?: string): void { return this.adminSettingsWorkflow.addLeadStatus(this, value); }
 
   toggleStatusForPage(status: string, page: 'interested' | 'dnp' | 'converted'): void { return this.adminSettingsWorkflow.toggleStatusForPage(this, status, page); }
 

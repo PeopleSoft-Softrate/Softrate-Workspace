@@ -1,21 +1,6 @@
       <div *ngIf="dashTab==='reports'" class="admin-reports-view">
-        <div class="dash-header-row admin-actions-only-header" style="margin-bottom: 1rem;">
-          <div class="admin-header-actions">
-          <button class="cta-primary" (click)="exportToExcel()"
-            style="padding: 0.6rem 1.25rem; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            EXPORT AS EXCEL
-          </button>
-          </div>
-        </div>
-
         <!-- Advanced Filter Bar -->
-        <div class="reports-filter-card">
+        <div class="reports-filter-card" style="margin-top: 0.5rem;">
           <div class="reports-filter-grid">
             <div class="filter-field">
               <label>From Date</label>
@@ -60,9 +45,19 @@
                 <option *ngFor="let t of timeOptions" [value]="t">{{ t }}</option>
               </select>
             </div>
-            <div class="filter-actions">
+            <div class="filter-actions" style="display: flex; align-items: center; gap: 10px;">
               <button class="btn-apply" (click)="applyCustomRange()">Apply</button>
               <button class="btn-reset" (click)="resetFilters()">Reset</button>
+              <button class="cta-primary btn-excel-export" (click)="exportToExcel()"
+                style="height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; border-radius: 8px; white-space: nowrap; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                EXPORT AS EXCEL
+              </button>
             </div>
           </div>
         </div>

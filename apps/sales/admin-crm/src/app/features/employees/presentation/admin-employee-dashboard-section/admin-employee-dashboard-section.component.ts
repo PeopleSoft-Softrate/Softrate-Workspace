@@ -20,22 +20,26 @@ export class AdminEmployeeDashboardSectionComponent extends AdminWorkspaceSectio
     (this.vm as any).adminEmployeesWorkflow.setEmployeeTarget(this.vm, month, targetAmount);
   }
   
-  bulkTargetAmount: number | null = null;
+  bulkTargetAmount: any = null;
   bulkTargetLoading: boolean = false;
   
   applyBulkTarget(): void {
-    if (this.bulkTargetAmount === null || this.bulkTargetAmount < 0) return;
+    const raw = this.bulkTargetAmount;
+    if (raw === null || raw === undefined || raw === '') return;
+    const num = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+    if (isNaN(num) || num < 0) return;
+
     this.bulkTargetLoading = true;
     
     // Optimistically update UI
     if (this.vm.selectedEmpTargets) {
       for (const t of this.vm.selectedEmpTargets) {
-        t.targetAmount = this.bulkTargetAmount;
+        t.targetAmount = num;
       }
     }
     
     for (let month = 1; month <= 12; month++) {
-      (this.vm as any).adminEmployeesWorkflow.setEmployeeTarget(this.vm, month, this.bulkTargetAmount);
+      (this.vm as any).adminEmployeesWorkflow.setEmployeeTarget(this.vm, month, num);
     }
     
     setTimeout(() => {

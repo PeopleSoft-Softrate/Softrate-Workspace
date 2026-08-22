@@ -1,11 +1,99 @@
 <ng-container *ngIf="vm.dashTab === 'pipeline'">
   <div class="pipeline-section">
 
-    <!-- ── Page Header ───────────────────────────────────────── -->
-    <div class="pipeline-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <!-- ── Error / Move Error Banners ────────────────────────── -->
+    <ng-container *ngIf="(pipelineVm.state$ | async) as state">
+      <div class="pipeline-error-banner" *ngIf="state.error">⚠ {{ state.error }}</div>
+      <div class="pipeline-error-banner" *ngIf="state.moveError">⚠ {{ state.moveError }}</div>
+    </ng-container>
+
+    <!-- ── Loading ────────────────────────────────────────────── -->
+    <div class="pipeline-loading" *ngIf="(pipelineVm.state$ | async)?.loading">
+      Loading pipeline…
+    </div>
+
+    <!-- ── Kanban Board ───────────────────────────────────────── -->
+    <div class="pipeline-board" *ngIf="!(pipelineVm.state$ | async)?.loading">
+      <div
+        class="pipeline-column"
+        [ngClass]="{'won-column': col.stage === 'CLOSED_WON', 'lost-column': col.stage === 'CLOSED_LOST'}"
+        *ngFor="let col of (pipelineVm.state$ | async)?.columns; trackBy: trackByColumn"
+        [class.drag-over]="dragOverStage === col.stage"
+        (dragover)="onDragOver($event, col.stage)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event, col.stage)"
+      >
+        <div class="pipeline-column-header" style="flex-direction: column; align-items: stretch; gap: 4px; padding-bottom: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="pipeline-column-title">{{ col.label }}</h3>
+            <span class="pipeline-column-count">{{ col.total }}</span>
+          </div>
+          <div *ngIf="col.totalAmount > 0" style="font-size: 1.15rem; color: #1e293b; font-weight: 800; display: block; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(226,232,240,0.8); letter-spacing: -0.5px;">
+            ₹{{ col.totalAmount | number:'1.0-0' }}
+          </div>
+        </div>
+
+        <!-- Column Cards -->
+        <div class="pipeline-column-body" (scroll)="onColumnScroll($event, col.stage, col.hasMore)">
+          <div
+            class="pipeline-card"
+            *ngFor="let lead of col.leads; trackBy: trackByLead"
+            [class.dragging]="draggingLeadId === lead._id"
+            draggable="true"
+            (dragstart)="onDragStart($event, lead)"
+            (dragend)="onDragEnd()"
+          >
+            <div class="pipeline-card-company" [title]="lead.leadCompanyName" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ lead.leadCompanyName }}</span>
+              <span class="pipeline-badge" *ngIf="lead.priority" [title]="'Priority: ' + lead.priority" style="display: inline-flex; align-items: center; padding: 0; background: transparent; border: none; flex-shrink: 0; margin: 0; box-shadow: none;">
+                <span [ngStyle]="{'background-color': lead.priority === 'High' ? '#ef4444' : lead.priority === 'Medium' ? '#f59e0b' : '#10b981'}" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+              </span>
+            </div>
+            <div class="pipeline-card-dealname" style="font-size: 0.85rem; font-weight: 500; margin-top: 4px; color: var(--text-primary);">
+              {{ lead.dealName || 'Legacy Deal' }}
+            </div>
+            <div class="pipeline-card-contact" *ngIf="lead.contactName || lead.contactNumber">
+              {{ lead.contactName || lead.contactNumber }}
+            </div>
+            <div class="pipeline-card-employee" *ngIf="lead.assignedEmployeeId" style="font-size: 0.75rem; color: var(--purple, #6366f1); margin-top: 2px;">
+              By: {{ assignedEmployeeName(lead.assignedEmployeeId) }}
+            </div>
+            <div class="pipeline-card-deal-info" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; display: flex; justify-content: space-between;">
+              <span *ngIf="lead.amount > 0">₹{{ lead.amount }}</span>
+              <span *ngIf="lead.closingDate">Closes: {{ lead.closingDate | date:'mediumDate' }}</span>
+            </div>
+
+            <!-- Badges -->
+            <div class="pipeline-card-meta" *ngIf="false">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">
+              <div class="pipeline-card-days" *ngIf="lead.stageChangedAt" style="font-size: 0.7rem; color: #64748b;">
+                {{ daysInStage(lead.stageChangedAt) }}d in stage
+              </div>
+              <button (click)="viewCompanyProfile(lead); $event.stopPropagation()" title="View Deal Details" style="display: flex; align-items: center; gap: 4px; padding: 0; font-size: 0.75rem; font-weight: 600; color: rgba(99, 102, 241, 1); cursor: pointer; background: transparent; border: none; transition: opacity 0.2s;">
+                View Details
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div class="pipeline-column-empty" *ngIf="!col.leads.length">
+            No leads
+          </div>
+        </div>
+
+        <!-- Infinite Scroll Loader -->
+        <div class="pipeline-column-loading" *ngIf="(pipelineVm.state$ | async)?.loadingColumns?.has(col.stage)">
+          <span class="pipeline-spinner"></span> Loading...
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Page Bottom Bar: Title, Filters & Summary ──────────── -->
+    <div class="pipeline-header pipeline-bottom-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; margin-bottom: 0; padding-top: 0.5rem; border-top: 1px solid rgba(226, 232, 240, 0.8); flex-shrink: 0;">
       
       <div style="display: flex; align-items: center; gap: 20px;">
-        <h1 class="pipeline-title" style="margin: 0;">Pipeline</h1>
         
         <div style="display: flex; gap: 10px; align-items: center;">
           <select class="field-select filter-select-field" style="min-width: 150px;" [value]="pipelineFilters.owner" (change)="onFilterChange('owner', $any($event.target).value)">
@@ -61,98 +149,6 @@
           <span style="font-size: 0.7rem; color: #64748b; font-weight: 500;">₹{{ state.summary.lostValue | number:'1.0-0' }}</span>
         </div>
 
-      </div>
-    </div>
-
-
-
-    <!-- ── Error / Move Error Banners ────────────────────────── -->
-    <ng-container *ngIf="(pipelineVm.state$ | async) as state">
-      <div class="pipeline-error-banner" *ngIf="state.error">⚠ {{ state.error }}</div>
-      <div class="pipeline-error-banner" *ngIf="state.moveError">⚠ {{ state.moveError }}</div>
-    </ng-container>
-
-    <!-- ── Loading ────────────────────────────────────────────── -->
-    <div class="pipeline-loading" *ngIf="(pipelineVm.state$ | async)?.loading">
-      Loading pipeline…
-    </div>
-
-    <!-- ── Kanban Board ───────────────────────────────────────── -->
-    <div class="pipeline-board" *ngIf="!(pipelineVm.state$ | async)?.loading">
-      <div
-        class="pipeline-column"
-        [ngClass]="{'won-column': col.stage === 'CLOSED_WON', 'lost-column': col.stage === 'CLOSED_LOST'}"
-        *ngFor="let col of (pipelineVm.state$ | async)?.columns; trackBy: trackByColumn"
-        [class.drag-over]="dragOverStage === col.stage"
-        (dragover)="onDragOver($event, col.stage)"
-        (dragleave)="onDragLeave()"
-        (drop)="onDrop($event, col.stage)"
-      >
-        <div class="pipeline-column-header" style="flex-direction: column; align-items: stretch; gap: 4px; padding-bottom: 0.5rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 class="pipeline-column-title">{{ col.label }}</h3>
-            <span class="pipeline-column-count">{{ col.total }}</span>
-          </div>
-          <div *ngIf="col.totalAmount > 0" style="font-size: 1.15rem; color: #1e293b; font-weight: 800; display: block; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(226,232,240,0.8); letter-spacing: -0.5px;">
-            ₹{{ col.totalAmount | number:'1.0-0' }}
-          </div>
-        </div>
-
-        <!-- Column Cards -->
-        <div class="pipeline-column-body" (scroll)="onColumnScroll($event, col.stage, col.hasMore)">
-          <div
-            class="pipeline-card"
-            *ngFor="let lead of col.leads; trackBy: trackByLead"
-            [class.dragging]="draggingLeadId === lead._id"
-            draggable="true"
-            (dragstart)="onDragStart($event, lead)"
-            (dragend)="onDragEnd()"
-          >
-            <div class="pipeline-card-company" [title]="lead.leadCompanyName" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ lead.leadCompanyName }}</span>
-              <span class="pipeline-badge" *ngIf="lead.priority" style="display: inline-flex; align-items: center; gap: 4px; padding: 0; background: transparent; border: none; flex-shrink: 0; margin: 0; box-shadow: none;">
-                <span [ngStyle]="{'background-color': lead.priority === 'High' ? '#ef4444' : lead.priority === 'Medium' ? '#f59e0b' : '#10b981'}" style="width: 6px; height: 6px; border-radius: 50%;"></span>
-                {{ lead.priority }}
-              </span>
-            </div>
-            <div class="pipeline-card-dealname" style="font-size: 0.85rem; font-weight: 500; margin-top: 4px; color: var(--text-primary);">
-              {{ lead.dealName || 'Legacy Deal' }}
-            </div>
-            <div class="pipeline-card-contact" *ngIf="lead.contactName || lead.contactNumber">
-              {{ lead.contactName || lead.contactNumber }}
-            </div>
-            <div class="pipeline-card-employee" *ngIf="lead.assignedEmployeeId" style="font-size: 0.75rem; color: var(--purple, #6366f1); margin-top: 2px;">
-              By: {{ assignedEmployeeName(lead.assignedEmployeeId) }}
-            </div>
-            <div class="pipeline-card-deal-info" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; display: flex; justify-content: space-between;">
-              <span *ngIf="lead.amount > 0">₹{{ lead.amount }}</span>
-              <span *ngIf="lead.closingDate">Closes: {{ lead.closingDate | date:'mediumDate' }}</span>
-            </div>
-
-            <!-- Badges -->
-            <div class="pipeline-card-meta" *ngIf="false">
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(226, 232, 240, 0.8);">
-              <div class="pipeline-card-days" *ngIf="lead.stageChangedAt" style="font-size: 0.7rem; color: #64748b;">
-                {{ daysInStage(lead.stageChangedAt) }}d in stage
-              </div>
-              <button (click)="viewCompanyProfile(lead); $event.stopPropagation()" title="View Deal Details" style="display: flex; align-items: center; gap: 4px; padding: 0; font-size: 0.75rem; font-weight: 600; color: rgba(99, 102, 241, 1); cursor: pointer; background: transparent; border: none; transition: opacity 0.2s;">
-                View Details
-              </button>
-            </div>
-          </div>
-
-          <!-- Empty state -->
-          <div class="pipeline-column-empty" *ngIf="!col.leads.length">
-            No leads
-          </div>
-        </div>
-
-        <!-- Infinite Scroll Loader -->
-        <div class="pipeline-column-loading" *ngIf="(pipelineVm.state$ | async)?.loadingColumns?.has(col.stage)">
-          <span class="pipeline-spinner"></span> Loading...
-        </div>
       </div>
     </div>
 

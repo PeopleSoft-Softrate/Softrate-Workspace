@@ -368,11 +368,12 @@ export class AdminSettingsWorkflow {
     this.saveSettings(vm);
   }
 
-  addProductRemark(vm: any): void {
-    const val = vm.newProductRemarkInput.trim();
+  addProductRemark(vm: any, value?: string): void {
+    const raw = value !== undefined ? value : vm?.newProductRemarkInput;
+    const val = String(raw || '').trim();
     if (val && !vm.settingsProductRemarks.includes(val)) {
       vm.settingsProductRemarks.push(val);
-      vm.newProductRemarkInput = '';
+      if (vm.newProductRemarkInput !== undefined) vm.newProductRemarkInput = '';
     }
   }
 
@@ -449,8 +450,9 @@ export class AdminSettingsWorkflow {
     });
   }
 
-  addLeadStatus(vm: any): void {
-    const status = vm.newLeadStatusInput.trim();
+  addLeadStatus(vm: any, value?: string): void {
+    const raw = value !== undefined ? value : vm?.newLeadStatusInput;
+    const status = String(raw || '').trim();
     if (!status) return;
     if (vm.settingsLeadStatuses.includes(status)) {
       vm.settingsSaveError = 'Status already exists.';
@@ -458,7 +460,7 @@ export class AdminSettingsWorkflow {
       return;
     }
     vm.settingsLeadStatuses.push(status);
-    vm.newLeadStatusInput = '';
+    if (vm.newLeadStatusInput !== undefined) vm.newLeadStatusInput = '';
   }
 
   toggleStatusForPage(vm: any, status: string, page: 'interested' | 'dnp' | 'converted'): void {

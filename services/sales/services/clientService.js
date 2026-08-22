@@ -4,6 +4,7 @@ const Counter = require('../models/Counter');
 const Lead = require('../models/Lead');
 const User = require('../models/User');
 const { normalizeText } = require('./leadNormalization');
+const { getLeadIdForCompany } = require('./leadIdService');
 
 function stringValue(value) {
   return String(value || '').trim();
@@ -215,13 +216,22 @@ async function createClientPayload({ ClientModel, CounterModel }, payload, optio
     throw error;
   }
 
+  let assignedLeadId = stringValue(payload.leadId);
+  if (!assignedLeadId) {
+    assignedLeadId = await getLeadIdForCompany(
+      { LeadModel: Lead, ClientModel, CounterModel },
+      companyCode,
+      companyName
+    );
+  }
+
   let client;
   for (let attempt = 0; attempt < 10; attempt++) {
     try {
       client = await ClientModel.create({
         companyCode,
         clientId: await nextClientId({ CounterModel }, companyCode),
-        leadId: stringValue(payload.leadId),
+        leadId: assignedLeadId,
         companyName,
         primaryContactName: stringValue(payload.primaryContactName || payload.contactName),
         primaryPhone: stringValue(payload.primaryPhone || payload.contactNumber || payload.phone),

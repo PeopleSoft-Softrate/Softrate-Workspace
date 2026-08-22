@@ -9,9 +9,6 @@ import { AdminWorkspaceSectionProxy } from '../../../admin-workspace/sections/ad
   templateUrl: './admin-settings-section.component.html'
 })
 export class AdminSettingsSectionComponent extends AdminWorkspaceSectionProxy {
-  override newLeadStatusInput: string = '';
-  override newProductRemarkInput: string = '';
-
   protectedStatuses = [
     'New',
     'Converted',

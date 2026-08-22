@@ -231,12 +231,12 @@
             </div>
 
             <!-- Send Invite Row -->
-            <div>
-              <label style="font-size:0.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:0.5rem;">SEND INVITE</label>
-              <div style="display:flex;gap:0.75rem;">
-                <input [(ngModel)]="vm.inviteCodeInput" type="text" class="field-input" placeholder="Enter Partner Company Code (e.g. STP-1603-2026)"
-                  style="flex:1;"
-                  (keyup.enter)="vm.sendCollaborationInvite()">
+              <div>
+                <label style="font-size:0.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:0.5rem;">SEND INVITE</label>
+                <div style="display:flex;gap:0.75rem;">
+                  <input [(ngModel)]="vm.inviteCodeInput" type="text" class="field-input" placeholder="Enter Partner Company Code (e.g. ABC-1001-2026)"
+                    style="flex: 1; padding: 0.65rem 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; background: var(--bg-card-2);"
+                    (keyup.enter)="vm.sendCollaborationInvite()">
                 <button (click)="vm.sendCollaborationInvite()" class="cta-primary"
                   [disabled]="vm.inviteLoading || !vm.inviteCodeInput"
                   style="padding: 0.5rem 1.25rem; border-radius: 8px; white-space:nowrap;">

@@ -6,6 +6,10 @@
   height: clamp(720px, calc(100vh - 140px), 900px) !important;
 }
 
+.dashboard-wrapper .admin-employee-list-section.admin-employee-assigned-section {
+  grid-template-rows: auto minmax(0, 1fr) !important;
+}
+
 .dashboard-wrapper .admin-employee-fullview {
   height: calc(100vh - 6.25rem) !important;
 }
@@ -24,7 +28,7 @@
   height: 100% !important;
 }
 
-.dashboard-wrapper .admin-employee-record-frame > .company-rail {
+.dashboard-wrapper .admin-employee-record-frame>.company-rail {
   position: sticky !important;
   left: 0 !important;
   height: 100% !important;
@@ -107,8 +111,8 @@
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-style-card {
-  min-height: 620px !important;
-  height: 100% !important;
+  min-height: auto !important;
+  height: auto !important;
   overflow: visible !important;
 }
 
@@ -192,8 +196,8 @@
   align-items: center !important;
 }
 
-.dashboard-wrapper .admin-employee-modal-grid .mini-field > span,
-.dashboard-wrapper .admin-employee-modal-wide-field > span {
+.dashboard-wrapper .admin-employee-modal-grid .mini-field>span,
+.dashboard-wrapper .admin-employee-modal-wide-field>span {
   display: block !important;
   margin-bottom: 8px !important;
   color: #667085 !important;
@@ -236,7 +240,7 @@
 }
 
 .dashboard-wrapper .admin-remarks-company-rail,
-.dashboard-wrapper .admin-followups-record-frame > .company-rail {
+.dashboard-wrapper .admin-followups-record-frame>.company-rail {
   width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
@@ -259,7 +263,7 @@
   background: #ffffff !important;
 }
 
-.dashboard-wrapper .admin-remarks-rail-header > div:first-child,
+.dashboard-wrapper .admin-remarks-rail-header>div:first-child,
 .dashboard-wrapper .admin-followups-record-frame .rail-heading {
   color: var(--crm-ink) !important;
   font-size: 18px !important;
@@ -268,7 +272,7 @@
   line-height: 1.2 !important;
 }
 
-.dashboard-wrapper .admin-remarks-rail-header > div:last-child,
+.dashboard-wrapper .admin-remarks-rail-header>div:last-child,
 .dashboard-wrapper .admin-followups-record-frame .rail-total {
   color: var(--crm-muted) !important;
   font-size: 13px !important;
@@ -415,7 +419,7 @@
   margin: 0 !important;
 }
 
-.dashboard-wrapper .admin-followups-mode-field > span {
+.dashboard-wrapper .admin-followups-mode-field>span {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
@@ -452,31 +456,29 @@
 /* Scrollable remark histories for admin lead and follow-up cards. */
 .dashboard-wrapper .admin-lead-record-card .lead-card-remarks,
 .dashboard-wrapper .admin-remarks-contact-card .lead-card-remarks,
-.dashboard-wrapper .admin-followup-contact-card .lead-card-remarks {
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) auto !important;
-  min-height: 178px !important;
-}
-
 .dashboard-wrapper .admin-followup-contact-card .lead-card-remarks,
-.dashboard-wrapper .employee-followup-record-card .lead-card-remarks {
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  min-height: 118px !important;
+.dashboard-wrapper .employee-followup-record-card .lead-card-remarks,
+.dashboard-wrapper .admin-employee-style-card .lead-card-remarks {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-height: auto !important;
 }
 
 .dashboard-wrapper .admin-lead-record-card .lead-card-remark-list,
 .dashboard-wrapper .admin-remarks-contact-card .lead-card-remark-list,
 .dashboard-wrapper .admin-followup-contact-card .lead-card-remark-list,
-.dashboard-wrapper .employee-followup-record-card .lead-card-remark-list {
-  display: grid !important;
-  align-content: start !important;
+.dashboard-wrapper .employee-followup-record-card .lead-card-remark-list,
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-list {
+  display: flex !important;
+  flex-direction: column !important;
   gap: 6px !important;
   min-height: 0 !important;
-  max-height: 78px !important;
+  max-height: 120px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   overscroll-behavior: contain !important;
-  padding-right: 6px !important;
+  padding: 2px 4px 2px 0 !important;
   scrollbar-color: #cbd5e1 transparent !important;
   scrollbar-gutter: stable !important;
   scrollbar-width: thin !important;
@@ -661,7 +663,7 @@
 }
 
 /* Center full-panel empty states so no-data views do not sit at the rail edge. */
-.dashboard-wrapper .rail-list > .empty-state-inline {
+.dashboard-wrapper .rail-list>.empty-state-inline {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -672,10 +674,10 @@
   line-height: 1.45 !important;
 }
 
-.dashboard-wrapper .lead-company-pane > .empty-state-inline-pane,
-.dashboard-wrapper .lead-company-pane-scroll > .empty-state-inline-pane,
-.dashboard-wrapper .admin-employee-company-pane > .empty-state-inline-pane,
-.dashboard-wrapper .admin-followups-company-pane > .empty-state-inline-pane {
+.dashboard-wrapper .lead-company-pane>.empty-state-inline-pane,
+.dashboard-wrapper .lead-company-pane-scroll>.empty-state-inline-pane,
+.dashboard-wrapper .admin-employee-company-pane>.empty-state-inline-pane,
+.dashboard-wrapper .admin-followups-company-pane>.empty-state-inline-pane {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -692,11 +694,11 @@
   line-height: 1.45 !important;
 }
 
-.dashboard-wrapper .lead-company-pane-scroll > .empty-state-inline-pane {
+.dashboard-wrapper .lead-company-pane-scroll>.empty-state-inline-pane {
   min-height: 100% !important;
 }
 
-.dashboard-wrapper .admin-remarks-view .lead-detail-view > .leads-empty-state {
+.dashboard-wrapper .admin-remarks-view .lead-detail-view>.leads-empty-state {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -724,8 +726,8 @@
   max-height: calc(100vh - 300px) !important;
 }
 
-.dashboard-wrapper .admin-followups-record-frame > .company-rail,
-.dashboard-wrapper .admin-followups-record-frame > .record-table-pane {
+.dashboard-wrapper .admin-followups-record-frame>.company-rail,
+.dashboard-wrapper .admin-followups-record-frame>.record-table-pane {
   min-height: 0 !important;
   height: 100% !important;
   overflow: hidden !important;
@@ -778,7 +780,7 @@
 }
 
 .dashboard-wrapper .admin-remarks-company-rail,
-.dashboard-wrapper .admin-followups-record-frame > .company-rail {
+.dashboard-wrapper .admin-followups-record-frame>.company-rail {
   background: #fbfbfc !important;
   border-right: 1px solid var(--admin-line) !important;
 }
@@ -790,9 +792,9 @@
   border-bottom: 1px solid var(--admin-line) !important;
 }
 
-.dashboard-wrapper .admin-remarks-rail-header > div:first-child,
+.dashboard-wrapper .admin-remarks-rail-header>div:first-child,
 .dashboard-wrapper .admin-followups-record-frame .rail-heading,
-.dashboard-wrapper .admin-remarks-rail-header > div:last-child,
+.dashboard-wrapper .admin-remarks-rail-header>div:last-child,
 .dashboard-wrapper .admin-followups-record-frame .rail-total {
   color: var(--admin-text) !important;
   font-size: 14px !important;
@@ -1079,7 +1081,7 @@
   overflow: hidden !important;
 }
 
-.dashboard-wrapper .admin-followups-record-frame > .company-rail {
+.dashboard-wrapper .admin-followups-record-frame>.company-rail {
   display: grid !important;
   grid-template-rows: auto minmax(0, 1fr) !important;
   min-width: 0 !important;
@@ -1087,7 +1089,7 @@
   overflow: hidden !important;
 }
 
-.dashboard-wrapper .admin-followups-record-frame > .record-table-pane,
+.dashboard-wrapper .admin-followups-record-frame>.record-table-pane,
 .dashboard-wrapper .admin-followups-company-pane {
   display: grid !important;
   grid-template-rows: auto minmax(0, 1fr) !important;
@@ -1129,7 +1131,7 @@
   grid-template-columns: 336px minmax(0, 1fr) !important;
 }
 
-.dashboard-wrapper .admin-employee-followups-frame > .company-rail {
+.dashboard-wrapper .admin-employee-followups-frame>.company-rail {
   width: 336px !important;
   min-width: 336px !important;
   max-width: 336px !important;
@@ -1293,8 +1295,8 @@
   font-size: 0.78rem !important;
 }
 
-.dashboard-wrapper .admin-employee-style-card .lead-record-line > span:last-child,
-.dashboard-wrapper .admin-employee-style-card .lead-record-email > span:last-child {
+.dashboard-wrapper .admin-employee-style-card .lead-record-line>span:last-child,
+.dashboard-wrapper .admin-employee-style-card .lead-record-email>span:last-child {
   min-width: 0 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -1429,38 +1431,48 @@
 }
 
 .dashboard-wrapper .admin-employee-style-card .lead-card-remark-list {
-  display: grid !important;
-  align-content: start !important;
-  gap: 5px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
   min-height: 0 !important;
-  max-height: 84px !important;
-  padding-right: 4px !important;
+  max-height: 120px !important;
+  padding: 2px 4px 2px 0 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scrollbar-width: thin !important;
   scrollbar-color: #cbd5e1 transparent !important;
 }
 
-.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item,
-.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
-  min-height: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  color: var(--text-2, #475569) !important;
-  font-size: 0.8rem !important;
-  font-weight: var(--font-weight-semibold) !important;
-  line-height: 1.35 !important;
+.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item {
+  display: block !important;
+  position: static !important;
+  min-height: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 6px 10px !important;
+  margin: 0 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  word-break: break-word !important;
   overflow-wrap: anywhere !important;
-}
-
-.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item + .lead-card-remark-item {
-  padding-top: 5px !important;
-  border-top: 1px solid #e2e8f0 !important;
+  white-space: normal !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .dashboard-wrapper .admin-employee-style-card .lead-card-empty {
+  display: block !important;
+  min-height: auto !important;
+  height: auto !important;
+  padding: 4px 2px !important;
   color: #94a3b8 !important;
-  font-weight: var(--font-weight-semibold) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
 }
 
 .dashboard-wrapper .admin-employee-style-card .lead-card-remark-entry {
@@ -1983,6 +1995,7 @@
 }
 
 @media (max-width: 760px) {
+
   .dashboard-wrapper .admin-overview-view .admin-statistics-header,
   .dashboard-wrapper .admin-overview-view .admin-statistics-metrics,
   .dashboard-wrapper .admin-overview-view .admin-stat-insights,
@@ -2018,9 +2031,9 @@
   overflow: hidden !important;
 }
 
-.dashboard-wrapper .admin-leads-company-header > div:first-child,
-.dashboard-wrapper .admin-remarks-company-header > div:first-child,
-.dashboard-wrapper .admin-followups-company-header > div:first-child {
+.dashboard-wrapper .admin-leads-company-header>div:first-child,
+.dashboard-wrapper .admin-remarks-company-header>div:first-child,
+.dashboard-wrapper .admin-followups-company-header>div:first-child {
   flex: 1 1 auto !important;
   min-width: 0 !important;
 }
@@ -2055,6 +2068,7 @@
 }
 
 @media (max-width: 760px) {
+
   .dashboard-wrapper .admin-leads-company-header,
   .dashboard-wrapper .admin-remarks-company-header,
   .dashboard-wrapper .admin-followups-company-header {
@@ -2375,6 +2389,7 @@
 }
 
 @media (max-width: 920px) {
+
   .dashboard-wrapper .crm-metrics-strip.metrics-strip,
   .dashboard-wrapper .crm-payments-metrics-strip.metrics-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -2382,6 +2397,7 @@
 }
 
 @media (max-width: 640px) {
+
   .dashboard-wrapper .crm-metrics-strip.metrics-strip,
   .dashboard-wrapper .crm-payments-metrics-strip.metrics-strip {
     grid-template-columns: 1fr !important;
@@ -3202,7 +3218,7 @@
   overflow: hidden !important;
 }
 
-.dashboard-wrapper .admin-employee-style-card .lead-record-line > span:last-child,
+.dashboard-wrapper .admin-employee-style-card .lead-record-line>span:last-child,
 .dashboard-wrapper .admin-employee-style-card .lead-record-line-value {
   flex: 1 1 auto !important;
   min-width: 0 !important;
@@ -3291,41 +3307,16 @@
 }
 
 .dashboard-wrapper .admin-employee-style-card .lead-card-remark-list {
-  display: grid !important;
-  align-content: start !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 6px !important;
   min-height: 0 !important;
-  max-height: 68px !important;
+  max-height: 140px !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  padding-right: 4px !important;
+  padding: 2px 0 !important;
   scrollbar-color: #cbd5e1 transparent !important;
   scrollbar-width: thin !important;
-}
-
-.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item,
-.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
-  overflow: hidden !important;
-  color: #4b5563 !important;
-  font-size: 13px !important;
-  font-style: normal !important;
-  font-weight: var(--font-weight-normal) !important;
-  line-height: 1.45 !important;
-  overflow-wrap: anywhere !important;
-}
-
-.dashboard-wrapper .admin-employee-style-card .lead-card-remark-item {
-  display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important;
-  line-clamp: 2 !important;
-  -webkit-box-orient: vertical !important;
-}
-
-.dashboard-wrapper .admin-employee-style-card .lead-card-empty {
-  display: flex !important;
-  align-items: flex-start !important;
-  min-height: 68px !important;
-  color: #8a94a6 !important;
 }
 
 .dashboard-wrapper .admin-employee-style-card .lead-card-remark-entry {
@@ -3486,6 +3477,7 @@
 }
 
 @media (max-width: 1180px) {
+
   .dashboard-wrapper .admin-leads-company-pane .admin-employee-style-grid,
   .dashboard-wrapper .admin-remarks-view .lead-detail-view .admin-employee-style-grid,
   .dashboard-wrapper .admin-followups-company-pane .admin-employee-style-grid,
@@ -3508,7 +3500,7 @@
   text-align: left !important;
 }
 
-.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header > div {
+.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header>div {
   min-width: 0 !important;
   margin: 0 !important;
   color: var(--admin-text, #111827) !important;
@@ -3521,7 +3513,7 @@
   text-transform: none !important;
 }
 
-.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header > div:last-child {
+.dashboard-wrapper .admin-remarks-company-rail .admin-remarks-rail-header>div:last-child {
   justify-self: end !important;
   text-align: right !important;
 }
@@ -3600,28 +3592,26 @@
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-lead-record-card.admin-employee-style-card {
-  grid-template-rows: 44px 28px 44px 28px 28px minmax(220px, 1fr) 44px !important;
-  height: 100% !important;
-  min-height: 620px !important;
+  height: auto !important;
+  min-height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
   overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .admin-lead-record-card.admin-employee-style-card,
 .dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card.admin-employee-style-card {
-  grid-template-rows: 44px 28px 44px 28px 28px minmax(168px, 1fr) 44px !important;
-  height: 100% !important;
-  min-height: 620px !important;
+  height: auto !important;
+  min-height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
   overflow: visible !important;
 }
 
 .dashboard-wrapper .admin-employee-followups-frame .admin-employee-card-grid {
-  grid-auto-rows: minmax(620px, auto) !important;
-}
-
-.dashboard-wrapper .admin-employee-followups-frame .admin-lead-record-card.admin-employee-style-card,
-.dashboard-wrapper .admin-employee-followups-frame .employee-followup-record-card.admin-employee-style-card {
-  min-height: 620px !important;
-  overflow: visible !important;
+  grid-auto-rows: auto !important;
 }
 
 /* Assigned employee leads: keep two cards per row and make the card pane, not the page, scroll. */
@@ -3642,24 +3632,23 @@
 .dashboard-wrapper .admin-employee-assigned-frame .admin-employee-card-grid.admin-employee-style-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-auto-rows: minmax(620px, auto) !important;
+  grid-auto-rows: auto !important;
   align-items: start !important;
   align-content: start !important;
-  gap: 24px !important;
+  gap: 20px !important;
   min-height: 0 !important;
   height: 100% !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scrollbar-gutter: stable both-edges !important;
-  padding: 24px 36px 96px 24px !important;
+  padding: 20px 28px 80px 20px !important;
 }
 
 .dashboard-wrapper .admin-employee-assigned-frame .admin-lead-record-card.admin-employee-style-card {
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 620px !important;
-  height: 100% !important;
-  grid-template-rows: 44px 28px 44px 28px 28px minmax(176px, 1fr) 44px !important;
+  min-height: auto !important;
+  height: auto !important;
   overflow: visible !important;
 }
 
@@ -3823,10 +3812,12 @@
 .admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-builder {
   padding: 0 !important;
 }
+
 .admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-builder-header {
   padding: 20px 24px 16px !important;
   top: 0 !important;
 }
+
 /* Add padding specifically to the form controls and table */
 .admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-control-card,
 .admin-quote-modal:not(.admin-quote-modal--side-by-side) .invoice-items-card {
@@ -3949,4 +3940,118 @@ select.glass-input {
 .dashboard-wrapper .admin-employee-style-card.we-crm-active {
   grid-template-rows: 44px 28px 96px 28px 28px 168px 44px !important;
   min-height: 508px !important;
+}
+
+/* ── Employee Profile / Dashboard: Remove All Scrollbars ── */
+.admin-employee-fullview,
+.admin-employee-fullview-card,
+.admin-employee-fullview-scroll,
+.admin-employee-overview-strip,
+.admin-employee-record-frame,
+.admin-employee-company-pane,
+.admin-employee-call-table-wrap,
+.admin-employee-card-grid,
+.admin-employee-fullview .company-rail,
+.admin-employee-fullview .company-list,
+.admin-employee-fullview .company-item,
+.admin-employee-fullview .table-pane,
+.admin-employee-fullview .table-pane-body,
+.admin-employee-fullview .record-frame,
+.admin-employee-fullview .rail-body,
+.admin-employee-fullview .pane-body,
+.admin-employee-fullview *,
+.dashboard-wrapper:has(.admin-employee-fullview) .dash-main,
+.dashboard-wrapper:has(.admin-employee-fullview) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.admin-employee-fullview::-webkit-scrollbar,
+.admin-employee-fullview-card::-webkit-scrollbar,
+.admin-employee-fullview-scroll::-webkit-scrollbar,
+.admin-employee-overview-strip::-webkit-scrollbar,
+.admin-employee-record-frame::-webkit-scrollbar,
+.admin-employee-company-pane::-webkit-scrollbar,
+.admin-employee-call-table-wrap::-webkit-scrollbar,
+.admin-employee-card-grid::-webkit-scrollbar,
+.admin-employee-fullview .company-rail::-webkit-scrollbar,
+.admin-employee-fullview .company-list::-webkit-scrollbar,
+.admin-employee-fullview .company-item::-webkit-scrollbar,
+.admin-employee-fullview .table-pane::-webkit-scrollbar,
+.admin-employee-fullview .table-pane-body::-webkit-scrollbar,
+.admin-employee-fullview .record-frame::-webkit-scrollbar,
+.admin-employee-fullview .rail-body::-webkit-scrollbar,
+.admin-employee-fullview .pane-body::-webkit-scrollbar,
+.admin-employee-fullview *::-webkit-scrollbar,
+.dashboard-wrapper:has(.admin-employee-fullview) .dash-main::-webkit-scrollbar,
+.dashboard-wrapper:has(.admin-employee-fullview)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Remove native up/down number input spin buttons */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button,
+.dashboard-wrapper input::-webkit-outer-spin-button,
+.dashboard-wrapper input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+
+input[type="number"],
+.dashboard-wrapper input[type="number"] {
+  -moz-appearance: textfield !important;
+}
+
+/* Sticky table header for Invoice, Quotation, and Proposal history tables */
+.dashboard-wrapper .invoice-history-table thead,
+.dashboard-wrapper .admin-invoice-section thead,
+.dashboard-wrapper .admin-quotation-section thead,
+.dashboard-wrapper .admin-proposal-section thead,
+.invoice-history-table thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+.dashboard-wrapper .invoice-history-table th,
+.dashboard-wrapper .admin-invoice-section th,
+.dashboard-wrapper .admin-quotation-section th,
+.dashboard-wrapper .admin-proposal-section th,
+.crm-nda-shell .invoice-history-table th,
+.invoice-history-table th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #ffffff !important;
+  box-shadow: inset 0 -1px 0 #e5e7eb, 0 1px 0 #e5e7eb !important;
+}
+
+.invoice-history-table th .col-resize-handle {
+  z-index: 11 !important;
+}
+
+/* Assigned Leads single line header alignment */
+.dashboard-wrapper .admin-employee-assigned-section .admin-employee-section-heading {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  flex-wrap: nowrap !important;
+  min-height: 80px !important;
+}
+
+.dashboard-wrapper .admin-employee-assigned-section .admin-employee-section-heading .workspace-controls {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: nowrap !important;
+  width: auto !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
 }
